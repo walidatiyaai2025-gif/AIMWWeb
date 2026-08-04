@@ -3,28 +3,266 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject AppLanguageService L
-<PageTitle>@L["SiteDetails"]</PageTitle>
-@if(_loading){<div class="loading-line">@L["LoadingSite"]</div>}
-else if(_site is null){<div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>}
-else{
-<div class="page-heading"><div><h1>@_site.Name</h1><p>@_site.SiteUrl</p></div><div class="actions"><a class="btn primary" href="@($"/sites/{Id}/explorer")">@L["ContentExplorer"]</a><button class="btn" @onclick="RetestAsync" disabled="@_testing">@(_testing?L["Testing"]:L["Retest"])</button><a class="btn" href="/sites">@L["Back"]</a></div></div>
-@if(!string.IsNullOrWhiteSpace(_message)){<div class="alert @(_isError?"error":"success")"><strong>@_message</strong>@if(!string.IsNullOrWhiteSpace(_diagnostics)){<small class="diagnostics">@_diagnostics</small>}</div>}
-<div class="stats-grid details-grid">
-<article class="stat-card"><span>@L["ConnectionStatus"]</span><strong class="date-value">@StatusText(_site.ConnectionStatus)</strong><small>@FormatDate(_site.LastConnectionTestAtUtc)</small></article>
-<article class="stat-card"><span>@L["WordPressVersion"]</span><strong class="date-value">@(_site.WordPressVersion??L["NotDetected"])</strong><small>@L["FromRestApi"]</small></article>
-<article class="stat-card"><span>@L["Language"]</span><strong class="date-value">@(_site.LanguageCode??L["NotDetected"])</strong><small>@L["SiteLanguage"]</small></article>
-<article class="stat-card"><span>@L["Credentials"]</span><strong class="date-value">@(_credential?.HasSavedPassword==true?L["Saved"]:L["NotSaved"])</strong><small>@(_credential?.UserName??"—")</small></article></div>
-<div class="panel form-panel"><div class="panel-head"><div><h3>@L["WordPressConnection"]</h3><p>@L["WpCredentialHelp"]</p></div><span class="badge">REST API</span></div>
-<EditForm Model="_model" OnSubmit="SaveAndTestAsync"><div class="form-grid"><label>@L["Username"]<InputText @bind-Value="_model.UserName" autocomplete="username" /></label><label>Application Password<InputText type="password" @bind-Value="_model.ApplicationPassword" autocomplete="new-password" /></label></div><div class="actions"><button type="submit" class="btn primary" disabled="@_testing">@(_testing?L["SaveAndTesting"]:L["SaveAndTest"])</button></div></EditForm></div>
-<div class="panel"><h3>@L["HowCreateAppPassword"]</h3><p>@L["AppPasswordSteps"]</p></div>}
 
-@code{
-[Parameter]public Guid Id{get;set;}private bool _loading=true,_testing,_isError;private string? _message,_diagnostics;private AIWordPressManager.Domain.Entities.Site? _site;private SiteCredentialSummary? _credential;private CredentialInput _model=new();
-protected override void OnInitialized()=>L.Changed+=Changed;protected override async Task OnParametersSetAsync()=>await ReloadAsync();
-private async Task ReloadAsync(){_loading=true;_site=await SiteService.GetSiteAsync(Id);_credential=await SiteService.GetCredentialSummaryAsync(Id);if(_credential is not null)_model.UserName=_credential.UserName;_loading=false;}
-private async Task SaveAndTestAsync(){try{_testing=true;if(string.IsNullOrWhiteSpace(_model.UserName)){Fail(L["RequiredUsername"]);return;}if(string.IsNullOrWhiteSpace(_model.ApplicationPassword)){Fail(L["RequiredPassword"]);return;}if(_model.ApplicationPassword.Length<8){Fail(L["ShortPassword"]);return;}var r=await SiteService.SaveCredentialAndTestAsync(Id,_model.UserName,_model.ApplicationPassword);ShowResult(r);_model.ApplicationPassword="";await ReloadAsync();}catch(Exception ex){Fail(L.TranslateMessage(ex.Message));}finally{_testing=false;}}
-private async Task RetestAsync(){try{_testing=true;ShowResult(await SiteService.RetestAsync(Id));await ReloadAsync();}catch(Exception ex){Fail(L.TranslateMessage(ex.Message));}finally{_testing=false;}}
-private void ShowResult(ConnectionTestViewResult r){_isError=!r.IsSuccess;_message=L.TranslateMessage(r.Message);_diagnostics=r.Diagnostics;}private void Fail(string m){_isError=true;_message=m;_diagnostics=null;}
-private string FormatDate(DateTime? v)=>v is null?L["NeverTested"]:v.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus s)=>s switch{AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected=>L["Connected"],AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable=>L["Unreachable"],AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed=>L["AuthFailed"],_=>L["NotTested"]};
-private void Changed()=>InvokeAsync(StateHasChanged);public void Dispose()=>L.Changed-=Changed;private sealed class CredentialInput{public string UserName{get;set;}="";public string ApplicationPassword{get;set;}="";}
+<PageTitle>@(_site?.Name ?? L["SiteDetails"])</PageTitle>
+
+@if (_loading)
+{
+    <div class="site-details-loading">
+        <div class="panel site-details-skeleton hero"></div>
+        <div class="site-details-skeleton-grid">
+            @for (var i = 0; i < 4; i++)
+            {
+                <div class="panel site-details-skeleton card"></div>
+            }
+        </div>
+    </div>
+}
+else if (_site is null)
+{
+    <section class="panel site-details-not-found">
+        <div class="site-details-not-found-icon">◎</div>
+        <h1>@L["SiteNotFound"]</h1>
+        <p>@(L.IsArabic ? "تعذر العثور على الموقع المطلوب داخل قاعدة البيانات المحلية." : "The requested site could not be found in the local database.")</p>
+        <a class="btn primary" href="/sites">@L["BackToSites"]</a>
+    </section>
+}
+else
+{
+    <div class="site-details-page">
+        <section class="panel site-details-hero">
+            <div class="site-details-identity">
+                <div class="site-details-avatar">@Initials(_site.Name)</div>
+                <div>
+                    <span class="workspace-kicker">@(L.IsArabic ? "مساحة عمل الموقع" : "SITE WORKSPACE")</span>
+                    <h1>@_site.Name</h1>
+                    <a href="@_site.SiteUrl" target="_blank">@_site.SiteUrl ↗</a>
+                </div>
+            </div>
+
+            <div class="site-details-hero-actions">
+                <span class="site-details-state @StatusClass(_site.ConnectionStatus)"><i></i>@StatusText(_site.ConnectionStatus)</span>
+                <button class="btn" @onclick="RetestAsync" disabled="@_testing">↻ @(_testing ? L["Testing"] : L["Retest"])</button>
+                <a class="btn primary" href="@($"/sites/{Id}/explorer")">@L["ContentExplorer"]</a>
+                <a class="btn" href="/sites">@L["Back"]</a>
+            </div>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success") site-details-alert">
+                <strong>@_message</strong>
+                @if (!string.IsNullOrWhiteSpace(_diagnostics))
+                {
+                    <small class="diagnostics">@_diagnostics</small>
+                }
+            </div>
+        }
+
+        <section class="site-details-metrics">
+            <article class="panel site-details-metric">
+                <span class="metric-icon">◉</span>
+                <div><small>@L["ConnectionStatus"]</small><strong>@StatusText(_site.ConnectionStatus)</strong><p>@FormatDate(_site.LastConnectionTestAtUtc)</p></div>
+            </article>
+            <article class="panel site-details-metric">
+                <span class="metric-icon">W</span>
+                <div><small>@L["WordPressVersion"]</small><strong>@(_site.WordPressVersion ?? L["NotDetected"])</strong><p>@L["FromRestApi"]</p></div>
+            </article>
+            <article class="panel site-details-metric">
+                <span class="metric-icon">文</span>
+                <div><small>@L["Language"]</small><strong>@(_site.LanguageCode ?? L["NotDetected"])</strong><p>@L["SiteLanguage"]</p></div>
+            </article>
+            <article class="panel site-details-metric">
+                <span class="metric-icon">⌘</span>
+                <div><small>@L["Credentials"]</small><strong>@(_credential?.HasSavedPassword == true ? L["Saved"] : L["NotSaved"])</strong><p>@(_credential?.UserName ?? "—")</p></div>
+            </article>
+        </section>
+
+        <section class="site-details-layout">
+            <div class="site-details-main">
+                <article class="panel site-details-section">
+                    <div class="site-details-section-head">
+                        <div>
+                            <span class="workspace-kicker">REST API</span>
+                            <h2>@L["WordPressConnection"]</h2>
+                            <p>@L["WpCredentialHelp"]</p>
+                        </div>
+                        <span class="site-details-security-badge">🔒 @(L.IsArabic ? "تخزين محلي آمن" : "Secure local storage")</span>
+                    </div>
+
+                    <EditForm Model="_model" OnSubmit="SaveAndTestAsync">
+                        <div class="site-details-form-grid">
+                            <label>
+                                <span>@L["Username"]</span>
+                                <InputText @bind-Value="_model.UserName" autocomplete="username" placeholder="wordpress-user" />
+                            </label>
+                            <label>
+                                <span>Application Password</span>
+                                <InputText type="password" @bind-Value="_model.ApplicationPassword" autocomplete="new-password" placeholder="xxxx xxxx xxxx xxxx" />
+                            </label>
+                        </div>
+                        <div class="site-details-form-actions">
+                            <button type="submit" class="btn primary" disabled="@_testing">@(_testing ? L["SaveAndTesting"] : L["SaveAndTest"])</button>
+                            <button type="button" class="btn" @onclick="RetestAsync" disabled="@_testing">@(L.IsArabic ? "اختبار البيانات المحفوظة" : "Test saved credentials")</button>
+                        </div>
+                    </EditForm>
+                </article>
+
+                <article class="panel site-details-section">
+                    <div class="site-details-section-head compact">
+                        <div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "أدوات إدارة الموقع" : "Site management tools")</h2></div>
+                    </div>
+                    <div class="site-tools-grid">
+                        <a class="site-tool-card" href="@($"/sites/{Id}/explorer")"><span>▤</span><div><strong>@L["ContentExplorer"]</strong><small>@(L.IsArabic ? "المقالات والصفحات والوسائط" : "Posts, pages, and media")</small></div></a>
+                        <a class="site-tool-card" href="@($"/sites/{Id}/seo")"><span>◈</span><div><strong>@(L.IsArabic ? "مساحة SEO" : "SEO workspace")</strong><small>@(L.IsArabic ? "التدقيق والاقتراحات" : "Audits and recommendations")</small></div></a>
+                        <a class="site-tool-card" href="@($"/sites/{Id}/comments")"><span>◌</span><div><strong>@(L.IsArabic ? "التعليقات" : "Comments")</strong><small>@(L.IsArabic ? "المراجعة والاعتماد والرد" : "Moderate, approve, and reply")</small></div></a>
+                        <a class="site-tool-card" href="@($"/sites/{Id}/users")"><span>◎</span><div><strong>@(L.IsArabic ? "المستخدمون" : "Users")</strong><small>@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles and permissions")</small></div></a>
+                    </div>
+                </article>
+            </div>
+
+            <aside class="site-details-side">
+                <article class="panel site-details-health-card">
+                    <div class="site-details-health-ring @StatusClass(_site.ConnectionStatus)"><span>@HealthPercent(_site.ConnectionStatus)%</span></div>
+                    <h3>@(L.IsArabic ? "صحة الاتصال" : "Connection health")</h3>
+                    <p>@HealthDescription(_site.ConnectionStatus)</p>
+                    <div class="site-details-health-bar"><span style="width:@HealthPercent(_site.ConnectionStatus)%"></span></div>
+                </article>
+
+                <article class="panel site-details-help">
+                    <span class="workspace-kicker">@(L.IsArabic ? "المساعدة" : "HELP")</span>
+                    <h3>@L["HowCreateAppPassword"]</h3>
+                    <p>@L["AppPasswordSteps"]</p>
+                    <a class="btn" href="@($"{_site.SiteUrl.TrimEnd('/')}/wp-admin/profile.php")" target="_blank">@(L.IsArabic ? "فتح ملف WordPress" : "Open WordPress profile") ↗</a>
+                </article>
+
+                <article class="panel site-details-info-list">
+                    <h3>@(L.IsArabic ? "معلومات النظام" : "System information")</h3>
+                    <div><span>@(L.IsArabic ? "المعرف" : "Site ID")</span><code>@Id</code></div>
+                    <div><span>@(L.IsArabic ? "آخر فحص" : "Last check")</span><strong>@FormatDate(_site.LastConnectionTestAtUtc)</strong></div>
+                    <div><span>@(L.IsArabic ? "حالة الاعتماد" : "Credential state")</span><strong>@(_credential?.HasSavedPassword == true ? L["Saved"] : L["NotSaved"])</strong></div>
+                </article>
+            </aside>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private bool _testing;
+    private bool _isError;
+    private string? _message;
+    private string? _diagnostics;
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private SiteCredentialSummary? _credential;
+    private CredentialInput _model = new();
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _site = await SiteService.GetSiteAsync(Id);
+        _credential = await SiteService.GetCredentialSummaryAsync(Id);
+        if (_credential is not null)
+        {
+            _model.UserName = _credential.UserName;
+        }
+        _loading = false;
+    }
+
+    private async Task SaveAndTestAsync()
+    {
+        try
+        {
+            _testing = true;
+            if (string.IsNullOrWhiteSpace(_model.UserName)) { Fail(L["RequiredUsername"]); return; }
+            if (string.IsNullOrWhiteSpace(_model.ApplicationPassword)) { Fail(L["RequiredPassword"]); return; }
+            if (_model.ApplicationPassword.Length < 8) { Fail(L["ShortPassword"]); return; }
+            var result = await SiteService.SaveCredentialAndTestAsync(Id, _model.UserName, _model.ApplicationPassword);
+            ShowResult(result);
+            _model.ApplicationPassword = string.Empty;
+            await ReloadAsync();
+        }
+        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
+        finally { _testing = false; }
+    }
+
+    private async Task RetestAsync()
+    {
+        try
+        {
+            _testing = true;
+            ShowResult(await SiteService.RetestAsync(Id));
+            await ReloadAsync();
+        }
+        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
+        finally { _testing = false; }
+    }
+
+    private void ShowResult(ConnectionTestViewResult result)
+    {
+        _isError = !result.IsSuccess;
+        _message = L.TranslateMessage(result.Message);
+        _diagnostics = result.Diagnostics;
+    }
+
+    private void Fail(string message)
+    {
+        _isError = true;
+        _message = message;
+        _diagnostics = null;
+    }
+
+    private string FormatDate(DateTime? value) => value is null ? L["NeverTested"] : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch
+    {
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => L["Connected"],
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable => L["Unreachable"],
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed => L["AuthFailed"],
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => L.IsArabic ? "صلاحيات محدودة" : "Limited permissions",
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled => L.IsArabic ? "معطل" : "Disabled",
+        _ => L["NotTested"]
+    };
+
+    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch
+    {
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => "connected",
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown => "neutral",
+        _ => "problem"
+    };
+
+    private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch
+    {
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => 100,
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown => 35,
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => 60,
+        _ => 15
+    };
+
+    private string HealthDescription(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch
+    {
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => L.IsArabic ? "الاتصال سليم وواجهة WordPress REST API تستجيب بنجاح." : "The connection is healthy and the WordPress REST API is responding successfully.",
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown => L.IsArabic ? "لم يتم اختبار الاتصال بعد. احفظ بيانات الاعتماد ثم نفذ الاختبار." : "The connection has not been tested yet. Save credentials and run a test.",
+        AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => L.IsArabic ? "الاتصال يعمل لكن الحساب لا يمتلك كل الصلاحيات المطلوبة." : "The connection works, but the account does not have all required permissions.",
+        _ => L.IsArabic ? "الاتصال يحتاج مراجعة. تحقق من الرابط واسم المستخدم وكلمة مرور التطبيق." : "The connection needs attention. Verify the URL, username, and application password."
+    };
+
+    private static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    }
+
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+
+    private sealed class CredentialInput
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string ApplicationPassword { get; set; } = string.Empty;
+    }
 }
