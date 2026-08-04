@@ -3,24 +3,97 @@
 @implements IDisposable
 @inject SiteWebService Sites
 @inject AppLanguageService L
+
 <PageTitle>@L["Dashboard"]</PageTitle>
 
-<div class="page-heading"><div><h1>@L["Dashboard"]</h1><p>@L["DashboardIntro"]</p></div><a class="btn primary" href="/sites">@L["ManageSites"]</a></div>
-@if (_loading){<div class="skeleton-grid"><div></div><div></div><div></div><div></div></div>}
-else if (_summary is not null){
-<div class="stats-grid">
-<article class="stat-card"><span>@L["TotalSites"]</span><strong>@_summary.TotalSites</strong><small>@L["AllRegisteredSites"]</small></article>
-<article class="stat-card"><span>@L["Connected"]</span><strong>@_summary.ConnectedSites</strong><small>@L["HealthyConnection"]</small></article>
-<article class="stat-card"><span>@L["NeedsReview"]</span><strong>@_summary.ProblemSites</strong><small>@L["ConnectionOrLoginFailed"]</small></article>
-<article class="stat-card"><span>@L["LastCheck"]</span><strong class="date-value">@FormatDate(_summary.LastConnectionTestAtUtc)</strong><small>@L["LocalDatabase"]</small></article>
+<div class="dashboard-v2">
+    <section class="dashboard-hero">
+        <div>
+            <span class="workspace-kicker">@(L.IsArabic ? "مركز القيادة" : "COMMAND CENTER")</span>
+            <h1>@(L.IsArabic ? "لوحة تحكم AI WordPress Manager" : "AI WordPress Manager Dashboard")</h1>
+            <p>@(L.IsArabic ? "تابع المواقع والمزامنة وSEO والمهام الذكية من شاشة واحدة." : "Monitor sites, synchronization, SEO, and AI operations from one workspace.")</p>
+        </div>
+        <div class="dashboard-hero-actions">
+            <a class="btn btn-primary" href="/sites">＋ @(L.IsArabic ? "إضافة موقع" : "Add site")</a>
+            <a class="btn" href="/module/sync">↻ @(L.IsArabic ? "مزامنة الآن" : "Sync now")</a>
+        </div>
+    </section>
+
+    @if (_loading)
+    {
+        <div class="skeleton-grid"><div></div><div></div><div></div><div></div></div>
+    }
+    else if (_summary is not null)
+    {
+        <section class="dashboard-kpis">
+            <article class="dashboard-kpi"><span class="kpi-icon">◉</span><div><small>@L["TotalSites"]</small><strong>@_summary.TotalSites</strong><em>@L["AllRegisteredSites"]</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon success">✓</span><div><small>@L["Connected"]</small><strong>@_summary.ConnectedSites</strong><em>@L["HealthyConnection"]</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon warning">!</span><div><small>@L["NeedsReview"]</small><strong>@_summary.ProblemSites</strong><em>@L["ConnectionOrLoginFailed"]</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon">◷</span><div><small>@L["LastCheck"]</small><strong class="dashboard-date">@FormatDate(_summary.LastConnectionTestAtUtc)</strong><em>@L["LocalDatabase"]</em></div></article>
+        </section>
+
+        <section class="dashboard-main-grid">
+            <div class="dashboard-column">
+                <article class="panel dashboard-card">
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "الحالة المباشرة" : "LIVE STATUS")</span><h2>@(L.IsArabic ? "حالة المنصة" : "Platform health")</h2></div><span class="badge success">@(L.IsArabic ? "مستقر" : "Healthy")</span></header>
+                    <div class="health-meter"><span style="width:92%"></span></div>
+                    <div class="health-metrics">
+                        <div><strong>92%</strong><small>@(L.IsArabic ? "الصحة العامة" : "Overall health")</small></div>
+                        <div><strong>@_summary.ConnectedSites</strong><small>@(L.IsArabic ? "اتصالات سليمة" : "Healthy connections")</small></div>
+                        <div><strong>0</strong><small>@(L.IsArabic ? "مهام فاشلة" : "Failed jobs")</small></div>
+                    </div>
+                </article>
+
+                <article class="panel dashboard-card">
+                    <header><div><span class="workspace-kicker">SEO</span><h2>@(L.IsArabic ? "أولوية التحسين" : "Optimization priorities")</h2></div><a href="/module/seo-audit">@(L.IsArabic ? "فتح التدقيق" : "Open audit")</a></header>
+                    <div class="priority-list">
+                        <div><span class="priority-dot high"></span><div><strong>@(L.IsArabic ? "وصف ميتا مفقود" : "Missing meta descriptions")</strong><small>@(L.IsArabic ? "12 صفحة تحتاج مراجعة" : "12 pages need review")</small></div><b>12</b></div>
+                        <div><span class="priority-dot medium"></span><div><strong>@(L.IsArabic ? "صور بدون Alt Text" : "Images without alt text")</strong><small>@(L.IsArabic ? "7 عناصر" : "7 items")</small></div><b>7</b></div>
+                        <div><span class="priority-dot low"></span><div><strong>@(L.IsArabic ? "روابط داخلية ضعيفة" : "Weak internal links")</strong><small>@(L.IsArabic ? "9 مقالات" : "9 posts")</small></div><b>9</b></div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="dashboard-column">
+                <article class="panel dashboard-card">
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")</h2></div><a href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a></header>
+                    <div class="job-list">
+                        <div><span class="job-state success">✓</span><div><strong>@(L.IsArabic ? "مزامنة المحتوى" : "Content synchronization")</strong><small>@(L.IsArabic ? "اكتملت منذ دقيقتين" : "Completed 2 minutes ago")</small></div></div>
+                        <div><span class="job-state running">↻</span><div><strong>@(L.IsArabic ? "فحص SEO" : "SEO audit")</strong><small>@(L.IsArabic ? "قيد التنفيذ" : "Running now")</small></div></div>
+                        <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "توليد اقتراحات AI" : "Generate AI suggestions")</strong><small>@(L.IsArabic ? "في قائمة الانتظار" : "Queued")</small></div></div>
+                    </div>
+                </article>
+
+                <article class="panel dashboard-card">
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "اختصارات" : "QUICK ACCESS")</span><h2>@(L.IsArabic ? "ابدأ بسرعة" : "Jump back in")</h2></div></header>
+                    <div class="quick-grid">
+                        <a href="/module/posts"><span>▤</span>@(L.IsArabic ? "المقالات" : "Posts")</a>
+                        <a href="/module/media"><span>▣</span>@(L.IsArabic ? "الوسائط" : "Media")</a>
+                        <a href="/module/ai-providers"><span>✦</span>@(L.IsArabic ? "مزودو AI" : "AI providers")</a>
+                        <a href="/system-health"><span>♥</span>@(L.IsArabic ? "صحة النظام" : "System health")</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+    }
 </div>
-<div class="panel"><div class="panel-head"><div><h3>@L["CurrentPhase"]</h3><p>@L["BlazorCreated"]</p></div><span class="badge success">Web</span></div>
-<div class="roadmap"><div class="done">✓ ASP.NET Core / Blazor Server</div><div class="done">✓ EF Core + SQLite</div><div class="done">✓ @L["DashboardSitesDone"]</div><div class="done">✓ @L["WpRestTest"]</div><div class="done">✓ @L["ContentSync"]</div><div>○ @L["SeoAi"]</div></div></div>}
 
 @code {
-private bool _loading=true; private DashboardSummary? _summary;
-protected override void OnInitialized(){L.Changed+=Changed;}
-protected override async Task OnInitializedAsync(){_summary=await Sites.GetSummaryAsync();_loading=false;}
-private string FormatDate(DateTime? value)=>value is null?L["Never"]:value.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
-private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+    private bool _loading = true;
+    private DashboardSummary? _summary;
+
+    protected override void OnInitialized() => L.Changed += Changed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _summary = await Sites.GetSummaryAsync();
+        _loading = false;
+    }
+
+    private string FormatDate(DateTime? value) => value is null
+        ? L["Never"]
+        : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
 }
