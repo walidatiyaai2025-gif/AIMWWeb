@@ -27,6 +27,7 @@ builder.Services.AddScoped<WordPressTaxonomyWebService>();
 builder.Services.AddScoped<WordPressCommentsWebService>();
 builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
+builder.Services.AddScoped<SeoAuditExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
 builder.Services.AddSingleton<BuildInformationService>();
@@ -66,6 +67,20 @@ app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(n
     jobs = service.GetJobs(),
     history = service.GetHistory(100)
 }));
+app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (
+    Guid siteId,
+    SeoAuditExecutionService service,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        return Results.Ok(await service.RunAsync(siteId, cancellationToken));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
