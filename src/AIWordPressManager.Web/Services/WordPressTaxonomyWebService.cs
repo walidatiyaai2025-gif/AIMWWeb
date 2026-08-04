@@ -34,11 +34,12 @@ public sealed class WordPressTaxonomyWebService(
             return new(false, "اسم التصنيف أو الوسم مطلوب.", 0);
 
         var type = NormalizeTaxonomy(taxonomy);
-        using var response = await apiClient.SendAsync(siteId, HttpMethod.Post, $"/wp-json/wp/v2/{type}", BuildPayload(model, taxonomy), ct);
+        var response = await apiClient.SendAsync(siteId, HttpMethod.Post, $"/wp-json/wp/v2/{type}", BuildPayload(model, taxonomy), ct);
         if (!response.IsSuccess || response.Value is null)
             return new(false, response.ErrorMessage, 0);
 
-        var id = response.Value.RootElement.TryGetProperty("id", out var idNode) && idNode.TryGetInt32(out var value) ? value : 0;
+        using var json = response.Value;
+        var id = json.RootElement.TryGetProperty("id", out var idNode) && idNode.TryGetInt32(out var value) ? value : 0;
         await syncService.SynchronizeAsync(siteId, ct);
         return new(true, "تم إنشاء العنصر في WordPress بنجاح.", id);
     }
@@ -49,7 +50,8 @@ public sealed class WordPressTaxonomyWebService(
         if (string.IsNullOrWhiteSpace(model.Name)) return new(false, "اسم التصنيف أو الوسم مطلوب.", id);
 
         var type = NormalizeTaxonomy(taxonomy);
-        using var response = await apiClient.SendAsync(siteId, HttpMethod.Post, $"/wp-json/wp/v2/{type}/{id}", BuildPayload(model, taxonomy), ct);
+        var response = await apiClient.SendAsync(siteId, HttpMethod.Post, $"/wp-json/wp/v2/{type}/{id}", BuildPayload(model, taxonomy), ct);
+        response.Value?.Dispose();
         if (!response.IsSuccess)
             return new(false, response.ErrorMessage, id);
 
@@ -62,7 +64,8 @@ public sealed class WordPressTaxonomyWebService(
         if (id <= 0) return new(false, "رقم العنصر غير صحيح.", 0);
 
         var type = NormalizeTaxonomy(taxonomy);
-        using var response = await apiClient.SendAsync(siteId, HttpMethod.Delete, $"/wp-json/wp/v2/{type}/{id}?force=true", cancellationToken: ct);
+        var response = await apiClient.SendAsync(siteId, HttpMethod.Delete, $"/wp-json/wp/v2/{type}/{id}?force=true", cancellationToken: ct);
+        response.Value?.Dispose();
         if (!response.IsSuccess)
             return new(false, response.ErrorMessage, id);
 
