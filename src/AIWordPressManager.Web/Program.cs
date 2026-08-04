@@ -29,6 +29,8 @@ builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
+builder.Services.AddSingleton<BulkContentOperationQueue>();
+builder.Services.AddHostedService<BulkContentOperationWorker>();
 
 var app = builder.Build();
 
