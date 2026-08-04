@@ -83,7 +83,6 @@ public sealed class AutomationCenterService
             command.Parameters.AddWithValue("$now", Format(now));
             command.ExecuteNonQuery();
         }
-
         return id;
     }
 
@@ -111,8 +110,7 @@ public sealed class AutomationCenterService
             command.CommandText = "UPDATE AutomationJobs SET Enabled=1,NextRunUtc=$now,LastStatus='Scheduled',UpdatedAtUtc=$now WHERE Id=$id AND LastStatus <> 'Running'";
             command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
             command.Parameters.AddWithValue("$id", id.ToString());
-            if (command.ExecuteNonQuery() == 0)
-                throw new InvalidOperationException("المهمة غير موجودة أو تعمل حاليًا.");
+            if (command.ExecuteNonQuery() == 0) throw new InvalidOperationException("المهمة غير موجودة أو تعمل حاليًا.");
         }
     }
 
@@ -139,8 +137,7 @@ public sealed class AutomationCenterService
             select.CommandText = "SELECT Id,Name,SiteId,SiteName,Type,Frequency,IntervalValue,TimeOfDay,Enabled,RetryCount,LastRunUtc,NextRunUtc,LastStatus,CreatedAtUtc FROM AutomationJobs WHERE Enabled=1 AND NextRunUtc <= $now AND LastStatus <> 'Running' ORDER BY NextRunUtc";
             select.Parameters.AddWithValue("$now", Format(utcNow));
             var due = new List<AutomationJob>();
-            using (var reader = select.ExecuteReader())
-                while (reader.Read()) due.Add(ReadJob(reader));
+            using (var reader = select.ExecuteReader()) while (reader.Read()) due.Add(ReadJob(reader));
 
             foreach (var job in due)
             {
@@ -151,7 +148,6 @@ public sealed class AutomationCenterService
                 update.Parameters.AddWithValue("$id", job.Id.ToString());
                 update.ExecuteNonQuery();
             }
-
             transaction.Commit();
             return due.Select(x => x with { LastRunUtc = utcNow, LastStatus = "Running" }).ToList();
         }
@@ -224,20 +220,9 @@ public sealed class AutomationCenterService
         }
     }
 
-    private SqliteConnection Open()
-    {
-        var connection = new SqliteConnection(_connectionString);
-        connection.Open();
-        return connection;
-    }
-
-    private static AutomationJob ReadJob(SqliteDataReader r) => new(
-        Guid.Parse(r.GetString(0)), r.GetString(1), Guid.Parse(r.GetString(2)), r.GetString(3), r.GetString(4), r.GetString(5),
-        r.GetInt32(6), r.GetString(7), r.GetInt32(8) == 1, r.GetInt32(9), r.IsDBNull(10) ? null : Parse(r.GetString(10)),
-        Parse(r.GetString(11)), r.GetString(12), Parse(r.GetString(13)));
-
-    private static string NormalizeFrequency(string? value) =>
-        value?.ToLowerInvariant() is "hourly" or "weekly" or "monthly" ? value.ToLowerInvariant() : "daily";
+    private SqliteConnection Open() { var connection = new SqliteConnection(_connectionString); connection.Open(); return connection; }
+    private static AutomationJob ReadJob(SqliteDataReader r) => new(Guid.Parse(r.GetString(0)), r.GetString(1), Guid.Parse(r.GetString(2)), r.GetString(3), r.GetString(4), r.GetString(5), r.GetInt32(6), r.GetString(7), r.GetInt32(8) == 1, r.GetInt32(9), r.IsDBNull(10) ? null : Parse(r.GetString(10)), Parse(r.GetString(11)), r.GetString(12), Parse(r.GetString(13)));
+    private static string NormalizeFrequency(string? value) => value?.ToLowerInvariant() is "hourly" or "weekly" or "monthly" ? value.ToLowerInvariant() : "daily";
 
     private static DateTime CalculateNextRun(DateTime fromUtc, string frequency, int interval, string? time)
     {
@@ -248,12 +233,7 @@ public sealed class AutomationCenterService
         var minute = parts.Length > 1 && int.TryParse(parts[1], out var m) ? Math.Clamp(m, 0, 59) : 0;
         var candidate = new DateTime(fromUtc.Year, fromUtc.Month, fromUtc.Day, hour, minute, 0, DateTimeKind.Utc);
         if (candidate <= fromUtc)
-            candidate = frequency switch
-            {
-                "weekly" => candidate.AddDays(7 * interval),
-                "monthly" => candidate.AddMonths(interval),
-                _ => candidate.AddDays(interval)
-            };
+            candidate = frequency switch { "weekly" => candidate.AddDays(7 * interval), "monthly" => candidate.AddMonths(interval), _ => candidate.AddDays(interval) };
         return candidate;
     }
 
@@ -271,46 +251,24 @@ public sealed class AutomationSchedulerService(
     {
         await ProcessDueJobsAsync(stoppingToken);
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
-        while (await timer.WaitForNextTickAsync(stoppingToken))
-            await ProcessDueJobsAsync(stoppingToken);
+        while (await timer.WaitForNextTickAsync(stoppingToken)) await ProcessDueJobsAsync(stoppingToken);
     }
 
     private async Task ProcessDueJobsAsync(CancellationToken cancellationToken)
     {
         IReadOnlyList<AutomationJob> dueJobs;
-        try
-        {
-            dueJobs = automation.ClaimDueJobs(DateTime.UtcNow);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to claim due automation jobs");
-            return;
-        }
+        try { dueJobs = automation.ClaimDueJobs(DateTime.UtcNow); }
+        catch (Exception ex) { logger.LogError(ex, "Failed to claim due automation jobs"); return; }
 
         foreach (var job in dueJobs)
         {
             try
             {
-                if (string.Equals(job.Type, "Synchronization", StringComparison.OrdinalIgnoreCase))
-                {
-                    using var scope = scopeFactory.CreateScope();
-                    var synchronization = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
-                    var result = await synchronization.SynchronizeAsync(job.SiteId, cancellationToken);
-                    automation.CompleteRun(job, "Completed", result.Message);
-                }
-                else
-                {
-                    execution.Enqueue(job.Name, job.Type, job.SiteName, 1);
-                    automation.CompleteRun(job, "Queued", "تمت إضافة المهمة إلى مركز التنفيذ. تنفيذ هذا النوع سيتم عبر الـWorker المختص.");
-                }
-
-                logger.LogInformation("Automation {AutomationId} processed for site {SiteId}", job.Id, job.SiteId);
+                var result = await ExecuteWithRetryAsync(job, cancellationToken);
+                automation.CompleteRun(job, result.Status, result.Message);
+                logger.LogInformation("Automation {AutomationId} finished with {Status} for site {SiteId}", job.Id, result.Status, job.SiteId);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
             catch (Exception ex)
             {
                 automation.CompleteRun(job, "Failed", ex.Message);
@@ -318,6 +276,55 @@ public sealed class AutomationSchedulerService(
             }
         }
     }
+
+    private async Task<AutomationExecutionResult> ExecuteWithRetryAsync(AutomationJob job, CancellationToken cancellationToken)
+    {
+        var maxAttempts = Math.Clamp(job.RetryCount + 1, 1, 11);
+        Exception? lastError = null;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                if (attempt > 1)
+                    logger.LogWarning("Retrying automation {AutomationId}; attempt {Attempt}/{MaxAttempts}", job.Id, attempt, maxAttempts);
+                return await ExecuteJobAsync(job, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+            catch (Exception ex)
+            {
+                lastError = ex;
+                if (attempt >= maxAttempts) break;
+                await Task.Delay(TimeSpan.FromSeconds(Math.Min(30, attempt * 2)), cancellationToken);
+            }
+        }
+
+        throw new InvalidOperationException($"فشلت المهمة بعد {maxAttempts} محاولة. {lastError?.Message}", lastError);
+    }
+
+    private async Task<AutomationExecutionResult> ExecuteJobAsync(AutomationJob job, CancellationToken cancellationToken)
+    {
+        using var scope = scopeFactory.CreateScope();
+
+        if (string.Equals(job.Type, "Synchronization", StringComparison.OrdinalIgnoreCase))
+        {
+            var synchronization = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
+            var result = await synchronization.SynchronizeAsync(job.SiteId, cancellationToken);
+            return new("Completed", result.Message);
+        }
+
+        if (string.Equals(job.Type, "SEO Audit", StringComparison.OrdinalIgnoreCase))
+        {
+            var seoAudit = scope.ServiceProvider.GetRequiredService<SeoAuditExecutionService>();
+            var result = await seoAudit.RunAsync(job.SiteId, cancellationToken);
+            return new("Completed", result.Message);
+        }
+
+        execution.Enqueue(job.Name, job.Type, job.SiteName, 1);
+        return new("Queued", "تمت إضافة المهمة إلى مركز التنفيذ. تنفيذ هذا النوع سيتم عبر الـWorker المختص.");
+    }
+
+    private sealed record AutomationExecutionResult(string Status, string Message);
 }
 
 public sealed record AutomationJob(Guid Id, string Name, Guid SiteId, string SiteName, string Type, string Frequency, int IntervalValue, string TimeOfDay, bool Enabled, int RetryCount, DateTime? LastRunUtc, DateTime NextRunUtc, string LastStatus, DateTime CreatedAtUtc);
