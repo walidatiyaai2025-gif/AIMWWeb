@@ -27,6 +27,7 @@ builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
+builder.Services.AddSingleton<ExecutionCenterService>();
 
 var app = builder.Build();
 
