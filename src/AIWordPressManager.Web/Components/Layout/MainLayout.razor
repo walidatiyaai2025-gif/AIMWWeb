@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject AppLanguageService L
+@inject BuildInformationService BuildInfo
 @inject IJSRuntime JS
 
 <div class="app-shell" dir="@L.Direction">
@@ -55,18 +56,19 @@
                 <NavLink href="/module/logs"><span>≡</span> @(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</NavLink>
                 <NavLink href="/module/backups"><span>⬡</span> @(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</NavLink>
                 <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
+                <NavLink href="/about-build"><span>ⓘ</span> @(L.IsArabic ? "معلومات الإصدار" : "Build Information")</NavLink>
             </div>
         </nav>
         <div class="sidebar-footer">
             <div><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
-            <strong class="app-version">VERSION @AppVersion</strong>
+            <a href="/about-build" class="app-version"><strong>VERSION @Build.Version</strong><small>@Build.Branch · @Build.Commit</small></a>
         </div>
     </aside>
     <main class="main-area">
         <header class="topbar">
             <div><h2>@L["AppName"]</h2><p>@L["BrowserManagement"]</p></div>
             <div class="topbar-actions">
-                <strong class="topbar-version">v@AppVersion</strong>
+                <a class="topbar-version" href="/about-build">v@Build.Version</a>
                 <button class="language-switch" @onclick="ToggleLanguage" title="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
                 <div class="user-chip"><span>WA</span><div><strong>@L["Administrator"]</strong><small>@L["LocalAccount"]</small></div></div>
             </div>
@@ -76,7 +78,7 @@
 </div>
 
 @code {
-    private static string AppVersion => typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "153.2.0";
+    private BuildInformation Build => BuildInfo.Current;
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
