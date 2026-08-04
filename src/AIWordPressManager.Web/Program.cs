@@ -32,7 +32,9 @@ builder.Services.AddScoped<AppLanguageService>();
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
+builder.Services.AddSingleton<AutomationCenterService>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
+builder.Services.AddHostedService<AutomationSchedulerService>();
 builder.Services.AddHostedService<BulkContentOperationWorker>();
 
 var app = builder.Build();
@@ -59,6 +61,11 @@ app.MapGet("/health/details", async (SystemHealthWebService service, Cancellatio
 app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service.Current));
 app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationToken cancellationToken) =>
     Results.Ok(await service.GetAsync(cancellationToken)));
+app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new
+{
+    jobs = service.GetJobs(),
+    history = service.GetHistory(100)
+}));
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
