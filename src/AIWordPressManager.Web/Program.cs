@@ -31,7 +31,12 @@ builder.Services.AddScoped<SeoAuditExecutionService>();
 builder.Services.AddScoped<BulkTrashExecutionService>();
 builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
-builder.Services.AddScoped<AppLanguageService>();
+builder.Services.AddScoped(_ =>
+{
+    var language = new AppLanguageService();
+    language.SetCulture("en");
+    return language;
+});
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
