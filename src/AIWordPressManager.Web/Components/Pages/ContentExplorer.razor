@@ -4,6 +4,7 @@
 @inject SiteWebService SiteService
 @inject WordPressSyncWebService SyncService
 @inject BulkContentOperationQueue BulkQueue
+@inject BulkTrashExecutionService TrashService
 @inject ExecutionOperationTracker OperationTracker
 @inject AppLanguageService L
 
@@ -63,6 +64,7 @@ else
                     <button class="btn" disabled="@_bulkQueuing" @onclick="BulkPendingAsync">@(L.IsArabic ? "إرسال للمراجعة" : "Send for review")</button>
                     <button class="btn primary" disabled="@_bulkQueuing" @onclick="BulkPublishAsync">@(L.IsArabic ? "نشر" : "Publish")</button>
                     <button class="btn" disabled="@_bulkQueuing" @onclick="BulkDraftAsync">@(L.IsArabic ? "تحويل لمسودة" : "Move to draft")</button>
+                    <button class="btn danger" disabled="@_bulkQueuing" @onclick="BulkTrashAsync">@(L.IsArabic ? "نقل لسلة المهملات" : "Move to trash")</button>
                     <button class="icon-button" disabled="@_bulkQueuing" @onclick="ClearSelection">×</button>
                 </section>
             }
@@ -156,6 +158,31 @@ else
                 : $"Operation queued in Execution Center. Job: {jobId.ToString()[..8]}";
         }
         catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _bulkQueuing = false; }
+    }
+
+    private async Task BulkTrashAsync()
+    {
+        if (_data is null || _selected.Count == 0) return;
+        try
+        {
+            _bulkQueuing = true;
+            _isError = false;
+            var targets = _data.Content
+                .Where(x => _selected.Contains(ContentKey(x)))
+                .Select(x => new BulkTrashTarget(x.ContentType, x.WordPressId))
+                .ToList();
+
+            var result = await TrashService.RunAsync(Id, new BulkTrashRequest(targets));
+            _message = result.Message;
+            _isError = result.Succeeded == 0;
+            await ReloadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
         finally { _bulkQueuing = false; }
     }
 
