@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject AppLanguageService L
+@inject AppNotificationService Notifications
 
 <PageTitle>@(_site?.Name ?? L["SiteDetails"])</PageTitle>
 
@@ -164,14 +165,25 @@ else
 
     private async Task ReloadAsync()
     {
-        _loading = true;
-        _site = await SiteService.GetSiteAsync(Id);
-        _credential = await SiteService.GetCredentialSummaryAsync(Id);
-        if (_credential is not null)
+        try
         {
-            _model.UserName = _credential.UserName;
+            _loading = true;
+            _site = await SiteService.GetSiteAsync(Id);
+            _credential = await SiteService.GetCredentialSummaryAsync(Id);
+            if (_credential is not null)
+            {
+                _model.UserName = _credential.UserName;
+            }
         }
-        _loading = false;
+        catch (Exception ex)
+        {
+            var message = L.TranslateMessage(ex.Message);
+            Fail(message, ex.ToString());
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private async Task SaveAndTestAsync()
@@ -187,7 +199,7 @@ else
             _model.ApplicationPassword = string.Empty;
             await ReloadAsync();
         }
-        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
+        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message), ex.ToString()); }
         finally { _testing = false; }
     }
 
@@ -199,7 +211,7 @@ else
             ShowResult(await SiteService.RetestAsync(Id));
             await ReloadAsync();
         }
-        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
+        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message), ex.ToString()); }
         finally { _testing = false; }
     }
 
@@ -208,13 +220,19 @@ else
         _isError = !result.IsSuccess;
         _message = L.TranslateMessage(result.Message);
         _diagnostics = result.Diagnostics;
+
+        if (result.IsSuccess)
+            Notifications.Success(_message, L.IsArabic ? "تم الاتصال بنجاح" : "Connection successful");
+        else
+            Notifications.Error(_message, L.IsArabic ? "فشل اختبار الاتصال" : "Connection test failed", result.Diagnostics);
     }
 
-    private void Fail(string message)
+    private void Fail(string message, string? details = null)
     {
         _isError = true;
         _message = message;
-        _diagnostics = null;
+        _diagnostics = details;
+        Notifications.Error(message, L.IsArabic ? "تعذر إكمال العملية" : "Operation failed", details);
     }
 
     private string FormatDate(DateTime? value) => value is null ? L["NeverTested"] : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
@@ -254,7 +272,7 @@ else
     private static string Initials(string name)
     {
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0])));
+        return parts.Length == 0 ? "WP" : string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0])));
     }
 
     private void Changed() => InvokeAsync(StateHasChanged);
