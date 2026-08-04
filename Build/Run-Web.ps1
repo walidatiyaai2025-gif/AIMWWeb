@@ -2,8 +2,25 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $solution = Join-Path $root 'AIWordPressManager.Web.sln'
 $project = Join-Path $root 'src\AIWordPressManager.Web\AIWordPressManager.Web.csproj'
-$webOutput = Join-Path $root 'src\AIWordPressManager.Web\bin\Debug\net8.0'
+$webProjectDir = Split-Path -Parent $project
+$webOutput = Join-Path $webProjectDir 'bin\Debug\net8.0'
+$webDll = Join-Path $webOutput 'AIWordPressManager.Web.dll'
 $port = 7148
+
+function Invoke-DotNetChecked {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory = $true)]
+        [string]$FailureMessage
+    )
+
+    & dotnet @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "$FailureMessage Exit code: $LASTEXITCODE"
+    }
+}
 
 function Stop-AIWordPressManagerProcesses {
     Write-Host 'Stopping previous website instances...' -ForegroundColor Yellow
@@ -66,13 +83,29 @@ if (Test-Path $webOutput) {
 }
 
 Write-Host 'Restoring packages...' -ForegroundColor Cyan
-dotnet restore $solution
+Invoke-DotNetChecked -Arguments @('restore', $solution) -FailureMessage 'NuGet restore failed.'
 
 Write-Host 'Building project...' -ForegroundColor Cyan
-dotnet build $solution -c Debug --no-restore
+Invoke-DotNetChecked -Arguments @('build', $solution, '-c', 'Debug', '--no-restore') -FailureMessage 'Build failed.'
 
+if (-not (Test-Path $webDll)) {
+    throw "Build reported success but the web DLL was not created: $webDll"
+}
+
+Write-Host "Compiled web application: $webDll" -ForegroundColor DarkGreen
 Write-Host 'Opening browser shortly...' -ForegroundColor Cyan
 Start-Process powershell -ArgumentList '-NoProfile','-WindowStyle','Hidden','-Command',"Start-Sleep -Seconds 5; Start-Process 'https://localhost:$port'"
 
 Write-Host 'Starting Blazor Server...' -ForegroundColor Green
-dotnet run --project $project --launch-profile https --no-build
+Push-Location $webProjectDir
+try {
+    $env:ASPNETCORE_ENVIRONMENT = 'Development'
+    $env:ASPNETCORE_URLS = "https://localhost:$port;http://localhost:5148"
+    & dotnet $webDll
+    if ($LASTEXITCODE -ne 0) {
+        throw "Website stopped with exit code $LASTEXITCODE"
+    }
+}
+finally {
+    Pop-Location
+}
