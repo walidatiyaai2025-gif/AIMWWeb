@@ -15,7 +15,7 @@
             <h1>◷ @(L.IsArabic ? "مركز الأتمتة" : "Automation Center")</h1>
             <p>@(L.IsArabic ? "إنشاء وتشغيل المهام المجدولة وربطها بمركز التنفيذ." : "Create scheduled jobs and route them through the execution center.")</p>
         </div>
-        <button class="btn btn-primary" @onclick="NewJob">＋ @(L.IsArabic ? "مهمة جديدة" : "New automation")</button>
+        <button class="btn btn-primary" @onclick="() => NewJob()">＋ @(L.IsArabic ? "مهمة جديدة" : "New automation")</button>
     </section>
 
     @if (!string.IsNullOrWhiteSpace(_message))
@@ -64,18 +64,18 @@
                 <label>@(L.IsArabic ? "الفاصل" : "Interval")<input type="number" min="1" max="365" @bind="_model.IntervalValue" /></label>
             </div>
             <div class="automation-row">
-                <label>@(L.IsArabic ? "وقت UTC" : "UTC time")<input type="time" @bind="_model.TimeOfDay" /></label>
+                <label>@(L.IsArabic ? "وقت UTC" : "UTC time")<input type="time" value="@_model.TimeOfDay" @onchange="TimeChanged" /></label>
                 <label>@(L.IsArabic ? "المحاولات" : "Retries")<input type="number" min="0" max="10" @bind="_model.RetryCount" /></label>
             </div>
             <label class="automation-check"><input type="checkbox" @bind="_model.Enabled" /> @(L.IsArabic ? "مفعلة" : "Enabled")</label>
             <div class="automation-actions">
-                <button class="btn btn-primary" @onclick="SaveAsync">@(L.IsArabic ? "حفظ" : "Save")</button>
-                <button class="btn" @onclick="NewJob">@(L.IsArabic ? "إلغاء" : "Cancel")</button>
+                <button class="btn btn-primary" @onclick="async () => await SaveAsync()">@(L.IsArabic ? "حفظ" : "Save")</button>
+                <button class="btn" @onclick="() => NewJob()">@(L.IsArabic ? "إلغاء" : "Cancel")</button>
             </div>
         </article>
 
         <article class="panel automation-list-card">
-            <header><div><h2>@(L.IsArabic ? "المهام المجدولة" : "Scheduled jobs")</h2><small>@(L.IsArabic ? "الفحص كل دقيقة" : "Checked every minute")</small></div><button class="btn" @onclick="Reload">↻</button></header>
+            <header><div><h2>@(L.IsArabic ? "المهام المجدولة" : "Scheduled jobs")</h2><small>@(L.IsArabic ? "الفحص كل دقيقة" : "Checked every minute")</small></div><button class="btn" @onclick="() => Reload()">↻</button></header>
             @if (_jobs.Count == 0)
             {
                 <div class="automation-empty">@(L.IsArabic ? "لا توجد مهام." : "No automations yet.")</div>
@@ -116,7 +116,7 @@
 </div>
 
 <style>
-.automation-page{display:grid;gap:18px}.automation-hero{display:flex;justify-content:space-between;align-items:center;padding:24px}.automation-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.automation-stats article{padding:18px;display:grid;gap:6px}.automation-stats strong{font-size:28px}.automation-stats .small-value{font-size:14px}.automation-grid{display:grid;grid-template-columns:minmax(310px,380px) 1fr;gap:18px}.automation-form,.automation-list-card,.automation-history{padding:20px}.automation-form{display:grid;gap:13px}.automation-form label{display:grid;gap:6px;font-weight:600}.automation-form input,.automation-form select{padding:10px;border:1px solid #d8dde7;border-radius:10px;font-family:Cairo,sans-serif}.automation-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.automation-check{display:flex!important;gap:8px}.automation-actions,.automation-job-actions{display:flex;gap:7px}.automation-list-card header,.automation-history header{display:flex;justify-content:space-between;align-items:center}.automation-job{display:grid;grid-template-columns:1fr 165px 90px 110px;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #e5e8ef}.automation-job>div{display:grid}.automation-job small{opacity:.68}.history-row{display:grid;grid-template-columns:220px 1fr 170px 90px;gap:12px;padding:12px 0;border-bottom:1px solid #e5e8ef}.automation-empty{padding:28px;text-align:center;opacity:.65}.automation-message{padding:12px 16px;border-radius:10px}.automation-message.success{background:#e9f8ef;color:#176e43}.automation-message.error{background:#fdecec;color:#a72828}@media(max-width:1000px){.automation-grid{grid-template-columns:1fr}.automation-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.automation-hero{flex-direction:column;align-items:flex-start}.automation-stats,.automation-row{grid-template-columns:1fr}.automation-job,.history-row{grid-template-columns:1fr}}
+.automation-page{display:grid;gap:18px}.automation-hero{display:flex;justify-content:space-between;align-items:center;padding:24px}.automation-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.automation-stats article{padding:18px;display:grid;gap:6px}.automation-stats strong{font-size:28px}.automation-stats .small-value{font-size:14px}.automation-grid{display:grid;grid-template-columns:minmax(310px,380px) 1fr;gap:18px}.automation-form,.automation-list-card,.automation-history{padding:20px}.automation-form{display:grid;gap:13px}.automation-form label{display:grid;gap:6px;font-weight:600}.automation-form input,.automation-form select{padding:10px;border:1px solid #d8dde7;border-radius:10px;font-family:Cairo,sans-serif}.automation-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.automation-check{display:flex!important;gap:8px}.automation-actions,.automation-job-actions{display:flex;gap:7px}.automation-list-card header,.automation-history header{display:flex;justify-content:space-between;align-items:center}.automation-job{display:grid;grid-template-columns:1fr 165px 90px 110px;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #e5e8ef}.automation-job>div{display:grid}.automation-job small{opacity:.68}.history-row{display:grid;grid-template-columns:220px 1fr 170px 90px;gap:12px;padding:12px 0;border-bottom:1px solid #e5e8ef}.automation-empty{padding:28px;text-align:center;opacity:.65}.automation-message{padding:12px 16px;border-radius:10px}.automation-message.success{background:#e9f8ef;color:#176e43}.automation-message.error{background:#fdecec;color:#a72828}@@media(max-width:1000px){.automation-grid{grid-template-columns:1fr}.automation-stats{grid-template-columns:repeat(2,1fr)}}@@media(max-width:650px){.automation-hero{flex-direction:column;align-items:flex-start}.automation-stats,.automation-row{grid-template-columns:1fr}.automation-job,.history-row{grid-template-columns:1fr}}
 </style>
 
 @code {
@@ -132,6 +132,7 @@
     protected override async Task OnInitializedAsync() { _sites = await Sites.GetSitesAsync(); Reload(); }
     private void Reload() { _jobs = Automation.GetJobs().ToList(); _history = Automation.GetHistory().ToList(); }
     private void SiteChanged(ChangeEventArgs args) { _selectedSiteId = args.Value?.ToString() ?? string.Empty; }
+    private void TimeChanged(ChangeEventArgs args) { _model.TimeOfDay = args.Value?.ToString() ?? "00:00"; }
 
     private Task SaveAsync()
     {
