@@ -28,6 +28,7 @@ builder.Services.AddScoped<SeoAnalysisWebService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
+builder.Services.AddSingleton<ExecutionOperationTracker>();
 
 var app = builder.Build();
 
