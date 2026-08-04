@@ -1,7 +1,7 @@
 @page "/"
 @rendermode InteractiveServer
 @implements IDisposable
-@inject SiteWebService Sites
+@inject DashboardLiveService Dashboard
 @inject AppLanguageService L
 
 <PageTitle>@L["Dashboard"]</PageTitle>
@@ -11,11 +11,11 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "مركز القيادة" : "COMMAND CENTER")</span>
             <h1>@(L.IsArabic ? "لوحة تحكم AI WordPress Manager" : "AI WordPress Manager Dashboard")</h1>
-            <p>@(L.IsArabic ? "تابع المواقع والمزامنة وSEO والمهام الذكية من شاشة واحدة." : "Monitor sites, synchronization, SEO, and AI operations from one workspace.")</p>
+            <p>@(L.IsArabic ? "بيانات مباشرة من SQLite ومركز التنفيذ، بتحديث تلقائي كل 15 ثانية." : "Live SQLite and execution-center data, refreshed every 15 seconds.")</p>
         </div>
         <div class="dashboard-hero-actions">
             <a class="btn btn-primary" href="/sites">＋ @(L.IsArabic ? "إضافة موقع" : "Add site")</a>
-            <a class="btn" href="/module/sync">↻ @(L.IsArabic ? "مزامنة الآن" : "Sync now")</a>
+            <a class="btn" href="/execution-center">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
         </div>
     </section>
 
@@ -23,53 +23,61 @@
     {
         <div class="skeleton-grid"><div></div><div></div><div></div><div></div></div>
     }
-    else if (_summary is not null)
+    else if (_data is not null)
     {
         <section class="dashboard-kpis">
-            <article class="dashboard-kpi"><span class="kpi-icon">◉</span><div><small>@L["TotalSites"]</small><strong>@_summary.TotalSites</strong><em>@L["AllRegisteredSites"]</em></div></article>
-            <article class="dashboard-kpi"><span class="kpi-icon success">✓</span><div><small>@L["Connected"]</small><strong>@_summary.ConnectedSites</strong><em>@L["HealthyConnection"]</em></div></article>
-            <article class="dashboard-kpi"><span class="kpi-icon warning">!</span><div><small>@L["NeedsReview"]</small><strong>@_summary.ProblemSites</strong><em>@L["ConnectionOrLoginFailed"]</em></div></article>
-            <article class="dashboard-kpi"><span class="kpi-icon">◷</span><div><small>@L["LastCheck"]</small><strong class="dashboard-date">@FormatDate(_summary.LastConnectionTestAtUtc)</strong><em>@L["LocalDatabase"]</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon">◉</span><div><small>@L["TotalSites"]</small><strong>@_data.Sites.TotalSites</strong><em>@_data.Sites.ConnectedSites @L["Connected"]</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon success">▤</span><div><small>@(L.IsArabic ? "المحتوى المحلي" : "Cached content")</small><strong>@(_data.Posts + _data.Pages)</strong><em>@_data.Posts @(L.IsArabic ? "مقال" : "posts") · @_data.Pages @(L.IsArabic ? "صفحة" : "pages")</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon warning">▶</span><div><small>@(L.IsArabic ? "مهام نشطة" : "Active jobs")</small><strong>@_data.ActiveJobs</strong><em>@_data.FailedJobs @(L.IsArabic ? "فاشلة" : "failed")</em></div></article>
+            <article class="dashboard-kpi"><span class="kpi-icon">◷</span><div><small>@L["LastSync"]</small><strong class="dashboard-date">@FormatDate(_data.LastSynchronizationAtUtc)</strong><em>@_data.Media @(L.IsArabic ? "ملف وسائط" : "media items")</em></div></article>
         </section>
 
         <section class="dashboard-main-grid">
             <div class="dashboard-column">
                 <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "الحالة المباشرة" : "LIVE STATUS")</span><h2>@(L.IsArabic ? "حالة المنصة" : "Platform health")</h2></div><span class="badge success">@(L.IsArabic ? "مستقر" : "Healthy")</span></header>
-                    <div class="health-meter"><span style="width:92%"></span></div>
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "الحالة المباشرة" : "LIVE STATUS")</span><h2>@(L.IsArabic ? "صحة المنصة" : "Platform health")</h2></div><span class="badge @(_data.HealthScore >= 80 ? "success" : "warning")">@_data.HealthScore%</span></header>
+                    <div class="health-meter"><span style="width:@($"{_data.HealthScore}%")"></span></div>
                     <div class="health-metrics">
-                        <div><strong>92%</strong><small>@(L.IsArabic ? "الصحة العامة" : "Overall health")</small></div>
-                        <div><strong>@_summary.ConnectedSites</strong><small>@(L.IsArabic ? "اتصالات سليمة" : "Healthy connections")</small></div>
-                        <div><strong>0</strong><small>@(L.IsArabic ? "مهام فاشلة" : "Failed jobs")</small></div>
+                        <div><strong>@_data.HealthScore%</strong><small>@(L.IsArabic ? "الصحة العامة" : "Overall health")</small></div>
+                        <div><strong>@_data.Sites.ConnectedSites</strong><small>@(L.IsArabic ? "اتصالات سليمة" : "Healthy connections")</small></div>
+                        <div><strong>@_data.FailedJobs</strong><small>@(L.IsArabic ? "مهام فاشلة" : "Failed jobs")</small></div>
                     </div>
                 </article>
 
                 <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">SEO</span><h2>@(L.IsArabic ? "أولوية التحسين" : "Optimization priorities")</h2></div><a href="/module/seo-audit">@(L.IsArabic ? "فتح التدقيق" : "Open audit")</a></header>
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "المحتوى" : "CONTENT")</span><h2>@(L.IsArabic ? "المخزون المحلي" : "Local inventory")</h2></div><a href="/sites">@(L.IsArabic ? "فتح المواقع" : "Open sites")</a></header>
                     <div class="priority-list">
-                        <div><span class="priority-dot high"></span><div><strong>@(L.IsArabic ? "وصف ميتا مفقود" : "Missing meta descriptions")</strong><small>@(L.IsArabic ? "12 صفحة تحتاج مراجعة" : "12 pages need review")</small></div><b>12</b></div>
-                        <div><span class="priority-dot medium"></span><div><strong>@(L.IsArabic ? "صور بدون Alt Text" : "Images without alt text")</strong><small>@(L.IsArabic ? "7 عناصر" : "7 items")</small></div><b>7</b></div>
-                        <div><span class="priority-dot low"></span><div><strong>@(L.IsArabic ? "روابط داخلية ضعيفة" : "Weak internal links")</strong><small>@(L.IsArabic ? "9 مقالات" : "9 posts")</small></div><b>9</b></div>
+                        <div><span class="priority-dot high"></span><div><strong>@(L.IsArabic ? "المقالات" : "Posts")</strong><small>@(L.IsArabic ? "محفوظة في SQLite" : "Cached in SQLite")</small></div><b>@_data.Posts</b></div>
+                        <div><span class="priority-dot medium"></span><div><strong>@(L.IsArabic ? "الصفحات" : "Pages")</strong><small>@(L.IsArabic ? "محفوظة في SQLite" : "Cached in SQLite")</small></div><b>@_data.Pages</b></div>
+                        <div><span class="priority-dot low"></span><div><strong>@(L.IsArabic ? "الوسائط" : "Media")</strong><small>@(L.IsArabic ? "صور وملفات" : "Images and files")</small></div><b>@_data.Media</b></div>
                     </div>
                 </article>
             </div>
 
             <div class="dashboard-column">
                 <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")</h2></div><a href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a></header>
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")</h2></div><a href="/execution-center">@(L.IsArabic ? "عرض الكل" : "View all")</a></header>
                     <div class="job-list">
-                        <div><span class="job-state success">✓</span><div><strong>@(L.IsArabic ? "مزامنة المحتوى" : "Content synchronization")</strong><small>@(L.IsArabic ? "اكتملت منذ دقيقتين" : "Completed 2 minutes ago")</small></div></div>
-                        <div><span class="job-state running">↻</span><div><strong>@(L.IsArabic ? "فحص SEO" : "SEO audit")</strong><small>@(L.IsArabic ? "قيد التنفيذ" : "Running now")</small></div></div>
-                        <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "توليد اقتراحات AI" : "Generate AI suggestions")</strong><small>@(L.IsArabic ? "في قائمة الانتظار" : "Queued")</small></div></div>
+                        @if (_data.RecentJobs.Count == 0)
+                        {
+                            <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "لا توجد مهام بعد" : "No jobs yet")</strong><small>@(L.IsArabic ? "ستظهر العمليات هنا تلقائيًا" : "Operations will appear here automatically")</small></div></div>
+                        }
+                        else
+                        {
+                            @foreach (var job in _data.RecentJobs)
+                            {
+                                <div><span class="job-state @JobClass(job.Status)">@JobIcon(job.Status)</span><div><strong>@job.Title</strong><small>@job.SiteName · @TranslateStatus(job.Status) · @job.Progress%</small></div></div>
+                            }
+                        }
                     </div>
                 </article>
 
                 <article class="panel dashboard-card">
                     <header><div><span class="workspace-kicker">@(L.IsArabic ? "اختصارات" : "QUICK ACCESS")</span><h2>@(L.IsArabic ? "ابدأ بسرعة" : "Jump back in")</h2></div></header>
                     <div class="quick-grid">
-                        <a href="/module/posts"><span>▤</span>@(L.IsArabic ? "المقالات" : "Posts")</a>
+                        <a href="/sites"><span>◉</span>@(L.IsArabic ? "المواقع" : "Sites")</a>
                         <a href="/module/media"><span>▣</span>@(L.IsArabic ? "الوسائط" : "Media")</a>
-                        <a href="/module/ai-providers"><span>✦</span>@(L.IsArabic ? "مزودو AI" : "AI providers")</a>
+                        <a href="/execution-center"><span>▶</span>@(L.IsArabic ? "التنفيذ" : "Execution")</a>
                         <a href="/system-health"><span>♥</span>@(L.IsArabic ? "صحة النظام" : "System health")</a>
                     </div>
                 </article>
@@ -79,21 +87,71 @@
 </div>
 
 @code {
+    private DashboardLiveView? _data;
     private bool _loading = true;
-    private DashboardSummary? _summary;
+    private Timer? _refreshTimer;
+    private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
-    protected override void OnInitialized() => L.Changed += Changed;
-
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        _summary = await Sites.GetSummaryAsync();
-        _loading = false;
+        L.Changed += Changed;
+        _refreshTimer = new Timer(_ => _ = InvokeAsync(RefreshAsync), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        if (!await _refreshLock.WaitAsync(0)) return;
+        try
+        {
+            _data = await Dashboard.GetAsync();
+            _loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
     }
 
     private string FormatDate(DateTime? value) => value is null
         ? L["Never"]
         : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
 
+    private string TranslateStatus(string status) => L.IsArabic ? status switch
+    {
+        "Waiting" => "في الانتظار",
+        "Running" => "قيد التنفيذ",
+        "Paused" => "متوقفة",
+        "Completed" => "مكتملة",
+        "Failed" => "فاشلة",
+        "Cancelled" => "ملغاة",
+        _ => status
+    } : status;
+
+    private static string JobClass(string status) => status switch
+    {
+        "Completed" => "success",
+        "Running" => "running",
+        "Failed" or "Cancelled" => "error",
+        _ => "queued"
+    };
+
+    private static string JobIcon(string status) => status switch
+    {
+        "Completed" => "✓",
+        "Running" => "↻",
+        "Failed" or "Cancelled" => "!",
+        _ => "◷"
+    };
+
     private void Changed() => InvokeAsync(StateHasChanged);
-    public void Dispose() => L.Changed -= Changed;
+
+    public void Dispose()
+    {
+        L.Changed -= Changed;
+        _refreshTimer?.Dispose();
+        _refreshLock.Dispose();
+    }
 }
