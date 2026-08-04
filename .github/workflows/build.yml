@@ -27,7 +27,7 @@ jobs:
             Directory.Packages.props
 
       - name: Restore
-        run: dotnet restore .\AIWordPressManager.Web.sln --locked-mode
+        run: dotnet restore .\AIWordPressManager.Web.sln
 
       - name: Build
         run: dotnet build .\AIWordPressManager.Web.sln --configuration Release --no-restore
