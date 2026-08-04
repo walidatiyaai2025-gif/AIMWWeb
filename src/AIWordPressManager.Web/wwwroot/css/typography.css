@@ -1,14 +1,11 @@
 :root{
-  --font-arabic:"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;
-  --font-latin:"Inter","Segoe UI",Roboto,Arial,sans-serif;
+  --font-ui:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;
 }
 
-html[dir="rtl"],html[lang="ar"],html[lang^="ar-"]{
-  font-family:var(--font-arabic);
-}
-
+html,
+html[dir="rtl"],html[lang="ar"],html[lang^="ar-"],
 html[dir="ltr"],html[lang="en"],html[lang^="en-"]{
-  font-family:var(--font-latin);
+  font-family:var(--font-ui);
 }
 
 body,button,input,select,textarea{
@@ -22,30 +19,21 @@ body,button,input,select,textarea{
 h1,h2,h3,h4,h5,h6,.brand strong,.topbar h2,.module-hero h1,.command-copy h1{
   font-family:inherit;
   font-weight:700;
-  letter-spacing:-.02em;
-}
-
-html[dir="rtl"] h1,
-html[dir="rtl"] h2,
-html[dir="rtl"] h3,
-html[dir="rtl"] h4,
-html[dir="rtl"] h5,
-html[dir="rtl"] h6{
   letter-spacing:0;
 }
 
 .main-nav a,.btn,button,input,select,textarea,.badge,.data-table-head{
-  font-weight:500;
+  font-weight:600;
 }
 
 .nav-section-title,.workspace-kicker,.command-eyebrow,.app-version,.topbar-version{
-  font-family:var(--font-latin);
+  font-family:var(--font-ui);
   font-weight:700;
-  letter-spacing:.08em;
+  letter-spacing:0;
 }
 
 .stat-card strong,.metric-card strong,.report-kpi strong,.seo-ring{
-  font-family:var(--font-latin);
+  font-family:var(--font-ui);
   font-variant-numeric:tabular-nums;
 }
 
