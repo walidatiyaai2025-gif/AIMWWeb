@@ -31,6 +31,7 @@ builder.Services.AddScoped<SeoAuditExecutionService>();
 builder.Services.AddScoped<BulkTrashExecutionService>();
 builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
+builder.Services.AddScoped<AppNotificationService>();
 builder.Services.AddScoped(_ =>
 {
     var language = new AppLanguageService();
