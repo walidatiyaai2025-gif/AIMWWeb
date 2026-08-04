@@ -7,10 +7,53 @@ $webOutput = Join-Path $webProjectDir 'bin\Debug\net8.0'
 $webDll = Join-Path $webOutput 'AIWordPressManager.Web.dll'
 $port = 7148
 
-function Invoke-DotNetChecked {
-    param([string[]]$Arguments,[string]$FailureMessage)
-    & dotnet @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "$FailureMessage Exit code: $LASTEXITCODE" }
+function Invoke-DotNetProcess {
+    param(
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [Parameter(Mandatory = $true)][string]$FailureMessage
+    )
+
+    $argumentText = ($Arguments | ForEach-Object {
+        if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
+    }) -join ' '
+
+    Write-Host "dotnet $argumentText" -ForegroundColor DarkGray
+
+    $process = Start-Process `
+        -FilePath 'dotnet.exe' `
+        -ArgumentList $argumentText `
+        -WorkingDirectory $root `
+        -NoNewWindow `
+        -Wait `
+        -PassThru
+
+    if ($null -eq $process) {
+        throw "$FailureMessage dotnet process could not be started."
+    }
+
+    if ($process.ExitCode -ne 0) {
+        throw "$FailureMessage Exit code: $($process.ExitCode)"
+    }
+}
+
+function Invoke-RestoreWithRetry {
+    try {
+        Invoke-DotNetProcess -Arguments @('restore', $solution, '--disable-parallel') -FailureMessage 'NuGet restore failed.'
+    }
+    catch {
+        Write-Host 'First restore attempt failed. Clearing NuGet temporary caches and retrying...' -ForegroundColor Yellow
+
+        $httpCache = Join-Path $env:LOCALAPPDATA 'NuGet\v3-cache'
+        $tempCache = Join-Path $env:TEMP 'NuGetScratchroot'
+        foreach ($cache in @($httpCache, $tempCache)) {
+            if ($cache -and (Test-Path $cache)) {
+                Remove-Item $cache -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        Invoke-DotNetProcess -Arguments @('nuget', 'locals', 'http-cache', '--clear') -FailureMessage 'Could not clear NuGet HTTP cache.'
+        Invoke-DotNetProcess -Arguments @('restore', $solution, '--disable-parallel', '--force') -FailureMessage 'NuGet restore failed after retry.'
+    }
 }
 
 function Stop-AIWordPressManagerProcesses {
@@ -22,7 +65,10 @@ function Stop-AIWordPressManagerProcesses {
         ForEach-Object { [void]$processIds.Add($_.Id) }
 
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -like 'AIWordPressManager.Web*' -or ($_.CommandLine -and $_.CommandLine -like '*AIWordPressManager.Web*') } |
+        Where-Object {
+            $_.Name -like 'AIWordPressManager.Web*' -or
+            ($_.Name -eq 'dotnet.exe' -and $_.CommandLine -and $_.CommandLine -like '*AIWordPressManager.Web.dll*')
+        } |
         ForEach-Object { [void]$processIds.Add([int]$_.ProcessId) }
 
     netstat -ano -p tcp 2>$null |
@@ -41,22 +87,30 @@ function Stop-AIWordPressManagerProcesses {
     }
 
     Start-Sleep -Seconds 2
-    $remaining = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like 'AIWordPressManager.Web*' }
-    if ($remaining) { throw "Unable to stop previous process(es): $($remaining.Id -join ', '). Run PowerShell as Administrator." }
+    $remaining = Get-Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.ProcessName -like 'AIWordPressManager.Web*' }
+
+    if ($remaining) {
+        throw "Unable to stop previous process(es): $($remaining.Id -join ', '). Run PowerShell as Administrator."
+    }
 }
 
 Stop-AIWordPressManagerProcesses
 
 Write-Host 'Cleaning web build output...' -ForegroundColor Cyan
-if (Test-Path $webOutput) { Remove-Item $webOutput -Recurse -Force }
+if (Test-Path $webOutput) {
+    Remove-Item $webOutput -Recurse -Force -ErrorAction Stop
+}
 
 Write-Host 'Restoring packages...' -ForegroundColor Cyan
-Invoke-DotNetChecked -Arguments @('restore', $solution) -FailureMessage 'NuGet restore failed.'
+Invoke-RestoreWithRetry
 
 Write-Host 'Building project...' -ForegroundColor Cyan
-Invoke-DotNetChecked -Arguments @('build', $solution, '-c', 'Debug', '--no-restore') -FailureMessage 'Build failed.'
+Invoke-DotNetProcess -Arguments @('build', $solution, '-c', 'Debug', '--no-restore') -FailureMessage 'Build failed.'
 
-if (-not (Test-Path $webDll)) { throw "Build succeeded but the web DLL was not created: $webDll" }
+if (-not (Test-Path $webDll)) {
+    throw "Build succeeded but the web DLL was not created: $webDll"
+}
 
 Write-Host "Compiled web application: $webDll" -ForegroundColor DarkGreen
 Start-Process powershell -ArgumentList '-NoProfile','-WindowStyle','Hidden','-Command',"Start-Sleep -Seconds 5; Start-Process 'https://localhost:$port'"
@@ -77,4 +131,6 @@ try {
 
     throw "Website stopped unexpectedly with exit code $exitCode"
 }
-finally { Pop-Location }
+finally {
+    Pop-Location
+}
