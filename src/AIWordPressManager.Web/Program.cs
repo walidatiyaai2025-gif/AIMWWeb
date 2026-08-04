@@ -19,6 +19,7 @@ builder.Services.AddPersistence();
 builder.Services.AddScoped<IWordPressConnectionTester, WordPressConnectionTester>();
 builder.Services.AddScoped<IWordPressApiClient, WordPressApiClient>();
 builder.Services.AddScoped<SiteWebService>();
+builder.Services.AddScoped<DashboardLiveService>();
 builder.Services.AddScoped<WordPressSyncWebService>();
 builder.Services.AddScoped<IWordPressPostEditorService, WordPressPostEditorWebService>();
 builder.Services.AddScoped<WordPressMediaWebService>();
@@ -56,6 +57,8 @@ app.MapHealthChecks("/health/live");
 app.MapGet("/health/details", async (SystemHealthWebService service, CancellationToken cancellationToken) =>
     Results.Ok(await service.CheckAsync(cancellationToken)));
 app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service.Current));
+app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationToken cancellationToken) =>
+    Results.Ok(await service.GetAsync(cancellationToken)));
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
