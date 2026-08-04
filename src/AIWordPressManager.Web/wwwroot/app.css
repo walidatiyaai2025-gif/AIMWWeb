@@ -1,0 +1,7 @@
+
+.comments-list{display:grid;gap:1rem}.comment-card{padding:1.15rem}.comment-head,.comment-links,.pagination-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem}.comment-head small,.comment-links small{display:block;color:var(--muted);margin-top:.2rem}.comment-meta{text-align:end}.comment-content{margin:1rem 0;line-height:1.75;padding:.85rem 1rem;border-radius:.65rem;background:rgba(255,255,255,.025);border:1px solid var(--border)}.comment-content p:first-child{margin-top:0}.comment-content p:last-child{margin-bottom:0}.comment-actions{margin-top:.9rem;flex-wrap:wrap}.reply-box{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}.reply-box textarea{width:100%;margin-bottom:.75rem}.pagination-bar{margin-top:1rem;padding:1rem}.badge.danger{background:rgba(239,68,68,.12);color:#fca5a5}@media(max-width:760px){.comment-head,.comment-links,.pagination-bar{align-items:flex-start;flex-direction:column}.comment-meta{text-align:start}}
+
+.users-editor-grid{grid-template-columns:minmax(0,1.8fr) minmax(320px,.8fr)}
+.user-row{display:flex;align-items:center;gap:.7rem}.user-row small{display:block;color:var(--muted)}
+.avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--border)}
+@media(max-width:1050px){.users-editor-grid{grid-template-columns:1fr}}

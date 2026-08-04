@@ -1,0 +1,48 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject AppLanguageService L
+@inject IJSRuntime JS
+
+<div class="app-shell" dir="@L.Direction">
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">AI</span><div><strong>@L["AppName"]</strong><small>@L["BlazorServer"]</small></div></div>
+        <nav>
+            <NavLink href="/" Match="NavLinkMatch.All"><span>⌂</span> @L["Dashboard"]</NavLink>
+            <NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink>
+            <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
+        </nav>
+        <div class="sidebar-footer"><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
+    </aside>
+    <main class="main-area">
+        <header class="topbar">
+            <div><h2>@L["AppName"]</h2><p>@L["BrowserManagement"]</p></div>
+            <div class="topbar-actions">
+                <button class="language-switch" @onclick="ToggleLanguage" title="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
+                <div class="user-chip"><span>WA</span><div><strong>@L["Administrator"]</strong><small>@L["LocalAccount"]</small></div></div>
+            </div>
+        </header>
+        <section class="content">@Body</section>
+    </main>
+</div>
+
+@code {
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        var culture = await JS.InvokeAsync<string>("appLanguage.get");
+        L.SetCulture(culture);
+        await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+    }
+
+    private async Task ToggleLanguage()
+    {
+        L.SetCulture(L.IsArabic ? "en" : "ar");
+        await JS.InvokeVoidAsync("appLanguage.set", L.Culture);
+        await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
+}

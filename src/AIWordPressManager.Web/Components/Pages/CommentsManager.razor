@@ -1,0 +1,180 @@
+@page "/sites/{SiteId:guid}/comments"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject WordPressCommentsWebService CommentsService
+@inject AppLanguageService L
+
+<PageTitle>@L["CommentsManager"]</PageTitle>
+
+@if (_loading)
+{
+    <div class="loading-line">@L["LoadingComments"]</div>
+}
+else if (_site is null)
+{
+    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+}
+else
+{
+    <div class="page-heading">
+        <div><h1>@L["CommentsManager"]</h1><p>@_site.Name — @L["CommentsIntro"]</p></div>
+        <div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+    }
+
+    <div class="stats-grid explorer-stats">
+        <article class="stat-card"><span>@L["Comments"]</span><strong>@_result.Total</strong><small>@L["CurrentFilter"]</small></article>
+        <article class="stat-card"><span>@L["CurrentPage"]</span><strong>@_page</strong><small>@L["OfPages"] @_result.TotalPages</small></article>
+    </div>
+
+    <div class="panel explorer-toolbar">
+        <div class="filter-row">
+            <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@L["SearchComments"]" />
+            <select @bind="_status">
+                <option value="all">@L["All"]</option>
+                <option value="approved">@L["Approved"]</option>
+                <option value="hold">@L["PendingComment"]</option>
+                <option value="spam">@L["Spam"]</option>
+                <option value="trash">@L["Trash"]</option>
+            </select>
+            <button class="btn primary" @onclick="ReloadFromFirstPageAsync">@L["Search"]</button>
+            <button class="btn" @onclick="LoadAsync">@L["Refresh"]</button>
+        </div>
+    </div>
+
+    @if (!_result.Success)
+    {
+        <div class="panel empty-state"><h3>@L["CouldNotLoadComments"]</h3><p>@L.TranslateMessage(_result.Message)</p></div>
+    }
+    else if (_result.Items.Count == 0)
+    {
+        <div class="panel empty-state"><h3>@L["NoComments"]</h3><p>@L["NoCommentsHelp"]</p></div>
+    }
+    else
+    {
+        <div class="comments-list">
+            @foreach (var comment in _result.Items)
+            {
+                <article class="panel comment-card">
+                    <div class="comment-head">
+                        <div>
+                            <strong>@(string.IsNullOrWhiteSpace(comment.AuthorName) ? L["Anonymous"] : comment.AuthorName)</strong>
+                            <small>@comment.AuthorEmail</small>
+                        </div>
+                        <div class="comment-meta">
+                            <span class="badge @StatusClass(comment.Status)">@TranslateStatus(comment.Status)</span>
+                            <small>@FormatDate(comment.DateUtc)</small>
+                        </div>
+                    </div>
+                    <div class="comment-content">@((MarkupString)comment.Content)</div>
+                    <div class="comment-links">
+                        <small>@L["PostId"]: @comment.PostId · @L["CommentId"]: @comment.Id</small>
+                        @if (!string.IsNullOrWhiteSpace(comment.Link)) { <a href="@comment.Link" target="_blank">@L["Open"] ↗</a> }
+                    </div>
+                    <div class="table-actions comment-actions">
+                        @if (comment.Status != "approved") { <button class="btn compact primary" @onclick="() => RunAsync(() => CommentsService.ApproveAsync(SiteId, comment.Id))">@L["Approve"]</button> }
+                        @if (comment.Status != "hold") { <button class="btn compact" @onclick="() => RunAsync(() => CommentsService.HoldAsync(SiteId, comment.Id))">@L["Unapprove"]</button> }
+                        @if (comment.Status != "spam") { <button class="btn compact" @onclick="() => RunAsync(() => CommentsService.SpamAsync(SiteId, comment.Id))">@L["MarkSpam"]</button> }
+                        @if (comment.Status != "trash") { <button class="btn compact danger" @onclick="() => RunAsync(() => CommentsService.TrashAsync(SiteId, comment.Id))">@L["MoveToTrash"]</button> }
+                        @if (comment.Status == "trash") { <button class="btn compact danger" @onclick="() => RunAsync(() => CommentsService.DeleteAsync(SiteId, comment.Id, true))">@L["DeletePermanently"]</button> }
+                        <button class="btn compact" @onclick="() => StartReply(comment)">@L["Reply"]</button>
+                    </div>
+                    @if (_replyingTo == comment.Id)
+                    {
+                        <div class="reply-box">
+                            <textarea rows="4" @bind="_replyText" placeholder="@L["WriteReply"]"></textarea>
+                            <div class="actions">
+                                <button class="btn primary" disabled="@_working" @onclick="() => SendReplyAsync(comment)">@L["SendReply"]</button>
+                                <button class="btn" @onclick="CancelReply">@L["Cancel"]</button>
+                            </div>
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+
+        <div class="panel pagination-bar">
+            <button class="btn" disabled="@(_page <= 1 || _working)" @onclick="PreviousPageAsync">@L["Previous"]</button>
+            <span>@L["Page"] @_page @L["Of"] @_result.TotalPages</span>
+            <button class="btn" disabled="@(_page >= _result.TotalPages || _working)" @onclick="NextPageAsync">@L["Next"]</button>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid SiteId { get; set; }
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private CommentPageResult _result = new(true, string.Empty, Array.Empty<WordPressCommentView>(), 0, 1);
+    private string _status = "all", _search = string.Empty, _replyText = string.Empty;
+    private string? _message;
+    private int _page = 1, _replyingTo;
+    private bool _loading = true, _working, _isError;
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _site = await SiteService.GetSiteAsync(SiteId);
+        if (_site is not null) await LoadAsync();
+        _loading = false;
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _working = true;
+            _result = await CommentsService.GetAsync(SiteId, _status, _search, _page);
+            _isError = !_result.Success;
+            _message = _result.Success ? null : L.TranslateMessage(_result.Message);
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+            _result = new(false, ex.Message, Array.Empty<WordPressCommentView>(), 0, 1);
+        }
+        finally { _working = false; }
+    }
+
+    private async Task ReloadFromFirstPageAsync() { _page = 1; await LoadAsync(); }
+    private async Task PreviousPageAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
+    private async Task NextPageAsync() { if (_page < _result.TotalPages) { _page++; await LoadAsync(); } }
+    private void StartReply(WordPressCommentView comment) { _replyingTo = comment.Id; _replyText = string.Empty; }
+    private void CancelReply() { _replyingTo = 0; _replyText = string.Empty; }
+
+    private async Task SendReplyAsync(WordPressCommentView comment)
+    {
+        if (string.IsNullOrWhiteSpace(_replyText)) { _isError = true; _message = L["ReplyRequired"]; return; }
+        await RunAsync(() => CommentsService.ReplyAsync(SiteId, comment.PostId, comment.Id, _replyText));
+        CancelReply();
+    }
+
+    private async Task RunAsync(Func<Task<CommentOperationResult>> operation)
+    {
+        try
+        {
+            _working = true;
+            var result = await operation();
+            _isError = !result.Success;
+            _message = L.TranslateMessage(result.Message);
+            if (result.Success) await LoadAsync();
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _working = false; }
+    }
+
+    private string TranslateStatus(string status) => status switch
+    {
+        "approved" => L["Approved"], "hold" => L["PendingComment"], "spam" => L["Spam"], "trash" => L["Trash"], _ => status
+    };
+    private static string StatusClass(string status) => status == "approved" ? "success" : status is "spam" or "trash" ? "danger" : string.Empty;
+    private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+}

@@ -1,0 +1,191 @@
+@page "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IWordPressPostEditorService EditorService
+@inject WordPressSyncWebService SyncService
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+
+<PageTitle>@L["EditContent"]</PageTitle>
+
+@if (_loading)
+{
+    <div class="loading-line">@L["LoadingContent"]</div>
+}
+else if (_site is null || _model is null)
+{
+    <div class="empty-state"><h1>@L["ContentNotFound"]</h1><a class="btn" href="@ExplorerUrl">@L["BackToExplorer"]</a></div>
+}
+else
+{
+    <div class="page-heading">
+        <div><h1>@L["EditContent"]</h1><p>@_site.Name — @(_model.ContentType == "post" ? L["Post"] : L["Page"]) #@_model.Id</p></div>
+        <div class="actions"><a class="btn" href="@ExplorerUrl">@L["BackToExplorer"]</a>@if (!string.IsNullOrWhiteSpace(_model.Link)){<a class="btn" href="@_model.Link" target="_blank">@L["ViewOnWordPress"] ↗</a>}</div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+    }
+
+    <EditForm Model="_model" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="editor-layout">
+            <section class="panel editor-main">
+                <div class="form-stack">
+                    <label><span>@L["Title"]</span><InputText @bind-Value="_model.Title" /></label>
+                    <label><span>@L["Slug"]</span><InputText @bind-Value="_model.Slug" dir="ltr" /></label>
+                    <label><span>@L["ContentHtml"]</span><InputTextArea class="content-editor" @bind-Value="_model.Content" dir="ltr" /></label>
+                    <label><span>@L["Excerpt"]</span><InputTextArea class="excerpt-editor" @bind-Value="_model.Excerpt" /></label>
+                </div>
+            </section>
+
+            <aside class="editor-side">
+                <section class="panel">
+                    <h3>@L["Publishing"]</h3>
+                    <div class="form-stack">
+                        <label><span>@L["Status"]</span><InputSelect @bind-Value="_model.Status"><option value="draft">@L["Draft"]</option><option value="pending">@L["PendingReview"]</option><option value="publish">@L["Published"]</option><option value="future">@L["Scheduled"]</option><option value="private">@L["Private"]</option></InputSelect></label>
+                        <label><span>@L["PublishDateUtc"]</span><InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_model.DateLocal" /></label>
+                        <label><span>@L["CommentStatus"]</span><InputSelect @bind-Value="_model.CommentStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
+                        <label><span>@L["PingStatus"]</span><InputSelect @bind-Value="_model.PingStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
+                        @if (_model.ContentType == "post") { <label class="check-row"><InputCheckbox @bind-Value="_model.Sticky" /> <span>@L["StickyPost"]</span></label> }
+                    </div>
+                    <button class="btn primary full" type="submit" disabled="@_saving">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                </section>
+
+                <section class="panel">
+                    <h3>@L["ContentSettings"]</h3>
+                    <div class="form-stack">
+                        <label><span>@L["FeaturedMediaId"]</span><InputNumber @bind-Value="_model.FeaturedMediaId" /></label>
+                        <label><span>@L["Template"]</span><InputText @bind-Value="_model.Template" dir="ltr" /></label>
+                        @if (_model.ContentType == "post")
+                        {
+                            <label><span>@L["CategoriesIds"]</span><InputText @bind-Value="_model.CategoryIdsText" dir="ltr" /><small>@L["CommaSeparatedIds"]</small></label>
+                            <label><span>@L["TagsIds"]</span><InputText @bind-Value="_model.TagIdsText" dir="ltr" /><small>@L["CommaSeparatedIds"]</small></label>
+                            <label><span>@L["Format"]</span><InputText @bind-Value="_model.Format" dir="ltr" /></label>
+                        }
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head"><h3>@L["FeaturedImage"]</h3><a class="btn compact" href="@($"/sites/{SiteId}/media")">@L["ManageMedia"]</a></div>
+                    @if (_model.FeaturedMediaId > 0)
+                    {
+                        var selected = _media.FirstOrDefault(x => x.WordPressId == _model.FeaturedMediaId);
+                        <div class="selected-featured">
+                            @if (selected is not null && selected.MediaType == "image") { <img src="@selected.SourceUrl" alt="@selected.Title" /> }
+                            <strong>#@_model.FeaturedMediaId</strong>
+                            <button type="button" class="btn compact" @onclick="ClearFeatured">@L["RemoveSelection"]</button>
+                        </div>
+                    }
+                    <input class="search-input" placeholder="@L["SearchMedia"]" @bind="_mediaSearch" @bind:event="oninput" />
+                    <div class="media-picker">
+                        @foreach (var media in FilteredMedia.Take(12))
+                        {
+                            <button type="button" class="media-picker-item @(media.WordPressId == _model.FeaturedMediaId ? "selected" : string.Empty)" @onclick="() => SelectFeatured(media.WordPressId)" title="@media.Title">
+                                @if (media.MediaType == "image") { <img src="@media.SourceUrl" alt="@media.Title" loading="lazy" /> }
+                                else { <span>@L["File"]</span> }
+                                <small>#@media.WordPressId</small>
+                            </button>
+                        }
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public Guid SiteId { get; set; }
+    [Parameter] public string ContentType { get; set; } = "post";
+    [Parameter] public int WordPressId { get; set; }
+
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private EditorModel? _model;
+    private bool _loading = true, _saving, _isError;
+    private string? _message;
+    private IReadOnlyList<MediaExplorerItem> _media = Array.Empty<MediaExplorerItem>();
+    private string _mediaSearch = string.Empty;
+    private string ExplorerUrl => $"/sites/{SiteId}/explorer";
+
+    protected override void OnInitialized() => L.Changed += Changed;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _site = await SiteService.GetSiteAsync(SiteId);
+        var result = await EditorService.GetAsync(SiteId, ContentType, WordPressId);
+        if (result.IsSuccess)
+        {
+            _model = EditorModel.From(result.Value);
+            var explorer = await SyncService.GetExplorerAsync(SiteId);
+            _media = explorer.Media;
+        }
+        else
+        {
+            _isError = true;
+            _message = L.TranslateMessage(result.Error.Message);
+        }
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_model is null) return;
+        try
+        {
+            _saving = true; _isError = false; _message = null;
+            var request = _model.ToRequest();
+            var result = await EditorService.UpdateAsync(SiteId, request);
+            if (result.IsFailure) { _isError = true; _message = L.TranslateMessage(result.Error.Message); return; }
+            _message = L.TranslateMessage(result.Value.Message);
+            _model.Link = result.Value.Link;
+            await SyncService.SynchronizeAsync(SiteId);
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _saving = false; }
+    }
+
+    private IEnumerable<MediaExplorerItem> FilteredMedia => _media.Where(x => x.MediaType == "image" && (string.IsNullOrWhiteSpace(_mediaSearch) || x.Title.Contains(_mediaSearch, StringComparison.OrdinalIgnoreCase) || x.MimeType.Contains(_mediaSearch, StringComparison.OrdinalIgnoreCase)));
+    private void SelectFeatured(int id) { if (_model is not null) _model.FeaturedMediaId = id; }
+    private void ClearFeatured() { if (_model is not null) _model.FeaturedMediaId = 0; }
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+
+    private sealed class EditorModel
+    {
+        public string ContentType { get; set; } = "post";
+        public int Id { get; set; }
+        [Required] public string Title { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
+        public string Status { get; set; } = "draft";
+        public string Content { get; set; } = string.Empty;
+        public string Excerpt { get; set; } = string.Empty;
+        public string Link { get; set; } = string.Empty;
+        public DateTime? DateLocal { get; set; }
+        public int FeaturedMediaId { get; set; }
+        public string CategoryIdsText { get; set; } = string.Empty;
+        public string TagIdsText { get; set; } = string.Empty;
+        public string Template { get; set; } = string.Empty;
+        public string CommentStatus { get; set; } = "open";
+        public string PingStatus { get; set; } = "open";
+        public string Format { get; set; } = "standard";
+        public bool Sticky { get; set; }
+
+        public static EditorModel From(WordPressEditableContent value) => new()
+        {
+            ContentType = value.ContentType, Id = value.Id, Title = value.Title, Slug = value.Slug, Status = value.Status,
+            Content = value.Content, Excerpt = value.Excerpt, Link = value.Link, DateLocal = value.DateGmt?.ToLocalTime().DateTime,
+            FeaturedMediaId = value.FeaturedMediaId, CategoryIdsText = string.Join(",", value.CategoryIds), TagIdsText = string.Join(",", value.TagIds),
+            Template = value.Template, CommentStatus = value.CommentStatus, PingStatus = value.PingStatus, Format = value.Format, Sticky = value.Sticky
+        };
+
+        public WordPressContentUpdateRequest ToRequest() => new(ContentType, Id, Title, Slug, Status, Content, Excerpt,
+            DateLocal.HasValue ? new DateTimeOffset(DateTime.SpecifyKind(DateLocal.Value, DateTimeKind.Local)).ToUniversalTime() : null,
+            FeaturedMediaId, ParseIds(CategoryIdsText), ParseIds(TagIdsText), Template, CommentStatus, PingStatus, Format, Sticky);
+
+        private static IReadOnlyList<int> ParseIds(string? value) => (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => int.TryParse(x, out var id) ? id : 0).Where(x => x > 0).Distinct().ToArray();
+    }
+}

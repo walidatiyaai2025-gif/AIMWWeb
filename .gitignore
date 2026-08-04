@@ -1,0 +1,50 @@
+﻿## Build outputs
+bin/
+obj/
+out/
+publish/
+artifacts/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Logs
+logs/
+*.log
+
+## Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+## Local configuration and secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+.env.*
+!.env.example
+
+## Node files, if present
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## OS files
+Thumbs.db
+.DS_Store
+
+## Published packages
+*.zip
+*.nupkg

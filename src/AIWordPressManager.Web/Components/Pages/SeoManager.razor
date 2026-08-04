@@ -1,0 +1,75 @@
+@page "/sites/{Id:guid}/seo"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SeoAnalysisWebService SeoService
+@inject AppLanguageService L
+
+<PageTitle>@L["SeoManager"]</PageTitle>
+
+@if (_loading)
+{
+    <div class="loading-line">@L["AnalyzingSeo"]</div>
+}
+else if (_view is null)
+{
+    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+}
+else
+{
+    <div class="page-heading">
+        <div><h1>@L["SeoManager"]</h1><p>@_view.SiteName — @L["SeoIntro"]</p></div>
+        <div class="actions"><a class="btn" href="@($"/sites/{Id}/explorer")">@L["BackToExplorer"]</a></div>
+    </div>
+
+    <div class="stats-grid seo-stats">
+        <article class="stat-card"><span>@L["AverageSeoScore"]</span><strong class="@ScoreClass(_view.Summary.AverageScore)">@_view.Summary.AverageScore</strong><small>/ 100</small></article>
+        <article class="stat-card"><span>@L["GoodContent"]</span><strong>@_view.Summary.Good</strong><small>@L["Score80Plus"]</small></article>
+        <article class="stat-card"><span>@L["NeedsImprovement"]</span><strong>@_view.Summary.NeedsImprovement</strong><small>@L["Score50To79"]</small></article>
+        <article class="stat-card"><span>@L["SeoIssues"]</span><strong>@_view.Summary.TotalIssues</strong><small>@_view.Summary.Poor @L["PoorItems"]</small></article>
+    </div>
+
+    <div class="panel explorer-toolbar">
+        <div class="filter-row seo-filter">
+            <InputText class="search-input" @bind-Value="_query" placeholder="@L["SearchPlaceholder"]" @onkeyup="OnSearchKeyUp" />
+            <select @bind="_type" @bind:after="LoadAsync"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select>
+            <button class="btn primary" @onclick="LoadAsync">@L["Analyze"]</button>
+        </div>
+    </div>
+
+    @if (_view.Items.Count == 0)
+    {
+        <div class="panel empty-state"><h3>@L["NoContentToAnalyze"]</h3><p>@L["SyncBeforeSeo"]</p></div>
+    }
+    else
+    {
+        <div class="panel table-panel"><table class="seo-table"><thead><tr><th>@L["Score"]</th><th>@L["Content"]</th><th>@L["SeoMetrics"]</th><th>@L["DetectedIssues"]</th><th></th></tr></thead><tbody>
+        @foreach (var item in _view.Items)
+        {
+            <tr>
+                <td><span class="score-pill @ScoreClass(item.Score)">@item.Score</span></td>
+                <td><strong>@(string.IsNullOrWhiteSpace(item.Title) ? L["Untitled"] : item.Title)</strong><small>@(item.ContentType == "post" ? L["Post"] : L["Page"]) · /@item.Slug</small></td>
+                <td><div class="metric-list"><span>@L["Words"]: @item.WordCount</span><span>@L["Headings"]: @item.HeadingCount</span><span>@L["InternalLinks"]: @item.InternalLinks</span><span>@L["Images"]: @item.ImageCount</span></div></td>
+                <td>@if(item.Issues.Count == 0){<span class="badge success">@L["NoSeoIssues"]</span>}else{<div class="issue-list">@foreach(var issue in item.Issues){<span class="issue-chip @issue.Severity.ToLowerInvariant()">@IssueText(issue)</span>}</div>}</td>
+                <td><div class="table-actions"><a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Fix"]</a>@if(!string.IsNullOrWhiteSpace(item.Link)){<a class="btn compact" href="@item.Link" target="_blank">@L["Open"] ↗</a>}</div></td>
+            </tr>
+        }
+        </tbody></table></div>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private SeoAnalysisView? _view;
+    private bool _loading = true;
+    private string _query = string.Empty;
+    private string _type = "all";
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnParametersSetAsync(){_loading=true; await LoadAsync(); _loading=false;}
+    private async Task LoadAsync() => _view = await SeoService.AnalyzeAsync(Id, _query, _type);
+    private async Task OnSearchKeyUp(KeyboardEventArgs e){if(e.Key=="Enter") await LoadAsync();}
+    private static string ScoreClass(int score) => score >= 80 ? "good" : score >= 50 ? "warning" : "poor";
+    private string IssueText(SeoIssue issue) => $"{L[issue.Code]}{(issue.Count > 1 ? $" ({issue.Count})" : string.Empty)}";
+    private void Changed()=>InvokeAsync(StateHasChanged);
+    public void Dispose()=>L.Changed-=Changed;
+}

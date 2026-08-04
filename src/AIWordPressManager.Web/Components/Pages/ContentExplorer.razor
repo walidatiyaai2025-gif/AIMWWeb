@@ -1,0 +1,32 @@
+@page "/sites/{Id:guid}/explorer"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject WordPressSyncWebService SyncService
+@inject AppLanguageService L
+<PageTitle>@L["WordPressExplorer"]</PageTitle>
+@if(_loading){<div class="loading-line">@L["LoadingLocalContent"]</div>}
+else if(_site is null){<div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>}
+else{
+<div class="page-heading"><div><h1>@L["WordPressExplorer"]</h1><p>@_site.Name — @L["ExplorerIntro"]</p></div><div class="actions"><button class="btn primary" @onclick="SynchronizeAsync" disabled="@_syncing">@(_syncing?L["Syncing"]:L["SyncNow"])</button><a class="btn" href="@($"/sites/{Id}/taxonomy")">@L["ManageTaxonomies"]</a><a class="btn" href="@($"/sites/{Id}/comments")">@L["ManageComments"]</a><a class="btn" href="@($"/sites/{Id}/users")">@L["ManageUsers"]</a><a class="btn" href="@($"/sites/{Id}/seo")">@L["ManageSeo"]</a><a class="btn" href="@($"/sites/{Id}/media")">@L["ManageMedia"]</a><a class="btn" href="@($"/sites/{Id}")">@L["SiteDetailsButton"]</a></div></div>
+@if(!string.IsNullOrWhiteSpace(_message)){<div class="alert @(_isError?"error":"success")"><strong>@_message</strong></div>}
+<div class="stats-grid explorer-stats">
+<article class="stat-card"><span>@L["Posts"]</span><strong>@(_data?.Totals.Posts??0)</strong><small>Post</small></article>
+<article class="stat-card"><span>@L["Pages"]</span><strong>@(_data?.Totals.Pages??0)</strong><small>Page</small></article>
+<article class="stat-card"><span>@L["CategoriesTags"]</span><strong>@((_data?.Totals.Categories??0)+(_data?.Totals.Tags??0))</strong><small>@(_data?.Totals.Categories??0) @L["Category"] · @(_data?.Totals.Tags??0) @L["Tag"]</small></article>
+<article class="stat-card"><span>@L["Media"]</span><strong>@(_data?.Totals.Media??0)</strong><small>@L["LastSync"]: @FormatDate(_data?.LastSynchronizedAtUtc)</small></article></div>
+<div class="panel explorer-toolbar"><div class="tabs"><button class="tab @Active("content")" @onclick="SetContentTab">@L["Content"]</button><button class="tab @Active("categories")" @onclick="SetCategoriesTab">@L["Categories"]</button><button class="tab @Active("tags")" @onclick="SetTagsTab">@L["Tags"]</button><button class="tab @Active("media")" @onclick="SetMediaTab">@L["Media"]</button></div>
+@if(_tab=="content"){<div class="filter-row"><InputText class="search-input" @bind-Value="_query" placeholder="@L["SearchPlaceholder"]" @onkeyup="OnSearchKeyUp"/><select @bind="_type" @bind:after="ReloadDataAsync"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select><button class="btn" @onclick="ReloadDataAsync">@L["Search"]</button></div>}</div>
+@if(_data is null||(_data.Content.Count==0&&_data.Categories.Count==0&&_data.Tags.Count==0&&_data.Media.Count==0)){<div class="panel empty-state"><h3>@L["NoLocalData"]</h3><p>@L["SyncPrompt"]</p></div>}
+else if(_tab=="content"){<div class="panel table-panel"><table><thead><tr><th>@L["Type"]</th><th>@L["Title"]</th><th>@L["Status"]</th><th>@L["LastModified"]</th><th></th></tr></thead><tbody>@foreach(var item in _data.Content){<tr><td><span class="badge">@(item.ContentType=="post"?L["Post"]:L["Page"])</span></td><td><strong>@PlainText(item.Title)</strong><small>/@item.Slug</small></td><td><span class="badge @(item.Status=="publish"?"success":"")">@TranslateStatus(item.Status)</span></td><td>@FormatDate(item.ModifiedAtUtc)</td><td><div class="table-actions"><a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Edit"]</a>@if(!string.IsNullOrWhiteSpace(item.Link)){<a class="btn compact" href="@item.Link" target="_blank">@L["Open"] ↗</a>}</div></td></tr>}</tbody></table></div>}
+else if(_tab is "categories" or "tags"){var terms=_tab=="categories"?_data.Categories:_data.Tags;<div class="panel table-panel"><table><thead><tr><th>@L["Name"]</th><th>Slug</th><th>@L["PostCount"]</th></tr></thead><tbody>@foreach(var item in terms){<tr><td><strong>@item.Name</strong></td><td><code>@item.Slug</code></td><td>@item.Count</td></tr>}</tbody></table></div>}
+else{<div class="media-grid">@foreach(var item in _data.Media){<article class="media-card"><div class="media-preview">@if(item.MediaType=="image"){<img src="@item.SourceUrl" alt="@PlainText(item.Title)" loading="lazy"/>}else{<span>@L["File"]</span>}</div><div><strong>@PlainText(item.Title)</strong><small>@item.MimeType</small><a href="@item.SourceUrl" target="_blank">@L["OpenFile"]</a></div></article>}</div>}}
+@code{
+[Parameter]public Guid Id{get;set;}private AIWordPressManager.Domain.Entities.Site? _site;private ContentExplorerView? _data;private bool _loading=true,_syncing,_isError;private string _tab="content",_type="all",_query="";private string? _message;
+protected override void OnInitialized()=>L.Changed+=Changed;protected override async Task OnParametersSetAsync(){_loading=true;_site=await SiteService.GetSiteAsync(Id);await ReloadDataAsync();_loading=false;}
+private async Task SynchronizeAsync(){try{_syncing=true;_isError=false;var r=await SyncService.SynchronizeAsync(Id);_message=L.TranslateMessage(r.Message);await ReloadDataAsync();}catch(Exception ex){_isError=true;_message=L.TranslateMessage(ex.Message);}finally{_syncing=false;}}
+private async Task ReloadDataAsync()=>_data=await SyncService.GetExplorerAsync(Id,_query,_type);private async Task OnSearchKeyUp(KeyboardEventArgs e){if(e.Key=="Enter")await ReloadDataAsync();}
+private void SetTab(string t)=>_tab=t;private void SetContentTab()=>SetTab("content");private void SetCategoriesTab()=>SetTab("categories");private void SetTagsTab()=>SetTab("tags");private void SetMediaTab()=>SetTab("media");private string Active(string t)=>_tab==t?"active":"";
+private string FormatDate(DateTime? v)=>v is null?"—":v.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");private string TranslateStatus(string s)=>L.IsArabic?s switch{"publish"=>"منشور","draft"=>"مسودة","pending"=>"قيد المراجعة","private"=>"خاص","future"=>"مجدول",_=>s}:s switch{"publish"=>"Published","draft"=>"Draft","pending"=>"Pending Review","private"=>"Private","future"=>"Scheduled",_=>s};
+private static string PlainText(string v)=>System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(v??"","<.*?>",""));private void Changed()=>InvokeAsync(StateHasChanged);public void Dispose()=>L.Changed-=Changed;
+}

@@ -1,0 +1,134 @@
+@page "/sites/{SiteId:guid}/taxonomy"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject WordPressTaxonomyWebService TaxonomyService
+@inject AppLanguageService L
+
+<PageTitle>@L["TaxonomyManager"]</PageTitle>
+
+@if (_loading)
+{
+    <div class="loading-line">@L["LoadingTaxonomies"]</div>
+}
+else if (_site is null)
+{
+    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+}
+else
+{
+    <div class="page-heading">
+        <div><h1>@L["TaxonomyManager"]</h1><p>@_site.Name — @L["TaxonomyIntro"]</p></div>
+        <div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+    }
+
+    <div class="panel explorer-toolbar">
+        <div class="tabs">
+            <button class="tab @(_taxonomy == "categories" ? "active" : "")" @onclick="ShowCategories">@L["Categories"]</button>
+            <button class="tab @(_taxonomy == "tags" ? "active" : "")" @onclick="ShowTags">@L["Tags"]</button>
+        </div>
+        <div class="filter-row">
+            <input class="search-input" @bind="_query" @bind:event="oninput" placeholder="@L["SearchTaxonomy"]" />
+            <button class="btn primary" @onclick="StartCreate">@L["AddNew"]</button>
+        </div>
+    </div>
+
+    <div class="editor-grid">
+        <section class="panel table-panel">
+            <table>
+                <thead><tr><th>@L["Name"]</th><th>@L["Slug"]</th><th>@L["PostCount"]</th><th>@L["Actions"]</th></tr></thead>
+                <tbody>
+                @foreach (var item in FilteredTerms)
+                {
+                    <tr>
+                        <td><strong>@item.Name</strong></td><td><code>@item.Slug</code></td><td>@item.Count</td>
+                        <td><div class="table-actions"><button class="btn compact" @onclick="() => StartEdit(item)">@L["Edit"]</button><button class="btn compact danger" @onclick="() => DeleteAsync(item)">@L["Delete"]</button></div></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            @if (!FilteredTerms.Any()) { <div class="empty-state"><p>@L["NoTaxonomies"]</p></div> }
+        </section>
+
+        <aside class="panel">
+            <h3>@(_editingId > 0 ? L["EditTaxonomy"] : L["CreateTaxonomy"])</h3>
+            <EditForm Model="_model" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <div class="form-grid one-column">
+                    <label>@L["Name"]<InputText @bind-Value="_model.Name" /></label>
+                    <label>@L["Slug"]<InputText @bind-Value="_model.Slug" /></label>
+                    <label>@L["Description"]<InputTextArea @bind-Value="_model.Description" rows="5" /></label>
+                    @if (_taxonomy == "categories")
+                    {
+                        <label>@L["ParentCategory"]
+                            <InputSelect @bind-Value="_model.ParentId">
+                                <option value="0">@L["NoParent"]</option>
+                                @foreach (var parent in _terms.Where(x => x.Id != _editingId)) { <option value="@parent.Id">@parent.Name</option> }
+                            </InputSelect>
+                        </label>
+                    }
+                </div>
+                <div class="actions form-actions">
+                    <button class="btn primary" type="submit" disabled="@_saving">@(_saving ? L["Saving"] : L["Save"])</button>
+                    <button class="btn" type="button" @onclick="ResetForm">@L["Cancel"]</button>
+                </div>
+            </EditForm>
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid SiteId { get; set; }
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private IReadOnlyList<TaxonomyTermView> _terms = Array.Empty<TaxonomyTermView>();
+    private TaxonomyTermEditModel _model = new();
+    private string _taxonomy = "categories", _query = string.Empty;
+    private string? _message;
+    private int _editingId;
+    private bool _loading = true, _saving, _isError;
+
+    private IEnumerable<TaxonomyTermView> FilteredTerms => _terms.Where(x => string.IsNullOrWhiteSpace(_query) || x.Name.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Slug.Contains(_query, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnParametersSetAsync() { _loading = true; _site = await SiteService.GetSiteAsync(SiteId); await LoadAsync(); _loading = false; }
+    private async Task LoadAsync() => _terms = await TaxonomyService.GetAsync(SiteId, _taxonomy);
+    private async Task ShowCategories() { _taxonomy = "categories"; ResetForm(); await LoadAsync(); }
+    private async Task ShowTags() { _taxonomy = "tags"; ResetForm(); await LoadAsync(); }
+    private void StartCreate() => ResetForm();
+    private void StartEdit(TaxonomyTermView item) { _editingId = item.Id; _model = new() { Name = item.Name, Slug = item.Slug, Description = item.Description, ParentId = item.ParentId }; }
+    private void ResetForm() { _editingId = 0; _model = new(); _message = null; _isError = false; }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            _saving = true; _isError = false;
+            var result = _editingId > 0
+                ? await TaxonomyService.UpdateAsync(SiteId, _taxonomy, _editingId, _model)
+                : await TaxonomyService.CreateAsync(SiteId, _taxonomy, _model);
+            _isError = !result.Success; _message = L.TranslateMessage(result.Message);
+            if (result.Success) { ResetForm(); _message = L.TranslateMessage(result.Message); await LoadAsync(); }
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _saving = false; }
+    }
+
+    private async Task DeleteAsync(TaxonomyTermView item)
+    {
+        try
+        {
+            var result = await TaxonomyService.DeleteAsync(SiteId, _taxonomy, item.Id);
+            _isError = !result.Success; _message = L.TranslateMessage(result.Message);
+            if (result.Success) await LoadAsync();
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+    }
+
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+}

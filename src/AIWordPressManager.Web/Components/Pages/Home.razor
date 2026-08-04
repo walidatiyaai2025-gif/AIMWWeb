@@ -1,0 +1,26 @@
+@page "/"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService Sites
+@inject AppLanguageService L
+<PageTitle>@L["Dashboard"]</PageTitle>
+
+<div class="page-heading"><div><h1>@L["Dashboard"]</h1><p>@L["DashboardIntro"]</p></div><a class="btn primary" href="/sites">@L["ManageSites"]</a></div>
+@if (_loading){<div class="skeleton-grid"><div></div><div></div><div></div><div></div></div>}
+else if (_summary is not null){
+<div class="stats-grid">
+<article class="stat-card"><span>@L["TotalSites"]</span><strong>@_summary.TotalSites</strong><small>@L["AllRegisteredSites"]</small></article>
+<article class="stat-card"><span>@L["Connected"]</span><strong>@_summary.ConnectedSites</strong><small>@L["HealthyConnection"]</small></article>
+<article class="stat-card"><span>@L["NeedsReview"]</span><strong>@_summary.ProblemSites</strong><small>@L["ConnectionOrLoginFailed"]</small></article>
+<article class="stat-card"><span>@L["LastCheck"]</span><strong class="date-value">@FormatDate(_summary.LastConnectionTestAtUtc)</strong><small>@L["LocalDatabase"]</small></article>
+</div>
+<div class="panel"><div class="panel-head"><div><h3>@L["CurrentPhase"]</h3><p>@L["BlazorCreated"]</p></div><span class="badge success">Web</span></div>
+<div class="roadmap"><div class="done">✓ ASP.NET Core / Blazor Server</div><div class="done">✓ EF Core + SQLite</div><div class="done">✓ @L["DashboardSitesDone"]</div><div class="done">✓ @L["WpRestTest"]</div><div class="done">✓ @L["ContentSync"]</div><div>○ @L["SeoAi"]</div></div></div>}
+
+@code {
+private bool _loading=true; private DashboardSummary? _summary;
+protected override void OnInitialized(){L.Changed+=Changed;}
+protected override async Task OnInitializedAsync(){_summary=await Sites.GetSummaryAsync();_loading=false;}
+private string FormatDate(DateTime? value)=>value is null?L["Never"]:value.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
+private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+}

@@ -1,0 +1,161 @@
+@page "/sites/{SiteId:guid}/media"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject WordPressSyncWebService SyncService
+@inject WordPressMediaWebService MediaService
+@inject AppLanguageService L
+
+<PageTitle>@L["MediaManager"]</PageTitle>
+
+@if (_loading)
+{
+    <div class="loading-line">@L["LoadingMedia"]</div>
+}
+else if (_site is null)
+{
+    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+}
+else
+{
+    <div class="page-heading">
+        <div><h1>@L["MediaManager"]</h1><p>@_site.Name — @L["MediaManagerIntro"]</p></div>
+        <div class="actions"><button class="btn" @onclick="RefreshAsync" disabled="@_busy">@L["Refresh"]</button><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+    }
+
+    <section class="panel upload-panel">
+        <h3>@L["UploadMedia"]</h3>
+        <p>@L["UploadMediaHelp"]</p>
+        <div class="form-grid">
+            <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
+            <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
+            <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
+            <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
+        </div>
+        @if (_selectedFile is not null)
+        {
+            <div class="selected-file"><strong>@_selectedFile.Name</strong><small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small></div>
+        }
+        <div class="actions"><button class="btn primary" @onclick="UploadAsync" disabled="@(_busy || _selectedFile is null)">@(_busy ? L["Uploading"] : L["UploadToWordPress"])</button></div>
+    </section>
+
+    <section class="panel explorer-toolbar">
+        <div><strong>@L["MediaLibrary"]</strong><small class="block-muted">@string.Format(L["MediaCount"], _data?.Media.Count ?? 0)</small></div>
+        <input class="search-input" placeholder="@L["SearchMedia"]" @bind="_search" @bind:event="oninput" />
+    </section>
+
+    @if (_data is null || !FilteredMedia.Any())
+    {
+        <div class="panel empty-state"><h3>@L["NoMedia"]</h3><p>@L["NoMediaHelp"]</p></div>
+    }
+    else
+    {
+        <div class="media-grid manager-grid">
+            @foreach (var item in FilteredMedia)
+            {
+                <article class="media-card">
+                    <div class="media-preview">
+                        @if (item.MediaType == "image")
+                        {
+                            <img src="@item.SourceUrl" alt="@item.Title" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span>@L["File"]</span>
+                        }
+                    </div>
+                    <div>
+                        <strong title="@item.Title">@DisplayTitle(item.Title)</strong>
+                        <small>#@item.WordPressId · @item.MimeType</small>
+                        <small>@FormatDate(item.ModifiedAtUtc)</small>
+                        <div class="media-actions">
+                            <a class="btn compact" href="@item.SourceUrl" target="_blank">@L["OpenFile"]</a>
+                            <button class="btn compact danger" @onclick="() => DeleteAsync(item.WordPressId, item.Title)" disabled="@_busy">@L["Delete"]</button>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid SiteId { get; set; }
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private ContentExplorerView? _data;
+    private IBrowserFile? _selectedFile;
+    private string _uploadTitle = string.Empty, _altText = string.Empty, _caption = string.Empty, _search = string.Empty;
+    private string? _message;
+    private bool _loading = true, _busy, _isError;
+
+    private IEnumerable<MediaExplorerItem> FilteredMedia => (_data?.Media ?? Array.Empty<MediaExplorerItem>())
+        .Where(x => string.IsNullOrWhiteSpace(_search) || x.Title.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.MimeType.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized() => L.Changed += Changed;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _site = await SiteService.GetSiteAsync(SiteId);
+        if (_site is not null) _data = await SyncService.GetExplorerAsync(SiteId);
+        _loading = false;
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs args)
+    {
+        _selectedFile = args.File;
+        if (string.IsNullOrWhiteSpace(_uploadTitle)) _uploadTitle = Path.GetFileNameWithoutExtension(args.File.Name);
+        _message = null;
+    }
+
+    private async Task UploadAsync()
+    {
+        if (_selectedFile is null) return;
+        _busy = true; _isError = false; _message = null;
+        var result = await MediaService.UploadAsync(SiteId, _selectedFile, _uploadTitle, _altText, _caption);
+        _isError = !result.IsSuccess;
+        _message = L.TranslateMessage(result.Message);
+        if (result.IsSuccess)
+        {
+            await SyncService.SynchronizeAsync(SiteId);
+            _data = await SyncService.GetExplorerAsync(SiteId);
+            _selectedFile = null; _uploadTitle = string.Empty; _altText = string.Empty; _caption = string.Empty;
+        }
+        _busy = false;
+    }
+
+    private async Task DeleteAsync(int mediaId, string title)
+    {
+        _busy = true; _isError = false; _message = null;
+        var result = await MediaService.DeleteAsync(SiteId, mediaId);
+        _isError = !result.IsSuccess;
+        _message = L.TranslateMessage(result.Message);
+        if (result.IsSuccess)
+        {
+            await SyncService.SynchronizeAsync(SiteId);
+            _data = await SyncService.GetExplorerAsync(SiteId);
+        }
+        _busy = false;
+    }
+
+    private async Task RefreshAsync()
+    {
+        _busy = true;
+        var result = await SyncService.SynchronizeAsync(SiteId);
+        _isError = !result.IsSuccess;
+        _message = L.TranslateMessage(result.Message);
+        _data = await SyncService.GetExplorerAsync(SiteId);
+        _busy = false;
+    }
+
+    private string DisplayTitle(string value) => string.IsNullOrWhiteSpace(value) ? L["UntitledMedia"] : value;
+    private string FormatDate(DateTimeOffset? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "dd/MM/yyyy HH:mm" : "MMM d, yyyy HH:mm") : L["Unknown"];
+    private static string FormatSize(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+}

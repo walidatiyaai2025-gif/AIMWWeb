@@ -1,0 +1,31 @@
+@page "/sites"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+<PageTitle>@L["Sites"]</PageTitle>
+
+<div class="page-heading"><div><h1>@L["Sites"]</h1><p>@L["SitesIntro"]</p></div><button class="btn primary" @onclick="OpenForm">+ @L["AddSite"]</button></div>
+@if (!string.IsNullOrWhiteSpace(_message)){<div class="alert @(_isError?"error":"success")">@_message</div>}
+@if (_showForm){<div class="panel form-panel"><h3>@L["AddNewSite"]</h3>
+<EditForm Model="_model" OnSubmit="SaveAsync"><div class="form-grid"><label>@L["SiteName"]<InputText @bind-Value="_model.Name" /></label><label>@L["SiteUrl"]<InputText @bind-Value="_model.Url" placeholder="https://example.com" /></label></div>
+<div class="actions"><button type="submit" class="btn primary" disabled="@_saving">@(_saving?L["Saving"]:L["Save"])</button><button type="button" class="btn" @onclick="CloseForm">@L["Cancel"]</button></div></EditForm></div>}
+<div class="panel table-panel">
+@if(_loading){<div class="loading-line">@L["LoadingSites"]</div>}
+else if(_sites.Count==0){<div class="empty-state"><h3>@L["NoSites"]</h3><p>@L["AddFirstSite"]</p></div>}
+else{<table><thead><tr><th>@L["Site"]</th><th>@L["Url"]</th><th>@L["Status"]</th><th>@L["LastTest"]</th><th>@L["Actions"]</th></tr></thead><tbody>
+@foreach(var site in _sites){<tr><td><strong>@site.Name</strong><small>@site.WordPressVersion</small></td><td><a href="@site.SiteUrl" target="_blank">@site.SiteUrl</a></td><td><span class="badge">@StatusText(site.ConnectionStatus)</span></td><td>@FormatDate(site.LastConnectionTestAtUtc)</td><td><div class="table-actions"><a class="icon-btn" href="@($"/sites/{site.Id}")">@L["Open"]</a><button class="icon-btn danger" @onclick="()=>DeleteAsync(site.Id)">@L["Delete"]</button></div></td></tr>}
+</tbody></table>}</div>
+
+@code{
+private bool _loading=true,_saving,_showForm,_isError; private string? _message; private List<AIWordPressManager.Domain.Entities.Site> _sites=[]; private SiteInput _model=new();
+protected override void OnInitialized()=>L.Changed+=Changed; protected override async Task OnInitializedAsync()=>await ReloadAsync();
+private async Task ReloadAsync(){_loading=true;_sites=await SiteService.GetSitesAsync();_loading=false;}
+private void OpenForm(){_showForm=true;_message=null;} private void CloseForm()=>_showForm=false;
+private async Task SaveAsync(){try{_saving=true;if(string.IsNullOrWhiteSpace(_model.Name)){Fail(L["RequiredSiteName"]);return;}if(string.IsNullOrWhiteSpace(_model.Url)){Fail(L["RequiredUrl"]);return;}if(!Uri.TryCreate(_model.Url,UriKind.Absolute,out var u)||u.Scheme is not("http" or "https")){Fail(L["InvalidUrl"]);return;}await SiteService.AddSiteAsync(_model.Name,_model.Url);_model=new();_showForm=false;_isError=false;_message=L["AddedSuccess"];await ReloadAsync();}catch(Exception ex){Fail(L.TranslateMessage(ex.Message));}finally{_saving=false;}}
+private void Fail(string m){_isError=true;_message=m;}
+private async Task DeleteAsync(Guid id){await SiteService.DeleteSiteAsync(id);_message=L["DeletedSuccess"];_isError=false;await ReloadAsync();}
+private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus s)=>s switch{AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected=>L["Connected"],AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable=>L["Unreachable"],AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed=>L["AuthFailed"],_=>L["NotTested"]};
+private string FormatDate(DateTime? v)=>v is null?"—":v.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
+private void Changed()=>InvokeAsync(StateHasChanged);public void Dispose()=>L.Changed-=Changed; private sealed class SiteInput{public string Name{get;set;}="";public string Url{get;set;}="";}
+}

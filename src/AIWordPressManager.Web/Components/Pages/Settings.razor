@@ -1,0 +1,14 @@
+@page "/settings"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject AppLanguageService L
+@inject IJSRuntime JS
+<PageTitle>@L["Settings"]</PageTitle>
+<div class="page-heading"><div><h1>@L["Settings"]</h1><p>@L["SettingsIntro"]</p></div></div>
+<div class="panel"><h3>@L["LanguageSettings"]</h3><p>@L["LanguageSettingsText"]</p><button class="btn primary" @onclick="ToggleLanguage">🌐 @L["SwitchLanguage"]</button></div>
+<div class="panel"><h3>@L["Database"]</h3><p>@L["PortableDb"]</p></div>
+@code{
+protected override void OnInitialized()=>L.Changed+=Changed;
+private async Task ToggleLanguage(){L.SetCulture(L.IsArabic?"en":"ar");await JS.InvokeVoidAsync("appLanguage.set",L.Culture);await JS.InvokeVoidAsync("appLanguage.apply",L.Culture,L.Direction);}
+private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+}
