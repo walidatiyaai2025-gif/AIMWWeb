@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject SeoAnalysisWebService SeoService
+@inject SeoAuditExecutionService AuditService
+@inject AppNotificationService Notifications
 @inject AppLanguageService L
 
 <PageTitle>@L["SeoManager"]</PageTitle>
@@ -18,7 +20,11 @@ else
 {
     <div class="page-heading">
         <div><h1>@L["SeoManager"]</h1><p>@_view.SiteName — @L["SeoIntro"]</p></div>
-        <div class="actions"><a class="btn" href="@($"/sites/{Id}/explorer")">@L["BackToExplorer"]</a></div>
+        <div class="actions">
+            <button class="btn primary" @onclick="RunFullAuditAsync" disabled="@_runningAudit">@(_runningAudit ? (L.IsArabic ? "جارٍ تشغيل التدقيق..." : "Running audit...") : (L.IsArabic ? "تشغيل تدقيق كامل" : "Run Full Audit"))</button>
+            <a class="btn" href="/execution-center">@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</a>
+            <a class="btn" href="@($"/sites/{Id}/explorer")">@L["BackToExplorer"]</a>
+        </div>
     </div>
 
     <div class="stats-grid seo-stats">
@@ -38,7 +44,7 @@ else
 
     @if (_view.Items.Count == 0)
     {
-        <div class="panel empty-state"><h3>@L["NoContentToAnalyze"]</h3><p>@L["SyncBeforeSeo"]</p></div>
+        <div class="panel empty-state"><h3>@L["NoContentToAnalyze"]</h3><p>@L["SyncBeforeSeo"]</p><a class="btn primary" href="@($"/sites/{Id}/explorer")">@(L.IsArabic ? "الانتقال للمزامنة" : "Go to Synchronization")</a></div>
     }
     else
     {
@@ -61,12 +67,53 @@ else
     [Parameter] public Guid Id { get; set; }
     private SeoAnalysisView? _view;
     private bool _loading = true;
+    private bool _runningAudit;
     private string _query = string.Empty;
     private string _type = "all";
 
     protected override void OnInitialized() => L.Changed += Changed;
-    protected override async Task OnParametersSetAsync(){_loading=true; await LoadAsync(); _loading=false;}
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try
+        {
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Notifications.Error(
+                L.IsArabic ? "تعذر تحميل تحليل SEO." : "SEO analysis could not be loaded.",
+                L.IsArabic ? "خطأ تحليل SEO" : "SEO Analysis Error",
+                ex.ToString());
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
     private async Task LoadAsync() => _view = await SeoService.AnalyzeAsync(Id, _query, _type);
+
+    private async Task RunFullAuditAsync()
+    {
+        if (_runningAudit) return;
+        try
+        {
+            _runningAudit = true;
+            await AuditService.RunAsync(Id);
+            await LoadAsync();
+        }
+        catch
+        {
+            // The centralized audit service already reports the full failure popup.
+        }
+        finally
+        {
+            _runningAudit = false;
+        }
+    }
+
     private async Task OnSearchKeyUp(KeyboardEventArgs e){if(e.Key=="Enter") await LoadAsync();}
     private static string ScoreClass(int score) => score >= 80 ? "good" : score >= 50 ? "warning" : "poor";
     private string IssueText(SeoIssue issue) => $"{L[issue.Code]}{(issue.Count > 1 ? $" ({issue.Count})" : string.Empty)}";
