@@ -18,6 +18,7 @@ public sealed class AutomationCenterService
             Cache = SqliteCacheMode.Shared
         }.ToString();
         Initialize();
+        RecoverInterruptedJobs();
     }
 
     public IReadOnlyList<AutomationJob> GetJobs()
@@ -44,7 +45,8 @@ public sealed class AutomationCenterService
             command.Parameters.AddWithValue("$take", Math.Clamp(take, 1, 500));
             using var reader = command.ExecuteReader();
             var rows = new List<AutomationHistoryItem>();
-            while (reader.Read()) rows.Add(new(Guid.Parse(reader.GetString(0)), Guid.Parse(reader.GetString(1)), reader.GetString(2), Parse(reader.GetString(3)), reader.IsDBNull(4) ? null : Parse(reader.GetString(4)), reader.GetString(5), reader.GetString(6)));
+            while (reader.Read())
+                rows.Add(new AutomationHistoryItem(Guid.Parse(reader.GetString(0)), Guid.Parse(reader.GetString(1)), reader.GetString(2), Parse(reader.GetString(3)), reader.IsDBNull(4) ? null : Parse(reader.GetString(4)), reader.GetString(5), reader.GetString(6)));
             return rows;
         }
     }
@@ -53,9 +55,11 @@ public sealed class AutomationCenterService
     {
         if (string.IsNullOrWhiteSpace(model.Name)) throw new InvalidOperationException("اسم المهمة مطلوب.");
         if (model.SiteId == Guid.Empty) throw new InvalidOperationException("اختر الموقع.");
+
         var id = model.Id == Guid.Empty ? Guid.NewGuid() : model.Id;
         var now = DateTime.UtcNow;
         var nextRun = CalculateNextRun(now, model.Frequency, model.IntervalValue, model.TimeOfDay);
+
         lock (_sync)
         {
             using var connection = Open();
@@ -63,7 +67,7 @@ public sealed class AutomationCenterService
             command.CommandText = """
                 INSERT INTO AutomationJobs (Id,Name,SiteId,SiteName,Type,Frequency,IntervalValue,TimeOfDay,Enabled,RetryCount,LastRunUtc,NextRunUtc,LastStatus,CreatedAtUtc,UpdatedAtUtc)
                 VALUES ($id,$name,$siteId,$siteName,$type,$frequency,$interval,$time,$enabled,$retry,NULL,$next,'Scheduled',$now,$now)
-                ON CONFLICT(Id) DO UPDATE SET Name=$name,SiteId=$siteId,SiteName=$siteName,Type=$type,Frequency=$frequency,IntervalValue=$interval,TimeOfDay=$time,Enabled=$enabled,RetryCount=$retry,NextRunUtc=$next,UpdatedAtUtc=$now;
+                ON CONFLICT(Id) DO UPDATE SET Name=$name,SiteId=$siteId,SiteName=$siteName,Type=$type,Frequency=$frequency,IntervalValue=$interval,TimeOfDay=$time,Enabled=$enabled,RetryCount=$retry,NextRunUtc=$next,LastStatus='Scheduled',UpdatedAtUtc=$now;
                 """;
             command.Parameters.AddWithValue("$id", id.ToString());
             command.Parameters.AddWithValue("$name", model.Name.Trim());
@@ -79,6 +83,7 @@ public sealed class AutomationCenterService
             command.Parameters.AddWithValue("$now", Format(now));
             command.ExecuteNonQuery();
         }
+
         return id;
     }
 
@@ -88,11 +93,26 @@ public sealed class AutomationCenterService
         {
             using var connection = Open();
             using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE AutomationJobs SET Enabled=$enabled,UpdatedAtUtc=$now WHERE Id=$id";
+            command.CommandText = "UPDATE AutomationJobs SET Enabled=$enabled,LastStatus=$status,UpdatedAtUtc=$now WHERE Id=$id";
             command.Parameters.AddWithValue("$enabled", enabled ? 1 : 0);
+            command.Parameters.AddWithValue("$status", enabled ? "Scheduled" : "Disabled");
             command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
             command.Parameters.AddWithValue("$id", id.ToString());
             command.ExecuteNonQuery();
+        }
+    }
+
+    public void QueueNow(Guid id)
+    {
+        lock (_sync)
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE AutomationJobs SET Enabled=1,NextRunUtc=$now,LastStatus='Scheduled',UpdatedAtUtc=$now WHERE Id=$id AND LastStatus <> 'Running'";
+            command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
+            command.Parameters.AddWithValue("$id", id.ToString());
+            if (command.ExecuteNonQuery() == 0)
+                throw new InvalidOperationException("المهمة غير موجودة أو تعمل حاليًا.");
         }
     }
 
@@ -119,7 +139,9 @@ public sealed class AutomationCenterService
             select.CommandText = "SELECT Id,Name,SiteId,SiteName,Type,Frequency,IntervalValue,TimeOfDay,Enabled,RetryCount,LastRunUtc,NextRunUtc,LastStatus,CreatedAtUtc FROM AutomationJobs WHERE Enabled=1 AND NextRunUtc <= $now AND LastStatus <> 'Running' ORDER BY NextRunUtc";
             select.Parameters.AddWithValue("$now", Format(utcNow));
             var due = new List<AutomationJob>();
-            using (var reader = select.ExecuteReader()) while (reader.Read()) due.Add(ReadJob(reader));
+            using (var reader = select.ExecuteReader())
+                while (reader.Read()) due.Add(ReadJob(reader));
+
             foreach (var job in due)
             {
                 using var update = connection.CreateCommand();
@@ -129,15 +151,18 @@ public sealed class AutomationCenterService
                 update.Parameters.AddWithValue("$id", job.Id.ToString());
                 update.ExecuteNonQuery();
             }
+
             transaction.Commit();
-            return due;
+            return due.Select(x => x with { LastRunUtc = utcNow, LastStatus = "Running" }).ToList();
         }
     }
 
-    public void CompleteRun(AutomationJob job, bool success, string message)
+    public void CompleteRun(AutomationJob job, string status, string message)
     {
+        var normalizedStatus = status is "Completed" or "Queued" or "Failed" ? status : "Completed";
         var now = DateTime.UtcNow;
         var next = CalculateNextRun(now, job.Frequency, job.IntervalValue, job.TimeOfDay);
+
         lock (_sync)
         {
             using var connection = Open();
@@ -145,11 +170,12 @@ public sealed class AutomationCenterService
             using var update = connection.CreateCommand();
             update.Transaction = transaction;
             update.CommandText = "UPDATE AutomationJobs SET LastStatus=$status,NextRunUtc=$next,UpdatedAtUtc=$now WHERE Id=$id";
-            update.Parameters.AddWithValue("$status", success ? "Queued" : "Failed");
+            update.Parameters.AddWithValue("$status", normalizedStatus);
             update.Parameters.AddWithValue("$next", Format(next));
             update.Parameters.AddWithValue("$now", Format(now));
             update.Parameters.AddWithValue("$id", job.Id.ToString());
             update.ExecuteNonQuery();
+
             using var history = connection.CreateCommand();
             history.Transaction = transaction;
             history.CommandText = "INSERT INTO AutomationHistory (Id,JobId,JobName,StartedAtUtc,FinishedAtUtc,Status,Message) VALUES ($id,$jobId,$name,$start,$finish,$status,$message)";
@@ -158,7 +184,7 @@ public sealed class AutomationCenterService
             history.Parameters.AddWithValue("$name", job.Name);
             history.Parameters.AddWithValue("$start", Format(job.LastRunUtc ?? now));
             history.Parameters.AddWithValue("$finish", Format(now));
-            history.Parameters.AddWithValue("$status", success ? "Queued" : "Failed");
+            history.Parameters.AddWithValue("$status", normalizedStatus);
             history.Parameters.AddWithValue("$message", message);
             history.ExecuteNonQuery();
             transaction.Commit();
@@ -186,9 +212,33 @@ public sealed class AutomationCenterService
         command.ExecuteNonQuery();
     }
 
-    private SqliteConnection Open() { var connection = new SqliteConnection(_connectionString); connection.Open(); return connection; }
-    private static AutomationJob ReadJob(SqliteDataReader r) => new(Guid.Parse(r.GetString(0)), r.GetString(1), Guid.Parse(r.GetString(2)), r.GetString(3), r.GetString(4), r.GetString(5), r.GetInt32(6), r.GetString(7), r.GetInt32(8) == 1, r.GetInt32(9), r.IsDBNull(10) ? null : Parse(r.GetString(10)), Parse(r.GetString(11)), r.GetString(12), Parse(r.GetString(13)));
-    private static string NormalizeFrequency(string? value) => value?.ToLowerInvariant() is "hourly" or "weekly" or "monthly" ? value.ToLowerInvariant() : "daily";
+    private void RecoverInterruptedJobs()
+    {
+        lock (_sync)
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE AutomationJobs SET LastStatus='Scheduled',NextRunUtc=$now,UpdatedAtUtc=$now WHERE LastStatus='Running'";
+            command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
+            command.ExecuteNonQuery();
+        }
+    }
+
+    private SqliteConnection Open()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        return connection;
+    }
+
+    private static AutomationJob ReadJob(SqliteDataReader r) => new(
+        Guid.Parse(r.GetString(0)), r.GetString(1), Guid.Parse(r.GetString(2)), r.GetString(3), r.GetString(4), r.GetString(5),
+        r.GetInt32(6), r.GetString(7), r.GetInt32(8) == 1, r.GetInt32(9), r.IsDBNull(10) ? null : Parse(r.GetString(10)),
+        Parse(r.GetString(11)), r.GetString(12), Parse(r.GetString(13)));
+
+    private static string NormalizeFrequency(string? value) =>
+        value?.ToLowerInvariant() is "hourly" or "weekly" or "monthly" ? value.ToLowerInvariant() : "daily";
+
     private static DateTime CalculateNextRun(DateTime fromUtc, string frequency, int interval, string? time)
     {
         interval = Math.Max(1, interval);
@@ -197,37 +247,82 @@ public sealed class AutomationCenterService
         var hour = parts.Length > 0 && int.TryParse(parts[0], out var h) ? Math.Clamp(h, 0, 23) : 0;
         var minute = parts.Length > 1 && int.TryParse(parts[1], out var m) ? Math.Clamp(m, 0, 59) : 0;
         var candidate = new DateTime(fromUtc.Year, fromUtc.Month, fromUtc.Day, hour, minute, 0, DateTimeKind.Utc);
-        if (candidate <= fromUtc) candidate = frequency switch { "weekly" => candidate.AddDays(7 * interval), "monthly" => candidate.AddMonths(interval), _ => candidate.AddDays(interval) };
+        if (candidate <= fromUtc)
+            candidate = frequency switch
+            {
+                "weekly" => candidate.AddDays(7 * interval),
+                "monthly" => candidate.AddMonths(interval),
+                _ => candidate.AddDays(interval)
+            };
         return candidate;
     }
+
     private static string Format(DateTime value) => value.ToUniversalTime().ToString("O");
     private static DateTime Parse(string value) => DateTime.Parse(value, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
 }
 
-public sealed class AutomationSchedulerService(AutomationCenterService automation, ExecutionCenterService execution, ILogger<AutomationSchedulerService> logger) : BackgroundService
+public sealed class AutomationSchedulerService(
+    AutomationCenterService automation,
+    ExecutionCenterService execution,
+    IServiceScopeFactory scopeFactory,
+    ILogger<AutomationSchedulerService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
-        do
+        await ProcessDueJobsAsync(stoppingToken);
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        while (await timer.WaitForNextTickAsync(stoppingToken))
+            await ProcessDueJobsAsync(stoppingToken);
+    }
+
+    private async Task ProcessDueJobsAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<AutomationJob> dueJobs;
+        try
+        {
+            dueJobs = automation.ClaimDueJobs(DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to claim due automation jobs");
+            return;
+        }
+
+        foreach (var job in dueJobs)
         {
             try
             {
-                foreach (var job in automation.ClaimDueJobs(DateTime.UtcNow))
+                if (string.Equals(job.Type, "Synchronization", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var scope = scopeFactory.CreateScope();
+                    var synchronization = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
+                    var result = await synchronization.SynchronizeAsync(job.SiteId, cancellationToken);
+                    automation.CompleteRun(job, "Completed", result.Message);
+                }
+                else
                 {
                     execution.Enqueue(job.Name, job.Type, job.SiteName, 1);
-                    automation.CompleteRun(job with { LastRunUtc = DateTime.UtcNow }, true, "تمت إضافة المهمة المجدولة إلى مركز التنفيذ.");
-                    logger.LogInformation("Automation {AutomationId} queued for site {SiteId}", job.Id, job.SiteId);
+                    automation.CompleteRun(job, "Queued", "تمت إضافة المهمة إلى مركز التنفيذ. تنفيذ هذا النوع سيتم عبر الـWorker المختص.");
                 }
+
+                logger.LogInformation("Automation {AutomationId} processed for site {SiteId}", job.Id, job.SiteId);
             }
-            catch (Exception ex) { logger.LogError(ex, "Automation scheduler iteration failed"); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                automation.CompleteRun(job, "Failed", ex.Message);
+                logger.LogError(ex, "Automation {AutomationId} failed for site {SiteId}", job.Id, job.SiteId);
+            }
         }
-        while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 }
 
 public sealed record AutomationJob(Guid Id, string Name, Guid SiteId, string SiteName, string Type, string Frequency, int IntervalValue, string TimeOfDay, bool Enabled, int RetryCount, DateTime? LastRunUtc, DateTime NextRunUtc, string LastStatus, DateTime CreatedAtUtc);
 public sealed record AutomationHistoryItem(Guid Id, Guid JobId, string JobName, DateTime StartedAtUtc, DateTime? FinishedAtUtc, string Status, string Message);
+
 public sealed class AutomationJobEditModel
 {
     public Guid Id { get; set; }
