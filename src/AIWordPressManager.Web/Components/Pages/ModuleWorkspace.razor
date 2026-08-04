@@ -31,7 +31,12 @@
     {
         <div class="media-screen">
             <div class="media-toolbar panel"><button class="btn btn-primary">＋ @(L.IsArabic ? "رفع ملفات" : "Upload files")</button><input placeholder="@(L.IsArabic ? "بحث في الوسائط..." : "Search media...")" /></div>
-            <div class="media-gallery">@for (var i=1;i<=8;i++){<article class="media-tile panel"><div class="media-placeholder">▧</div><strong>image-@i.jpg</strong><small>1200 × 800</small></article>}</div>
+            <div class="media-gallery">
+                @for (var i = 1; i <= 8; i++)
+                {
+                    <article class="media-tile panel"><div class="media-placeholder">▧</div><strong>@($"image-{i}.jpg")</strong><small>1200 × 800</small></article>
+                }
+            </div>
         </div>
     }
     else if (Key.StartsWith("seo"))
@@ -64,7 +69,15 @@
     }
     else if (Key == "backups")
     {
-        <div class="backup-screen"><div class="backup-create panel"><div class="backup-icon">⬡</div><div><h2>@(L.IsArabic ? "إنشاء نسخة احتياطية" : "Create backup")</h2><p>@(L.IsArabic ? "قاعدة البيانات والإعدادات والبيانات المحلية." : "Database, settings, and local data.")</p></div><button class="btn btn-primary">@(L.IsArabic ? "إنشاء الآن" : "Create now")</button></div><div class="backup-list panel">@for(var i=1;i<=4;i++){<div class="backup-row"><span>●</span><div><strong>backup-2026-08-0@i.zip</strong><small>24.8 MB</small></div><button class="btn">@(L.IsArabic ? "استعادة" : "Restore")</button></div>}</div></div>
+        <div class="backup-screen">
+            <div class="backup-create panel"><div class="backup-icon">⬡</div><div><h2>@(L.IsArabic ? "إنشاء نسخة احتياطية" : "Create backup")</h2><p>@(L.IsArabic ? "قاعدة البيانات والإعدادات والبيانات المحلية." : "Database, settings, and local data.")</p></div><button class="btn btn-primary">@(L.IsArabic ? "إنشاء الآن" : "Create now")</button></div>
+            <div class="backup-list panel">
+                @for (var i = 1; i <= 4; i++)
+                {
+                    <div class="backup-row"><span>●</span><div><strong>@($"backup-2026-08-0{i}.zip")</strong><small>24.8 MB</small></div><button class="btn">@(L.IsArabic ? "استعادة" : "Restore")</button></div>
+                }
+            </div>
+        </div>
     }
     else if (Key == "reports")
     {
