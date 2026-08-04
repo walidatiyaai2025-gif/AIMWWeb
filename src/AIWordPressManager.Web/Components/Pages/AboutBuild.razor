@@ -1,0 +1,34 @@
+@page "/about-build"
+@rendermode InteractiveServer
+@inject BuildInformationService BuildInfo
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "معلومات الإصدار" : "Build Information")</PageTitle>
+
+<div class="build-info-page">
+    <section class="panel build-info-hero">
+        <div>
+            <span class="workspace-kicker">@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")</span>
+            <h1>@(L.IsArabic ? "معلومات الإصدار والبناء" : "Version & Build Information")</h1>
+            <p>@(L.IsArabic ? "هذه البيانات تُقرأ مباشرة من النسخة التي تعمل حاليًا." : "These values are read directly from the running application build.")</p>
+        </div>
+        <strong class="build-version-badge">v@Build.Version</strong>
+    </section>
+
+    <section class="build-info-grid">
+        <article class="panel build-info-card"><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong>@Build.Version</strong></article>
+        <article class="panel build-info-card"><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong>@Build.Branch</strong></article>
+        <article class="panel build-info-card"><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong>@Build.Commit</strong></article>
+        <article class="panel build-info-card"><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong>@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</strong></article>
+    </section>
+
+    <section class="panel build-info-details">
+        <div><span>@(L.IsArabic ? "اسم التجميعة" : "Assembly")</span><code>@Build.AssemblyName</code></div>
+        <div><span>@(L.IsArabic ? "الإصدار التفصيلي" : "Informational version")</span><code>@Build.InformationalVersion</code></div>
+        <div><span>API</span><code>/api/build</code></div>
+    </section>
+</div>
+
+@code {
+    private BuildInformation Build => BuildInfo.Current;
+}
