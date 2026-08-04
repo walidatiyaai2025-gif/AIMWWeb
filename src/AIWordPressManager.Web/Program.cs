@@ -27,6 +27,7 @@ builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
+builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
@@ -53,6 +54,7 @@ using (var scope = app.Services.CreateScope())
 app.MapHealthChecks("/health/live");
 app.MapGet("/health/details", async (SystemHealthWebService service, CancellationToken cancellationToken) =>
     Results.Ok(await service.CheckAsync(cancellationToken)));
+app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service.Current));
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
