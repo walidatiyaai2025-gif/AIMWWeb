@@ -5,3 +5,5 @@
 .user-row{display:flex;align-items:center;gap:.7rem}.user-row small{display:block;color:var(--muted)}
 .avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--border)}
 @media(max-width:1050px){.users-editor-grid{grid-template-columns:1fr}}
+
+.sidebar-footer{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}.app-version{font-weight:800;letter-spacing:.04em;color:var(--accent,#c8a45c);white-space:nowrap}
