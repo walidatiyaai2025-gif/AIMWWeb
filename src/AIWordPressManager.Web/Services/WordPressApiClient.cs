@@ -24,28 +24,47 @@ public sealed class WordPressApiClient(
         CancellationToken cancellationToken = default) =>
         SendAsync(siteId, HttpMethod.Get, relativePath, null, cancellationToken);
 
-    public async Task<WordPressApiResponse<JsonDocument>> SendAsync(
+    public Task<WordPressApiResponse<JsonDocument>> SendAsync(
         Guid siteId,
         HttpMethod method,
         string relativePath,
         object? payload = null,
         CancellationToken cancellationToken = default)
     {
+        HttpContent? content = payload is null ? null : JsonContent.Create(payload);
+        return SendCoreAsync(siteId, method, relativePath, content, cancellationToken);
+    }
+
+    public Task<WordPressApiResponse<JsonDocument>> SendContentAsync(
+        Guid siteId,
+        HttpMethod method,
+        string relativePath,
+        HttpContent content,
+        CancellationToken cancellationToken = default) =>
+        SendCoreAsync(siteId, method, relativePath, content, cancellationToken);
+
+    private async Task<WordPressApiResponse<JsonDocument>> SendCoreAsync(
+        Guid siteId,
+        HttpMethod method,
+        string relativePath,
+        HttpContent? content,
+        CancellationToken cancellationToken)
+    {
         var connection = await ResolveConnectionAsync(siteId, cancellationToken);
         var requestUri = BuildRequestUri(connection.SiteUrl, relativePath);
 
-        using var request = new HttpRequestMessage(method, requestUri);
+        using var request = new HttpRequestMessage(method, requestUri)
+        {
+            Content = content
+        };
         request.Headers.Authorization = new AuthenticationHeaderValue(
             "Basic",
             Convert.ToBase64String(Encoding.UTF8.GetBytes($"{connection.UserName}:{connection.ApplicationPassword}")));
         request.Headers.UserAgent.ParseAdd("AIWordPressManager/154.1");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        if (payload is not null)
-            request.Content = JsonContent.Create(payload);
-
         var client = httpClientFactory.CreateClient(nameof(WordPressApiClient));
-        client.Timeout = TimeSpan.FromMinutes(3);
+        client.Timeout = TimeSpan.FromMinutes(5);
 
         try
         {
@@ -88,7 +107,7 @@ public sealed class WordPressApiClient(
     private async Task<WordPressConnectionData> ResolveConnectionAsync(Guid siteId, CancellationToken cancellationToken)
     {
         var site = await dbContext.Sites.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Id == siteId && !x.IsDeleted, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
 
         var credential = await dbContext.SiteCredentials.AsNoTracking()
