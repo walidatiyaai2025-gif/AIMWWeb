@@ -17,6 +17,7 @@ public sealed class WordPressApiClient(
     ILogger<WordPressApiClient> logger) : IWordPressApiClient
 {
     private const int MaximumErrorLength = 800;
+    private const int MaximumReadAttempts = 3;
 
     public Task<WordPressApiResponse<JsonDocument>> GetAsync(
         Guid siteId,
@@ -52,59 +53,134 @@ public sealed class WordPressApiClient(
     {
         var connection = await ResolveConnectionAsync(siteId, cancellationToken);
         var requestUri = BuildRequestUri(connection.SiteUrl, relativePath);
-
-        using var request = new HttpRequestMessage(method, requestUri)
-        {
-            Content = content
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Basic",
-            Convert.ToBase64String(Encoding.UTF8.GetBytes($"{connection.UserName}:{connection.ApplicationPassword}")));
-        request.Headers.UserAgent.ParseAdd("AIWordPressManager/154.1");
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
         var client = httpClientFactory.CreateClient(nameof(WordPressApiClient));
         client.Timeout = TimeSpan.FromMinutes(5);
 
-        try
-        {
-            logger.LogInformation("WordPress API {Method} {RequestUri} for site {SiteId}", method, requestUri, siteId);
-            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            var headers = ReadHeaders(response);
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var maximumAttempts = IsSafeRead(method, content) ? MaximumReadAttempts : 1;
 
-            if (!response.IsSuccessStatusCode)
+        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            using var request = CreateRequest(method, requestUri, connection, content);
+
+            try
             {
+                logger.LogInformation(
+                    "WordPress API {Method} {RequestUri} for site {SiteId}. Attempt {Attempt}/{MaximumAttempts}",
+                    method,
+                    requestUri,
+                    siteId,
+                    attempt,
+                    maximumAttempts);
+
+                using var response = await client.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
+
+                var headers = ReadHeaders(response);
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var document = string.IsNullOrWhiteSpace(body)
+                        ? JsonDocument.Parse("{}")
+                        : JsonDocument.Parse(body);
+
+                    return WordPressApiResponse<JsonDocument>.Success(response.StatusCode, document, headers);
+                }
+
+                if (attempt < maximumAttempts && IsTransient(response.StatusCode))
+                {
+                    var delay = GetRetryDelay(response, attempt);
+                    logger.LogWarning(
+                        "Transient WordPress response {StatusCode}. Retrying after {DelayMs} ms. Site {SiteId}",
+                        (int)response.StatusCode,
+                        delay.TotalMilliseconds,
+                        siteId);
+                    await Task.Delay(delay, cancellationToken);
+                    continue;
+                }
+
                 var message = CreateErrorMessage(response.StatusCode, body);
-                logger.LogWarning("WordPress API request failed: {StatusCode} {Message}", (int)response.StatusCode, message);
+                logger.LogWarning(
+                    "WordPress API request failed: {StatusCode} {Message}",
+                    (int)response.StatusCode,
+                    message);
                 return WordPressApiResponse<JsonDocument>.Failure(response.StatusCode, message, headers);
             }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                if (attempt < maximumAttempts)
+                {
+                    var delay = GetRetryDelay(null, attempt);
+                    logger.LogWarning(
+                        "WordPress API timeout. Retrying after {DelayMs} ms. Site {SiteId}",
+                        delay.TotalMilliseconds,
+                        siteId);
+                    await Task.Delay(delay, cancellationToken);
+                    continue;
+                }
 
-            var document = string.IsNullOrWhiteSpace(body)
-                ? JsonDocument.Parse("{}")
-                : JsonDocument.Parse(body);
+                const string message = "انتهت مهلة الاتصال بـ WordPress.";
+                logger.LogWarning("WordPress API timeout for site {SiteId}: {RequestUri}", siteId, requestUri);
+                return WordPressApiResponse<JsonDocument>.Failure(HttpStatusCode.RequestTimeout, message);
+            }
+            catch (HttpRequestException ex)
+            {
+                if (attempt < maximumAttempts)
+                {
+                    var delay = GetRetryDelay(null, attempt);
+                    logger.LogWarning(
+                        ex,
+                        "WordPress API network error. Retrying after {DelayMs} ms. Site {SiteId}",
+                        delay.TotalMilliseconds,
+                        siteId);
+                    await Task.Delay(delay, cancellationToken);
+                    continue;
+                }
 
-            return WordPressApiResponse<JsonDocument>.Success(response.StatusCode, document, headers);
+                logger.LogError(ex, "WordPress API network error for site {SiteId}: {RequestUri}", siteId, requestUri);
+                return WordPressApiResponse<JsonDocument>.Failure(
+                    HttpStatusCode.ServiceUnavailable,
+                    $"تعذر الاتصال بـ WordPress: {ex.Message}");
+            }
+            catch (JsonException ex)
+            {
+                logger.LogError(ex, "Invalid JSON returned by WordPress for site {SiteId}: {RequestUri}", siteId, requestUri);
+                return WordPressApiResponse<JsonDocument>.Failure(
+                    HttpStatusCode.BadGateway,
+                    "أعاد WordPress استجابة JSON غير صالحة.");
+            }
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            const string message = "انتهت مهلة الاتصال بـ WordPress.";
-            logger.LogWarning("WordPress API timeout for site {SiteId}: {RequestUri}", siteId, requestUri);
-            return WordPressApiResponse<JsonDocument>.Failure(HttpStatusCode.RequestTimeout, message);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogError(ex, "WordPress API network error for site {SiteId}: {RequestUri}", siteId, requestUri);
-            return WordPressApiResponse<JsonDocument>.Failure(HttpStatusCode.ServiceUnavailable, $"تعذر الاتصال بـ WordPress: {ex.Message}");
-        }
-        catch (JsonException ex)
-        {
-            logger.LogError(ex, "Invalid JSON returned by WordPress for site {SiteId}: {RequestUri}", siteId, requestUri);
-            return WordPressApiResponse<JsonDocument>.Failure(HttpStatusCode.BadGateway, "أعاد WordPress استجابة JSON غير صالحة.");
-        }
+
+        return WordPressApiResponse<JsonDocument>.Failure(
+            HttpStatusCode.ServiceUnavailable,
+            "تعذر إكمال طلب WordPress بعد عدة محاولات.");
     }
 
-    private async Task<WordPressConnectionData> ResolveConnectionAsync(Guid siteId, CancellationToken cancellationToken)
+    private static HttpRequestMessage CreateRequest(
+        HttpMethod method,
+        Uri requestUri,
+        WordPressConnectionData connection,
+        HttpContent? content)
+    {
+        var request = new HttpRequestMessage(method, requestUri)
+        {
+            Content = content
+        };
+
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            "Basic",
+            Convert.ToBase64String(
+                Encoding.UTF8.GetBytes($"{connection.UserName}:{connection.ApplicationPassword}")));
+        request.Headers.UserAgent.ParseAdd("AIWordPressManager/154.1");
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        return request;
+    }
+
+    private async Task<WordPressConnectionData> ResolveConnectionAsync(
+        Guid siteId,
+        CancellationToken cancellationToken)
     {
         var site = await dbContext.Sites.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == siteId && !x.IsDeleted, cancellationToken)
@@ -130,6 +206,28 @@ public sealed class WordPressApiClient(
             site.SiteUrl.TrimEnd('/'),
             credential.UserName,
             password.Replace(" ", string.Empty, StringComparison.Ordinal));
+    }
+
+    private static bool IsSafeRead(HttpMethod method, HttpContent? content) =>
+        content is null && (method == HttpMethod.Get || method == HttpMethod.Head);
+
+    private static bool IsTransient(HttpStatusCode statusCode) =>
+        statusCode is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests ||
+        (int)statusCode >= 500;
+
+    private static TimeSpan GetRetryDelay(HttpResponseMessage? response, int attempt)
+    {
+        if (response?.Headers.RetryAfter?.Delta is { } delta && delta > TimeSpan.Zero)
+            return delta > TimeSpan.FromSeconds(30) ? TimeSpan.FromSeconds(30) : delta;
+
+        if (response?.Headers.RetryAfter?.Date is { } date)
+        {
+            var calculated = date - DateTimeOffset.UtcNow;
+            if (calculated > TimeSpan.Zero)
+                return calculated > TimeSpan.FromSeconds(30) ? TimeSpan.FromSeconds(30) : calculated;
+        }
+
+        return TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
     }
 
     private static Uri BuildRequestUri(string siteUrl, string relativePath)
