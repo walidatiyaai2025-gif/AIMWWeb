@@ -28,6 +28,7 @@ builder.Services.AddScoped<WordPressCommentsWebService>();
 builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
 builder.Services.AddScoped<SeoAuditExecutionService>();
+builder.Services.AddScoped<BulkTrashExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
 builder.Services.AddSingleton<BuildInformationService>();
@@ -72,14 +73,17 @@ app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (
     SeoAuditExecutionService service,
     CancellationToken cancellationToken) =>
 {
-    try
-    {
-        return Results.Ok(await service.RunAsync(siteId, cancellationToken));
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
+    try { return Results.Ok(await service.RunAsync(siteId, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/sites/{siteId:guid}/content/trash", async (
+    Guid siteId,
+    BulkTrashRequest request,
+    BulkTrashExecutionService service,
+    CancellationToken cancellationToken) =>
+{
+    try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
 });
 
 app.MapRazorComponents<App>()
