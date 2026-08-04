@@ -5,7 +5,8 @@ using AIWordPressManager.Application.Common.Results;
 namespace AIWordPressManager.Web.Services;
 
 public sealed class WordPressPostEditorWebService(
-    IWordPressApiClient apiClient) : IWordPressPostEditorService
+    IWordPressApiClient apiClient,
+    AppNotificationService notifications) : IWordPressPostEditorService
 {
     public async Task<Result<WordPressEditableContent>> GetAsync(
         Guid siteId,
@@ -61,7 +62,15 @@ public sealed class WordPressPostEditorWebService(
         try
         {
             if (string.IsNullOrWhiteSpace(request.Title))
-                return Result.Failure<WordPressContentUpdateResult>(Error.Validation("عنوان المحتوى مطلوب."));
+            {
+                const string validationMessage = "Content title is required.";
+                notifications.Warning(validationMessage, "Validation");
+                return Result.Failure<WordPressContentUpdateResult>(Error.Validation(validationMessage));
+            }
+
+            notifications.Info(
+                $"Sending {NormalizeType(request.ContentType)} #{request.Id} changes to WordPress.",
+                "Saving content");
 
             var payload = new Dictionary<string, object?>
             {
@@ -95,21 +104,38 @@ public sealed class WordPressPostEditorWebService(
                 cancellationToken);
 
             if (!response.IsSuccess || response.Value is null)
-                return Result.Failure<WordPressContentUpdateResult>(ToError(response.ErrorMessage, response.StatusCode));
+            {
+                var error = ToError(response.ErrorMessage, response.StatusCode);
+                notifications.Error(
+                    error.Message,
+                    "WordPress update failed",
+                    $"HTTP {(int)response.StatusCode} ({response.StatusCode})");
+                return Result.Failure<WordPressContentUpdateResult>(error);
+            }
 
             using var json = response.Value;
             var item = json.RootElement;
+            var id = GetInt(item, "id");
+            var status = GetString(item, "status");
+            var link = GetString(item, "link");
+            const string successMessage = "Content was updated in WordPress successfully.";
+
+            notifications.Success(
+                $"Content #{id} was saved with status '{status}'.",
+                "WordPress updated");
+
             return Result.Success(new WordPressContentUpdateResult(
                 true,
-                "تم حفظ التعديلات في WordPress بنجاح.",
+                successMessage,
                 string.Empty,
-                GetInt(item, "id"),
-                GetString(item, "status"),
-                GetString(item, "link"),
+                id,
+                status,
+                link,
                 GetDate(item, "modified_gmt")));
         }
         catch (Exception ex)
         {
+            notifications.Error(ex.Message, "WordPress update failed", ex.ToString());
             return Result.Failure<WordPressContentUpdateResult>(Error.Failure(ex.Message));
         }
     }
