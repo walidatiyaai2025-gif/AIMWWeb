@@ -1,0 +1,93 @@
+@page "/module/{Key}"
+@inject AppLanguageService L
+
+<PageTitle>@Title</PageTitle>
+
+<div class="module-page">
+    <div class="module-hero panel">
+        <div>
+            <span class="workspace-kicker">@Section</span>
+            <h1>@Icon @Title</h1>
+            <p>@Description</p>
+        </div>
+        <div class="module-hero-actions">
+            <button class="btn btn-primary">@(L.IsArabic ? "إجراء جديد" : "New action")</button>
+            <button class="btn">@(L.IsArabic ? "تحديث" : "Refresh")</button>
+        </div>
+    </div>
+
+    <div class="module-stats">
+        @foreach (var stat in Stats)
+        {
+            <div class="panel module-stat"><small>@stat.Label</small><strong>@stat.Value</strong><span>@stat.Note</span></div>
+        }
+    </div>
+
+    <div class="module-layout">
+        <section class="panel module-table-card">
+            <div class="module-toolbar">
+                <div><h2>@(L.IsArabic ? "مساحة العمل" : "Workspace")</h2><small>@(L.IsArabic ? "الشاشة جاهزة لربط البيانات والعمليات" : "Ready for data and operation integration")</small></div>
+                <input placeholder="@(L.IsArabic ? "بحث..." : "Search...")" />
+            </div>
+            <div class="module-empty">
+                <div class="module-empty-icon">@Icon</div>
+                <h3>@(L.IsArabic ? "تم تصميم الشاشة" : "Screen design completed")</h3>
+                <p>@(L.IsArabic ? "سيتم ربط الوظائف الفعلية تدريجيًا ضمن خطة التنفيذ مع الحفاظ على نفس التصميم." : "Live functionality will be connected incrementally while preserving this design.")</p>
+                <span class="badge warning">@(L.IsArabic ? "قيد الربط" : "Integration pending")</span>
+            </div>
+        </section>
+
+        <aside class="panel module-side-card">
+            <h3>@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")</h3>
+            @foreach (var action in Actions)
+            {
+                <button class="module-action"><span>@action.Icon</span><div><strong>@action.Title</strong><small>@action.Note</small></div></button>
+            }
+        </aside>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Key { get; set; } = "overview";
+
+    private ModuleDefinition Module => Modules.TryGetValue(Key.ToLowerInvariant(), out var item) ? item : Modules["overview"];
+    private string Title => L.IsArabic ? Module.ArTitle : Module.EnTitle;
+    private string Description => L.IsArabic ? Module.ArDescription : Module.EnDescription;
+    private string Section => L.IsArabic ? Module.ArSection : Module.EnSection;
+    private string Icon => Module.Icon;
+    private IEnumerable<StatItem> Stats => L.IsArabic ? Module.ArStats : Module.EnStats;
+    private IEnumerable<ActionItem> Actions => L.IsArabic ? Module.ArActions : Module.EnActions;
+
+    private static readonly Dictionary<string, ModuleDefinition> Modules = new()
+    {
+        ["overview"] = M("⌂","الرئيسية","Overview","نظرة عامة على النظام","System overview","متابعة الأداء والأنشطة والحالة العامة.","Monitor performance, activity, and overall status."),
+        ["posts"] = M("▤","المحتوى","Content","المقالات","Posts","إدارة المقالات والمنشورات والتحرير الجماعي.","Manage posts, publishing, and bulk editing."),
+        ["pages"] = M("▧","المحتوى","Content","الصفحات","Pages","إدارة الصفحات الثابتة والقوالب والحالات.","Manage static pages, templates, and statuses."),
+        ["media"] = M("▣","المحتوى","Content","مكتبة الوسائط","Media Library","رفع وتنظيم وتحسين الصور والملفات.","Upload, organize, and optimize media files."),
+        ["taxonomy"] = M("#","المحتوى","Content","التصنيفات والوسوم","Categories & Tags","إدارة البنية التصنيفية وربطها بالمحتوى.","Manage taxonomy structure and content links."),
+        ["comments"] = M("◌","التفاعل","Engagement","التعليقات","Comments","مراجعة واعتماد والرد على التعليقات.","Review, moderate, and reply to comments."),
+        ["users"] = M("◎","الإدارة","Administration","المستخدمون والأدوار","Users & Roles","إدارة المستخدمين والصلاحيات والأدوار.","Manage users, permissions, and roles."),
+        ["seo-audit"] = M("◈","SEO","SEO","تدقيق SEO","SEO Audit","تحليل المشكلات وترتيب أولويات التحسين.","Analyze issues and prioritize improvements."),
+        ["seo-suggestions"] = M("✦","SEO","SEO","اقتراحات التحسين","SEO Suggestions","اقتراحات قابلة للمراجعة والتنفيذ.","Reviewable and actionable recommendations."),
+        ["approvals"] = M("✓","سير العمل","Workflow","قائمة الموافقات","Approval Queue","مراجعة واعتماد التغييرات قبل التنفيذ.","Review and approve changes before execution."),
+        ["ai-providers"] = M("✦","الذكاء الاصطناعي","AI","مزودو الذكاء الاصطناعي","AI Providers","إدارة المزودين والمفاتيح والنماذج.","Manage providers, keys, and models."),
+        ["prompts"] = M("⌘","الذكاء الاصطناعي","AI","قوالب الأوامر","Prompt Templates","إنشاء وتنظيم قوالب الأوامر الذكية.","Create and organize prompt templates."),
+        ["execution"] = M("▶","التشغيل","Operations","مركز التنفيذ","Execution Center","متابعة الطوابير والمهام والمحاولات.","Track queues, jobs, and retries."),
+        ["sync"] = M("↻","التشغيل","Operations","المزامنة","Synchronization","إدارة المزامنة والحالة والعمل دون اتصال.","Manage synchronization and offline state."),
+        ["schedules"] = M("◷","التشغيل","Operations","الجدولة","Schedules","إنشاء الجداول ومهام التشغيل التلقائي.","Create schedules and automated jobs."),
+        ["logs"] = M("≡","النظام","System","السجلات والأخطاء","Logs & Errors","عرض السجلات والأخطاء ومعرفات التتبع.","Inspect logs, errors, and correlation IDs."),
+        ["backups"] = M("⬡","النظام","System","النسخ الاحتياطي","Backup & Restore","إنشاء واستعادة وإدارة النسخ الاحتياطية.","Create, restore, and manage backups."),
+        ["reports"] = M("▥","التقارير","Reports","التقارير والتصدير","Reports & Exports","تقارير تشغيلية وتصدير PDF وExcel وCSV.","Operational reports and PDF, Excel, CSV exports."),
+    };
+
+    private static ModuleDefinition M(string icon,string arSection,string enSection,string arTitle,string enTitle,string arDescription,string enDescription) =>
+        new(icon,arSection,enSection,arTitle,enTitle,arDescription,enDescription,
+            new[]{new StatItem("الإجمالي","0","بانتظار البيانات"),new StatItem("نشط","0","لا توجد عمليات"),new StatItem("يحتاج مراجعة","0","كل شيء مستقر"),new StatItem("آخر تحديث","الآن","بيانات محلية")},
+            new[]{new StatItem("Total","0","Awaiting data"),new StatItem("Active","0","No running jobs"),new StatItem("Needs review","0","Everything stable"),new StatItem("Last update","Now","Local data")},
+            new[]{new ActionItem("＋","إضافة جديد","إنشاء عنصر جديد"),new ActionItem("↻","مزامنة الآن","تحديث البيانات المحلية"),new ActionItem("✓","تنفيذ المحدد","تشغيل آمن مع مراجعة")},
+            new[]{new ActionItem("＋","Add new","Create a new item"),new ActionItem("↻","Sync now","Refresh local data"),new ActionItem("✓","Execute selected","Safe reviewed execution")});
+
+    private sealed record ModuleDefinition(string Icon,string ArSection,string EnSection,string ArTitle,string EnTitle,string ArDescription,string EnDescription,IReadOnlyList<StatItem> ArStats,IReadOnlyList<StatItem> EnStats,IReadOnlyList<ActionItem> ArActions,IReadOnlyList<ActionItem> EnActions);
+    private sealed record StatItem(string Label,string Value,string Note);
+    private sealed record ActionItem(string Icon,string Title,string Note);
+}
