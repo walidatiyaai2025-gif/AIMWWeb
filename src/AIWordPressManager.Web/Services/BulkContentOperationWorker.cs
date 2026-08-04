@@ -41,55 +41,43 @@ public sealed class BulkContentOperationWorker(
         for (var index = 0; index < request.Targets.Count; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var currentJob = executionCenter.GetJobs().FirstOrDefault(x => x.Id == request.JobId);
-            if (currentJob?.Status == "Cancelled") return;
-
-            while (currentJob?.Status == "Paused")
-            {
-                await Task.Delay(750, cancellationToken);
-                currentJob = executionCenter.GetJobs().FirstOrDefault(x => x.Id == request.JobId);
-                if (currentJob?.Status == "Cancelled") return;
-            }
+            if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
 
             var target = request.Targets[index];
-            tracker.Report(request.JobId, index, total, $"Loading {target.ContentType} #{target.WordPressId}: {target.Title}");
+            var outcome = await ProcessTargetWithRetryAsync(
+                editor,
+                request,
+                target,
+                index,
+                total,
+                cancellationToken);
 
-            var current = await editor.GetAsync(request.SiteId, target.ContentType, target.WordPressId, cancellationToken);
-            if (current.IsFailure)
-            {
-                failures.Add($"{target.Title}: {current.Error.Message}");
-                tracker.Report(request.JobId, index + 1, total, $"Failed: {target.Title}");
-                continue;
-            }
+            if (outcome.Success)
+                succeeded++;
+            else
+                failures.Add($"{target.Title}: {outcome.Error}");
 
-            var value = current.Value;
-            var update = new WordPressContentUpdateRequest(
-                value.ContentType,
-                value.Id,
-                value.Title,
-                value.Slug,
-                request.TargetStatus,
-                value.Content,
-                value.Excerpt,
-                value.DateGmt,
-                value.FeaturedMediaId,
-                value.CategoryIds,
-                value.TagIds,
-                value.Template,
-                value.CommentStatus,
-                value.PingStatus,
-                value.Format,
-                value.Sticky);
-
-            var result = await editor.UpdateAsync(request.SiteId, update, cancellationToken);
-            if (result.IsSuccess) succeeded++;
-            else failures.Add($"{target.Title}: {result.Error.Message}");
-
-            tracker.Report(request.JobId, index + 1, total, $"Processed {index + 1}/{total}: {target.Title}");
+            tracker.Report(
+                request.JobId,
+                index + 1,
+                total,
+                outcome.Success
+                    ? $"Processed {index + 1}/{total}: {target.Title}"
+                    : $"Failed after {outcome.Attempts} attempt(s): {target.Title}");
         }
 
+        if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
+
         tracker.Report(request.JobId, total, total, "Refreshing local WordPress cache.");
-        await syncService.SynchronizeAsync(request.SiteId, cancellationToken);
+        try
+        {
+            await syncService.SynchronizeAsync(request.SiteId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Bulk operation {JobId} completed but local cache refresh failed.", request.JobId);
+            failures.Add($"Local cache refresh: {ex.Message}");
+        }
 
         if (failures.Count == 0)
         {
@@ -97,11 +85,128 @@ public sealed class BulkContentOperationWorker(
         }
         else if (succeeded > 0)
         {
-            tracker.Complete(request.JobId, total, total, $"Completed with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}");
+            tracker.Complete(
+                request.JobId,
+                total,
+                total,
+                $"Completed with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}");
         }
         else
         {
             tracker.Fail(request.JobId, $"All items failed. {string.Join(" | ", failures.Take(3))}");
         }
     }
+
+    private async Task<BulkTargetOutcome> ProcessTargetWithRetryAsync(
+        IWordPressPostEditorService editor,
+        BulkContentOperationRequest request,
+        BulkContentTarget target,
+        int index,
+        int total,
+        CancellationToken cancellationToken)
+    {
+        var maximumAttempts = request.NormalizedRetryCount + 1;
+        string? lastError = null;
+
+        for (var attempt = 1; attempt <= maximumAttempts; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken))
+                return new BulkTargetOutcome(false, attempt, "Cancelled by user.");
+
+            tracker.Report(
+                request.JobId,
+                index,
+                total,
+                $"Attempt {attempt}/{maximumAttempts}: {target.ContentType} #{target.WordPressId} - {target.Title}");
+
+            try
+            {
+                var current = await editor.GetAsync(
+                    request.SiteId,
+                    target.ContentType,
+                    target.WordPressId,
+                    cancellationToken);
+
+                if (current.IsFailure)
+                {
+                    lastError = current.Error.Message;
+                }
+                else
+                {
+                    var value = current.Value;
+                    var update = new WordPressContentUpdateRequest(
+                        value.ContentType,
+                        value.Id,
+                        value.Title,
+                        value.Slug,
+                        request.TargetStatus,
+                        value.Content,
+                        value.Excerpt,
+                        value.DateGmt,
+                        value.FeaturedMediaId,
+                        value.CategoryIds,
+                        value.TagIds,
+                        value.Template,
+                        value.CommentStatus,
+                        value.PingStatus,
+                        value.Format,
+                        value.Sticky);
+
+                    var result = await editor.UpdateAsync(request.SiteId, update, cancellationToken);
+                    if (result.IsSuccess)
+                        return new BulkTargetOutcome(true, attempt, null);
+
+                    lastError = result.Error.Message;
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                lastError = ex.Message;
+                logger.LogWarning(
+                    ex,
+                    "Bulk item {ContentType} {WordPressId} failed on attempt {Attempt}/{MaximumAttempts}.",
+                    target.ContentType,
+                    target.WordPressId,
+                    attempt,
+                    maximumAttempts);
+            }
+
+            if (attempt < maximumAttempts)
+            {
+                var delay = TimeSpan.FromSeconds(Math.Min(10, attempt * 2));
+                tracker.Report(
+                    request.JobId,
+                    index,
+                    total,
+                    $"Retrying {target.Title} in {delay.TotalSeconds:0} second(s). Last error: {lastError}");
+                await Task.Delay(delay, cancellationToken);
+            }
+        }
+
+        return new BulkTargetOutcome(false, maximumAttempts, lastError ?? "Unknown error.");
+    }
+
+    private async Task<bool> WaitUntilRunnableAsync(Guid jobId, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var currentJob = executionCenter.GetJobs().FirstOrDefault(x => x.Id == jobId);
+
+            if (currentJob?.Status == "Cancelled")
+                return false;
+
+            if (currentJob?.Status != "Paused")
+                return true;
+
+            await Task.Delay(750, cancellationToken);
+        }
+    }
+
+    private sealed record BulkTargetOutcome(bool Success, int Attempts, string? Error);
 }
