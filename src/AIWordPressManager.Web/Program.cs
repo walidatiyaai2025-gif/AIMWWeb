@@ -11,8 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Required by services that create outbound HTTP requests, such as the broken-link scanner.
 builder.Services.AddHttpClient();
+builder.Services.AddHealthChecks();
 
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
@@ -25,6 +25,7 @@ builder.Services.AddScoped<WordPressTaxonomyWebService>();
 builder.Services.AddScoped<WordPressCommentsWebService>();
 builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
+builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
 
 var app = builder.Build();
@@ -44,6 +45,10 @@ using (var scope = app.Services.CreateScope())
     var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializationService>();
     await initializer.InitializeAsync();
 }
+
+app.MapHealthChecks("/health/live");
+app.MapGet("/health/details", async (SystemHealthWebService service, CancellationToken cancellationToken) =>
+    Results.Ok(await service.CheckAsync(cancellationToken)));
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
