@@ -1,7 +1,5 @@
-using System.Net.Http.Headers;
-using System.Text;
+using System.Net;
 using System.Text.Json;
-using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Persistence;
@@ -11,8 +9,7 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class WordPressSyncWebService(
     AppDbContext dbContext,
-    IHttpClientFactory httpClientFactory,
-    ISecretProtectionService secretProtectionService,
+    IWordPressApiClient wordPressApiClient,
     IWordPressContentStore contentStore,
     ExecutionOperationTracker executionTracker)
 {
@@ -26,34 +23,15 @@ public sealed class WordPressSyncWebService(
         var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 6);
         try
         {
-            executionTracker.Report(jobId, 1, 6, "Reading WordPress credentials.");
-            var credential = await dbContext.SiteCredentials.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken)
-                ?? throw new InvalidOperationException("احفظ بيانات اتصال WordPress واختبرها أولًا.");
-
-            string password;
-            try
-            {
-                password = await secretProtectionService.UnprotectAsync(credential.ProtectedApplicationPassword, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("تعذر قراءة كلمة المرور المشفرة. أعد حفظ بيانات الاتصال.", ex);
-            }
-
+            executionTracker.Report(jobId, 1, 6, "Preparing the unified WordPress API client.");
             executionTracker.Report(jobId, 2, 6, "Connecting to WordPress REST API.");
-            var client = httpClientFactory.CreateClient(nameof(WordPressSyncWebService));
-            client.Timeout = TimeSpan.FromMinutes(3);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("AIWordPressManager/1.0");
-            var rawCredential = $"{credential.UserName}:{password.Replace(" ", string.Empty, StringComparison.Ordinal)}";
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(rawCredential)));
-            var root = site.SiteUrl.TrimEnd('/');
-
             executionTracker.Report(jobId, 3, 6, "Downloading posts, pages, taxonomies and media.");
-            var postsTask = LoadContentAsync(client, $"{root}/wp-json/wp/v2/posts", cancellationToken);
-            var pagesTask = LoadContentAsync(client, $"{root}/wp-json/wp/v2/pages", cancellationToken);
-            var categoriesTask = LoadTermsAsync(client, $"{root}/wp-json/wp/v2/categories", cancellationToken);
-            var tagsTask = LoadTermsAsync(client, $"{root}/wp-json/wp/v2/tags", cancellationToken);
-            var mediaTask = LoadMediaAsync(client, $"{root}/wp-json/wp/v2/media", cancellationToken);
+
+            var postsTask = LoadContentAsync(siteId, "/wp-json/wp/v2/posts", cancellationToken);
+            var pagesTask = LoadContentAsync(siteId, "/wp-json/wp/v2/pages", cancellationToken);
+            var categoriesTask = LoadTermsAsync(siteId, "/wp-json/wp/v2/categories", cancellationToken);
+            var tagsTask = LoadTermsAsync(siteId, "/wp-json/wp/v2/tags", cancellationToken);
+            var mediaTask = LoadMediaAsync(siteId, "/wp-json/wp/v2/media", cancellationToken);
 
             await Task.WhenAll(postsTask, pagesTask, categoriesTask, tagsTask, mediaTask);
             var posts = await postsTask;
@@ -111,18 +89,17 @@ public sealed class WordPressSyncWebService(
         return new ContentExplorerView(content, categories, tags, media, totals, lastSync);
     }
 
-    private static async Task<PagedResult<WordPressContentItem>> LoadContentAsync(HttpClient client, string endpoint, CancellationToken ct)
+    private async Task<PagedResult<WordPressContentItem>> LoadContentAsync(Guid siteId, string endpoint, CancellationToken ct)
     {
         var items = new List<WordPressContentItem>();
         var total = 0;
         for (var page = 1; ; page++)
         {
-            using var response = await client.GetAsync($"{endpoint}?context=edit&per_page={PageSize}&page={page}&orderby=modified&order=desc", ct);
-            if ((int)response.StatusCode == 400 && page > 1) break;
-            await EnsureSuccessAsync(response, endpoint, ct);
-            total = ReadTotal(response, total);
-            await using var stream = await response.Content.ReadAsStreamAsync(ct);
-            using var json = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+            var response = await wordPressApiClient.GetAsync(siteId, $"{endpoint}?context=edit&per_page={PageSize}&page={page}&orderby=modified&order=desc", ct);
+            if (response.StatusCode == HttpStatusCode.BadRequest && page > 1) break;
+            EnsureSuccess(response, endpoint);
+            total = ReadTotal(response.Headers, total);
+            using var json = response.Value!;
             var count = 0;
             foreach (var item in json.RootElement.EnumerateArray())
             {
@@ -136,47 +113,61 @@ public sealed class WordPressSyncWebService(
         return new(items, Math.Max(total, items.Count));
     }
 
-    private static async Task<PagedResult<WordPressCategoryItem>> LoadTermsAsync(HttpClient client, string endpoint, CancellationToken ct)
+    private async Task<PagedResult<WordPressCategoryItem>> LoadTermsAsync(Guid siteId, string endpoint, CancellationToken ct)
     {
-        var items = new List<WordPressCategoryItem>(); var total = 0;
+        var items = new List<WordPressCategoryItem>();
+        var total = 0;
         for (var page = 1; ; page++)
         {
-            using var response = await client.GetAsync($"{endpoint}?context=edit&per_page={PageSize}&page={page}&hide_empty=false", ct);
-            if ((int)response.StatusCode == 400 && page > 1) break;
-            await EnsureSuccessAsync(response, endpoint, ct); total = ReadTotal(response, total);
-            await using var stream = await response.Content.ReadAsStreamAsync(ct); using var json = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-            var count = 0; foreach (var item in json.RootElement.EnumerateArray()) { count++; items.Add(new(GetInt(item,"id"),GetString(item,"name"),GetString(item,"slug"),GetInt(item,"count"))); }
+            var response = await wordPressApiClient.GetAsync(siteId, $"{endpoint}?context=edit&per_page={PageSize}&page={page}&hide_empty=false", ct);
+            if (response.StatusCode == HttpStatusCode.BadRequest && page > 1) break;
+            EnsureSuccess(response, endpoint);
+            total = ReadTotal(response.Headers, total);
+            using var json = response.Value!;
+            var count = 0;
+            foreach (var item in json.RootElement.EnumerateArray())
+            {
+                count++;
+                items.Add(new WordPressCategoryItem(GetInt(item, "id"), GetString(item, "name"), GetString(item, "slug"), GetInt(item, "count")));
+            }
             if (count < PageSize || items.Count >= total && total > 0) break;
         }
         return new(items, Math.Max(total, items.Count));
     }
 
-    private static async Task<PagedResult<WordPressMediaItem>> LoadMediaAsync(HttpClient client, string endpoint, CancellationToken ct)
+    private async Task<PagedResult<WordPressMediaItem>> LoadMediaAsync(Guid siteId, string endpoint, CancellationToken ct)
     {
-        var items = new List<WordPressMediaItem>(); var total = 0;
+        var items = new List<WordPressMediaItem>();
+        var total = 0;
         for (var page = 1; ; page++)
         {
-            using var response = await client.GetAsync($"{endpoint}?context=edit&per_page={PageSize}&page={page}&orderby=modified&order=desc", ct);
-            if ((int)response.StatusCode == 400 && page > 1) break;
-            await EnsureSuccessAsync(response, endpoint, ct); total = ReadTotal(response, total);
-            await using var stream = await response.Content.ReadAsStreamAsync(ct); using var json = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-            var count = 0; foreach (var item in json.RootElement.EnumerateArray()) { count++; items.Add(new(GetInt(item,"id"),GetRendered(item,"title"),GetString(item,"slug"),GetString(item,"media_type"),GetString(item,"mime_type"),GetString(item,"source_url"),GetDate(item,"modified_gmt") ?? GetDate(item,"modified"))); }
+            var response = await wordPressApiClient.GetAsync(siteId, $"{endpoint}?context=edit&per_page={PageSize}&page={page}&orderby=modified&order=desc", ct);
+            if (response.StatusCode == HttpStatusCode.BadRequest && page > 1) break;
+            EnsureSuccess(response, endpoint);
+            total = ReadTotal(response.Headers, total);
+            using var json = response.Value!;
+            var count = 0;
+            foreach (var item in json.RootElement.EnumerateArray())
+            {
+                count++;
+                items.Add(new WordPressMediaItem(
+                    GetInt(item, "id"), GetRendered(item, "title"), GetString(item, "slug"), GetString(item, "media_type"),
+                    GetString(item, "mime_type"), GetString(item, "source_url"), GetDate(item, "modified_gmt") ?? GetDate(item, "modified")));
+            }
             if (count < PageSize || items.Count >= total && total > 0) break;
         }
         return new(items, Math.Max(total, items.Count));
     }
 
-    private static async Task EnsureSuccessAsync(HttpResponseMessage response, string endpoint, CancellationToken ct)
+    private static void EnsureSuccess(WordPressApiResponse<JsonDocument> response, string endpoint)
     {
-        if (response.IsSuccessStatusCode) return;
-        var body = await response.Content.ReadAsStringAsync(ct);
-        if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
-            throw new InvalidOperationException("فشل تسجيل الدخول أو لا يملك المستخدم صلاحية قراءة المحتوى.");
-        throw new HttpRequestException($"فشل طلب WordPress ({(int)response.StatusCode}) إلى {endpoint}. {body[..Math.Min(body.Length, 300)]}");
+        if (response.IsSuccess && response.Value is not null) return;
+        throw new InvalidOperationException($"فشل طلب WordPress إلى {endpoint}. {response.ErrorMessage}");
     }
 
-    private static int ReadTotal(HttpResponseMessage response, int fallback) =>
-        response.Headers.TryGetValues("X-WP-Total", out var values) && int.TryParse(values.FirstOrDefault(), out var total) ? total : fallback;
+    private static int ReadTotal(IReadOnlyDictionary<string, string> headers, int fallback) =>
+        headers.TryGetValue("X-WP-Total", out var value) && int.TryParse(value, out var total) ? total : fallback;
+
     private static int GetInt(JsonElement item, string name) => item.TryGetProperty(name, out var value) && value.TryGetInt32(out var result) ? result : 0;
     private static string GetString(JsonElement item, string name) => item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;
     private static string GetRendered(JsonElement item, string name) => item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Object && value.TryGetProperty("rendered", out var rendered) ? rendered.GetString() ?? string.Empty : string.Empty;
