@@ -6,11 +6,30 @@
 <div class="app-shell" dir="@L.Direction">
     <aside class="sidebar">
         <div class="brand"><span class="brand-mark">AI</span><div><strong>@L["AppName"]</strong><small>@L["BlazorServer"]</small></div></div>
-        <nav>
-            <NavLink href="/" Match="NavLinkMatch.All"><span>⌂</span> @L["Dashboard"]</NavLink>
-            <NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink>
-            <NavLink href="/system-health"><span>♥</span> @(L.IsArabic ? "صحة النظام" : "System Health")</NavLink>
-            <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
+        <nav class="main-nav">
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "الرئيسية" : "OVERVIEW")</span>
+                <NavLink href="/" Match="NavLinkMatch.All"><span>⌂</span> @L["Dashboard"]</NavLink>
+                <NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "إدارة WordPress" : "WORDPRESS")</span>
+                <NavLink href="/content-workspace"><span>▣</span> @(L.IsArabic ? "إدارة المحتوى" : "Content Management")</NavLink>
+                <NavLink href="/seo-workspace"><span>◎</span> @(L.IsArabic ? "مساحة SEO" : "SEO Workspace")</NavLink>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "الذكاء والتشغيل" : "AI & OPERATIONS")</span>
+                <NavLink href="/ai-workspace"><span>✦</span> @(L.IsArabic ? "الذكاء الاصطناعي" : "AI Workspace")</NavLink>
+                <NavLink href="/operations-workspace"><span>▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "النظام" : "SYSTEM")</span>
+                <NavLink href="/system-health"><span>♥</span> @(L.IsArabic ? "صحة النظام" : "System Health")</NavLink>
+                <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
+            </div>
         </nav>
         <div class="sidebar-footer">
             <div><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
