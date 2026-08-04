@@ -13,7 +13,7 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "التشغيل التلقائي" : "AUTOMATION")</span>
             <h1>◷ @(L.IsArabic ? "مركز الأتمتة" : "Automation Center")</h1>
-            <p>@(L.IsArabic ? "إنشاء وتشغيل المهام المجدولة وربطها بمركز التنفيذ." : "Create scheduled jobs and route them through the execution center.")</p>
+            <p>@(L.IsArabic ? "إنشاء وتشغيل المهام المجدولة وربطها بالتنفيذ الحقيقي." : "Create scheduled jobs and run them through the real execution engine.")</p>
         </div>
         <button class="btn btn-primary" @onclick="() => NewJob()">＋ @(L.IsArabic ? "مهمة جديدة" : "New automation")</button>
     </section>
@@ -75,7 +75,7 @@
         </article>
 
         <article class="panel automation-list-card">
-            <header><div><h2>@(L.IsArabic ? "المهام المجدولة" : "Scheduled jobs")</h2><small>@(L.IsArabic ? "الفحص كل دقيقة" : "Checked every minute")</small></div><button class="btn" @onclick="() => Reload()">↻</button></header>
+            <header><div><h2>@(L.IsArabic ? "المهام المجدولة" : "Scheduled jobs")</h2><small>@(L.IsArabic ? "الفحص كل 5 ثوانٍ" : "Checked every 5 seconds")</small></div><button class="btn" @onclick="() => Reload()">↻</button></header>
             @if (_jobs.Count == 0)
             {
                 <div class="automation-empty">@(L.IsArabic ? "لا توجد مهام." : "No automations yet.")</div>
@@ -87,11 +87,12 @@
                     <div class="automation-job">
                         <div><strong>@job.Name</strong><small>@job.SiteName · @job.Type</small></div>
                         <div><small>@(L.IsArabic ? "القادم" : "Next")</small><strong>@FormatDate(job.NextRunUtc)</strong></div>
-                        <span class="badge @(job.Enabled ? "success" : "warning")">@(job.Enabled ? "Enabled" : "Disabled")</span>
+                        <span class="badge @StatusClass(job.LastStatus)">@TranslateStatus(job.LastStatus)</span>
                         <div class="automation-job-actions">
-                            <button class="icon-button" @onclick="() => Edit(job)">✎</button>
-                            <button class="icon-button" @onclick="() => Toggle(job)">@(job.Enabled ? "Ⅱ" : "▶")</button>
-                            <button class="icon-button danger" @onclick="() => Delete(job.Id)">×</button>
+                            <button class="icon-button" title="@(L.IsArabic ? "تشغيل الآن" : "Run now")" disabled="@(job.LastStatus == "Running")" @onclick="() => RunNow(job.Id)">▶</button>
+                            <button class="icon-button" title="@(L.IsArabic ? "تعديل" : "Edit")" @onclick="() => Edit(job)">✎</button>
+                            <button class="icon-button" title="@(L.IsArabic ? "تفعيل أو إيقاف" : "Enable or disable")" @onclick="() => Toggle(job)">@(job.Enabled ? "Ⅱ" : "●")</button>
+                            <button class="icon-button danger" title="@(L.IsArabic ? "حذف" : "Delete")" @onclick="() => Delete(job.Id)">×</button>
                         </div>
                     </div>
                 }
@@ -109,14 +110,14 @@
         {
             @foreach (var item in _history.Take(20))
             {
-                <div class="history-row"><strong>@item.JobName</strong><span>@item.Message</span><time>@FormatDate(item.StartedAtUtc)</time><span class="badge">@item.Status</span></div>
+                <div class="history-row"><strong>@item.JobName</strong><span>@item.Message</span><time>@FormatDate(item.StartedAtUtc)</time><span class="badge @StatusClass(item.Status)">@TranslateStatus(item.Status)</span></div>
             }
         }
     </section>
 </div>
 
 <style>
-.automation-page{display:grid;gap:18px}.automation-hero{display:flex;justify-content:space-between;align-items:center;padding:24px}.automation-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.automation-stats article{padding:18px;display:grid;gap:6px}.automation-stats strong{font-size:28px}.automation-stats .small-value{font-size:14px}.automation-grid{display:grid;grid-template-columns:minmax(310px,380px) 1fr;gap:18px}.automation-form,.automation-list-card,.automation-history{padding:20px}.automation-form{display:grid;gap:13px}.automation-form label{display:grid;gap:6px;font-weight:600}.automation-form input,.automation-form select{padding:10px;border:1px solid #d8dde7;border-radius:10px;font-family:Cairo,sans-serif}.automation-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.automation-check{display:flex!important;gap:8px}.automation-actions,.automation-job-actions{display:flex;gap:7px}.automation-list-card header,.automation-history header{display:flex;justify-content:space-between;align-items:center}.automation-job{display:grid;grid-template-columns:1fr 165px 90px 110px;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #e5e8ef}.automation-job>div{display:grid}.automation-job small{opacity:.68}.history-row{display:grid;grid-template-columns:220px 1fr 170px 90px;gap:12px;padding:12px 0;border-bottom:1px solid #e5e8ef}.automation-empty{padding:28px;text-align:center;opacity:.65}.automation-message{padding:12px 16px;border-radius:10px}.automation-message.success{background:#e9f8ef;color:#176e43}.automation-message.error{background:#fdecec;color:#a72828}@@media(max-width:1000px){.automation-grid{grid-template-columns:1fr}.automation-stats{grid-template-columns:repeat(2,1fr)}}@@media(max-width:650px){.automation-hero{flex-direction:column;align-items:flex-start}.automation-stats,.automation-row{grid-template-columns:1fr}.automation-job,.history-row{grid-template-columns:1fr}}
+.automation-page{display:grid;gap:18px}.automation-hero{display:flex;justify-content:space-between;align-items:center;padding:24px}.automation-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.automation-stats article{padding:18px;display:grid;gap:6px}.automation-stats strong{font-size:28px}.automation-stats .small-value{font-size:14px}.automation-grid{display:grid;grid-template-columns:minmax(310px,380px) 1fr;gap:18px}.automation-form,.automation-list-card,.automation-history{padding:20px}.automation-form{display:grid;gap:13px}.automation-form label{display:grid;gap:6px;font-weight:600}.automation-form input,.automation-form select{padding:10px;border:1px solid #d8dde7;border-radius:10px;font-family:Cairo,sans-serif}.automation-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.automation-check{display:flex!important;gap:8px}.automation-actions,.automation-job-actions{display:flex;gap:7px}.automation-list-card header,.automation-history header{display:flex;justify-content:space-between;align-items:center}.automation-job{display:grid;grid-template-columns:1fr 165px 100px 145px;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #e5e8ef}.automation-job>div{display:grid}.automation-job small{opacity:.68}.history-row{display:grid;grid-template-columns:220px 1fr 170px 100px;gap:12px;padding:12px 0;border-bottom:1px solid #e5e8ef}.automation-empty{padding:28px;text-align:center;opacity:.65}.automation-message{padding:12px 16px;border-radius:10px}.automation-message.success{background:#e9f8ef;color:#176e43}.automation-message.error{background:#fdecec;color:#a72828}@@media(max-width:1000px){.automation-grid{grid-template-columns:1fr}.automation-stats{grid-template-columns:repeat(2,1fr)}}@@media(max-width:650px){.automation-hero{flex-direction:column;align-items:flex-start}.automation-stats,.automation-row{grid-template-columns:1fr}.automation-job,.history-row{grid-template-columns:1fr}}
 </style>
 
 @code {
@@ -153,16 +154,35 @@
         return Task.CompletedTask;
     }
 
+    private void RunNow(Guid id)
+    {
+        try
+        {
+            Automation.QueueNow(id);
+            _message = L.IsArabic ? "تم إرسال المهمة للتنفيذ الفوري." : "Automation queued to run now.";
+            _isError = false;
+            Reload();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _isError = true;
+        }
+    }
+
     private void Edit(AutomationJob job)
     {
         _model = new() { Id = job.Id, Name = job.Name, SiteId = job.SiteId, SiteName = job.SiteName, Type = job.Type, Frequency = job.Frequency, IntervalValue = job.IntervalValue, TimeOfDay = job.TimeOfDay, Enabled = job.Enabled, RetryCount = job.RetryCount };
         _selectedSiteId = job.SiteId.ToString();
     }
+
     private void Toggle(AutomationJob job) { Automation.SetEnabled(job.Id, !job.Enabled); Reload(); }
     private void Delete(Guid id) { Automation.Delete(id); Reload(); }
     private void NewJob(bool clearMessage = true) { _model = new(); _selectedSiteId = string.Empty; if (clearMessage) _message = string.Empty; }
     private string FormatNextRun() => _jobs.Where(x => x.Enabled).OrderBy(x => x.NextRunUtc).Select(x => FormatDate(x.NextRunUtc)).FirstOrDefault() ?? L["Never"];
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private string StatusClass(string status) => status switch { "Completed" => "success", "Queued" or "Scheduled" or "Running" => "warning", "Failed" => "danger", _ => string.Empty };
+    private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Completed" => "مكتملة", "Queued" => "في الانتظار", "Scheduled" => "مجدولة", "Running" => "تعمل", "Failed" => "فاشلة", "Disabled" => "متوقفة", _ => status };
     private void LanguageChanged() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= LanguageChanged;
 }
