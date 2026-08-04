@@ -17,17 +17,17 @@
 
             <div class="nav-section">
                 <span class="nav-section-title">@(L.IsArabic ? "إدارة المحتوى" : "CONTENT")</span>
-                <NavLink href="/module/posts"><span>▤</span> @(L.IsArabic ? "المقالات" : "Posts")</NavLink>
-                <NavLink href="/module/pages"><span>▧</span> @(L.IsArabic ? "الصفحات" : "Pages")</NavLink>
-                <NavLink href="/module/media"><span>▣</span> @(L.IsArabic ? "مكتبة الوسائط" : "Media Library")</NavLink>
-                <NavLink href="/module/taxonomy"><span>#</span> @(L.IsArabic ? "التصنيفات والوسوم" : "Categories & Tags")</NavLink>
-                <NavLink href="/module/comments"><span>◌</span> @(L.IsArabic ? "التعليقات" : "Comments")</NavLink>
-                <NavLink href="/module/users"><span>◎</span> @(L.IsArabic ? "المستخدمون والأدوار" : "Users & Roles")</NavLink>
+                <NavLink href="/module/posts"><span>▤</span> @L["Posts"]</NavLink>
+                <NavLink href="/module/pages"><span>▧</span> @L["Pages"]</NavLink>
+                <NavLink href="/module/media"><span>▣</span> @L["MediaManager"]</NavLink>
+                <NavLink href="/module/taxonomy"><span>#</span> @L["CategoriesTags"]</NavLink>
+                <NavLink href="/module/comments"><span>◌</span> @L["Comments"]</NavLink>
+                <NavLink href="/module/users"><span>◎</span> @L["UsersManager"]</NavLink>
             </div>
 
             <div class="nav-section">
                 <span class="nav-section-title">SEO</span>
-                <NavLink href="/module/seo-audit"><span>◈</span> @(L.IsArabic ? "تدقيق SEO" : "SEO Audit")</NavLink>
+                <NavLink href="/module/seo-audit"><span>◈</span> @L["SeoManager"]</NavLink>
                 <NavLink href="/module/seo-suggestions"><span>✦</span> @(L.IsArabic ? "اقتراحات التحسين" : "Suggestions")</NavLink>
                 <NavLink href="/module/approvals"><span>✓</span> @(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</NavLink>
             </div>
@@ -41,7 +41,7 @@
             <div class="nav-section">
                 <span class="nav-section-title">@(L.IsArabic ? "التشغيل والأتمتة" : "OPERATIONS")</span>
                 <NavLink href="/module/execution"><span>▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink>
-                <NavLink href="/module/sync"><span>↻</span> @(L.IsArabic ? "المزامنة" : "Synchronization")</NavLink>
+                <NavLink href="/module/sync"><span>↻</span> @L["ContentSync"]</NavLink>
                 <NavLink href="/module/schedules"><span>◷</span> @(L.IsArabic ? "الجدولة" : "Schedules")</NavLink>
             </div>
 
