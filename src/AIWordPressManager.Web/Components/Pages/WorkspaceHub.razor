@@ -1,0 +1,98 @@
+@page "/content-workspace"
+@page "/seo-workspace"
+@page "/ai-workspace"
+@page "/operations-workspace"
+@inject NavigationManager Navigation
+@inject AppLanguageService L
+
+<PageTitle>@Title</PageTitle>
+
+<div class="page-heading workspace-heading">
+    <div>
+        <span class="workspace-kicker">@Kicker</span>
+        <h1>@Title</h1>
+        <p>@Description</p>
+    </div>
+    <NavLink class="btn primary" href="/sites">@(L.IsArabic ? "اختيار موقع" : "Select Site")</NavLink>
+</div>
+
+<div class="workspace-grid">
+    @foreach (var item in Items)
+    {
+        <article class="card workspace-card">
+            <div class="workspace-card-icon">@item.Icon</div>
+            <div>
+                <h3>@(L.IsArabic ? item.Arabic : item.English)</h3>
+                <p>@(L.IsArabic ? item.ArabicDescription : item.EnglishDescription)</p>
+            </div>
+            <span class="badge @(item.Ready ? "success" : "warning")">
+                @(item.Ready ? (L.IsArabic ? "متاح" : "Available") : (L.IsArabic ? "قيد التطوير" : "In Progress"))
+            </span>
+        </article>
+    }
+</div>
+
+@code {
+    private string Route => new Uri(Navigation.Uri).AbsolutePath.Trim('/').ToLowerInvariant();
+
+    private string Title => Route switch
+    {
+        "content-workspace" => L.IsArabic ? "إدارة محتوى WordPress" : "WordPress Content Management",
+        "seo-workspace" => L.IsArabic ? "مساحة عمل SEO" : "SEO Workspace",
+        "ai-workspace" => L.IsArabic ? "مساحة عمل الذكاء الاصطناعي" : "AI Workspace",
+        _ => L.IsArabic ? "مركز التشغيل والأتمتة" : "Operations & Automation"
+    };
+
+    private string Kicker => Route switch
+    {
+        "content-workspace" => L.IsArabic ? "المحتوى" : "CONTENT",
+        "seo-workspace" => "SEO",
+        "ai-workspace" => "AI",
+        _ => L.IsArabic ? "التشغيل" : "OPERATIONS"
+    };
+
+    private string Description => Route switch
+    {
+        "content-workspace" => L.IsArabic ? "إدارة المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين من مكان واحد." : "Manage posts, pages, media, taxonomies, comments, and users from one workspace.",
+        "seo-workspace" => L.IsArabic ? "فحص المحتوى، ترتيب الأولويات، مراجعة التحسينات، وتنفيذها بأمان." : "Audit content, prioritize issues, review recommendations, and execute improvements safely.",
+        "ai-workspace" => L.IsArabic ? "إدارة مزودي الذكاء الاصطناعي والقوالب والاقتراحات والموافقات." : "Manage AI providers, templates, suggestions, approvals, and automation controls.",
+        _ => L.IsArabic ? "متابعة المهام والمزامنة والتنفيذ والجدولة والمحاولات والأخطاء." : "Track jobs, synchronization, execution, scheduling, retries, and failures."
+    };
+
+    private IReadOnlyList<WorkspaceItem> Items => Route switch
+    {
+        "content-workspace" => new[]
+        {
+            new WorkspaceItem("▣", "المقالات والصفحات", "Posts & Pages", "إنشاء وتعديل وحذف ونشر المحتوى.", "Create, edit, delete, and publish content.", true),
+            new WorkspaceItem("▧", "مكتبة الوسائط", "Media Library", "رفع الصور والملفات وإدارة البيانات الوصفية.", "Upload media and manage metadata.", true),
+            new WorkspaceItem("⌘", "التصنيفات والوسوم", "Categories & Tags", "إدارة هيكل المحتوى والتصنيفات.", "Manage taxonomies and content structure.", true),
+            new WorkspaceItem("◫", "التعليقات", "Comments", "مراجعة واعتماد ورد وحذف التعليقات.", "Moderate, reply to, and delete comments.", true),
+            new WorkspaceItem("♟", "المستخدمون والأدوار", "Users & Roles", "إدارة حسابات WordPress والصلاحيات.", "Manage WordPress accounts and roles.", true),
+            new WorkspaceItem("⇄", "العمليات الجماعية", "Bulk Operations", "تحديد عناصر متعددة وتنفيذ إجراءات موحدة.", "Select multiple items and run common actions.", false)
+        },
+        "seo-workspace" => new[]
+        {
+            new WorkspaceItem("◎", "تدقيق SEO", "SEO Audit", "فحص العناوين والوصف والمحتوى والروابط والصور.", "Audit titles, descriptions, content, links, and images.", true),
+            new WorkspaceItem("★", "الاقتراحات ذات الأولوية", "Prioritized Recommendations", "ترتيب المشاكل حسب التأثير وسهولة التنفيذ.", "Rank issues by impact and implementation effort.", false),
+            new WorkspaceItem("✓", "قائمة الموافقات", "Approval Queue", "مراجعة التغييرات قبل تطبيقها على WordPress.", "Review changes before applying them to WordPress.", false),
+            new WorkspaceItem("↶", "السجل والتراجع", "History & Rollback", "حفظ قبل وبعد وإتاحة الرجوع للتغييرات.", "Store before-and-after states and support rollback.", false)
+        },
+        "ai-workspace" => new[]
+        {
+            new WorkspaceItem("✦", "مزودو الذكاء الاصطناعي", "AI Providers", "إعداد OpenAI وPuter ومزودين إضافيين.", "Configure OpenAI, Puter, and additional providers.", false),
+            new WorkspaceItem("▤", "قوالب الأوامر", "Prompt Templates", "إنشاء قوالب قابلة لإعادة الاستخدام لكل مهمة.", "Create reusable templates for every task.", false),
+            new WorkspaceItem("◈", "اقتراحات الذكاء الاصطناعي", "AI Suggestions", "إنشاء اقتراحات موثقة وقابلة للمراجعة.", "Generate evidence-backed, reviewable suggestions.", false),
+            new WorkspaceItem("⚙", "أوضاع التنفيذ", "Execution Modes", "يدوي، بعد الموافقة، أو تلقائي حسب السياسة.", "Manual, approval-based, or policy-driven automation.", false)
+        },
+        _ => new[]
+        {
+            new WorkspaceItem("▶", "مركز التنفيذ", "Execution Center", "متابعة المهام والتقدم والنتائج.", "Track jobs, progress, and results.", false),
+            new WorkspaceItem("⟳", "المزامنة", "Synchronization", "مزامنة مواقع WordPress مع SQLite.", "Synchronize WordPress sites with SQLite.", true),
+            new WorkspaceItem("◷", "الجدولة", "Scheduling", "تشغيل المهام في أوقات محددة.", "Run jobs on defined schedules.", false),
+            new WorkspaceItem("!", "الأخطاء والمحاولات", "Failures & Retries", "إدارة إعادة المحاولة والإلغاء وفترة التهدئة.", "Manage retries, cancellation, and cooldown.", false),
+            new WorkspaceItem("▥", "السجلات", "Logs", "عرض سجل العمليات والأخطاء التفصيلي.", "View detailed operational and error logs.", false)
+        }
+    };
+
+    private sealed record WorkspaceItem(string Icon, string Arabic, string English, string ArabicDescription, string EnglishDescription, bool Ready);
+}
