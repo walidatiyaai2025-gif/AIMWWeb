@@ -3,7 +3,7 @@
 
 <PageTitle>@Title</PageTitle>
 
-<div class="module-page">
+<div class="module-page module-@Key">
     <div class="module-hero panel">
         <div>
             <span class="workspace-kicker">@Section</span>
@@ -16,47 +16,80 @@
         </div>
     </div>
 
-    <div class="module-stats">
-        @foreach (var stat in Stats)
-        {
-            <div class="panel module-stat"><small>@stat.Label</small><strong>@stat.Value</strong><span>@stat.Note</span></div>
-        }
-    </div>
-
-    <div class="module-layout">
-        <section class="panel module-table-card">
-            <div class="module-toolbar">
-                <div><h2>@(L.IsArabic ? "مساحة العمل" : "Workspace")</h2><small>@(L.IsArabic ? "الشاشة جاهزة لربط البيانات والعمليات" : "Ready for data and operation integration")</small></div>
-                <input placeholder="@(L.IsArabic ? "بحث..." : "Search...")" />
-            </div>
-            <div class="module-empty">
-                <div class="module-empty-icon">@Icon</div>
-                <h3>@(L.IsArabic ? "تم تصميم الشاشة" : "Screen design completed")</h3>
-                <p>@(L.IsArabic ? "سيتم ربط الوظائف الفعلية تدريجيًا ضمن خطة التنفيذ مع الحفاظ على نفس التصميم." : "Live functionality will be connected incrementally while preserving this design.")</p>
-                <span class="badge warning">@(L.IsArabic ? "قيد الربط" : "Integration pending")</span>
-            </div>
-        </section>
-
-        <aside class="panel module-side-card">
-            <h3>@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")</h3>
-            @foreach (var action in Actions)
+    @if (IsContentModule)
+    {
+        <div class="content-screen panel">
+            <div class="screen-toolbar"><input placeholder="@(L.IsArabic ? "ابحث في المحتوى..." : "Search content...")" /><select><option>@(L.IsArabic ? "كل الحالات" : "All statuses")</option></select><button class="btn">@(L.IsArabic ? "تصفية" : "Filter")</button></div>
+            <div class="data-table-head"><span>☐</span><span>@(L.IsArabic ? "العنوان" : "Title")</span><span>@(L.IsArabic ? "الحالة" : "Status")</span><span>@(L.IsArabic ? "التاريخ" : "Date")</span><span>@(L.IsArabic ? "إجراءات" : "Actions")</span></div>
+            @foreach (var row in SampleRows)
             {
-                <button class="module-action"><span>@action.Icon</span><div><strong>@action.Title</strong><small>@action.Note</small></div></button>
+                <div class="data-table-row"><span>□</span><strong>@row</strong><span class="badge success">@(L.IsArabic ? "منشور" : "Published")</span><span>@DateTime.Today.ToString("yyyy-MM-dd")</span><button class="icon-button">⋯</button></div>
             }
-        </aside>
-    </div>
+        </div>
+    }
+    else if (Key == "media")
+    {
+        <div class="media-screen">
+            <div class="media-toolbar panel"><button class="btn btn-primary">＋ @(L.IsArabic ? "رفع ملفات" : "Upload files")</button><input placeholder="@(L.IsArabic ? "بحث في الوسائط..." : "Search media...")" /></div>
+            <div class="media-gallery">@for (var i=1;i<=8;i++){<article class="media-tile panel"><div class="media-placeholder">▧</div><strong>image-@i.jpg</strong><small>1200 × 800</small></article>}</div>
+        </div>
+    }
+    else if (Key.StartsWith("seo"))
+    {
+        <div class="seo-screen">
+            <div class="seo-score-card panel"><div class="seo-ring">78</div><div><h2>@(L.IsArabic ? "درجة صحة SEO" : "SEO Health Score")</h2><p>@(L.IsArabic ? "الموقع جيد ويحتاج بعض التحسينات ذات الأولوية." : "The site is healthy with a few priority improvements.")</p></div></div>
+            <div class="seo-issues">@foreach(var issue in SeoIssues){<article class="panel seo-issue"><span class="seo-severity">!</span><div><strong>@issue</strong><small>@(L.IsArabic ? "اضغط للمراجعة والتطبيق" : "Open to review and apply")</small></div><button class="btn">@(L.IsArabic ? "مراجعة" : "Review")</button></article>}</div>
+        </div>
+    }
+    else if (Key == "ai-providers" || Key == "prompts")
+    {
+        <div class="ai-screen">
+            <div class="provider-grid">@foreach(var provider in Providers){<article class="provider-card panel"><div class="provider-logo">✦</div><h3>@provider</h3><p>@(L.IsArabic ? "إعداد الاتصال والنموذج وحدود الاستخدام." : "Configure connection, model, and usage limits.")</p><div class="provider-footer"><span class="badge warning">@(L.IsArabic ? "غير متصل" : "Not connected")</span><button class="btn">@(L.IsArabic ? "إعداد" : "Configure")</button></div></article>}</div>
+        </div>
+    }
+    else if (Key == "execution" || Key == "sync" || Key == "schedules")
+    {
+        <div class="operations-screen">
+            <div class="queue-columns">
+                @foreach(var column in QueueColumns){<section class="queue-column panel"><header><strong>@column</strong><span class="badge">2</span></header>@for(var i=1;i<=2;i++){<article class="queue-card"><strong>@(L.IsArabic ? "مهمة تشغيل" : "Execution job") #@i</strong><small>@(L.IsArabic ? "آخر تحديث منذ دقيقة" : "Updated one minute ago")</small><div class="progress-line"><span></span></div></article>}</section>}
+            </div>
+        </div>
+    }
+    else if (Key == "logs")
+    {
+        <div class="logs-screen panel">
+            <div class="logs-toolbar"><select><option>Information</option><option>Warning</option><option>Error</option></select><input placeholder="Correlation ID" /><button class="btn">@(L.IsArabic ? "تصدير" : "Export")</button></div>
+            <div class="log-console">@foreach(var log in Logs){<div><time>@DateTime.Now.ToString("HH:mm:ss")</time><span class="log-level">INFO</span><code>@log</code></div>}</div>
+        </div>
+    }
+    else if (Key == "backups")
+    {
+        <div class="backup-screen"><div class="backup-create panel"><div class="backup-icon">⬡</div><div><h2>@(L.IsArabic ? "إنشاء نسخة احتياطية" : "Create backup")</h2><p>@(L.IsArabic ? "قاعدة البيانات والإعدادات والبيانات المحلية." : "Database, settings, and local data.")</p></div><button class="btn btn-primary">@(L.IsArabic ? "إنشاء الآن" : "Create now")</button></div><div class="backup-list panel">@for(var i=1;i<=4;i++){<div class="backup-row"><span>●</span><div><strong>backup-2026-08-0@i.zip</strong><small>24.8 MB</small></div><button class="btn">@(L.IsArabic ? "استعادة" : "Restore")</button></div>}</div></div>
+    }
+    else if (Key == "reports")
+    {
+        <div class="reports-screen"><div class="report-kpis">@foreach(var s in Stats){<article class="panel report-kpi"><small>@s.Label</small><strong>@s.Value</strong><span>@s.Note</span></article>}</div><div class="report-chart panel"><div class="chart-bars">@for(var i=1;i<=12;i++){<span style="height:@(25 + (i*5)%65)%"></span>}</div></div></div>
+    }
+    else
+    {
+        <div class="module-layout"><section class="panel module-table-card"><div class="module-toolbar"><div><h2>@(L.IsArabic ? "مساحة العمل" : "Workspace")</h2><small>@(L.IsArabic ? "تم تجهيز تصميم مستقل لهذه الوحدة" : "A dedicated layout is ready for this module")</small></div></div><div class="module-stats">@foreach(var stat in Stats){<div class="panel module-stat"><small>@stat.Label</small><strong>@stat.Value</strong><span>@stat.Note</span></div>}</div></section></div>
+    }
 </div>
 
 @code {
     [Parameter] public string Key { get; set; } = "overview";
-
+    private bool IsContentModule => Key is "posts" or "pages" or "taxonomy" or "comments" or "users" or "approvals";
     private ModuleDefinition Module => Modules.TryGetValue(Key.ToLowerInvariant(), out var item) ? item : Modules["overview"];
     private string Title => L.IsArabic ? Module.ArTitle : Module.EnTitle;
     private string Description => L.IsArabic ? Module.ArDescription : Module.EnDescription;
     private string Section => L.IsArabic ? Module.ArSection : Module.EnSection;
     private string Icon => Module.Icon;
     private IEnumerable<StatItem> Stats => L.IsArabic ? Module.ArStats : Module.EnStats;
-    private IEnumerable<ActionItem> Actions => L.IsArabic ? Module.ArActions : Module.EnActions;
+    private string[] SampleRows => L.IsArabic ? new[]{"دليل تحسين محركات البحث","إدارة محتوى WordPress","أفضل إعدادات الموقع","خطة المحتوى الشهرية"} : new[]{"SEO optimization guide","WordPress content management","Best site settings","Monthly content plan"};
+    private string[] SeoIssues => L.IsArabic ? new[]{"وصف ميتا مفقود في 12 صفحة","7 صور بدون نص بديل","روابط داخلية ضعيفة في 9 مقالات","عنوانان أطول من الحد الموصى"} : new[]{"Missing meta description on 12 pages","7 images without alt text","Weak internal links in 9 posts","2 titles exceed recommended length"};
+    private string[] Providers => new[]{"OpenAI","Google Gemini","Puter AI","Azure OpenAI"};
+    private string[] QueueColumns => L.IsArabic ? new[]{"قيد الانتظار","قيد التنفيذ","مكتمل"} : new[]{"Queued","Running","Completed"};
+    private string[] Logs => new[]{"Application started successfully","SQLite quick check completed","WordPress synchronization requested","Health endpoint returned 200"};
 
     private static readonly Dictionary<string, ModuleDefinition> Modules = new()
     {
@@ -80,14 +113,7 @@
         ["reports"] = M("▥","التقارير","Reports","التقارير والتصدير","Reports & Exports","تقارير تشغيلية وتصدير PDF وExcel وCSV.","Operational reports and PDF, Excel, CSV exports."),
     };
 
-    private static ModuleDefinition M(string icon,string arSection,string enSection,string arTitle,string enTitle,string arDescription,string enDescription) =>
-        new(icon,arSection,enSection,arTitle,enTitle,arDescription,enDescription,
-            new[]{new StatItem("الإجمالي","0","بانتظار البيانات"),new StatItem("نشط","0","لا توجد عمليات"),new StatItem("يحتاج مراجعة","0","كل شيء مستقر"),new StatItem("آخر تحديث","الآن","بيانات محلية")},
-            new[]{new StatItem("Total","0","Awaiting data"),new StatItem("Active","0","No running jobs"),new StatItem("Needs review","0","Everything stable"),new StatItem("Last update","Now","Local data")},
-            new[]{new ActionItem("＋","إضافة جديد","إنشاء عنصر جديد"),new ActionItem("↻","مزامنة الآن","تحديث البيانات المحلية"),new ActionItem("✓","تنفيذ المحدد","تشغيل آمن مع مراجعة")},
-            new[]{new ActionItem("＋","Add new","Create a new item"),new ActionItem("↻","Sync now","Refresh local data"),new ActionItem("✓","Execute selected","Safe reviewed execution")});
-
-    private sealed record ModuleDefinition(string Icon,string ArSection,string EnSection,string ArTitle,string EnTitle,string ArDescription,string EnDescription,IReadOnlyList<StatItem> ArStats,IReadOnlyList<StatItem> EnStats,IReadOnlyList<ActionItem> ArActions,IReadOnlyList<ActionItem> EnActions);
+    private static ModuleDefinition M(string icon,string arSection,string enSection,string arTitle,string enTitle,string arDescription,string enDescription) => new(icon,arSection,enSection,arTitle,enTitle,arDescription,enDescription,new[]{new StatItem("الإجمالي","128","هذا الشهر"),new StatItem("نشط","24","قيد المتابعة"),new StatItem("يحتاج مراجعة","7","أولوية")},new[]{new StatItem("Total","128","This month"),new StatItem("Active","24","In progress"),new StatItem("Needs review","7","Priority")});
+    private sealed record ModuleDefinition(string Icon,string ArSection,string EnSection,string ArTitle,string EnTitle,string ArDescription,string EnDescription,IReadOnlyList<StatItem> ArStats,IReadOnlyList<StatItem> EnStats);
     private sealed record StatItem(string Label,string Value,string Note);
-    private sealed record ActionItem(string Icon,string Title,string Note);
 }
