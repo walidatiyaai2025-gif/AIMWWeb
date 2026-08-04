@@ -17,6 +17,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
 builder.Services.AddScoped<IWordPressConnectionTester, WordPressConnectionTester>();
+builder.Services.AddScoped<IWordPressApiClient, WordPressApiClient>();
 builder.Services.AddScoped<SiteWebService>();
 builder.Services.AddScoped<WordPressSyncWebService>();
 builder.Services.AddScoped<IWordPressPostEditorService, WordPressPostEditorWebService>();
