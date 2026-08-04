@@ -19,20 +19,35 @@ function Invoke-DotNetProcess {
 
     Write-Host "dotnet $argumentText" -ForegroundColor DarkGray
 
-    $process = Start-Process `
-        -FilePath 'dotnet.exe' `
-        -ArgumentList $argumentText `
-        -WorkingDirectory $root `
-        -NoNewWindow `
-        -Wait `
-        -PassThru
+    $previousErrorAction = $ErrorActionPreference
+    $nativePreferenceExists = Get-Variable PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue
+    $previousNativePreference = $null
 
-    if ($null -eq $process) {
-        throw "$FailureMessage dotnet process could not be started."
+    if ($nativePreferenceExists) {
+        $previousNativePreference = $PSNativeCommandUseErrorActionPreference
+        $PSNativeCommandUseErrorActionPreference = $false
     }
 
-    if ($process.ExitCode -ne 0) {
-        throw "$FailureMessage Exit code: $($process.ExitCode)"
+    try {
+        $ErrorActionPreference = 'Continue'
+        & dotnet.exe @Arguments 2>&1 | ForEach-Object {
+            Write-Host $_
+        }
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+        if ($nativePreferenceExists) {
+            $PSNativeCommandUseErrorActionPreference = $previousNativePreference
+        }
+    }
+
+    if ($null -eq $exitCode) {
+        throw "$FailureMessage dotnet did not return an exit code."
+    }
+
+    if ($exitCode -ne 0) {
+        throw "$FailureMessage Exit code: $exitCode"
     }
 }
 
