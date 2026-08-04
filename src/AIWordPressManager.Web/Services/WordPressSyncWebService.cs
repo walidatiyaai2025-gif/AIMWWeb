@@ -20,12 +20,32 @@ public sealed class WordPressSyncWebService(
         var site = await dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
 
-        var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 6);
+        var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 7);
         try
         {
-            executionTracker.Report(jobId, 1, 6, "Preparing the unified WordPress API client.");
-            executionTracker.Report(jobId, 2, 6, "Connecting to WordPress REST API.");
-            executionTracker.Report(jobId, 3, 6, "Downloading posts, pages, taxonomies and media.");
+            executionTracker.Report(jobId, 1, 7, "Preparing the unified WordPress API client.");
+
+            var lastSync = await GetLastSuccessfulSyncAsync(siteId, cancellationToken);
+            if (lastSync.HasValue)
+            {
+                executionTracker.Report(jobId, 2, 7, $"Checking remote changes since {lastSync.Value:O}.");
+                var delta = await ProbeChangesAsync(siteId, lastSync.Value, cancellationToken);
+                if (!delta.HasChanges)
+                {
+                    var unchangedMessage = "لا توجد تغييرات جديدة في المقالات أو الصفحات أو الوسائط منذ آخر مزامنة.";
+                    executionTracker.Complete(jobId, 7, 7, unchangedMessage);
+                    return new WordPressSyncViewResult(true, unchangedMessage, WordPressSyncSummary.Empty, DateTime.UtcNow, true, 0);
+                }
+
+                executionTracker.Report(jobId, 2, 7, $"Detected {delta.ChangedItems} changed remote items. Starting verified full refresh.");
+            }
+            else
+            {
+                executionTracker.Report(jobId, 2, 7, "No previous synchronization was found. Starting initial full synchronization.");
+            }
+
+            executionTracker.Report(jobId, 3, 7, "Connecting to WordPress REST API.");
+            executionTracker.Report(jobId, 4, 7, "Downloading posts, pages, taxonomies and media.");
 
             var postsTask = LoadContentAsync(siteId, "/wp-json/wp/v2/posts", cancellationToken);
             var pagesTask = LoadContentAsync(siteId, "/wp-json/wp/v2/pages", cancellationToken);
@@ -43,17 +63,18 @@ public sealed class WordPressSyncWebService(
                 categoryShapedTags.Total);
             var media = await mediaTask;
 
-            executionTracker.Report(jobId, 4, 6, $"Downloaded {posts.Total + pages.Total + categories.Total + tags.Total + media.Total} records.");
+            var downloaded = posts.Total + pages.Total + categories.Total + tags.Total + media.Total;
+            executionTracker.Report(jobId, 5, 7, $"Downloaded {downloaded} records.");
             var snapshot = new WordPressExplorerSnapshot(
                 posts.Items, pages.Items, categories.Items, tags.Items, media.Items,
                 posts.Total, pages.Total, categories.Total, tags.Total, media.Total,
                 DateTimeOffset.UtcNow, WordPressSyncSummary.Empty);
 
-            executionTracker.Report(jobId, 5, 6, "Saving synchronized data to the local database.");
+            executionTracker.Report(jobId, 6, 7, "Saving synchronized data to the local database.");
             var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
             var message = $"اكتملت المزامنة: {posts.Total} مقال، {pages.Total} صفحة، {categories.Total} تصنيف، {tags.Total} وسم، {media.Total} ملف وسائط.";
-            executionTracker.Complete(jobId, 6, 6, message);
-            return new WordPressSyncViewResult(true, message, summary, DateTime.UtcNow);
+            executionTracker.Complete(jobId, 7, 7, message);
+            return new WordPressSyncViewResult(true, message, summary, DateTime.UtcNow, false, downloaded);
         }
         catch (Exception ex)
         {
@@ -87,6 +108,42 @@ public sealed class WordPressSyncWebService(
             await dbContext.WordPressMediaRecords.CountAsync(x => x.SiteId == siteId && x.IsAvailable, cancellationToken));
         var lastSync = await dbContext.WordPressContentRecords.Where(x => x.SiteId == siteId).MaxAsync(x => (DateTime?)x.LastSynchronizedAtUtc, cancellationToken);
         return new ContentExplorerView(content, categories, tags, media, totals, lastSync);
+    }
+
+    private async Task<DateTime?> GetLastSuccessfulSyncAsync(Guid siteId, CancellationToken ct)
+    {
+        var contentSync = await dbContext.WordPressContentRecords.AsNoTracking()
+            .Where(x => x.SiteId == siteId)
+            .MaxAsync(x => (DateTime?)x.LastSynchronizedAtUtc, ct);
+        var mediaSync = await dbContext.WordPressMediaRecords.AsNoTracking()
+            .Where(x => x.SiteId == siteId)
+            .MaxAsync(x => (DateTime?)x.LastSynchronizedAtUtc, ct);
+
+        if (!contentSync.HasValue) return mediaSync;
+        if (!mediaSync.HasValue) return contentSync;
+        return contentSync.Value <= mediaSync.Value ? contentSync : mediaSync;
+    }
+
+    private async Task<DeltaProbeResult> ProbeChangesAsync(Guid siteId, DateTime lastSyncUtc, CancellationToken ct)
+    {
+        var safeCursor = lastSyncUtc.ToUniversalTime().AddMinutes(-2).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        var paths = new[]
+        {
+            $"/wp-json/wp/v2/posts?context=edit&per_page=1&modified_after={Uri.EscapeDataString(safeCursor)}&_fields=id,modified_gmt",
+            $"/wp-json/wp/v2/pages?context=edit&per_page=1&modified_after={Uri.EscapeDataString(safeCursor)}&_fields=id,modified_gmt",
+            $"/wp-json/wp/v2/media?context=edit&per_page=1&modified_after={Uri.EscapeDataString(safeCursor)}&_fields=id,modified_gmt"
+        };
+
+        var changed = 0;
+        foreach (var path in paths)
+        {
+            var response = await wordPressApiClient.GetAsync(siteId, path, ct);
+            EnsureSuccess(response, path);
+            changed += ReadTotal(response.Headers, 0);
+            response.Value?.Dispose();
+        }
+
+        return new DeltaProbeResult(changed > 0, changed);
     }
 
     private async Task<PagedResult<WordPressContentItem>> LoadContentAsync(Guid siteId, string endpoint, CancellationToken ct)
@@ -162,6 +219,7 @@ public sealed class WordPressSyncWebService(
     private static void EnsureSuccess(WordPressApiResponse<JsonDocument> response, string endpoint)
     {
         if (response.IsSuccess && response.Value is not null) return;
+        response.Value?.Dispose();
         throw new InvalidOperationException($"فشل طلب WordPress إلى {endpoint}. {response.ErrorMessage}");
     }
 
@@ -173,9 +231,16 @@ public sealed class WordPressSyncWebService(
     private static string GetRendered(JsonElement item, string name) => item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Object && value.TryGetProperty("rendered", out var rendered) ? rendered.GetString() ?? string.Empty : string.Empty;
     private static DateTimeOffset? GetDate(JsonElement item, string name) => DateTimeOffset.TryParse(GetString(item, name), out var value) ? value : null;
     private sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total);
+    private sealed record DeltaProbeResult(bool HasChanges, int ChangedItems);
 }
 
-public sealed record WordPressSyncViewResult(bool IsSuccess, string Message, WordPressSyncSummary Summary, DateTime CompletedAtUtc);
+public sealed record WordPressSyncViewResult(
+    bool IsSuccess,
+    string Message,
+    WordPressSyncSummary Summary,
+    DateTime CompletedAtUtc,
+    bool WasSkipped = false,
+    int DownloadedRecords = 0);
 public sealed record ContentExplorerView(IReadOnlyList<ContentExplorerItem> Content, IReadOnlyList<TaxonomyExplorerItem> Categories, IReadOnlyList<TaxonomyExplorerItem> Tags, IReadOnlyList<MediaExplorerItem> Media, ExplorerTotals Totals, DateTime? LastSynchronizedAtUtc);
 public sealed record ContentExplorerItem(int WordPressId, string ContentType, string Title, string Slug, string Status, string Link, DateTime? ModifiedAtUtc, DateTime LastSynchronizedAtUtc);
 public sealed record TaxonomyExplorerItem(int WordPressId, string Name, string Slug, int Count);
