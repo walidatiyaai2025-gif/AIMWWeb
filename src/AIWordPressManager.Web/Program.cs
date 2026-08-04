@@ -29,6 +29,7 @@ builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
 builder.Services.AddScoped<SeoAuditExecutionService>();
 builder.Services.AddScoped<BulkTrashExecutionService>();
+builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppLanguageService>();
 builder.Services.AddSingleton<BuildInformationService>();
@@ -80,6 +81,15 @@ app.MapPost("/api/sites/{siteId:guid}/content/trash", async (
     Guid siteId,
     BulkTrashRequest request,
     BulkTrashExecutionService service,
+    CancellationToken cancellationToken) =>
+{
+    try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/sites/{siteId:guid}/content/status", async (
+    Guid siteId,
+    BulkStatusRequest request,
+    BulkStatusExecutionService service,
     CancellationToken cancellationToken) =>
 {
     try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); }
