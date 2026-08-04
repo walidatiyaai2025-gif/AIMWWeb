@@ -16,6 +16,13 @@ public interface IWordPressApiClient
         string relativePath,
         object? payload = null,
         CancellationToken cancellationToken = default);
+
+    Task<WordPressApiResponse<JsonDocument>> SendContentAsync(
+        Guid siteId,
+        HttpMethod method,
+        string relativePath,
+        HttpContent content,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record WordPressApiResponse<T>(
