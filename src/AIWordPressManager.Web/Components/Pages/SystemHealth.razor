@@ -1,0 +1,73 @@
+@page "/system-health"
+@inject SystemHealthWebService HealthService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "صحة النظام" : "System Health")</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>@(L.IsArabic ? "صحة النظام والتشخيص" : "System Health & Diagnostics")</h1>
+        <p>@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة SQLite والسجلات." : "Application, local storage, SQLite, and logging diagnostics.")</p>
+    </div>
+    <button class="primary" @onclick="RefreshAsync" disabled="@isLoading">
+        @(isLoading ? (L.IsArabic ? "جارٍ الفحص..." : "Checking...") : (L.IsArabic ? "إعادة الفحص" : "Run checks"))
+    </button>
+</div>
+
+@if (snapshot is null)
+{
+    <div class="panel health-loading">@(L.IsArabic ? "جارٍ تحميل حالة النظام..." : "Loading system status...")</div>
+}
+else
+{
+    <div class="health-summary @(snapshot.IsHealthy ? "healthy" : "unhealthy")">
+        <div>
+            <strong>@(snapshot.IsHealthy ? (L.IsArabic ? "النظام يعمل بصورة سليمة" : "System is healthy") : (L.IsArabic ? "توجد عناصر تحتاج مراجعة" : "Some checks need attention"))</strong>
+            <small>@(L.IsArabic ? "الإصدار" : "Version") @snapshot.Version</small>
+        </div>
+        <span>@snapshot.CheckedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
+    </div>
+
+    <div class="health-grid">
+        @foreach (var check in snapshot.Checks)
+        {
+            <article class="panel health-card @(check.IsHealthy ? "healthy" : "unhealthy")">
+                <div class="health-card-head">
+                    <h3>@CheckTitle(check.Key)</h3>
+                    <span class="health-state">@(check.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "خطأ" : "Failed"))</span>
+                </div>
+                <code>@check.Target</code>
+                <p>@check.Details</p>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    private SystemHealthSnapshot? snapshot;
+    private bool isLoading;
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        isLoading = true;
+        try
+        {
+            snapshot = await HealthService.CheckAsync();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string CheckTitle(string key) => key switch
+    {
+        "application" => L.IsArabic ? "التطبيق وبيئة التشغيل" : "Application runtime",
+        "storage" => L.IsArabic ? "التخزين المحلي" : "Local storage",
+        "sqlite" => L.IsArabic ? "قاعدة بيانات SQLite" : "SQLite database",
+        "logs" => L.IsArabic ? "مجلد السجلات" : "Logs directory",
+        _ => key
+    };
+}
