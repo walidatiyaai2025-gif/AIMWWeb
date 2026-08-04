@@ -46,15 +46,15 @@ public sealed class SiteWebService(
     public async Task<Guid> AddSiteAsync(string name, string url, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new InvalidOperationException("اسم الموقع مطلوب.");
+            throw new InvalidOperationException("Site name is required.");
         if (name.Trim().Length > 150)
-            throw new InvalidOperationException("اسم الموقع طويل جدًا.");
+            throw new InvalidOperationException("Site name cannot exceed 150 characters.");
         if (!Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
-            throw new InvalidOperationException("رابط الموقع غير صالح ويجب أن يبدأ بـ http أو https.");
+            throw new InvalidOperationException("Enter a valid site URL starting with http or https.");
 
         var normalized = uri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
         if (await dbContext.Sites.AnyAsync(x => x.SiteUrl == normalized, cancellationToken))
-            throw new InvalidOperationException("الموقع مضاف بالفعل.");
+            throw new InvalidOperationException("This site has already been added.");
 
         var site = new Site(name.Trim(), new Uri(normalized), DateTime.UtcNow);
         dbContext.Sites.Add(site);
@@ -69,15 +69,25 @@ public sealed class SiteWebService(
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(userName))
-            throw new InvalidOperationException("اسم مستخدم WordPress مطلوب.");
+            throw new InvalidOperationException("WordPress username is required.");
         if (string.IsNullOrWhiteSpace(applicationPassword))
-            throw new InvalidOperationException("كلمة مرور التطبيق مطلوبة.");
-
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
-            ?? throw new InvalidOperationException("الموقع غير موجود.");
+            throw new InvalidOperationException("Application Password is required.");
 
         var cleanUserName = userName.Trim();
         var cleanPassword = applicationPassword.Trim();
+        if (cleanUserName.Length > 100)
+            throw new InvalidOperationException("WordPress username is too long.");
+        if (cleanPassword.Length < 8)
+            throw new InvalidOperationException("Application Password is too short.");
+
+        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
+            ?? throw new InvalidOperationException("Site not found.");
+
+        // Test first. Credentials are persisted only after the tester returns a classified result.
+        var result = await connectionTester.TestAsync(
+            new WordPressConnectionRequest(site.SiteUrl, cleanUserName, cleanPassword),
+            cancellationToken);
+
         var protectedPassword = await secretProtectionService.ProtectAsync(cleanPassword, cancellationToken);
         var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
         if (credential is null)
@@ -91,10 +101,6 @@ public sealed class SiteWebService(
             credential.SetProtectedApplicationPassword(protectedPassword, DateTime.UtcNow);
         }
 
-        var result = await connectionTester.TestAsync(
-            new WordPressConnectionRequest(site.SiteUrl, cleanUserName, cleanPassword),
-            cancellationToken);
-
         ApplyConnectionResult(site, result);
         await dbContext.SaveChangesAsync(cancellationToken);
         return new ConnectionTestViewResult(result.IsSuccess, result.Message, result.Diagnostics);
@@ -103,12 +109,12 @@ public sealed class SiteWebService(
     public async Task<ConnectionTestViewResult> RetestAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
         var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
-            ?? throw new InvalidOperationException("الموقع غير موجود.");
+            ?? throw new InvalidOperationException("Site not found.");
         var credential = await dbContext.SiteCredentials.AsNoTracking()
             .FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
 
         if (credential is null)
-            return new(false, "أدخل بيانات WordPress واحفظها أولًا.", null);
+            return new(false, "Enter and save the WordPress credentials first.", null);
 
         string password;
         try
@@ -119,7 +125,7 @@ public sealed class SiteWebService(
         {
             site.RecordConnectionStatus(SiteConnectionStatus.AuthenticationFailed, DateTime.UtcNow);
             await dbContext.SaveChangesAsync(cancellationToken);
-            return new(false, "تعذر قراءة كلمة المرور المشفّرة. أعد إدخال بيانات الاعتماد.", ex.Message);
+            return new(false, "The encrypted Application Password could not be read. Re-enter the credentials.", ex.Message);
         }
 
         var result = await connectionTester.TestAsync(
@@ -150,9 +156,14 @@ public sealed class SiteWebService(
         if (result.IsSuccess) return SiteConnectionStatus.Connected;
 
         var details = $"{result.Message} {result.Diagnostics}";
-        if (ContainsAny(details, "401", "unauthorized", "incorrect password", "invalid username", "اسم المستخدم", "كلمة المرور"))
+        if (ContainsAny(details,
+            "401", "unauthorized", "authentication", "invalid credentials", "incorrect password",
+            "invalid username", "application password", "اسم المستخدم", "كلمة المرور"))
             return SiteConnectionStatus.AuthenticationFailed;
-        if (ContainsAny(details, "403", "forbidden", "permission", "capability", "صلاحيات", "غير مسموح"))
+
+        if (ContainsAny(details,
+            "403", "forbidden", "permission", "capability", "insufficient privileges",
+            "rest_cannot", "صلاحيات", "غير مسموح"))
             return SiteConnectionStatus.LimitedPermissions;
 
         return SiteConnectionStatus.Unreachable;
