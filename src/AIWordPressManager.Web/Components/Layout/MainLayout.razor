@@ -11,23 +11,49 @@
                 <span class="nav-section-title">@(L.IsArabic ? "الرئيسية" : "OVERVIEW")</span>
                 <NavLink href="/" Match="NavLinkMatch.All"><span>⌂</span> @L["Dashboard"]</NavLink>
                 <NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink>
+                <NavLink href="/module/overview"><span>▦</span> @(L.IsArabic ? "مركز النظام" : "System Overview")</NavLink>
             </div>
 
             <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "إدارة WordPress" : "WORDPRESS")</span>
-                <NavLink href="/content-workspace"><span>▣</span> @(L.IsArabic ? "إدارة المحتوى" : "Content Management")</NavLink>
-                <NavLink href="/seo-workspace"><span>◎</span> @(L.IsArabic ? "مساحة SEO" : "SEO Workspace")</NavLink>
+                <span class="nav-section-title">@(L.IsArabic ? "إدارة المحتوى" : "CONTENT")</span>
+                <NavLink href="/module/posts"><span>▤</span> @(L.IsArabic ? "المقالات" : "Posts")</NavLink>
+                <NavLink href="/module/pages"><span>▧</span> @(L.IsArabic ? "الصفحات" : "Pages")</NavLink>
+                <NavLink href="/module/media"><span>▣</span> @(L.IsArabic ? "مكتبة الوسائط" : "Media Library")</NavLink>
+                <NavLink href="/module/taxonomy"><span>#</span> @(L.IsArabic ? "التصنيفات والوسوم" : "Categories & Tags")</NavLink>
+                <NavLink href="/module/comments"><span>◌</span> @(L.IsArabic ? "التعليقات" : "Comments")</NavLink>
+                <NavLink href="/module/users"><span>◎</span> @(L.IsArabic ? "المستخدمون والأدوار" : "Users & Roles")</NavLink>
             </div>
 
             <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "الذكاء والتشغيل" : "AI & OPERATIONS")</span>
-                <NavLink href="/ai-workspace"><span>✦</span> @(L.IsArabic ? "الذكاء الاصطناعي" : "AI Workspace")</NavLink>
-                <NavLink href="/operations-workspace"><span>▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink>
+                <span class="nav-section-title">SEO</span>
+                <NavLink href="/module/seo-audit"><span>◈</span> @(L.IsArabic ? "تدقيق SEO" : "SEO Audit")</NavLink>
+                <NavLink href="/module/seo-suggestions"><span>✦</span> @(L.IsArabic ? "اقتراحات التحسين" : "Suggestions")</NavLink>
+                <NavLink href="/module/approvals"><span>✓</span> @(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</NavLink>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "الذكاء الاصطناعي" : "AI WORKSPACE")</span>
+                <NavLink href="/module/ai-providers"><span>✦</span> @(L.IsArabic ? "مزودو الذكاء" : "AI Providers")</NavLink>
+                <NavLink href="/module/prompts"><span>⌘</span> @(L.IsArabic ? "قوالب الأوامر" : "Prompt Templates")</NavLink>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "التشغيل والأتمتة" : "OPERATIONS")</span>
+                <NavLink href="/module/execution"><span>▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink>
+                <NavLink href="/module/sync"><span>↻</span> @(L.IsArabic ? "المزامنة" : "Synchronization")</NavLink>
+                <NavLink href="/module/schedules"><span>◷</span> @(L.IsArabic ? "الجدولة" : "Schedules")</NavLink>
+            </div>
+
+            <div class="nav-section">
+                <span class="nav-section-title">@(L.IsArabic ? "التقارير" : "REPORTS")</span>
+                <NavLink href="/module/reports"><span>▥</span> @(L.IsArabic ? "التقارير والتصدير" : "Reports & Exports")</NavLink>
             </div>
 
             <div class="nav-section">
                 <span class="nav-section-title">@(L.IsArabic ? "النظام" : "SYSTEM")</span>
                 <NavLink href="/system-health"><span>♥</span> @(L.IsArabic ? "صحة النظام" : "System Health")</NavLink>
+                <NavLink href="/module/logs"><span>≡</span> @(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</NavLink>
+                <NavLink href="/module/backups"><span>⬡</span> @(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</NavLink>
                 <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
             </div>
         </nav>
@@ -50,11 +76,8 @@
 </div>
 
 @code {
-    private static string AppVersion =>
-        typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "153.1.0";
-
+    private static string AppVersion => typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "153.2.0";
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -62,14 +85,12 @@
         L.SetCulture(culture);
         await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
     }
-
     private async Task ToggleLanguage()
     {
         L.SetCulture(L.IsArabic ? "en" : "ar");
         await JS.InvokeVoidAsync("appLanguage.set", L.Culture);
         await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
     }
-
     private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= OnLanguageChanged;
 }
