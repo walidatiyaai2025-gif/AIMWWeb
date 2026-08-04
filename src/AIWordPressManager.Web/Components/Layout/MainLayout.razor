@@ -11,7 +11,10 @@
             <NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink>
             <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
         </nav>
-        <div class="sidebar-footer"><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
+        <div class="sidebar-footer">
+            <div><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
+            <strong class="app-version">v@AppVersion</strong>
+        </div>
     </aside>
     <main class="main-area">
         <header class="topbar">
@@ -26,6 +29,9 @@
 </div>
 
 @code {
+    private static string AppVersion =>
+        typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "153.0.0";
+
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
