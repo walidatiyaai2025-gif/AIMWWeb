@@ -19,7 +19,10 @@ else
     <div class="content-explorer-page">
         <section class="explorer-hero panel"><div><span class="workspace-kicker">@(L.IsArabic ? "مركز إدارة المحتوى" : "CONTENT OPERATIONS")</span><h1>@L["WordPressExplorer"]</h1><p><strong>@_site.Name</strong> · @L["ExplorerIntro"]</p></div><div class="explorer-hero-actions"><a class="btn" href="@($"/sites/{Id}")">← @L["SiteDetailsButton"]</a><button class="btn primary" @onclick="SynchronizeAsync" disabled="@_syncing">@(_syncing ? L["Syncing"] : $"↻ {L["SyncNow"]}")</button></div></section>
 
-        @if (!string.IsNullOrWhiteSpace(_message)) { <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div> }
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+        }
 
         <section class="explorer-summary-grid">
             <article class="panel explorer-summary-card"><span>▤</span><div><small>@L["Posts"]</small><strong>@(_data?.Totals.Posts ?? 0)</strong><p>@(L.IsArabic ? "مقال محفوظ محليًا" : "Locally cached posts")</p></div></article>
@@ -28,12 +31,23 @@ else
             <article class="panel explorer-summary-card"><span>▣</span><div><small>@L["Media"]</small><strong>@(_data?.Totals.Media ?? 0)</strong><p>@L["LastSync"]: @FormatDate(_data?.LastSynchronizedAtUtc)</p></div></article>
         </section>
 
-        <section class="explorer-nav panel"><button class="explorer-tab @Active("content")" @onclick="() => SetTab("content")">▤ @L["Content"]</button><button class="explorer-tab @Active("categories")" @onclick="() => SetTab("categories")"># @L["Categories"]</button><button class="explorer-tab @Active("tags")" @onclick="() => SetTab("tags")">⌗ @L["Tags"]</button><button class="explorer-tab @Active("media")" @onclick="() => SetTab("media")">▣ @L["Media"]</button><span class="explorer-nav-spacer"></span><a class="explorer-shortcut" href="@($"/sites/{Id}/taxonomy")">@(L.IsArabic ? "إدارة التصنيفات" : "Manage taxonomy")</a><a class="explorer-shortcut" href="@($"/sites/{Id}/seo")">SEO</a></section>
+        <section class="explorer-nav panel">
+            <button class="explorer-tab @Active("content")" @onclick="SetContentTab">▤ @L["Content"]</button>
+            <button class="explorer-tab @Active("categories")" @onclick="SetCategoriesTab"># @L["Categories"]</button>
+            <button class="explorer-tab @Active("tags")" @onclick="SetTagsTab">⌗ @L["Tags"]</button>
+            <button class="explorer-tab @Active("media")" @onclick="SetMediaTab">▣ @L["Media"]</button>
+            <span class="explorer-nav-spacer"></span>
+            <a class="explorer-shortcut" href="@($"/sites/{Id}/taxonomy")">@(L.IsArabic ? "إدارة التصنيفات" : "Manage taxonomy")</a>
+            <a class="explorer-shortcut" href="@($"/sites/{Id}/seo")">SEO</a>
+        </section>
 
         @if (_tab == "content")
         {
             <section class="explorer-toolbar panel"><div class="explorer-search"><span>⌕</span><InputText @bind-Value="_query" @bind-Value:event="oninput" placeholder="@L["SearchPlaceholder"]" /></div><select @bind="_type"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select><select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="publish">@(L.IsArabic ? "منشور" : "Published")</option><option value="draft">@(L.IsArabic ? "مسودة" : "Draft")</option><option value="pending">@(L.IsArabic ? "قيد المراجعة" : "Pending")</option><option value="future">@(L.IsArabic ? "مجدول" : "Scheduled")</option></select><button class="btn" @onclick="ApplyFiltersAsync">@L["Search"]</button></section>
-            @if (_selected.Count > 0) { <section class="bulk-action-bar panel"><strong>@(L.IsArabic ? $"تم تحديد {_selected.Count} عنصر" : $"{_selected.Count} items selected")</strong><button class="btn">@(L.IsArabic ? "إرسال للمراجعة" : "Send for review")</button><button class="btn">@(L.IsArabic ? "تحسين SEO" : "Optimize SEO")</button><button class="btn danger">@L["Delete"]</button><button class="icon-button" @onclick="ClearSelection">×</button></section> }
+            @if (_selected.Count > 0)
+            {
+                <section class="bulk-action-bar panel"><strong>@(L.IsArabic ? $"تم تحديد {_selected.Count} عنصر" : $"{_selected.Count} items selected")</strong><button class="btn">@(L.IsArabic ? "إرسال للمراجعة" : "Send for review")</button><button class="btn">@(L.IsArabic ? "تحسين SEO" : "Optimize SEO")</button><button class="btn danger">@L["Delete"]</button><button class="icon-button" @onclick="ClearSelection">×</button></section>
+            }
         }
 
         @if (_data is null || (_data.Content.Count == 0 && _data.Categories.Count == 0 && _data.Tags.Count == 0 && _data.Media.Count == 0))
@@ -83,6 +97,10 @@ else
     private async Task ReloadDataAsync() { _data = await SyncService.GetExplorerAsync(Id, _query, _type); _page = 1; _selected.Clear(); }
     private async Task ApplyFiltersAsync() => await ReloadDataAsync();
     private void SetTab(string tab) { _tab = tab; _selected.Clear(); }
+    private void SetContentTab() => SetTab("content");
+    private void SetCategoriesTab() => SetTab("categories");
+    private void SetTagsTab() => SetTab("tags");
+    private void SetMediaTab() => SetTab("media");
     private string Active(string tab) => _tab == tab ? "active" : "";
     private void PreviousPage() { if (_page > 1) _page--; }
     private void NextPage() { if (_page < TotalPages) _page++; }
