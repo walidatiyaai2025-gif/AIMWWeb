@@ -11,15 +11,17 @@ public sealed class WordPressSyncWebService(
     AppDbContext dbContext,
     IWordPressApiClient wordPressApiClient,
     IWordPressContentStore contentStore,
-    ExecutionOperationTracker executionTracker)
+    ExecutionOperationTracker executionTracker,
+    AppNotificationService notifications)
 {
     private const int PageSize = 100;
 
     public async Task<WordPressSyncViewResult> SynchronizeAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
         var site = await dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
-            ?? throw new InvalidOperationException("الموقع غير موجود.");
+            ?? throw new InvalidOperationException("Site was not found.");
 
+        notifications.Info($"Synchronization started for {site.Name}.", "Synchronization");
         var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 7);
         try
         {
@@ -32,8 +34,9 @@ public sealed class WordPressSyncWebService(
                 var delta = await ProbeChangesAsync(siteId, lastSync.Value, cancellationToken);
                 if (!delta.HasChanges)
                 {
-                    var unchangedMessage = "لا توجد تغييرات جديدة في المقالات أو الصفحات أو الوسائط منذ آخر مزامنة.";
+                    const string unchangedMessage = "No new post, page, or media changes were found since the last synchronization.";
                     executionTracker.Complete(jobId, 7, 7, unchangedMessage);
+                    notifications.Info(unchangedMessage, "Synchronization complete");
                     return new WordPressSyncViewResult(true, unchangedMessage, WordPressSyncSummary.Empty, DateTime.UtcNow, true, 0);
                 }
 
@@ -72,13 +75,15 @@ public sealed class WordPressSyncWebService(
 
             executionTracker.Report(jobId, 6, 7, "Saving synchronized data to the local database.");
             var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
-            var message = $"اكتملت المزامنة: {posts.Total} مقال، {pages.Total} صفحة، {categories.Total} تصنيف، {tags.Total} وسم، {media.Total} ملف وسائط.";
+            var message = $"Synchronization completed: {posts.Total} posts, {pages.Total} pages, {categories.Total} categories, {tags.Total} tags, and {media.Total} media items.";
             executionTracker.Complete(jobId, 7, 7, message);
+            notifications.Success(message, "Synchronization complete");
             return new WordPressSyncViewResult(true, message, summary, DateTime.UtcNow, false, downloaded);
         }
         catch (Exception ex)
         {
             executionTracker.Fail(jobId, ex.Message);
+            notifications.Error("WordPress synchronization failed.", "Synchronization failed", ex.ToString());
             throw;
         }
     }
@@ -220,7 +225,7 @@ public sealed class WordPressSyncWebService(
     {
         if (response.IsSuccess && response.Value is not null) return;
         response.Value?.Dispose();
-        throw new InvalidOperationException($"فشل طلب WordPress إلى {endpoint}. {response.ErrorMessage}");
+        throw new InvalidOperationException($"WordPress request to {endpoint} failed. {response.ErrorMessage}");
     }
 
     private static int ReadTotal(IReadOnlyDictionary<string, string> headers, int fallback) =>
