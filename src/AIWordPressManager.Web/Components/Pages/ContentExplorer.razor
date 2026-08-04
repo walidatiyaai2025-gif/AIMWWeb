@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject WordPressSyncWebService SyncService
+@inject IWordPressPostEditorService EditorService
 @inject AppLanguageService L
 <PageTitle>@L["WordPressExplorer"]</PageTitle>
 
@@ -17,7 +18,7 @@ else if (_site is null)
 else
 {
     <div class="content-explorer-page">
-        <section class="explorer-hero panel"><div><span class="workspace-kicker">@(L.IsArabic ? "مركز إدارة المحتوى" : "CONTENT OPERATIONS")</span><h1>@L["WordPressExplorer"]</h1><p><strong>@_site.Name</strong> · @L["ExplorerIntro"]</p></div><div class="explorer-hero-actions"><a class="btn" href="@($"/sites/{Id}")">← @L["SiteDetailsButton"]</a><button class="btn primary" @onclick="SynchronizeAsync" disabled="@_syncing">@(_syncing ? L["Syncing"] : $"↻ {L["SyncNow"]}")</button></div></section>
+        <section class="explorer-hero panel"><div><span class="workspace-kicker">@(L.IsArabic ? "مركز إدارة المحتوى" : "CONTENT OPERATIONS")</span><h1>@L["WordPressExplorer"]</h1><p><strong>@_site.Name</strong> · @L["ExplorerIntro"]</p></div><div class="explorer-hero-actions"><a class="btn" href="@($"/sites/{Id}")">← @L["SiteDetailsButton"]</a><button class="btn primary" @onclick="SynchronizeAsync" disabled="@(_syncing || _bulkRunning)">@(_syncing ? L["Syncing"] : $"↻ {L["SyncNow"]}")</button></div></section>
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
@@ -46,7 +47,13 @@ else
             <section class="explorer-toolbar panel"><div class="explorer-search"><span>⌕</span><InputText @bind-Value="_query" @bind-Value:event="oninput" placeholder="@L["SearchPlaceholder"]" /></div><select @bind="_type"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select><select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="publish">@(L.IsArabic ? "منشور" : "Published")</option><option value="draft">@(L.IsArabic ? "مسودة" : "Draft")</option><option value="pending">@(L.IsArabic ? "قيد المراجعة" : "Pending")</option><option value="future">@(L.IsArabic ? "مجدول" : "Scheduled")</option></select><button class="btn" @onclick="ApplyFiltersAsync">@L["Search"]</button></section>
             @if (_selected.Count > 0)
             {
-                <section class="bulk-action-bar panel"><strong>@(L.IsArabic ? $"تم تحديد {_selected.Count} عنصر" : $"{_selected.Count} items selected")</strong><button class="btn">@(L.IsArabic ? "إرسال للمراجعة" : "Send for review")</button><button class="btn">@(L.IsArabic ? "تحسين SEO" : "Optimize SEO")</button><button class="btn danger">@L["Delete"]</button><button class="icon-button" @onclick="ClearSelection">×</button></section>
+                <section class="bulk-action-bar panel">
+                    <strong>@(L.IsArabic ? $"تم تحديد {_selected.Count} عنصر" : $"{_selected.Count} items selected")</strong>
+                    <button class="btn" disabled="@_bulkRunning" @onclick="BulkPendingAsync">@(_bulkRunning ? (L.IsArabic ? "جارٍ التنفيذ..." : "Working...") : (L.IsArabic ? "إرسال للمراجعة" : "Send for review"))</button>
+                    <button class="btn primary" disabled="@_bulkRunning" @onclick="BulkPublishAsync">@(L.IsArabic ? "نشر" : "Publish")</button>
+                    <button class="btn" disabled="@_bulkRunning" @onclick="BulkDraftAsync">@(L.IsArabic ? "تحويل لمسودة" : "Move to draft")</button>
+                    <button class="icon-button" disabled="@_bulkRunning" @onclick="ClearSelection">×</button>
+                </section>
             }
         }
 
@@ -59,7 +66,8 @@ else
             <section class="panel explorer-table-panel"><div class="explorer-table-head"><span><input type="checkbox" checked="@AllPageSelected" @onchange="TogglePageSelection" /></span><span>@L["Title"]</span><span>@L["Type"]</span><span>@L["Status"]</span><span>@L["LastModified"]</span><span>@L["Actions"]</span></div>
                 @foreach (var item in PagedContent)
                 {
-                    <article class="explorer-table-row @(_selected.Contains(item.WordPressId) ? "selected" : "")"><span><input type="checkbox" checked="@_selected.Contains(item.WordPressId)" @onchange="e => ToggleItem(item.WordPressId, e)" /></span><div class="content-title-cell"><strong>@PlainText(item.Title)</strong><small>/@item.Slug</small></div><span class="content-type-pill">@(item.ContentType == "post" ? L["Post"] : L["Page"])</span><span class="badge @(item.Status == "publish" ? "success" : item.Status == "draft" ? "warning" : "")">@TranslateStatus(item.Status)</span><time>@FormatDate(item.ModifiedAtUtc)</time><div class="table-actions"><a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Edit"]</a>@if (!string.IsNullOrWhiteSpace(item.Link)) { <a class="btn compact" href="@item.Link" target="_blank">↗</a> }</div></article>
+                    var key = ContentKey(item);
+                    <article class="explorer-table-row @(_selected.Contains(key) ? "selected" : "")"><span><input type="checkbox" checked="@_selected.Contains(key)" @onchange="e => ToggleItem(key, e)" /></span><div class="content-title-cell"><strong>@PlainText(item.Title)</strong><small>/@item.Slug</small></div><span class="content-type-pill">@(item.ContentType == "post" ? L["Post"] : L["Page"])</span><span class="badge @(item.Status == "publish" ? "success" : item.Status == "draft" ? "warning" : "")">@TranslateStatus(item.Status)</span><time>@FormatDate(item.ModifiedAtUtc)</time><div class="table-actions"><a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Edit"]</a>@if (!string.IsNullOrWhiteSpace(item.Link)) { <a class="btn compact" href="@item.Link" target="_blank">↗</a> }</div></article>
                 }
                 <footer class="explorer-pagination"><span>@(L.IsArabic ? $"صفحة {_page} من {TotalPages}" : $"Page {_page} of {TotalPages}")</span><div><button class="btn compact" disabled="@(_page <= 1)" @onclick="PreviousPage">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_page >= TotalPages)" @onclick="NextPage">@(L.IsArabic ? "التالي" : "Next")</button></div></footer></section>
         }
@@ -79,21 +87,71 @@ else
     [Parameter] public Guid Id { get; set; }
     private AIWordPressManager.Domain.Entities.Site? _site;
     private ContentExplorerView? _data;
-    private bool _loading = true, _syncing, _isError;
+    private bool _loading = true, _syncing, _bulkRunning, _isError;
     private string _tab = "content", _type = "all", _status = "all", _query = "";
     private string? _message;
-    private readonly HashSet<int> _selected = [];
+    private readonly HashSet<string> _selected = [];
     private int _page = 1;
     private const int PageSize = 10;
 
     private IEnumerable<ContentExplorerItem> FilteredContent => (_data?.Content ?? Array.Empty<ContentExplorerItem>()).Where(x => _status == "all" || x.Status == _status);
     private IEnumerable<ContentExplorerItem> PagedContent => FilteredContent.Skip((_page - 1) * PageSize).Take(PageSize);
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredContent.Count() / (double)PageSize));
-    private bool AllPageSelected => PagedContent.Any() && PagedContent.All(x => _selected.Contains(x.WordPressId));
+    private bool AllPageSelected => PagedContent.Any() && PagedContent.All(x => _selected.Contains(ContentKey(x)));
 
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnParametersSetAsync() { _loading = true; _site = await SiteService.GetSiteAsync(Id); await ReloadDataAsync(); _loading = false; }
-    private async Task SynchronizeAsync() { try { _syncing = true; _isError = false; var result = await SyncService.SynchronizeAsync(Id); _message = L.TranslateMessage(result.Message); await ReloadDataAsync(); } catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); } finally { _syncing = false; } }
+
+    private async Task SynchronizeAsync()
+    {
+        try { _syncing = true; _isError = false; var result = await SyncService.SynchronizeAsync(Id); _message = L.TranslateMessage(result.Message); await ReloadDataAsync(); }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _syncing = false; }
+    }
+
+    private async Task ExecuteBulkStatusAsync(string status)
+    {
+        if (_data is null || _selected.Count == 0) return;
+        try
+        {
+            _bulkRunning = true; _isError = false; _message = null;
+            var targets = _data.Content.Where(x => _selected.Contains(ContentKey(x))).ToList();
+            var succeeded = 0;
+            var failed = new List<string>();
+
+            foreach (var item in targets)
+            {
+                var current = await EditorService.GetAsync(Id, item.ContentType, item.WordPressId);
+                if (current.IsFailure)
+                {
+                    failed.Add($"{PlainText(item.Title)}: {current.Error.Message}");
+                    continue;
+                }
+
+                var value = current.Value;
+                var request = new WordPressContentUpdateRequest(
+                    value.ContentType, value.Id, value.Title, value.Slug, status, value.Content, value.Excerpt,
+                    value.DateGmt, value.FeaturedMediaId, value.CategoryIds, value.TagIds, value.Template,
+                    value.CommentStatus, value.PingStatus, value.Format, value.Sticky);
+                var result = await EditorService.UpdateAsync(Id, request);
+                if (result.IsSuccess) succeeded++;
+                else failed.Add($"{PlainText(item.Title)}: {result.Error.Message}");
+            }
+
+            await SyncService.SynchronizeAsync(Id);
+            await ReloadDataAsync();
+            _isError = failed.Count > 0;
+            _message = L.IsArabic
+                ? $"تم تحديث {succeeded} عنصر بنجاح" + (failed.Count > 0 ? $"، وفشل {failed.Count}: {string.Join(" | ", failed.Take(3))}" : ".")
+                : $"Updated {succeeded} item(s) successfully" + (failed.Count > 0 ? $"; {failed.Count} failed: {string.Join(" | ", failed.Take(3))}" : ".");
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _bulkRunning = false; }
+    }
+
+    private Task BulkPendingAsync() => ExecuteBulkStatusAsync("pending");
+    private Task BulkPublishAsync() => ExecuteBulkStatusAsync("publish");
+    private Task BulkDraftAsync() => ExecuteBulkStatusAsync("draft");
     private async Task ReloadDataAsync() { _data = await SyncService.GetExplorerAsync(Id, _query, _type); _page = 1; _selected.Clear(); }
     private async Task ApplyFiltersAsync() => await ReloadDataAsync();
     private void SetTab(string tab) { _tab = tab; _selected.Clear(); }
@@ -105,8 +163,9 @@ else
     private void PreviousPage() { if (_page > 1) _page--; }
     private void NextPage() { if (_page < TotalPages) _page++; }
     private void ClearSelection() => _selected.Clear();
-    private void ToggleItem(int id, ChangeEventArgs e) { if (e.Value is bool selected && selected) _selected.Add(id); else _selected.Remove(id); }
-    private void TogglePageSelection(ChangeEventArgs e) { var selected = e.Value is bool value && value; foreach (var item in PagedContent) { if (selected) _selected.Add(item.WordPressId); else _selected.Remove(item.WordPressId); } }
+    private static string ContentKey(ContentExplorerItem item) => $"{item.ContentType}:{item.WordPressId}";
+    private void ToggleItem(string key, ChangeEventArgs e) { if (e.Value is bool selected && selected) _selected.Add(key); else _selected.Remove(key); }
+    private void TogglePageSelection(ChangeEventArgs e) { var selected = e.Value is bool value && value; foreach (var item in PagedContent) { var key = ContentKey(item); if (selected) _selected.Add(key); else _selected.Remove(key); } }
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private string TranslateStatus(string status) => L.IsArabic ? status switch { "publish" => "منشور", "draft" => "مسودة", "pending" => "قيد المراجعة", "private" => "خاص", "future" => "مجدول", _ => status } : status switch { "publish" => "Published", "draft" => "Draft", "pending" => "Pending Review", "private" => "Private", "future" => "Scheduled", _ => status };
     private static string PlainText(string value) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value ?? "", "<.*?>", ""));
