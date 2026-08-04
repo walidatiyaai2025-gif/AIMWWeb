@@ -19,6 +19,10 @@ public sealed record BulkContentOperationRequest(
     Guid SiteId,
     string SiteName,
     string TargetStatus,
-    IReadOnlyList<BulkContentTarget> Targets);
+    IReadOnlyList<BulkContentTarget> Targets,
+    int RetryCount = 2)
+{
+    public int NormalizedRetryCount => Math.Clamp(RetryCount, 0, 5);
+}
 
 public sealed record BulkContentTarget(string ContentType, int WordPressId, string Title);
