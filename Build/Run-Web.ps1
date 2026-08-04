@@ -61,12 +61,20 @@ if (-not (Test-Path $webDll)) { throw "Build succeeded but the web DLL was not c
 Write-Host "Compiled web application: $webDll" -ForegroundColor DarkGreen
 Start-Process powershell -ArgumentList '-NoProfile','-WindowStyle','Hidden','-Command',"Start-Sleep -Seconds 5; Start-Process 'https://localhost:$port'"
 Write-Host 'Starting Blazor Server...' -ForegroundColor Green
+Write-Host 'Press Ctrl+C to stop the website.' -ForegroundColor DarkGray
 
 Push-Location $webProjectDir
 try {
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:ASPNETCORE_URLS = "https://localhost:$port;http://localhost:5148"
     & dotnet $webDll
-    if ($LASTEXITCODE -ne 0) { throw "Website stopped with exit code $LASTEXITCODE" }
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -eq 0 -or $exitCode -eq -1) {
+        Write-Host 'Website stopped normally.' -ForegroundColor Yellow
+        exit 0
+    }
+
+    throw "Website stopped unexpectedly with exit code $exitCode"
 }
 finally { Pop-Location }
