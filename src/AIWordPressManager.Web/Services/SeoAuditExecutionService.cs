@@ -2,7 +2,8 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class SeoAuditExecutionService(
     SeoAnalysisWebService seoAnalysis,
-    ExecutionOperationTracker executionTracker)
+    ExecutionOperationTracker executionTracker,
+    AppNotificationService notifications)
 {
     public async Task<SeoAuditExecutionResult> RunAsync(
         Guid siteId,
@@ -14,6 +15,10 @@ public sealed class SeoAuditExecutionService(
             siteId.ToString(),
             4);
 
+        notifications.Info(
+            "The SEO audit has started. Progress is available in Execution Center.",
+            "SEO Audit");
+
         try
         {
             executionTracker.Report(jobId, 1, 4, "Loading synchronized WordPress content from SQLite.");
@@ -23,7 +28,7 @@ public sealed class SeoAuditExecutionService(
                 cancellationToken: cancellationToken);
 
             if (analysis is null)
-                throw new InvalidOperationException("الموقع غير موجود.");
+                throw new InvalidOperationException("Site not found.");
 
             executionTracker.Report(
                 jobId,
@@ -51,6 +56,7 @@ public sealed class SeoAuditExecutionService(
                 $"{analysis.Summary.TotalIssues} issues.";
 
             executionTracker.Complete(jobId, 4, 4, message);
+            notifications.Success(message, "SEO Audit Completed");
 
             return new SeoAuditExecutionResult(
                 true,
@@ -63,6 +69,10 @@ public sealed class SeoAuditExecutionService(
         catch (Exception ex)
         {
             executionTracker.Fail(jobId, ex.Message);
+            notifications.Error(
+                "The SEO audit failed. Open the details for the technical error.",
+                "SEO Audit Failed",
+                ex.ToString());
             throw;
         }
     }
