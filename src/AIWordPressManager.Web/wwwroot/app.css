@@ -6,4 +6,8 @@
 .avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--border)}
 @media(max-width:1050px){.users-editor-grid{grid-template-columns:1fr}}
 
-.sidebar-footer{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}.app-version{font-weight:800;letter-spacing:.04em;color:var(--accent,#c8a45c);white-space:nowrap}
+.sidebar-footer{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;padding-top:.75rem;border-top:1px solid var(--border)}
+.app-version,.topbar-version{font-weight:900;letter-spacing:.05em;color:var(--accent,#c8a45c);white-space:nowrap;text-shadow:0 0 14px rgba(200,164,92,.18)}
+.app-version{font-size:.88rem}
+.topbar-version{display:inline-flex;align-items:center;min-height:38px;padding:.4rem .75rem;border:1px solid rgba(200,164,92,.35);border-radius:.65rem;background:rgba(200,164,92,.08);font-size:.82rem}
+@media(max-width:760px){.topbar-version{display:none}}
