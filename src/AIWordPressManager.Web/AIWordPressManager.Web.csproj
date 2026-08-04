@@ -3,15 +3,18 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>153.0.0</Version>
-    <AssemblyVersion>153.0.0.0</AssemblyVersion>
-    <FileVersion>153.0.0.0</FileVersion>
-    <InformationalVersion>153.0.0</InformationalVersion>
+    <Version>153.1.0</Version>
+    <AssemblyVersion>153.1.0.0</AssemblyVersion>
+    <FileVersion>153.1.0.0</FileVersion>
+    <InformationalVersion>153.1.0</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\AIWordPressManager.Application\AIWordPressManager.Application.csproj" />
     <ProjectReference Include="..\AIWordPressManager.Domain\AIWordPressManager.Domain.csproj" />
     <ProjectReference Include="..\AIWordPressManager.Infrastructure\AIWordPressManager.Infrastructure.csproj" />
     <ProjectReference Include="..\AIWordPressManager.Persistence\AIWordPressManager.Persistence.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>
 </Project>
