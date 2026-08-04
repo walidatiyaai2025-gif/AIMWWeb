@@ -135,8 +135,8 @@
     private void Fail(string message) { _isError = true; _message = message; }
     private async Task DeleteAsync(Guid id) { await SiteService.DeleteSiteAsync(id); _message = L["DeletedSuccess"]; _isError = false; await ReloadAsync(); }
     private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch { AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => L["Connected"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable => L["Unreachable"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed => L["AuthFailed"], _ => L["NotTested"] };
-    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? "connected" : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested ? "neutral" : "problem";
-    private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? 100 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested ? 35 : 15;
+    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? "connected" : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown ? "neutral" : "problem";
+    private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? 100 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown ? 35 : 15;
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private static string Initials(string name) { var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries); return string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0]))); }
     private void Changed() => InvokeAsync(StateHasChanged);
