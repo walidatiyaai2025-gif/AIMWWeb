@@ -5,27 +5,141 @@
 @inject AppLanguageService L
 <PageTitle>@L["Sites"]</PageTitle>
 
-<div class="page-heading"><div><h1>@L["Sites"]</h1><p>@L["SitesIntro"]</p></div><button class="btn primary" @onclick="OpenForm">+ @L["AddSite"]</button></div>
-@if (!string.IsNullOrWhiteSpace(_message)){<div class="alert @(_isError?"error":"success")">@_message</div>}
-@if (_showForm){<div class="panel form-panel"><h3>@L["AddNewSite"]</h3>
-<EditForm Model="_model" OnSubmit="SaveAsync"><div class="form-grid"><label>@L["SiteName"]<InputText @bind-Value="_model.Name" /></label><label>@L["SiteUrl"]<InputText @bind-Value="_model.Url" placeholder="https://example.com" /></label></div>
-<div class="actions"><button type="submit" class="btn primary" disabled="@_saving">@(_saving?L["Saving"]:L["Save"])</button><button type="button" class="btn" @onclick="CloseForm">@L["Cancel"]</button></div></EditForm></div>}
-<div class="panel table-panel">
-@if(_loading){<div class="loading-line">@L["LoadingSites"]</div>}
-else if(_sites.Count==0){<div class="empty-state"><h3>@L["NoSites"]</h3><p>@L["AddFirstSite"]</p></div>}
-else{<table><thead><tr><th>@L["Site"]</th><th>@L["Url"]</th><th>@L["Status"]</th><th>@L["LastTest"]</th><th>@L["Actions"]</th></tr></thead><tbody>
-@foreach(var site in _sites){<tr><td><strong>@site.Name</strong><small>@site.WordPressVersion</small></td><td><a href="@site.SiteUrl" target="_blank">@site.SiteUrl</a></td><td><span class="badge">@StatusText(site.ConnectionStatus)</span></td><td>@FormatDate(site.LastConnectionTestAtUtc)</td><td><div class="table-actions"><a class="icon-btn" href="@($"/sites/{site.Id}")">@L["Open"]</a><button class="icon-btn danger" @onclick="()=>DeleteAsync(site.Id)">@L["Delete"]</button></div></td></tr>}
-</tbody></table>}</div>
+<div class="sites-page">
+    <section class="sites-hero panel">
+        <div>
+            <span class="workspace-kicker">@(L.IsArabic ? "إدارة البنية الرقمية" : "DIGITAL ESTATE")</span>
+            <h1>@L["Sites"]</h1>
+            <p>@(L.IsArabic ? "راقب مواقع WordPress واتصالاتها وآخر مزامنة من شاشة واحدة." : "Monitor WordPress sites, connections, and recent synchronization from one workspace.")</p>
+        </div>
+        <div class="sites-hero-actions">
+            <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn primary" @onclick="OpenForm">＋ @L["AddSite"]</button>
+        </div>
+    </section>
 
-@code{
-private bool _loading=true,_saving,_showForm,_isError; private string? _message; private List<AIWordPressManager.Domain.Entities.Site> _sites=[]; private SiteInput _model=new();
-protected override void OnInitialized()=>L.Changed+=Changed; protected override async Task OnInitializedAsync()=>await ReloadAsync();
-private async Task ReloadAsync(){_loading=true;_sites=await SiteService.GetSitesAsync();_loading=false;}
-private void OpenForm(){_showForm=true;_message=null;} private void CloseForm()=>_showForm=false;
-private async Task SaveAsync(){try{_saving=true;if(string.IsNullOrWhiteSpace(_model.Name)){Fail(L["RequiredSiteName"]);return;}if(string.IsNullOrWhiteSpace(_model.Url)){Fail(L["RequiredUrl"]);return;}if(!Uri.TryCreate(_model.Url,UriKind.Absolute,out var u)||u.Scheme is not("http" or "https")){Fail(L["InvalidUrl"]);return;}await SiteService.AddSiteAsync(_model.Name,_model.Url);_model=new();_showForm=false;_isError=false;_message=L["AddedSuccess"];await ReloadAsync();}catch(Exception ex){Fail(L.TranslateMessage(ex.Message));}finally{_saving=false;}}
-private void Fail(string m){_isError=true;_message=m;}
-private async Task DeleteAsync(Guid id){await SiteService.DeleteSiteAsync(id);_message=L["DeletedSuccess"];_isError=false;await ReloadAsync();}
-private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus s)=>s switch{AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected=>L["Connected"],AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable=>L["Unreachable"],AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed=>L["AuthFailed"],_=>L["NotTested"]};
-private string FormatDate(DateTime? v)=>v is null?"—":v.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
-private void Changed()=>InvokeAsync(StateHasChanged);public void Dispose()=>L.Changed-=Changed; private sealed class SiteInput{public string Name{get;set;}="";public string Url{get;set;}="";}
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")">@_message</div>
+    }
+
+    <section class="sites-summary-grid">
+        <article class="panel site-summary-card">
+            <span class="site-summary-icon">◉</span>
+            <div><small>@(L.IsArabic ? "إجمالي المواقع" : "Total sites")</small><strong>@_sites.Count</strong><p>@(L.IsArabic ? "مسجلة في النظام" : "Registered in the system")</p></div>
+        </article>
+        <article class="panel site-summary-card">
+            <span class="site-summary-icon success">✓</span>
+            <div><small>@L["Connected"]</small><strong>@ConnectedCount</strong><p>@(L.IsArabic ? "اتصال WordPress سليم" : "Healthy WordPress connections")</p></div>
+        </article>
+        <article class="panel site-summary-card">
+            <span class="site-summary-icon warning">!</span>
+            <div><small>@L["NeedsReview"]</small><strong>@ProblemCount</strong><p>@(L.IsArabic ? "تحتاج فحص الاتصال" : "Require connection review")</p></div>
+        </article>
+        <article class="panel site-summary-card">
+            <span class="site-summary-icon">◷</span>
+            <div><small>@(L.IsArabic ? "آخر فحص" : "Latest check")</small><strong class="summary-date">@LatestCheck</strong><p>@(L.IsArabic ? "وفق التوقيت المحلي" : "Using local time")</p></div>
+        </article>
+    </section>
+
+    @if (_showForm)
+    {
+        <section class="panel site-create-panel">
+            <div class="site-create-head">
+                <div><span class="workspace-kicker">@(L.IsArabic ? "اتصال جديد" : "NEW CONNECTION")</span><h2>@L["AddNewSite"]</h2><p>@(L.IsArabic ? "أدخل اسم الموقع ورابطه، ثم أكمل بيانات المصادقة من صفحة التفاصيل." : "Enter the site name and URL, then complete authentication from the details page.")</p></div>
+                <button type="button" class="icon-button" @onclick="CloseForm">×</button>
+            </div>
+            <EditForm Model="_model" OnSubmit="SaveAsync">
+                <div class="site-create-grid">
+                    <label><span>@L["SiteName"]</span><InputText @bind-Value="_model.Name" placeholder="@(L.IsArabic ? "مثال: موقع الشركة" : "Example: Corporate site")" /></label>
+                    <label><span>@L["SiteUrl"]</span><InputText @bind-Value="_model.Url" placeholder="https://example.com" /></label>
+                </div>
+                <div class="actions"><button type="submit" class="btn primary" disabled="@_saving">@(_saving ? L["Saving"] : L["Save"])</button><button type="button" class="btn" @onclick="CloseForm">@L["Cancel"]</button></div>
+            </EditForm>
+        </section>
+    }
+
+    <section class="sites-toolbar panel">
+        <div class="sites-search"><span>⌕</span><input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث بالاسم أو الرابط..." : "Search by name or URL...")" /></div>
+        <div class="sites-view-note">@(L.IsArabic ? $"عرض {FilteredSites.Count()} موقع" : $"Showing {FilteredSites.Count()} sites")</div>
+    </section>
+
+    @if (_loading)
+    {
+        <div class="sites-skeleton-grid">@for (var i = 0; i < 4; i++) { <div class="panel site-skeleton"></div> }</div>
+    }
+    else if (!_sites.Any())
+    {
+        <section class="panel sites-empty"><div class="sites-empty-icon">◎</div><h2>@L["NoSites"]</h2><p>@L["AddFirstSite"]</p><button class="btn primary" @onclick="OpenForm">＋ @L["AddSite"]</button></section>
+    }
+    else
+    {
+        <section class="sites-card-grid">
+            @foreach (var site in FilteredSites)
+            {
+                <article class="panel site-management-card">
+                    <header>
+                        <div class="site-identity"><div class="site-avatar">@Initials(site.Name)</div><div><h3>@site.Name</h3><a href="@site.SiteUrl" target="_blank">@site.SiteUrl</a></div></div>
+                        <span class="site-state @StatusClass(site.ConnectionStatus)"><i></i>@StatusText(site.ConnectionStatus)</span>
+                    </header>
+                    <div class="site-card-metrics">
+                        <div><small>@(L.IsArabic ? "إصدار WordPress" : "WordPress version")</small><strong>@(string.IsNullOrWhiteSpace(site.WordPressVersion) ? "—" : site.WordPressVersion)</strong></div>
+                        <div><small>@L["LastTest"]</small><strong>@FormatDate(site.LastConnectionTestAtUtc)</strong></div>
+                    </div>
+                    <div class="site-health-line"><span style="width:@HealthPercent(site.ConnectionStatus)%"></span></div>
+                    <footer>
+                        <a class="btn primary" href="@($"/sites/{site.Id}")">@(L.IsArabic ? "فتح لوحة الموقع" : "Open site workspace")</a>
+                        <a class="btn" href="@site.SiteUrl" target="_blank">↗</a>
+                        <button class="btn danger" title="@L["Delete"]" @onclick="() => DeleteAsync(site.Id)">⌫</button>
+                    </footer>
+                </article>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private bool _loading = true, _saving, _showForm, _isError;
+    private string? _message;
+    private string _search = string.Empty;
+    private List<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private SiteInput _model = new();
+
+    private int ConnectedCount => _sites.Count(x => x.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected);
+    private int ProblemCount => _sites.Count - ConnectedCount;
+    private string LatestCheck => FormatDate(_sites.Where(x => x.LastConnectionTestAtUtc.HasValue).Select(x => x.LastConnectionTestAtUtc).OrderByDescending(x => x).FirstOrDefault());
+    private IEnumerable<AIWordPressManager.Domain.Entities.Site> FilteredSites => string.IsNullOrWhiteSpace(_search) ? _sites : _sites.Where(x => x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.SiteUrl.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync() { _loading = true; _sites = await SiteService.GetSitesAsync(); _loading = false; }
+    private void OpenForm() { _showForm = true; _message = null; }
+    private void CloseForm() => _showForm = false;
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            _saving = true;
+            if (string.IsNullOrWhiteSpace(_model.Name)) { Fail(L["RequiredSiteName"]); return; }
+            if (string.IsNullOrWhiteSpace(_model.Url)) { Fail(L["RequiredUrl"]); return; }
+            if (!Uri.TryCreate(_model.Url, UriKind.Absolute, out var u) || u.Scheme is not ("http" or "https")) { Fail(L["InvalidUrl"]); return; }
+            await SiteService.AddSiteAsync(_model.Name, _model.Url);
+            _model = new(); _showForm = false; _isError = false; _message = L["AddedSuccess"]; await ReloadAsync();
+        }
+        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
+        finally { _saving = false; }
+    }
+
+    private void Fail(string message) { _isError = true; _message = message; }
+    private async Task DeleteAsync(Guid id) { await SiteService.DeleteSiteAsync(id); _message = L["DeletedSuccess"]; _isError = false; await ReloadAsync(); }
+    private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch { AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => L["Connected"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable => L["Unreachable"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed => L["AuthFailed"], _ => L["NotTested"] };
+    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? "connected" : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested ? "neutral" : "problem";
+    private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? 100 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested ? 35 : 15;
+    private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private static string Initials(string name) { var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries); return string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0]))); }
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+    private sealed class SiteInput { public string Name { get; set; } = ""; public string Url { get; set; } = ""; }
 }
