@@ -13,13 +13,14 @@
         </nav>
         <div class="sidebar-footer">
             <div><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
-            <strong class="app-version">v@AppVersion</strong>
+            <strong class="app-version">VERSION @AppVersion</strong>
         </div>
     </aside>
     <main class="main-area">
         <header class="topbar">
             <div><h2>@L["AppName"]</h2><p>@L["BrowserManagement"]</p></div>
             <div class="topbar-actions">
+                <strong class="topbar-version">v@AppVersion</strong>
                 <button class="language-switch" @onclick="ToggleLanguage" title="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
                 <div class="user-chip"><span>WA</span><div><strong>@L["Administrator"]</strong><small>@L["LocalAccount"]</small></div></div>
             </div>
