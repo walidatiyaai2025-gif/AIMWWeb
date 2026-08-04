@@ -13,7 +13,8 @@ public sealed class WordPressSyncWebService(
     AppDbContext dbContext,
     IHttpClientFactory httpClientFactory,
     ISecretProtectionService secretProtectionService,
-    IWordPressContentStore contentStore)
+    IWordPressContentStore contentStore,
+    ExecutionOperationTracker executionTracker)
 {
     private const int PageSize = 100;
 
@@ -21,54 +22,66 @@ public sealed class WordPressSyncWebService(
     {
         var site = await dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
-        var credential = await dbContext.SiteCredentials.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken)
-            ?? throw new InvalidOperationException("احفظ بيانات اتصال WordPress واختبرها أولًا.");
 
-        string password;
+        var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 6);
         try
         {
-            password = await secretProtectionService.UnprotectAsync(credential.ProtectedApplicationPassword, cancellationToken);
+            executionTracker.Report(jobId, 1, 6, "Reading WordPress credentials.");
+            var credential = await dbContext.SiteCredentials.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken)
+                ?? throw new InvalidOperationException("احفظ بيانات اتصال WordPress واختبرها أولًا.");
+
+            string password;
+            try
+            {
+                password = await secretProtectionService.UnprotectAsync(credential.ProtectedApplicationPassword, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("تعذر قراءة كلمة المرور المشفرة. أعد حفظ بيانات الاتصال.", ex);
+            }
+
+            executionTracker.Report(jobId, 2, 6, "Connecting to WordPress REST API.");
+            var client = httpClientFactory.CreateClient(nameof(WordPressSyncWebService));
+            client.Timeout = TimeSpan.FromMinutes(3);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("AIWordPressManager/1.0");
+            var rawCredential = $"{credential.UserName}:{password.Replace(" ", string.Empty, StringComparison.Ordinal)}";
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(rawCredential)));
+            var root = site.SiteUrl.TrimEnd('/');
+
+            executionTracker.Report(jobId, 3, 6, "Downloading posts, pages, taxonomies and media.");
+            var postsTask = LoadContentAsync(client, $"{root}/wp-json/wp/v2/posts", cancellationToken);
+            var pagesTask = LoadContentAsync(client, $"{root}/wp-json/wp/v2/pages", cancellationToken);
+            var categoriesTask = LoadTermsAsync(client, $"{root}/wp-json/wp/v2/categories", cancellationToken);
+            var tagsTask = LoadTermsAsync(client, $"{root}/wp-json/wp/v2/tags", cancellationToken);
+            var mediaTask = LoadMediaAsync(client, $"{root}/wp-json/wp/v2/media", cancellationToken);
+
+            await Task.WhenAll(postsTask, pagesTask, categoriesTask, tagsTask, mediaTask);
+            var posts = await postsTask;
+            var pages = await pagesTask;
+            var categories = await categoriesTask;
+            var categoryShapedTags = await tagsTask;
+            var tags = new PagedResult<WordPressTagItem>(
+                categoryShapedTags.Items.Select(x => new WordPressTagItem(x.Id, x.Name, x.Slug, x.Count)).ToList(),
+                categoryShapedTags.Total);
+            var media = await mediaTask;
+
+            executionTracker.Report(jobId, 4, 6, $"Downloaded {posts.Total + pages.Total + categories.Total + tags.Total + media.Total} records.");
+            var snapshot = new WordPressExplorerSnapshot(
+                posts.Items, pages.Items, categories.Items, tags.Items, media.Items,
+                posts.Total, pages.Total, categories.Total, tags.Total, media.Total,
+                DateTimeOffset.UtcNow, WordPressSyncSummary.Empty);
+
+            executionTracker.Report(jobId, 5, 6, "Saving synchronized data to the local database.");
+            var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
+            var message = $"اكتملت المزامنة: {posts.Total} مقال، {pages.Total} صفحة، {categories.Total} تصنيف، {tags.Total} وسم، {media.Total} ملف وسائط.";
+            executionTracker.Complete(jobId, 6, 6, message);
+            return new WordPressSyncViewResult(true, message, summary, DateTime.UtcNow);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("تعذر قراءة كلمة المرور المشفرة. أعد حفظ بيانات الاتصال.", ex);
+            executionTracker.Fail(jobId, ex.Message);
+            throw;
         }
-
-        var client = httpClientFactory.CreateClient(nameof(WordPressSyncWebService));
-        client.Timeout = TimeSpan.FromMinutes(3);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("AIWordPressManager/1.0");
-        var rawCredential = $"{credential.UserName}:{password.Replace(" ", string.Empty, StringComparison.Ordinal)}";
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(rawCredential)));
-        var root = site.SiteUrl.TrimEnd('/');
-
-        var postsTask = LoadContentAsync(client, $"{root}/wp-json/wp/v2/posts", cancellationToken);
-        var pagesTask = LoadContentAsync(client, $"{root}/wp-json/wp/v2/pages", cancellationToken);
-        var categoriesTask = LoadTermsAsync(client, $"{root}/wp-json/wp/v2/categories", cancellationToken);
-        var tagsTask = LoadTermsAsync(client, $"{root}/wp-json/wp/v2/tags", cancellationToken);
-        var mediaTask = LoadMediaAsync(client, $"{root}/wp-json/wp/v2/media", cancellationToken);
-
-        await Task.WhenAll(postsTask, pagesTask, categoriesTask, tagsTask, mediaTask);
-        var posts = await postsTask;
-        var pages = await pagesTask;
-        var categories = await categoriesTask;
-        var categoryShapedTags = await tagsTask;
-        var tags = new PagedResult<WordPressTagItem>(
-            categoryShapedTags.Items
-                .Select(x => new WordPressTagItem(x.Id, x.Name, x.Slug, x.Count))
-                .ToList(),
-            categoryShapedTags.Total);
-        var media = await mediaTask;
-
-        var snapshot = new WordPressExplorerSnapshot(
-            posts.Items, pages.Items, categories.Items, tags.Items, media.Items,
-            posts.Total, pages.Total, categories.Total, tags.Total, media.Total,
-            DateTimeOffset.UtcNow, WordPressSyncSummary.Empty);
-
-        var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
-        return new WordPressSyncViewResult(true,
-            $"اكتملت المزامنة: {posts.Total} مقال، {pages.Total} صفحة، {categories.Total} تصنيف، {tags.Total} وسم، {media.Total} ملف وسائط.",
-            summary,
-            DateTime.UtcNow);
     }
 
     public async Task<ContentExplorerView> GetExplorerAsync(Guid siteId, string? query = null, string type = "all", CancellationToken cancellationToken = default)
