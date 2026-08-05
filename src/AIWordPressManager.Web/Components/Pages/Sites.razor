@@ -25,9 +25,9 @@
     }
 
     <section class="app-stat-grid">
-        <AppStatCard Icon="◉" Label="@L["TotalSites"]" Value="@_sites.Count.ToString()" Description="@L["AllRegisteredSites"]" />
-        <AppStatCard Icon="✓" Label="@L["Connected"]" Value="@ConnectedCount.ToString()" Description="@L["HealthyConnection"]" Tone="success" />
-        <AppStatCard Icon="!" Label="@L["NeedsReview"]" Value="@ProblemCount.ToString()" Description="@L["ConnectionOrLoginFailed"]" Tone="warning" />
+        <AppStatCard Icon="◉" Label="@L["TotalSites"]" Value="@(_sites.Count.ToString())" Description="@L["AllRegisteredSites"]" />
+        <AppStatCard Icon="✓" Label="@L["Connected"]" Value="@(ConnectedCount.ToString())" Description="@L["HealthyConnection"]" Tone="success" />
+        <AppStatCard Icon="!" Label="@L["NeedsReview"]" Value="@(ProblemCount.ToString())" Description="@L["ConnectionOrLoginFailed"]" Tone="warning" />
         <AppStatCard Icon="◷" Label="@L["LastCheck"]" Value="@LatestCheck" Description="@L["LocalDatabase"]" ValueClass="summary-date" />
     </section>
 
@@ -41,17 +41,19 @@
             <Header>
                 <button type="button" class="icon-button" @onclick="CloseForm" aria-label="Close">×</button>
             </Header>
-            <EditForm Model="_model" OnSubmit="SaveAsync">
-                <div class="site-create-grid">
-                    <label><span>@L["SiteName"]</span><InputText @bind-Value="_model.Name" disabled="@_saving" /></label>
-                    <label><span>@L["SiteUrl"]</span><InputText @bind-Value="_model.Url" placeholder="https://example.com" disabled="@_saving" /></label>
-                </div>
-                <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم حفظ الرابط بعد تطبيعه ومنع التكرار تلقائيًا." : "The URL is normalized and duplicate sites are blocked automatically.")</div>
-                <div class="actions">
-                    <AppButton Type="submit" Variant="primary" Text="@(_saving ? L["Saving"] : L["Save"])" Busy="@_saving" Disabled="@_saving" />
-                    <AppButton Text="@L["Cancel"]" Disabled="@_saving" OnClick="CloseFormClicked" />
-                </div>
-            </EditForm>
+            <ChildContent>
+                <EditForm Model="_model" OnSubmit="SaveAsync">
+                    <div class="site-create-grid">
+                        <label><span>@L["SiteName"]</span><InputText @bind-Value="_model.Name" disabled="@_saving" /></label>
+                        <label><span>@L["SiteUrl"]</span><InputText @bind-Value="_model.Url" placeholder="https://example.com" disabled="@_saving" /></label>
+                    </div>
+                    <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم حفظ الرابط بعد تطبيعه ومنع التكرار تلقائيًا." : "The URL is normalized and duplicate sites are blocked automatically.")</div>
+                    <div class="actions">
+                        <AppButton Type="submit" Variant="primary" Text="@(_saving ? L["Saving"] : L["Save"])" Busy="@_saving" Disabled="@_saving" />
+                        <AppButton Text="@L["Cancel"]" Disabled="@_saving" OnClick="CloseFormClicked" />
+                    </div>
+                </EditForm>
+            </ChildContent>
         </AppCard>
     }
 
@@ -94,7 +96,7 @@
             {
                 var busy = _busySiteId == site.Id;
                 var health = HealthPercent(site.ConnectionStatus);
-                <AppCard Class="site-management-card @(busy ? "is-busy" : string.Empty)" @key="site.Id">
+                <AppCard Class="@($"site-management-card {(busy ? "is-busy" : string.Empty)}")" @key="site.Id">
                     <div class="site-card-header"><div class="site-identity"><div class="site-avatar">@Initials(site.Name)</div><div><h3>@site.Name</h3><a href="@site.SiteUrl" target="_blank" rel="noopener">@site.SiteUrl</a></div></div><AppBadge Tone="@StatusTone(site.ConnectionStatus)" Text="@StatusText(site.ConnectionStatus)" Icon="●" /></div>
                     <div class="site-overview-row">
                         <div class="site-health-ring" style="--health:@health"><div><strong>@health%</strong><small>@(L.IsArabic ? "الصحة" : "Health")</small></div></div>
