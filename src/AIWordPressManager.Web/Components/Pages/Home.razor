@@ -38,9 +38,9 @@
     else if (_data is not null)
     {
         <section class="app-stat-grid">
-            <AppStatCard Icon="◉" Label="@L["TotalSites"]" Value="@_data.Sites.TotalSites.ToString()" Description="@($"{_data.Sites.ConnectedSites} {L["Connected"]}")" Tone="accent" />
-            <AppStatCard Icon="▤" Label="@(L.IsArabic ? "المحتوى المحلي" : "Cached content")" Value="@(_data.Posts + _data.Pages).ToString()" Description="@($"{_data.Posts} {(L.IsArabic ? "مقال" : "posts")} · {_data.Pages} {(L.IsArabic ? "صفحة" : "pages")}")" Tone="success" />
-            <AppStatCard Icon="▶" Label="@(L.IsArabic ? "مهام نشطة" : "Active jobs")" Value="@_data.ActiveJobs.ToString()" Description="@($"{_data.FailedJobs} {(L.IsArabic ? "فاشلة" : "failed")}")" Tone="warning" />
+            <AppStatCard Icon="◉" Label="@L["TotalSites"]" Value="@(_data.Sites.TotalSites.ToString())" Description="@($"{_data.Sites.ConnectedSites} {L["Connected"]}")" Tone="accent" />
+            <AppStatCard Icon="▤" Label="@(L.IsArabic ? "المحتوى المحلي" : "Cached content")" Value="@((_data.Posts + _data.Pages).ToString())" Description="@($"{_data.Posts} {(L.IsArabic ? "مقال" : "posts")} · {_data.Pages} {(L.IsArabic ? "صفحة" : "pages")}")" Tone="success" />
+            <AppStatCard Icon="▶" Label="@(L.IsArabic ? "مهام نشطة" : "Active jobs")" Value="@(_data.ActiveJobs.ToString())" Description="@($"{_data.FailedJobs} {(L.IsArabic ? "فاشلة" : "failed")}")" Tone="warning" />
             <AppStatCard Icon="◷" Label="@L["LastSync"]" Value="@FormatDate(_data.LastSynchronizationAtUtc)" Description="@($"{_data.Media} {(L.IsArabic ? "ملف وسائط" : "media items")}")" Tone="info" ValueClass="dashboard-date" />
         </section>
 
