@@ -1,0 +1,96 @@
+@page "/logs"
+@page "/module/logs"
+@rendermode InteractiveServer
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+@inject IJSRuntime JS
+
+<PageTitle>@(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</PageTitle>
+
+<div class="logs-page">
+    <section class="panel logs-hero">
+        <div><span class="workspace-kicker">DIAGNOSTICS</span><h1>@(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</h1><p>@(L.IsArabic ? "قراءة ملفات السجلات الفعلية من مجلدات التطبيق المسموح بها." : "Read actual application log files from the allowed log directories.")</p></div>
+        <button class="btn primary" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+    </section>
+
+    <section class="logs-stats">
+        <article class="panel"><small>@(L.IsArabic ? "ملفات السجل" : "Log files")</small><strong>@_files.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "السطور المعروضة" : "Visible lines")</small><strong>@FilteredLines.Count()</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "أخطاء" : "Errors")</small><strong>@_lines.Count(x => x.Level is "Error" or "Critical")</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "تحذيرات" : "Warnings")</small><strong>@_lines.Count(x => x.Level == "Warning")</strong></article>
+    </section>
+
+    <section class="logs-layout">
+        <aside class="panel logs-files">
+            <header><h2>@(L.IsArabic ? "الملفات" : "Files")</h2></header>
+            @if (_files.Count == 0)
+            {
+                <div class="empty-state"><p>@(L.IsArabic ? "لا توجد ملفات log أو txt حاليًا." : "No .log or .txt files were found.")</p></div>
+            }
+            else
+            {
+                @foreach (var file in _files)
+                {
+                    <button class="@(_selectedPath == file.Path ? "active" : string.Empty)" @onclick="() => SelectFile(file)">
+                        <strong>@file.Name</strong><small>@FormatSize(file.Size) · @file.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small>
+                    </button>
+                }
+            }
+        </aside>
+
+        <main class="panel logs-console-card">
+            <div class="logs-toolbar">
+                <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث في السجل..." : "Search log text...")" />
+                <select @bind="_level"><option value="">@(L.IsArabic ? "كل المستويات" : "All levels")</option>@foreach (var level in new[]{"Critical","Error","Warning","Information","Debug"}){<option value="@level">@level</option>}</select>
+                <select @bind="_take"><option value="200">200</option><option value="500">500</option><option value="1000">1000</option><option value="5000">5000</option></select>
+                <button class="btn" disabled="@(!_lines.Any())" @onclick="CopyVisibleAsync">@(L.IsArabic ? "نسخ الظاهر" : "Copy visible")</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="alert error">@_error</div>
+            }
+            else if (string.IsNullOrWhiteSpace(_selectedPath))
+            {
+                <div class="empty-state logs-empty"><p>@(L.IsArabic ? "اختر ملف سجل لعرض محتواه." : "Select a log file to inspect its contents.")</p></div>
+            }
+            else
+            {
+                <div class="logs-console">
+                    @foreach (var line in FilteredLines)
+                    {
+                        <div class="log-line level-@line.Level.ToLowerInvariant()"><span>@line.Number</span><b>@line.Level</b><code>@line.Text</code></div>
+                    }
+                </div>
+            }
+        </main>
+    </section>
+</div>
+
+@code {
+    private readonly LogReaderService _reader = new();
+    private List<LogFileInfo> _files = [];
+    private List<LogLine> _lines = [];
+    private string _selectedPath = string.Empty, _search = string.Empty, _level = string.Empty, _error = string.Empty;
+    private int _take = 500;
+    private IEnumerable<LogLine> FilteredLines => _lines.Where(x => (string.IsNullOrWhiteSpace(_level) || x.Level == _level) && (string.IsNullOrWhiteSpace(_search) || x.Text.Contains(_search, StringComparison.OrdinalIgnoreCase)));
+
+    protected override void OnInitialized() => Reload();
+
+    private void Reload()
+    {
+        try
+        {
+            _error = string.Empty; _files = _reader.GetFiles().ToList();
+            if (!string.IsNullOrWhiteSpace(_selectedPath) && _files.Any(x => x.Path == _selectedPath)) LoadLines();
+            else if (_files.Count > 0) SelectFile(_files[0]);
+            else { _selectedPath = string.Empty; _lines = []; }
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
+    }
+
+    private void SelectFile(LogFileInfo file) { _selectedPath = file.Path; LoadLines(); }
+    private void LoadLines() { try { _lines = _reader.Read(_selectedPath, _take).ToList(); _error = string.Empty; } catch (Exception ex) { _error = L.TranslateMessage(ex.Message); _lines = []; } }
+    private async Task CopyVisibleAsync() { await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(Environment.NewLine, FilteredLines.Select(x => x.Text))); Notifications.Success(L.IsArabic ? "تم نسخ السطور الظاهرة." : "Visible log lines copied."); }
+    private static string FormatSize(long bytes) => bytes < 1024 ? $"{bytes} B" : bytes < 1024 * 1024 ? $"{bytes / 1024d:0.0} KB" : $"{bytes / 1024d / 1024d:0.0} MB";
+}
