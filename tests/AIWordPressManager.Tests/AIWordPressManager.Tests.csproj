@@ -18,5 +18,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\AIWordPressManager.Application\AIWordPressManager.Application.csproj" />
     <ProjectReference Include="..\..\src\AIWordPressManager.Infrastructure\AIWordPressManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj" />
   </ItemGroup>
 </Project>
