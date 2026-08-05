@@ -17,68 +17,76 @@ else if (_site is null)
 }
 else
 {
-    <div class="page-heading">
-        <div><h1>@L["TaxonomyManager"]</h1><p>@_site.Name — @L["TaxonomyIntro"]</p></div>
-        <div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(_message))
-    {
-        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
-    }
-
-    <div class="panel explorer-toolbar">
-        <div class="tabs">
-            <button class="tab @(_taxonomy == "categories" ? "active" : "")" @onclick="ShowCategories">@L["Categories"]</button>
-            <button class="tab @(_taxonomy == "tags" ? "active" : "")" @onclick="ShowTags">@L["Tags"]</button>
+    <div class="taxonomy-page">
+        <div class="page-heading">
+            <div><h1>@L["TaxonomyManager"]</h1><p>@_site.Name — @L["TaxonomyIntro"]</p></div>
+            <div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
         </div>
-        <div class="filter-row">
-            <input class="search-input" @bind="_query" @bind:event="oninput" placeholder="@L["SearchTaxonomy"]" />
-            <button class="btn primary" @onclick="StartCreate">@L["AddNew"]</button>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+        }
+
+        <div class="panel explorer-toolbar">
+            <div class="tabs">
+                <button class="tab @(_taxonomy == "categories" ? "active" : "")" @onclick="ShowCategories">@L["Categories"]</button>
+                <button class="tab @(_taxonomy == "tags" ? "active" : "")" @onclick="ShowTags">@L["Tags"]</button>
+            </div>
+            <div class="filter-row">
+                <input class="search-input" @bind="_query" @bind:event="oninput" placeholder="@L["SearchTaxonomy"]" />
+                <button class="btn primary" @onclick="StartCreate">@L["AddNew"]</button>
+            </div>
         </div>
-    </div>
 
-    <div class="editor-grid">
-        <section class="panel table-panel">
-            <table>
-                <thead><tr><th>@L["Name"]</th><th>@L["Slug"]</th><th>@L["PostCount"]</th><th>@L["Actions"]</th></tr></thead>
-                <tbody>
-                @foreach (var item in FilteredTerms)
-                {
-                    <tr>
-                        <td><strong>@item.Name</strong></td><td><code>@item.Slug</code></td><td>@item.Count</td>
-                        <td><div class="table-actions"><button class="btn compact" @onclick="() => StartEdit(item)">@L["Edit"]</button><button class="btn compact danger" @onclick="() => DeleteAsync(item)">@L["Delete"]</button></div></td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-            @if (!FilteredTerms.Any()) { <div class="empty-state"><p>@L["NoTaxonomies"]</p></div> }
-        </section>
-
-        <aside class="panel">
-            <h3>@(_editingId > 0 ? L["EditTaxonomy"] : L["CreateTaxonomy"])</h3>
-            <EditForm Model="_model" OnValidSubmit="SaveAsync">
-                <DataAnnotationsValidator />
-                <div class="form-grid one-column">
-                    <label>@L["Name"]<InputText @bind-Value="_model.Name" /></label>
-                    <label>@L["Slug"]<InputText @bind-Value="_model.Slug" /></label>
-                    <label>@L["Description"]<InputTextArea @bind-Value="_model.Description" rows="5" /></label>
-                    @if (_taxonomy == "categories")
+        <div class="editor-grid">
+            <section class="panel table-panel">
+                <table>
+                    <thead><tr><th>@L["Name"]</th><th>@L["Slug"]</th><th>@L["PostCount"]</th><th>@L["Actions"]</th></tr></thead>
+                    <tbody>
+                    @foreach (var item in FilteredTerms)
                     {
-                        <label>@L["ParentCategory"]
-                            <InputSelect @bind-Value="_model.ParentId">
-                                <option value="0">@L["NoParent"]</option>
-                                @foreach (var parent in _terms.Where(x => x.Id != _editingId)) { <option value="@parent.Id">@parent.Name</option> }
-                            </InputSelect>
-                        </label>
+                        <tr>
+                            <td><strong>@item.Name</strong></td><td><code>@item.Slug</code></td><td>@item.Count</td>
+                            <td><div class="table-actions"><button class="btn compact" @onclick="() => StartEdit(item)">@L["Edit"]</button><button class="btn compact danger" @onclick="() => DeleteAsync(item)">@L["Delete"]</button></div></td>
+                        </tr>
                     }
-                </div>
-                <div class="actions form-actions">
-                    <button class="btn primary" type="submit" disabled="@_saving">@(_saving ? L["Saving"] : L["Save"])</button>
-                    <button class="btn" type="button" @onclick="ResetForm">@L["Cancel"]</button>
-                </div>
-            </EditForm>
-        </aside>
+                    </tbody>
+                </table>
+                @if (!FilteredTerms.Any())
+                {
+                    <div class="empty-state"><p>@L["NoTaxonomies"]</p></div>
+                }
+            </section>
+
+            <aside class="panel">
+                <h3>@(_editingId > 0 ? L["EditTaxonomy"] : L["CreateTaxonomy"])</h3>
+                <EditForm Model="_model" OnValidSubmit="SaveAsync">
+                    <DataAnnotationsValidator />
+                    <div class="form-grid one-column">
+                        <label>@L["Name"]<InputText @bind-Value="_model.Name" /></label>
+                        <label>@L["Slug"]<InputText @bind-Value="_model.Slug" /></label>
+                        <label>@L["Description"]<InputTextArea @bind-Value="_model.Description" rows="5" /></label>
+                        @if (_taxonomy == "categories")
+                        {
+                            <label>@L["ParentCategory"]
+                                <InputSelect @bind-Value="_model.ParentId">
+                                    <option value="0">@L["NoParent"]</option>
+                                    @foreach (var parent in _terms.Where(x => x.Id != _editingId))
+                                    {
+                                        <option value="@parent.Id">@parent.Name</option>
+                                    }
+                                </InputSelect>
+                            </label>
+                        }
+                    </div>
+                    <div class="actions form-actions">
+                        <button class="btn primary" type="submit" disabled="@_saving">@(_saving ? L["Saving"] : L["Save"])</button>
+                        <button class="btn" type="button" @onclick="ResetForm">@L["Cancel"]</button>
+                    </div>
+                </EditForm>
+            </aside>
+        </div>
     </div>
 }
 
