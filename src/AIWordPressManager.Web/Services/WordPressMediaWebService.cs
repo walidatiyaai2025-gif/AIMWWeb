@@ -13,7 +13,9 @@ public sealed class WordPressMediaWebService(
     IAIPromptRegistry prompts,
     ApprovalWorkflowService approvals,
     ExecutionCenterService execution,
-    NotificationInboxService notifications)
+    ExecutionOperationTracker executionTracker,
+    NotificationInboxService notifications,
+    ILogger<WordPressMediaWebService> logger)
 {
     private const long MaxUploadSize = 25 * 1024 * 1024;
 
@@ -28,8 +30,12 @@ public sealed class WordPressMediaWebService(
         if (file.Size <= 0) return MediaActionResult.Fail("The selected file is empty.");
         if (file.Size > MaxUploadSize) return MediaActionResult.Fail("The file exceeds the 25 MB upload limit.");
 
+        var jobId = executionTracker.Start("Upload WordPress media", "Media Upload", siteId.ToString(), 3);
         try
         {
+            logger.LogInformation("Uploading media {FileName} ({FileSize} bytes) to site {SiteId}", file.Name, file.Size, siteId);
+            executionTracker.Report(jobId, 1, 3, $"Preparing {file.Name} for upload.");
+
             await using var stream = file.OpenReadStream(MaxUploadSize, cancellationToken);
             using var content = new MultipartFormDataContent();
             using var fileContent = new StreamContent(stream);
@@ -40,35 +46,82 @@ public sealed class WordPressMediaWebService(
             AddText(content, "alt_text", altText);
             AddText(content, "caption", caption);
 
+            executionTracker.Report(jobId, 2, 3, "Sending media to WordPress.");
             var response = await apiClient.SendContentAsync(siteId, HttpMethod.Post, "/wp-json/wp/v2/media", content, cancellationToken);
-            if (!response.IsSuccess || response.Value is null) return MediaActionResult.Fail(response.ErrorMessage);
+            if (!response.IsSuccess || response.Value is null)
+            {
+                executionTracker.Fail(jobId, response.ErrorMessage);
+                logger.LogWarning("Media upload failed for {FileName} on site {SiteId}: {Error}", file.Name, siteId, response.ErrorMessage);
+                return MediaActionResult.Fail(response.ErrorMessage);
+            }
 
             using var json = response.Value;
             var root = json.RootElement;
-            var result = MediaActionResult.Ok(GetInt(root, "id"), GetString(root, "source_url"), "Media uploaded to WordPress successfully.");
+            var mediaId = GetInt(root, "id");
+            var sourceUrl = GetString(root, "source_url");
+            var result = MediaActionResult.Ok(mediaId, sourceUrl, "Media uploaded to WordPress successfully.");
+
             notifications.Create("System", "Media uploaded", file.Name, NotificationSeverity.Success, siteId);
+            executionTracker.Complete(jobId, 3, 3, $"Uploaded media #{mediaId}: {file.Name}");
+            logger.LogInformation("Media upload completed for {FileName} as WordPress media {MediaId}", file.Name, mediaId);
             return result;
         }
-        catch (Exception ex) { return MediaActionResult.Fail(ex.Message); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            executionTracker.Fail(jobId, "Media upload was cancelled.");
+            logger.LogWarning("Media upload cancelled for {FileName} on site {SiteId}", file.Name, siteId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            executionTracker.Fail(jobId, ex.Message);
+            logger.LogError(ex, "Unexpected media upload failure for {FileName} on site {SiteId}", file.Name, siteId);
+            return MediaActionResult.Fail(ex.Message);
+        }
     }
 
     public async Task<MediaActionResult> UpdateMetadataAsync(Guid siteId, int mediaId, MediaMetadataUpdate request, CancellationToken cancellationToken = default)
     {
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
-        var payload = JsonSerializer.Serialize(new
+
+        var jobId = executionTracker.Start("Update WordPress media metadata", "Media Metadata", siteId.ToString(), 2);
+        try
         {
-            title = request.Title,
-            alt_text = request.AltText,
-            caption = request.Caption,
-            description = request.Description,
-            slug = request.Slug
-        });
-        using var content = new StringContent(payload, Encoding.UTF8, "application/json");
-        var response = await apiClient.SendContentAsync(siteId, HttpMethod.Post, $"/wp-json/wp/v2/media/{mediaId}", content, cancellationToken);
-        if (!response.IsSuccess || response.Value is null) return MediaActionResult.Fail(response.ErrorMessage);
-        using var json = response.Value;
-        notifications.Create("System", "Media updated", $"Media #{mediaId}", NotificationSeverity.Success, siteId);
-        return MediaActionResult.Ok(mediaId, GetString(json.RootElement, "source_url"), "Media metadata updated successfully.");
+            logger.LogInformation("Updating media metadata for {MediaId} on site {SiteId}", mediaId, siteId);
+            executionTracker.Report(jobId, 1, 2, $"Updating media #{mediaId} metadata.");
+
+            var payload = JsonSerializer.Serialize(new
+            {
+                title = request.Title,
+                alt_text = request.AltText,
+                caption = request.Caption,
+                description = request.Description,
+                slug = request.Slug
+            });
+            using var content = new StringContent(payload, Encoding.UTF8, "application/json");
+            var response = await apiClient.SendContentAsync(siteId, HttpMethod.Post, $"/wp-json/wp/v2/media/{mediaId}", content, cancellationToken);
+            if (!response.IsSuccess || response.Value is null)
+            {
+                executionTracker.Fail(jobId, response.ErrorMessage);
+                return MediaActionResult.Fail(response.ErrorMessage);
+            }
+
+            using var json = response.Value;
+            notifications.Create("System", "Media updated", $"Media #{mediaId}", NotificationSeverity.Success, siteId);
+            executionTracker.Complete(jobId, 2, 2, $"Updated metadata for media #{mediaId}.");
+            return MediaActionResult.Ok(mediaId, GetString(json.RootElement, "source_url"), "Media metadata updated successfully.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            executionTracker.Fail(jobId, "Media metadata update was cancelled.");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            executionTracker.Fail(jobId, ex.Message);
+            logger.LogError(ex, "Failed to update media metadata for {MediaId} on site {SiteId}", mediaId, siteId);
+            return MediaActionResult.Fail(ex.Message);
+        }
     }
 
     public async Task<MediaActionResult> ReplaceAsync(Guid siteId, int mediaId, IBrowserFile replacement, string? title, CancellationToken cancellationToken = default)
@@ -84,30 +137,59 @@ public sealed class WordPressMediaWebService(
             new { mediaId }, new { replacementMediaId = upload.MediaId, upload.SourceUrl },
             "System", ApprovalRiskLevel.High, null, null));
 
+        logger.LogInformation("Media replacement request created for media {MediaId}; replacement media {ReplacementMediaId}; approval {ApprovalId}", mediaId, upload.MediaId, approval.Id);
         return upload with { Message = $"Replacement uploaded and submitted for approval ({approval.Id})." };
     }
 
     public async Task<string> SuggestAltTextAsync(Guid siteId, int mediaId, string imageContext, string culture, string? userId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(imageContext)) throw new InvalidOperationException("Image context is required.");
+
+        logger.LogInformation("Generating AI alt text for media {MediaId} on site {SiteId}", mediaId, siteId);
         var prompt = prompts.Get("alt-text", culture);
         var result = await ai.ExecuteAsync(new AIRequest(imageContext, prompt, null, 0.2, 180, siteId, userId, "alt-text"), cancellationToken);
-        if (!result.IsSuccess) throw new InvalidOperationException(result.Error ?? "Alt text generation failed.");
+        if (!result.IsSuccess)
+        {
+            logger.LogWarning("AI alt text generation failed for media {MediaId}: {Error}", mediaId, result.Error);
+            throw new InvalidOperationException(result.Error ?? "Alt text generation failed.");
+        }
+
         return result.Content.Trim();
     }
 
     public async Task<MediaActionResult> DeleteAsync(Guid siteId, int mediaId, CancellationToken cancellationToken = default)
     {
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
+
+        var jobId = executionTracker.Start("Delete WordPress media", "Media Delete", siteId.ToString(), 2);
         try
         {
+            logger.LogInformation("Deleting media {MediaId} from site {SiteId}", mediaId, siteId);
+            executionTracker.Report(jobId, 1, 2, $"Deleting media #{mediaId} from WordPress.");
+
             var response = await apiClient.SendAsync(siteId, HttpMethod.Delete, $"/wp-json/wp/v2/media/{mediaId}?force=true", cancellationToken: cancellationToken);
             response.Value?.Dispose();
-            if (!response.IsSuccess) return MediaActionResult.Fail(response.ErrorMessage);
+            if (!response.IsSuccess)
+            {
+                executionTracker.Fail(jobId, response.ErrorMessage);
+                return MediaActionResult.Fail(response.ErrorMessage);
+            }
+
             notifications.Create("System", "Media deleted", $"Media #{mediaId}", NotificationSeverity.Warning, siteId);
+            executionTracker.Complete(jobId, 2, 2, $"Deleted media #{mediaId} from WordPress.");
             return MediaActionResult.Ok(mediaId, string.Empty, "Media deleted from WordPress successfully.");
         }
-        catch (Exception ex) { return MediaActionResult.Fail(ex.Message); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            executionTracker.Fail(jobId, "Media deletion was cancelled.");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            executionTracker.Fail(jobId, ex.Message);
+            logger.LogError(ex, "Failed to delete media {MediaId} from site {SiteId}", mediaId, siteId);
+            return MediaActionResult.Fail(ex.Message);
+        }
     }
 
     public ApprovalItem RequestBulkDelete(Guid siteId, string siteName, IReadOnlyCollection<int> mediaIds, string requestedBy)
