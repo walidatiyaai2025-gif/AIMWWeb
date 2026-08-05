@@ -49,11 +49,15 @@ public sealed class SiteWebService(
             throw new InvalidOperationException("Site name is required.");
         if (name.Trim().Length > 150)
             throw new InvalidOperationException("Site name cannot exceed 150 characters.");
-        if (!Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
-            throw new InvalidOperationException("Enter a valid site URL starting with http or https.");
 
-        var normalized = uri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
-        if (await dbContext.Sites.AnyAsync(x => x.SiteUrl == normalized, cancellationToken))
+        var normalizedUri = NormalizeSiteUri(url);
+        var normalized = normalizedUri.AbsoluteUri.TrimEnd('/');
+        var normalizedKey = normalized.ToLowerInvariant();
+
+        var existingUrls = await dbContext.Sites.AsNoTracking()
+            .Select(x => x.SiteUrl)
+            .ToListAsync(cancellationToken);
+        if (existingUrls.Any(x => x.TrimEnd('/').ToLowerInvariant() == normalizedKey))
             throw new InvalidOperationException("This site has already been added.");
 
         var site = new Site(name.Trim(), new Uri(normalized), DateTime.UtcNow);
@@ -83,25 +87,31 @@ public sealed class SiteWebService(
         var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
             ?? throw new InvalidOperationException("Site not found.");
 
-        // Test first. Credentials are persisted only after the tester returns a classified result.
         var result = await connectionTester.TestAsync(
             new WordPressConnectionRequest(site.SiteUrl, cleanUserName, cleanPassword),
             cancellationToken);
 
-        var protectedPassword = await secretProtectionService.ProtectAsync(cleanPassword, cancellationToken);
-        var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
-        if (credential is null)
+        var classifiedStatus = ClassifyConnectionStatus(result);
+        ApplyConnectionResult(site, result, classifiedStatus);
+
+        // Persist credentials only when authentication is valid. Limited permissions
+        // still proves that the supplied username and Application Password are accepted.
+        if (classifiedStatus is SiteConnectionStatus.Connected or SiteConnectionStatus.LimitedPermissions)
         {
-            credential = new SiteCredential(siteId, cleanUserName, protectedPassword, DateTime.UtcNow);
-            dbContext.SiteCredentials.Add(credential);
-        }
-        else
-        {
-            credential.SetUserName(cleanUserName, DateTime.UtcNow);
-            credential.SetProtectedApplicationPassword(protectedPassword, DateTime.UtcNow);
+            var protectedPassword = await secretProtectionService.ProtectAsync(cleanPassword, cancellationToken);
+            var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
+            if (credential is null)
+            {
+                credential = new SiteCredential(siteId, cleanUserName, protectedPassword, DateTime.UtcNow);
+                dbContext.SiteCredentials.Add(credential);
+            }
+            else
+            {
+                credential.SetUserName(cleanUserName, DateTime.UtcNow);
+                credential.SetProtectedApplicationPassword(protectedPassword, DateTime.UtcNow);
+            }
         }
 
-        ApplyConnectionResult(site, result);
         await dbContext.SaveChangesAsync(cancellationToken);
         return new ConnectionTestViewResult(result.IsSuccess, result.Message, result.Diagnostics);
     }
@@ -131,7 +141,7 @@ public sealed class SiteWebService(
         var result = await connectionTester.TestAsync(
             new WordPressConnectionRequest(site.SiteUrl, credential.UserName, password),
             cancellationToken);
-        ApplyConnectionResult(site, result);
+        ApplyConnectionResult(site, result, ClassifyConnectionStatus(result));
         await dbContext.SaveChangesAsync(cancellationToken);
         return new ConnectionTestViewResult(result.IsSuccess, result.Message, result.Diagnostics);
     }
@@ -144,11 +154,32 @@ public sealed class SiteWebService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private static void ApplyConnectionResult(Site site, WordPressConnectionResult result)
+    private static Uri NormalizeSiteUri(string? value)
+    {
+        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            throw new InvalidOperationException("Enter a valid site URL starting with http or https.");
+
+        var builder = new UriBuilder(uri)
+        {
+            Query = string.Empty,
+            Fragment = string.Empty,
+            Host = uri.Host.ToLowerInvariant()
+        };
+        builder.Path = string.IsNullOrWhiteSpace(uri.AbsolutePath)
+            ? "/"
+            : uri.AbsolutePath.TrimEnd('/') + "/";
+
+        return builder.Uri;
+    }
+
+    private static void ApplyConnectionResult(
+        Site site,
+        WordPressConnectionResult result,
+        SiteConnectionStatus status)
     {
         var now = DateTime.UtcNow;
         site.UpdateDiscovery(result.HomeUrl, result.WordPressVersion, result.LanguageCode, now);
-        site.RecordConnectionStatus(ClassifyConnectionStatus(result), now);
+        site.RecordConnectionStatus(status, now);
     }
 
     private static SiteConnectionStatus ClassifyConnectionStatus(WordPressConnectionResult result)
