@@ -23,7 +23,19 @@ public sealed class SeoAnalysisWebService(AppDbContext dbContext)
         }
 
         var records = await contentQuery.OrderByDescending(x => x.ModifiedAtUtc).Take(1000).ToListAsync(cancellationToken);
-        var items = records.Select(AnalyzeItem).OrderBy(x => x.Score).ThenByDescending(x => x.Issues.Count).ToList();
+        var items = records.Select(item => SeoRuleEngine.Analyze(new SeoRuleInput(
+                item.WordPressId,
+                item.ContentType,
+                item.Title,
+                item.Slug,
+                item.Link,
+                item.Status,
+                item.RenderedExcerpt,
+                item.RenderedContent)))
+            .OrderBy(x => x.Score)
+            .ThenByDescending(x => x.Issues.Count)
+            .ToList();
+
         var average = items.Count == 0 ? 0 : (int)Math.Round(items.Average(x => x.Score));
         return new SeoAnalysisView(site.Name, items, new SeoSummary(
             items.Count,
@@ -33,18 +45,31 @@ public sealed class SeoAnalysisWebService(AppDbContext dbContext)
             items.Count(x => x.Score < 50),
             items.Sum(x => x.Issues.Count)));
     }
+}
 
-    private static SeoAnalysisItem AnalyzeItem(AIWordPressManager.Domain.Entities.WordPressContentRecord item)
+public static class SeoRuleEngine
+{
+    private static readonly Regex WordRegex = new(@"\p{L}[\p{L}\p{M}\p{N}'’-]*", RegexOptions.Compiled);
+    private static readonly Regex HeadingRegex = new(@"<h[1-6]\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex InternalLinkRegex = new(@"<a\b[^>]*href\s*=\s*[""'](?!https?://|mailto:|tel:|#)[^""']+[""']", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ImageRegex = new(@"<img\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex AltRegex = new(@"\balt\s*=\s*[""'][^""']+[""']", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex ScriptStyleRegex = new(@"<(script|style)\b[^>]*>.*?</\1>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+    private static readonly Regex HtmlTagRegex = new("<.*?>", RegexOptions.Singleline | RegexOptions.Compiled);
+
+    public static SeoAnalysisItem Analyze(SeoRuleInput item)
     {
+        ArgumentNullException.ThrowIfNull(item);
+
         var title = PlainText(item.Title).Trim();
         var excerpt = PlainText(item.RenderedExcerpt).Trim();
         var html = item.RenderedContent ?? string.Empty;
         var text = PlainText(html);
-        var wordCount = Regex.Matches(text, @"\p{L}[\p{L}\p{M}\p{N}'’-]*").Count;
-        var headingCount = Regex.Matches(html, @"<h[1-6]\b", RegexOptions.IgnoreCase).Count;
-        var internalLinks = Regex.Matches(html, @"<a\b[^>]*href\s*=\s*[""'](?!https?://|mailto:|tel:|#)[^""']+[""']", RegexOptions.IgnoreCase).Count;
-        var imageMatches = Regex.Matches(html, @"<img\b[^>]*>", RegexOptions.IgnoreCase);
-        var imagesWithoutAlt = imageMatches.Cast<Match>().Count(m => !Regex.IsMatch(m.Value, @"\balt\s*=\s*[""'][^""']+[""']", RegexOptions.IgnoreCase));
+        var wordCount = WordRegex.Matches(text).Count;
+        var headingCount = HeadingRegex.Matches(html).Count;
+        var internalLinks = InternalLinkRegex.Matches(html).Count;
+        var imageMatches = ImageRegex.Matches(html);
+        var imagesWithoutAlt = imageMatches.Cast<Match>().Count(m => !AltRegex.IsMatch(m.Value));
         var issues = new List<SeoIssue>();
         var score = 100;
 
@@ -59,8 +84,20 @@ public sealed class SeoAnalysisWebService(AppDbContext dbContext)
         Add(imagesWithoutAlt > 0, Math.Min(15, imagesWithoutAlt * 5), "ImagesMissingAlt", "High", imagesWithoutAlt);
         Add(string.IsNullOrWhiteSpace(item.Slug), 10, "MissingSlug", "Medium");
 
-        return new SeoAnalysisItem(item.WordPressId, item.ContentType, title, item.Slug, item.Link, item.Status,
-            Math.Max(0, score), wordCount, headingCount, internalLinks, imageMatches.Count, imagesWithoutAlt, issues);
+        return new SeoAnalysisItem(
+            item.WordPressId,
+            item.ContentType,
+            title,
+            item.Slug ?? string.Empty,
+            item.Link ?? string.Empty,
+            item.Status ?? string.Empty,
+            Math.Max(0, score),
+            wordCount,
+            headingCount,
+            internalLinks,
+            imageMatches.Count,
+            imagesWithoutAlt,
+            issues);
 
         void Add(bool condition, int penalty, string code, string severity, int count = 1)
         {
@@ -70,12 +107,22 @@ public sealed class SeoAnalysisWebService(AppDbContext dbContext)
         }
     }
 
-    private static string PlainText(string value)
+    public static string PlainText(string? value)
     {
-        var withoutScripts = Regex.Replace(value ?? string.Empty, @"<(script|style)\b[^>]*>.*?</\1>", " ", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        return WebUtility.HtmlDecode(Regex.Replace(withoutScripts, "<.*?>", " "));
+        var withoutScripts = ScriptStyleRegex.Replace(value ?? string.Empty, " ");
+        return WebUtility.HtmlDecode(HtmlTagRegex.Replace(withoutScripts, " "));
     }
 }
+
+public sealed record SeoRuleInput(
+    int WordPressId,
+    string ContentType,
+    string? Title,
+    string? Slug,
+    string? Link,
+    string? Status,
+    string? RenderedExcerpt,
+    string? RenderedContent);
 
 public sealed record SeoAnalysisView(string SiteName, IReadOnlyList<SeoAnalysisItem> Items, SeoSummary Summary);
 public sealed record SeoSummary(int Total, int AverageScore, int Good, int NeedsImprovement, int Poor, int TotalIssues);
