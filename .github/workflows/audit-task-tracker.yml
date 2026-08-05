@@ -14,31 +14,82 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: task-tracker-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   audit:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout active branch with main history
+      - name: Checkout active branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Python dependencies
+      - name: Install tracker dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install python-docx
+          sudo apt-get update
+          sudo apt-get install -y libreoffice-writer
 
-      - name: Load tracker sources from main
+      - name: Load missing tracker sources from main
+        shell: bash
         run: |
           git fetch origin main
-          git show origin/main:AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx > AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
-          git show origin/main:task-tracker.json > task-tracker.json
+          if [ ! -f AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx ]; then
+            git show origin/main:AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx > AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
+          fi
+          if [ ! -f task-tracker.json ]; then
+            git show origin/main:task-tracker.json > task-tracker.json
+          fi
 
       - name: Audit first 100 tasks and update Word
         run: python Build/Audit-And-Sync-TaskTracker.py
 
+      - name: Validate JSON and DOCX package
+        shell: bash
+        run: |
+          python -m json.tool task-tracker.json > /dev/null
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          from docx import Document
+
+          path = Path('AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx')
+          assert path.exists() and path.stat().st_size > 10000, 'DOCX is missing or too small'
+          with ZipFile(path) as package:
+              assert package.testzip() is None, 'DOCX ZIP package is corrupt'
+              assert 'word/document.xml' in package.namelist(), 'word/document.xml is missing'
+          document = Document(path)
+          rows = sum(len(table.rows) for table in document.tables)
+          assert len(document.tables) >= 1, 'Tracker has no tables'
+          assert rows >= 260, f'Unexpected tracker row count: {rows}'
+          print(f'Validated tracker: tables={len(document.tables)}, rows={rows}, bytes={path.stat().st_size}')
+          PY
+
+      - name: Render Word document for layout validation
+        shell: bash
+        run: |
+          mkdir -p artifacts/rendered
+          timeout 120 libreoffice --headless --convert-to pdf --outdir artifacts/rendered AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
+          test -s artifacts/rendered/AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.pdf
+          ls -lh artifacts/rendered/AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.pdf
+
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: task-tracker-validation
+          path: |
+            task-tracker.json
+            AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
+            artifacts/rendered/AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.pdf
+          retention-days: 14
+
       - name: Commit synchronized tracker
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -46,6 +97,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No tracker changes"
           else
-            git commit -m "chore: audit first 100 tasks and sync Word tracker"
+            git commit -m "chore: audit first 100 tasks and sync validated Word tracker"
             git push
           fi
