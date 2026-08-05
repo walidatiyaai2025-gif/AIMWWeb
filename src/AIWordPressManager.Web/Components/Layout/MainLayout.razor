@@ -20,10 +20,18 @@
         </nav>
         <div class="sidebar-footer"><div><span class="status-dot"></span> @L["LocalSystemRunning"]</div><a href="/about-build" class="app-version"><strong>VERSION @Build.Version</strong><small>@Build.Branch · @Build.Commit</small></a></div>
     </aside>
+
     <main class="main-area">
         <header class="topbar">
-            <div class="topbar-title"><button type="button" class="sidebar-toggle" @onclick="ToggleSidebarAsync" title="@(L.IsArabic ? "طي القائمة الجانبية" : "Collapse sidebar")">☰</button><div><h2>@L["AppName"]</h2><p>@L["BrowserManagement"]</p></div></div>
+            <div class="topbar-title">
+                <button type="button" class="sidebar-toggle" @onclick="ToggleSidebarAsync" title="@(L.IsArabic ? "طي القائمة الجانبية" : "Collapse sidebar")">☰</button>
+                <div class="topbar-heading-block">
+                    <div class="app-breadcrumb"><span>@SectionTitle</span><b>›</b><strong>@PageTitle</strong></div>
+                    <h2>@PageTitle</h2>
+                </div>
+            </div>
             <div class="topbar-actions">
+                <button id="command-palette-trigger" type="button" class="command-trigger" @onclick="OpenCommandPalette" title="@(L.IsArabic ? "البحث السريع" : "Quick search")"><span>⌕</span><em>@(L.IsArabic ? "بحث سريع" : "Quick search")</em><kbd>Ctrl K</kbd></button>
                 <a class="topbar-version" href="/about-build">v@Build.Version</a>
                 <button type="button" class="appearance-toggle" @onclick="ToggleAppearanceAsync" title="@(L.IsArabic ? "تبديل الوضع الفاتح والداكن" : "Toggle light and dark mode")">@(_appearanceMode == "light" ? "☀" : "☾")</button>
                 <div class="theme-picker"><button type="button" class="theme-trigger" @onclick="ToggleThemePicker" aria-expanded="@_themePickerOpen" title="@(L.IsArabic ? "تغيير ألوان النظام" : "Change application colors")">◈</button>@if (_themePickerOpen){<div class="theme-popover"><div class="theme-popover-head"><div><strong>@(L.IsArabic ? "ألوان النظام" : "Application colors")</strong><small>@(L.IsArabic ? "اختر لوحة الألوان المناسبة لك" : "Choose your preferred color palette")</small></div><button type="button" class="theme-popover-close" @onclick="CloseThemePicker">×</button></div><div class="theme-grid">@foreach (var theme in Themes){<button type="button" class="theme-swatch @(_selectedTheme == theme.Key ? "active" : string.Empty)" style="--swatch:@theme.Color" @onclick="() => SelectThemeAsync(theme.Key)"><span class="theme-swatch-dot"></span><span>@(L.IsArabic ? theme.ArabicName : theme.EnglishName)</span></button>}</div></div>}</div>
@@ -35,19 +43,65 @@
     </main>
 </div>
 
+@if (_commandOpen)
+{
+    <div class="command-overlay" @onclick="CloseCommandPalette">
+        <section class="command-dialog" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <header><span>⌕</span><input autofocus @bind="_commandQuery" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث عن صفحة أو أمر..." : "Search pages and commands...")" /><button type="button" @onclick="CloseCommandPalette">Esc</button></header>
+            <div class="command-results">
+                @if (!FilteredCommands.Any())
+                {
+                    <div class="command-empty">@(L.IsArabic ? "لا توجد نتائج مطابقة." : "No matching commands.")</div>
+                }
+                else
+                {
+                    @foreach (var command in FilteredCommands)
+                    {
+                        <button type="button" class="command-item" @onclick="() => RunCommand(command)"><span>@command.Icon</span><div><strong>@(L.IsArabic ? command.ArabicName : command.EnglishName)</strong><small>@(L.IsArabic ? command.ArabicGroup : command.EnglishGroup)</small></div><kbd>↵</kbd></button>
+                    }
+                }
+            </div>
+            <footer><span>↑↓ @(L.IsArabic ? "للتصفح" : "navigate")</span><span>Enter @(L.IsArabic ? "للفتح" : "open")</span><span>Esc @(L.IsArabic ? "للإغلاق" : "close")</span></footer>
+        </section>
+    </div>
+}
+
 @code {
     private BuildInformation Build => BuildInfo.Current;
-    private string ActiveGroup => GroupForPath(new Uri(Navigation.Uri).AbsolutePath);
+    private string CurrentPath => new Uri(Navigation.Uri).AbsolutePath;
+    private string ActiveGroup => GroupForPath(CurrentPath);
+    private string SectionTitle => SectionForPath(CurrentPath, L.IsArabic);
+    private string PageTitle => PageForPath(CurrentPath, L.IsArabic);
     private bool _themePickerOpen;
     private bool _sidebarCollapsed;
+    private bool _commandOpen;
+    private string _commandQuery = string.Empty;
     private string _selectedTheme = "gold";
     private string _appearanceMode = "dark";
+
     private static readonly ThemeOption[] Themes = [new("gold","Gold","ذهبي","#c5a45d"),new("ocean","Ocean","أزرق","#3b82f6"),new("emerald","Emerald","زمردي","#10b981"),new("violet","Violet","بنفسجي","#8b5cf6"),new("rose","Rose","وردي","#f43f5e"),new("amber","Amber","كهرماني","#f59e0b"),new("cyan","Cyan","سماوي","#06b6d4"),new("slate","Slate","رمادي","#94a3b8")];
+    private static readonly CommandOption[] Commands =
+    [
+        new("⌂","Dashboard","لوحة التحكم","Overview","الرئيسية","/"),new("◉","Sites","المواقع","Overview","الرئيسية","/sites"),new("▤","Posts","المقالات","Content","المحتوى","/module/posts"),new("▧","Pages","الصفحات","Content","المحتوى","/module/pages"),new("▣","Media","الوسائط","Content","المحتوى","/module/media"),new("#","Categories & Tags","التصنيفات والوسوم","Content","المحتوى","/module/taxonomy"),new("◌","Comments","التعليقات","Content","المحتوى","/module/comments"),new("◎","Users","المستخدمون","Content","المحتوى","/module/users"),new("◈","SEO Audit","تدقيق SEO","SEO","تحسين الظهور","/module/seo-audit"),new("✦","AI Providers","مزودو الذكاء الاصطناعي","AI","الذكاء الاصطناعي","/module/ai-providers"),new("▶","Execution Center","مركز التنفيذ","Operations","التشغيل","/module/execution"),new("↻","Synchronization","المزامنة","Operations","التشغيل","/module/sync"),new("▥","Reports","التقارير","Reports","التقارير","/module/reports"),new("♥","System Health","صحة النظام","System","النظام","/system-health"),new("⚙","Settings","الإعدادات","System","النظام","/settings"),new("ⓘ","Build Information","معلومات الإصدار","System","النظام","/about-build")
+    ];
+
+    private IEnumerable<CommandOption> FilteredCommands => string.IsNullOrWhiteSpace(_commandQuery)
+        ? Commands
+        : Commands.Where(x => x.EnglishName.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) || x.ArabicName.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) || x.EnglishGroup.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) || x.ArabicGroup.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase));
+
     protected override async Task OnAfterRenderAsync(bool firstRender){if(!firstRender)return;var culture=await JS.InvokeAsync<string?>("appLanguage.get");L.SetCulture(culture=="ar"?"ar":"en");await JS.InvokeVoidAsync("appLanguage.apply",L.Culture,L.Direction);_selectedTheme=await JS.InvokeAsync<string>("appTheme.get");_appearanceMode=await JS.InvokeAsync<string>("appTheme.getMode");_sidebarCollapsed=await JS.InvokeAsync<bool>("appTheme.getSidebarCollapsed");StateHasChanged();}
-    private void ToggleThemePicker()=>_themePickerOpen=!_themePickerOpen; private void CloseThemePicker()=>_themePickerOpen=false;
+    private void ToggleThemePicker()=>_themePickerOpen=!_themePickerOpen;
+    private void CloseThemePicker()=>_themePickerOpen=false;
     private async Task SelectThemeAsync(string theme){_selectedTheme=await JS.InvokeAsync<string>("appTheme.set",theme);_themePickerOpen=false;}
     private async Task ToggleAppearanceAsync()=>_appearanceMode=await JS.InvokeAsync<string>("appTheme.toggleMode");
     private async Task ToggleSidebarAsync(){_sidebarCollapsed=!_sidebarCollapsed;await JS.InvokeVoidAsync("appTheme.setSidebarCollapsed",_sidebarCollapsed);}
+    private void OpenCommandPalette(){_commandQuery=string.Empty;_commandOpen=true;_themePickerOpen=false;}
+    private void CloseCommandPalette()=>_commandOpen=false;
+    private void RunCommand(CommandOption command){_commandOpen=false;Navigation.NavigateTo(command.Path);}
+
     private static string GroupForPath(string path){if(path is "/" or "/sites"||path.StartsWith("/sites/",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/overview",StringComparison.OrdinalIgnoreCase))return "overview";if(path.StartsWith("/module/posts",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/pages",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/media",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/taxonomy",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/comments",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/users",StringComparison.OrdinalIgnoreCase))return "content";if(path.StartsWith("/module/seo",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/approvals",StringComparison.OrdinalIgnoreCase))return "seo";if(path.StartsWith("/module/ai",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/prompts",StringComparison.OrdinalIgnoreCase))return "ai";if(path.StartsWith("/module/execution",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/sync",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/schedules",StringComparison.OrdinalIgnoreCase))return "operations";if(path.StartsWith("/module/reports",StringComparison.OrdinalIgnoreCase))return "reports";return "system";}
+    private static string SectionForPath(string path,bool ar)=>GroupForPath(path) switch{"overview"=>ar?"الرئيسية":"Overview","content"=>ar?"إدارة المحتوى":"Content","seo"=>"SEO","ai"=>ar?"الذكاء الاصطناعي":"AI Workspace","operations"=>ar?"التشغيل والأتمتة":"Operations","reports"=>ar?"التقارير":"Reports",_=>ar?"النظام":"System"};
+    private static string PageForPath(string path,bool ar){if(path=="/")return ar?"لوحة التحكم":"Dashboard";if(path=="/sites")return ar?"المواقع":"Sites";var command=Commands.FirstOrDefault(x=>path.StartsWith(x.Path,StringComparison.OrdinalIgnoreCase));return command is null?(ar?"مساحة العمل":"Workspace"):(ar?command.ArabicName:command.EnglishName);}
     private sealed record ThemeOption(string Key,string EnglishName,string ArabicName,string Color);
+    private sealed record CommandOption(string Icon,string EnglishName,string ArabicName,string EnglishGroup,string ArabicGroup,string Path);
 }
