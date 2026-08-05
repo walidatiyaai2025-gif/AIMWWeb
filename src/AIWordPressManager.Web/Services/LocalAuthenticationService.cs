@@ -41,21 +41,31 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         string? returnUrl,
         CancellationToken cancellationToken = default)
     {
-        var normalized = (userName ?? string.Empty).Trim().ToUpperInvariant();
+        var submittedUserName = (userName ?? string.Empty).Trim();
+        var normalized = submittedUserName.ToUpperInvariant();
         var safePassword = password ?? string.Empty;
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == normalized, cancellationToken);
         var now = DateTime.UtcNow;
 
         if (user is null || !user.IsActive)
+        {
+            AddAudit(context, submittedUserName, false, user is null ? "Unknown user" : "Inactive account", now);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return LoginResult.Failed("Invalid username or password.");
+        }
 
         if (user.LockedUntilUtc is { } lockedUntil && lockedUntil > now)
+        {
+            AddAudit(context, user.UserName, false, "Account locked", now);
+            await dbContext.SaveChangesAsync(cancellationToken);
             return LoginResult.Failed($"Account is locked until {lockedUntil.ToLocalTime():g}.");
+        }
 
         var verification = _hasher.VerifyHashedPassword(user, user.PasswordHash, safePassword);
         if (verification == PasswordVerificationResult.Failed)
         {
             user.RecordFailedLogin(now);
+            AddAudit(context, user.UserName, false, "Invalid password", now);
             await dbContext.SaveChangesAsync(cancellationToken);
             return LoginResult.Failed("Invalid username or password.");
         }
@@ -64,6 +74,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
             user.SetPasswordHash(_hasher.HashPassword(user, safePassword), now);
 
         user.RecordSuccessfulLogin(now);
+        AddAudit(context, user.UserName, true, "Success", now);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var claims = new[]
@@ -81,6 +92,17 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         });
 
         return LoginResult.Succeeded(ResolveRedirectPath(returnUrl, user.LastPage));
+    }
+
+    public async Task<IReadOnlyList<LoginAuditDto>> GetRecentAuditsAsync(int take = 100, CancellationToken cancellationToken = default)
+    {
+        take = Math.Clamp(take, 1, 500);
+        return await dbContext.LoginAudits
+            .AsNoTracking()
+            .OrderByDescending(x => x.AttemptedAtUtc)
+            .Take(take)
+            .Select(x => new LoginAuditDto(x.Id, x.UserName, x.Succeeded, x.Reason, x.IpAddress, x.UserAgent, x.AttemptedAtUtc))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task SaveLastPageAsync(ClaimsPrincipal principal, string path, CancellationToken cancellationToken = default)
@@ -103,6 +125,13 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         return "/";
     }
 
+    private void AddAudit(HttpContext context, string userName, bool succeeded, string reason, DateTime utcNow)
+    {
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString();
+        var userAgent = context.Request.Headers.UserAgent.ToString();
+        dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, ipAddress, userAgent, utcNow));
+    }
+
     private static bool IsSafeLocalPath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path) || !path.StartsWith('/') || path.StartsWith("//"))
@@ -121,3 +150,12 @@ public sealed record LoginResult(bool IsSuccess, string Message, string Redirect
     public static LoginResult Failed(string message) => new(false, message, "/login");
     public static LoginResult Succeeded(string path) => new(true, string.Empty, path);
 }
+
+public sealed record LoginAuditDto(
+    Guid Id,
+    string UserName,
+    bool Succeeded,
+    string Reason,
+    string IpAddress,
+    string UserAgent,
+    DateTime AttemptedAtUtc);
