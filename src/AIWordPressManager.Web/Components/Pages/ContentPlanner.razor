@@ -1,0 +1,209 @@
+@page "/content-planner"
+@rendermode InteractiveServer
+@implements IDisposable
+@using AIWordPressManager.Domain.Entities
+@inject ContentPlannerService Planner
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "مخطط المحتوى" : "Content Planner")</PageTitle>
+
+<div class="planner-page">
+    <section class="panel planner-hero">
+        <div>
+            <span class="workspace-kicker">CONTENT OPERATIONS</span>
+            <h1>@(L.IsArabic ? "مخطط المحتوى" : "Content Planner")</h1>
+            <p>@(L.IsArabic ? "حوّل الأفكار إلى ملخصات ومسودات، ثم أرسلها إلى مركز التنفيذ من خلال سير عمل واضح." : "Turn ideas into briefs and drafts, then queue them through a controlled execution workflow.")</p>
+        </div>
+        <div class="planner-hero-actions">
+            <a class="btn" href="/ai-center">✦ AI Center</a>
+            <a class="btn" href="/module/execution">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
+            <button class="btn btn-primary" @onclick="NewItem">＋ @(L.IsArabic ? "فكرة جديدة" : "New idea")</button>
+        </div>
+    </section>
+
+    <section class="planner-stats">
+        <article class="panel"><small>@(L.IsArabic ? "الإجمالي" : "Total")</small><strong>@_items.Count</strong><span>@(L.IsArabic ? "عناصر التخطيط" : "planner items")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "أفكار" : "Ideas")</small><strong>@_items.Count(x => x.Status == PlannerItemStatus.Idea)</strong><span>@(L.IsArabic ? "تنتظر الملخص" : "waiting for briefs")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "مسودات" : "Drafts")</small><strong>@_items.Count(x => x.Status == PlannerItemStatus.Draft)</strong><span>@(L.IsArabic ? "جاهزة للمراجعة" : "ready for review")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "مجدولة" : "Scheduled")</small><strong>@_items.Count(x => x.ScheduledAtUtc.HasValue)</strong><span>@NextScheduledText</span></article>
+    </section>
+
+    <section class="planner-layout">
+        <aside class="panel planner-editor">
+            <header><div><span class="workspace-kicker">EDITOR</span><h2>@(_editingId.HasValue ? (L.IsArabic ? "تعديل العنصر" : "Edit item") : (L.IsArabic ? "إنشاء فكرة" : "Create idea"))</h2></div></header>
+            <label><span>@(L.IsArabic ? "الموقع" : "Site")</span>
+                <select @bind="_selectedSiteId">
+                    <option value="">@(L.IsArabic ? "بدون موقع محدد" : "No specific site")</option>
+                    @foreach (var site in _sites){<option value="@site.Id">@site.Name</option>}
+                </select>
+            </label>
+            <label><span>@(L.IsArabic ? "العنوان" : "Title")</span><input @bind="_title" /></label>
+            <label><span>@(L.IsArabic ? "الفكرة أو الهدف" : "Idea or objective")</span><textarea rows="7" @bind="_idea"></textarea></label>
+            <label><span>@(L.IsArabic ? "موعد النشر المقترح" : "Suggested publish time")</span><input type="datetime-local" @bind="_scheduledLocal" /></label>
+            <div class="planner-editor-actions">
+                <button class="btn btn-primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))</button>
+                <button class="btn" @onclick="NewItem">@(L.IsArabic ? "مسح" : "Clear")</button>
+            </div>
+        </aside>
+
+        <main class="panel planner-board">
+            <header class="planner-toolbar">
+                <div><span class="workspace-kicker">PIPELINE</span><h2>@(L.IsArabic ? "مسار المحتوى" : "Content pipeline")</h2></div>
+                <div class="planner-filters">
+                    <input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث..." : "Search...")" />
+                    <select @bind="_statusFilter">
+                        <option value="">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
+                        @foreach (var status in Enum.GetValues<PlannerItemStatus>()){<option value="@status">@StatusText(status)</option>}
+                    </select>
+                    <button class="btn" @onclick="ReloadAsync">↻</button>
+                </div>
+            </header>
+
+            @if (_loading)
+            {
+                <div class="planner-loading"><span></span><span></span><span></span></div>
+            }
+            else if (!FilteredItems.Any())
+            {
+                <div class="empty-state planner-empty"><h3>@(L.IsArabic ? "لا توجد عناصر" : "No planner items")</h3><p>@(L.IsArabic ? "ابدأ بإضافة فكرة محتوى جديدة." : "Start by creating a new content idea.")</p></div>
+            }
+            else
+            {
+                <div class="planner-items">
+                    @foreach (var item in FilteredItems)
+                    {
+                        <article class="planner-card @item.Status.ToString().ToLowerInvariant()">
+                            <div class="planner-card-head">
+                                <div><span class="badge @StatusClass(item.Status)">@StatusText(item.Status)</span><h3>@item.Title</h3></div>
+                                <button class="icon-button" @onclick="() => Edit(item)">✎</button>
+                            </div>
+                            <p>@(string.IsNullOrWhiteSpace(item.Idea) ? (L.IsArabic ? "بدون وصف" : "No description") : item.Idea)</p>
+                            <div class="planner-meta"><span>@(string.IsNullOrWhiteSpace(item.SiteName) ? (L.IsArabic ? "عام" : "General") : item.SiteName)</span><span>@FormatDate(item.ScheduledAtUtc)</span></div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Brief))
+                            {
+                                <details><summary>@(L.IsArabic ? "عرض الملخص" : "View brief")</summary><pre>@item.Brief</pre></details>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.DraftContent))
+                            {
+                                <details><summary>@(L.IsArabic ? "عرض المسودة" : "View draft")</summary><pre>@item.DraftContent</pre></details>
+                            }
+
+                            <div class="planner-card-actions">
+                                <button class="btn compact" disabled="@IsBusy(item.Id)" @onclick="() => GenerateBriefAsync(item)">✦ @(L.IsArabic ? "توليد Brief" : "Generate brief")</button>
+                                <button class="btn compact" disabled="@(IsBusy(item.Id) || string.IsNullOrWhiteSpace(item.Brief))" @onclick="() => GenerateDraftAsync(item)">▤ @(L.IsArabic ? "توليد مسودة" : "Generate draft")</button>
+                                <button class="btn compact primary" disabled="@(IsBusy(item.Id) || string.IsNullOrWhiteSpace(item.DraftContent))" @onclick="() => QueueAsync(item)">▶ @(L.IsArabic ? "إرسال للتنفيذ" : "Queue")</button>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </main>
+    </section>
+</div>
+
+@code {
+    private List<Site> _sites = [];
+    private List<PlannerItem> _items = [];
+    private Guid? _editingId;
+    private Guid? _busyId;
+    private string _selectedSiteId = string.Empty;
+    private string _title = string.Empty;
+    private string _idea = string.Empty;
+    private string _scheduledLocal = string.Empty;
+    private string _search = string.Empty;
+    private string _statusFilter = string.Empty;
+    private bool _loading;
+    private bool _saving;
+
+    private IEnumerable<PlannerItem> FilteredItems => _items.Where(x =>
+        (string.IsNullOrWhiteSpace(_search) || x.Title.Contains(_search, StringComparison.OrdinalIgnoreCase) || (x.Idea?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false) || x.SiteName.Contains(_search, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrWhiteSpace(_statusFilter) || x.Status.ToString().Equals(_statusFilter, StringComparison.OrdinalIgnoreCase)));
+
+    private string NextScheduledText => _items.Where(x => x.ScheduledAtUtc.HasValue).OrderBy(x => x.ScheduledAtUtc).Select(x => FormatDate(x.ScheduledAtUtc)).FirstOrDefault() ?? L["Never"];
+
+    protected override void OnInitialized() => L.Changed += LanguageChanged;
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            _items = Planner.GetItems().ToList();
+        }
+        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل تحميل المخطط" : "Planner load failed", ex.ToString());}
+        finally{_loading = false;}
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_title)) { Notifications.Warning(L.IsArabic ? "أدخل عنوانًا." : "Enter a title."); return; }
+        _saving = true;
+        try
+        {
+            var siteId = Guid.TryParse(_selectedSiteId, out var parsed) ? parsed : (Guid?)null;
+            var siteName = siteId.HasValue ? _sites.FirstOrDefault(x => x.Id == siteId.Value)?.Name : null;
+            var scheduledUtc = ParseLocalDate(_scheduledLocal);
+            if (_editingId.HasValue)
+                Planner.Update(_editingId.Value, new UpdatePlannerItem(_title, null, _idea, null, null, scheduledUtc, null));
+            else
+                Planner.Create(new CreatePlannerItem(siteId, siteName, _title, _idea, scheduledUtc, "Content Planner"));
+            Notifications.Success(L.IsArabic ? "تم حفظ عنصر التخطيط." : "Planner item saved.");
+            NewItem();
+            await ReloadAsync();
+        }
+        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل الحفظ" : "Save failed", ex.ToString());}
+        finally{_saving = false;}
+    }
+
+    private async Task GenerateBriefAsync(PlannerItem item)
+    {
+        await RunItemActionAsync(item.Id, async () => await Planner.GenerateBriefAsync(item.Id, L.Culture, "Content Planner", CancellationToken.None), L.IsArabic ? "تم توليد الملخص." : "Brief generated.");
+    }
+
+    private async Task GenerateDraftAsync(PlannerItem item)
+    {
+        await RunItemActionAsync(item.Id, async () => await Planner.GenerateDraftAsync(item.Id, L.Culture, "Content Planner", CancellationToken.None), L.IsArabic ? "تم توليد المسودة." : "Draft generated.");
+    }
+
+    private async Task QueueAsync(PlannerItem item)
+    {
+        await RunItemActionAsync(item.Id, () => Task.FromResult(Planner.QueueForExecution(item.Id)), L.IsArabic ? "تم إرسال المسودة إلى مركز التنفيذ." : "Draft queued for execution.");
+    }
+
+    private async Task RunItemActionAsync(Guid id, Func<Task<PlannerItem>> action, string success)
+    {
+        _busyId = id;
+        try { await action(); Notifications.Success(success); await ReloadAsync(); }
+        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "تعذر تنفيذ العملية" : "Operation failed", ex.ToString());}
+        finally{_busyId = null;}
+    }
+
+    private void Edit(PlannerItem item)
+    {
+        _editingId = item.Id;
+        _selectedSiteId = item.SiteId?.ToString() ?? string.Empty;
+        _title = item.Title;
+        _idea = item.Idea ?? string.Empty;
+        _scheduledLocal = item.ScheduledAtUtc?.ToLocalTime().ToString("yyyy-MM-ddTHH:mm") ?? string.Empty;
+    }
+
+    private void NewItem()
+    {
+        _editingId = null;
+        _selectedSiteId = string.Empty;
+        _title = _idea = _scheduledLocal = string.Empty;
+    }
+
+    private bool IsBusy(Guid id) => _busyId == id;
+    private static DateTime? ParseLocalDate(string value) => DateTime.TryParse(value, out var local) ? local.ToUniversalTime() : null;
+    private string FormatDate(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") : L["Never"];
+    private string StatusText(PlannerItemStatus status) => !L.IsArabic ? status.ToString() : status switch { PlannerItemStatus.Idea => "فكرة", PlannerItemStatus.Brief => "ملخص", PlannerItemStatus.Draft => "مسودة", PlannerItemStatus.Review => "مراجعة", PlannerItemStatus.Scheduled => "مجدول", PlannerItemStatus.Published => "منشور", PlannerItemStatus.Cancelled => "ملغي", _ => status.ToString() };
+    private static string StatusClass(PlannerItemStatus status) => status switch { PlannerItemStatus.Published => "success", PlannerItemStatus.Cancelled => "danger", PlannerItemStatus.Review or PlannerItemStatus.Scheduled => "warning", _ => string.Empty };
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
