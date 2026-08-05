@@ -3,9 +3,12 @@
 @implements IDisposable
 @using System.Text.Json
 @using AIWordPressManager.Application.Abstractions.AI
+@using AIWordPressManager.Domain.Entities
 @inject IAIOrchestrator Orchestrator
 @inject IAIPromptRegistry PromptRegistry
 @inject IAIUsageLog UsageLog
+@inject SiteWebService SiteService
+@inject ApprovalWorkflowService ApprovalService
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
@@ -17,19 +20,20 @@
         <div>
             <span class="workspace-kicker">AI WORKSPACE</span>
             <h1>@(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</h1>
-            <p>@(L.IsArabic ? "استخدم القوالب المسجلة في النظام لتوليد وتحسين محتوى WordPress عبر مزود الذكاء الاصطناعي النشط." : "Use the registered prompt library to generate and improve WordPress content through the active AI provider.")</p>
+            <p>@(L.IsArabic ? "ولّد المحتوى من القوالب المسجلة، قارنه بالمصدر، ثم أرسله إلى قائمة الموافقات قبل التنفيذ على WordPress." : "Generate content from registered prompts, compare it with the source, then submit it to the approval queue before WordPress execution.")</p>
         </div>
         <div class="ai-center-hero-actions">
-            <button class="btn" @onclick="LoadMetadata">↻ @(L.IsArabic ? "تحديث القوالب والسجل" : "Refresh prompts & usage")</button>
-            <button class="btn" @onclick="Clear">@(L.IsArabic ? "محادثة جديدة" : "New session")</button>
+            <a class="btn" href="/approvals">✓ @(L.IsArabic ? "قائمة الموافقات" : "Approval queue")</a>
+            <button class="btn" @onclick="LoadMetadataAsync">↻ @(L.IsArabic ? "تحديث البيانات" : "Refresh data")</button>
+            <button class="btn" @onclick="Clear">@(L.IsArabic ? "جلسة جديدة" : "New session")</button>
         </div>
     </section>
 
     <section class="ai-center-stats">
         <article class="panel"><small>@(L.IsArabic ? "القوالب المتاحة" : "Available prompts")</small><strong>@_prompts.Count</strong><span>@(L.IsArabic ? "من سجل القوالب" : "from prompt registry")</span></article>
         <article class="panel"><small>@(L.IsArabic ? "طلبات الاستخدام الأخيرة" : "Recent usage records")</small><strong>@_usageCount</strong><span>@(L.IsArabic ? "آخر 100 سجل" : "latest 100 records")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "المواقع المتاحة" : "Available sites")</small><strong>@_sites.Count</strong><span>@(L.IsArabic ? "للربط بالموافقة" : "for approval targeting")</span></article>
         <article class="panel"><small>@(L.IsArabic ? "حالة الجلسة" : "Session state")</small><strong>@(_working ? (L.IsArabic ? "جارٍ التوليد" : "Generating") : (L.IsArabic ? "جاهز" : "Ready"))</strong><span>@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "النموذج" : "Model")</small><strong>@(string.IsNullOrWhiteSpace(_model) ? (L.IsArabic ? "افتراضي" : "Default") : _model)</strong><span>Temperature @_temperature.ToString("0.0")</span></article>
     </section>
 
     <section class="ai-center-layout">
@@ -60,7 +64,7 @@
                 <label><span>@(L.IsArabic ? "الحد الأقصى للرموز" : "Max output tokens")</span><input type="number" min="100" max="8000" @bind="_maxTokens" /></label>
             </div>
 
-            <label class="ai-content-input"><span>@(L.IsArabic ? "المحتوى أو التعليمات" : "Content or instructions")</span><textarea @bind="_content" rows="14" placeholder="@(L.IsArabic ? "ألصق المحتوى أو اكتب المهمة المطلوبة..." : "Paste content or describe the task...")"></textarea></label>
+            <label class="ai-content-input"><span>@(L.IsArabic ? "المحتوى الأصلي أو التعليمات" : "Original content or instructions")</span><textarea @bind="_content" rows="14" placeholder="@(L.IsArabic ? "ألصق المحتوى أو اكتب المهمة المطلوبة..." : "Paste content or describe the task...")"></textarea></label>
             <div class="ai-composer-footer">
                 <span>@ContentLength @(L.IsArabic ? "حرف" : "characters")</span>
                 <button class="btn primary" disabled="@(_working || string.IsNullOrWhiteSpace(_content))" @onclick="GenerateAsync">✦ @(_working ? (L.IsArabic ? "جارٍ التوليد..." : "Generating...") : (L.IsArabic ? "توليد" : "Generate"))</button>
@@ -85,6 +89,33 @@
             {
                 <article class="ai-generated-output">@_output</article>
                 <div class="ai-result-meta"><span>@_output.Length @(L.IsArabic ? "حرف" : "characters")</span><span>@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</span></div>
+
+                <section class="ai-approval-box">
+                    <div class="ai-approval-heading">
+                        <div><span class="workspace-kicker">GOVERNANCE</span><h3>@(L.IsArabic ? "إرسال للموافقة" : "Submit for approval")</h3></div>
+                        @if (_lastApprovalId.HasValue){<a class="btn compact" href="/approvals">@(L.IsArabic ? "فتح العنصر" : "Open queue") ↗</a>}
+                    </div>
+                    <div class="ai-approval-grid">
+                        <label><span>@(L.IsArabic ? "الموقع" : "Site")</span>
+                            <select @bind="_selectedSiteId">
+                                <option value="">@(L.IsArabic ? "بدون موقع محدد" : "No specific site")</option>
+                                @foreach (var site in _sites){<option value="@site.Id">@site.Name</option>}
+                            </select>
+                        </label>
+                        <label><span>@(L.IsArabic ? "درجة الخطورة" : "Risk level")</span>
+                            <select @bind="_riskLevel">
+                                @foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()){<option value="@risk">@RiskText(risk)</option>}
+                            </select>
+                        </label>
+                        <label class="wide"><span>@(L.IsArabic ? "عنوان طلب الموافقة" : "Approval title")</span><input @bind="_approvalTitle" /></label>
+                        <label class="wide"><span>@(L.IsArabic ? "نوع العملية" : "Operation type")</span><input @bind="_operationType" /></label>
+                    </div>
+                    <div class="ai-compare-grid">
+                        <div><small>@(L.IsArabic ? "قبل" : "Before")</small><pre>@_content</pre></div>
+                        <div><small>@(L.IsArabic ? "بعد" : "After")</small><pre>@_output</pre></div>
+                    </div>
+                    <button class="btn primary full" disabled="@_submittingApproval" @onclick="SubmitForApprovalAsync">✓ @(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال إلى قائمة الموافقات" : "Submit to approval queue"))</button>
+                </section>
             }
         </aside>
     </section>
@@ -92,17 +123,22 @@
 
 @code {
     private readonly List<PromptOption> _prompts = new();
+    private List<Site> _sites = new();
     private string _content = string.Empty, _promptKey = string.Empty, _model = string.Empty, _output = string.Empty, _error = string.Empty, _promptSearch = string.Empty;
+    private string _selectedSiteId = string.Empty, _approvalTitle = string.Empty, _operationType = "AI.ContentUpdate";
+    private ApprovalRiskLevel _riskLevel = ApprovalRiskLevel.High;
     private double _temperature = .2;
     private int _maxTokens = 1500, _usageCount;
-    private bool _working;
+    private bool _working, _submittingApproval;
     private TimeSpan? _lastElapsed;
+    private Guid? _lastApprovalId;
     private int ContentLength => _content?.Length ?? 0;
     private IEnumerable<PromptOption> FilteredPrompts => _prompts.Where(x => string.IsNullOrWhiteSpace(_promptSearch) || x.Key.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase) || x.Title.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase));
 
-    protected override void OnInitialized(){L.Changed += Changed; LoadMetadata();}
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnInitializedAsync() => await LoadMetadataAsync();
 
-    private void LoadMetadata()
+    private async Task LoadMetadataAsync()
     {
         _prompts.Clear();
         try
@@ -119,33 +155,63 @@
                 }
             }
             _usageCount = CountArray(JsonSerializer.Serialize(UsageLog.GetRecent(100, null, null)));
+            _sites = await SiteService.GetSitesAsync();
         }
         catch (Exception ex){_error = L.TranslateMessage(ex.Message);}
     }
 
-    private void SelectPrompt(PromptOption prompt){_promptKey = prompt.Key;}
+    private void SelectPrompt(PromptOption prompt){_promptKey = prompt.Key; _approvalTitle = prompt.Title;}
 
     private async Task GenerateAsync()
     {
-        _working = true; _error = string.Empty; _output = string.Empty; var started = DateTime.UtcNow;
+        _working = true; _error = string.Empty; _output = string.Empty; _lastApprovalId = null; var started = DateTime.UtcNow;
         try
         {
             var instruction = string.IsNullOrWhiteSpace(_promptKey) ? null : PromptRegistry.Get(_promptKey, L.Culture);
-            var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, null, null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
+            var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
             _lastElapsed = DateTime.UtcNow - started;
             if (result.IsFailure){_error = L.TranslateMessage(result.Error.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed"); return;}
             var json = JsonSerializer.Serialize(result.Value);
             _output = ExtractOutput(json);
             if (string.IsNullOrWhiteSpace(_output)) _output = json;
+            if (string.IsNullOrWhiteSpace(_approvalTitle)) _approvalTitle = string.IsNullOrWhiteSpace(_promptKey) ? (L.IsArabic ? "اقتراح محتوى بالذكاء الاصطناعي" : "AI content proposal") : _promptKey;
             Notifications.Success(L.IsArabic ? "اكتمل توليد المحتوى." : "AI content generated.");
-            LoadMetadata();
+            await LoadMetadataAsync();
         }
         catch (Exception ex){_error = L.TranslateMessage(ex.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed", ex.ToString());}
         finally{_working = false;}
     }
 
+    private async Task SubmitForApprovalAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_output)) return;
+        try
+        {
+            _submittingApproval = true;
+            var siteId = SelectedSiteGuid();
+            var site = siteId.HasValue ? _sites.FirstOrDefault(x => x.Id == siteId.Value) : null;
+            var item = ApprovalService.Submit(new ApprovalSubmission(
+                siteId,
+                site?.Name,
+                string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(),
+                string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(),
+                new { Content = _content, PromptKey = _promptKey, Model = _model },
+                new { Content = _output, PromptKey = _promptKey, Model = _model },
+                "AI Center",
+                _riskLevel,
+                Guid.NewGuid().ToString("N"),
+                null));
+            _lastApprovalId = item.Id;
+            Notifications.Success(L.IsArabic ? "تم إرسال الاقتراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
+        }
+        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "تعذر إرسال الموافقة" : "Approval submission failed", ex.ToString());}
+        finally{_submittingApproval = false;}
+    }
+
+    private Guid? SelectedSiteGuid() => Guid.TryParse(_selectedSiteId, out var value) ? value : null;
     private async Task CopyOutputAsync(){await JS.InvokeVoidAsync("navigator.clipboard.writeText", _output); Notifications.Success(L.IsArabic ? "تم نسخ النتيجة." : "Result copied.");}
-    private void Clear(){_content = _output = _error = _promptKey = string.Empty; _lastElapsed = null;}
+    private void Clear(){_content = _output = _error = _promptKey = _approvalTitle = string.Empty; _operationType = "AI.ContentUpdate"; _lastElapsed = null; _lastApprovalId = null;}
+    private string RiskText(ApprovalRiskLevel risk) => L.IsArabic ? risk switch { ApprovalRiskLevel.Low => "منخفضة", ApprovalRiskLevel.Medium => "متوسطة", ApprovalRiskLevel.High => "مرتفعة", ApprovalRiskLevel.Critical => "حرجة", _ => risk.ToString() } : risk.ToString();
     private void Changed()=>InvokeAsync(StateHasChanged);
     public void Dispose()=>L.Changed-=Changed;
 
