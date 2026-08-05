@@ -2,24 +2,28 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from docx.shared import Pt
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCX = ROOT / "AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx"
 JSON_FILE = ROOT / "task-tracker.json"
+BACKUP_DOCX = ROOT / "artifacts" / "task-tracker-backup.docx"
 BATCH_SIZE = 100
 DONE_COLOR = "E2F0D9"
 PENDING_COLOR = "FCE4EC"
 HEADER_COLOR = "D9EAF7"
 
-TEXT_EXTENSIONS = {".cs", ".razor", ".json", ".yml", ".yaml", ".md", ".ps1", ".bat", ".props", ".sln", ".csproj", ".css", ".js"}
-IGNORE_PARTS = {".git", "bin", "obj", ".vs", "node_modules"}
+IGNORE_PARTS = {".git", "bin", "obj", ".vs", "node_modules", "artifacts"}
 
 EXPLICIT_RULES: list[tuple[tuple[str, ...], tuple[str, ...]]] = [
     (("نطاق mvp", "scope"), ("docs/governance/PROJECT_GOVERNANCE.md",)),
@@ -63,45 +67,52 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip().lower()
 
 
+def normalize_id(value: str) -> str:
+    value = normalize(value)
+    match = re.search(r"\d+", value)
+    return str(int(match.group(0))) if match else value
+
+
 def repo_paths() -> set[str]:
     result: set[str] = set()
-    for p in ROOT.rglob("*"):
-        if any(part in IGNORE_PARTS for part in p.parts):
+    for path in ROOT.rglob("*"):
+        if any(part in IGNORE_PARTS for part in path.parts):
             continue
-        if p.is_file():
-            result.add(p.relative_to(ROOT).as_posix())
+        if path.is_file():
+            result.add(path.relative_to(ROOT).as_posix())
     return result
 
 
 def path_exists(paths: set[str], required: str) -> bool:
     required = required.rstrip("/")
-    return required in paths or any(p.startswith(required + "/") for p in paths)
+    return required in paths or any(path.startswith(required + "/") for path in paths)
 
 
 def task_text(task: dict) -> str:
-    return normalize(" | ".join(str(v) for v in task.get("values", [])))
+    return normalize(" | ".join(str(value) for value in task.get("values", [])))
 
 
 def rule_evidence(text: str, paths: set[str]) -> list[str]:
     found: list[str] = []
     for keywords, required_paths in EXPLICIT_RULES:
-        if not any(normalize(k) in text for k in keywords):
+        if not any(normalize(keyword) in text for keyword in keywords):
             continue
-        matches = [p for p in required_paths if path_exists(paths, p)]
-        if matches:
-            found.extend(matches)
+        found.extend(path for path in required_paths if path_exists(paths, path))
     return sorted(set(found))
 
 
 def generic_evidence(text: str, paths: set[str]) -> list[str]:
-    tokens = [t for t in re.findall(r"[a-zA-Z][a-zA-Z0-9_.-]{3,}", text) if t.lower() not in {"project", "document", "manager", "developer", "wordpress"}]
+    ignored = {"project", "document", "manager", "developer", "wordpress", "implementation"}
+    tokens = [
+        token for token in re.findall(r"[a-zA-Z][a-zA-Z0-9_.-]{3,}", text)
+        if token.lower() not in ignored
+    ]
     evidence: list[str] = []
     for token in tokens[:8]:
         low = token.lower()
-        for p in paths:
-            if low in p.lower():
-                evidence.append(p)
-                break
+        match = next((path for path in sorted(paths) if low in path.lower()), None)
+        if match:
+            evidence.append(match)
     return sorted(set(evidence))
 
 
@@ -109,27 +120,24 @@ def audit(data: dict) -> dict:
     paths = repo_paths()
     now = datetime.now(timezone.utc).isoformat()
     processed = 0
+
     for task in data.get("tasks", []):
-        try:
-            task_id = int(str(task.get("id", "0")))
-        except ValueError:
+        task_id = normalize_id(str(task.get("id", "")))
+        if not task_id.isdigit() or not 1 <= int(task_id) <= BATCH_SIZE:
             continue
-        if task_id < 1 or task_id > BATCH_SIZE:
-            continue
+
         processed += 1
         text = task_text(task)
-        evidence = rule_evidence(text, paths)
-        if not evidence:
-            evidence = generic_evidence(text, paths)
+        evidence = rule_evidence(text, paths) or generic_evidence(text, paths)
 
         if evidence:
             task["status"] = "completed"
             task["status_text"] = "مكتمل - تم التنفيذ"
-            task["notes"] = "Evidence: " + "; ".join(evidence[:6])
+            task["notes"] = "دليل التنفيذ: " + "؛ ".join(evidence[:6])
         else:
             task["status"] = "pending"
             task["status_text"] = "غير مكتمل"
-            task["notes"] = "تمت المراجعة ضمن دفعة أول 100 مهمة ولم يُعثر على دليل تنفيذ كافٍ بعد."
+            task["notes"] = "تمت المراجعة ضمن دفعة 1-100، ولا يوجد دليل تنفيذ كافٍ حتى الآن."
         task["updated_at_utc"] = now
 
     data["audit"] = {
@@ -140,61 +148,146 @@ def audit(data: dict) -> dict:
     }
     data["summary"] = {
         "total": len(data.get("tasks", [])),
-        "completed": sum(1 for t in data.get("tasks", []) if t.get("status") == "completed"),
-        "pending": sum(1 for t in data.get("tasks", []) if t.get("status") != "completed"),
+        "completed": sum(1 for task in data.get("tasks", []) if task.get("status") == "completed"),
+        "pending": sum(1 for task in data.get("tasks", []) if task.get("status") != "completed"),
     }
     data["generated_at_utc"] = now
     return data
 
 
-def shade(cell, fill: str) -> None:
+def shade_cell(cell, fill: str) -> None:
     tc_pr = cell._tc.get_or_add_tcPr()
-    shd = tc_pr.find(qn("w:shd"))
-    if shd is None:
-        shd = OxmlElement("w:shd")
-        tc_pr.append(shd)
-    shd.set(qn("w:fill"), fill)
+    shading = tc_pr.find(qn("w:shd"))
+    if shading is None:
+        shading = OxmlElement("w:shd")
+        tc_pr.append(shading)
+    shading.set(qn("w:fill"), fill)
+    shading.set(qn("w:val"), "clear")
 
 
-def find_status_column(headers: Iterable[str]) -> int | None:
-    for i, header in enumerate(headers):
-        h = normalize(header)
-        if any(x in h for x in ("الحالة", "حالة", "status", "الإنجاز", "التنفيذ")):
-            return i
+def set_cell_text_preserving_layout(cell, text: str, *, rtl: bool = True) -> None:
+    paragraph = cell.paragraphs[0] if cell.paragraphs else cell.add_paragraph()
+    for extra in list(cell.paragraphs[1:]):
+        extra._element.getparent().remove(extra._element)
+
+    runs = paragraph.runs
+    if runs:
+        runs[0].text = text
+        for run in runs[1:]:
+            run.text = ""
+        run = runs[0]
+    else:
+        run = paragraph.add_run(text)
+
+    run.font.name = "Cairo"
+    run.font.size = Pt(8)
+    run._element.get_or_add_rPr().rFonts.set(qn("w:cs"), "Cairo")
+    run._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Cairo")
+
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT if rtl else WD_ALIGN_PARAGRAPH.LEFT
+    p_pr = paragraph._p.get_or_add_pPr()
+    bidi = p_pr.find(qn("w:bidi"))
+    if rtl and bidi is None:
+        bidi = OxmlElement("w:bidi")
+        p_pr.append(bidi)
+    elif not rtl and bidi is not None:
+        p_pr.remove(bidi)
+
+
+def find_column(headers: Iterable[str], candidates: tuple[str, ...]) -> int | None:
+    for index, header in enumerate(headers):
+        normalized = normalize(header)
+        if any(candidate in normalized for candidate in candidates):
+            return index
     return None
 
 
+def row_task_id(row) -> str:
+    if not row.cells:
+        return ""
+    return normalize_id(row.cells[0].text)
+
+
 def apply_to_docx(data: dict) -> None:
+    BACKUP_DOCX.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(DOCX, BACKUP_DOCX)
+
     document = Document(DOCX)
-    positions = {(int(t["table_index"]), int(t["row_index"])): t for t in data.get("tasks", []) if "table_index" in t and "row_index" in t}
-    for ti, table in enumerate(document.tables):
+    original_table_count = len(document.tables)
+    original_row_count = sum(len(table.rows) for table in document.tables)
+    tasks_by_id = {normalize_id(str(task.get("id", ""))): task for task in data.get("tasks", [])}
+    matched_ids: set[str] = set()
+
+    for table in document.tables:
         if not table.rows:
             continue
+
+        headers = [cell.text for cell in table.rows[0].cells]
+        status_col = find_column(headers, ("الحالة", "حالة", "status", "الإنجاز", "التنفيذ"))
+        notes_col = find_column(headers, ("ملاحظات", "الملاحظات", "notes", "note", "دليل"))
+
         for cell in table.rows[0].cells:
-            shade(cell, HEADER_COLOR)
-        status_col = find_status_column(cell.text for cell in table.rows[0].cells)
-        for ri, row in enumerate(table.rows[1:], 1):
-            task = positions.get((ti, ri))
+            shade_cell(cell, HEADER_COLOR)
+
+        for row in table.rows[1:]:
+            task_id = row_task_id(row)
+            task = tasks_by_id.get(task_id)
             if not task:
                 continue
-            done = task.get("status") == "completed"
+
+            matched_ids.add(task_id)
+            completed = task.get("status") == "completed"
+            fill = DONE_COLOR if completed else PENDING_COLOR
             for cell in row.cells:
-                shade(cell, DONE_COLOR if done else PENDING_COLOR)
+                shade_cell(cell, fill)
+
             if status_col is not None and status_col < len(row.cells):
-                row.cells[status_col].text = "مكتمل - تم التنفيذ" if done else "غير مكتمل"
-            if len(row.cells) >= 11:
-                row.cells[10].text = task.get("notes", "")
+                set_cell_text_preserving_layout(
+                    row.cells[status_col],
+                    "مكتمل - تم التنفيذ" if completed else "غير مكتمل",
+                )
+
+            if notes_col is not None and notes_col < len(row.cells):
+                set_cell_text_preserving_layout(row.cells[notes_col], task.get("notes", ""))
+
+    if len(document.tables) != original_table_count:
+        raise RuntimeError("Table count changed while updating the tracker.")
+    if sum(len(table.rows) for table in document.tables) != original_row_count:
+        raise RuntimeError("Row count changed while updating the tracker.")
+
+    expected_ids = {
+        normalize_id(str(task.get("id", "")))
+        for task in data.get("tasks", [])
+        if normalize_id(str(task.get("id", "")))
+    }
+    missing = sorted(expected_ids - matched_ids, key=lambda value: int(value) if value.isdigit() else 999999)
+    data["document_sync"] = {
+        "matched_rows": len(matched_ids),
+        "missing_task_ids": missing,
+        "table_count": original_table_count,
+        "row_count": original_row_count,
+        "updated_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+
     document.save(DOCX)
+
+    verification = Document(DOCX)
+    if len(verification.tables) != original_table_count:
+        raise RuntimeError("Saved DOCX failed table-count verification.")
+    if sum(len(table.rows) for table in verification.tables) != original_row_count:
+        raise RuntimeError("Saved DOCX failed row-count verification.")
 
 
 def main() -> int:
     if not JSON_FILE.exists() or not DOCX.exists():
-        raise SystemExit("task-tracker.json and tracker DOCX are required")
+        print("task-tracker.json and tracker DOCX are required", file=sys.stderr)
+        return 2
+
     data = json.loads(JSON_FILE.read_text(encoding="utf-8"))
     data = audit(data)
-    JSON_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     apply_to_docx(data)
-    print(json.dumps(data["summary"], ensure_ascii=False))
+    JSON_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"summary": data["summary"], "document_sync": data["document_sync"]}, ensure_ascii=False))
     return 0
 
 
