@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_document": "AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx",
-  "generated_at_utc": "2026-08-05T08:26:01.330774+00:00",
+  "generated_at_utc": "2026-08-05T08:29:27.530212+00:00",
   "summary": {
     "total": 259,
     "completed": 96,
@@ -30,7 +30,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "2",
@@ -54,7 +54,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "3",
@@ -78,7 +78,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ Build/Run-Web.ps1؛ docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "4",
@@ -102,7 +102,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "5",
@@ -126,7 +126,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "6",
@@ -150,7 +150,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "7",
@@ -174,7 +174,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "8",
@@ -198,7 +198,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ AIWordPressManager.Web.sln؛ Build/Run-Web.ps1",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "9",
@@ -222,7 +222,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Web/AIWordPressManager.Web.csproj",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "10",
@@ -246,7 +246,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Domain/AIWordPressManager.Domain.csproj",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "11",
@@ -270,7 +270,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Application/AIWordPressManager.Application.csproj",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "12",
@@ -294,7 +294,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Infrastructure/AIWordPressManager.Infrastructure.csproj",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "13",
@@ -318,7 +318,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressApiClient.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "14",
@@ -341,8 +341,8 @@
         "",
         ""
       ],
-      "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Application/Abstractions/AI",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Application/Abstractions/AI؛ src/AIWordPressManager.Infrastructure/AI",
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "15",
@@ -366,7 +366,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "16",
@@ -390,7 +390,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "17",
@@ -414,7 +414,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ AIWordPressManager.Web.sln؛ Build/Run-Web.ps1",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "18",
@@ -438,7 +438,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ AIWordPressManager.Web.sln؛ Build/Run-Web.ps1",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "19",
@@ -462,7 +462,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "20",
@@ -486,7 +486,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "21",
@@ -510,7 +510,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "22",
@@ -534,7 +534,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "23",
@@ -558,7 +558,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ AIWordPressManager.Web.sln؛ Build/Run-Web.ps1",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "24",
@@ -582,7 +582,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/IDatabaseBackupService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "25",
@@ -606,7 +606,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Persistence/AppDbContext.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "26",
@@ -630,7 +630,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md؛ src/AIWordPressManager.Application/AIWordPressManager.Application.csproj",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "27",
@@ -654,7 +654,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs؛ src/AIWordPressManager.Domain/Entities/SiteCredential.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "28",
@@ -678,7 +678,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "29",
@@ -702,7 +702,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/IWordPressContentStore.cs؛ src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressPostEditorService.cs؛ src/AIWordPressManager.Domain/Entities/ApplicationSetting.cs؛ src/AIWordPressManager.Domain/Entities/WordPressMediaRecord.cs؛ src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor؛ src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "30",
@@ -726,7 +726,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/SeoAuditExecutionService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "31",
@@ -750,7 +750,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "32",
@@ -774,7 +774,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/ExecutionJobListItem.cs؛ src/AIWordPressManager.Domain/Entities/ApplicationSetting.cs؛ src/AIWordPressManager.Persistence/Migrations/AppDbContextModelSnapshot.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "33",
@@ -798,7 +798,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Planning/ICategoryPlannerService.cs؛ src/AIWordPressManager.Domain/Entities/ApplicationSetting.cs؛ src/AIWordPressManager.Persistence/Migrations/AppDbContextModelSnapshot.cs؛ src/AIWordPressManager.Web/Components/Pages/AutomationCenter.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "34",
@@ -822,7 +822,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor؛ src/AIWordPressManager.Web/Services/AppNotificationService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "35",
@@ -846,7 +846,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Persistence/AppDbContext.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "36",
@@ -870,7 +870,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/IDatabaseBackupService.cs؛ src/AIWordPressManager.Application/Abstractions/Persistence/IDatabaseInitializationService.cs؛ src/AIWordPressManager.Persistence/Migrations/20260802130000_InitialDatabase.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "37",
@@ -894,7 +894,7 @@
         ""
       ],
       "notes": "تمت المراجعة ضمن دفعة 1-100، ولا يوجد دليل تنفيذ كافٍ حتى الآن.",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "38",
@@ -918,7 +918,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "39",
@@ -942,7 +942,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Infrastructure/Security/DpapiSecretProtectionService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "40",
@@ -966,7 +966,7 @@
         ""
       ],
       "notes": "تمت المراجعة ضمن دفعة 1-100، ولا يوجد دليل تنفيذ كافٍ حتى الآن.",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "41",
@@ -990,7 +990,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/IDatabaseBackupService.cs؛ src/AIWordPressManager.Domain/Common/SoftDeletableEntity.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "42",
@@ -1014,7 +1014,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Layout/MainLayout.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "43",
@@ -1038,7 +1038,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Layout/MainLayout.razor؛ src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "44",
@@ -1062,7 +1062,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: Run-System.bat",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "45",
@@ -1086,7 +1086,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/WordPress/IThemeIntelligenceStore.cs؛ src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressThemeService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "46",
@@ -1110,7 +1110,7 @@
         ""
       ],
       "notes": "تمت المراجعة ضمن دفعة 1-100، ولا يوجد دليل تنفيذ كافٍ حتى الآن.",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "47",
@@ -1134,7 +1134,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Localization/AppLanguageService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "48",
@@ -1158,7 +1158,7 @@
         ""
       ],
       "notes": "تمت المراجعة ضمن دفعة 1-100، ولا يوجد دليل تنفيذ كافٍ حتى الآن.",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "49",
@@ -1182,7 +1182,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Common/Results/Error.cs؛ src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "50",
@@ -1206,7 +1206,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/App.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "51",
@@ -1229,8 +1229,8 @@
         "",
         ""
       ],
-      "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/AppNotificationService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "notes": "دليل التنفيذ: src/AIWordPressManager.Infrastructure/AI/AIPlatformServices.cs",
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "52",
@@ -1254,7 +1254,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Common/Results/Error.cs؛ src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "53",
@@ -1278,7 +1278,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "54",
@@ -1302,7 +1302,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor؛ src/AIWordPressManager.Web/Services/DashboardLiveService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "55",
@@ -1326,7 +1326,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Layout/MainLayout.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "56",
@@ -1350,7 +1350,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/ExecutionJobListItem.cs؛ src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "57",
@@ -1374,7 +1374,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressPostEditorService.cs؛ src/AIWordPressManager.Application/Sites/CreateSiteRequest.cs؛ src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "58",
@@ -1398,7 +1398,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: docs/governance/PROJECT_GOVERNANCE.md",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "59",
@@ -1422,7 +1422,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ Build/Run-Web.ps1",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "60",
@@ -1446,7 +1446,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "61",
@@ -1470,7 +1470,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Infrastructure/Security/DpapiSecretProtectionService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "62",
@@ -1494,7 +1494,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/audit-task-tracker.yml؛ src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "63",
@@ -1518,7 +1518,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/IApplicationPathService.cs؛ src/AIWordPressManager.Application/Abstractions/ISecretProtectionService.cs؛ src/AIWordPressManager.Application/Abstractions/Persistence/IDatabaseBackupService.cs؛ src/AIWordPressManager.Infrastructure/Security/DpapiSecretProtectionService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "64",
@@ -1542,7 +1542,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "65",
@@ -1566,7 +1566,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "66",
@@ -1590,7 +1590,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/AIWordPressManager.Application.csproj",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "67",
@@ -1614,7 +1614,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressApiClient.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "68",
@@ -1638,7 +1638,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/dotnet-build.yml؛ Build/Run-Web.ps1",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "69",
@@ -1662,7 +1662,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/SiteWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "70",
@@ -1686,7 +1686,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "71",
@@ -1710,7 +1710,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "72",
@@ -1734,7 +1734,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: .github/workflows/audit-task-tracker.yml",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "73",
@@ -1758,7 +1758,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "74",
@@ -1782,7 +1782,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "75",
@@ -1806,7 +1806,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "76",
@@ -1830,7 +1830,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "77",
@@ -1854,7 +1854,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "78",
@@ -1878,7 +1878,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "79",
@@ -1902,7 +1902,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "80",
@@ -1926,7 +1926,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "81",
@@ -1950,7 +1950,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "82",
@@ -1974,7 +1974,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "83",
@@ -1998,7 +1998,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "84",
@@ -2022,7 +2022,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "85",
@@ -2046,7 +2046,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "86",
@@ -2070,7 +2070,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: Update-System.bat؛ Update-System.ps1؛ src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "87",
@@ -2094,7 +2094,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "88",
@@ -2118,7 +2118,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "89",
@@ -2142,7 +2142,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "90",
@@ -2166,7 +2166,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "91",
@@ -2190,7 +2190,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: AIWordPressManager.Web.sln؛ src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "92",
@@ -2214,7 +2214,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Domain/Entities/Site.cs؛ src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "93",
@@ -2238,7 +2238,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "94",
@@ -2262,7 +2262,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "95",
@@ -2286,7 +2286,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Services/WordPressSyncWebService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "96",
@@ -2310,7 +2310,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressExplorerService.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "97",
@@ -2334,7 +2334,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/ExecutionJobListItem.cs؛ src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor؛ src/AIWordPressManager.Web/Services/BulkContentOperationQueue.cs",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "98",
@@ -2358,7 +2358,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Application/Abstractions/Persistence/ExecutionJobListItem.cs؛ src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "99",
@@ -2382,7 +2382,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Persistence/Migrations/20260802193000_AddTagsMediaAndAvailability.cs؛ src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor؛ src/AIWordPressManager.Web/Components/Pages/TaxonomyManager.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "100",
@@ -2406,7 +2406,7 @@
         ""
       ],
       "notes": "دليل التنفيذ: src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor؛ src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
-      "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+      "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
     },
     {
       "id": "101",
@@ -6229,13 +6229,13 @@
     "batch": "1-100",
     "processed": 100,
     "method": "repository evidence audit",
-    "updated_at_utc": "2026-08-05T08:26:01.330774+00:00"
+    "updated_at_utc": "2026-08-05T08:29:27.530212+00:00"
   },
   "document_sync": {
     "matched_rows": 259,
     "missing_task_ids": [],
     "table_count": 1,
     "row_count": 260,
-    "updated_at_utc": "2026-08-05T08:26:01.649662+00:00"
+    "updated_at_utc": "2026-08-05T08:29:27.929800+00:00"
   }
 }
