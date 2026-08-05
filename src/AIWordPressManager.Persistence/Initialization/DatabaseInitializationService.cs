@@ -53,6 +53,21 @@ public sealed class DatabaseInitializationService(
                 ConcurrencyToken BLOB NOT NULL
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_AuthUsers_NormalizedUserName ON AuthUsers (NormalizedUserName);
+
+            CREATE TABLE IF NOT EXISTS LoginAudits (
+                Id TEXT NOT NULL CONSTRAINT PK_LoginAudits PRIMARY KEY,
+                UserName TEXT NOT NULL,
+                Succeeded INTEGER NOT NULL,
+                Reason TEXT NOT NULL,
+                IpAddress TEXT NOT NULL,
+                UserAgent TEXT NOT NULL,
+                AttemptedAtUtc TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS IX_LoginAudits_AttemptedAtUtc ON LoginAudits (AttemptedAtUtc);
+            CREATE INDEX IF NOT EXISTS IX_LoginAudits_UserName_AttemptedAtUtc ON LoginAudits (UserName, AttemptedAtUtc);
             """,
             cancellationToken);
 
