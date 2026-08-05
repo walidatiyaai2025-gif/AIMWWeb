@@ -14,9 +14,9 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -35,3 +35,14 @@ jobs:
 
       - name: Build solution
         run: dotnet build AIWordPressManager.Web.sln --configuration Debug --no-restore --warnaserror
+
+      - name: Run automated tests
+        run: dotnet test AIWordPressManager.Web.sln --configuration Debug --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-test-results
+          path: '**/TestResults/*.trx'
+          retention-days: 14
