@@ -3,10 +3,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>154.21.0</Version>
-    <AssemblyVersion>154.21.0.0</AssemblyVersion>
-    <FileVersion>154.21.0.0</FileVersion>
-    <InformationalVersion>154.21.0</InformationalVersion>
+    <Version>154.22.0</Version>
+    <AssemblyVersion>154.22.0.0</AssemblyVersion>
+    <FileVersion>154.22.0.0</FileVersion>
+    <InformationalVersion>154.22.0</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\AIWordPressManager.Application\AIWordPressManager.Application.csproj" />
