@@ -7,6 +7,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     public DbSet<Site> Sites => Set<Site>();
     public DbSet<SiteCredential> SiteCredentials => Set<SiteCredential>();
+    public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
     public DbSet<DatabaseVersion> DatabaseVersions => Set<DatabaseVersion>();
     public DbSet<BackupRecord> Backups => Set<BackupRecord>();
@@ -25,5 +26,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        modelBuilder.Entity<AuthUser>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.NormalizedUserName).IsUnique();
+            entity.Property(x => x.UserName).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.NormalizedUserName).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.PasswordHash).IsRequired();
+            entity.Property(x => x.Role).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.LastPage).HasMaxLength(1024).IsRequired();
+        });
     }
 }
