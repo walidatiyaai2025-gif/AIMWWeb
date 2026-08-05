@@ -1,0 +1,203 @@
+@page "/approvals"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject ApprovalWorkflowService ApprovalService
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</PageTitle>
+
+<div class="approval-page">
+    <section class="panel approval-hero">
+        <div>
+            <span class="workspace-kicker">@(L.IsArabic ? "سير العمل الآمن" : "CONTROLLED WORKFLOW")</span>
+            <h1>@(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</h1>
+            <p>@(L.IsArabic ? "راجع التغييرات المقترحة قبل اعتمادها أو إرسالها إلى مركز التنفيذ." : "Review proposed changes before approving, rejecting, or sending them to the execution center.")</p>
+        </div>
+        <div class="approval-hero-actions">
+            <button class="btn" @onclick="LoadAsync" disabled="@_working">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <a class="btn" href="/module/execution">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
+        </div>
+    </section>
+
+    <section class="approval-kpis">
+        <article class="panel"><small>@(L.IsArabic ? "الكل" : "Total")</small><strong>@_allItems.Count</strong></article>
+        <article class="panel pending"><small>@(L.IsArabic ? "في الانتظار" : "Pending")</small><strong>@Count(ApprovalStatus.Pending)</strong></article>
+        <article class="panel approved"><small>@(L.IsArabic ? "معتمدة" : "Approved")</small><strong>@Count(ApprovalStatus.Approved)</strong></article>
+        <article class="panel rejected"><small>@(L.IsArabic ? "مرفوضة" : "Rejected")</small><strong>@Count(ApprovalStatus.Rejected)</strong></article>
+        <article class="panel executed"><small>@(L.IsArabic ? "تم تنفيذها" : "Executed")</small><strong>@Count(ApprovalStatus.Executed)</strong></article>
+    </section>
+
+    <section class="panel approval-toolbar">
+        <div class="approval-filters">
+            <input class="search-input" placeholder="@(L.IsArabic ? "ابحث بالعنوان أو الموقع أو نوع العملية..." : "Search title, site, or operation...")" @bind="_search" @bind:event="oninput" />
+            <select @bind="_statusFilter">
+                <option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
+                @foreach (var status in Enum.GetValues<ApprovalStatus>())
+                {
+                    <option value="@status.ToString()">@StatusText(status)</option>
+                }
+            </select>
+            <select @bind="_riskFilter">
+                <option value="all">@(L.IsArabic ? "كل المخاطر" : "All risks")</option>
+                @foreach (var risk in Enum.GetValues<ApprovalRiskLevel>())
+                {
+                    <option value="@risk.ToString()">@RiskText(risk)</option>
+                }
+            </select>
+        </div>
+        <div class="approval-reviewer">
+            <label>@(L.IsArabic ? "اسم المراجع" : "Reviewer")</label>
+            <input @bind="_reviewer" placeholder="Admin" />
+        </div>
+    </section>
+
+    @if (_loading)
+    {
+        <div class="approval-skeleton-grid">@for (var i = 0; i < 4; i++) { <div class="panel"></div> }</div>
+    }
+    else if (!FilteredItems.Any())
+    {
+        <section class="panel empty-state approval-empty">
+            <div class="approval-empty-icon">✓</div>
+            <h2>@(L.IsArabic ? "لا توجد عناصر مطابقة" : "No matching approval items")</h2>
+            <p>@(L.IsArabic ? "ستظهر هنا اقتراحات SEO والذكاء الاصطناعي والعمليات الحساسة عند إرسالها للمراجعة." : "SEO, AI, and sensitive-operation proposals appear here when submitted for review.")</p>
+        </section>
+    }
+    else
+    {
+        <section class="approval-list">
+            @foreach (var item in FilteredItems)
+            {
+                <article class="panel approval-card @(item.Id == _expandedId ? "expanded" : string.Empty)">
+                    <header class="approval-card-head">
+                        <button class="approval-card-title" @onclick="() => ToggleDetails(item)">
+                            <span class="approval-risk @RiskClass(item.RiskLevel)">@RiskText(item.RiskLevel)</span>
+                            <span><strong>@item.Title</strong><small>@item.SiteName · @item.OperationType</small></span>
+                        </button>
+                        <div class="approval-card-state">
+                            <span class="badge @StatusClass(item.Status)">@StatusText(item.Status)</span>
+                            <small>@FormatDate(item.RequestedAtUtc)</small>
+                        </div>
+                    </header>
+
+                    <div class="approval-meta">
+                        <span><b>@(L.IsArabic ? "طلب بواسطة" : "Requested by"):</b> @item.RequestedBy</span>
+                        <span><b>Correlation:</b> <code>@item.CorrelationId</code></span>
+                        @if (item.ExecutionJobId.HasValue)
+                        {
+                            <span><b>@(L.IsArabic ? "مهمة التنفيذ" : "Execution job"):</b> <code>@item.ExecutionJobId</code></span>
+                        }
+                    </div>
+
+                    @if (item.Id == _expandedId)
+                    {
+                        <div class="approval-details">
+                            <div class="approval-diff-grid">
+                                <section><h3>@(L.IsArabic ? "قبل" : "Before")</h3><pre>@PrettyJson(item.BeforeJson)</pre></section>
+                                <section><h3>@(L.IsArabic ? "بعد" : "After")</h3><pre>@PrettyJson(item.AfterJson)</pre></section>
+                            </div>
+
+                            @if (_audit.Count > 0)
+                            {
+                                <section class="approval-audit">
+                                    <h3>@(L.IsArabic ? "سجل المراجعة" : "Audit trail")</h3>
+                                    @foreach (var entry in _audit)
+                                    {
+                                        <div><span></span><div><strong>@entry.Action</strong><small>@entry.Actor · @FormatDate(entry.CreatedAtUtc)</small>@if (!string.IsNullOrWhiteSpace(entry.Notes)) { <p>@entry.Notes</p> }</div></div>
+                                    }
+                                </section>
+                            }
+
+                            @if (item.Status == ApprovalStatus.Pending)
+                            {
+                                <div class="approval-decision-box">
+                                    <textarea rows="3" @bind="_notes" placeholder="@(L.IsArabic ? "ملاحظات المراجع..." : "Reviewer notes...")"></textarea>
+                                    <label class="check-row"><input type="checkbox" @bind="_executeImmediately" /> <span>@(L.IsArabic ? "إرسال إلى مركز التنفيذ فور الموافقة" : "Queue for execution immediately after approval")</span></label>
+                                    <div class="approval-actions">
+                                        <button class="btn primary" disabled="@_working" @onclick="() => ApproveAsync(item)">✓ @(L.IsArabic ? "موافقة" : "Approve")</button>
+                                        <button class="btn danger" disabled="@_working" @onclick="() => RejectAsync(item)">✕ @(L.IsArabic ? "رفض" : "Reject")</button>
+                                    </div>
+                                </div>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(item.ReviewerNotes))
+                            {
+                                <div class="approval-reviewed-note"><strong>@(L.IsArabic ? "ملاحظات المراجع" : "Reviewer notes")</strong><p>@item.ReviewerNotes</p></div>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<ApprovalItem> _allItems = Array.Empty<ApprovalItem>();
+    private IReadOnlyList<ApprovalAuditEntry> _audit = Array.Empty<ApprovalAuditEntry>();
+    private string _search = string.Empty, _statusFilter = "all", _riskFilter = "all", _reviewer = "Admin", _notes = string.Empty;
+    private Guid? _expandedId;
+    private bool _loading = true, _working, _executeImmediately = true;
+
+    private IEnumerable<ApprovalItem> FilteredItems => _allItems.Where(item =>
+        (_statusFilter == "all" || item.Status.ToString() == _statusFilter) &&
+        (_riskFilter == "all" || item.RiskLevel.ToString() == _riskFilter) &&
+        (string.IsNullOrWhiteSpace(_search) || item.Title.Contains(_search, StringComparison.OrdinalIgnoreCase) || item.SiteName.Contains(_search, StringComparison.OrdinalIgnoreCase) || item.OperationType.Contains(_search, StringComparison.OrdinalIgnoreCase)));
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private Task LoadAsync()
+    {
+        _loading = true;
+        _allItems = ApprovalService.GetItems(null, 500);
+        _loading = false;
+        return Task.CompletedTask;
+    }
+
+    private void ToggleDetails(ApprovalItem item)
+    {
+        if (_expandedId == item.Id) { _expandedId = null; _audit = Array.Empty<ApprovalAuditEntry>(); return; }
+        _expandedId = item.Id;
+        _notes = item.ReviewerNotes ?? string.Empty;
+        _audit = ApprovalService.GetAudit(item.Id, 100);
+    }
+
+    private async Task ApproveAsync(ApprovalItem item)
+    {
+        try
+        {
+            _working = true;
+            var result = ApprovalService.Approve(item.Id, _reviewer, _notes, _executeImmediately);
+            Notifications.Success(L.IsArabic ? "تم اعتماد العنصر." : "Approval completed.", result.Status.ToString());
+            await LoadAsync();
+            _audit = ApprovalService.GetAudit(item.Id, 100);
+        }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر اعتماد العنصر." : "Approval failed.", details: ex.Message); }
+        finally { _working = false; }
+    }
+
+    private async Task RejectAsync(ApprovalItem item)
+    {
+        try
+        {
+            _working = true;
+            ApprovalService.Reject(item.Id, _reviewer, _notes);
+            Notifications.Warning(L.IsArabic ? "تم رفض العنصر." : "Approval rejected.");
+            await LoadAsync();
+            _audit = ApprovalService.GetAudit(item.Id, 100);
+        }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر رفض العنصر." : "Rejection failed.", details: ex.Message); }
+        finally { _working = false; }
+    }
+
+    private int Count(ApprovalStatus status) => _allItems.Count(x => x.Status == status);
+    private string StatusText(ApprovalStatus status) => L.IsArabic ? status switch { ApprovalStatus.Pending => "في الانتظار", ApprovalStatus.Approved => "معتمدة", ApprovalStatus.Rejected => "مرفوضة", ApprovalStatus.Executed => "تم تنفيذها", ApprovalStatus.Cancelled => "ملغاة", _ => status.ToString() } : status.ToString();
+    private string RiskText(ApprovalRiskLevel risk) => L.IsArabic ? risk switch { ApprovalRiskLevel.Low => "منخفضة", ApprovalRiskLevel.Medium => "متوسطة", ApprovalRiskLevel.High => "مرتفعة", ApprovalRiskLevel.Critical => "حرجة", _ => risk.ToString() } : risk.ToString();
+    private static string StatusClass(ApprovalStatus status) => status switch { ApprovalStatus.Approved or ApprovalStatus.Executed => "success", ApprovalStatus.Rejected or ApprovalStatus.Cancelled => "danger", _ => "warning" };
+    private static string RiskClass(ApprovalRiskLevel risk) => risk.ToString().ToLowerInvariant();
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private static string PrettyJson(string value) { try { using var document = System.Text.Json.JsonDocument.Parse(value); return System.Text.Json.JsonSerializer.Serialize(document.RootElement, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }); } catch { return value; } }
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+}
