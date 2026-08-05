@@ -41,6 +41,7 @@ builder.Services.AddScoped(_ =>
 });
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
+builder.Services.AddSingleton<ApprovalWorkflowService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
 builder.Services.AddSingleton<AutomationCenterService>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
@@ -105,6 +106,45 @@ app.MapPost("/api/ai/generate", async (
         input.PromptKey), cancellationToken);
 
     return result.IsSuccess ? Results.Ok(result) : Results.BadRequest(result);
+});
+
+app.MapGet("/api/approvals", (string? status, int? take, ApprovalWorkflowService service) =>
+{
+    ApprovalStatus? parsed = null;
+    if (!string.IsNullOrWhiteSpace(status))
+    {
+        if (!Enum.TryParse<ApprovalStatus>(status, true, out var value))
+            return Results.BadRequest(new { error = "Invalid approval status." });
+        parsed = value;
+    }
+    return Results.Ok(service.GetItems(parsed, take ?? 200));
+});
+app.MapGet("/api/approvals/{id:guid}", (Guid id, ApprovalWorkflowService service) =>
+{
+    var item = service.GetById(id);
+    return item is null ? Results.NotFound() : Results.Ok(item);
+});
+app.MapGet("/api/approvals/{id:guid}/audit", (Guid id, int? take, ApprovalWorkflowService service) =>
+    Results.Ok(service.GetAudit(id, take ?? 200)));
+app.MapPost("/api/approvals", (ApprovalSubmission request, ApprovalWorkflowService service) =>
+{
+    try { return Results.Ok(service.Submit(request)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/approvals/{id:guid}/approve", (Guid id, ApprovalDecision request, ApprovalWorkflowService service) =>
+{
+    try { return Results.Ok(service.Approve(id, request.Reviewer, request.Notes, request.ExecuteImmediately)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/approvals/{id:guid}/reject", (Guid id, ApprovalDecision request, ApprovalWorkflowService service) =>
+{
+    try { return Results.Ok(service.Reject(id, request.Reviewer, request.Notes)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPut("/api/approvals/{id:guid}/proposal", (Guid id, ApprovalEditRequest request, ApprovalWorkflowService service) =>
+{
+    try { return Results.Ok(service.UpdateProposal(id, request.After, request.Actor, request.Notes)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
 });
 
 app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (
