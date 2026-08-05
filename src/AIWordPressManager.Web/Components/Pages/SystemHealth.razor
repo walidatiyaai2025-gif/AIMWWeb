@@ -115,5 +115,6 @@
         _ => "●"
     };
 
+    private string FormatDate(DateTimeOffset value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
 }
