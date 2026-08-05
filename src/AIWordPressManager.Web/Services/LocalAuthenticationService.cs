@@ -28,6 +28,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
     public async Task<LoginResult> SignInAsync(HttpContext context, string userName, string password, bool rememberMe, CancellationToken cancellationToken = default)
     {
         var normalized = (userName ?? string.Empty).Trim().ToUpperInvariant();
+        var safePassword = password ?? string.Empty;
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == normalized, cancellationToken);
         var now = DateTime.UtcNow;
 
@@ -37,7 +38,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         if (user.LockedUntilUtc is { } lockedUntil && lockedUntil > now)
             return LoginResult.Failed($"Account is locked until {lockedUntil.ToLocalTime():g}.");
 
-        var verification = _hasher.VerifyHashedPassword(user, user.PasswordHash, password ?? string.Empty);
+        var verification = _hasher.VerifyHashedPassword(user, user.PasswordHash, safePassword);
         if (verification == PasswordVerificationResult.Failed)
         {
             user.RecordFailedLogin(now);
@@ -46,7 +47,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         }
 
         if (verification == PasswordVerificationResult.SuccessRehashNeeded)
-            user.SetPasswordHash(_hasher.HashPassword(user, password), now);
+            user.SetPasswordHash(_hasher.HashPassword(user, safePassword), now);
 
         user.RecordSuccessfulLogin(now);
         await dbContext.SaveChangesAsync(cancellationToken);
