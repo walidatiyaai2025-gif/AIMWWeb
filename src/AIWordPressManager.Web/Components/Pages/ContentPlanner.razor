@@ -41,7 +41,7 @@
             </label>
             <label><span>@(L.IsArabic ? "العنوان" : "Title")</span><input @bind="_title" /></label>
             <label><span>@(L.IsArabic ? "الفكرة أو الهدف" : "Idea or objective")</span><textarea rows="7" @bind="_idea"></textarea></label>
-            <label><span>@(L.IsArabic ? "موعد النشر المقترح" : "Suggested publish time")</span><input type="datetime-local" @bind="_scheduledLocal" /></label>
+            <label><span>@(L.IsArabic ? "موعد النشر المقترح" : "Suggested publish time")</span><input type="datetime-local" value="@_scheduledLocal" @onchange="ScheduledChanged" /></label>
             <div class="planner-editor-actions">
                 <button class="btn btn-primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))</button>
                 <button class="btn" @onclick="NewItem">@(L.IsArabic ? "مسح" : "Clear")</button>
@@ -199,6 +199,7 @@
         _title = _idea = _scheduledLocal = string.Empty;
     }
 
+    private void ScheduledChanged(ChangeEventArgs e) => _scheduledLocal = e.Value?.ToString() ?? string.Empty;
     private bool IsBusy(Guid id) => _busyId == id;
     private static DateTime? ParseLocalDate(string value) => DateTime.TryParse(value, out var local) ? local.ToUniversalTime() : null;
     private string FormatDate(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") : L["Never"];
