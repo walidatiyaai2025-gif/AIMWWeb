@@ -1,65 +1,100 @@
 @page "/system-health"
+@rendermode InteractiveServer
 @inject SystemHealthWebService HealthService
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "صحة النظام" : "System Health")</PageTitle>
 
-<div class="page-heading">
-    <div>
-        <h1>@(L.IsArabic ? "صحة النظام والتشخيص" : "System Health & Diagnostics")</h1>
-        <p>@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة SQLite والسجلات." : "Application, local storage, SQLite, and logging diagnostics.")</p>
-    </div>
-    <button class="primary" @onclick="RefreshAsync" disabled="@isLoading">
-        @(isLoading ? (L.IsArabic ? "جارٍ الفحص..." : "Checking...") : (L.IsArabic ? "إعادة الفحص" : "Run checks"))
-    </button>
-</div>
-
-@if (snapshot is null)
-{
-    <div class="panel health-loading">@(L.IsArabic ? "جارٍ تحميل حالة النظام..." : "Loading system status...")</div>
-}
-else
-{
-    <div class="health-summary @(snapshot.IsHealthy ? "healthy" : "unhealthy")">
+<div class="system-health-page">
+    <section class="panel system-health-hero">
         <div>
-            <strong>@(snapshot.IsHealthy ? (L.IsArabic ? "النظام يعمل بصورة سليمة" : "System is healthy") : (L.IsArabic ? "توجد عناصر تحتاج مراجعة" : "Some checks need attention"))</strong>
-            <small>@(L.IsArabic ? "الإصدار" : "Version") @snapshot.Version</small>
+            <span class="workspace-kicker">@(L.IsArabic ? "التشخيص المباشر" : "LIVE DIAGNOSTICS")</span>
+            <h1>@(L.IsArabic ? "صحة النظام والتشخيص" : "System Health & Diagnostics")</h1>
+            <p>@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة SQLite والسجلات من مصدر النظام الحقيقي." : "Real application, local storage, SQLite, and logging diagnostics.")</p>
         </div>
-        <span>@snapshot.CheckedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
-    </div>
+        <div class="system-health-actions">
+            @if (snapshot is not null)
+            {
+                <span class="health-live-state @(snapshot.IsHealthy ? "good" : "bad")"><i></i>@(snapshot.IsHealthy ? (L.IsArabic ? "النظام سليم" : "System healthy") : (L.IsArabic ? "يحتاج مراجعة" : "Attention required"))</span>
+            }
+            <button class="btn primary" @onclick="RefreshAsync" disabled="@isLoading">↻ @(isLoading ? (L.IsArabic ? "جارٍ الفحص..." : "Checking...") : (L.IsArabic ? "إعادة الفحص" : "Run checks"))</button>
+        </div>
+    </section>
 
-    <div class="health-grid">
-        @foreach (var check in snapshot.Checks)
-        {
-            <article class="panel health-card @(check.IsHealthy ? "healthy" : "unhealthy")">
-                <div class="health-card-head">
-                    <h3>@CheckTitle(check.Key)</h3>
-                    <span class="health-state">@(check.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "خطأ" : "Failed"))</span>
-                </div>
-                <code>@check.Target</code>
-                <p>@check.Details</p>
-            </article>
-        }
-    </div>
-}
+    @if (snapshot is null)
+    {
+        <div class="health-skeleton-grid">@for (var i = 0; i < 4; i++) { <div class="panel health-skeleton"></div> }</div>
+    }
+    else
+    {
+        <section class="health-kpi-grid">
+            <article class="panel health-kpi @(snapshot.IsHealthy ? "good" : "bad")"><span>♥</span><div><small>@(L.IsArabic ? "الحالة العامة" : "Overall status")</small><strong>@(snapshot.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "تحذير" : "Warning"))</strong><em>@HealthyCount / @snapshot.Checks.Count</em></div></article>
+            <article class="panel health-kpi"><span>✓</span><div><small>@(L.IsArabic ? "الفحوصات السليمة" : "Healthy checks")</small><strong>@HealthyCount</strong><em>@(L.IsArabic ? "تعمل بصورة طبيعية" : "Operating normally")</em></div></article>
+            <article class="panel health-kpi @(FailedCount == 0 ? "good" : "bad")"><span>!</span><div><small>@(L.IsArabic ? "تحتاج مراجعة" : "Needs attention")</small><strong>@FailedCount</strong><em>@(L.IsArabic ? "فحوصات غير سليمة" : "Unhealthy checks")</em></div></article>
+            <article class="panel health-kpi"><span>◷</span><div><small>@(L.IsArabic ? "آخر فحص" : "Last checked")</small><strong class="health-date">@FormatDate(snapshot.CheckedAtUtc)</strong><em>v@snapshot.Version</em></div></article>
+        </section>
+
+        <section class="system-health-layout">
+            <div class="system-health-main">
+                <article class="panel health-section">
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "المكونات" : "COMPONENTS")</span><h2>@(L.IsArabic ? "حالة مكونات النظام" : "System component status")</h2><p>@(L.IsArabic ? "كل بطاقة تمثل فحصًا فعليًا منفذًا بواسطة خدمة صحة النظام." : "Each card represents a real check executed by the system health service.")</p></div></header>
+                    <div class="health-check-grid">
+                        @foreach (var check in snapshot.Checks)
+                        {
+                            <article class="health-check-card @(check.IsHealthy ? "good" : "bad")">
+                                <div class="health-check-head"><span class="health-check-icon">@CheckIcon(check.Key)</span><div><strong>@CheckTitle(check.Key)</strong><small>@check.Target</small></div><b>@(check.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "فشل" : "Failed"))</b></div>
+                                <p>@check.Details</p>
+                                <div class="health-check-meter"><i style="width:@(check.IsHealthy ? "100%" : "35%")"></i></div>
+                            </article>
+                        }
+                    </div>
+                </article>
+            </div>
+
+            <aside class="system-health-side">
+                <article class="panel overall-health-card">
+                    <div class="overall-health-ring @(snapshot.IsHealthy ? "good" : "bad")"><span>@HealthPercent%</span></div>
+                    <h3>@(snapshot.IsHealthy ? (L.IsArabic ? "المنصة تعمل بصورة جيدة" : "Platform is healthy") : (L.IsArabic ? "توجد عناصر تحتاج مراجعة" : "Some checks need attention"))</h3>
+                    <p>@(snapshot.IsHealthy ? (L.IsArabic ? "جميع الفحوصات الأساسية اجتازت الاختبار بنجاح." : "All essential diagnostics passed successfully.") : (L.IsArabic ? "راجع البطاقات الحمراء لتحديد سبب المشكلة." : "Review the red diagnostics cards to identify the issue."))</p>
+                    <div class="overall-health-progress"><span style="width:@HealthPercent%"></span></div>
+                </article>
+
+                <article class="panel health-info-card">
+                    <h3>@(L.IsArabic ? "معلومات الفحص" : "Diagnostic information")</h3>
+                    <dl>
+                        <div><dt>@(L.IsArabic ? "الإصدار" : "Version")</dt><dd>@snapshot.Version</dd></div>
+                        <div><dt>@(L.IsArabic ? "إجمالي الفحوصات" : "Total checks")</dt><dd>@snapshot.Checks.Count</dd></div>
+                        <div><dt>@(L.IsArabic ? "الناجحة" : "Healthy")</dt><dd>@HealthyCount</dd></div>
+                        <div><dt>@(L.IsArabic ? "غير السليمة" : "Unhealthy")</dt><dd>@FailedCount</dd></div>
+                        <div><dt>@(L.IsArabic ? "وقت الفحص" : "Checked at")</dt><dd>@FormatDate(snapshot.CheckedAtUtc)</dd></div>
+                    </dl>
+                </article>
+
+                <article class="panel health-help-card">
+                    <span class="workspace-kicker">@(L.IsArabic ? "الإجراءات" : "ACTIONS")</span>
+                    <h3>@(L.IsArabic ? "ماذا أفعل عند ظهور خطأ؟" : "What to do when a check fails")</h3>
+                    <p>@(L.IsArabic ? "أعد الفحص أولًا، ثم راجع مسار العنصر وتفاصيله. استخدم صفحة السجلات للحصول على معلومات إضافية." : "Run the checks again, review the target and details, then open Logs for deeper diagnostics.")</p>
+                    <a class="btn" href="/module/logs">@(L.IsArabic ? "فتح السجلات" : "Open logs")</a>
+                </article>
+            </aside>
+        </section>
+    }
+</div>
 
 @code {
     private SystemHealthSnapshot? snapshot;
     private bool isLoading;
+    private int HealthyCount => snapshot?.Checks.Count(x => x.IsHealthy) ?? 0;
+    private int FailedCount => snapshot?.Checks.Count(x => !x.IsHealthy) ?? 0;
+    private int HealthPercent => snapshot is null || snapshot.Checks.Count == 0 ? 0 : (int)Math.Round(HealthyCount * 100d / snapshot.Checks.Count);
 
     protected override Task OnInitializedAsync() => RefreshAsync();
 
     private async Task RefreshAsync()
     {
         isLoading = true;
-        try
-        {
-            snapshot = await HealthService.CheckAsync();
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        try { snapshot = await HealthService.CheckAsync(); }
+        finally { isLoading = false; }
     }
 
     private string CheckTitle(string key) => key switch
@@ -70,4 +105,15 @@ else
         "logs" => L.IsArabic ? "مجلد السجلات" : "Logs directory",
         _ => key
     };
+
+    private static string CheckIcon(string key) => key switch
+    {
+        "application" => "◆",
+        "storage" => "▣",
+        "sqlite" => "DB",
+        "logs" => "≡",
+        _ => "●"
+    };
+
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
 }
