@@ -1,0 +1,51 @@
+name: Audit Task Tracker
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/system-health
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'Build/Audit-And-Sync-TaskTracker.py'
+      - '.github/workflows/audit-task-tracker.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout active branch with main history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install python-docx
+
+      - name: Load tracker sources from main
+        run: |
+          git fetch origin main
+          git show origin/main:AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx > AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
+          git show origin/main:task-tracker.json > task-tracker.json
+
+      - name: Audit first 100 tasks and update Word
+        run: python Build/Audit-And-Sync-TaskTracker.py
+
+      - name: Commit synchronized tracker
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add task-tracker.json AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
+          if git diff --cached --quiet; then
+            echo "No tracker changes"
+          else
+            git commit -m "chore: audit first 100 tasks and sync Word tracker"
+            git push
+          fi
