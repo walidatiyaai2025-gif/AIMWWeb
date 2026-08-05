@@ -1,0 +1,226 @@
+@using System.Text.Json
+@implements IDisposable
+@inject IJSRuntime JS
+@inject AppLanguageService L
+@inject NavigationManager Navigation
+
+<div class="notification-center">
+    <button type="button" class="notification-trigger" @onclick="ToggleAsync" aria-expanded="@_open" title="@(L.IsArabic ? "مركز التنبيهات" : "Notification center")">
+        <span aria-hidden="true">♢</span>
+        @if (UnreadCount > 0)
+        {
+            <b>@(UnreadCount > 99 ? "99+" : UnreadCount)</b>
+        }
+    </button>
+
+    @if (_open)
+    {
+        <div class="notification-popover">
+            <header>
+                <div>
+                    <strong>@(L.IsArabic ? "مركز التنبيهات" : "Notification center")</strong>
+                    <small>@(L.IsArabic ? $"{UnreadCount} غير مقروء" : $"{UnreadCount} unread")</small>
+                </div>
+                <div class="notification-head-actions">
+                    <button type="button" @onclick="RefreshAsync" disabled="@_loading" title="@(L.IsArabic ? "تحديث" : "Refresh")">↻</button>
+                    <button type="button" @onclick="Close" title="@(L.IsArabic ? "إغلاق" : "Close")">×</button>
+                </div>
+            </header>
+
+            @if (_loading)
+            {
+                <div class="notification-loading"><span></span><span></span><span></span></div>
+            }
+            else if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="notification-empty error"><strong>@(L.IsArabic ? "تعذر تحميل التنبيهات" : "Notifications could not be loaded")</strong><small>@_error</small></div>
+            }
+            else if (_items.Count == 0)
+            {
+                <div class="notification-empty"><span>✓</span><strong>@(L.IsArabic ? "لا توجد تنبيهات" : "You're all caught up")</strong><small>@(L.IsArabic ? "ستظهر عمليات النظام المهمة هنا." : "Important system activity will appear here.")</small></div>
+            }
+            else
+            {
+                <div class="notification-list">
+                    @foreach (var item in _items)
+                    {
+                        <button type="button" class="notification-item @(!item.IsRead ? "unread" : string.Empty) @SeverityClass(item.Severity)" @onclick="() => OpenAsync(item)">
+                            <span class="notification-icon">@SeverityIcon(item.Severity)</span>
+                            <span class="notification-copy">
+                                <strong>@item.Title</strong>
+                                <small>@item.Message</small>
+                                <em>@FormatTime(item.CreatedAtUtc)</em>
+                            </span>
+                            @if (!item.IsRead)<i></i>
+                        </button>
+                    }
+                </div>
+            }
+
+            <footer>
+                <a href="/module/logs" @onclick="Close">@(L.IsArabic ? "عرض السجلات والأخطاء" : "View logs and errors")</a>
+            </footer>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly List<NotificationView> _items = [];
+    private bool _open;
+    private bool _loading;
+    private string? _error;
+    private Timer? _timer;
+    private int UnreadCount => _items.Count(x => !x.IsRead);
+
+    protected override void OnInitialized()
+    {
+        L.Changed += LanguageChanged;
+        _timer = new Timer(_ => _ = InvokeAsync(RefreshAsync), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(30));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await RefreshAsync();
+    }
+
+    private async Task ToggleAsync()
+    {
+        _open = !_open;
+        if (_open) await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_loading) return;
+        _loading = true;
+        try
+        {
+            var result = await JS.InvokeAsync<JsonElement>("aiwmNotifications.get", 12);
+            _items.Clear();
+            if (result.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in result.EnumerateArray()) _items.Add(Map(element));
+            }
+            _error = null;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OpenAsync(NotificationView item)
+    {
+        if (!item.IsRead)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("aiwmNotifications.markRead", item.Id);
+                var index = _items.FindIndex(x => x.Id == item.Id);
+                if (index >= 0) _items[index] = item with { IsRead = true };
+            }
+            catch { }
+        }
+
+        _open = false;
+        if (!string.IsNullOrWhiteSpace(item.TargetUrl)) Navigation.NavigateTo(item.TargetUrl);
+    }
+
+    private void Close() => _open = false;
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private NotificationView Map(JsonElement element)
+    {
+        var severity = Text(element, "severity", "Severity");
+        var category = Text(element, "category", "Category");
+        var title = Text(element, "title", "Title");
+        var message = Text(element, "message", "Message");
+        var url = Text(element, "targetUrl", "TargetUrl", "url", "Url");
+        if (string.IsNullOrWhiteSpace(url)) url = TargetFor(category, severity);
+        return new NotificationView(
+            GuidValue(element, "id", "Id"),
+            string.IsNullOrWhiteSpace(title) ? (L.IsArabic ? "تنبيه من النظام" : "System notification") : title,
+            message,
+            severity,
+            BoolValue(element, "isRead", "IsRead"),
+            DateValue(element, "createdAtUtc", "CreatedAtUtc", "createdAt", "CreatedAt"),
+            url);
+    }
+
+    private static string TargetFor(string category, string severity)
+    {
+        if (category.Contains("Media", StringComparison.OrdinalIgnoreCase)) return "/module/media";
+        if (category.Contains("SEO", StringComparison.OrdinalIgnoreCase)) return "/module/seo-audit";
+        if (category.Contains("Execution", StringComparison.OrdinalIgnoreCase) || category.Contains("Job", StringComparison.OrdinalIgnoreCase)) return "/module/execution";
+        if (severity.Contains("Error", StringComparison.OrdinalIgnoreCase)) return "/module/logs";
+        return string.Empty;
+    }
+
+    private string FormatTime(DateTime? value)
+    {
+        if (value is null) return string.Empty;
+        var local = value.Value.ToLocalTime();
+        var delta = DateTime.Now - local;
+        if (delta.TotalMinutes < 1) return L.IsArabic ? "الآن" : "Now";
+        if (delta.TotalHours < 1) return L.IsArabic ? $"منذ {(int)delta.TotalMinutes} دقيقة" : $"{(int)delta.TotalMinutes}m ago";
+        if (delta.TotalDays < 1) return L.IsArabic ? $"منذ {(int)delta.TotalHours} ساعة" : $"{(int)delta.TotalHours}h ago";
+        return local.ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, HH:mm");
+    }
+
+    private static string SeverityClass(string value) => value.ToLowerInvariant() switch
+    {
+        "success" => "success",
+        "warning" => "warning",
+        "error" or "critical" => "error",
+        _ => "info"
+    };
+
+    private static string SeverityIcon(string value) => value.ToLowerInvariant() switch
+    {
+        "success" => "✓",
+        "warning" => "!",
+        "error" or "critical" => "×",
+        _ => "i"
+    };
+
+    private static string Text(JsonElement element, params string[] names)
+    {
+        foreach (var name in names)
+            if (element.TryGetProperty(name, out var node) && node.ValueKind == JsonValueKind.String)
+                return node.GetString() ?? string.Empty;
+        return string.Empty;
+    }
+
+    private static Guid GuidValue(JsonElement element, params string[] names)
+    {
+        var value = Text(element, names);
+        return Guid.TryParse(value, out var id) ? id : Guid.Empty;
+    }
+
+    private static bool BoolValue(JsonElement element, params string[] names)
+    {
+        foreach (var name in names)
+            if (element.TryGetProperty(name, out var node) && node.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                return node.GetBoolean();
+        return false;
+    }
+
+    private static DateTime? DateValue(JsonElement element, params string[] names)
+    {
+        var value = Text(element, names);
+        return DateTime.TryParse(value, out var date) ? date : null;
+    }
+
+    public void Dispose()
+    {
+        L.Changed -= LanguageChanged;
+        _timer?.Dispose();
+    }
+
+    private sealed record NotificationView(Guid Id, string Title, string Message, string Severity, bool IsRead, DateTime? CreatedAtUtc, string TargetUrl);
+}
