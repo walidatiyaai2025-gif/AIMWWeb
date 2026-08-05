@@ -194,6 +194,8 @@ app.MapPost("/api/notifications/{id:guid}/read", (Guid id, NotificationInboxServ
     return Results.NoContent();
 });
 
+app.MapMediaApi();
+
 app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (
     Guid siteId,
     SeoAuditExecutionService service,
