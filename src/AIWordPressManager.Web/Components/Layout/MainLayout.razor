@@ -3,6 +3,7 @@
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <GlobalNotifications />
 
@@ -10,56 +11,49 @@
     <aside class="sidebar">
         <div class="brand"><span class="brand-mark">AI</span><div><strong>@L["AppName"]</strong><small>@L["BlazorServer"]</small></div></div>
         <nav class="main-nav">
-            <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "الرئيسية" : "OVERVIEW")</span>
+            @NavGroup("overview", L.IsArabic ? "الرئيسية" : "OVERVIEW", @<>
                 <NavLink href="/" Match="NavLinkMatch.All"><span>⌂</span> @L["Dashboard"]</NavLink>
                 <NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink>
                 <NavLink href="/module/overview"><span>▦</span> @(L.IsArabic ? "مركز النظام" : "System Overview")</NavLink>
-            </div>
+            </>)
 
-            <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "إدارة المحتوى" : "CONTENT")</span>
+            @NavGroup("content", L.IsArabic ? "إدارة المحتوى" : "CONTENT", @<>
                 <NavLink href="/module/posts"><span>▤</span> @L["Posts"]</NavLink>
                 <NavLink href="/module/pages"><span>▧</span> @L["Pages"]</NavLink>
                 <NavLink href="/module/media"><span>▣</span> @L["MediaManager"]</NavLink>
                 <NavLink href="/module/taxonomy"><span>#</span> @L["CategoriesTags"]</NavLink>
                 <NavLink href="/module/comments"><span>◌</span> @L["Comments"]</NavLink>
                 <NavLink href="/module/users"><span>◎</span> @L["UsersManager"]</NavLink>
-            </div>
+            </>)
 
-            <div class="nav-section">
-                <span class="nav-section-title">SEO</span>
+            @NavGroup("seo", "SEO", @<>
                 <NavLink href="/module/seo-audit"><span>◈</span> @L["SeoManager"]</NavLink>
                 <NavLink href="/module/seo-suggestions"><span>✦</span> @(L.IsArabic ? "اقتراحات التحسين" : "Suggestions")</NavLink>
                 <NavLink href="/module/approvals"><span>✓</span> @(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</NavLink>
-            </div>
+            </>)
 
-            <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "الذكاء الاصطناعي" : "AI WORKSPACE")</span>
+            @NavGroup("ai", L.IsArabic ? "الذكاء الاصطناعي" : "AI WORKSPACE", @<>
                 <NavLink href="/module/ai-providers"><span>✦</span> @(L.IsArabic ? "مزودو الذكاء" : "AI Providers")</NavLink>
                 <NavLink href="/module/prompts"><span>⌘</span> @(L.IsArabic ? "قوالب الأوامر" : "Prompt Templates")</NavLink>
-            </div>
+            </>)
 
-            <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "التشغيل والأتمتة" : "OPERATIONS")</span>
+            @NavGroup("operations", L.IsArabic ? "التشغيل والأتمتة" : "OPERATIONS", @<>
                 <NavLink href="/module/execution"><span>▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink>
                 <NavLink href="/module/sync"><span>↻</span> @L["ContentSync"]</NavLink>
                 <NavLink href="/module/schedules"><span>◷</span> @(L.IsArabic ? "الجدولة" : "Schedules")</NavLink>
-            </div>
+            </>)
 
-            <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "التقارير" : "REPORTS")</span>
+            @NavGroup("reports", L.IsArabic ? "التقارير" : "REPORTS", @<>
                 <NavLink href="/module/reports"><span>▥</span> @(L.IsArabic ? "التقارير والتصدير" : "Reports & Exports")</NavLink>
-            </div>
+            </>)
 
-            <div class="nav-section">
-                <span class="nav-section-title">@(L.IsArabic ? "النظام" : "SYSTEM")</span>
+            @NavGroup("system", L.IsArabic ? "النظام" : "SYSTEM", @<>
                 <NavLink href="/system-health"><span>♥</span> @(L.IsArabic ? "صحة النظام" : "System Health")</NavLink>
                 <NavLink href="/module/logs"><span>≡</span> @(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</NavLink>
                 <NavLink href="/module/backups"><span>⬡</span> @(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</NavLink>
                 <NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink>
                 <NavLink href="/about-build"><span>ⓘ</span> @(L.IsArabic ? "معلومات الإصدار" : "Build Information")</NavLink>
-            </div>
+            </>)
         </nav>
         <div class="sidebar-footer">
             <div><span class="status-dot"></span> @L["LocalSystemRunning"]</div>
@@ -71,7 +65,7 @@
             <div><h2>@L["AppName"]</h2><p>@L["BrowserManagement"]</p></div>
             <div class="topbar-actions">
                 <a class="topbar-version" href="/about-build">v@Build.Version</a>
-                <button class="language-switch" @onclick="ToggleLanguage" title="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
+                <button type="button" class="language-switch" @onclick="ToggleLanguage" title="@L["Language"]" aria-label="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
                 <div class="user-chip"><span>WA</span><div><strong>@L["Administrator"]</strong><small>@L["LocalAccount"]</small></div></div>
             </div>
         </header>
@@ -81,20 +75,86 @@
 
 @code {
     private BuildInformation Build => BuildInfo.Current;
-    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    private string? _openGroup;
+
+    protected override void OnInitialized()
+    {
+        L.Changed += OnLanguageChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        _openGroup = GroupForPath(new Uri(Navigation.Uri).AbsolutePath);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        var culture = await JS.InvokeAsync<string>("appLanguage.get");
-        L.SetCulture(culture);
+        var culture = await JS.InvokeAsync<string?>("appLanguage.get");
+        L.SetCulture(culture == "ar" ? "ar" : "en");
         await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+        StateHasChanged();
     }
+
+    private RenderFragment NavGroup(string key, string title, RenderFragment links) => builder =>
+    {
+        var seq = 0;
+        var expanded = _openGroup == key;
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", $"nav-section{(expanded ? " expanded" : string.Empty)}");
+        builder.OpenElement(seq++, "button");
+        builder.AddAttribute(seq++, "type", "button");
+        builder.AddAttribute(seq++, "class", "nav-section-toggle");
+        builder.AddAttribute(seq++, "aria-expanded", expanded);
+        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => ToggleGroup(key)));
+        builder.OpenElement(seq++, "span");
+        builder.AddContent(seq++, title);
+        builder.CloseElement();
+        builder.OpenElement(seq++, "span");
+        builder.AddAttribute(seq++, "class", "nav-chevron");
+        builder.AddContent(seq++, expanded ? "⌃" : "⌄");
+        builder.CloseElement();
+        builder.CloseElement();
+        if (expanded)
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "nav-section-links");
+            builder.AddContent(seq++, links);
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+    };
+
+    private void ToggleGroup(string key) => _openGroup = _openGroup == key ? null : key;
+
     private async Task ToggleLanguage()
     {
-        L.SetCulture(L.IsArabic ? "en" : "ar");
-        await JS.InvokeVoidAsync("appLanguage.set", L.Culture);
+        var next = L.IsArabic ? "en" : "ar";
+        L.SetCulture(next);
+        await JS.InvokeVoidAsync("appLanguage.set", next);
         await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+        StateHasChanged();
     }
-    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
-    public void Dispose() => L.Changed -= OnLanguageChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        _openGroup = GroupForPath(new Uri(args.Location).AbsolutePath);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private static string GroupForPath(string path)
+    {
+        if (path is "/" or "/sites" || path.StartsWith("/sites/", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/overview", StringComparison.OrdinalIgnoreCase)) return "overview";
+        if (path.StartsWith("/module/posts", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/pages", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/media", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/taxonomy", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/comments", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/users", StringComparison.OrdinalIgnoreCase)) return "content";
+        if (path.StartsWith("/module/seo", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/approvals", StringComparison.OrdinalIgnoreCase)) return "seo";
+        if (path.StartsWith("/module/ai", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/prompts", StringComparison.OrdinalIgnoreCase)) return "ai";
+        if (path.StartsWith("/module/execution", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/sync", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/module/schedules", StringComparison.OrdinalIgnoreCase)) return "operations";
+        if (path.StartsWith("/module/reports", StringComparison.OrdinalIgnoreCase)) return "reports";
+        return "system";
+    }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        L.Changed -= OnLanguageChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
 }
