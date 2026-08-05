@@ -51,7 +51,10 @@
                                 <small>@item.Message</small>
                                 <em>@FormatTime(item.CreatedAtUtc)</em>
                             </span>
-                            @if (!item.IsRead)<i></i>
+                            @if (!item.IsRead)
+                            {
+                                <i></i>
+                            }
                         </button>
                     }
                 </div>
