@@ -7,10 +7,17 @@ namespace AIWordPressManager.Tests.Fixtures;
 
 public sealed class MockWordPressHttpHandler : HttpMessageHandler
 {
+    private readonly object _sync = new();
     private readonly List<MockWordPressRoute> _routes = [];
     private readonly List<RecordedWordPressRequest> _requests = [];
 
-    public IReadOnlyList<RecordedWordPressRequest> Requests => _requests;
+    public IReadOnlyList<RecordedWordPressRequest> Requests
+    {
+        get
+        {
+            lock (_sync) return _requests.ToArray();
+        }
+    }
 
     public MockWordPressHttpHandler AddJson(
         HttpMethod method,
@@ -22,15 +29,18 @@ public sealed class MockWordPressHttpHandler : HttpMessageHandler
         string? expectedBasicPassword = null)
     {
         var json = payload is string raw ? raw : JsonSerializer.Serialize(payload);
-        _routes.Add(new MockWordPressRoute(
-            method,
-            NormalizePath(pathAndQuery),
-            statusCode,
-            json,
-            "application/json",
-            headers ?? new Dictionary<string, string>(),
-            expectedBasicUserName,
-            expectedBasicPassword));
+        lock (_sync)
+        {
+            _routes.Add(new MockWordPressRoute(
+                method,
+                NormalizePath(pathAndQuery),
+                statusCode,
+                json,
+                "application/json",
+                headers ?? new Dictionary<string, string>(),
+                expectedBasicUserName,
+                expectedBasicPassword));
+        }
         return this;
     }
 
@@ -61,16 +71,29 @@ public sealed class MockWordPressHttpHandler : HttpMessageHandler
             ? null
             : await request.Content.ReadAsStringAsync(cancellationToken);
 
-        var recorded = new RecordedWordPressRequest(
-            request.Method,
-            request.RequestUri ?? new Uri("http://localhost/"),
-            request.Headers.Authorization?.Scheme,
-            request.Headers.Authorization?.Parameter,
-            body);
-        _requests.Add(recorded);
-
+        MockWordPressRoute? route;
         var path = NormalizePath(request.RequestUri?.PathAndQuery ?? "/");
-        var route = _routes.FirstOrDefault(x => x.Method == request.Method && x.PathAndQuery == path);
+
+        lock (_sync)
+        {
+            _requests.Add(new RecordedWordPressRequest(
+                request.Method,
+                request.RequestUri ?? new Uri("http://localhost/"),
+                request.Headers.Authorization?.Scheme,
+                request.Headers.Authorization?.Parameter,
+                body));
+
+            var index = _routes.FindIndex(x => x.Method == request.Method && x.PathAndQuery == path);
+            route = index >= 0 ? _routes[index] : null;
+
+            if (index >= 0)
+            {
+                var duplicateExists = _routes.Skip(index + 1)
+                    .Any(x => x.Method == request.Method && x.PathAndQuery == path);
+                if (duplicateExists) _routes.RemoveAt(index);
+            }
+        }
+
         if (route is null)
         {
             return JsonResponse(
