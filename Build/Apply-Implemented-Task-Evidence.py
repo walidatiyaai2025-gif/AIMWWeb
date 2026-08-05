@@ -35,7 +35,11 @@ EVIDENCE: dict[int, list[str]] = {
     168: ["src/AIWordPressManager.Web/Services/ApprovalWorkflowService.cs", "src/AIWordPressManager.Web/Program.cs"],
     169: ["src/AIWordPressManager.Web/Services/ApprovalWorkflowService.cs"],
     170: ["src/AIWordPressManager.Web/Services/ApprovalWorkflowService.cs"],
-    184: ["src/AIWordPressManager.Web/Services/AppNotificationService.cs", "src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor"],
+    179: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs"],
+    181: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs", "src/AIWordPressManager.Web/Program.cs"],
+    182: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs", "src/AIWordPressManager.Web/Program.cs"],
+    183: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs", "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs"],
+    184: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs", "src/AIWordPressManager.Web/Services/AppNotificationService.cs", "src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor"],
 }
 
 
