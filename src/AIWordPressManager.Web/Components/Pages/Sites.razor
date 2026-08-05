@@ -7,14 +7,15 @@
 @inject IJSRuntime JS
 <PageTitle>@L["Sites"]</PageTitle>
 
-<div class="sites-page">
+<div class="sites-page sites-workspace">
     <section class="sites-hero panel">
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "إدارة البنية الرقمية" : "DIGITAL ESTATE")</span>
             <h1>@L["Sites"]</h1>
-            <p>@L["SitesIntro"]</p>
+            <p>@(L.IsArabic ? "راقب اتصالات WordPress وصحة المواقع وافتح أدوات المحتوى من مساحة عمل موحدة." : "Monitor WordPress connections, site health and content tools from one unified workspace.")</p>
         </div>
         <div class="sites-hero-actions">
+            <a class="btn" href="/system-health">♥ @(L.IsArabic ? "صحة النظام" : "System health")</a>
             <button class="btn" @onclick="ReloadAsync" disabled="@_loading">↻ @(_loading ? (L.IsArabic ? "جارٍ التحديث" : "Refreshing") : L["Refresh"])</button>
             <button class="btn primary" @onclick="OpenAddForm" disabled="@_saving">＋ @L["AddSite"]</button>
         </div>
@@ -59,6 +60,11 @@
 
     <section class="sites-toolbar panel">
         <div class="sites-search"><span>⌕</span><input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث بالاسم أو الرابط..." : "Search by name or URL...")" /></div>
+        <div class="sites-filter-group">
+            <button class="site-filter @(_statusFilter == "all" ? "active" : string.Empty)" @onclick="() => SetFilter("all")">@(L.IsArabic ? "الكل" : "All") <b>@_sites.Count</b></button>
+            <button class="site-filter @(_statusFilter == "connected" ? "active" : string.Empty)" @onclick="() => SetFilter("connected")">@(L.IsArabic ? "متصل" : "Connected") <b>@ConnectedCount</b></button>
+            <button class="site-filter @(_statusFilter == "review" ? "active" : string.Empty)" @onclick="() => SetFilter("review")">@(L.IsArabic ? "يحتاج مراجعة" : "Needs review") <b>@ProblemCount</b></button>
+        </div>
         <div class="sites-view-note">@(L.IsArabic ? $"عرض {FilteredSites.Count()} موقع" : $"Showing {FilteredSites.Count()} sites")</div>
     </section>
 
@@ -76,23 +82,34 @@
             @foreach (var site in FilteredSites)
             {
                 var busy = _busySiteId == site.Id;
+                var health = HealthPercent(site.ConnectionStatus);
                 <article class="panel site-management-card @(busy ? "is-busy" : string.Empty)">
                     <header>
                         <div class="site-identity"><div class="site-avatar">@Initials(site.Name)</div><div><h3>@site.Name</h3><a href="@site.SiteUrl" target="_blank" rel="noopener">@site.SiteUrl</a></div></div>
                         <span class="site-state @StatusClass(site.ConnectionStatus)"><i></i>@StatusText(site.ConnectionStatus)</span>
                     </header>
-                    <div class="site-card-metrics">
-                        <div><small>@L["WordPressVersion"]</small><strong>@(string.IsNullOrWhiteSpace(site.WordPressVersion) ? "—" : site.WordPressVersion)</strong></div>
-                        <div><small>@L["LastTest"]</small><strong>@FormatDate(site.LastConnectionTestAtUtc)</strong></div>
-                        <div><small>@(L.IsArabic ? "لغة الموقع" : "Site language")</small><strong>@(string.IsNullOrWhiteSpace(site.LanguageCode) ? "—" : site.LanguageCode)</strong></div>
-                        <div><small>@(L.IsArabic ? "حالة REST API" : "REST API status")</small><strong>@StatusText(site.ConnectionStatus)</strong></div>
+
+                    <div class="site-overview-row">
+                        <div class="site-health-ring" style="--health:@health"><div><strong>@health%</strong><small>@(L.IsArabic ? "الصحة" : "Health")</small></div></div>
+                        <div class="site-card-metrics">
+                            <div><small>@L["WordPressVersion"]</small><strong>@(string.IsNullOrWhiteSpace(site.WordPressVersion) ? "—" : site.WordPressVersion)</strong></div>
+                            <div><small>@L["LastTest"]</small><strong>@FormatDate(site.LastConnectionTestAtUtc)</strong></div>
+                            <div><small>@(L.IsArabic ? "لغة الموقع" : "Site language")</small><strong>@(string.IsNullOrWhiteSpace(site.LanguageCode) ? "—" : site.LanguageCode)</strong></div>
+                            <div><small>@(L.IsArabic ? "حالة REST API" : "REST API status")</small><strong>@StatusText(site.ConnectionStatus)</strong></div>
+                        </div>
                     </div>
-                    <div class="site-health-line"><span style="width:@HealthPercent(site.ConnectionStatus)%"></span></div>
+
+                    <div class="site-quick-links">
+                        <a href="@($"/sites/{site.Id}")"><span>⌂</span>@(L.IsArabic ? "لوحة الموقع" : "Dashboard")</a>
+                        <a href="@($"/sites/{site.Id}/explorer")"><span>▤</span>@(L.IsArabic ? "المحتوى" : "Content")</a>
+                        <a href="@site.SiteUrl" target="_blank" rel="noopener"><span>↗</span>@(L.IsArabic ? "فتح الموقع" : "Visit site")</a>
+                    </div>
+
+                    <div class="site-health-line"><span style="width:@health%"></span></div>
                     <footer class="site-card-actions">
                         <a class="btn primary" href="@($"/sites/{site.Id}")">@L["Open"]</a>
                         <button class="btn" title="@(L.IsArabic ? "اختبار الاتصال" : "Test connection")" disabled="@busy" @onclick="() => RetestAsync(site.Id)">@(busy ? "…" : "↻")</button>
                         <button class="btn" title="@(L.IsArabic ? "تعديل" : "Edit")" disabled="@busy" @onclick="() => OpenEditForm(site)">✎</button>
-                        <a class="btn" href="@site.SiteUrl" target="_blank" rel="noopener" title="@(L.IsArabic ? "فتح الموقع" : "Open website")">↗</a>
                         <button class="btn danger" title="@L["Delete"]" disabled="@busy" @onclick="() => DeleteAsync(site.Id, site.Name)">⌫</button>
                     </footer>
                     @if (busy) { <div class="site-card-overlay"><span class="site-spinner"></span><strong>@(L.IsArabic ? "جارٍ تنفيذ العملية..." : "Processing...")</strong></div> }
@@ -107,16 +124,26 @@
     private Guid? _editingId, _busySiteId;
     private string? _message;
     private string _search = string.Empty;
+    private string _statusFilter = "all";
     private List<AIWordPressManager.Domain.Entities.Site> _sites = [];
     private SiteInput _model = new();
 
     private int ConnectedCount => _sites.Count(x => x.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected);
     private int ProblemCount => _sites.Count(x => x.ConnectionStatus is not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected and not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown);
     private string LatestCheck => FormatDate(_sites.Where(x => x.LastConnectionTestAtUtc.HasValue).Select(x => x.LastConnectionTestAtUtc).OrderByDescending(x => x).FirstOrDefault());
-    private IEnumerable<AIWordPressManager.Domain.Entities.Site> FilteredSites => string.IsNullOrWhiteSpace(_search) ? _sites : _sites.Where(x => x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.SiteUrl.Contains(_search, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<AIWordPressManager.Domain.Entities.Site> FilteredSites => _sites.Where(MatchesFilter).Where(x => string.IsNullOrWhiteSpace(_search) || x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.SiteUrl.Contains(_search, StringComparison.OrdinalIgnoreCase));
 
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private bool MatchesFilter(AIWordPressManager.Domain.Entities.Site site) => _statusFilter switch
+    {
+        "connected" => site.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected,
+        "review" => site.ConnectionStatus is not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected and not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown,
+        _ => true
+    };
+
+    private void SetFilter(string filter) => _statusFilter = filter;
 
     private async Task ReloadAsync()
     {
