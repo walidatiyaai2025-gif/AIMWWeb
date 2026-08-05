@@ -12,41 +12,98 @@
 
 <div class="automation-page">
     <section class="panel automation-hero">
-        <div><span class="workspace-kicker">AUTOMATION</span><h1>@(L.IsArabic ? "مركز الأتمتة" : "Automation Center")</h1><p>@(L.IsArabic ? "أنشئ مهام المزامنة وتدقيق SEO وجدولها، أو شغلها فورًا، وتابع سجل التنفيذ الفعلي." : "Create and schedule synchronization and SEO audit jobs, run them immediately, and review real execution history.")</p></div>
-        <div class="automation-hero-actions"><button class="btn" @onclick="Refresh">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button><button class="btn primary" @onclick="NewJob">＋ @(L.IsArabic ? "مهمة جديدة" : "New job")</button><a class="btn" href="/module/execution">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a></div>
+        <div>
+            <span class="workspace-kicker">AUTOMATION</span>
+            <h1>@(L.IsArabic ? "مركز الأتمتة" : "Automation Center")</h1>
+            <p>@(L.IsArabic ? "أنشئ مهام المزامنة وتدقيق SEO وجدولها وتابع سجل التنفيذ." : "Create and schedule synchronization and SEO audit jobs and review execution history.")</p>
+        </div>
+        <div class="automation-hero-actions">
+            <button class="btn" @onclick="Refresh">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn primary" @onclick="NewJob">＋ @(L.IsArabic ? "مهمة جديدة" : "New job")</button>
+            <a class="btn" href="/module/execution">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
+        </div>
     </section>
 
     <section class="automation-kpis">
-        <article class="panel"><small>@(L.IsArabic ? "إجمالي المهام" : "Total jobs")</small><strong>@_jobs.Count</strong><span>@(L.IsArabic ? "محفوظة في SQLite" : "stored in SQLite")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "المهام المفعلة" : "Enabled jobs")</small><strong>@_jobs.Count(x => x.Enabled)</strong><span>@(L.IsArabic ? "تعمل حسب الجدول" : "running on schedule")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "تشغيلات فاشلة" : "Failed runs")</small><strong>@_history.Count(x => x.Status == "Failed")</strong><span>@(L.IsArabic ? "في آخر 100 سجل" : "in latest 100 records")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "أقرب تشغيل" : "Next run")</small><strong class="date-value">@FormatDate(_jobs.Where(x => x.Enabled).OrderBy(x => x.NextRunUtc).FirstOrDefault()?.NextRunUtc)</strong><span>@(L.IsArabic ? "بتوقيت الجهاز" : "local device time")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "إجمالي المهام" : "Total jobs")</small><strong>@_jobs.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "المهام المفعلة" : "Enabled jobs")</small><strong>@_jobs.Count(x => x.Enabled)</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "تشغيلات فاشلة" : "Failed runs")</small><strong>@_history.Count(x => x.Status == "Failed")</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "أقرب تشغيل" : "Next run")</small><strong class="date-value">@FormatDate(_jobs.Where(x => x.Enabled).OrderBy(x => x.NextRunUtc).FirstOrDefault()?.NextRunUtc)</strong></article>
     </section>
 
     <section class="automation-layout">
         <main class="panel automation-list-panel">
-            <header><div><span class="workspace-kicker">JOBS</span><h2>@(L.IsArabic ? "المهام المجدولة" : "Scheduled jobs")</h2></div><div class="automation-filters"><input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث..." : "Search...")"/><select @bind="_statusFilter"><option value="">@(L.IsArabic ? "كل الحالات" : "All states")</option><option value="enabled">@(L.IsArabic ? "مفعلة" : "Enabled")</option><option value="disabled">@(L.IsArabic ? "معطلة" : "Disabled")</option></select></div></header>
+            <header>
+                <div><span class="workspace-kicker">JOBS</span><h2>@(L.IsArabic ? "المهام المجدولة" : "Scheduled jobs")</h2></div>
+                <div class="automation-filters">
+                    <input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث..." : "Search...")" />
+                    <select @bind="_statusFilter">
+                        <option value="">@(L.IsArabic ? "كل الحالات" : "All states")</option>
+                        <option value="enabled">@(L.IsArabic ? "مفعلة" : "Enabled")</option>
+                        <option value="disabled">@(L.IsArabic ? "معطلة" : "Disabled")</option>
+                    </select>
+                </div>
+            </header>
+
             <div class="automation-job-list">
                 @foreach (var job in FilteredJobs)
                 {
                     <article class="automation-job-card @(job.Enabled ? "enabled" : "disabled")">
-                        <div class="automation-job-main"><span class="automation-job-icon">@TypeIcon(job.Type)</span><div><div class="automation-job-title"><strong>@job.Name</strong><span class="badge @StatusClass(job.LastStatus)">@StatusText(job.LastStatus)</span></div><p>@job.SiteName · @TypeText(job.Type)</p><div class="automation-job-meta"><span>◷ @ScheduleText(job)</span><span>→ @FormatDate(job.NextRunUtc)</span><span>↻ @job.RetryCount</span></div></div></div>
-                        <div class="automation-job-actions"><button class="btn compact" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button><button class="btn compact" disabled="@(job.LastStatus == "Running")" @onclick="() => RunNow(job)">▶ @(L.IsArabic ? "الآن" : "Run")</button><button class="btn compact" @onclick="() => Toggle(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button><button class="btn danger compact" @onclick="() => Delete(job)">@(L.IsArabic ? "حذف" : "Delete")</button></div>
+                        <div class="automation-job-main">
+                            <span class="automation-job-icon">@TypeIcon(job.Type)</span>
+                            <div>
+                                <div class="automation-job-title"><strong>@job.Name</strong><span class="badge @StatusClass(job.LastStatus)">@StatusText(job.LastStatus)</span></div>
+                                <p>@job.SiteName · @TypeText(job.Type)</p>
+                                <div class="automation-job-meta"><span>◷ @ScheduleText(job)</span><span>→ @FormatDate(job.NextRunUtc)</span><span>↻ @job.RetryCount</span></div>
+                            </div>
+                        </div>
+                        <div class="automation-job-actions">
+                            <button class="btn compact" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button>
+                            <button class="btn compact" disabled="@(job.LastStatus == "Running")" @onclick="() => RunNow(job)">▶ @(L.IsArabic ? "الآن" : "Run")</button>
+                            <button class="btn compact" @onclick="() => Toggle(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
+                            <button class="btn danger compact" @onclick="() => Delete(job)">@(L.IsArabic ? "حذف" : "Delete")</button>
+                        </div>
                     </article>
                 }
-                @if (!FilteredJobs.Any()){<div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام مطابقة" : "No matching jobs")</h3><p>@(L.IsArabic ? "أنشئ أول مهمة أتمتة أو غيّر الفلاتر." : "Create your first automation or adjust the filters.")</p></div>}
+
+                @if (!FilteredJobs.Any())
+                {
+                    <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام مطابقة" : "No matching jobs")</h3></div>
+                }
             </div>
         </main>
 
         <aside class="panel automation-editor">
-            <header><div><span class="workspace-kicker">EDITOR</span><h2>@(_model.Id == Guid.Empty ? (L.IsArabic ? "مهمة جديدة" : "New job") : (L.IsArabic ? "تعديل المهمة" : "Edit job"))</h2></div>@if(_model.Id != Guid.Empty){<button class="btn compact" @onclick="NewJob">@(L.IsArabic ? "جديد" : "New")</button>}</header>
+            <header>
+                <div><span class="workspace-kicker">EDITOR</span><h2>@(_model.Id == Guid.Empty ? (L.IsArabic ? "مهمة جديدة" : "New job") : (L.IsArabic ? "تعديل المهمة" : "Edit job"))</h2></div>
+                @if (_model.Id != Guid.Empty)
+                {
+                    <button class="btn compact" @onclick="NewJob">@(L.IsArabic ? "جديد" : "New")</button>
+                }
+            </header>
+
             <div class="automation-form">
                 <label><span>@(L.IsArabic ? "اسم المهمة" : "Job name")</span><input @bind="_model.Name" /></label>
-                <label><span>@(L.IsArabic ? "الموقع" : "Site")</span><select value="@_siteIdText" @onchange="SiteChanged"><option value="">@(L.IsArabic ? "اختر الموقع" : "Select site")</option>@foreach(var site in _sites){<option value="@site.Id">@site.Name</option>}</select></label>
+                <label>
+                    <span>@(L.IsArabic ? "الموقع" : "Site")</span>
+                    <select value="@_siteIdText" @onchange="SiteChanged">
+                        <option value="">@(L.IsArabic ? "اختر الموقع" : "Select site")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                </label>
                 <label><span>@(L.IsArabic ? "نوع المهمة" : "Job type")</span><select @bind="_model.Type"><option>Synchronization</option><option>SEO Audit</option><option>Content Operation</option></select></label>
-                <div class="automation-form-grid"><label><span>@(L.IsArabic ? "التكرار" : "Frequency")</span><select @bind="_model.Frequency"><option value="hourly">Hourly</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label><label><span>@(L.IsArabic ? "كل" : "Every")</span><input type="number" min="1" max="365" @bind="_model.IntervalValue" /></label></div>
-                <div class="automation-form-grid"><label><span>@(L.IsArabic ? "وقت التشغيل UTC" : "Run time UTC")</span><input type="time" value="@TimeText" @onchange="TimeChanged" /></label><label><span>@(L.IsArabic ? "عدد الإعادات" : "Retries")</span><input type="number" min="0" max="10" @bind="_model.RetryCount" /></label></div>
-                <label class="automation-toggle"><input type="checkbox" @bind="_model.Enabled"/><span>@(L.IsArabic ? "تفعيل المهمة بعد الحفظ" : "Enable after saving")</span></label>
+                <div class="automation-form-grid">
+                    <label><span>@(L.IsArabic ? "التكرار" : "Frequency")</span><select @bind="_model.Frequency"><option value="hourly">Hourly</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
+                    <label><span>@(L.IsArabic ? "كل" : "Every")</span><input type="number" min="1" max="365" @bind="_model.IntervalValue" /></label>
+                </div>
+                <div class="automation-form-grid">
+                    <label><span>@(L.IsArabic ? "وقت التشغيل UTC" : "Run time UTC")</span><input type="time" value="@TimeText" @onchange="TimeChanged" /></label>
+                    <label><span>@(L.IsArabic ? "عدد الإعادات" : "Retries")</span><input type="number" min="0" max="10" @bind="_model.RetryCount" /></label>
+                </div>
+                <label class="automation-toggle"><input type="checkbox" @bind="_model.Enabled" /><span>@(L.IsArabic ? "تفعيل المهمة بعد الحفظ" : "Enable after saving")</span></label>
                 <button class="btn primary full" disabled="@_saving" @onclick="Save">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ المهمة" : "Save job"))</button>
             </div>
         </aside>
@@ -54,33 +111,139 @@
 
     <section class="panel automation-history-panel">
         <header><div><span class="workspace-kicker">HISTORY</span><h2>@(L.IsArabic ? "سجل التشغيل" : "Execution history")</h2></div><span class="badge">@_history.Count</span></header>
-        <div class="automation-history-list">@foreach(var row in _history.Take(30)){<article><span class="history-state @StatusClass(row.Status)">@StatusIcon(row.Status)</span><div><strong>@row.JobName</strong><p>@row.Message</p><small>@FormatDate(row.StartedAtUtc) · @StatusText(row.Status)</small></div></article>}@if(_history.Count==0){<div class="empty-state"><p>@(L.IsArabic ? "لا يوجد سجل تشغيل حتى الآن." : "No execution history yet.")</p></div>}</div>
+        <div class="automation-history-list">
+            @foreach (var row in _history.Take(30))
+            {
+                <article><span class="history-state @StatusClass(row.Status)">@StatusIcon(row.Status)</span><div><strong>@row.JobName</strong><p>@row.Message</p><small>@FormatDate(row.StartedAtUtc) · @StatusText(row.Status)</small></div></article>
+            }
+            @if (_history.Count == 0)
+            {
+                <div class="empty-state"><p>@(L.IsArabic ? "لا يوجد سجل تشغيل حتى الآن." : "No execution history yet.")</p></div>
+            }
+        </div>
     </section>
 </div>
 
 @code {
-    private List<AutomationJob> _jobs = new(); private List<AutomationHistoryItem> _history = new(); private List<Site> _sites = new();
-    private AutomationJobEditModel _model = new(); private string _siteIdText = string.Empty, _search = string.Empty, _statusFilter = string.Empty; private bool _saving;
-    private string TimeText => _model.TimeOfDay?.ToString("HH:mm") ?? string.Empty;
-    private IEnumerable<AutomationJob> FilteredJobs => _jobs.Where(x => (string.IsNullOrWhiteSpace(_search) || x.Name.Contains(_search,StringComparison.OrdinalIgnoreCase) || x.SiteName.Contains(_search,StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_search,StringComparison.OrdinalIgnoreCase)) && (_statusFilter == "" || (_statusFilter == "enabled" && x.Enabled) || (_statusFilter == "disabled" && !x.Enabled)));
-    protected override void OnInitialized()=>L.Changed+=Changed;
-    protected override async Task OnInitializedAsync(){_sites=await SiteService.GetSitesAsync();Refresh();}
-    private void Refresh(){_jobs=Automation.GetJobs().ToList();_history=Automation.GetHistory(100).ToList();}
-    private void NewJob(){_model=new AutomationJobEditModel();_siteIdText=string.Empty;}
-    private void Edit(AutomationJob j){_model=new AutomationJobEditModel{Id=j.Id,Name=j.Name,SiteId=j.SiteId,SiteName=j.SiteName,Type=j.Type,Frequency=j.Frequency,IntervalValue=j.IntervalValue,TimeOfDay=j.TimeOfDay,Enabled=j.Enabled,RetryCount=j.RetryCount};_siteIdText=j.SiteId.ToString();}
-    private void SiteChanged(ChangeEventArgs e){_siteIdText=e.Value?.ToString()??string.Empty;if(Guid.TryParse(_siteIdText,out var id)){_model.SiteId=id;_model.SiteName=_sites.FirstOrDefault(x=>x.Id==id)?.Name??string.Empty;}}
-    private void TimeChanged(ChangeEventArgs e){var value=e.Value?.ToString();_model.TimeOfDay=TimeOnly.TryParse(value,out var parsed)?parsed:null;}
-    private void Save(){try{_saving=true;if(Guid.TryParse(_siteIdText,out var id)){_model.SiteId=id;_model.SiteName=_sites.FirstOrDefault(x=>x.Id==id)?.Name??string.Empty;}Automation.Save(_model);Notifications.Success(L.IsArabic?"تم حفظ مهمة الأتمتة.":"Automation job saved.");NewJob();Refresh();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل الحفظ":"Save failed",ex.ToString());}finally{_saving=false;}}
-    private void Toggle(AutomationJob j){try{Automation.SetEnabled(j.Id,!j.Enabled);Refresh();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message));}}
-    private void RunNow(AutomationJob j){try{Automation.QueueNow(j.Id);Notifications.Success(L.IsArabic?"تمت جدولة المهمة للتشغيل الفوري.":"Job queued to run now.");Refresh();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message));}}
-    private void Delete(AutomationJob j){try{Automation.Delete(j.Id);if(_model.Id==j.Id)NewJob();Notifications.Success(L.IsArabic?"تم حذف المهمة.":"Job deleted.");Refresh();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message));}}
-    private string FormatDate(DateTime? d)=>d is null?"—":d.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
-    private string FormatDate(string? value)=>DateTime.TryParse(value,out var parsed)?FormatDate(parsed):"—";
-    private string ScheduleText(AutomationJob j)=>j.Frequency=="hourly"?$"{(L.IsArabic?"كل":"Every")} {j.IntervalValue}h":$"{j.Frequency} · {j.TimeOfDay} UTC";
-    private string TypeText(string s)=>L.IsArabic?s switch{"Synchronization"=>"مزامنة","SEO Audit"=>"تدقيق SEO","Content Operation"=>"عملية محتوى",_=>s}:s;
-    private static string TypeIcon(string s)=>s switch{"Synchronization"=>"↻","SEO Audit"=>"◈",_=>"▶"};
-    private string StatusText(string s)=>L.IsArabic?s switch{"Scheduled"=>"مجدولة","Running"=>"قيد التنفيذ","Completed"=>"مكتملة","Queued"=>"في الطابور","Failed"=>"فاشلة","Disabled"=>"معطلة",_=>s}:s;
-    private static string StatusClass(string s)=>s switch{"Completed"=>"success","Running"=>"running","Failed"=>"error","Disabled"=>"neutral",_=>"warning"};
-    private static string StatusIcon(string s)=>s switch{"Completed"=>"✓","Failed"=>"!","Running"=>"↻",_=>"◷"};
-    private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+    private List<AutomationJob> _jobs = [];
+    private List<AutomationHistoryItem> _history = [];
+    private List<Site> _sites = [];
+    private AutomationJobEditModel _model = new();
+    private string _siteIdText = string.Empty;
+    private string _search = string.Empty;
+    private string _statusFilter = string.Empty;
+    private bool _saving;
+
+    private string TimeText => _model.TimeOfDay ?? string.Empty;
+
+    private IEnumerable<AutomationJob> FilteredJobs => _jobs.Where(x =>
+        (string.IsNullOrWhiteSpace(_search) || x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.SiteName.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_search, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrWhiteSpace(_statusFilter) || (_statusFilter == "enabled" && x.Enabled) || (_statusFilter == "disabled" && !x.Enabled)));
+
+    protected override void OnInitialized() => L.Changed += Changed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sites = await SiteService.GetSitesAsync();
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _jobs = Automation.GetJobs().ToList();
+        _history = Automation.GetHistory(100).ToList();
+    }
+
+    private void NewJob()
+    {
+        _model = new AutomationJobEditModel();
+        _siteIdText = string.Empty;
+    }
+
+    private void Edit(AutomationJob job)
+    {
+        _model = new AutomationJobEditModel
+        {
+            Id = job.Id,
+            Name = job.Name,
+            SiteId = job.SiteId,
+            SiteName = job.SiteName,
+            Type = job.Type,
+            Frequency = job.Frequency,
+            IntervalValue = job.IntervalValue,
+            TimeOfDay = job.TimeOfDay?.ToString("HH:mm") ?? string.Empty,
+            Enabled = job.Enabled,
+            RetryCount = job.RetryCount
+        };
+        _siteIdText = job.SiteId.ToString();
+    }
+
+    private void SiteChanged(ChangeEventArgs e)
+    {
+        _siteIdText = e.Value?.ToString() ?? string.Empty;
+        if (Guid.TryParse(_siteIdText, out var id))
+        {
+            _model.SiteId = id;
+            _model.SiteName = _sites.FirstOrDefault(x => x.Id == id)?.Name ?? string.Empty;
+        }
+    }
+
+    private void TimeChanged(ChangeEventArgs e)
+    {
+        _model.TimeOfDay = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private void Save()
+    {
+        try
+        {
+            _saving = true;
+            if (Guid.TryParse(_siteIdText, out var id))
+            {
+                _model.SiteId = id;
+                _model.SiteName = _sites.FirstOrDefault(x => x.Id == id)?.Name ?? string.Empty;
+            }
+            Automation.Save(_model);
+            Notifications.Success(L.IsArabic ? "تم حفظ مهمة الأتمتة." : "Automation job saved.");
+            NewJob();
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل الحفظ" : "Save failed", ex.ToString());
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Toggle(AutomationJob job)
+    {
+        try { Automation.SetEnabled(job.Id, !job.Enabled); Refresh(); }
+        catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message)); }
+    }
+
+    private void RunNow(AutomationJob job)
+    {
+        try { Automation.QueueNow(job.Id); Notifications.Success(L.IsArabic ? "تمت جدولة المهمة للتشغيل الفوري." : "Job queued to run now."); Refresh(); }
+        catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message)); }
+    }
+
+    private void Delete(AutomationJob job)
+    {
+        try { Automation.Delete(job.Id); if (_model.Id == job.Id) NewJob(); Refresh(); }
+        catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message)); }
+    }
+
+    private string FormatDate(DateTime? value) => value?.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") ?? "—";
+    private string FormatDate(string? value) => DateTime.TryParse(value, out var parsed) ? FormatDate(parsed) : "—";
+    private string ScheduleText(AutomationJob job) => job.Frequency == "hourly" ? $"{(L.IsArabic ? "كل" : "Every")} {job.IntervalValue}h" : $"{job.Frequency} · {job.TimeOfDay} UTC";
+    private string TypeText(string value) => L.IsArabic ? value switch { "Synchronization" => "مزامنة", "SEO Audit" => "تدقيق SEO", "Content Operation" => "عملية محتوى", _ => value } : value;
+    private static string TypeIcon(string value) => value switch { "Synchronization" => "↻", "SEO Audit" => "◈", _ => "▶" };
+    private string StatusText(string value) => L.IsArabic ? value switch { "Scheduled" => "مجدولة", "Running" => "قيد التنفيذ", "Completed" => "مكتملة", "Queued" => "في الطابور", "Failed" => "فاشلة", "Disabled" => "معطلة", _ => value } : value;
+    private static string StatusClass(string value) => value switch { "Completed" => "success", "Running" => "running", "Failed" => "error", "Disabled" => "neutral", _ => "warning" };
+    private static string StatusIcon(string value) => value switch { "Completed" => "✓", "Failed" => "!", "Running" => "↻", _ => "◷" };
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
 }
