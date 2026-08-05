@@ -20,7 +20,7 @@
         <div>
             <span class="workspace-kicker">AI WORKSPACE</span>
             <h1>@(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</h1>
-            <p>@(L.IsArabic ? "ولّد المحتوى من القوالب المسجلة، قارنه بالمصدر، ثم أرسله إلى قائمة الموافقات قبل التنفيذ على WordPress." : "Generate content from registered prompts, compare it with the source, then submit it to the approval queue before WordPress execution.")</p>
+            <p>@(L.IsArabic ? "ولّد المحتوى، احتفظ بتاريخ الجلسة، قارنه بالمصدر، ثم أرسله إلى قائمة الموافقات قبل التنفيذ على WordPress." : "Generate content, retain session history, compare it with the source, then submit it to the approval queue before WordPress execution.")</p>
         </div>
         <div class="ai-center-hero-actions">
             <a class="btn" href="/approvals">✓ @(L.IsArabic ? "قائمة الموافقات" : "Approval queue")</a>
@@ -32,8 +32,8 @@
     <section class="ai-center-stats">
         <article class="panel"><small>@(L.IsArabic ? "القوالب المتاحة" : "Available prompts")</small><strong>@_prompts.Count</strong><span>@(L.IsArabic ? "من سجل القوالب" : "from prompt registry")</span></article>
         <article class="panel"><small>@(L.IsArabic ? "طلبات الاستخدام الأخيرة" : "Recent usage records")</small><strong>@_usageCount</strong><span>@(L.IsArabic ? "آخر 100 سجل" : "latest 100 records")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "المواقع المتاحة" : "Available sites")</small><strong>@_sites.Count</strong><span>@(L.IsArabic ? "للربط بالموافقة" : "for approval targeting")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "حالة الجلسة" : "Session state")</small><strong>@(_working ? (L.IsArabic ? "جارٍ التوليد" : "Generating") : (L.IsArabic ? "جاهز" : "Ready"))</strong><span>@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "نتائج الجلسة" : "Session results")</small><strong>@_history.Count</strong><span>@(L.IsArabic ? "متاحة للاستعادة" : "available for reuse")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "حالة الموافقة" : "Approval state")</small><strong>@ApprovalStateText</strong><span>@(_lastApprovalId?.ToString("N")[..8] ?? "—")</span></article>
     </section>
 
     <section class="ai-center-layout">
@@ -56,14 +56,21 @@
 
         <main class="panel ai-composer">
             <header><div><span class="workspace-kicker">COMPOSER</span><h2>@(L.IsArabic ? "إنشاء طلب" : "Create request")</h2></div><span class="badge @(_working ? "warning" : "success")">@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "جاهز" : "Ready"))</span></header>
-
             <div class="ai-options-grid">
                 <label><span>@(L.IsArabic ? "مفتاح القالب" : "Prompt key")</span><input @bind="_promptKey" placeholder="content.rewrite" /></label>
                 <label><span>@(L.IsArabic ? "النموذج الاختياري" : "Optional model")</span><input @bind="_model" placeholder="Default provider model" /></label>
                 <label><span>Temperature: @_temperature.ToString("0.0")</span><input type="range" min="0" max="1" step="0.1" @bind="_temperature" /></label>
                 <label><span>@(L.IsArabic ? "الحد الأقصى للرموز" : "Max output tokens")</span><input type="number" min="100" max="8000" @bind="_maxTokens" /></label>
+                <label class="wide"><span>@(L.IsArabic ? "الموقع" : "Site")</span>
+                    <select @bind="_selectedSiteId">
+                        <option value="">@(L.IsArabic ? "بدون موقع محدد" : "No specific site")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                </label>
             </div>
-
             <label class="ai-content-input"><span>@(L.IsArabic ? "المحتوى الأصلي أو التعليمات" : "Original content or instructions")</span><textarea @bind="_content" rows="14" placeholder="@(L.IsArabic ? "ألصق المحتوى أو اكتب المهمة المطلوبة..." : "Paste content or describe the task...")"></textarea></label>
             <div class="ai-composer-footer">
                 <span>@ContentLength @(L.IsArabic ? "حرف" : "characters")</span>
@@ -72,7 +79,13 @@
         </main>
 
         <aside class="panel ai-output-panel">
-            <header><div><span class="workspace-kicker">OUTPUT</span><h2>@(L.IsArabic ? "النتيجة" : "Result")</h2></div>@if (!string.IsNullOrWhiteSpace(_output)){<button class="btn compact" @onclick="CopyOutputAsync">@(L.IsArabic ? "نسخ" : "Copy")</button>}</header>
+            <header>
+                <div><span class="workspace-kicker">OUTPUT</span><h2>@(L.IsArabic ? "النتيجة" : "Result")</h2></div>
+                @if (!string.IsNullOrWhiteSpace(_output))
+                {
+                    <button class="btn compact" @onclick="CopyOutputAsync">@(L.IsArabic ? "نسخ" : "Copy")</button>
+                }
+            </header>
             @if (_working)
             {
                 <div class="ai-output-loading"><span></span><span></span><span></span><p>@(L.IsArabic ? "يتولى المزود معالجة الطلب..." : "The provider is processing your request...")</p></div>
@@ -93,40 +106,64 @@
                 <section class="ai-approval-box">
                     <div class="ai-approval-heading">
                         <div><span class="workspace-kicker">GOVERNANCE</span><h3>@(L.IsArabic ? "إرسال للموافقة" : "Submit for approval")</h3></div>
-                        @if (_lastApprovalId.HasValue){<a class="btn compact" href="/approvals">@(L.IsArabic ? "فتح العنصر" : "Open queue") ↗</a>}
+                        <button class="btn compact" disabled="@(!_lastApprovalId.HasValue)" @onclick="RefreshApprovalStatus">↻ @(L.IsArabic ? "تحديث الحالة" : "Refresh state")</button>
                     </div>
                     <div class="ai-approval-grid">
-                        <label><span>@(L.IsArabic ? "الموقع" : "Site")</span>
-                            <select @bind="_selectedSiteId">
-                                <option value="">@(L.IsArabic ? "بدون موقع محدد" : "No specific site")</option>
-                                @foreach (var site in _sites){<option value="@site.Id">@site.Name</option>}
-                            </select>
-                        </label>
                         <label><span>@(L.IsArabic ? "درجة الخطورة" : "Risk level")</span>
                             <select @bind="_riskLevel">
-                                @foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()){<option value="@risk">@RiskText(risk)</option>}
+                                @foreach (var risk in Enum.GetValues<ApprovalRiskLevel>())
+                                {
+                                    <option value="@risk">@RiskText(risk)</option>
+                                }
                             </select>
                         </label>
+                        <label><span>@(L.IsArabic ? "نوع العملية" : "Operation type")</span><input @bind="_operationType" /></label>
                         <label class="wide"><span>@(L.IsArabic ? "عنوان طلب الموافقة" : "Approval title")</span><input @bind="_approvalTitle" /></label>
-                        <label class="wide"><span>@(L.IsArabic ? "نوع العملية" : "Operation type")</span><input @bind="_operationType" /></label>
                     </div>
                     <div class="ai-compare-grid">
                         <div><small>@(L.IsArabic ? "قبل" : "Before")</small><pre>@_content</pre></div>
                         <div><small>@(L.IsArabic ? "بعد" : "After")</small><pre>@_output</pre></div>
                     </div>
                     <button class="btn primary full" disabled="@_submittingApproval" @onclick="SubmitForApprovalAsync">✓ @(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال إلى قائمة الموافقات" : "Submit to approval queue"))</button>
+                    @if (_lastApprovalId.HasValue)
+                    {
+                        <div class="ai-approval-status"><span class="badge @ApprovalBadgeClass">@ApprovalStateText</span><a href="/approvals">@(L.IsArabic ? "فتح قائمة الموافقات" : "Open approval queue") ↗</a></div>
+                    }
                 </section>
             }
         </aside>
+    </section>
+
+    <section class="panel ai-session-history">
+        <header><div><span class="workspace-kicker">SESSION HISTORY</span><h2>@(L.IsArabic ? "نتائج الجلسة" : "Session results")</h2></div><button class="btn compact" disabled="@(_history.Count == 0)" @onclick="ClearHistory">@(L.IsArabic ? "مسح السجل" : "Clear history")</button></header>
+        @if (_history.Count == 0)
+        {
+            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد نتائج في هذه الجلسة بعد." : "No results have been generated in this session yet.")</p></div>
+        }
+        else
+        {
+            <div class="ai-history-list">
+                @foreach (var item in _history)
+                {
+                    <article>
+                        <div><strong>@item.Title</strong><small>@item.PromptKey · @item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") · @item.Elapsed.TotalSeconds.ToString("0.0")s</small></div>
+                        <p>@Preview(item.Output)</p>
+                        <div class="ai-history-actions"><button class="btn compact" @onclick="() => RestoreHistory(item)">@(L.IsArabic ? "استعادة" : "Restore")</button><button class="btn compact" @onclick="() => CopyHistoryAsync(item)">@(L.IsArabic ? "نسخ" : "Copy")</button></div>
+                    </article>
+                }
+            </div>
+        }
     </section>
 </div>
 
 @code {
     private readonly List<PromptOption> _prompts = new();
+    private readonly List<SessionResult> _history = new();
     private List<Site> _sites = new();
     private string _content = string.Empty, _promptKey = string.Empty, _model = string.Empty, _output = string.Empty, _error = string.Empty, _promptSearch = string.Empty;
     private string _selectedSiteId = string.Empty, _approvalTitle = string.Empty, _operationType = "AI.ContentUpdate";
     private ApprovalRiskLevel _riskLevel = ApprovalRiskLevel.High;
+    private ApprovalStatus? _lastApprovalStatus;
     private double _temperature = .2;
     private int _maxTokens = 1500, _usageCount;
     private bool _working, _submittingApproval;
@@ -134,6 +171,8 @@
     private Guid? _lastApprovalId;
     private int ContentLength => _content?.Length ?? 0;
     private IEnumerable<PromptOption> FilteredPrompts => _prompts.Where(x => string.IsNullOrWhiteSpace(_promptSearch) || x.Key.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase) || x.Title.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase));
+    private string ApprovalStateText => _lastApprovalStatus?.ToString() ?? (L.IsArabic ? "لم يُرسل" : "Not submitted");
+    private string ApprovalBadgeClass => _lastApprovalStatus switch { ApprovalStatus.Approved or ApprovalStatus.Executed => "success", ApprovalStatus.Rejected or ApprovalStatus.Cancelled => "error", _ => "warning" };
 
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnInitializedAsync() => await LoadMetadataAsync();
@@ -156,30 +195,33 @@
             }
             _usageCount = CountArray(JsonSerializer.Serialize(UsageLog.GetRecent(100, null, null)));
             _sites = await SiteService.GetSitesAsync();
+            RefreshApprovalStatus();
         }
-        catch (Exception ex){_error = L.TranslateMessage(ex.Message);}
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
     }
 
-    private void SelectPrompt(PromptOption prompt){_promptKey = prompt.Key; _approvalTitle = prompt.Title;}
+    private void SelectPrompt(PromptOption prompt) { _promptKey = prompt.Key; _approvalTitle = prompt.Title; }
 
     private async Task GenerateAsync()
     {
-        _working = true; _error = string.Empty; _output = string.Empty; _lastApprovalId = null; var started = DateTime.UtcNow;
+        _working = true; _error = string.Empty; _output = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null; var started = DateTime.UtcNow;
         try
         {
             var instruction = string.IsNullOrWhiteSpace(_promptKey) ? null : PromptRegistry.Get(_promptKey, L.Culture);
             var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
             _lastElapsed = DateTime.UtcNow - started;
-            if (result.IsFailure){_error = L.TranslateMessage(result.Error.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed"); return;}
+            if (result.IsFailure) { _error = L.TranslateMessage(result.Error.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed"); return; }
             var json = JsonSerializer.Serialize(result.Value);
             _output = ExtractOutput(json);
             if (string.IsNullOrWhiteSpace(_output)) _output = json;
             if (string.IsNullOrWhiteSpace(_approvalTitle)) _approvalTitle = string.IsNullOrWhiteSpace(_promptKey) ? (L.IsArabic ? "اقتراح محتوى بالذكاء الاصطناعي" : "AI content proposal") : _promptKey;
+            _history.Insert(0, new SessionResult(Guid.NewGuid(), _approvalTitle, string.IsNullOrWhiteSpace(_promptKey) ? "custom" : _promptKey, _content, _output, DateTime.UtcNow, _lastElapsed ?? TimeSpan.Zero, _selectedSiteId));
+            if (_history.Count > 10) _history.RemoveAt(_history.Count - 1);
             Notifications.Success(L.IsArabic ? "اكتمل توليد المحتوى." : "AI content generated.");
             await LoadMetadataAsync();
         }
-        catch (Exception ex){_error = L.TranslateMessage(ex.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed", ex.ToString());}
-        finally{_working = false;}
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed", ex.ToString()); }
+        finally { _working = false; }
     }
 
     private async Task SubmitForApprovalAsync()
@@ -190,46 +232,50 @@
             _submittingApproval = true;
             var siteId = SelectedSiteGuid();
             var site = siteId.HasValue ? _sites.FirstOrDefault(x => x.Id == siteId.Value) : null;
-            var item = ApprovalService.Submit(new ApprovalSubmission(
-                siteId,
-                site?.Name,
-                string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(),
-                string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(),
-                new { Content = _content, PromptKey = _promptKey, Model = _model },
-                new { Content = _output, PromptKey = _promptKey, Model = _model },
-                "AI Center",
-                _riskLevel,
-                Guid.NewGuid().ToString("N"),
-                null));
+            var item = ApprovalService.Submit(new ApprovalSubmission(siteId, site?.Name, string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(), string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(), new { Content = _content, PromptKey = _promptKey, Model = _model }, new { Content = _output, PromptKey = _promptKey, Model = _model }, "AI Center", _riskLevel, Guid.NewGuid().ToString("N"), null));
             _lastApprovalId = item.Id;
+            _lastApprovalStatus = item.Status;
             Notifications.Success(L.IsArabic ? "تم إرسال الاقتراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
         }
-        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "تعذر إرسال الموافقة" : "Approval submission failed", ex.ToString());}
-        finally{_submittingApproval = false;}
+        catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل إرسال الموافقة" : "Approval submission failed", ex.ToString()); }
+        finally { _submittingApproval = false; }
     }
 
-    private Guid? SelectedSiteGuid() => Guid.TryParse(_selectedSiteId, out var value) ? value : null;
-    private async Task CopyOutputAsync(){await JS.InvokeVoidAsync("navigator.clipboard.writeText", _output); Notifications.Success(L.IsArabic ? "تم نسخ النتيجة." : "Result copied.");}
-    private void Clear(){_content = _output = _error = _promptKey = _approvalTitle = string.Empty; _operationType = "AI.ContentUpdate"; _lastElapsed = null; _lastApprovalId = null;}
-    private string RiskText(ApprovalRiskLevel risk) => L.IsArabic ? risk switch { ApprovalRiskLevel.Low => "منخفضة", ApprovalRiskLevel.Medium => "متوسطة", ApprovalRiskLevel.High => "مرتفعة", ApprovalRiskLevel.Critical => "حرجة", _ => risk.ToString() } : risk.ToString();
-    private void Changed()=>InvokeAsync(StateHasChanged);
-    public void Dispose()=>L.Changed-=Changed;
-
-    private static int CountArray(string json){try{using var d=JsonDocument.Parse(json);return d.RootElement.ValueKind==JsonValueKind.Array?d.RootElement.GetArrayLength():0;}catch{return 0;}}
-    private static string ReadString(JsonElement item, params string[] names){foreach(var n in names)if(item.TryGetProperty(n,out var v)&&v.ValueKind==JsonValueKind.String)return v.GetString()??string.Empty;return string.Empty;}
-    private static string ExtractOutput(string json)
+    private void RefreshApprovalStatus()
     {
-        try{using var d=JsonDocument.Parse(json);return FindText(d.RootElement)??string.Empty;}catch{return json;}
+        if (!_lastApprovalId.HasValue) return;
+        _lastApprovalStatus = ApprovalService.GetById(_lastApprovalId.Value)?.Status;
     }
+
+    private void RestoreHistory(SessionResult item)
+    {
+        _content = item.Input; _output = item.Output; _promptKey = item.PromptKey == "custom" ? string.Empty : item.PromptKey; _approvalTitle = item.Title; _selectedSiteId = item.SiteId; _lastElapsed = item.Elapsed; _error = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null;
+    }
+
+    private async Task CopyHistoryAsync(SessionResult item) { await JS.InvokeVoidAsync("navigator.clipboard.writeText", item.Output); Notifications.Success(L.IsArabic ? "تم نسخ النتيجة." : "Result copied."); }
+    private async Task CopyOutputAsync() { await JS.InvokeVoidAsync("navigator.clipboard.writeText", _output); Notifications.Success(L.IsArabic ? "تم نسخ النتيجة." : "Result copied."); }
+    private void ClearHistory() => _history.Clear();
+    private void Clear() { _content = _output = _error = _promptKey = string.Empty; _lastElapsed = null; _lastApprovalId = null; _lastApprovalStatus = null; }
+    private Guid? SelectedSiteGuid() => Guid.TryParse(_selectedSiteId, out var id) ? id : null;
+    private string RiskText(ApprovalRiskLevel risk) => L.IsArabic ? risk switch { ApprovalRiskLevel.Low => "منخفض", ApprovalRiskLevel.Medium => "متوسط", ApprovalRiskLevel.High => "مرتفع", ApprovalRiskLevel.Critical => "حرج", _ => risk.ToString() } : risk.ToString();
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+
+    private static string Preview(string value) => value.Length <= 180 ? value : value[..180] + "…";
+    private static int CountArray(string json) { try { using var d = JsonDocument.Parse(json); return d.RootElement.ValueKind == JsonValueKind.Array ? d.RootElement.GetArrayLength() : 0; } catch { return 0; } }
+    private static string ReadString(JsonElement item, params string[] names) { foreach (var n in names) if (item.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String) return v.GetString() ?? string.Empty; return string.Empty; }
+    private static string ExtractOutput(string json) { try { using var d = JsonDocument.Parse(json); return FindText(d.RootElement) ?? string.Empty; } catch { return json; } }
     private static string? FindText(JsonElement element)
     {
-        if(element.ValueKind==JsonValueKind.Object)
+        if (element.ValueKind == JsonValueKind.Object)
         {
-            foreach(var name in new[]{"Content","content","Text","text","Output","output","Response","response"})if(element.TryGetProperty(name,out var p)&&p.ValueKind==JsonValueKind.String&&!string.IsNullOrWhiteSpace(p.GetString()))return p.GetString();
-            foreach(var p in element.EnumerateObject()){var found=FindText(p.Value);if(!string.IsNullOrWhiteSpace(found))return found;}
+            foreach (var name in new[] { "Content", "content", "Text", "text", "Output", "output", "Response", "response" }) if (element.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(p.GetString())) return p.GetString();
+            foreach (var p in element.EnumerateObject()) { var found = FindText(p.Value); if (!string.IsNullOrWhiteSpace(found)) return found; }
         }
-        if(element.ValueKind==JsonValueKind.Array)foreach(var x in element.EnumerateArray()){var found=FindText(x);if(!string.IsNullOrWhiteSpace(found))return found;}
+        if (element.ValueKind == JsonValueKind.Array) foreach (var x in element.EnumerateArray()) { var found = FindText(x); if (!string.IsNullOrWhiteSpace(found)) return found; }
         return null;
     }
-    private sealed record PromptOption(string Key,string Title);
+
+    private sealed record PromptOption(string Key, string Title);
+    private sealed record SessionResult(Guid Id, string Title, string PromptKey, string Input, string Output, DateTime CreatedAt, TimeSpan Elapsed, string SiteId);
 }
