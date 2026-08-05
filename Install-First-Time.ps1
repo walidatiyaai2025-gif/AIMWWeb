@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$InstallPath = "C:\AIWordpressSite",
+    [string]$InstallPath = (Join-Path -Path (Get-Location) -ChildPath "AIWordpressSite"),
     [string]$RepositoryUrl = "https://github.com/walidatiyaai2025-gif/AIMWWeb.git",
     [string]$Branch = "feature/system-health"
 )
