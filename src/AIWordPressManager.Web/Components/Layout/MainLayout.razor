@@ -85,6 +85,27 @@
             <div><h2>@L["AppName"]</h2><p>@L["BrowserManagement"]</p></div>
             <div class="topbar-actions">
                 <a class="topbar-version" href="/about-build">v@Build.Version</a>
+                <div class="theme-picker">
+                    <button type="button" class="theme-trigger" @onclick="ToggleThemePicker" aria-expanded="@_themePickerOpen" title="@(L.IsArabic ? "تغيير ألوان النظام" : "Change application colors")">◈</button>
+                    @if (_themePickerOpen)
+                    {
+                        <div class="theme-popover">
+                            <div class="theme-popover-head">
+                                <div><strong>@(L.IsArabic ? "ألوان النظام" : "Application colors")</strong><small>@(L.IsArabic ? "اختر لوحة الألوان المناسبة لك" : "Choose your preferred color palette")</small></div>
+                                <button type="button" class="theme-popover-close" @onclick="CloseThemePicker">×</button>
+                            </div>
+                            <div class="theme-grid">
+                                @foreach (var theme in Themes)
+                                {
+                                    <button type="button" class="theme-swatch @(_selectedTheme == theme.Key ? "active" : string.Empty)" style="--swatch:@theme.Color" @onclick="() => SelectThemeAsync(theme.Key)">
+                                        <span class="theme-swatch-dot"></span>
+                                        <span>@(L.IsArabic ? theme.ArabicName : theme.EnglishName)</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
                 <button type="button" class="language-switch" onclick="window.appLanguage.toggleAndReload(); return false;" title="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
                 <CurrentUserChip />
             </div>
@@ -96,6 +117,20 @@
 @code {
     private BuildInformation Build => BuildInfo.Current;
     private string ActiveGroup => GroupForPath(new Uri(Navigation.Uri).AbsolutePath);
+    private bool _themePickerOpen;
+    private string _selectedTheme = "gold";
+
+    private static readonly ThemeOption[] Themes =
+    [
+        new("gold", "Gold", "ذهبي", "#c5a45d"),
+        new("ocean", "Ocean", "أزرق", "#3b82f6"),
+        new("emerald", "Emerald", "زمردي", "#10b981"),
+        new("violet", "Violet", "بنفسجي", "#8b5cf6"),
+        new("rose", "Rose", "وردي", "#f43f5e"),
+        new("amber", "Amber", "كهرماني", "#f59e0b"),
+        new("cyan", "Cyan", "سماوي", "#06b6d4"),
+        new("slate", "Slate", "رمادي", "#94a3b8")
+    ];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -103,7 +138,17 @@
         var culture = await JS.InvokeAsync<string?>("appLanguage.get");
         L.SetCulture(culture == "ar" ? "ar" : "en");
         await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+        _selectedTheme = await JS.InvokeAsync<string>("appTheme.get");
         StateHasChanged();
+    }
+
+    private void ToggleThemePicker() => _themePickerOpen = !_themePickerOpen;
+    private void CloseThemePicker() => _themePickerOpen = false;
+
+    private async Task SelectThemeAsync(string theme)
+    {
+        _selectedTheme = await JS.InvokeAsync<string>("appTheme.set", theme);
+        _themePickerOpen = false;
     }
 
     private static string GroupForPath(string path)
@@ -116,4 +161,6 @@
         if (path.StartsWith("/module/reports", StringComparison.OrdinalIgnoreCase)) return "reports";
         return "system";
     }
+
+    private sealed record ThemeOption(string Key, string EnglishName, string ArabicName, string Color);
 }
