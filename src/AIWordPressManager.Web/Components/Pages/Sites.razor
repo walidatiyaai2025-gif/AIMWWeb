@@ -8,66 +8,84 @@
 <PageTitle>@L["Sites"]</PageTitle>
 
 <div class="sites-page sites-workspace">
-    <section class="sites-hero panel">
-        <div>
-            <span class="workspace-kicker">@(L.IsArabic ? "إدارة البنية الرقمية" : "DIGITAL ESTATE")</span>
-            <h1>@L["Sites"]</h1>
-            <p>@(L.IsArabic ? "راقب اتصالات WordPress وصحة المواقع وافتح أدوات المحتوى من مساحة عمل موحدة." : "Monitor WordPress connections, site health and content tools from one unified workspace.")</p>
-        </div>
-        <div class="sites-hero-actions">
-            <a class="btn" href="/system-health">♥ @(L.IsArabic ? "صحة النظام" : "System health")</a>
-            <button class="btn" @onclick="ReloadAsync" disabled="@_refreshing">↻ @(_refreshing ? (L.IsArabic ? "جارٍ التحديث" : "Refreshing") : L["Refresh"])</button>
-            <button class="btn primary" @onclick="OpenAddForm" disabled="@_saving">＋ @L["AddSite"]</button>
-        </div>
-    </section>
+    <AppToolbar
+        Eyebrow="@(L.IsArabic ? "إدارة البنية الرقمية" : "DIGITAL ESTATE")"
+        Title="@L["Sites"]"
+        Subtitle="@(L.IsArabic ? "راقب اتصالات WordPress وصحة المواقع وافتح أدوات المحتوى من مساحة عمل موحدة." : "Monitor WordPress connections, site health and content tools from one unified workspace.")">
+        <Actions>
+            <AppButton Href="/system-health" Icon="♥" Text="@(L.IsArabic ? "صحة النظام" : "System health")" />
+            <AppButton Icon="↻" Text="@(_refreshing ? (L.IsArabic ? "جارٍ التحديث" : "Refreshing") : L["Refresh"])" Busy="@_refreshing" Disabled="@_refreshing" OnClick="ReloadClickedAsync" />
+            <AppButton Variant="primary" Icon="＋" Text="@L["AddSite"]" Disabled="@_saving" OnClick="OpenAddFormClicked" />
+        </Actions>
+    </AppToolbar>
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
         <div class="alert @(_isError ? "error" : "success")">@_message</div>
     }
 
-    <section class="sites-summary-grid">
-        <article class="panel site-summary-card"><span class="site-summary-icon">◉</span><div><small>@L["TotalSites"]</small><strong>@_sites.Count</strong><p>@L["AllRegisteredSites"]</p></div></article>
-        <article class="panel site-summary-card"><span class="site-summary-icon success">✓</span><div><small>@L["Connected"]</small><strong>@ConnectedCount</strong><p>@L["HealthyConnection"]</p></div></article>
-        <article class="panel site-summary-card"><span class="site-summary-icon warning">!</span><div><small>@L["NeedsReview"]</small><strong>@ProblemCount</strong><p>@L["ConnectionOrLoginFailed"]</p></div></article>
-        <article class="panel site-summary-card"><span class="site-summary-icon">◷</span><div><small>@L["LastCheck"]</small><strong class="summary-date">@LatestCheck</strong><p>@L["LocalDatabase"]</p></div></article>
+    <section class="app-stat-grid">
+        <AppStatCard Icon="◉" Label="@L["TotalSites"]" Value="@_sites.Count.ToString()" Description="@L["AllRegisteredSites"]" />
+        <AppStatCard Icon="✓" Label="@L["Connected"]" Value="@ConnectedCount.ToString()" Description="@L["HealthyConnection"]" Tone="success" />
+        <AppStatCard Icon="!" Label="@L["NeedsReview"]" Value="@ProblemCount.ToString()" Description="@L["ConnectionOrLoginFailed"]" Tone="warning" />
+        <AppStatCard Icon="◷" Label="@L["LastCheck"]" Value="@LatestCheck" Description="@L["LocalDatabase"]" ValueClass="summary-date" />
     </section>
 
     @if (_showForm)
     {
-        <section class="panel site-create-panel">
-            <div class="site-create-head">
-                <div><span class="workspace-kicker">@(_editingId.HasValue ? (L.IsArabic ? "تعديل الاتصال" : "EDIT CONNECTION") : (L.IsArabic ? "اتصال جديد" : "NEW CONNECTION"))</span><h2>@(_editingId.HasValue ? (L.IsArabic ? "تعديل بيانات الموقع" : "Edit site profile") : L["AddNewSite"])</h2><p>@(L.IsArabic ? "راجع الاسم والرابط قبل الحفظ." : "Review the name and URL before saving.")</p></div>
+        <AppCard
+            Class="site-create-panel"
+            Eyebrow="@(_editingId.HasValue ? (L.IsArabic ? "تعديل الاتصال" : "EDIT CONNECTION") : (L.IsArabic ? "اتصال جديد" : "NEW CONNECTION"))"
+            Title="@(_editingId.HasValue ? (L.IsArabic ? "تعديل بيانات الموقع" : "Edit site profile") : L["AddNewSite"])"
+            Subtitle="@(L.IsArabic ? "راجع الاسم والرابط قبل الحفظ." : "Review the name and URL before saving.")">
+            <Header>
                 <button type="button" class="icon-button" @onclick="CloseForm" aria-label="Close">×</button>
-            </div>
+            </Header>
             <EditForm Model="_model" OnSubmit="SaveAsync">
                 <div class="site-create-grid">
                     <label><span>@L["SiteName"]</span><InputText @bind-Value="_model.Name" disabled="@_saving" /></label>
                     <label><span>@L["SiteUrl"]</span><InputText @bind-Value="_model.Url" placeholder="https://example.com" disabled="@_saving" /></label>
                 </div>
                 <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم حفظ الرابط بعد تطبيعه ومنع التكرار تلقائيًا." : "The URL is normalized and duplicate sites are blocked automatically.")</div>
-                <div class="actions"><button type="submit" class="btn primary" disabled="@_saving">@(_saving ? L["Saving"] : L["Save"])</button><button type="button" class="btn" @onclick="CloseForm" disabled="@_saving">@L["Cancel"]</button></div>
+                <div class="actions">
+                    <AppButton Type="submit" Variant="primary" Text="@(_saving ? L["Saving"] : L["Save"])" Busy="@_saving" Disabled="@_saving" />
+                    <AppButton Text="@L["Cancel"]" Disabled="@_saving" OnClick="CloseFormClicked" />
+                </div>
             </EditForm>
-        </section>
+        </AppCard>
     }
 
-    <section class="sites-toolbar panel">
-        <div class="sites-search"><span>⌕</span><input value="@_searchInput" @oninput="SearchChanged" placeholder="@(L.IsArabic ? "ابحث بالاسم أو الرابط..." : "Search by name or URL...")" /></div>
-        <div class="sites-filter-group">
-            <button class="site-filter @(_statusFilter == "all" ? "active" : string.Empty)" @onclick="ShowAllSites">@(L.IsArabic ? "الكل" : "All") <b>@_sites.Count</b></button>
-            <button class="site-filter @(_statusFilter == "connected" ? "active" : string.Empty)" @onclick="ShowConnectedSites">@(L.IsArabic ? "متصل" : "Connected") <b>@ConnectedCount</b></button>
-            <button class="site-filter @(_statusFilter == "review" ? "active" : string.Empty)" @onclick="ShowReviewSites">@(L.IsArabic ? "يحتاج مراجعة" : "Needs review") <b>@ProblemCount</b></button>
+    <AppCard Class="sites-toolbar" BodyClass="sites-toolbar-body">
+        <div class="sites-toolbar-layout">
+            <AppSearchBox Value="@_searchInput" ValueChanged="SearchChangedAsync" Busy="@(_searchDebounce is not null && !_searchDebounce.IsCancellationRequested)" Placeholder="@(L.IsArabic ? "ابحث بالاسم أو الرابط..." : "Search by name or URL...")" AriaLabel="@(L.IsArabic ? "بحث المواقع" : "Search sites")" />
+            <div class="sites-filter-group">
+                <button class="site-filter @(_statusFilter == "all" ? "active" : string.Empty)" @onclick="ShowAllSites">@(L.IsArabic ? "الكل" : "All") <b>@_sites.Count</b></button>
+                <button class="site-filter @(_statusFilter == "connected" ? "active" : string.Empty)" @onclick="ShowConnectedSites">@(L.IsArabic ? "متصل" : "Connected") <b>@ConnectedCount</b></button>
+                <button class="site-filter @(_statusFilter == "review" ? "active" : string.Empty)" @onclick="ShowReviewSites">@(L.IsArabic ? "يحتاج مراجعة" : "Needs review") <b>@ProblemCount</b></button>
+            </div>
+            <AppBadge Tone="info" Text="@(L.IsArabic ? $"عرض {_visibleSites.Count} موقع" : $"Showing {_visibleSites.Count} sites")" />
         </div>
-        <div class="sites-view-note">@(L.IsArabic ? $"عرض {_visibleSites.Count} موقع" : $"Showing {_visibleSites.Count} sites")</div>
-    </section>
+    </AppCard>
 
     @if (_loading)
     {
-        <div class="sites-skeleton-grid">@for (var i = 0; i < 4; i++) { <div class="panel site-skeleton"></div> }</div>
+        <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل المواقع" : "Loading sites")" Message="@(L.IsArabic ? "يتم قراءة البيانات المحلية وحالة الاتصالات." : "Reading local data and connection status.")" />
     }
     else if (!_sites.Any())
     {
-        <section class="panel sites-empty"><div class="sites-empty-icon">◎</div><h2>@L["NoSites"]</h2><p>@L["AddFirstSite"]</p><button class="btn primary" @onclick="OpenAddForm">＋ @L["AddSite"]</button></section>
+        <AppCard>
+            <AppEmptyState Icon="◎" Title="@L["NoSites"]" Description="@L["AddFirstSite"]">
+                <Actions>
+                    <AppButton Variant="primary" Icon="＋" Text="@L["AddSite"]" OnClick="OpenAddFormClicked" />
+                </Actions>
+            </AppEmptyState>
+        </AppCard>
+    }
+    else if (!_visibleSites.Any())
+    {
+        <AppCard>
+            <AppEmptyState Icon="⌕" Title="@(L.IsArabic ? "لا توجد نتائج" : "No matching sites")" Description="@(L.IsArabic ? "غيّر البحث أو الفلتر لعرض مواقع أخرى." : "Change the search or status filter to see other sites.")" />
+        </AppCard>
     }
     else
     {
@@ -76,8 +94,8 @@
             {
                 var busy = _busySiteId == site.Id;
                 var health = HealthPercent(site.ConnectionStatus);
-                <article class="panel site-management-card @(busy ? "is-busy" : string.Empty)" @key="site.Id">
-                    <header><div class="site-identity"><div class="site-avatar">@Initials(site.Name)</div><div><h3>@site.Name</h3><a href="@site.SiteUrl" target="_blank" rel="noopener">@site.SiteUrl</a></div></div><span class="site-state @StatusClass(site.ConnectionStatus)"><i></i>@StatusText(site.ConnectionStatus)</span></header>
+                <AppCard Class="site-management-card @(busy ? "is-busy" : string.Empty)" @key="site.Id">
+                    <div class="site-card-header"><div class="site-identity"><div class="site-avatar">@Initials(site.Name)</div><div><h3>@site.Name</h3><a href="@site.SiteUrl" target="_blank" rel="noopener">@site.SiteUrl</a></div></div><AppBadge Tone="@StatusTone(site.ConnectionStatus)" Text="@StatusText(site.ConnectionStatus)" Icon="●" /></div>
                     <div class="site-overview-row">
                         <div class="site-health-ring" style="--health:@health"><div><strong>@health%</strong><small>@(L.IsArabic ? "الصحة" : "Health")</small></div></div>
                         <div class="site-card-metrics">
@@ -88,10 +106,14 @@
                         </div>
                     </div>
                     <div class="site-quick-links"><a href="@($"/sites/{site.Id}")"><span>⌂</span>@(L.IsArabic ? "لوحة الموقع" : "Dashboard")</a><a href="@($"/sites/{site.Id}/explorer")"><span>▤</span>@(L.IsArabic ? "المحتوى" : "Content")</a><a href="@site.SiteUrl" target="_blank" rel="noopener"><span>↗</span>@(L.IsArabic ? "فتح الموقع" : "Visit site")</a></div>
-                    <div class="site-health-line"><span style="width:@health%"></span></div>
-                    <footer class="site-card-actions"><a class="btn primary" href="@($"/sites/{site.Id}")">@L["Open"]</a><button class="btn" disabled="@busy" @onclick="() => RetestAsync(site.Id)">@(busy ? "…" : "↻")</button><button class="btn" disabled="@busy" @onclick="() => OpenEditForm(site)">✎</button><button class="btn danger" disabled="@busy" @onclick="() => DeleteAsync(site.Id, site.Name)">⌫</button></footer>
-                    @if (busy) { <div class="site-card-overlay"><span class="site-spinner"></span></div> }
-                </article>
+                    <AppProgressBar Value="@health" Tone="@HealthTone(health)" Label="@(L.IsArabic ? "صحة الاتصال" : "Connection health")" />
+                    <div class="site-card-actions">
+                        <AppButton Href="@($"/sites/{site.Id}")" Variant="primary" Text="@L["Open"]" />
+                        <AppButton Icon="↻" Disabled="@busy" Busy="@busy" OnClick="args => RetestAsync(site.Id)" />
+                        <AppButton Icon="✎" Disabled="@busy" OnClick="args => OpenEditForm(site)" />
+                        <AppButton Icon="⌫" Variant="danger" Disabled="@busy" OnClick="args => DeleteAsync(site.Id, site.Name)" />
+                    </div>
+                </AppCard>
             }
         </section>
     }
@@ -117,7 +139,8 @@
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnInitializedAsync() => await ReloadAsync(true);
 
-    private async Task ReloadAsync() => await ReloadAsync(false);
+    private Task ReloadClickedAsync(MouseEventArgs _) => ReloadAsync(false);
+    private Task ReloadAsync() => ReloadAsync(false);
 
     private async Task ReloadAsync(bool initial)
     {
@@ -135,9 +158,9 @@
         finally { if (version == _loadVersion) { _loading = false; _refreshing = false; } }
     }
 
-    private async Task SearchChanged(ChangeEventArgs e)
+    private async Task SearchChangedAsync(string value)
     {
-        _searchInput = e.Value?.ToString() ?? string.Empty;
+        _searchInput = value;
         _searchDebounce?.Cancel();
         _searchDebounce?.Dispose();
         _searchDebounce = new CancellationTokenSource();
@@ -159,8 +182,10 @@
     private bool MatchesFilter(AIWordPressManager.Domain.Entities.Site site) => _statusFilter switch { "connected" => site.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected, "review" => site.ConnectionStatus is not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected and not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown, _ => true };
 
     private void OpenAddForm() { _editingId = null; _model = new(); _showForm = true; _message = null; }
+    private Task OpenAddFormClicked(MouseEventArgs _) { OpenAddForm(); return Task.CompletedTask; }
     private void OpenEditForm(AIWordPressManager.Domain.Entities.Site site) { _editingId = site.Id; _model = new() { Name = site.Name, Url = site.SiteUrl }; _showForm = true; _message = null; }
     private void CloseForm() { if (_saving) return; _showForm = false; _editingId = null; _model = new(); }
+    private Task CloseFormClicked(MouseEventArgs _) { CloseForm(); return Task.CompletedTask; }
 
     private async Task SaveAsync()
     {
@@ -216,8 +241,9 @@
     private void Warn(string message) { _isError = true; _message = message; Notifications.Warning(message, L["Sites"]); }
     private void Fail(string message, string? details = null) { _isError = true; _message = message; Notifications.Error(message, L["Sites"], details); }
     private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch { AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => L["Connected"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable => L["Unreachable"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed => L["AuthFailed"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => L["NeedsReview"], _ => L["NotTested"] };
-    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? "connected" : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown ? "neutral" : "problem";
+    private static string StatusTone(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch { AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => "success", AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown => "neutral", AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => "warning", _ => "danger" };
     private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? 100 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown ? 35 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions ? 60 : 15;
+    private static string HealthTone(int health) => health >= 80 ? "success" : health >= 45 ? "warning" : "danger";
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private static string Initials(string name) { var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries); return parts.Length == 0 ? "WP" : string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0]))); }
     private void Changed() => _ = InvokeAsync(StateHasChanged);
