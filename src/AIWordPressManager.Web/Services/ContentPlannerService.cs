@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AIWordPressManager.Application.Abstractions.AI;
 using Microsoft.Data.Sqlite;
 
@@ -54,10 +53,10 @@ public sealed class ContentPlannerService
                   AND ($toUtc IS NULL OR ScheduledAtUtc <= $toUtc)
                 ORDER BY COALESCE(ScheduledAtUtc, UpdatedAtUtc), UpdatedAtUtc DESC;
                 """;
-            command.Parameters.AddWithValue("$siteId", siteId?.ToString() ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$status", status?.ToString() ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$fromUtc", fromUtc?.ToUniversalTime().ToString("O") ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$toUtc", toUtc?.ToUniversalTime().ToString("O") ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("$siteId", Db(siteId?.ToString()));
+            command.Parameters.AddWithValue("$status", Db(status?.ToString()));
+            command.Parameters.AddWithValue("$fromUtc", Db(fromUtc?.ToUniversalTime().ToString("O")));
+            command.Parameters.AddWithValue("$toUtc", Db(toUtc?.ToUniversalTime().ToString("O")));
             using var reader = command.ExecuteReader();
             var result = new List<PlannerItem>();
             while (reader.Read()) result.Add(Read(reader));
@@ -146,15 +145,15 @@ public sealed class ContentPlannerService
                   UpdatedAtUtc=excluded.UpdatedAtUtc;
                 """;
             command.Parameters.AddWithValue("$id", item.Id.ToString());
-            command.Parameters.AddWithValue("$siteId", item.SiteId?.ToString() ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("$siteId", Db(item.SiteId?.ToString()));
             command.Parameters.AddWithValue("$siteName", item.SiteName);
             command.Parameters.AddWithValue("$title", item.Title);
             command.Parameters.AddWithValue("$status", item.Status.ToString());
-            command.Parameters.AddWithValue("$idea", item.Idea ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$brief", item.Brief ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$draft", item.DraftContent ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$scheduled", item.ScheduledAtUtc?.ToString("O") ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$postId", item.WordPressPostId ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("$idea", Db(item.Idea));
+            command.Parameters.AddWithValue("$brief", Db(item.Brief));
+            command.Parameters.AddWithValue("$draft", Db(item.DraftContent));
+            command.Parameters.AddWithValue("$scheduled", Db(item.ScheduledAtUtc?.ToString("O")));
+            command.Parameters.AddWithValue("$postId", Db(item.WordPressPostId));
             command.Parameters.AddWithValue("$created", item.CreatedAtUtc.ToString("O"));
             command.Parameters.AddWithValue("$updated", item.UpdatedAtUtc.ToString("O"));
             command.Parameters.AddWithValue("$createdBy", item.CreatedBy);
@@ -179,6 +178,7 @@ public sealed class ContentPlannerService
     }
 
     private SqliteConnection Open() { var connection = new SqliteConnection(_connectionString); connection.Open(); return connection; }
+    private static object Db(object? value) => value ?? DBNull.Value;
     private static DateTime ParseDate(string value) => DateTime.Parse(value, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
     private static PlannerItem Read(SqliteDataReader reader) => new(
         Guid.Parse(reader.GetString(0)), reader.IsDBNull(1) ? null : Guid.Parse(reader.GetString(1)), reader.GetString(2),
@@ -204,7 +204,7 @@ public sealed class NotificationInboxService
     public NotificationItem Create(string? userId, string title, string message, NotificationSeverity severity, Guid? relatedId = null)
     {
         var item = new NotificationItem(Guid.NewGuid(), string.IsNullOrWhiteSpace(userId) ? "System" : userId.Trim(), title.Trim(), message.Trim(), severity, relatedId, false, DateTime.UtcNow);
-        lock (_sync) { using var c = Open(); using var q = c.CreateCommand(); q.CommandText = "INSERT INTO Notifications VALUES($id,$user,$title,$message,$severity,$related,0,$created)"; q.Parameters.AddWithValue("$id", item.Id.ToString()); q.Parameters.AddWithValue("$user", item.UserId); q.Parameters.AddWithValue("$title", item.Title); q.Parameters.AddWithValue("$message", item.Message); q.Parameters.AddWithValue("$severity", item.Severity.ToString()); q.Parameters.AddWithValue("$related", item.RelatedId?.ToString() ?? (object)DBNull.Value); q.Parameters.AddWithValue("$created", item.CreatedAtUtc.ToString("O")); q.ExecuteNonQuery(); }
+        lock (_sync) { using var c = Open(); using var q = c.CreateCommand(); q.CommandText = "INSERT INTO Notifications VALUES($id,$user,$title,$message,$severity,$related,0,$created)"; q.Parameters.AddWithValue("$id", item.Id.ToString()); q.Parameters.AddWithValue("$user", item.UserId); q.Parameters.AddWithValue("$title", item.Title); q.Parameters.AddWithValue("$message", item.Message); q.Parameters.AddWithValue("$severity", item.Severity.ToString()); q.Parameters.AddWithValue("$related", Db(item.RelatedId?.ToString())); q.Parameters.AddWithValue("$created", item.CreatedAtUtc.ToString("O")); q.ExecuteNonQuery(); }
         return item;
     }
     public IReadOnlyList<NotificationItem> Get(string? userId, bool unreadOnly = false, int take = 100)
@@ -213,6 +213,7 @@ public sealed class NotificationInboxService
     }
     public void MarkRead(Guid id) { lock(_sync){ using var c=Open(); using var q=c.CreateCommand(); q.CommandText="UPDATE Notifications SET IsRead=1 WHERE Id=$id"; q.Parameters.AddWithValue("$id",id.ToString()); q.ExecuteNonQuery(); } }
     private SqliteConnection Open(){var c=new SqliteConnection(_connectionString);c.Open();return c;}
+    private static object Db(object? value) => value ?? DBNull.Value;
 }
 
 public sealed record PlannerItem(Guid Id, Guid? SiteId, string SiteName, string Title, PlannerItemStatus Status, string? Idea, string? Brief, string? DraftContent, DateTime? ScheduledAtUtc, int? WordPressPostId, DateTime CreatedAtUtc, DateTime UpdatedAtUtc, string CreatedBy);
