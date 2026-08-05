@@ -1,0 +1,46 @@
+<section class="app-card @Class" aria-label="@AriaLabel">
+    @if (!string.IsNullOrWhiteSpace(Title) || Header is not null)
+    {
+        <header class="app-card__header">
+            <div class="app-card__heading">
+                @if (!string.IsNullOrWhiteSpace(Eyebrow))
+                {
+                    <span class="app-card__eyebrow">@Eyebrow</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Title))
+                {
+                    <h2>@Title</h2>
+                }
+                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                {
+                    <p>@Subtitle</p>
+                }
+            </div>
+            @if (Header is not null)
+            {
+                <div class="app-card__header-content">@Header</div>
+            }
+        </header>
+    }
+
+    <div class="app-card__body @BodyClass">
+        @ChildContent
+    </div>
+
+    @if (Footer is not null)
+    {
+        <footer class="app-card__footer">@Footer</footer>
+    }
+</section>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string BodyClass { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Header { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+}
