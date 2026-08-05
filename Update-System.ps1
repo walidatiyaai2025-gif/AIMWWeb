@@ -1,12 +1,18 @@
 [CmdletBinding()]
 param(
-    [string]$ProjectPath = "C:\AIWordpressSite",
+    [string]$ProjectPath,
     [string]$Branch = "feature/system-health",
     [switch]$Clean
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+if ([string]::IsNullOrWhiteSpace($ProjectPath)) {
+    $ProjectPath = $PSScriptRoot
+}
+
+$ProjectPath = (Resolve-Path -LiteralPath $ProjectPath).Path
 
 function Write-Step([string]$Message) {
     Write-Host "`n[INFO] $Message" -ForegroundColor Cyan
@@ -30,13 +36,14 @@ try {
     Write-Host "=======================================" -ForegroundColor DarkCyan
     Write-Host " AI WordPress Manager - Update & Run" -ForegroundColor White
     Write-Host "=======================================" -ForegroundColor DarkCyan
+    Write-Host "Project path: $ProjectPath" -ForegroundColor DarkGray
 
-    if (-not (Test-Path $ProjectPath)) {
-        Stop-WithError "Project folder was not found: $ProjectPath. Run Install-First-Time.ps1 first."
+    if (-not (Test-Path -LiteralPath $ProjectPath)) {
+        Stop-WithError "Project folder was not found: $ProjectPath"
     }
 
-    if (-not (Test-Path (Join-Path $ProjectPath ".git"))) {
-        Stop-WithError "The project folder is not a Git repository: $ProjectPath"
+    if (-not (Test-Path -LiteralPath (Join-Path $ProjectPath ".git"))) {
+        Stop-WithError "The current folder is not a Git repository: $ProjectPath"
     }
 
     if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) {
@@ -47,7 +54,7 @@ try {
         Stop-WithError ".NET SDK is not installed or is not available in PATH."
     }
 
-    Set-Location $ProjectPath
+    Set-Location -LiteralPath $ProjectPath
 
     Write-Step "Stopping previous application instances..."
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
@@ -79,7 +86,7 @@ try {
     Invoke-Native "dotnet.exe" @("build", $solution, "-c", "Debug", "--no-restore") "Build failed."
 
     $runner = Join-Path $ProjectPath "Build\Run-Web.ps1"
-    if (-not (Test-Path $runner)) {
+    if (-not (Test-Path -LiteralPath $runner)) {
         Stop-WithError "Run-Web.ps1 was not found: $runner"
     }
 
