@@ -1,0 +1,23 @@
+<div class="app-progress @Class" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@SafeValue" aria-label="@AriaLabel">
+    @if (ShowLabel)
+    {
+        <div class="app-progress__label">
+            <span>@Label</span>
+            <strong>@SafeValue%</strong>
+        </div>
+    }
+    <div class="app-progress__track">
+        <span class="app-progress__value app-progress__value--@Tone" style="width:@($"{SafeValue}%")"></span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string Tone { get; set; } = "accent";
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public bool ShowLabel { get; set; } = true;
+
+    private int SafeValue => Math.Clamp(Value, 0, 100);
+}
