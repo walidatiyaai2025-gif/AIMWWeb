@@ -15,20 +15,10 @@ public sealed class DatabaseInitializationService(
     {
         logger.LogInformation("Starting database initialization.");
 
-        var pendingBeforeMigration = (await dbContext.Database
-            .GetPendingMigrationsAsync(cancellationToken))
-            .ToArray();
-
-        logger.LogInformation(
-            "Found {PendingMigrationCount} pending database migration(s).",
-            pendingBeforeMigration.Length);
-
+        var pendingBeforeMigration = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToArray();
+        logger.LogInformation("Found {PendingMigrationCount} pending database migration(s).", pendingBeforeMigration.Length);
         await dbContext.Database.MigrateAsync(cancellationToken);
 
-        // Defensive compatibility for databases created by older application builds.
-        // EF migrations remain the source of truth, while this idempotent statement
-        // prevents the SEO history screen from failing when an old database missed
-        // the snapshot migration.
         await dbContext.Database.ExecuteSqlRawAsync(
             """
             CREATE TABLE IF NOT EXISTS SeoAuditSnapshots (
@@ -43,30 +33,36 @@ public sealed class DatabaseInitializationService(
                 CreatedAtUtc TEXT NOT NULL,
                 UpdatedAtUtc TEXT NOT NULL,
                 ConcurrencyToken BLOB NOT NULL,
-                CONSTRAINT FK_SeoAuditSnapshots_Sites_SiteId
-                    FOREIGN KEY (SiteId) REFERENCES Sites (Id) ON DELETE CASCADE
+                CONSTRAINT FK_SeoAuditSnapshots_Sites_SiteId FOREIGN KEY (SiteId) REFERENCES Sites (Id) ON DELETE CASCADE
             );
-            CREATE INDEX IF NOT EXISTS IX_SeoAuditSnapshots_SiteId_CapturedAtUtc
-                ON SeoAuditSnapshots (SiteId, CapturedAtUtc);
+            CREATE INDEX IF NOT EXISTS IX_SeoAuditSnapshots_SiteId_CapturedAtUtc ON SeoAuditSnapshots (SiteId, CapturedAtUtc);
+
+            CREATE TABLE IF NOT EXISTS AuthUsers (
+                Id TEXT NOT NULL CONSTRAINT PK_AuthUsers PRIMARY KEY,
+                UserName TEXT NOT NULL,
+                NormalizedUserName TEXT NOT NULL,
+                PasswordHash TEXT NOT NULL,
+                Role TEXT NOT NULL,
+                IsActive INTEGER NOT NULL,
+                FailedAccessCount INTEGER NOT NULL,
+                LockedUntilUtc TEXT NULL,
+                LastLoginAtUtc TEXT NULL,
+                LastPage TEXT NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_AuthUsers_NormalizedUserName ON AuthUsers (NormalizedUserName);
             """,
             cancellationToken);
 
-        var pendingAfterMigration = (await dbContext.Database
-            .GetPendingMigrationsAsync(cancellationToken))
-            .ToArray();
-
+        var pendingAfterMigration = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToArray();
         if (pendingAfterMigration.Length > 0)
-        {
-            throw new InvalidOperationException(
-                $"Database migration did not complete. Pending migrations: {string.Join(", ", pendingAfterMigration)}");
-        }
+            throw new InvalidOperationException($"Database migration did not complete. Pending migrations: {string.Join(", ", pendingAfterMigration)}");
 
         if (!await dbContext.Database.CanConnectAsync(cancellationToken))
-        {
             throw new InvalidOperationException("The SQLite database could not be opened after migration.");
-        }
 
-        // Run seed data only after migrations are confirmed as applied.
         await SeedSettingAsync("Application.Language", "en", cancellationToken);
         await SeedSettingAsync("Application.Theme", "Dark", cancellationToken);
         await SeedSettingAsync("Application.PortableMode", "false", cancellationToken);
@@ -79,33 +75,15 @@ public sealed class DatabaseInitializationService(
     private async Task SeedDefaultSiteAsync(CancellationToken cancellationToken)
     {
         const string normalizedUrl = "https://notonlybook.com";
-
-        var exists = await dbContext.Sites
-            .IgnoreQueryFilters()
-            .AnyAsync(x => x.SiteUrl == normalizedUrl, cancellationToken);
-
-        if (exists)
-        {
-            return;
-        }
-
+        if (await dbContext.Sites.IgnoreQueryFilters().AnyAsync(x => x.SiteUrl == normalizedUrl, cancellationToken)) return;
         var site = new Site("NOB", new Uri(normalizedUrl), clock.UtcNow);
         dbContext.Sites.Add(site);
         logger.LogInformation("Seeded the default site profile {SiteName} at {SiteUrl} without credentials.", site.Name, site.SiteUrl);
     }
 
-    private async Task SeedSettingAsync(
-        string key,
-        string value,
-        CancellationToken cancellationToken)
+    private async Task SeedSettingAsync(string key, string value, CancellationToken cancellationToken)
     {
-        var exists = await dbContext.ApplicationSettings
-            .IgnoreQueryFilters()
-            .AnyAsync(x => x.Key == key, cancellationToken);
-
-        if (!exists)
-        {
+        if (!await dbContext.ApplicationSettings.IgnoreQueryFilters().AnyAsync(x => x.Key == key, cancellationToken))
             dbContext.ApplicationSettings.Add(new ApplicationSetting(key, value, clock.UtcNow));
-        }
     }
 }
