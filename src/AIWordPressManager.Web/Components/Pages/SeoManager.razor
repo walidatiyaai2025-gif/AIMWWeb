@@ -52,7 +52,7 @@ else
             <div class="seo-search"><span>⌕</span><InputText @bind-Value="_query" @bind-Value:event="oninput" placeholder="@L["SearchPlaceholder"]" /></div>
             <select @bind="_type"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select>
             <select @bind="_quality"><option value="all">@(L.IsArabic ? "كل الدرجات" : "All scores")</option><option value="good">@(L.IsArabic ? "جيد 80+" : "Good 80+")</option><option value="warning">@(L.IsArabic ? "يحتاج تحسين" : "Needs improvement")</option><option value="poor">@(L.IsArabic ? "ضعيف" : "Poor")</option></select>
-            <select @bind="_issue"><option value="all">@(L.IsArabic ? "كل المشكلات" : "All issues")</option>@foreach (var code in IssueCodes) { <option value="@code">@IssueLabel(code)</option> }</select>
+            <select @bind="_issue"><option value="all">@(L.IsArabic ? "كل المشكلات" : "All issues")</option>@foreach (var code in IssueCodes) { <option value="@(code)">@IssueLabel(code)</option> }</select>
             <select @bind="_pageSize"><option value="10">10</option><option value="25">25</option><option value="50">50</option></select>
             <button class="btn primary" @onclick="ApplyFiltersAsync">@L["Analyze"]</button>
             <button class="btn" @onclick="ResetFiltersAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button>
