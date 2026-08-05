@@ -37,4 +37,26 @@ a:not(.btn):not(.app-version):not(.topbar-version):focus-visible,button:focus-vi
 .theme-popover-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.theme-popover-head strong,.theme-popover-head small{display:block}.theme-popover-head small{color:var(--muted);margin-top:3px}.theme-popover-close{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:20px}.theme-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.theme-swatch{border:1px solid var(--border);background:var(--surface2);color:var(--muted);border-radius:12px;padding:9px 6px;cursor:pointer;display:grid;justify-items:center;gap:7px;font:inherit;font-size:11px;transition:.18s ease}.theme-swatch:hover,.theme-swatch.active{border-color:var(--swatch);color:var(--text);transform:translateY(-1px);background:var(--accent-soft)}.theme-swatch-dot{width:28px;height:28px;border-radius:9px;background:var(--swatch);box-shadow:0 5px 14px color-mix(in srgb,var(--swatch) 35%,transparent)}.theme-swatch.active .theme-swatch-dot{outline:3px solid color-mix(in srgb,var(--swatch) 26%,transparent)}
 .app-shell.sidebar-collapsed{grid-template-columns:88px 1fr}.app-shell.sidebar-collapsed .sidebar{padding-inline:10px}.app-shell.sidebar-collapsed .brand>div,.app-shell.sidebar-collapsed .nav-section-toggle span:first-child,.app-shell.sidebar-collapsed .nav-chevron,.app-shell.sidebar-collapsed .nav-section-links a:not(.active){font-size:0}.app-shell.sidebar-collapsed .nav-section-links a{justify-content:center}.app-shell.sidebar-collapsed .nav-section-links a span{font-size:18px}.app-shell.sidebar-collapsed .sidebar-footer{display:none}.app-shell.sidebar-collapsed .brand{justify-content:center}.app-shell.sidebar-collapsed .brand-mark{width:44px}
 .design-system-shell .panel,.sites-page .panel,.content-explorer-page .panel,.editor-layout .panel{border-radius:16px}.workspace-kicker{color:var(--accent-strong)!important;letter-spacing:.08em}
-@media(max-width:700px){.theme-trigger,.appearance-toggle,.sidebar-toggle{width:38px;height:38px}.theme-popover{position:fixed;top:74px;inset-inline:14px;width:auto}.theme-grid{grid-template-columns:repeat(4,1fr)}.sidebar-toggle{display:none}}
+@media(max-width:700px){
+  body.mobile-navigation-open{overflow:hidden}
+  .theme-trigger,.appearance-toggle,.sidebar-toggle{width:38px;height:38px}
+  .sidebar-toggle{display:grid!important;position:relative;z-index:72}
+  .theme-popover{position:fixed;top:74px;inset-inline:14px;width:auto}
+  .theme-grid{grid-template-columns:repeat(4,1fr)}
+  .app-shell{display:block!important;min-height:100vh}
+  .app-shell .sidebar{position:fixed!important;top:0;bottom:0;inset-inline-start:0;width:min(310px,86vw)!important;height:100dvh!important;padding:22px 16px!important;z-index:70;overflow-y:auto;transform:translateX(0);transition:transform .24s ease,box-shadow .24s ease;box-shadow:0 0 0 1px var(--border),0 25px 70px rgba(0,0,0,.42)}
+  [dir="rtl"] .app-shell .sidebar{transform:translateX(0)}
+  .app-shell.sidebar-collapsed .sidebar{transform:translateX(-110%)}
+  [dir="rtl"] .app-shell.sidebar-collapsed .sidebar{transform:translateX(110%)}
+  .app-shell.sidebar-collapsed .brand>div,.app-shell.sidebar-collapsed .nav-section-toggle span:first-child,.app-shell.sidebar-collapsed .nav-chevron,.app-shell.sidebar-collapsed .nav-section-links a:not(.active){font-size:inherit}
+  .app-shell.sidebar-collapsed .nav-section-links a{justify-content:flex-start}
+  [dir="rtl"] .app-shell.sidebar-collapsed .nav-section-links a{justify-content:flex-start}
+  .app-shell.sidebar-collapsed .nav-section-links a span{font-size:inherit}
+  .app-shell.sidebar-collapsed .sidebar-footer{display:block}
+  .app-shell.sidebar-collapsed .brand{justify-content:flex-start}
+  .app-shell:not(.sidebar-collapsed)::after{content:"";position:fixed;inset:0;background:rgba(4,8,15,.62);backdrop-filter:blur(3px);z-index:60;animation:mobileNavFade .18s ease}
+  html[data-mode="light"] .app-shell:not(.sidebar-collapsed)::after{background:rgba(20,30,45,.34)}
+  .topbar{z-index:50!important}
+  .main-area{min-width:0;width:100%}
+}
+@keyframes mobileNavFade{from{opacity:0}to{opacity:1}}
