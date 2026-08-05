@@ -32,5 +32,6 @@
 .app-dialog__body{padding:var(--ui-space-5)}
 .app-dialog__close{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--ui-border);border-radius:12px;background:var(--ui-surface-2);color:var(--ui-muted);font:inherit;font-size:1.25rem;cursor:pointer}
 .app-dialog__close:hover{border-color:var(--ui-accent);color:var(--ui-text)}
+.app-confirm-dialog__details{padding:var(--ui-space-4);border:1px solid color-mix(in srgb,var(--ui-danger) 30%,var(--ui-border));border-radius:var(--ui-radius-md);background:color-mix(in srgb,var(--ui-danger) 8%,var(--ui-surface));color:var(--ui-muted);line-height:1.7}
 
 @media(max-width:700px){.app-section__header{flex-direction:column}.app-details-panel{flex-direction:column}.app-dialog-backdrop{align-items:end;padding:0}.app-dialog{width:100%;max-height:92dvh;border-radius:20px 20px 0 0}}
