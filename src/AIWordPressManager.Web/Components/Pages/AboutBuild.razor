@@ -6,27 +6,35 @@
 <PageTitle>@(L.IsArabic ? "معلومات الإصدار" : "Build Information")</PageTitle>
 
 <div class="build-info-page">
-    <section class="panel build-info-hero">
-        <div>
-            <span class="workspace-kicker">@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")</span>
-            <h1>@(L.IsArabic ? "معلومات الإصدار والبناء" : "Version & Build Information")</h1>
-            <p>@(L.IsArabic ? "هذه البيانات تُقرأ مباشرة من النسخة التي تعمل حاليًا." : "These values are read directly from the running application build.")</p>
-        </div>
-        <strong class="build-version-badge">v@Build.Version</strong>
-    </section>
+    <AppCard Class="build-info-hero"
+             Eyebrow="@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")"
+             Title="@(L.IsArabic ? "معلومات الإصدار والبناء" : "Version & Build Information")"
+             Subtitle="@(L.IsArabic ? "هذه البيانات تُقرأ مباشرة من النسخة التي تعمل حاليًا." : "These values are read directly from the running application build.")">
+        <Header>
+            <strong class="build-version-badge">v@Build.Version</strong>
+        </Header>
+        <ChildContent>
+            <AppButton Href="/api/build"
+                       Target="_blank"
+                       Variant="primary"
+                       Icon="↗"
+                       Text="@(L.IsArabic ? "فتح بيانات API" : "Open build API")" />
+        </ChildContent>
+    </AppCard>
 
     <section class="build-info-grid">
-        <article class="panel build-info-card"><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong>@Build.Version</strong></article>
-        <article class="panel build-info-card"><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong>@Build.Branch</strong></article>
-        <article class="panel build-info-card"><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong>@Build.Commit</strong></article>
-        <article class="panel build-info-card"><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong>@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</strong></article>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong>@Build.Version</strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong>@Build.Branch</strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong>@Build.Commit</strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong>@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</strong></AppCard>
     </section>
 
-    <section class="panel build-info-details">
+    <AppCard Class="build-info-details"
+             Title="@(L.IsArabic ? "التفاصيل التقنية" : "Technical details")">
         <div><span>@(L.IsArabic ? "اسم التجميعة" : "Assembly")</span><code>@Build.AssemblyName</code></div>
         <div><span>@(L.IsArabic ? "الإصدار التفصيلي" : "Informational version")</span><code>@Build.InformationalVersion</code></div>
         <div><span>API</span><code>/api/build</code></div>
-    </section>
+    </AppCard>
 </div>
 
 @code {
