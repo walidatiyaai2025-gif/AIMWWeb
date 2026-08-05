@@ -10,33 +10,58 @@
 
 @if (_loading)
 {
-    <div class="seo-loading"><div class="seo-skeleton hero"></div><div class="seo-skeleton-grid">@for (var i = 0; i < 4; i++) { <div class="seo-skeleton"></div> }</div></div>
+    <div class="seo-loading">
+        <div class="seo-skeleton hero"></div>
+        <div class="seo-skeleton-grid">
+            @for (var i = 0; i < 4; i++)
+            {
+                <div class="seo-skeleton"></div>
+            }
+        </div>
+    </div>
 }
 else if (_view is null)
 {
-    <section class="panel empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></section>
+    <section class="panel empty-state">
+        <h1>@L["SiteNotFound"]</h1>
+        <a class="btn" href="/sites">@L["BackToSites"]</a>
+    </section>
 }
 else
 {
     <div class="seo-page">
         <section class="panel seo-hero">
-            <div><span class="workspace-kicker">@(L.IsArabic ? "تحسين الظهور" : "SEARCH OPTIMIZATION")</span><h1>@L["SeoManager"]</h1><p><strong>@_view.SiteName</strong> · @L["SeoIntro"]</p></div>
+            <div>
+                <span class="workspace-kicker">@(L.IsArabic ? "تحسين الظهور" : "SEARCH OPTIMIZATION")</span>
+                <h1>@L["SeoManager"]</h1>
+                <p><strong>@_view.SiteName</strong> · @L["SeoIntro"]</p>
+            </div>
             <div class="seo-hero-actions">
-                <button class="btn primary" @onclick="RunFullAuditAsync" disabled="@_runningAudit">@(_runningAudit ? (L.IsArabic ? "جارٍ التدقيق..." : "Running audit...") : (L.IsArabic ? "تشغيل تدقيق كامل" : "Run full audit"))</button>
+                <button class="btn primary" @onclick="RunFullAuditAsync" disabled="@_runningAudit">
+                    @(_runningAudit ? (L.IsArabic ? "جارٍ التدقيق..." : "Running audit...") : (L.IsArabic ? "تشغيل تدقيق كامل" : "Run full audit"))
+                </button>
                 <a class="btn" href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
                 <a class="btn" href="@($"/sites/{Id}/explorer")">@L["BackToExplorer"]</a>
             </div>
         </section>
 
         <section class="seo-summary-grid">
-            <article class="panel seo-score-card"><div class="seo-score-ring @ScoreClass(_view.Summary.AverageScore)"><strong>@_view.Summary.AverageScore</strong><small>/100</small></div><div><span>@L["AverageSeoScore"]</span><p>@ScoreDescription(_view.Summary.AverageScore)</p></div></article>
+            <article class="panel seo-score-card">
+                <div class="seo-score-ring @ScoreClass(_view.Summary.AverageScore)">
+                    <strong>@_view.Summary.AverageScore</strong><small>/100</small>
+                </div>
+                <div><span>@L["AverageSeoScore"]</span><p>@ScoreDescription(_view.Summary.AverageScore)</p></div>
+            </article>
             <article class="panel seo-summary-card good"><small>@L["GoodContent"]</small><strong>@_view.Summary.Good</strong><span>@L["Score80Plus"]</span></article>
             <article class="panel seo-summary-card warning"><small>@L["NeedsImprovement"]</small><strong>@_view.Summary.NeedsImprovement</strong><span>@L["Score50To79"]</span></article>
             <article class="panel seo-summary-card poor"><small>@L["SeoIssues"]</small><strong>@_view.Summary.TotalIssues</strong><span>@_view.Summary.Poor @L["PoorItems"]</span></article>
         </section>
 
         <section class="panel seo-priority-panel">
-            <header><div><span class="workspace-kicker">@(L.IsArabic ? "الأولويات" : "TOP PRIORITIES")</span><h2>@(L.IsArabic ? "المشكلات الأكثر تكرارًا" : "Most frequent issues")</h2></div><span>@FilteredItems.Count() @(L.IsArabic ? "عنصر" : "items")</span></header>
+            <header>
+                <div><span class="workspace-kicker">@(L.IsArabic ? "الأولويات" : "TOP PRIORITIES")</span><h2>@(L.IsArabic ? "المشكلات الأكثر تكرارًا" : "Most frequent issues")</h2></div>
+                <span>@FilteredItems.Count() @(L.IsArabic ? "عنصر" : "items")</span>
+            </header>
             <div class="seo-priority-grid">
                 @foreach (var issue in TopIssues)
                 {
@@ -44,51 +69,122 @@ else
                         <span>@IssueLabel(issue.Code)</span><strong>@issue.Count</strong><small>@SeverityText(issue.Severity)</small>
                     </button>
                 }
-                @if (!TopIssues.Any()) { <div class="seo-clean-state">✓ @(L.IsArabic ? "لا توجد مشكلات في النتائج الحالية" : "No issues in the current results")</div> }
+                @if (!TopIssues.Any())
+                {
+                    <div class="seo-clean-state">✓ @(L.IsArabic ? "لا توجد مشكلات في النتائج الحالية" : "No issues in the current results")</div>
+                }
             </div>
         </section>
 
         <section class="panel seo-toolbar">
-            <div class="seo-search"><span>⌕</span><InputText @bind-Value="_query" @bind-Value:event="oninput" placeholder="@L["SearchPlaceholder"]" /></div>
-            <select @bind="_type"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select>
-            <select @bind="_quality"><option value="all">@(L.IsArabic ? "كل الدرجات" : "All scores")</option><option value="good">@(L.IsArabic ? "جيد 80+" : "Good 80+")</option><option value="warning">@(L.IsArabic ? "يحتاج تحسين" : "Needs improvement")</option><option value="poor">@(L.IsArabic ? "ضعيف" : "Poor")</option></select>
+            <div class="seo-search">
+                <span>⌕</span>
+                <InputText @bind-Value="_query" @bind-Value:event="oninput" placeholder="@L["SearchPlaceholder"]" />
+            </div>
+            <select @bind="_type">
+                <option value="all">@L["All"]</option>
+                <option value="post">@L["Posts"]</option>
+                <option value="page">@L["Pages"]</option>
+            </select>
+            <select @bind="_quality">
+                <option value="all">@(L.IsArabic ? "كل الدرجات" : "All scores")</option>
+                <option value="good">@(L.IsArabic ? "جيد 80+" : "Good 80+")</option>
+                <option value="warning">@(L.IsArabic ? "يحتاج تحسين" : "Needs improvement")</option>
+                <option value="poor">@(L.IsArabic ? "ضعيف" : "Poor")</option>
+            </select>
             <select @bind="_issue">
                 <option value="all">@(L.IsArabic ? "كل المشكلات" : "All issues")</option>
-                @foreach (var code in IssueCodes)
+                @foreach (var issueCode in IssueCodes)
                 {
-                    <option value="@code">@IssueLabel(code)</option>
+                    <option value="@issueCode">@IssueLabel(issueCode)</option>
                 }
             </select>
-            <select @bind="_pageSize"><option value="10">10</option><option value="25">25</option><option value="50">50</option></select>
+            <select @bind="_pageSize">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
             <button class="btn primary" @onclick="ApplyFiltersAsync">@L["Analyze"]</button>
             <button class="btn" @onclick="ResetFiltersAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button>
         </section>
 
         @if (!FilteredItems.Any())
         {
-            <section class="panel empty-state"><h3>@L["NoContentToAnalyze"]</h3><p>@L["SyncBeforeSeo"]</p><a class="btn primary" href="@($"/sites/{Id}/explorer")">@(L.IsArabic ? "الانتقال للمزامنة" : "Go to synchronization")</a></section>
+            <section class="panel empty-state">
+                <h3>@L["NoContentToAnalyze"]</h3>
+                <p>@L["SyncBeforeSeo"]</p>
+                <a class="btn primary" href="@($"/sites/{Id}/explorer")">@(L.IsArabic ? "الانتقال للمزامنة" : "Go to synchronization")</a>
+            </section>
         }
         else
         {
             <section class="panel seo-results">
-                <header><div><h2>@(L.IsArabic ? "نتائج التحليل" : "Analysis results")</h2><p>@(L.IsArabic ? $"عرض {PagedItems.Count()} من {FilteredItems.Count()}" : $"Showing {PagedItems.Count()} of {FilteredItems.Count()}")</p></div></header>
-                <div class="seo-table-wrap"><table class="seo-table"><thead><tr><th>@L["Score"]</th><th>@L["Content"]</th><th>@L["SeoMetrics"]</th><th>@L["DetectedIssues"]</th><th>@L["Actions"]</th></tr></thead><tbody>
-                @foreach (var item in PagedItems)
-                {
-                    <tr class="@ScoreClass(item.Score)">
-                        <td><span class="score-pill @ScoreClass(item.Score)">@item.Score</span></td>
-                        <td><strong>@(string.IsNullOrWhiteSpace(item.Title) ? L["Untitled"] : item.Title)</strong><small>@(item.ContentType == "post" ? L["Post"] : L["Page"]) · /@item.Slug</small></td>
-                        <td><div class="metric-list"><span>@L["Words"] <b>@item.WordCount</b></span><span>@L["Headings"] <b>@item.HeadingCount</b></span><span>@L["InternalLinks"] <b>@item.InternalLinks</b></span><span>@L["Images"] <b>@item.ImageCount</b></span></div></td>
-                        <td>@if(item.Issues.Count == 0){<span class="badge success">@L["NoSeoIssues"]</span>}else{<div class="issue-list">@foreach(var issue in item.Issues){<button class="issue-chip @issue.Severity.ToLowerInvariant()" @onclick="() => FilterByIssue(issue.Code)">@IssueText(issue)</button>}</div>}</td>
-                        <td><div class="table-actions"><button class="btn compact" @onclick="() => ToggleDetails(item)">@(ReferenceEquals(_expanded, item) ? (L.IsArabic ? "إخفاء" : "Hide") : (L.IsArabic ? "تفاصيل" : "Details"))</button><a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Fix"]</a>@if(!string.IsNullOrWhiteSpace(item.Link)){<a class="btn compact" href="@item.Link" target="_blank">↗</a>}</div></td>
-                    </tr>
-                    @if (ReferenceEquals(_expanded, item))
-                    {
-                        <tr class="seo-detail-row"><td colspan="5"><div class="seo-detail-grid"><div><h3>@(L.IsArabic ? "خطة الإصلاح" : "Fix plan")</h3><ol>@foreach (var issue in item.Issues) { <li><strong>@IssueLabel(issue.Code)</strong><span>@IssueRecommendation(issue.Code)</span></li> }</ol></div><div class="seo-detail-score"><span>@(L.IsArabic ? "الدرجة الحالية" : "Current score")</span><strong>@item.Score</strong><a class="btn primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@(L.IsArabic ? "فتح المحرر وتنفيذ الإصلاح" : "Open editor and apply fixes")</a></div></div></td></tr>
-                    }
-                }
-                </tbody></table></div>
-                <footer class="seo-pagination"><span>@(L.IsArabic ? $"صفحة {_page} من {TotalPages}" : $"Page {_page} of {TotalPages}")</span><div><button class="btn compact" disabled="@(_page <= 1)" @onclick="PreviousPage">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_page >= TotalPages)" @onclick="NextPage">@(L.IsArabic ? "التالي" : "Next")</button></div></footer>
+                <header>
+                    <div><h2>@(L.IsArabic ? "نتائج التحليل" : "Analysis results")</h2><p>@(L.IsArabic ? $"عرض {PagedItems.Count()} من {FilteredItems.Count()}" : $"Showing {PagedItems.Count()} of {FilteredItems.Count()}")</p></div>
+                </header>
+                <div class="seo-table-wrap">
+                    <table class="seo-table">
+                        <thead><tr><th>@L["Score"]</th><th>@L["Content"]</th><th>@L["SeoMetrics"]</th><th>@L["DetectedIssues"]</th><th>@L["Actions"]</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in PagedItems)
+                        {
+                            <tr class="@ScoreClass(item.Score)">
+                                <td><span class="score-pill @ScoreClass(item.Score)">@item.Score</span></td>
+                                <td><strong>@(string.IsNullOrWhiteSpace(item.Title) ? L["Untitled"] : item.Title)</strong><small>@(item.ContentType == "post" ? L["Post"] : L["Page"]) · /@item.Slug</small></td>
+                                <td><div class="metric-list"><span>@L["Words"] <b>@item.WordCount</b></span><span>@L["Headings"] <b>@item.HeadingCount</b></span><span>@L["InternalLinks"] <b>@item.InternalLinks</b></span><span>@L["Images"] <b>@item.ImageCount</b></span></div></td>
+                                <td>
+                                    @if (item.Issues.Count == 0)
+                                    {
+                                        <span class="badge success">@L["NoSeoIssues"]</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="issue-list">
+                                            @foreach (var issue in item.Issues)
+                                            {
+                                                <button class="issue-chip @issue.Severity.ToLowerInvariant()" @onclick="() => FilterByIssue(issue.Code)">@IssueText(issue)</button>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn compact" @onclick="() => ToggleDetails(item)">@(ReferenceEquals(_expanded, item) ? (L.IsArabic ? "إخفاء" : "Hide") : (L.IsArabic ? "تفاصيل" : "Details"))</button>
+                                        <a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Fix"]</a>
+                                        @if (!string.IsNullOrWhiteSpace(item.Link))
+                                        {
+                                            <a class="btn compact" href="@item.Link" target="_blank">↗</a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            @if (ReferenceEquals(_expanded, item))
+                            {
+                                <tr class="seo-detail-row">
+                                    <td colspan="5">
+                                        <div class="seo-detail-grid">
+                                            <div>
+                                                <h3>@(L.IsArabic ? "خطة الإصلاح" : "Fix plan")</h3>
+                                                <ol>
+                                                    @foreach (var issue in item.Issues)
+                                                    {
+                                                        <li><strong>@IssueLabel(issue.Code)</strong><span>@IssueRecommendation(issue.Code)</span></li>
+                                                    }
+                                                </ol>
+                                            </div>
+                                            <div class="seo-detail-score"><span>@(L.IsArabic ? "الدرجة الحالية" : "Current score")</span><strong>@item.Score</strong><a class="btn primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@(L.IsArabic ? "فتح المحرر وتنفيذ الإصلاح" : "Open editor and apply fixes")</a></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="seo-pagination">
+                    <span>@(L.IsArabic ? $"صفحة {_page} من {TotalPages}" : $"Page {_page} of {TotalPages}")</span>
+                    <div><button class="btn compact" disabled="@(_page <= 1)" @onclick="PreviousPage">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_page >= TotalPages)" @onclick="NextPage">@(L.IsArabic ? "التالي" : "Next")</button></div>
+                </footer>
             </section>
         }
     </div>
@@ -111,11 +207,19 @@ else
     private IEnumerable<IssueAggregate> TopIssues => (_view?.Items ?? Array.Empty<SeoAnalysisItem>()).SelectMany(x => x.Issues).GroupBy(x => new { x.Code, x.Severity }).Select(g => new IssueAggregate(g.Key.Code, g.Key.Severity, g.Sum(x => x.Count))).OrderByDescending(x => x.Count).Take(5);
 
     protected override void OnInitialized() => L.Changed += Changed;
-    protected override async Task OnParametersSetAsync() { _loading = true; try { await LoadAsync(); } catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تحميل تحليل SEO." : "SEO analysis could not be loaded.", L.IsArabic ? "خطأ تحليل SEO" : "SEO analysis error", ex.ToString()); } finally { _loading = false; } }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try { await LoadAsync(); }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تحميل تحليل SEO." : "SEO analysis could not be loaded.", L.IsArabic ? "خطأ تحليل SEO" : "SEO analysis error", ex.ToString()); }
+        finally { _loading = false; }
+    }
+
     private async Task LoadAsync() { _view = await SeoService.AnalyzeAsync(Id, _query, _type); _page = 1; _expanded = null; }
     private async Task ApplyFiltersAsync() { await LoadAsync(); Notifications.Info(L.IsArabic ? "تم تحديث نتائج التحليل." : "SEO results refreshed.", "SEO"); }
     private async Task ResetFiltersAsync() { _query = ""; _type = _quality = _issue = "all"; _pageSize = 10; await LoadAsync(); }
-    private void FilterByIssue(string code) { _issue = code; _page = 1; }
+    private void FilterByIssue(string issueCode) { _issue = issueCode; _page = 1; }
     private void ToggleDetails(SeoAnalysisItem item) => _expanded = ReferenceEquals(_expanded, item) ? null : item;
     private void PreviousPage() { if (_page > 1) _page--; _expanded = null; }
     private void NextPage() { if (_page < TotalPages) _page++; _expanded = null; }
@@ -131,9 +235,9 @@ else
     private static string ScoreClass(int score) => score >= 80 ? "good" : score >= 50 ? "warning" : "poor";
     private string ScoreDescription(int score) => score >= 80 ? (L.IsArabic ? "المحتوى في حالة جيدة." : "Content is in good condition.") : score >= 50 ? (L.IsArabic ? "توجد فرص تحسين واضحة." : "There are clear improvement opportunities.") : (L.IsArabic ? "يحتاج المحتوى إلى معالجة ذات أولوية." : "Content requires priority remediation.");
     private string IssueText(SeoIssue issue) => $"{IssueLabel(issue.Code)}{(issue.Count > 1 ? $" ({issue.Count})" : string.Empty)}";
-    private string IssueLabel(string code) => L[code];
+    private string IssueLabel(string issueCode) => L[issueCode];
     private string SeverityText(string severity) => L.IsArabic ? severity switch { "High" => "عالية", "Medium" => "متوسطة", _ => "منخفضة" } : severity;
-    private string IssueRecommendation(string code) => L.IsArabic ? code switch { "MissingTitle" => "أضف عنوانًا واضحًا وفريدًا.", "ShortTitle" => "وسّع العنوان ليصف نية البحث بدقة.", "LongTitle" => "اختصر العنوان إلى نحو 60 حرفًا.", "MissingDescription" => "أضف وصفًا موجزًا وجذابًا.", "LongDescription" => "اختصر الوصف إلى نحو 160 حرفًا.", "ThinContent" => "وسّع المحتوى بمعلومات أصلية ومفيدة.", "MissingHeadings" => "قسّم المحتوى بعناوين H2 وH3 منطقية.", "MissingInternalLinks" => "أضف روابط داخلية مرتبطة بالموضوع.", "ImagesMissingAlt" => "أضف ALT وصفيًا للصور.", "MissingSlug" => "أنشئ Slug قصيرًا وواضحًا.", _ => "راجع العنصر داخل المحرر." } : code switch { "MissingTitle" => "Add a clear, unique title.", "ShortTitle" => "Expand the title to describe search intent.", "LongTitle" => "Shorten the title to about 60 characters.", "MissingDescription" => "Add a concise, compelling description.", "LongDescription" => "Shorten the description to about 160 characters.", "ThinContent" => "Expand the content with original, useful information.", "MissingHeadings" => "Structure the content with logical H2 and H3 headings.", "MissingInternalLinks" => "Add relevant internal links.", "ImagesMissingAlt" => "Add descriptive ALT text to images.", "MissingSlug" => "Create a short, readable slug.", _ => "Review the item in the editor." };
+    private string IssueRecommendation(string issueCode) => L.IsArabic ? issueCode switch { "MissingTitle" => "أضف عنوانًا واضحًا وفريدًا.", "ShortTitle" => "وسّع العنوان ليصف نية البحث بدقة.", "LongTitle" => "اختصر العنوان إلى نحو 60 حرفًا.", "MissingDescription" => "أضف وصفًا موجزًا وجذابًا.", "LongDescription" => "اختصر الوصف إلى نحو 160 حرفًا.", "ThinContent" => "وسّع المحتوى بمعلومات أصلية ومفيدة.", "MissingHeadings" => "قسّم المحتوى بعناوين H2 وH3 منطقية.", "MissingInternalLinks" => "أضف روابط داخلية مرتبطة بالموضوع.", "ImagesMissingAlt" => "أضف ALT وصفيًا للصور.", "MissingSlug" => "أنشئ Slug قصيرًا وواضحًا.", _ => "راجع العنصر داخل المحرر." } : issueCode switch { "MissingTitle" => "Add a clear, unique title.", "ShortTitle" => "Expand the title to describe search intent.", "LongTitle" => "Shorten the title to about 60 characters.", "MissingDescription" => "Add a concise, compelling description.", "LongDescription" => "Shorten the description to about 160 characters.", "ThinContent" => "Expand the content with original, useful information.", "MissingHeadings" => "Structure the content with logical H2 and H3 headings.", "MissingInternalLinks" => "Add relevant internal links.", "ImagesMissingAlt" => "Add descriptive ALT text to images.", "MissingSlug" => "Create a short, readable slug.", _ => "Review the item in the editor." };
     private void Changed() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= Changed;
     private sealed record IssueAggregate(string Code, string Severity, int Count);
