@@ -1,0 +1,96 @@
+@page "/notifications"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject NotificationInboxService Inbox
+@inject AppLanguageService L
+@inject AppNotificationService Toasts
+
+<PageTitle>@(L.IsArabic ? "صندوق الإشعارات" : "Notification Inbox")</PageTitle>
+
+<div class="notification-inbox-page">
+    <section class="panel notification-inbox-hero">
+        <div>
+            <span class="workspace-kicker">NOTIFICATION INBOX</span>
+            <h1>@(L.IsArabic ? "صندوق الإشعارات" : "Notification Inbox")</h1>
+            <p>@(L.IsArabic ? "راجع إشعارات التخطيط والتنفيذ والعمليات الفعلية المسجلة داخل النظام." : "Review real planner, execution, and operational notifications recorded by the application.")</p>
+        </div>
+        <div class="notification-inbox-actions">
+            <button class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn primary" disabled="@(!_items.Any(x => !x.IsRead))" @onclick="MarkAllRead">✓ @(L.IsArabic ? "تعليم الكل كمقروء" : "Mark all read")</button>
+        </div>
+    </section>
+
+    <section class="notification-inbox-stats">
+        <article class="panel"><small>@(L.IsArabic ? "الإجمالي" : "Total")</small><strong>@_items.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "غير مقروء" : "Unread")</small><strong>@_items.Count(x => !x.IsRead)</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "أخطاء وتحذيرات" : "Errors & warnings")</small><strong>@_items.Count(x => x.Severity is NotificationSeverity.Error or NotificationSeverity.Warning)</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "آخر إشعار" : "Latest")</small><strong class="small-value">@LatestText</strong></article>
+    </section>
+
+    <section class="panel notification-inbox-toolbar">
+        <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث في العنوان أو الرسالة..." : "Search title or message...")" />
+        <select @bind="_severity">
+            <option value="">@(L.IsArabic ? "كل الأنواع" : "All severities")</option>
+            @foreach (var severity in Enum.GetValues<NotificationSeverity>())
+            {
+                <option value="@severity">@SeverityText(severity)</option>
+            }
+        </select>
+        <label class="notification-unread-toggle"><input type="checkbox" @bind="_unreadOnly" /> @(L.IsArabic ? "غير المقروء فقط" : "Unread only")</label>
+    </section>
+
+    <section class="panel notification-inbox-list">
+        @if (!Filtered.Any())
+        {
+            <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد إشعارات مطابقة" : "No matching notifications")</h3><p>@(L.IsArabic ? "ستظهر هنا إشعارات العمليات التي ينشئها النظام." : "Operational notifications created by the system will appear here.")</p></div>
+        }
+        else
+        {
+            @foreach (var item in Filtered)
+            {
+                <article class="notification-inbox-item @(!item.IsRead ? "unread" : string.Empty)">
+                    <div class="notification-severity @SeverityClass(item.Severity)">@SeverityIcon(item.Severity)</div>
+                    <div class="notification-inbox-main">
+                        <div class="notification-inbox-title"><strong>@item.Title</strong>@if (!item.IsRead){<span class="badge warning">@(L.IsArabic ? "جديد" : "New")</span>}</div>
+                        <p>@item.Message</p>
+                        <small>@FormatDate(item.CreatedAtUtc) · @SeverityText(item.Severity)</small>
+                    </div>
+                    <div class="notification-inbox-item-actions">
+                        @if (RelatedUrl(item) is { } url)
+                        {
+                            <a class="btn compact" href="@url">@(L.IsArabic ? "فتح" : "Open") ↗</a>
+                        }
+                        @if (!item.IsRead)
+                        {
+                            <button class="btn compact" @onclick="() => MarkRead(item)">✓ @(L.IsArabic ? "مقروء" : "Read")</button>
+                        }
+                    </div>
+                </article>
+            }
+        }
+    </section>
+</div>
+
+@code {
+    private List<NotificationItem> _items = [];
+    private string _search = string.Empty;
+    private string _severity = string.Empty;
+    private bool _unreadOnly;
+    private IEnumerable<NotificationItem> Filtered => _items.Where(x =>
+        (!_unreadOnly || !x.IsRead) &&
+        (string.IsNullOrWhiteSpace(_severity) || x.Severity.ToString() == _severity) &&
+        (string.IsNullOrWhiteSpace(_search) || x.Title.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.Message.Contains(_search, StringComparison.OrdinalIgnoreCase)));
+    private string LatestText => _items.OrderByDescending(x => x.CreatedAtUtc).Select(x => FormatDate(x.CreatedAtUtc)).FirstOrDefault() ?? "—";
+
+    protected override void OnInitialized(){L.Changed += Changed; Reload();}
+    private void Reload(){try{_items=Inbox.Get("System", false, 300).ToList();}catch(Exception ex){Toasts.Error(L.TranslateMessage(ex.Message), L.IsArabic?"فشل تحميل الإشعارات":"Failed to load notifications",ex.ToString());}}
+    private void MarkRead(NotificationItem item){Inbox.MarkRead(item.Id); Reload();}
+    private void MarkAllRead(){foreach(var item in _items.Where(x=>!x.IsRead)) Inbox.MarkRead(item.Id); Reload(); Toasts.Success(L.IsArabic?"تم تعليم كل الإشعارات كمقروءة.":"All notifications marked as read.");}
+    private string? RelatedUrl(NotificationItem item) => item.Title.Contains("planner",StringComparison.OrdinalIgnoreCase) || item.Title.Contains("content",StringComparison.OrdinalIgnoreCase) ? "/content-planner" : item.Title.Contains("execution",StringComparison.OrdinalIgnoreCase) ? "/execution-center" : item.RelatedId.HasValue ? "/content-planner" : null;
+    private string SeverityClass(NotificationSeverity value)=>value.ToString().ToLowerInvariant();
+    private string SeverityIcon(NotificationSeverity value)=>value switch{NotificationSeverity.Success=>"✓",NotificationSeverity.Warning=>"!",NotificationSeverity.Error=>"×",_=>"i"};
+    private string SeverityText(NotificationSeverity value)=>L.IsArabic?value switch{NotificationSeverity.Information=>"معلومة",NotificationSeverity.Success=>"نجاح",NotificationSeverity.Warning=>"تحذير",NotificationSeverity.Error=>"خطأ",_=>value.ToString()}:value.ToString();
+    private string FormatDate(DateTime value)=>value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
+    private void Changed()=>InvokeAsync(StateHasChanged);
+    public void Dispose()=>L.Changed-=Changed;
+}
