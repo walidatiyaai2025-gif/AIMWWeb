@@ -1,0 +1,123 @@
+@page "/backups"
+@page "/module/backups"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject BackupManagementService Backups
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</PageTitle>
+
+<div class="backup-page">
+    <section class="panel backup-hero">
+        <div>
+            <span class="workspace-kicker">DATA PROTECTION</span>
+            <h1>@(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</h1>
+            <p>@(L.IsArabic ? "أنشئ نسخة ZIP موثقة من قواعد بيانات التطبيق المحلية، تحقق من سلامتها، ثم نزّلها للاحتفاظ بها خارج الجهاز." : "Create a verified ZIP archive of the local application databases, validate it, and download it for off-device retention.")</p>
+        </div>
+        <button class="btn primary" disabled="@_working" @onclick="CreateAsync">＋ @(_working ? (L.IsArabic ? "جارٍ الإنشاء..." : "Creating...") : (L.IsArabic ? "إنشاء نسخة" : "Create backup"))</button>
+    </section>
+
+    <section class="backup-stats">
+        <article class="panel"><small>@(L.IsArabic ? "إجمالي النسخ" : "Total backups")</small><strong>@_items.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "نسخ سليمة" : "Verified")</small><strong>@_items.Count(x => x.IsValid)</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "إجمالي الحجم" : "Total size")</small><strong>@FormatBytes(_items.Sum(x => x.SizeBytes))</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "آخر نسخة" : "Latest backup")</small><strong class="small-value">@LatestText</strong></article>
+    </section>
+
+    <section class="panel backup-toolbar">
+        <label>
+            <span>@(L.IsArabic ? "ملاحظة النسخة" : "Backup note")</span>
+            <input @bind="_note" placeholder="@(L.IsArabic ? "مثال: قبل تحديث النظام" : "Example: before system update")" />
+        </label>
+        <div>
+            <button class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <code>@Backups.BackupDirectory</code>
+        </div>
+    </section>
+
+    <section class="panel backup-list">
+        <header>
+            <div><span class="workspace-kicker">ARCHIVES</span><h2>@(L.IsArabic ? "النسخ المتاحة" : "Available backups")</h2></div>
+        </header>
+
+        @if (_items.Count == 0)
+        {
+            <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد نسخ احتياطية" : "No backups yet")</h3><p>@(L.IsArabic ? "أنشئ أول نسخة من الزر بالأعلى." : "Create the first archive using the button above.")</p></div>
+        }
+        else
+        {
+            @foreach (var item in _items)
+            {
+                <article class="backup-row">
+                    <div class="backup-icon">▣</div>
+                    <div class="backup-main">
+                        <strong>@item.FileName</strong>
+                        <small>@FormatDate(item.CreatedAtUtc) · @FormatBytes(item.SizeBytes) · @item.DatabaseCount @(L.IsArabic ? "قاعدة" : "databases")</small>
+                        <code>SHA-256 @item.Sha256[..Math.Min(20, item.Sha256.Length)]…</code>
+                    </div>
+                    <span class="badge @(item.IsValid ? "success" : "danger")">@(item.IsValid ? (L.IsArabic ? "سليمة" : "Verified") : (L.IsArabic ? "غير سليمة" : "Invalid"))</span>
+                    <div class="backup-actions">
+                        <a class="btn compact" href="@($"/api/backups/{Uri.EscapeDataString(item.FileName)}")">⇩ @(L.IsArabic ? "تنزيل" : "Download")</a>
+                        <button class="btn compact" @onclick="() => Verify(item)">✓ @(L.IsArabic ? "تحقق" : "Verify")</button>
+                        <button class="btn compact danger" @onclick="() => Delete(item)">× @(L.IsArabic ? "حذف" : "Delete")</button>
+                    </div>
+                </article>
+            }
+        }
+    </section>
+
+    <section class="panel backup-warning">
+        <strong>@(L.IsArabic ? "الاستعادة الآمنة" : "Safe restore policy")</strong>
+        <p>@(L.IsArabic ? "هذا الإصدار ينشئ ويتحقق وينزّل النسخ فقط. الاستعادة أثناء تشغيل التطبيق غير مفعلة لتجنب استبدال قواعد بيانات مفتوحة أو إتلافها." : "This release creates, verifies, and downloads archives only. In-process restore remains disabled to avoid replacing open SQLite databases or corrupting active data.")</p>
+    </section>
+</div>
+
+@code {
+    private List<BackupFileInfo> _items = [];
+    private string _note = string.Empty;
+    private bool _working;
+    private string LatestText => _items.OrderByDescending(x => x.CreatedAtUtc).Select(x => FormatDate(x.CreatedAtUtc)).FirstOrDefault() ?? "—";
+
+    protected override void OnInitialized(){L.Changed += Changed; Reload();}
+
+    private void Reload()
+    {
+        try { _items = Backups.GetBackups().ToList(); }
+        catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل تحميل النسخ" : "Failed to load backups", ex.ToString()); }
+    }
+
+    private Task CreateAsync()
+    {
+        try
+        {
+            _working = true;
+            var item = Backups.CreateBackup(_note);
+            _note = string.Empty;
+            Reload();
+            Notifications.Success(L.IsArabic ? $"تم إنشاء النسخة {item.FileName}." : $"Backup {item.FileName} was created.");
+        }
+        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل إنشاء النسخة" : "Backup failed", ex.ToString());}
+        finally{_working=false;}
+        return Task.CompletedTask;
+    }
+
+    private void Verify(BackupFileInfo item)
+    {
+        var result = Backups.Verify(item.FileName);
+        if (result.IsValid) Notifications.Success(L.IsArabic ? "تم التحقق من النسخة بنجاح." : result.Message);
+        else Notifications.Error(L.TranslateMessage(result.Message), L.IsArabic ? "فشل التحقق" : "Verification failed");
+        Reload();
+    }
+
+    private void Delete(BackupFileInfo item)
+    {
+        try { Backups.Delete(item.FileName); Reload(); Notifications.Success(L.IsArabic ? "تم حذف النسخة." : "Backup deleted."); }
+        catch (Exception ex){Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل الحذف" : "Delete failed", ex.ToString());}
+    }
+
+    private string FormatDate(DateTime value)=>value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
+    private static string FormatBytes(long value)=>value switch{>=1073741824=>$"{value/1073741824d:0.00} GB",>=1048576=>$"{value/1048576d:0.00} MB",>=1024=>$"{value/1024d:0.0} KB",_=>$"{value} B"};
+    private void Changed()=>InvokeAsync(StateHasChanged);
+    public void Dispose()=>L.Changed-=Changed;
+}
