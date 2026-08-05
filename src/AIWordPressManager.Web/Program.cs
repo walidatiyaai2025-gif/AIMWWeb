@@ -33,6 +33,7 @@ builder.Services.AddScoped<BulkTrashExecutionService>();
 builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppNotificationService>();
+builder.Services.AddScoped<ContentPlannerService>();
 builder.Services.AddScoped(_ =>
 {
     var language = new AppLanguageService();
@@ -43,7 +44,6 @@ builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
 builder.Services.AddSingleton<ApprovalWorkflowService>();
 builder.Services.AddSingleton<NotificationInboxService>();
-builder.Services.AddSingleton<ContentPlannerService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
 builder.Services.AddSingleton<AutomationCenterService>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
