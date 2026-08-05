@@ -6,6 +6,9 @@ $webProjectDir = Split-Path -Parent $project
 $webOutput = Join-Path $webProjectDir 'bin\Debug\net8.0'
 $webDll = Join-Path $webOutput 'AIWordPressManager.Web.dll'
 $port = 7148
+$logsDirectory = Join-Path $root 'Logs'
+$runtimeLog = Join-Path $logsDirectory ('runtime-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
+New-Item -ItemType Directory -Path $logsDirectory -Force | Out-Null
 
 function Invoke-DotNetProcess {
     param(
@@ -152,9 +155,7 @@ function Remove-BuildOutputs {
     Get-ChildItem (Join-Path $root 'src') -Directory -ErrorAction SilentlyContinue | ForEach-Object {
         foreach ($folderName in @('bin', 'obj')) {
             $folder = Join-Path $_.FullName $folderName
-            if (Test-Path $folder) {
-                Remove-Item $folder -Recurse -Force -ErrorAction Stop
-            }
+            if (Test-Path $folder) { Remove-Item $folder -Recurse -Force -ErrorAction Stop }
         }
     }
 }
@@ -172,6 +173,7 @@ Invoke-DotNetProcess -Arguments @('build', $solution, '-c', 'Debug', '--no-resto
 if (-not (Test-Path $webDll)) { throw "Build succeeded but the web DLL was not created: $webDll" }
 
 Write-Host "Compiled web application: $webDll" -ForegroundColor DarkGreen
+Write-Host "Runtime log: $runtimeLog" -ForegroundColor DarkCyan
 Start-Process powershell -ArgumentList '-NoProfile','-WindowStyle','Hidden','-Command',"Start-Sleep -Seconds 5; Start-Process 'https://localhost:$port'"
 Write-Host 'Starting Blazor Server...' -ForegroundColor Green
 Write-Host 'Press Ctrl+C to stop the website.' -ForegroundColor DarkGray
@@ -180,12 +182,27 @@ Push-Location $webProjectDir
 try {
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:ASPNETCORE_URLS = "https://localhost:$port;http://localhost:5148"
-    & dotnet $webDll
-    $exitCode = $LASTEXITCODE
+    $previousErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & dotnet $webDll 2>&1 | Tee-Object -FilePath $runtimeLog | ForEach-Object { Write-Host $_ }
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+    }
+
     if ($exitCode -eq 0 -or $exitCode -eq -1) {
         Write-Host 'Website stopped normally.' -ForegroundColor Yellow
         exit 0
     }
-    throw "Website stopped unexpectedly with exit code $exitCode"
+
+    Write-Host ''
+    Write-Host '================ LAST RUNTIME LOG LINES ================' -ForegroundColor Red
+    if (Test-Path $runtimeLog) {
+        Get-Content $runtimeLog -Tail 80 | ForEach-Object { Write-Host $_ }
+    }
+    Write-Host '========================================================' -ForegroundColor Red
+    throw "Website stopped unexpectedly with exit code $exitCode. Runtime log: $runtimeLog"
 }
 finally { Pop-Location }
