@@ -1,0 +1,28 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="current-user">
+    <div class="user-avatar">@Initials</div>
+    <div class="user-details">
+        <strong>@UserName</strong>
+        <small>@Role</small>
+    </div>
+    <form method="post" action="/logout">
+        <button type="submit" class="logout-button" title="Sign out" aria-label="Sign out">↪</button>
+    </form>
+</div>
+
+@code {
+    private string UserName { get; set; } = "Admin";
+    private string Role { get; set; } = "Administrator";
+    private string Initials => string.Concat(UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var principal = state.User;
+        UserName = principal.Identity?.Name ?? "Admin";
+        Role = principal.FindFirstValue(ClaimTypes.Role) ?? "Administrator";
+    }
+}
