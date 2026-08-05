@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject DashboardLiveService Dashboard
+@inject AppNotificationService Notifications
 @inject AppLanguageService L
 
 <PageTitle>@L["Dashboard"]</PageTitle>
@@ -14,14 +15,23 @@
             <p>@(L.IsArabic ? "بيانات مباشرة من SQLite ومركز التنفيذ، بتحديث تلقائي كل 15 ثانية." : "Live SQLite and execution-center data, refreshed every 15 seconds.")</p>
         </div>
         <div class="dashboard-hero-actions">
+            <button class="btn" @onclick="ManualRefreshAsync" disabled="@_refreshing">↻ @(_refreshing ? (L.IsArabic ? "جارٍ التحديث..." : "Refreshing...") : (L.IsArabic ? "تحديث" : "Refresh"))</button>
             <a class="btn btn-primary" href="/sites">＋ @(L.IsArabic ? "إضافة موقع" : "Add site")</a>
-            <a class="btn" href="/execution-center">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
+            <a class="btn" href="/module/execution">▶ @(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
         </div>
     </section>
 
     @if (_loading)
     {
         <div class="skeleton-grid"><div></div><div></div><div></div><div></div></div>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <section class="panel empty-state">
+            <h2>@(L.IsArabic ? "تعذر تحميل لوحة التحكم" : "Dashboard could not be loaded")</h2>
+            <p>@_error</p>
+            <button class="btn primary" @onclick="ManualRefreshAsync">@(L.IsArabic ? "إعادة المحاولة" : "Try again")</button>
+        </section>
     }
     else if (_data is not null)
     {
@@ -56,11 +66,11 @@
 
             <div class="dashboard-column">
                 <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")</h2></div><a href="/execution-center">@(L.IsArabic ? "عرض الكل" : "View all")</a></header>
+                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")</h2></div><a href="/module/execution">@(L.IsArabic ? "عرض الكل" : "View all")</a></header>
                     <div class="job-list">
                         @if (_data.RecentJobs.Count == 0)
                         {
-                            <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "لا توجد مهام بعد" : "No jobs yet")</strong><small>@(L.IsArabic ? "ستظهر العمليات هنا تلقائيًا" : "Operations will appear here automatically")</small></div></div>
+                            <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "لا توجد مهام بعد" : "No jobs yet")</strong><small>@(L.IsArabic ? "ستظهر العمليات الحقيقية هنا تلقائيًا" : "Real operations will appear here automatically")</small></div></div>
                         }
                         else
                         {
@@ -77,7 +87,7 @@
                     <div class="quick-grid">
                         <a href="/sites"><span>◉</span>@(L.IsArabic ? "المواقع" : "Sites")</a>
                         <a href="/module/media"><span>▣</span>@(L.IsArabic ? "الوسائط" : "Media")</a>
-                        <a href="/execution-center"><span>▶</span>@(L.IsArabic ? "التنفيذ" : "Execution")</a>
+                        <a href="/module/execution"><span>▶</span>@(L.IsArabic ? "التنفيذ" : "Execution")</a>
                         <a href="/system-health"><span>♥</span>@(L.IsArabic ? "صحة النظام" : "System health")</a>
                     </div>
                 </article>
@@ -89,64 +99,51 @@
 @code {
     private DashboardLiveView? _data;
     private bool _loading = true;
+    private bool _refreshing;
+    private string? _error;
     private Timer? _refreshTimer;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
     protected override void OnInitialized()
     {
         L.Changed += Changed;
-        _refreshTimer = new Timer(_ => _ = InvokeAsync(RefreshAsync), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+        _refreshTimer = new Timer(_ => _ = InvokeAsync(() => RefreshAsync(false)), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 
-    protected override async Task OnInitializedAsync() => await RefreshAsync();
+    protected override async Task OnInitializedAsync() => await RefreshAsync(false);
 
-    private async Task RefreshAsync()
+    private Task ManualRefreshAsync() => RefreshAsync(true);
+
+    private async Task RefreshAsync(bool notify)
     {
         if (!await _refreshLock.WaitAsync(0)) return;
+        _refreshing = true;
         try
         {
             _data = await Dashboard.GetAsync();
+            _error = null;
             _loading = false;
-            await InvokeAsync(StateHasChanged);
+            if (notify) Notifications.Success(L.IsArabic ? "تم تحديث لوحة التحكم." : "Dashboard refreshed.");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _loading = false;
+            if (notify) Notifications.Error(L.IsArabic ? "تعذر تحديث لوحة التحكم." : "Dashboard refresh failed.", details: ex.Message);
         }
         finally
         {
+            _refreshing = false;
             _refreshLock.Release();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    private string FormatDate(DateTime? value) => value is null
-        ? L["Never"]
-        : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-
-    private string TranslateStatus(string status) => L.IsArabic ? status switch
-    {
-        "Waiting" => "في الانتظار",
-        "Running" => "قيد التنفيذ",
-        "Paused" => "متوقفة",
-        "Completed" => "مكتملة",
-        "Failed" => "فاشلة",
-        "Cancelled" => "ملغاة",
-        _ => status
-    } : status;
-
-    private static string JobClass(string status) => status switch
-    {
-        "Completed" => "success",
-        "Running" => "running",
-        "Failed" or "Cancelled" => "error",
-        _ => "queued"
-    };
-
-    private static string JobIcon(string status) => status switch
-    {
-        "Completed" => "✓",
-        "Running" => "↻",
-        "Failed" or "Cancelled" => "!",
-        _ => "◷"
-    };
-
-    private void Changed() => InvokeAsync(StateHasChanged);
+    private string FormatDate(DateTime? value) => value is null ? L["Never"] : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private string TranslateStatus(string status) => L.IsArabic ? status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status } : status;
+    private static string JobClass(string status) => status switch { "Completed" => "success", "Running" => "running", "Failed" or "Cancelled" => "error", _ => "queued" };
+    private static string JobIcon(string status) => status switch { "Completed" => "✓", "Running" => "↻", "Failed" or "Cancelled" => "!", _ => "◷" };
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
 
     public void Dispose()
     {
