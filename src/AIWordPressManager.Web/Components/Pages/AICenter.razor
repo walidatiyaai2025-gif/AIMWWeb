@@ -210,10 +210,14 @@
             var instruction = string.IsNullOrWhiteSpace(_promptKey) ? null : PromptRegistry.Get(_promptKey, L.Culture);
             var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
             _lastElapsed = DateTime.UtcNow - started;
-            if (result.IsFailure) { _error = L.TranslateMessage(result.Error.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed"); return; }
-            var json = JsonSerializer.Serialize(result.Value);
-            _output = ExtractOutput(json);
-            if (string.IsNullOrWhiteSpace(_output)) _output = json;
+            if (!result.IsSuccess)
+            {
+                _error = L.TranslateMessage(result.Error ?? (L.IsArabic ? "فشل طلب الذكاء الاصطناعي." : "AI generation failed."));
+                Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed");
+                return;
+            }
+            _output = result.Content ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(_output)) _output = JsonSerializer.Serialize(result);
             if (string.IsNullOrWhiteSpace(_approvalTitle)) _approvalTitle = string.IsNullOrWhiteSpace(_promptKey) ? (L.IsArabic ? "اقتراح محتوى بالذكاء الاصطناعي" : "AI content proposal") : _promptKey;
             _history.Insert(0, new SessionResult(Guid.NewGuid(), _approvalTitle, string.IsNullOrWhiteSpace(_promptKey) ? "custom" : _promptKey, _content, _output, DateTime.UtcNow, _lastElapsed ?? TimeSpan.Zero, _selectedSiteId));
             if (_history.Count > 10) _history.RemoveAt(_history.Count - 1);
@@ -224,9 +228,9 @@
         finally { _working = false; }
     }
 
-    private async Task SubmitForApprovalAsync()
+    private Task SubmitForApprovalAsync()
     {
-        if (string.IsNullOrWhiteSpace(_output)) return;
+        if (string.IsNullOrWhiteSpace(_output)) return Task.CompletedTask;
         try
         {
             _submittingApproval = true;
@@ -235,10 +239,11 @@
             var item = ApprovalService.Submit(new ApprovalSubmission(siteId, site?.Name, string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(), string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(), new { Content = _content, PromptKey = _promptKey, Model = _model }, new { Content = _output, PromptKey = _promptKey, Model = _model }, "AI Center", _riskLevel, Guid.NewGuid().ToString("N"), null));
             _lastApprovalId = item.Id;
             _lastApprovalStatus = item.Status;
-            Notifications.Success(L.IsArabic ? "تم إرسال الاقتراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
+            Notifications.Success(L.IsArabic ? "تم إرسال الاقراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
         }
         catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل إرسال الموافقة" : "Approval submission failed", ex.ToString()); }
         finally { _submittingApproval = false; }
+        return Task.CompletedTask;
     }
 
     private void RefreshApprovalStatus()
@@ -264,17 +269,6 @@
     private static string Preview(string value) => value.Length <= 180 ? value : value[..180] + "…";
     private static int CountArray(string json) { try { using var d = JsonDocument.Parse(json); return d.RootElement.ValueKind == JsonValueKind.Array ? d.RootElement.GetArrayLength() : 0; } catch { return 0; } }
     private static string ReadString(JsonElement item, params string[] names) { foreach (var n in names) if (item.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String) return v.GetString() ?? string.Empty; return string.Empty; }
-    private static string ExtractOutput(string json) { try { using var d = JsonDocument.Parse(json); return FindText(d.RootElement) ?? string.Empty; } catch { return json; } }
-    private static string? FindText(JsonElement element)
-    {
-        if (element.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var name in new[] { "Content", "content", "Text", "text", "Output", "output", "Response", "response" }) if (element.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(p.GetString())) return p.GetString();
-            foreach (var p in element.EnumerateObject()) { var found = FindText(p.Value); if (!string.IsNullOrWhiteSpace(found)) return found; }
-        }
-        if (element.ValueKind == JsonValueKind.Array) foreach (var x in element.EnumerateArray()) { var found = FindText(x); if (!string.IsNullOrWhiteSpace(found)) return found; }
-        return null;
-    }
 
     private sealed record PromptOption(string Key, string Title);
     private sealed record SessionResult(Guid Id, string Title, string PromptKey, string Input, string Output, DateTime CreatedAt, TimeSpan Elapsed, string SiteId);
