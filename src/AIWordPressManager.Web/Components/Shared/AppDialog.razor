@@ -1,0 +1,47 @@
+@if (Open)
+{
+    <div class="app-dialog-backdrop" role="presentation" @onclick="HandleBackdropAsync">
+        <section class="app-dialog app-dialog--@Size @Class" role="dialog" aria-modal="true" aria-label="@AriaLabel" @onclick:stopPropagation="true">
+            <header class="app-dialog__header">
+                <div>
+                    @if (!string.IsNullOrWhiteSpace(Eyebrow))
+                    {
+                        <span class="app-dialog__eyebrow">@Eyebrow</span>
+                    }
+                    <h2>@Title</h2>
+                    @if (!string.IsNullOrWhiteSpace(Subtitle))
+                    {
+                        <p>@Subtitle</p>
+                    }
+                </div>
+                @if (ShowCloseButton)
+                {
+                    <button type="button" class="app-dialog__close" @onclick="CloseAsync" aria-label="Close">×</button>
+                }
+            </header>
+            <div class="app-dialog__body">@ChildContent</div>
+            @if (Footer is not null)
+            {
+                <footer class="app-dialog__footer">@Footer</footer>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string Size { get; set; } = "medium";
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+    [Parameter] public bool ShowCloseButton { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    private Task CloseAsync() => OpenChanged.InvokeAsync(false);
+    private Task HandleBackdropAsync() => CloseOnBackdrop ? CloseAsync() : Task.CompletedTask;
+}
