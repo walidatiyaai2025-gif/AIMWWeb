@@ -6,6 +6,7 @@ using AIWordPressManager.Persistence;
 using AIWordPressManager.Web.Components;
 using AIWordPressManager.Web.Services;
 using AIWordPressManager.Web.Localization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 
