@@ -9,6 +9,7 @@ on:
       - 'src/**'
       - 'docs/**'
       - 'Build/Audit-And-Sync-TaskTracker.py'
+      - 'Build/Apply-Implemented-Task-Evidence.py'
       - '.github/workflows/audit-task-tracker.yml'
 
 permissions:
@@ -46,7 +47,10 @@ jobs:
             git show origin/main:task-tracker.json > task-tracker.json
           fi
 
-      - name: Audit first 100 tasks and update Word
+      - name: Apply explicit implementation evidence
+        run: python Build/Apply-Implemented-Task-Evidence.py
+
+      - name: Audit repository evidence and update Word
         run: python Build/Audit-And-Sync-TaskTracker.py
 
       - name: Validate JSON and DOCX package
@@ -97,6 +101,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No tracker changes"
           else
-            git commit -m "chore: audit first 100 tasks and sync validated Word tracker"
+            git commit -m "chore: sync implementation evidence and validated Word tracker"
             git push
           fi
