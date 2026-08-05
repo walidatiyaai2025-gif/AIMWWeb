@@ -42,6 +42,7 @@ EVIDENCE: dict[int, list[str]] = {
     184: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs", "src/AIWordPressManager.Web/Services/AppNotificationService.cs", "src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor"],
     201: ["tests/AIWordPressManager.Tests/AIWordPressManager.Tests.csproj", "tests/AIWordPressManager.Tests/AIPlatformTests.cs"],
     207: ["tests/AIWordPressManager.Tests/ExecutionCenterTests.cs", "tests/AIWordPressManager.Tests/ApprovalWorkflowTests.cs", ".github/workflows/dotnet-build.yml"],
+    208: ["src/AIWordPressManager.Web/Services/SeoAnalysisWebService.cs", "tests/AIWordPressManager.Tests/SeoRuleEngineTests.cs", ".github/workflows/dotnet-build.yml"],
     209: ["tests/AIWordPressManager.Tests/AIPlatformTests.cs", ".github/workflows/dotnet-build.yml"],
 }
 
