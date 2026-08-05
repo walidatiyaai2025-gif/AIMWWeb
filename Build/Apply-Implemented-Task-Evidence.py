@@ -42,6 +42,7 @@ EVIDENCE: dict[int, list[str]] = {
     184: ["src/AIWordPressManager.Web/Services/ContentPlannerService.cs", "src/AIWordPressManager.Web/Services/AppNotificationService.cs", "src/AIWordPressManager.Web/Components/Shared/GlobalNotifications.razor"],
     201: ["tests/AIWordPressManager.Tests/AIWordPressManager.Tests.csproj", "tests/AIWordPressManager.Tests/AIPlatformTests.cs"],
     202: ["src/AIWordPressManager.Domain/Entities/Site.cs", "src/AIWordPressManager.Domain/Entities/SiteCredential.cs", "src/AIWordPressManager.Application/Abstractions/WordPress/IWordPressApiClient.cs", "tests/AIWordPressManager.Tests/DomainApplicationTests.cs", ".github/workflows/dotnet-build.yml"],
+    203: ["src/AIWordPressManager.Persistence/AppDbContext.cs", "tests/AIWordPressManager.Tests/EfPersistenceIntegrationTests.cs", ".github/workflows/dotnet-build.yml"],
     204: ["tests/AIWordPressManager.Tests/Fixtures/MockWordPressHttpHandler.cs", "tests/AIWordPressManager.Tests/MockWordPressHttpHandlerTests.cs", ".github/workflows/dotnet-build.yml"],
     205: ["src/AIWordPressManager.Web/Services/WordPressApiClient.cs", "tests/AIWordPressManager.Tests/WordPressApiClientTests.cs", "tests/AIWordPressManager.Tests/Fixtures/MockWordPressHttpHandler.cs", ".github/workflows/dotnet-build.yml"],
     206: ["src/AIWordPressManager.Persistence/WordPress/WordPressContentStore.cs", "tests/AIWordPressManager.Tests/WordPressContentStoreTests.cs", ".github/workflows/dotnet-build.yml"],
