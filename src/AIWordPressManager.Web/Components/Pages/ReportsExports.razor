@@ -41,7 +41,9 @@
             <header><div><span class="workspace-kicker">SITES</span><h2>@(L.IsArabic ? "تقرير المواقع" : "Sites report")</h2></div><button class="btn compact" @onclick="ExportSitesAsync">CSV</button></header>
             <div class="report-table-wrap"><table><thead><tr><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>URL</th><th>@(L.IsArabic ? "الحالة" : "Status")</th><th>@(L.IsArabic ? "آخر فحص" : "Last check")</th></tr></thead><tbody>
                 @foreach (var site in _sites.Take(12))
-                {<tr><td><strong>@site.Name</strong></td><td><span class="truncate">@site.SiteUrl</span></td><td><span class="badge @StatusClass(site.ConnectionStatus.ToString())">@site.ConnectionStatus</span></td><td>@FormatDate(site.LastConnectionTestAtUtc)</td></tr>}
+                {
+                    <tr><td><strong>@site.Name</strong></td><td><span class="truncate">@site.SiteUrl</span></td><td><span class="badge @StatusClass(site.ConnectionStatus.ToString())">@site.ConnectionStatus</span></td><td>@FormatDate(site.LastConnectionTestAtUtc)</td></tr>
+                }
             </tbody></table></div>
         </article>
 
@@ -51,7 +53,7 @@
                 @foreach (var status in Enum.GetValues<ApprovalStatus>())
                 {
                     var count = _approvals.Count(x => x.Status == status);
-                    <div><span>@status</span><div><i style="width:@Percent(count,_approvals.Count)%"></i></div><strong>@count</strong></div>
+                    <div><span>@status</span><div><i style="width:@Percent(count, _approvals.Count)%"></i></div><strong>@count</strong></div>
                 }
             </div>
         </article>
@@ -60,7 +62,9 @@
             <header><div><span class="workspace-kicker">AUTOMATION</span><h2>@(L.IsArabic ? "تقرير الأتمتة" : "Automation report")</h2></div><button class="btn compact" @onclick="ExportAutomationAsync">CSV</button></header>
             <div class="report-table-wrap"><table><thead><tr><th>@(L.IsArabic ? "المهمة" : "Job")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>@(L.IsArabic ? "الحالة" : "Status")</th><th>@(L.IsArabic ? "القادم" : "Next")</th></tr></thead><tbody>
                 @foreach (var job in _jobs.Take(12))
-                {<tr><td><strong>@job.Name</strong><small>@job.Type</small></td><td>@job.SiteName</td><td><span class="badge @StatusClass(job.LastStatus)">@job.LastStatus</span></td><td>@FormatDate(job.NextRunUtc)</td></tr>}
+                {
+                    <tr><td><strong>@job.Name</strong><small>@job.Type</small></td><td>@job.SiteName</td><td><span class="badge @StatusClass(job.LastStatus)">@job.LastStatus</span></td><td>@FormatDate(job.NextRunUtc)</td></tr>
+                }
             </tbody></table></div>
         </article>
 
@@ -68,7 +72,9 @@
             <header><div><span class="workspace-kicker">CONTENT</span><h2>@(L.IsArabic ? "تقرير خطة المحتوى" : "Content planner report")</h2></div><button class="btn compact" @onclick="ExportPlannerAsync">CSV</button></header>
             <div class="planner-status-grid">
                 @foreach (var status in Enum.GetValues<PlannerItemStatus>())
-                {<div><span class="badge @StatusClass(status.ToString())">@status</span><strong>@_planner.Count(x => x.Status == status)</strong></div>}
+                {
+                    <div><span class="badge @StatusClass(status.ToString())">@status</span><strong>@_planner.Count(x => x.Status == status)</strong></div>
+                }
             </div>
         </article>
     </section>
@@ -82,12 +88,20 @@
     private bool _loading;
     private string _error = string.Empty;
 
-    protected override void OnInitialized() => L.Changed += Changed;
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override void OnInitialized()
+    {
+        L.Changed += Changed;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
-        _loading = true; _error = string.Empty;
+        _loading = true;
+        _error = string.Empty;
         try
         {
             _sites = await SiteService.GetSitesAsync();
@@ -95,31 +109,52 @@
             _jobs = AutomationService.GetJobs().ToList();
             _planner = PlannerService.GetItems().ToList();
         }
-        catch (Exception ex){_error=L.TranslateMessage(ex.Message);Notifications.Error(_error,L.IsArabic?"فشل التقرير":"Report failed",ex.ToString());}
-        finally{_loading=false;}
+        catch (Exception ex)
+        {
+            _error = L.TranslateMessage(ex.Message);
+            Notifications.Error(_error, L.IsArabic ? "فشل التقرير" : "Report failed", ex.ToString());
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
-    private Task ExportSitesAsync()=>DownloadAsync("sites-report.csv",Csv(new[]{"Name","Url","Status","LastConnectionTestUtc"},_sites.Select(x=>new[]{x.Name,x.SiteUrl.ToString(),x.ConnectionStatus.ToString(),x.LastConnectionTestAtUtc?.ToString("O")??string.Empty})));
-    private Task ExportApprovalsAsync()=>DownloadAsync("approvals-report.csv",Csv(new[]{"Id","Title","Site","Operation","Risk","Status","RequestedBy","RequestedAtUtc"},_approvals.Select(x=>new[]{x.Id.ToString(),x.Title,x.SiteName,x.OperationType,x.RiskLevel.ToString(),x.Status.ToString(),x.RequestedBy,x.RequestedAtUtc.ToString("O")})));
-    private Task ExportAutomationAsync()=>DownloadAsync("automation-report.csv",Csv(new[]{"Id","Name","Site","Type","Frequency","Enabled","LastStatus","LastRunUtc","NextRunUtc"},_jobs.Select(x=>new[]{x.Id.ToString(),x.Name,x.SiteName,x.Type,x.Frequency,x.Enabled.ToString(),x.LastStatus,x.LastRunUtc?.ToString("O")??string.Empty,x.NextRunUtc.ToString("O")})));
-    private Task ExportPlannerAsync()=>DownloadAsync("content-planner-report.csv",Csv(new[]{"Id","Title","Site","Status","ScheduledAtUtc","WordPressPostId","UpdatedAtUtc"},_planner.Select(x=>new[]{x.Id.ToString(),x.Title,x.SiteName,x.Status.ToString(),x.ScheduledAtUtc?.ToString("O")??string.Empty,x.WordPressPostId?.ToString()??string.Empty,x.UpdatedAtUtc.ToString("O")})));
+    private Task ExportSitesAsync() => DownloadAsync("sites-report.csv", Csv(new[] { "Name", "Url", "Status", "LastConnectionTestUtc" }, _sites.Select(x => new[] { x.Name, x.SiteUrl.ToString(), x.ConnectionStatus.ToString(), x.LastConnectionTestAtUtc?.ToString("O") ?? string.Empty })));
+    private Task ExportApprovalsAsync() => DownloadAsync("approvals-report.csv", Csv(new[] { "Id", "Title", "Site", "Operation", "Risk", "Status", "RequestedBy", "RequestedAtUtc" }, _approvals.Select(x => new[] { x.Id.ToString(), x.Title, x.SiteName, x.OperationType, x.RiskLevel.ToString(), x.Status.ToString(), x.RequestedBy, x.RequestedAtUtc.ToString("O") })));
+    private Task ExportAutomationAsync() => DownloadAsync("automation-report.csv", Csv(new[] { "Id", "Name", "Site", "Type", "Frequency", "Enabled", "LastStatus", "LastRunUtc", "NextRunUtc" }, _jobs.Select(x => new[] { x.Id.ToString(), x.Name, x.SiteName, x.Type, x.Frequency, x.Enabled.ToString(), x.LastStatus, x.LastRunUtc?.ToString("O") ?? string.Empty, x.NextRunUtc.ToString("O") })));
+    private Task ExportPlannerAsync() => DownloadAsync("content-planner-report.csv", Csv(new[] { "Id", "Title", "Site", "Status", "ScheduledAtUtc", "WordPressPostId", "UpdatedAtUtc" }, _planner.Select(x => new[] { x.Id.ToString(), x.Title, x.SiteName, x.Status.ToString(), x.ScheduledAtUtc?.ToString("O") ?? string.Empty, x.WordPressPostId?.ToString() ?? string.Empty, x.UpdatedAtUtc.ToString("O") })));
 
-    private async Task DownloadAsync(string fileName,string csv)
+    private async Task DownloadAsync(string fileName, string csv)
     {
-        await JS.InvokeVoidAsync("aiwmReports.downloadCsv",fileName,csv);
-        Notifications.Success(L.IsArabic?"تم تجهيز ملف CSV.":"CSV export created.");
+        await JS.InvokeVoidAsync("aiwmReports.downloadCsv", fileName, csv);
+        Notifications.Success(L.IsArabic ? "تم تجهيز ملف CSV." : "CSV export created.");
     }
 
-    private static string Csv(IEnumerable<string> headers,IEnumerable<IEnumerable<string>> rows)
+    private static string Csv(IEnumerable<string> headers, IEnumerable<IEnumerable<string>> rows)
     {
-        var sb=new StringBuilder();sb.AppendLine(string.Join(',',headers.Select(Escape)));
-        foreach(var row in rows)sb.AppendLine(string.Join(',',row.Select(Escape)));
-        return "\uFEFF"+sb;
+        var sb = new StringBuilder();
+        sb.AppendLine(string.Join(',', headers.Select(Escape)));
+        foreach (var row in rows)
+        {
+            sb.AppendLine(string.Join(',', row.Select(Escape)));
+        }
+        return "\uFEFF" + sb;
     }
-    private static string Escape(string? value){var text=value??string.Empty;return $"\"{text.Replace("\"","\"\"")}\"";}
-    private static int Percent(int value,int total)=>total==0?0:(int)Math.Round(value*100d/total);
-    private static string StatusClass(string status)=>status.ToLowerInvariant() switch{"connected" or "completed" or "approved" or "published"=>"success","failed" or "rejected" or "critical"=>"danger","pending" or "running" or "scheduled" or "draft" or "review"=>"warning",_=>string.Empty};
-    private string FormatDate(DateTime? value)=>value?.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm")??"—";
-    private void Changed()=>InvokeAsync(StateHasChanged);
-    public void Dispose()=>L.Changed-=Changed;
+
+    private static string Escape(string? value)
+    {
+        var text = value ?? string.Empty;
+        return $"\"{text.Replace("\"", "\"\"")}\"";
+    }
+
+    private static int Percent(int value, int total) => total == 0 ? 0 : (int)Math.Round(value * 100d / total);
+    private static string StatusClass(string status) => status.ToLowerInvariant() switch { "connected" or "completed" or "approved" or "published" => "success", "failed" or "rejected" or "critical" => "danger", "pending" or "running" or "scheduled" or "draft" or "review" => "warning", _ => string.Empty };
+    private string FormatDate(DateTime? value) => value?.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") ?? "—";
+    private void Changed() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        L.Changed -= Changed;
+    }
 }
