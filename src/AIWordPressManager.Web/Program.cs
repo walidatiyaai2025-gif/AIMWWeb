@@ -42,6 +42,8 @@ builder.Services.AddScoped(_ =>
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
 builder.Services.AddSingleton<ApprovalWorkflowService>();
+builder.Services.AddSingleton<NotificationInboxService>();
+builder.Services.AddSingleton<ContentPlannerService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
 builder.Services.AddSingleton<AutomationCenterService>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
@@ -147,6 +149,51 @@ app.MapPut("/api/approvals/{id:guid}/proposal", (Guid id, ApprovalEditRequest re
     catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
 });
 
+app.MapGet("/api/planner", (Guid? siteId, string? status, DateTime? fromUtc, DateTime? toUtc, ContentPlannerService service) =>
+{
+    PlannerItemStatus? parsed = null;
+    if (!string.IsNullOrWhiteSpace(status))
+    {
+        if (!Enum.TryParse<PlannerItemStatus>(status, true, out var value))
+            return Results.BadRequest(new { error = "Invalid planner status." });
+        parsed = value;
+    }
+    return Results.Ok(service.GetItems(siteId, parsed, fromUtc, toUtc));
+});
+app.MapPost("/api/planner", (CreatePlannerItem request, ContentPlannerService service) =>
+{
+    try { return Results.Ok(service.Create(request)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPut("/api/planner/{id:guid}", (Guid id, UpdatePlannerItem request, ContentPlannerService service) =>
+{
+    try { return Results.Ok(service.Update(id, request)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/planner/{id:guid}/generate-brief", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CancellationToken cancellationToken) =>
+{
+    try { return Results.Ok(await service.GenerateBriefAsync(id, request.Culture ?? "en", request.UserId, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/planner/{id:guid}/generate-draft", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CancellationToken cancellationToken) =>
+{
+    try { return Results.Ok(await service.GenerateDraftAsync(id, request.Culture ?? "en", request.UserId, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/planner/{id:guid}/queue", (Guid id, ContentPlannerService service) =>
+{
+    try { return Results.Ok(service.QueueForExecution(id)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+
+app.MapGet("/api/notifications", (string? userId, bool? unreadOnly, int? take, NotificationInboxService service) =>
+    Results.Ok(service.Get(userId, unreadOnly ?? false, take ?? 100)));
+app.MapPost("/api/notifications/{id:guid}/read", (Guid id, NotificationInboxService service) =>
+{
+    service.MarkRead(id);
+    return Results.NoContent();
+});
+
 app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (
     Guid siteId,
     SeoAuditExecutionService service,
@@ -189,3 +236,5 @@ public sealed record AIGenerateApiRequest(
     int? MaxOutputTokens,
     Guid? SiteId,
     string? UserId);
+
+public sealed record PlannerAIRequest(string? Culture, string? UserId);
