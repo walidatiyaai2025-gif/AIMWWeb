@@ -1,0 +1,77 @@
+@inject AppLanguageService L
+@inject NavigationManager Navigation
+
+<div class="quick-actions">
+    <button type="button"
+            class="quick-actions-trigger"
+            @onclick="Toggle"
+            aria-expanded="@_open"
+            title="@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")">
+        <span aria-hidden="true">＋</span>
+        <em>@(L.IsArabic ? "إجراء سريع" : "Quick action")</em>
+    </button>
+
+    @if (_open)
+    {
+        <div class="quick-actions-popover">
+            <header>
+                <div>
+                    <strong>@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")</strong>
+                    <small>@(L.IsArabic ? "ابدأ أهم عمليات النظام مباشرة" : "Start common workflows instantly")</small>
+                </div>
+                <button type="button" @onclick="Close" aria-label="Close">×</button>
+            </header>
+
+            <div class="quick-actions-grid">
+                @foreach (var action in Actions)
+                {
+                    <button type="button" class="quick-action-item @action.ClassName" @onclick="() => Run(action)">
+                        <span class="quick-action-icon">@action.Icon</span>
+                        <span>
+                            <strong>@(L.IsArabic ? action.ArabicTitle : action.EnglishTitle)</strong>
+                            <small>@(L.IsArabic ? action.ArabicDescription : action.EnglishDescription)</small>
+                        </span>
+                        <b>›</b>
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (_open)
+{
+    <button type="button" class="quick-actions-backdrop" @onclick="Close" aria-label="Close quick actions"></button>
+}
+
+@code {
+    private bool _open;
+
+    private static readonly QuickAction[] Actions =
+    [
+        new("＋", "Add site", "إضافة موقع", "Connect another WordPress website", "ربط موقع WordPress جديد", "/sites?new=1", "primary"),
+        new("▤", "Create content", "إنشاء محتوى", "Open the content workspace", "فتح مساحة إدارة المحتوى", "/module/posts", "content"),
+        new("▣", "Upload media", "رفع وسائط", "Open the media library", "فتح مكتبة الوسائط", "/module/media", "media"),
+        new("↻", "Run synchronization", "تشغيل المزامنة", "Refresh local WordPress data", "تحديث بيانات WordPress المحلية", "/module/sync", "sync"),
+        new("▶", "Execution center", "مركز التنفيذ", "Review active and queued jobs", "مراجعة المهام النشطة والمنتظرة", "/module/execution", "execution"),
+        new("◈", "SEO audit", "تدقيق SEO", "Analyze site optimization issues", "تحليل مشكلات تحسين الظهور", "/module/seo-audit", "seo")
+    ];
+
+    private void Toggle() => _open = !_open;
+    private void Close() => _open = false;
+
+    private void Run(QuickAction action)
+    {
+        _open = false;
+        Navigation.NavigateTo(action.Path);
+    }
+
+    private sealed record QuickAction(
+        string Icon,
+        string EnglishTitle,
+        string ArabicTitle,
+        string EnglishDescription,
+        string ArabicDescription,
+        string Path,
+        string ClassName);
+}
