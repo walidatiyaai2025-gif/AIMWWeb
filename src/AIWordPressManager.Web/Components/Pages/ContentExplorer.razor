@@ -6,6 +6,8 @@
 @inject BulkContentOperationQueue BulkQueue
 @inject BulkTrashExecutionService TrashService
 @inject ExecutionOperationTracker OperationTracker
+@inject AppNotificationService Notifications
+@inject IJSRuntime JS
 @inject AppLanguageService L
 
 <PageTitle>@L["WordPressExplorer"]</PageTitle>
@@ -23,7 +25,7 @@ else
     <div class="content-explorer-page">
         <section class="explorer-hero panel">
             <div><span class="workspace-kicker">@(L.IsArabic ? "مركز إدارة المحتوى" : "CONTENT OPERATIONS")</span><h1>@L["WordPressExplorer"]</h1><p><strong>@_site.Name</strong> · @L["ExplorerIntro"]</p></div>
-            <div class="explorer-hero-actions"><a class="btn" href="@($"/sites/{Id}")">← @L["SiteDetailsButton"]</a><a class="btn" href="/execution-center">@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</a><button class="btn primary" @onclick="SynchronizeAsync" disabled="@_syncing">@(_syncing ? L["Syncing"] : $"↻ {L["SyncNow"]}")</button></div>
+            <div class="explorer-hero-actions"><a class="btn" href="@($"/sites/{Id}")">← @L["SiteDetailsButton"]</a><a class="btn" href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</a><button class="btn primary" @onclick="SynchronizeAsync" disabled="@_syncing">@(_syncing ? L["Syncing"] : $"↻ {L["SyncNow"]}")</button></div>
         </section>
 
         @if (!string.IsNullOrWhiteSpace(_message))
@@ -54,13 +56,16 @@ else
                 <div class="explorer-search"><span>⌕</span><InputText @bind-Value="_query" @bind-Value:event="oninput" placeholder="@L["SearchPlaceholder"]" /></div>
                 <select @bind="_type"><option value="all">@L["All"]</option><option value="post">@L["Posts"]</option><option value="page">@L["Pages"]</option></select>
                 <select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="publish">@(L.IsArabic ? "منشور" : "Published")</option><option value="draft">@(L.IsArabic ? "مسودة" : "Draft")</option><option value="pending">@(L.IsArabic ? "قيد المراجعة" : "Pending")</option><option value="future">@(L.IsArabic ? "مجدول" : "Scheduled")</option></select>
-                <button class="btn" @onclick="ApplyFiltersAsync">@L["Search"]</button>
+                <select @bind="_pageSize"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select>
+                <button class="btn" @onclick="ApplyFiltersAsync" disabled="@_filtering">@(_filtering ? (L.IsArabic ? "جاري البحث..." : "Searching...") : L["Search"])</button>
+                <button class="btn" @onclick="ResetFiltersAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button>
             </section>
 
             @if (_selected.Count > 0)
             {
                 <section class="bulk-action-bar panel">
                     <strong>@(L.IsArabic ? $"تم تحديد {_selected.Count} عنصر" : $"{_selected.Count} items selected")</strong>
+                    <button class="btn" @onclick="SelectAllFiltered">@(L.IsArabic ? "تحديد كل النتائج" : "Select all results")</button>
                     <button class="btn" disabled="@_bulkQueuing" @onclick="BulkPendingAsync">@(L.IsArabic ? "إرسال للمراجعة" : "Send for review")</button>
                     <button class="btn primary" disabled="@_bulkQueuing" @onclick="BulkPublishAsync">@(L.IsArabic ? "نشر" : "Publish")</button>
                     <button class="btn" disabled="@_bulkQueuing" @onclick="BulkDraftAsync">@(L.IsArabic ? "تحويل لمسودة" : "Move to draft")</button>
@@ -87,10 +92,18 @@ else
                         <span class="content-type-pill">@(item.ContentType == "post" ? L["Post"] : L["Page"])</span>
                         <span class="badge @(item.Status == "publish" ? "success" : item.Status == "draft" ? "warning" : "")">@TranslateStatus(item.Status)</span>
                         <time>@FormatDate(item.ModifiedAtUtc)</time>
-                        <div class="table-actions"><a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Edit"]</a>@if (!string.IsNullOrWhiteSpace(item.Link)) { <a class="btn compact" href="@item.Link" target="_blank">↗</a> }</div>
+                        <div class="table-actions">
+                            <button class="btn compact" @onclick="() => Preview(item)">@(L.IsArabic ? "معاينة" : "Preview")</button>
+                            <a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Edit"]</a>
+                            @if (!string.IsNullOrWhiteSpace(item.Link))
+                            {
+                                <button class="btn compact" @onclick="() => CopyLinkAsync(item.Link)">⧉</button>
+                                <a class="btn compact" href="@item.Link" target="_blank">↗</a>
+                            }
+                        </div>
                     </article>
                 }
-                <footer class="explorer-pagination"><span>@(L.IsArabic ? $"صفحة {_page} من {TotalPages}" : $"Page {_page} of {TotalPages}")</span><div><button class="btn compact" disabled="@(_page <= 1)" @onclick="PreviousPage">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_page >= TotalPages)" @onclick="NextPage">@(L.IsArabic ? "التالي" : "Next")</button></div></footer>
+                <footer class="explorer-pagination"><span>@(L.IsArabic ? $"صفحة {_page} من {TotalPages} · {FilteredContent.Count()} نتيجة" : $"Page {_page} of {TotalPages} · {FilteredContent.Count()} results")</span><div><button class="btn compact" disabled="@(_page <= 1)" @onclick="PreviousPage">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_page >= TotalPages)" @onclick="NextPage">@(L.IsArabic ? "التالي" : "Next")</button></div></footer>
             </section>
         }
         else if (_tab is "categories" or "tags")
@@ -100,34 +113,59 @@ else
         }
         else
         {
-            <section class="explorer-media-grid">@foreach (var item in _data.Media) { <article class="panel explorer-media-card"><div class="explorer-media-preview">@if (item.MediaType == "image") { <img src="@item.SourceUrl" alt="@PlainText(item.Title)" loading="lazy" /> } else { <span>FILE</span> }</div><div class="explorer-media-info"><strong>@PlainText(item.Title)</strong><small>@item.MimeType</small><a class="btn compact" href="@item.SourceUrl" target="_blank">@L["OpenFile"] ↗</a></div></article> }</section>
+            <section class="explorer-media-grid">@foreach (var item in _data.Media) { <article class="panel explorer-media-card"><div class="explorer-media-preview">@if (item.MediaType == "image") { <img src="@item.SourceUrl" alt="@PlainText(item.Title)" loading="lazy" /> } else { <span>FILE</span> }</div><div class="explorer-media-info"><strong>@PlainText(item.Title)</strong><small>@item.MimeType</small><div class="table-actions"><button class="btn compact" @onclick="() => CopyLinkAsync(item.SourceUrl)">⧉</button><a class="btn compact" href="@item.SourceUrl" target="_blank">@L["OpenFile"] ↗</a></div></div></article> }</section>
         }
     </div>
+
+    @if (_preview is not null)
+    {
+        <div class="explorer-modal-backdrop" @onclick="ClosePreview">
+            <section class="panel explorer-preview-modal" @onclick:stopPropagation="true">
+                <header><div><span class="workspace-kicker">@(L.IsArabic ? "معاينة المحتوى" : "CONTENT PREVIEW")</span><h2>@PlainText(_preview.Title)</h2></div><button class="icon-button" @onclick="ClosePreview">×</button></header>
+                <div class="explorer-preview-meta"><span>@(_preview.ContentType == "post" ? L["Post"] : L["Page"])</span><span>@TranslateStatus(_preview.Status)</span><span>@FormatDate(_preview.ModifiedAtUtc)</span></div>
+                <div class="explorer-preview-body"><p>@(L.IsArabic ? "هذه معاينة للبيانات المحلية المتزامنة. افتح المحرر لعرض وتعديل المحتوى الكامل." : "This preview uses locally synchronized metadata. Open the editor to view and change the full content.")</p><code>/@_preview.Slug</code></div>
+                <footer><a class="btn primary" href="@($"/sites/{Id}/content/{_preview.ContentType}/{_preview.WordPressId}/edit")">@L["Edit"]</a>@if (!string.IsNullOrWhiteSpace(_preview.Link)) { <button class="btn" @onclick="() => CopyLinkAsync(_preview.Link)">@(L.IsArabic ? "نسخ الرابط" : "Copy link")</button><a class="btn" href="@_preview.Link" target="_blank">@(L.IsArabic ? "فتح في الموقع" : "Open on site") ↗</a> }</footer>
+            </section>
+        </div>
+    }
 }
 
 @code {
     [Parameter] public Guid Id { get; set; }
     private AIWordPressManager.Domain.Entities.Site? _site;
     private ContentExplorerView? _data;
-    private bool _loading = true, _syncing, _bulkQueuing, _isError;
+    private ContentExplorerItem? _preview;
+    private bool _loading = true, _syncing, _bulkQueuing, _filtering, _isError;
     private string _tab = "content", _type = "all", _status = "all", _query = "";
     private string? _message;
     private readonly HashSet<string> _selected = [];
     private int _page = 1;
-    private const int PageSize = 10;
+    private int _pageSize = 10;
 
     private IEnumerable<ContentExplorerItem> FilteredContent => (_data?.Content ?? Array.Empty<ContentExplorerItem>()).Where(x => _status == "all" || x.Status == _status);
-    private IEnumerable<ContentExplorerItem> PagedContent => FilteredContent.Skip((_page - 1) * PageSize).Take(PageSize);
-    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredContent.Count() / (double)PageSize));
+    private IEnumerable<ContentExplorerItem> PagedContent => FilteredContent.Skip((_page - 1) * _pageSize).Take(_pageSize);
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredContent.Count() / (double)_pageSize));
     private bool AllPageSelected => PagedContent.Any() && PagedContent.All(x => _selected.Contains(ContentKey(x)));
 
     protected override void OnInitialized() => L.Changed += Changed;
-    protected override async Task OnParametersSetAsync() { _loading = true; _site = await SiteService.GetSiteAsync(Id); await ReloadDataAsync(); _loading = false; }
+    protected override async Task OnParametersSetAsync()
+    {
+        try { _loading = true; _site = await SiteService.GetSiteAsync(Id); await ReloadDataAsync(); }
+        catch (Exception ex) { Fail(ex); }
+        finally { _loading = false; }
+    }
 
     private async Task SynchronizeAsync()
     {
-        try { _syncing = true; _isError = false; var result = await SyncService.SynchronizeAsync(Id); _message = L.TranslateMessage(result.Message); await ReloadDataAsync(); }
-        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        try
+        {
+            _syncing = true; _isError = false;
+            var result = await SyncService.SynchronizeAsync(Id);
+            _message = L.TranslateMessage(result.Message);
+            Notifications.Success(_message, L.IsArabic ? "اكتملت المزامنة" : "Synchronization complete");
+            await ReloadDataAsync();
+        }
+        catch (Exception ex) { Fail(ex); }
         finally { _syncing = false; }
     }
 
@@ -136,28 +174,16 @@ else
         if (_site is null || _data is null || _selected.Count == 0) return;
         try
         {
-            _bulkQueuing = true;
-            _isError = false;
-            var targets = _data.Content
-                .Where(x => _selected.Contains(ContentKey(x)))
-                .Select(x => new BulkContentTarget(x.ContentType, x.WordPressId, PlainText(x.Title)))
-                .ToList();
-
-            var title = status switch
-            {
-                "publish" => L.IsArabic ? "نشر محتوى محدد" : "Publish selected content",
-                "pending" => L.IsArabic ? "إرسال محتوى للمراجعة" : "Send content for review",
-                _ => L.IsArabic ? "تحويل محتوى لمسودة" : "Move content to draft"
-            };
-
+            _bulkQueuing = true; _isError = false;
+            var targets = _data.Content.Where(x => _selected.Contains(ContentKey(x))).Select(x => new BulkContentTarget(x.ContentType, x.WordPressId, PlainText(x.Title))).ToList();
+            var title = status switch { "publish" => L.IsArabic ? "نشر محتوى محدد" : "Publish selected content", "pending" => L.IsArabic ? "إرسال محتوى للمراجعة" : "Send content for review", _ => L.IsArabic ? "تحويل محتوى لمسودة" : "Move content to draft" };
             var jobId = OperationTracker.Start(title, $"Bulk Status: {status}", _site.Name, targets.Count);
             await BulkQueue.QueueAsync(new BulkContentOperationRequest(jobId, Id, _site.Name, status, targets));
             _selected.Clear();
-            _message = L.IsArabic
-                ? $"تمت إضافة العملية إلى مركز التنفيذ. رقم المهمة: {jobId.ToString()[..8]}"
-                : $"Operation queued in Execution Center. Job: {jobId.ToString()[..8]}";
+            _message = L.IsArabic ? $"تمت إضافة العملية إلى مركز التنفيذ. رقم المهمة: {jobId.ToString()[..8]}" : $"Operation queued in Execution Center. Job: {jobId.ToString()[..8]}";
+            Notifications.Success(_message, title);
         }
-        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        catch (Exception ex) { Fail(ex); }
         finally { _bulkQueuing = false; }
     }
 
@@ -166,23 +192,15 @@ else
         if (_data is null || _selected.Count == 0) return;
         try
         {
-            _bulkQueuing = true;
-            _isError = false;
-            var targets = _data.Content
-                .Where(x => _selected.Contains(ContentKey(x)))
-                .Select(x => new BulkTrashTarget(x.ContentType, x.WordPressId))
-                .ToList();
-
+            _bulkQueuing = true; _isError = false;
+            var targets = _data.Content.Where(x => _selected.Contains(ContentKey(x))).Select(x => new BulkTrashTarget(x.ContentType, x.WordPressId)).ToList();
             var result = await TrashService.RunAsync(Id, new BulkTrashRequest(targets));
-            _message = result.Message;
+            _message = L.TranslateMessage(result.Message);
             _isError = result.Succeeded == 0;
+            if (_isError) Notifications.Error(_message, L.IsArabic ? "فشلت العملية" : "Operation failed"); else Notifications.Success(_message, L.IsArabic ? "اكتملت العملية" : "Operation complete");
             await ReloadDataAsync();
         }
-        catch (Exception ex)
-        {
-            _isError = true;
-            _message = L.TranslateMessage(ex.Message);
-        }
+        catch (Exception ex) { Fail(ex); }
         finally { _bulkQueuing = false; }
     }
 
@@ -190,8 +208,9 @@ else
     private Task BulkPublishAsync() => QueueBulkStatusAsync("publish");
     private Task BulkDraftAsync() => QueueBulkStatusAsync("draft");
     private async Task ReloadDataAsync() { _data = await SyncService.GetExplorerAsync(Id, _query, _type); _page = 1; _selected.Clear(); }
-    private async Task ApplyFiltersAsync() => await ReloadDataAsync();
-    private void SetTab(string tab) { _tab = tab; _selected.Clear(); }
+    private async Task ApplyFiltersAsync() { try { _filtering = true; await ReloadDataAsync(); } catch (Exception ex) { Fail(ex); } finally { _filtering = false; } }
+    private async Task ResetFiltersAsync() { _query = string.Empty; _type = "all"; _status = "all"; await ApplyFiltersAsync(); }
+    private void SetTab(string tab) { _tab = tab; _selected.Clear(); _preview = null; }
     private void SetContentTab() => SetTab("content");
     private void SetCategoriesTab() => SetTab("categories");
     private void SetTagsTab() => SetTab("tags");
@@ -200,6 +219,11 @@ else
     private void PreviousPage() { if (_page > 1) _page--; }
     private void NextPage() { if (_page < TotalPages) _page++; }
     private void ClearSelection() => _selected.Clear();
+    private void SelectAllFiltered() { foreach (var item in FilteredContent) _selected.Add(ContentKey(item)); }
+    private void Preview(ContentExplorerItem item) => _preview = item;
+    private void ClosePreview() => _preview = null;
+    private async Task CopyLinkAsync(string link) { await JS.InvokeVoidAsync("navigator.clipboard.writeText", link); Notifications.Success(L.IsArabic ? "تم نسخ الرابط." : "Link copied."); }
+    private void Fail(Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); Notifications.Error(_message, L.IsArabic ? "تعذر إكمال العملية" : "Operation failed", ex.ToString()); }
     private static string ContentKey(ContentExplorerItem item) => $"{item.ContentType}:{item.WordPressId}";
     private void ToggleItem(string key, ChangeEventArgs e) { if (e.Value is bool selected && selected) _selected.Add(key); else _selected.Remove(key); }
     private void TogglePageSelection(ChangeEventArgs e) { var selected = e.Value is bool value && value; foreach (var item in PagedContent) { var key = ContentKey(item); if (selected) _selected.Add(key); else _selected.Remove(key); } }
