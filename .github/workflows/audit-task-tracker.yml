@@ -7,6 +7,7 @@ on:
       - feature/system-health
     paths:
       - 'src/**'
+      - 'tests/**'
       - 'docs/**'
       - 'Build/Audit-And-Sync-TaskTracker.py'
       - 'Build/Apply-Implemented-Task-Evidence.py'
@@ -28,6 +29,20 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore solution
+        run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
+
+      - name: Build solution
+        run: dotnet build AIWordPressManager.Web.sln --configuration Debug --no-restore
+
+      - name: Run automated tests
+        run: dotnet test AIWordPressManager.Web.sln --configuration Debug --no-build --logger "trx;LogFileName=task-tracker-tests.trx" --results-directory artifacts/test-results
 
       - name: Install tracker dependencies
         run: |
@@ -90,6 +105,7 @@ jobs:
             task-tracker.json
             AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.docx
             artifacts/rendered/AI_WordPress_Manager_Web_ASPNET_Core_Full_Task_Tracker_AR.pdf
+            artifacts/test-results/*.trx
           retention-days: 14
 
       - name: Commit synchronized tracker
@@ -101,6 +117,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No tracker changes"
           else
-            git commit -m "chore: sync implementation evidence and validated Word tracker"
+            git commit -m "chore: sync verified implementation evidence and Word tracker"
             git push
           fi
