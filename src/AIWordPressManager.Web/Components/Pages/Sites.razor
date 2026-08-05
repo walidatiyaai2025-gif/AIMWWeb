@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject AppLanguageService L
+@inject AppNotificationService Notifications
 <PageTitle>@L["Sites"]</PageTitle>
 
 <div class="sites-page">
@@ -94,7 +95,7 @@
     private SiteInput _model = new();
 
     private int ConnectedCount => _sites.Count(x => x.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected);
-    private int ProblemCount => _sites.Count - ConnectedCount;
+    private int ProblemCount => _sites.Count(x => x.ConnectionStatus is not AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected and not AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested);
     private string LatestCheck => FormatDate(_sites.Where(x => x.LastConnectionTestAtUtc.HasValue).Select(x => x.LastConnectionTestAtUtc).OrderByDescending(x => x).FirstOrDefault());
     private IEnumerable<AIWordPressManager.Domain.Entities.Site> FilteredSites => string.IsNullOrWhiteSpace(_search) ? _sites : _sites.Where(x => x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.SiteUrl.Contains(_search, StringComparison.OrdinalIgnoreCase));
 
@@ -103,9 +104,20 @@
 
     private async Task ReloadAsync()
     {
-        try { _loading = true; _sites = await SiteService.GetSitesAsync(); _isError = false; }
-        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
-        finally { _loading = false; }
+        try
+        {
+            _loading = true;
+            _sites = await SiteService.GetSitesAsync();
+            _isError = false;
+        }
+        catch (Exception ex)
+        {
+            Fail(L.TranslateMessage(ex.Message), ex.ToString());
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private void OpenForm() { _showForm = true; _message = null; }
@@ -116,27 +128,66 @@
         try
         {
             _saving = true;
-            if (string.IsNullOrWhiteSpace(_model.Name)) { Fail(L["RequiredSiteName"]); return; }
-            if (string.IsNullOrWhiteSpace(_model.Url)) { Fail(L["RequiredUrl"]); return; }
-            if (!Uri.TryCreate(_model.Url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) { Fail(L["InvalidUrl"]); return; }
+            if (string.IsNullOrWhiteSpace(_model.Name)) { Warn(L["RequiredSiteName"]); return; }
+            if (string.IsNullOrWhiteSpace(_model.Url)) { Warn(L["RequiredUrl"]); return; }
+            if (!Uri.TryCreate(_model.Url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) { Warn(L["InvalidUrl"]); return; }
+
             await SiteService.AddSiteAsync(_model.Name, _model.Url);
-            _model = new(); _showForm = false; _isError = false; _message = L["AddedSuccess"]; await ReloadAsync();
+            _model = new();
+            _showForm = false;
+            _isError = false;
+            _message = L["AddedSuccess"];
+            Notifications.Success(_message, L["Sites"]);
+            await ReloadAsync();
         }
-        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
-        finally { _saving = false; }
+        catch (Exception ex)
+        {
+            Fail(L.TranslateMessage(ex.Message), ex.ToString());
+        }
+        finally
+        {
+            _saving = false;
+        }
     }
 
     private async Task DeleteAsync(Guid id)
     {
-        try { _deleting = true; await SiteService.DeleteSiteAsync(id); _message = L["DeletedSuccess"]; _isError = false; await ReloadAsync(); }
-        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message)); }
-        finally { _deleting = false; }
+        try
+        {
+            _deleting = true;
+            await SiteService.DeleteSiteAsync(id);
+            _message = L["DeletedSuccess"];
+            _isError = false;
+            Notifications.Success(_message, L["Sites"]);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Fail(L.TranslateMessage(ex.Message), ex.ToString());
+        }
+        finally
+        {
+            _deleting = false;
+        }
     }
 
-    private void Fail(string message) { _isError = true; _message = message; }
+    private void Warn(string message)
+    {
+        _isError = true;
+        _message = message;
+        Notifications.Warning(message, L["Sites"]);
+    }
+
+    private void Fail(string message, string? details = null)
+    {
+        _isError = true;
+        _message = message;
+        Notifications.Error(message, L["Sites"], details);
+    }
+
     private string StatusText(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch { AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => L["Connected"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable => L["Unreachable"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed => L["AuthFailed"], AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => L["NeedsReview"], _ => L["NotTested"] };
-    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? "connected" : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown ? "neutral" : "problem";
-    private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? 100 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unknown ? 35 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions ? 60 : 15;
+    private static string StatusClass(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? "connected" : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested ? "neutral" : "problem";
+    private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected ? 100 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.NotTested ? 35 : status == AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions ? 60 : 15;
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private static string Initials(string name) { var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries); return parts.Length == 0 ? "WP" : string.Concat(parts.Take(2).Select(x => char.ToUpperInvariant(x[0]))); }
     private void Changed() => InvokeAsync(StateHasChanged);
