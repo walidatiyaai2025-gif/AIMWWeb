@@ -66,7 +66,7 @@
             <div class="topbar-actions">
                 <a class="topbar-version" href="/about-build">v@Build.Version</a>
                 <button type="button" class="language-switch" @onclick="ToggleLanguage" title="@L["Language"]" aria-label="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
-                <div class="user-chip"><span>WA</span><div><strong>@L["Administrator"]</strong><small>@L["LocalAccount"]</small></div></div>
+                <CurrentUserChip />
             </div>
         </header>
         <section class="content">@Body</section>
