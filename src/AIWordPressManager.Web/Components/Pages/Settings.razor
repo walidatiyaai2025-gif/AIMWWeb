@@ -3,12 +3,122 @@
 @implements IDisposable
 @inject AppLanguageService L
 @inject IJSRuntime JS
+
 <PageTitle>@L["Settings"]</PageTitle>
-<div class="page-heading"><div><h1>@L["Settings"]</h1><p>@L["SettingsIntro"]</p></div></div>
-<div class="panel"><h3>@L["LanguageSettings"]</h3><p>@L["LanguageSettingsText"]</p><button class="btn primary" @onclick="ToggleLanguage">🌐 @L["SwitchLanguage"]</button></div>
-<div class="panel"><h3>@L["Database"]</h3><p>@L["PortableDb"]</p></div>
-@code{
-protected override void OnInitialized()=>L.Changed+=Changed;
-private async Task ToggleLanguage(){L.SetCulture(L.IsArabic?"en":"ar");await JS.InvokeVoidAsync("appLanguage.set",L.Culture);await JS.InvokeVoidAsync("appLanguage.apply",L.Culture,L.Direction);}
-private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">@(L.IsArabic ? "تخصيص النظام" : "SYSTEM PREFERENCES")</span>
+            <h1>@L["Settings"]</h1>
+            <p>@(L.IsArabic ? "تحكم في اللغة والمظهر وسلوك الواجهة والتخزين المحلي من مكان واحد." : "Control language, appearance, interface behavior, and local storage from one place.")</p>
+        </div>
+        <div class="settings-status">
+            <span>✓</span>
+            <div><strong>@(L.IsArabic ? "الإعدادات محفوظة محليًا" : "Settings are stored locally")</strong><small>@(L.IsArabic ? "يتم تطبيق التغييرات فورًا" : "Changes apply immediately")</small></div>
+        </div>
+    </section>
+
+    <section class="settings-summary-grid">
+        <article class="panel settings-summary-card"><span>文</span><div><small>@(L.IsArabic ? "اللغة الحالية" : "Current language")</small><strong>@(L.IsArabic ? "العربية" : "English")</strong></div></article>
+        <article class="panel settings-summary-card"><span>◐</span><div><small>@(L.IsArabic ? "وضع العرض" : "Appearance")</small><strong>@ModeText</strong></div></article>
+        <article class="panel settings-summary-card"><span>◈</span><div><small>@(L.IsArabic ? "لون النظام" : "Accent color")</small><strong>@ThemeText</strong></div></article>
+        <article class="panel settings-summary-card"><span>DB</span><div><small>@L["Database"]</small><strong>SQLite</strong></div></article>
+    </section>
+
+    <div class="settings-layout">
+        <nav class="panel settings-nav" aria-label="Settings sections">
+            <a href="#language"><span>文</span><div><strong>@L["LanguageSettings"]</strong><small>@(L.IsArabic ? "العربية والإنجليزية" : "Arabic and English")</small></div></a>
+            <a href="#appearance"><span>◐</span><div><strong>@(L.IsArabic ? "المظهر والألوان" : "Appearance and colors")</strong><small>@(L.IsArabic ? "الوضع والثيم" : "Mode and theme")</small></div></a>
+            <a href="#accessibility"><span>Aa</span><div><strong>@(L.IsArabic ? "سهولة الاستخدام" : "Accessibility")</strong><small>@(L.IsArabic ? "الخط والكثافة والحركة" : "Font, density, and motion")</small></div></a>
+            <a href="#database"><span>DB</span><div><strong>@L["Database"]</strong><small>@(L.IsArabic ? "التخزين المحلي" : "Local storage")</small></div></a>
+        </nav>
+
+        <main class="settings-content">
+            <section id="language" class="panel settings-section">
+                <header><div><span class="workspace-kicker">LANGUAGE</span><h2>@L["LanguageSettings"]</h2><p>@L["LanguageSettingsText"]</p></div><span class="settings-badge">@(L.IsArabic ? "RTL" : "LTR")</span></header>
+                <div class="settings-option-row">
+                    <div><strong>@(L.IsArabic ? "لغة واجهة التطبيق" : "Application interface language")</strong><small>@(L.IsArabic ? "التغيير يطبق فورًا على اتجاه ونصوص الواجهة." : "The change immediately updates interface text and direction.")</small></div>
+                    <button class="btn primary" @onclick="ToggleLanguage">🌐 @L["SwitchLanguage"]</button>
+                </div>
+            </section>
+
+            <section id="appearance" class="panel settings-section">
+                <header><div><span class="workspace-kicker">APPEARANCE</span><h2>@(L.IsArabic ? "المظهر والألوان" : "Appearance and colors")</h2><p>@(L.IsArabic ? "اختر الوضع ولوحة الألوان التي تناسب بيئة العمل." : "Choose the display mode and color palette that suit your workspace.")</p></div></header>
+                <div class="settings-subsection">
+                    <h3>@(L.IsArabic ? "وضع العرض" : "Display mode")</h3>
+                    <div class="settings-choice-grid two">
+                        <button type="button" class="settings-choice @ModeClass("dark")" @onclick="SetDark"><span class="choice-preview dark"></span><strong>@(L.IsArabic ? "داكن" : "Dark")</strong><small>@(L.IsArabic ? "مناسب للعمل المطول" : "Comfortable for long sessions")</small></button>
+                        <button type="button" class="settings-choice @ModeClass("light")" @onclick="SetLight"><span class="choice-preview light"></span><strong>@(L.IsArabic ? "فاتح" : "Light")</strong><small>@(L.IsArabic ? "وضوح أعلى في الإضاءة" : "Clearer in bright environments")</small></button>
+                    </div>
+                </div>
+                <div class="settings-subsection">
+                    <h3>@(L.IsArabic ? "لون النظام" : "Accent color")</h3>
+                    <div class="theme-swatch-grid">
+                        <button class="theme-swatch gold @ThemeClass("gold")" @onclick="SetGold"><i></i><span>@(L.IsArabic ? "ذهبي" : "Gold")</span></button>
+                        <button class="theme-swatch ocean @ThemeClass("ocean")" @onclick="SetOcean"><i></i><span>@(L.IsArabic ? "أزرق" : "Ocean")</span></button>
+                        <button class="theme-swatch emerald @ThemeClass("emerald")" @onclick="SetEmerald"><i></i><span>@(L.IsArabic ? "زمردي" : "Emerald")</span></button>
+                        <button class="theme-swatch violet @ThemeClass("violet")" @onclick="SetViolet"><i></i><span>@(L.IsArabic ? "بنفسجي" : "Violet")</span></button>
+                        <button class="theme-swatch rose @ThemeClass("rose")" @onclick="SetRose"><i></i><span>@(L.IsArabic ? "وردي" : "Rose")</span></button>
+                        <button class="theme-swatch amber @ThemeClass("amber")" @onclick="SetAmber"><i></i><span>@(L.IsArabic ? "كهرماني" : "Amber")</span></button>
+                        <button class="theme-swatch cyan @ThemeClass("cyan")" @onclick="SetCyan"><i></i><span>@(L.IsArabic ? "سماوي" : "Cyan")</span></button>
+                        <button class="theme-swatch slate @ThemeClass("slate")" @onclick="SetSlate"><i></i><span>@(L.IsArabic ? "رمادي" : "Slate")</span></button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="accessibility" class="panel settings-section">
+                <header><div><span class="workspace-kicker">ACCESSIBILITY</span><h2>@(L.IsArabic ? "سهولة الاستخدام والعرض" : "Accessibility and display")</h2><p>@(L.IsArabic ? "افتح مركز العرض لضبط حجم الخط وكثافة الشاشة والتباين والحركة." : "Open the display center to adjust font size, density, contrast, and motion.")</p></div></header>
+                <div class="settings-option-row">
+                    <div><strong>@(L.IsArabic ? "مركز العرض" : "Display center")</strong><small>Ctrl + Alt + A</small></div>
+                    <button class="btn" @onclick="OpenAccessibility">Aa @(L.IsArabic ? "فتح المركز" : "Open center")</button>
+                </div>
+            </section>
+
+            <section id="database" class="panel settings-section">
+                <header><div><span class="workspace-kicker">DATABASE</span><h2>@L["Database"]</h2><p>@L["PortableDb"]</p></div><span class="settings-badge success">SQLite</span></header>
+                <div class="database-info-grid">
+                    <div><small>@(L.IsArabic ? "نوع قاعدة البيانات" : "Database engine")</small><strong>SQLite</strong></div>
+                    <div><small>@(L.IsArabic ? "نمط التخزين" : "Storage mode")</small><strong>@(L.IsArabic ? "محلي ومحمول" : "Local and portable")</strong></div>
+                    <div><small>@(L.IsArabic ? "الاستخدام" : "Purpose")</small><strong>@(L.IsArabic ? "الكاش والمزامنة" : "Cache and synchronization")</strong></div>
+                </div>
+                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "بيانات WordPress المتزامنة تحفظ محليًا لتسريع فتح الشاشات واستمرار عرض آخر بيانات متاحة عند تعذر الاتصال." : "Synchronized WordPress data is stored locally for faster screens and continued access to the latest available data when connectivity is unavailable.")</p></div>
+            </section>
+        </main>
+    </div>
+</div>
+
+@code {
+    private string _theme = "gold";
+    private string _mode = "dark";
+    private string ThemeText => L.IsArabic ? _theme switch { "gold" => "ذهبي", "ocean" => "أزرق", "emerald" => "زمردي", "violet" => "بنفسجي", "rose" => "وردي", "amber" => "كهرماني", "cyan" => "سماوي", "slate" => "رمادي", _ => _theme } : _theme;
+    private string ModeText => L.IsArabic ? (_mode == "light" ? "فاتح" : "داكن") : (_mode == "light" ? "Light" : "Dark");
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _theme = await JS.InvokeAsync<string>("appTheme.get");
+        _mode = await JS.InvokeAsync<string>("appTheme.getMode");
+        StateHasChanged();
+    }
+
+    private async Task ToggleLanguage() { L.SetCulture(L.IsArabic ? "en" : "ar"); await JS.InvokeVoidAsync("appLanguage.set", L.Culture); await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction); }
+    private async Task SetTheme(string value) { _theme = await JS.InvokeAsync<string>("appTheme.set", value); }
+    private async Task SetMode(string value) { _mode = await JS.InvokeAsync<string>("appTheme.setMode", value); }
+    private Task SetGold() => SetTheme("gold");
+    private Task SetOcean() => SetTheme("ocean");
+    private Task SetEmerald() => SetTheme("emerald");
+    private Task SetViolet() => SetTheme("violet");
+    private Task SetRose() => SetTheme("rose");
+    private Task SetAmber() => SetTheme("amber");
+    private Task SetCyan() => SetTheme("cyan");
+    private Task SetSlate() => SetTheme("slate");
+    private Task SetDark() => SetMode("dark");
+    private Task SetLight() => SetMode("light");
+    private string ThemeClass(string value) => _theme == value ? "active" : string.Empty;
+    private string ModeClass(string value) => _mode == value ? "active" : string.Empty;
+    private async Task OpenAccessibility() => await JS.InvokeVoidAsync("eval", "document.querySelector('.accessibility-launcher')?.click()");
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
 }
