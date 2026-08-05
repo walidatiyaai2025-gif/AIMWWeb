@@ -1,0 +1,16 @@
+<div class="app-loading @Class" role="status" aria-live="polite">
+    <span class="app-loading__spinner" aria-hidden="true"></span>
+    <div>
+        <strong>@Title</strong>
+        @if (!string.IsNullOrWhiteSpace(Message))
+        {
+            <p>@Message</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Loading";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+}
