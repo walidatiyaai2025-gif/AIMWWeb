@@ -25,7 +25,21 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<LoginResult> SignInAsync(HttpContext context, string userName, string password, bool rememberMe, CancellationToken cancellationToken = default)
+    public Task<LoginResult> SignInAsync(
+        HttpContext context,
+        string userName,
+        string password,
+        bool rememberMe,
+        CancellationToken cancellationToken = default) =>
+        SignInAsync(context, userName, password, rememberMe, null, cancellationToken);
+
+    public async Task<LoginResult> SignInAsync(
+        HttpContext context,
+        string userName,
+        string password,
+        bool rememberMe,
+        string? returnUrl,
+        CancellationToken cancellationToken = default)
     {
         var normalized = (userName ?? string.Empty).Trim().ToUpperInvariant();
         var safePassword = password ?? string.Empty;
@@ -66,7 +80,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
             ExpiresUtc = rememberMe ? DateTimeOffset.UtcNow.AddDays(14) : null
         });
 
-        return LoginResult.Succeeded(IsSafeLocalPath(user.LastPage) ? user.LastPage : "/");
+        return LoginResult.Succeeded(ResolveRedirectPath(returnUrl, user.LastPage));
     }
 
     public async Task SaveLastPageAsync(ClaimsPrincipal principal, string path, CancellationToken cancellationToken = default)
@@ -78,8 +92,28 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private static bool IsSafeLocalPath(string? path) =>
-        !string.IsNullOrWhiteSpace(path) && path.StartsWith('/') && !path.StartsWith("//");
+    public static string ResolveRedirectPath(string? requestedPath, string? lastPage)
+    {
+        if (IsSafeLocalPath(requestedPath) && !IsAuthenticationPath(requestedPath!))
+            return requestedPath!;
+
+        if (IsSafeLocalPath(lastPage) && !IsAuthenticationPath(lastPage!))
+            return lastPage!;
+
+        return "/";
+    }
+
+    private static bool IsSafeLocalPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !path.StartsWith('/') || path.StartsWith("//"))
+            return false;
+
+        return !Uri.TryCreate(path, UriKind.Absolute, out _);
+    }
+
+    private static bool IsAuthenticationPath(string path) =>
+        path.StartsWith("/login", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/logout", StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed record LoginResult(bool IsSuccess, string Message, string RedirectPath)
