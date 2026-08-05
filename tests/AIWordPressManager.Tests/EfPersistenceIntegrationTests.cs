@@ -38,10 +38,11 @@ public sealed class EfPersistenceIntegrationTests
         await fixture.Context.SaveChangesAsync();
         fixture.Context.ChangeTracker.Clear();
 
-        var loaded = await fixture.Context.Sites.Include(x => x.Credentials).SingleAsync();
-        loaded.Name.Should().Be("Integration Site");
-        loaded.Credentials.Should().ContainSingle();
-        loaded.Credentials.Single().UserName.Should().Be("editor");
+        var loadedSite = await fixture.Context.Sites.SingleAsync();
+        var loadedCredential = await fixture.Context.SiteCredentials.SingleAsync();
+        loadedSite.Name.Should().Be("Integration Site");
+        loadedCredential.SiteId.Should().Be(loadedSite.Id);
+        loadedCredential.UserName.Should().Be("editor");
     }
 
     [Fact]
@@ -52,6 +53,17 @@ public sealed class EfPersistenceIntegrationTests
 
         var action = async () => await fixture.Context.SaveChangesAsync();
         await action.Should().ThrowAsync<DbUpdateException>();
+    }
+
+    [Fact]
+    public async Task Model_Contains_Required_Credential_Foreign_Key()
+    {
+        await using var fixture = await SqliteFixture.CreateAsync();
+        var entity = fixture.Context.Model.FindEntityType(typeof(SiteCredential));
+        var foreignKey = entity!.GetForeignKeys().Single(x => x.PrincipalEntityType.ClrType == typeof(Site));
+
+        foreignKey.Properties.Should().ContainSingle(x => x.Name == nameof(SiteCredential.SiteId));
+        foreignKey.IsRequired.Should().BeTrue();
     }
 
     private sealed class SqliteFixture : IAsyncDisposable
