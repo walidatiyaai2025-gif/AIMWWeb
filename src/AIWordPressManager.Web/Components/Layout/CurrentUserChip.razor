@@ -1,19 +1,47 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AppLanguageService L
+@inject BuildInformationService BuildInfo
 
 <NotificationCenter />
 
-<div class="current-user">
-    <div class="user-avatar">@Initials</div>
-    <div class="user-details">
-        <strong>@UserName</strong>
-        <small>@Role</small>
-    </div>
-    <form method="post" action="/logout">
-        <button type="submit" class="logout-button" title="Sign out" aria-label="Sign out">↪</button>
-    </form>
-</div>
+<details class="account-menu">
+    <summary class="account-trigger" title="@(L.IsArabic ? "قائمة الحساب" : "Account menu")">
+        <span class="user-avatar">@Initials</span>
+        <span class="user-details">
+            <strong>@UserName</strong>
+            <small>@Role</small>
+        </span>
+        <span class="account-chevron">⌄</span>
+    </summary>
+
+    <section class="account-popover">
+        <header class="account-profile">
+            <span class="account-avatar-large">@Initials</span>
+            <div>
+                <strong>@UserName</strong>
+                <small>@Role</small>
+                <em>@(L.IsArabic ? "جلسة محلية آمنة" : "Secure local session")</em>
+            </div>
+        </header>
+
+        <div class="account-meta">
+            <div><span>◉</span><div><small>@(L.IsArabic ? "الحالة" : "Status")</small><strong>@(L.IsArabic ? "متصل" : "Online")</strong></div></div>
+            <div><span>ⓘ</span><div><small>@(L.IsArabic ? "الإصدار" : "Version")</small><strong>@BuildInfo.Current.Version</strong></div></div>
+        </div>
+
+        <nav class="account-links">
+            <a href="/settings"><span>⚙</span><div><strong>@(L.IsArabic ? "الإعدادات" : "Settings")</strong><small>@(L.IsArabic ? "اللغة والمظهر والتفضيلات" : "Language, appearance and preferences")</small></div><b>›</b></a>
+            <a href="/about-build"><span>ⓘ</span><div><strong>@(L.IsArabic ? "معلومات الإصدار" : "Build information")</strong><small>@(L.IsArabic ? "الفرع والنسخة وتفاصيل البناء" : "Branch, version and build details")</small></div><b>›</b></a>
+            <a href="/system-health"><span>♥</span><div><strong>@(L.IsArabic ? "صحة النظام" : "System health")</strong><small>@(L.IsArabic ? "فحص الخدمات وقاعدة البيانات" : "Services and database status")</small></div><b>›</b></a>
+        </nav>
+
+        <form method="post" action="/logout" class="account-logout-form">
+            <button type="submit" class="account-logout"><span>↪</span><div><strong>@(L.IsArabic ? "تسجيل الخروج" : "Sign out")</strong><small>@(L.IsArabic ? "إنهاء الجلسة الحالية بأمان" : "End the current session securely")</small></div></button>
+        </form>
+    </section>
+</details>
 
 @code {
     private string UserName { get; set; } = "Admin";
