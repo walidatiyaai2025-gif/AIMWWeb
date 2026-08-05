@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ExecutionCenterService ExecutionService
+@inject AppNotificationService Notifications
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</PageTitle>
@@ -15,8 +16,7 @@
             <p>@(L.IsArabic ? "تابع المهام المعلقة والجارية والمكتملة، وأعد المحاولة أو أوقف التنفيذ من شاشة واحدة." : "Monitor queued, running, completed, and failed jobs from one workspace.")</p>
         </div>
         <div class="execution-hero-actions">
-            <button class="btn" @onclick="Refresh">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
-            <button class="btn primary" @onclick="AddDemoJob">＋ @(L.IsArabic ? "مهمة تجريبية" : "Demo job")</button>
+            <button class="btn" @onclick="RefreshWithNotice">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
         </div>
     </section>
 
@@ -37,7 +37,7 @@
             <header><div><h2>@(L.IsArabic ? "قائمة المهام" : "Job queue")</h2><p>@(L.IsArabic ? $"إجمالي {_jobs.Count} مهمة" : $"{_jobs.Count} total jobs")</p></div></header>
             @if (!FilteredJobs.Any())
             {
-                <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام" : "No jobs found")</h3></div>
+                <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام" : "No jobs found")</h3><p>@(L.IsArabic ? "ستظهر هنا العمليات الحقيقية القادمة من المزامنة وSEO والوسائط." : "Real synchronization, SEO, and media operations will appear here.")</p></div>
             }
             else
             {
@@ -76,7 +76,7 @@
 
 @code {
     private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(2));
-    private CancellationTokenSource _cts = new();
+    private readonly CancellationTokenSource _cts = new();
     private IReadOnlyList<ExecutionJob> _jobs = [];
     private IReadOnlyList<ExecutionActivity> _activities = [];
     private string _query = string.Empty;
@@ -101,15 +101,22 @@
     }
 
     private void Refresh() { _jobs = ExecutionService.GetJobs(); _activities = ExecutionService.GetActivities(); }
+    private void RefreshWithNotice() { Refresh(); Notifications.Success(L.IsArabic ? "تم تحديث مركز التنفيذ." : "Execution Center refreshed."); }
     private int Count(string status) => _jobs.Count(x => x.Status == status);
-    private void AddDemoJob() { ExecutionService.Enqueue(L.IsArabic ? "مزامنة محتوى جديدة" : "New content synchronization", "Synchronization", L.IsArabic ? "موقع تجريبي" : "Demo site", 120); Refresh(); }
-    private void Pause(Guid id) { ExecutionService.Pause(id); Refresh(); }
-    private void Resume(Guid id) { ExecutionService.Resume(id); Refresh(); }
-    private void Retry(Guid id) { ExecutionService.Retry(id); Refresh(); }
-    private void Cancel(Guid id) { ExecutionService.Cancel(id); Refresh(); }
-    private string StatusClass(string status) => status.ToLowerInvariant();
+    private void Pause(Guid id) => RunAction(() => ExecutionService.Pause(id), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
+    private void Resume(Guid id) => RunAction(() => ExecutionService.Resume(id), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
+    private void Retry(Guid id) => RunAction(() => ExecutionService.Retry(id), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
+    private void Cancel(Guid id) => RunAction(() => ExecutionService.Cancel(id), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
+
+    private void RunAction(Action action, string successMessage)
+    {
+        try { action(); Refresh(); Notifications.Success(successMessage); }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
+    }
+
+    private static string StatusClass(string status) => status.ToLowerInvariant();
     private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة مؤقتًا", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status };
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-    private void Changed() => InvokeAsync(StateHasChanged);
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() { L.Changed -= Changed; _cts.Cancel(); _cts.Dispose(); _timer.Dispose(); }
 }
