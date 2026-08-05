@@ -18,16 +18,11 @@
         <div>
             <span class="workspace-kicker">BUSINESS INTELLIGENCE</span>
             <h1>@(L.IsArabic ? "التقارير والتصدير" : "Reports & Exports")</h1>
-            <p>@(L.IsArabic ? "تقارير مباشرة من بيانات المواقع والموافقات والأتمتة وخطة المحتوى." : "Live reports from sites, approvals, automations, and content planning data.")</p>
+            <p>@(L.IsArabic ? "تقارير مباشرة من بيانات النظام الفعلية." : "Live reports from real application data.")</p>
         </div>
-        <button class="btn" disabled="@_loading" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
-    </section>
-
-    <section class="reports-stats">
-        <article class="panel"><small>@(L.IsArabic ? "المواقع" : "Sites")</small><strong>@_sites.Count</strong></article>
-        <article class="panel"><small>@(L.IsArabic ? "الموافقات المعلقة" : "Pending approvals")</small><strong>@_approvals.Count(x => x.Status == ApprovalStatus.Pending)</strong></article>
-        <article class="panel"><small>@(L.IsArabic ? "مهام الأتمتة" : "Automations")</small><strong>@_jobs.Count</strong></article>
-        <article class="panel"><small>@(L.IsArabic ? "عناصر التخطيط" : "Planner items")</small><strong>@_planner.Count</strong></article>
+        <button class="btn" disabled="@_loading" @onclick="LoadAsync">
+            @(_loading ? (L.IsArabic ? "جارٍ التحميل..." : "Loading...") : (L.IsArabic ? "تحديث" : "Refresh"))
+        </button>
     </section>
 
     @if (!string.IsNullOrWhiteSpace(_error))
@@ -35,24 +30,26 @@
         <div class="alert error"><strong>@(L.IsArabic ? "فشل تحميل التقرير" : "Report loading failed")</strong><p>@_error</p></div>
     }
 
+    <section class="reports-stats">
+        <article class="panel"><small>@(L.IsArabic ? "المواقع" : "Sites")</small><strong>@_sites.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "الموافقات" : "Approvals")</small><strong>@_approvals.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "مهام الأتمتة" : "Automations")</small><strong>@_jobs.Count</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "عناصر التخطيط" : "Planner items")</small><strong>@_planner.Count</strong></article>
+    </section>
+
     <section class="reports-grid">
         <article class="panel report-card">
             <header>
-                <div><span class="workspace-kicker">SITES</span><h2>@(L.IsArabic ? "تقرير المواقع" : "Sites report")</h2></div>
+                <h2>@(L.IsArabic ? "تقرير المواقع" : "Sites report")</h2>
                 <button class="btn compact" @onclick="ExportSitesAsync">CSV</button>
             </header>
             <div class="report-table-wrap">
                 <table>
-                    <thead><tr><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>URL</th><th>@(L.IsArabic ? "الحالة" : "Status")</th><th>@(L.IsArabic ? "آخر فحص" : "Last check")</th></tr></thead>
+                    <thead><tr><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>URL</th><th>@(L.IsArabic ? "الحالة" : "Status")</th></tr></thead>
                     <tbody>
                         @foreach (var site in _sites.Take(12))
                         {
-                            <tr>
-                                <td><strong>@site.Name</strong></td>
-                                <td><span class="truncate">@site.SiteUrl</span></td>
-                                <td><span class="badge @StatusClass(site.ConnectionStatus.ToString())">@site.ConnectionStatus</span></td>
-                                <td>@FormatDate(site.LastConnectionTestAtUtc)</td>
-                            </tr>
+                            <tr><td>@site.Name</td><td>@site.SiteUrl</td><td>@site.ConnectionStatus</td></tr>
                         }
                     </tbody>
                 </table>
@@ -61,39 +58,34 @@
 
         <article class="panel report-card">
             <header>
-                <div><span class="workspace-kicker">GOVERNANCE</span><h2>@(L.IsArabic ? "تقرير الموافقات" : "Approvals report")</h2></div>
+                <h2>@(L.IsArabic ? "تقرير الموافقات" : "Approvals report")</h2>
                 <button class="btn compact" @onclick="ExportApprovalsAsync">CSV</button>
             </header>
-            <div class="report-bars">
-                @foreach (var approvalStatus in Enum.GetValues<ApprovalStatus>())
-                {
-                    var count = _approvals.Count(x => x.Status == approvalStatus);
-                    <div>
-                        <span>@approvalStatus</span>
-                        <div><i style="width:@Percent(count, _approvals.Count)%"></i></div>
-                        <strong>@count</strong>
-                    </div>
-                }
+            <div class="report-table-wrap">
+                <table>
+                    <thead><tr><th>@(L.IsArabic ? "العنوان" : "Title")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>@(L.IsArabic ? "الحالة" : "Status")</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in _approvals.Take(12))
+                        {
+                            <tr><td>@item.Title</td><td>@item.SiteName</td><td>@item.Status</td></tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </article>
 
         <article class="panel report-card">
             <header>
-                <div><span class="workspace-kicker">AUTOMATION</span><h2>@(L.IsArabic ? "تقرير الأتمتة" : "Automation report")</h2></div>
+                <h2>@(L.IsArabic ? "تقرير الأتمتة" : "Automation report")</h2>
                 <button class="btn compact" @onclick="ExportAutomationAsync">CSV</button>
             </header>
             <div class="report-table-wrap">
                 <table>
-                    <thead><tr><th>@(L.IsArabic ? "المهمة" : "Job")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>@(L.IsArabic ? "الحالة" : "Status")</th><th>@(L.IsArabic ? "القادم" : "Next")</th></tr></thead>
+                    <thead><tr><th>@(L.IsArabic ? "المهمة" : "Job")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>@(L.IsArabic ? "الحالة" : "Status")</th></tr></thead>
                     <tbody>
                         @foreach (var job in _jobs.Take(12))
                         {
-                            <tr>
-                                <td><strong>@job.Name</strong><small>@job.Type</small></td>
-                                <td>@job.SiteName</td>
-                                <td><span class="badge @StatusClass(job.LastStatus)">@job.LastStatus</span></td>
-                                <td>@FormatDate(job.NextRunUtc)</td>
-                            </tr>
+                            <tr><td>@job.Name</td><td>@job.SiteName</td><td>@job.LastStatus</td></tr>
                         }
                     </tbody>
                 </table>
@@ -102,24 +94,29 @@
 
         <article class="panel report-card">
             <header>
-                <div><span class="workspace-kicker">CONTENT</span><h2>@(L.IsArabic ? "تقرير خطة المحتوى" : "Content planner report")</h2></div>
+                <h2>@(L.IsArabic ? "تقرير خطة المحتوى" : "Content planner report")</h2>
                 <button class="btn compact" @onclick="ExportPlannerAsync">CSV</button>
             </header>
-            <div class="planner-status-grid">
-                @foreach (var plannerStatus in Enum.GetValues<PlannerItemStatus>())
-                {
-                    <div><span class="badge @StatusClass(plannerStatus.ToString())">@plannerStatus</span><strong>@_planner.Count(x => x.Status == plannerStatus)</strong></div>
-                }
+            <div class="report-table-wrap">
+                <table>
+                    <thead><tr><th>@(L.IsArabic ? "العنوان" : "Title")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>@(L.IsArabic ? "الحالة" : "Status")</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in _planner.Take(12))
+                        {
+                            <tr><td>@item.Title</td><td>@item.SiteName</td><td>@item.Status</td></tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </article>
     </section>
 </div>
 
 @code {
-    private List<Site> _sites = [];
-    private List<ApprovalItem> _approvals = [];
-    private List<AutomationJob> _jobs = [];
-    private List<PlannerItem> _planner = [];
+    private List<Site> _sites = new List<Site>();
+    private List<ApprovalItem> _approvals = new List<ApprovalItem>();
+    private List<AutomationJob> _jobs = new List<AutomationJob>();
+    private List<PlannerItem> _planner = new List<PlannerItem>();
     private bool _loading;
     private string _error = string.Empty;
 
@@ -130,14 +127,16 @@
 
     private async Task LoadAsync()
     {
+        if (_loading) return;
         _loading = true;
         _error = string.Empty;
         try
         {
-            _sites = await SiteService.GetSitesAsync();
+            var sitesTask = SiteService.GetSitesAsync();
             _approvals = ApprovalService.GetItems(null, 1000).ToList();
             _jobs = AutomationService.GetJobs().ToList();
             _planner = PlannerService.GetItems().ToList();
+            _sites = await sitesTask;
         }
         catch (Exception ex)
         {
@@ -150,21 +149,33 @@
         }
     }
 
-    private Task ExportSitesAsync() => DownloadAsync("sites-report.csv", Csv(
-        ["Name", "Url", "Status", "LastConnectionTestUtc"],
-        _sites.Select(x => new[] { x.Name, x.SiteUrl.ToString(), x.ConnectionStatus.ToString(), x.LastConnectionTestAtUtc?.ToString("O") ?? string.Empty })));
+    private Task ExportSitesAsync()
+    {
+        return DownloadAsync("sites-report.csv", Csv(
+            new[] { "Name", "Url", "Status" },
+            _sites.Select(x => new[] { x.Name, x.SiteUrl.ToString(), x.ConnectionStatus.ToString() })));
+    }
 
-    private Task ExportApprovalsAsync() => DownloadAsync("approvals-report.csv", Csv(
-        ["Id", "Title", "Site", "Operation", "Risk", "Status", "RequestedBy", "RequestedAtUtc"],
-        _approvals.Select(x => new[] { x.Id.ToString(), x.Title, x.SiteName, x.OperationType, x.RiskLevel.ToString(), x.Status.ToString(), x.RequestedBy, x.RequestedAtUtc.ToString("O") })));
+    private Task ExportApprovalsAsync()
+    {
+        return DownloadAsync("approvals-report.csv", Csv(
+            new[] { "Id", "Title", "Site", "Status" },
+            _approvals.Select(x => new[] { x.Id.ToString(), x.Title, x.SiteName, x.Status.ToString() })));
+    }
 
-    private Task ExportAutomationAsync() => DownloadAsync("automation-report.csv", Csv(
-        ["Id", "Name", "Site", "Type", "Frequency", "Enabled", "LastStatus", "LastRunUtc", "NextRunUtc"],
-        _jobs.Select(x => new[] { x.Id.ToString(), x.Name, x.SiteName, x.Type, x.Frequency, x.Enabled.ToString(), x.LastStatus, x.LastRunUtc?.ToString("O") ?? string.Empty, x.NextRunUtc.ToString("O") })));
+    private Task ExportAutomationAsync()
+    {
+        return DownloadAsync("automation-report.csv", Csv(
+            new[] { "Id", "Name", "Site", "Type", "Status" },
+            _jobs.Select(x => new[] { x.Id.ToString(), x.Name, x.SiteName, x.Type, x.LastStatus })));
+    }
 
-    private Task ExportPlannerAsync() => DownloadAsync("content-planner-report.csv", Csv(
-        ["Id", "Title", "Site", "Status", "ScheduledAtUtc", "WordPressPostId", "UpdatedAtUtc"],
-        _planner.Select(x => new[] { x.Id.ToString(), x.Title, x.SiteName, x.Status.ToString(), x.ScheduledAtUtc?.ToString("O") ?? string.Empty, x.WordPressPostId?.ToString() ?? string.Empty, x.UpdatedAtUtc.ToString("O") })));
+    private Task ExportPlannerAsync()
+    {
+        return DownloadAsync("content-planner-report.csv", Csv(
+            new[] { "Id", "Title", "Site", "Status" },
+            _planner.Select(x => new[] { x.Id.ToString(), x.Title, x.SiteName, x.Status.ToString() })));
+    }
 
     private async Task DownloadAsync(string fileName, string csv)
     {
@@ -174,30 +185,18 @@
 
     private static string Csv(IEnumerable<string> headers, IEnumerable<IEnumerable<string>> rows)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine(string.Join(',', headers.Select(Escape)));
+        var builder = new StringBuilder();
+        builder.AppendLine(string.Join(",", headers.Select(Escape)));
         foreach (var row in rows)
         {
-            sb.AppendLine(string.Join(',', row.Select(Escape)));
+            builder.AppendLine(string.Join(",", row.Select(Escape)));
         }
-        return "\uFEFF" + sb;
+        return "\uFEFF" + builder.ToString();
     }
 
-    private static string Escape(string? value)
+    private static string Escape(string value)
     {
         var text = value ?? string.Empty;
-        return $"\"{text.Replace("\"", "\"\"")}\"";
+        return "\"" + text.Replace("\"", "\"\"") + "\"";
     }
-
-    private static int Percent(int value, int total) => total == 0 ? 0 : (int)Math.Round(value * 100d / total);
-
-    private static string StatusClass(string status) => status.ToLowerInvariant() switch
-    {
-        "connected" or "completed" or "approved" or "published" => "success",
-        "failed" or "rejected" or "critical" => "danger",
-        "pending" or "running" or "scheduled" or "draft" or "review" => "warning",
-        _ => string.Empty
-    };
-
-    private string FormatDate(DateTime? value) => value?.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") ?? "—";
 }
