@@ -1,0 +1,39 @@
+name: Apply Confirm Dialog Patch
+
+on:
+  push:
+    branches:
+      - feature/system-health
+    paths:
+      - Build/apply-confirm-dialog-patch.py
+      - .github/workflows/apply-confirm-dialog-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[confirm-dialog-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: feature/system-health
+          fetch-depth: 0
+
+      - name: Apply patch
+        run: python Build/apply-confirm-dialog-patch.py
+
+      - name: Commit generated changes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No generated changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AIWordPressManager.Web/Components/Pages/Sites.razor src/AIWordPressManager.Web/AIWordPressManager.Web.csproj
+          git commit -m "feat: use confirm dialog for site deletion [confirm-dialog-applied]"
+          git push origin HEAD:feature/system-health
