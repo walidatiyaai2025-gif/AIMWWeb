@@ -27,13 +27,21 @@ public sealed class SiteOperationHistoryService
         }
     }
 
+    public SiteOperationHistoryItem? GetById(Guid operationId)
+    {
+        lock (_sync)
+        {
+            return Load().FirstOrDefault(x => x.Id == operationId);
+        }
+    }
+
     public IReadOnlyList<SiteOperationHistoryItem> GetAll(int take = 250)
     {
         lock (_sync)
         {
             return Load()
                 .OrderByDescending(x => x.StartedAtUtc)
-                .Take(Math.Clamp(take, 1, 1000))
+                .Take(Math.Clamp(take, 1, 2000))
                 .ToList();
         }
     }
