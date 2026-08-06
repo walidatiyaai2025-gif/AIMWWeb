@@ -2,6 +2,7 @@
 @page "/module/content"
 @rendermode InteractiveServer
 @implements IDisposable
+@using Microsoft.AspNetCore.Components
 @inject AIWordPressManager.Persistence.AppDbContext DbContext
 @inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
@@ -20,21 +21,25 @@ else
                 <div>
                     <small style="font-weight:800;letter-spacing:.1em">@(L.IsArabic ? "مساحة المحتوى الموحدة" : "UNIFIED CONTENT WORKSPACE")</small>
                     <h1 style="margin:8px 0">@(L.IsArabic ? "مركز إدارة محتوى WordPress" : "WordPress Content Management Hub")</h1>
-                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "ملخص موحد للمحتوى المخزن محليًا داخل مواقع حسابك فقط." : "A unified view of locally cached content for your WordPress sites only.")</p>
+                    <p style="margin:0;opacity:.74">@HubDescription</p>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    @if (WorkspaceSiteId.HasValue)
+                    {
+                        <a class="btn" href="/content">@(L.IsArabic ? "كل المواقع" : "All sites")</a>
+                    }
                     <button class="btn" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
-                    <a class="btn primary" href="/module/sync">@(L.IsArabic ? "فتح المزامنة" : "Open synchronization")</a>
+                    <a class="btn primary" href="@WorkspaceUrl("/module/sync")">@(L.IsArabic ? "فتح المزامنة" : "Open synchronization")</a>
                 </div>
             </div>
         </section>
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:18px">
-            @Stat(L.IsArabic ? "المقالات" : "Posts", _view.Posts, "/module/posts")
-            @Stat(L.IsArabic ? "الصفحات" : "Pages", _view.Pages, "/module/pages")
-            @Stat(L.IsArabic ? "الوسائط" : "Media", _view.Media, "/module/media")
-            @Stat(L.IsArabic ? "التصنيفات" : "Categories", _view.Categories, "/module/taxonomy")
-            @Stat(L.IsArabic ? "الوسوم" : "Tags", _view.Tags, "/module/taxonomy")
+            @Stat(L.IsArabic ? "المقالات" : "Posts", _view.Posts, WorkspaceUrl("/module/posts"))
+            @Stat(L.IsArabic ? "الصفحات" : "Pages", _view.Pages, WorkspaceUrl("/module/pages"))
+            @Stat(L.IsArabic ? "الوسائط" : "Media", _view.Media, WorkspaceUrl("/module/media"))
+            @Stat(L.IsArabic ? "التصنيفات" : "Categories", _view.Categories, WorkspaceUrl("/module/taxonomy"))
+            @Stat(L.IsArabic ? "الوسوم" : "Tags", _view.Tags, WorkspaceUrl("/module/taxonomy"))
             @Stat(L.IsArabic ? "مواقع بها Cache" : "Sites with cache", _view.SitesWithCachedData, "/sites")
         </section>
 
@@ -49,13 +54,19 @@ else
                 <tbody>
                     @if (_view.Sites.Count == 0)
                     {
-                        <tr><td colspan="9" style="padding:32px;text-align:center;opacity:.72">@(L.IsArabic ? "لم تضف مواقع WordPress إلى حسابك بعد." : "You have not added any WordPress sites yet.")</td></tr>
+                        <tr><td colspan="9" style="padding:32px;text-align:center;opacity:.72">@(L.IsArabic ? "لا توجد بيانات للموقع المحدد أو لا تملك صلاحية الوصول إليه." : "No data is available for the selected site, or it is not accessible to your account.")</td></tr>
                     }
                     else
                     {
                         @foreach (var site in _view.Sites)
                         {
-                            <tr style="border-top:1px solid rgba(128,128,128,.2)"><td style="padding:14px"><a href="@($"/sites/{site.SiteId}")"><strong>@site.SiteName</strong></a><small style="display:block;opacity:.65">@site.TotalRecords @(L.IsArabic ? "سجل" : "records")</small></td><td style="padding:14px">@site.Posts</td><td style="padding:14px">@site.Pages</td><td style="padding:14px">@site.Media</td><td style="padding:14px">@site.Categories</td><td style="padding:14px">@site.Tags</td><td style="padding:14px">@FormatDate(site.LastSynchronizedAtUtc)</td><td style="padding:14px"><span class="badge @FreshnessClass(site.Freshness)">@FreshnessText(site.Freshness)</span></td><td style="padding:14px"><a class="btn compact primary" href="@($"/sites/{site.SiteId}/explorer")">@(L.IsArabic ? "المحتوى" : "Content")</a></td></tr>
+                            <tr style="border-top:1px solid rgba(128,128,128,.2)">
+                                <td style="padding:14px"><a href="@($"/sites/{site.SiteId}")"><strong>@site.SiteName</strong></a><small style="display:block;opacity:.65">@site.TotalRecords @(L.IsArabic ? "سجل" : "records")</small></td>
+                                <td style="padding:14px">@site.Posts</td><td style="padding:14px">@site.Pages</td><td style="padding:14px">@site.Media</td><td style="padding:14px">@site.Categories</td><td style="padding:14px">@site.Tags</td>
+                                <td style="padding:14px">@FormatDate(site.LastSynchronizedAtUtc)</td>
+                                <td style="padding:14px"><span class="badge @FreshnessClass(site.Freshness)">@FreshnessText(site.Freshness)</span></td>
+                                <td style="padding:14px"><a class="btn compact primary" href="@($"/sites/{site.SiteId}/explorer")">@(L.IsArabic ? "المحتوى" : "Content")</a></td>
+                            </tr>
                         }
                     }
                 </tbody>
@@ -65,11 +76,38 @@ else
 }
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "siteId")]
+    public Guid? WorkspaceSiteId { get; set; }
+
     private bool _loading = true;
+    private Guid? _loadedSiteId;
     private GlobalContentHubView _view = new([], 0, 0, 0, 0, 0, 0, 0);
+    private string HubDescription => WorkspaceSiteId.HasValue
+        ? (L.IsArabic ? "ملخص المحتوى المخزن محليًا للموقع النشط فقط." : "A local content summary for the active site workspace only.")
+        : (L.IsArabic ? "ملخص موحد للمحتوى المخزن محليًا داخل مواقع حسابك فقط." : "A unified view of locally cached content for your WordPress sites only.");
+
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
     protected override async Task OnInitializedAsync() => await LoadAsync();
-    private async Task LoadAsync() { _loading = true; try { _view = await GlobalContentHubService.GetAsync(DbContext, CurrentUser.RequireUserId()); } finally { _loading = false; } }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_loading && _loadedSiteId != WorkspaceSiteId)
+            await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _view = await GlobalContentHubService.GetAsync(DbContext, CurrentUser.RequireUserId(), WorkspaceSiteId);
+            _loadedSiteId = WorkspaceSiteId;
+        }
+        finally { _loading = false; }
+    }
+
+    private string WorkspaceUrl(string path) => WorkspaceSiteId.HasValue ? $"{path}?siteId={WorkspaceSiteId.Value}" : path;
     private RenderFragment Stat(string label, int value, string href) => builder => { builder.OpenElement(0, "a"); builder.AddAttribute(1, "class", "panel"); builder.AddAttribute(2, "href", href); builder.AddAttribute(3, "style", "display:block;padding:18px;text-decoration:none;color:inherit"); builder.OpenElement(4, "small"); builder.AddContent(5, label); builder.CloseElement(); builder.OpenElement(6, "strong"); builder.AddAttribute(7, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(8, value); builder.CloseElement(); builder.CloseElement(); };
     private string FreshnessText(ContentCacheFreshness freshness) => freshness switch { ContentCacheFreshness.Fresh => L.IsArabic ? "حديث" : "Fresh", ContentCacheFreshness.Review => L.IsArabic ? "يحتاج مراجعة" : "Review", ContentCacheFreshness.Stale => L.IsArabic ? "قديم" : "Stale", _ => L.IsArabic ? "لا توجد بيانات" : "No data" };
     private static string FreshnessClass(ContentCacheFreshness freshness) => freshness switch { ContentCacheFreshness.Fresh => "success", ContentCacheFreshness.Review => "warning", ContentCacheFreshness.Stale => "danger", _ => string.Empty };
