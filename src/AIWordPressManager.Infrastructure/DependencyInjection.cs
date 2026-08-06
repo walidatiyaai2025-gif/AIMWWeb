@@ -18,6 +18,10 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IJobCancellationRegistry, JobCancellationRegistry>();
 
+        services.AddSingleton<InMemoryBackgroundJobQueue>();
+        services.AddSingleton<IBackgroundJobQueue>(sp => sp.GetRequiredService<InMemoryBackgroundJobQueue>());
+        services.AddHostedService<BackgroundJobDispatcher>();
+
         services.AddSingleton<IAIPromptRegistry, AIPromptRegistry>();
         services.AddSingleton<IAIUsageLog, AIUsageLog>();
         services.AddSingleton<IAIContentProtector, AIContentProtector>();
