@@ -2,7 +2,9 @@
 @page "/module/execution"
 @rendermode InteractiveServer
 @implements IDisposable
+@using AIWordPressManager.Domain.Entities
 @inject ExecutionCenterService ExecutionService
+@inject SiteWebService SiteService
 @inject AppNotificationService Notifications
 @inject AppLanguageService L
 
@@ -13,82 +15,150 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "مراقبة العمليات" : "OPERATIONS CONTROL")</span>
             <h1>@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</h1>
-            <p>@(L.IsArabic ? "تابع المهام المعلقة والجارية والمكتملة، وأعد المحاولة أو أوقف التنفيذ من شاشة واحدة." : "Monitor queued, running, completed, and failed jobs from one workspace.")</p>
+            <p>@(L.IsArabic ? "تابع عمليات مواقعك فقط، مع فلترة حسب الموقع والحالة وإدارة الإيقاف والاستكمال وإعادة المحاولة." : "Monitor operations for your own sites, filter by site and status, and manage pause, resume, retry, and cancellation.")</p>
         </div>
         <div class="execution-hero-actions">
+            @if (_selectedSiteId != Guid.Empty)
+            {
+                <a class="btn" href="@($"/module/sync?siteId={_selectedSiteId}")">↻ @(L.IsArabic ? "مزامنة الموقع" : "Synchronize site")</a>
+            }
             <button class="btn" @onclick="RefreshWithNotice">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
         </div>
     </section>
 
-    <section class="execution-summary-grid">
-        <article class="panel execution-summary-card"><small>@(L.IsArabic ? "في الانتظار" : "Waiting")</small><strong>@Count("Waiting")</strong><span>◷</span></article>
-        <article class="panel execution-summary-card"><small>@(L.IsArabic ? "قيد التنفيذ" : "Running")</small><strong>@Count("Running")</strong><span>▶</span></article>
-        <article class="panel execution-summary-card"><small>@(L.IsArabic ? "مكتملة" : "Completed")</small><strong>@Count("Completed")</strong><span>✓</span></article>
-        <article class="panel execution-summary-card"><small>@(L.IsArabic ? "فاشلة" : "Failed")</small><strong>@Count("Failed")</strong><span>!</span></article>
-    </section>
-
-    <section class="execution-toolbar panel">
-        <div class="execution-search"><span>⌕</span><input @bind="_query" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث باسم المهمة أو الموقع..." : "Search job or site...")" /></div>
-        <select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="Waiting">Waiting</option><option value="Running">Running</option><option value="Paused">Paused</option><option value="Completed">Completed</option><option value="Failed">Failed</option><option value="Cancelled">Cancelled</option></select>
-    </section>
-
-    <div class="execution-layout">
-        <section class="panel execution-jobs">
-            <header><div><h2>@(L.IsArabic ? "قائمة المهام" : "Job queue")</h2><p>@(L.IsArabic ? $"إجمالي {_jobs.Count} مهمة" : $"{_jobs.Count} total jobs")</p></div></header>
-            @if (!FilteredJobs.Any())
-            {
-                <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام" : "No jobs found")</h3><p>@(L.IsArabic ? "ستظهر هنا العمليات الحقيقية القادمة من المزامنة وSEO والوسائط." : "Real synchronization, SEO, and media operations will appear here.")</p></div>
-            }
-            else
-            {
-                @foreach (var job in FilteredJobs)
-                {
-                    <article class="execution-job @StatusClass(job.Status)">
-                        <div class="execution-job-head">
-                            <div><span class="job-type">@job.Type</span><h3>@job.Title</h3><p>@job.SiteName · @FormatDate(job.CreatedAtUtc)</p></div>
-                            <span class="job-status">@TranslateStatus(job.Status)</span>
-                        </div>
-                        <div class="job-progress-meta"><span>@job.ProcessedItems / @job.TotalItems</span><strong>@job.Progress%</strong></div>
-                        <div class="job-progress"><span style="width:@job.Progress%"></span></div>
-                        @if (!string.IsNullOrWhiteSpace(job.Error)) { <div class="job-error">@job.Error</div> }
-                        <footer>
-                            @if (job.Status == "Running") { <button class="btn compact" @onclick="() => Pause(job.Id)">@(L.IsArabic ? "إيقاف مؤقت" : "Pause")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
-                            else if (job.Status == "Paused") { <button class="btn compact primary" @onclick="() => Resume(job.Id)">@(L.IsArabic ? "استكمال" : "Resume")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
-                            else if (job.Status is "Failed" or "Cancelled") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button> }
-                            <code>@job.Id.ToString()[..8]</code>
-                        </footer>
-                    </article>
-                }
-            }
+    @if (_loadingSites)
+    {
+        <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل مساحة التنفيذ" : "Loading execution workspace")" />
+    }
+    else
+    {
+        <section class="execution-summary-grid">
+            <article class="panel execution-summary-card"><small>@(L.IsArabic ? "في الانتظار" : "Waiting")</small><strong>@Count("Waiting")</strong><span>◷</span></article>
+            <article class="panel execution-summary-card"><small>@(L.IsArabic ? "قيد التنفيذ" : "Running")</small><strong>@Count("Running")</strong><span>▶</span></article>
+            <article class="panel execution-summary-card"><small>@(L.IsArabic ? "مكتملة" : "Completed")</small><strong>@Count("Completed")</strong><span>✓</span></article>
+            <article class="panel execution-summary-card"><small>@(L.IsArabic ? "فاشلة" : "Failed")</small><strong>@Count("Failed")</strong><span>!</span></article>
         </section>
 
-        <aside class="panel execution-activity">
-            <header><h2>@(L.IsArabic ? "سجل النشاط" : "Activity log")</h2><span class="live-dot"></span></header>
-            <div class="activity-list">
-                @foreach (var item in _activities)
+        <section class="execution-toolbar panel">
+            <div class="execution-search"><span>⌕</span><input @bind="_query" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث باسم المهمة..." : "Search job title...")" /></div>
+            <select @bind="_selectedSiteId">
+                <option value="@Guid.Empty">@(L.IsArabic ? "كل مواقعي" : "All my sites")</option>
+                @foreach (var site in _ownedSites)
                 {
-                    <article class="activity-item @item.Level.ToLowerInvariant()"><time>@item.CreatedAtUtc.ToLocalTime().ToString("HH:mm:ss")</time><div><strong>@item.Level</strong><p>@item.Message</p></div></article>
+                    <option value="@site.Id">@site.Name</option>
                 }
-            </div>
-        </aside>
-    </div>
+            </select>
+            <select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="Waiting">Waiting</option><option value="Running">Running</option><option value="Paused">Paused</option><option value="Completed">Completed</option><option value="Failed">Failed</option><option value="Cancelled">Cancelled</option></select>
+        </section>
+
+        <div class="execution-layout">
+            <section class="panel execution-jobs">
+                <header><div><h2>@(L.IsArabic ? "قائمة المهام" : "Job queue")</h2><p>@QueueCaption</p></div></header>
+                @if (_ownedSites.Count == 0)
+                {
+                    <AppEmptyState Icon="◎" Title="@(L.IsArabic ? "لا توجد مواقع في حسابك" : "No sites in your account")" Description="@(L.IsArabic ? "أضف موقع WordPress أولًا لتظهر عملياته هنا." : "Connect a WordPress site first to view its operations here.")">
+                        <Actions><AppButton Href="/sites/connect" Variant="primary" Text="@(L.IsArabic ? "إضافة موقع" : "Connect site")" /></Actions>
+                    </AppEmptyState>
+                }
+                else if (!FilteredJobs.Any())
+                {
+                    <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام مطابقة" : "No matching jobs")</h3><p>@(L.IsArabic ? "شغّل مزامنة أو عملية SEO أو وسائط للموقع المختار." : "Run synchronization, SEO, or media operations for the selected site.")</p></div>
+                }
+                else
+                {
+                    @foreach (var job in FilteredJobs)
+                    {
+                        <article class="execution-job @StatusClass(job.Status)">
+                            <div class="execution-job-head">
+                                <div><span class="job-type">@job.Type</span><h3>@job.Title</h3><p>@job.SiteName · @FormatDate(job.CreatedAtUtc)</p></div>
+                                <span class="job-status">@TranslateStatus(job.Status)</span>
+                            </div>
+                            <div class="job-progress-meta"><span>@job.ProcessedItems / @job.TotalItems</span><strong>@job.Progress%</strong></div>
+                            <div class="job-progress"><span style="width:@job.Progress%"></span></div>
+                            @if (!string.IsNullOrWhiteSpace(job.Error)) { <div class="job-error">@job.Error</div> }
+                            <footer>
+                                @if (job.Status == "Running") { <button class="btn compact" @onclick="() => Pause(job.Id)">@(L.IsArabic ? "إيقاف مؤقت" : "Pause")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
+                                else if (job.Status == "Paused") { <button class="btn compact primary" @onclick="() => Resume(job.Id)">@(L.IsArabic ? "استكمال" : "Resume")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
+                                else if (job.Status is "Failed" or "Cancelled") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button> }
+                                <code>@job.Id.ToString()[..8]</code>
+                            </footer>
+                        </article>
+                    }
+                }
+            </section>
+
+            <aside class="panel execution-activity">
+                <header><h2>@(L.IsArabic ? "سجل النشاط" : "Activity log")</h2><span class="live-dot"></span></header>
+                <div class="activity-list">
+                    @foreach (var item in VisibleActivities)
+                    {
+                        <article class="activity-item @item.Level.ToLowerInvariant()"><time>@item.CreatedAtUtc.ToLocalTime().ToString("HH:mm:ss")</time><div><strong>@item.Level</strong><p>@item.Message</p></div></article>
+                    }
+                </div>
+            </aside>
+        </div>
+    }
 </div>
 
 @code {
     private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(2));
     private readonly CancellationTokenSource _cts = new();
+    private IReadOnlyList<Site> _ownedSites = [];
     private IReadOnlyList<ExecutionJob> _jobs = [];
     private IReadOnlyList<ExecutionActivity> _activities = [];
+    private Guid _selectedSiteId;
     private string _query = string.Empty;
     private string _status = "all";
+    private bool _loadingSites = true;
 
-    private IEnumerable<ExecutionJob> FilteredJobs => _jobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.SiteName.Contains(_query, StringComparison.OrdinalIgnoreCase)));
+    [Parameter, SupplyParameterFromQuery(Name = "siteId")]
+    public Guid? WorkspaceSiteId { get; set; }
+
+    private HashSet<string> OwnedSiteNames => _ownedSites.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    private string? SelectedSiteName => _selectedSiteId == Guid.Empty ? null : _ownedSites.FirstOrDefault(x => x.Id == _selectedSiteId)?.Name;
+    private IEnumerable<ExecutionJob> OwnedJobs => _jobs.Where(x => OwnedSiteNames.Contains(x.SiteName));
+    private IEnumerable<ExecutionJob> SiteJobs => string.IsNullOrWhiteSpace(SelectedSiteName) ? OwnedJobs : OwnedJobs.Where(x => x.SiteName.Equals(SelectedSiteName, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<ExecutionActivity> VisibleActivities
+    {
+        get
+        {
+            var ids = SiteJobs.Select(x => x.Id).ToHashSet();
+            return _activities.Where(x => ids.Contains(x.JobId)).Take(40);
+        }
+    }
+    private string QueueCaption => L.IsArabic ? $"إجمالي {SiteJobs.Count()} مهمة للمواقع المملوكة لحسابك" : $"{SiteJobs.Count()} jobs for sites owned by your account";
 
     protected override void OnInitialized()
     {
         L.Changed += Changed;
-        Refresh();
         _ = AutoRefreshAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _ownedSites = await SiteService.GetSitesAsync();
+            if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value))
+                _selectedSiteId = WorkspaceSiteId.Value;
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            Notifications.Error(L.IsArabic ? "تعذر تحميل مركز التنفيذ." : "Execution Center could not be loaded.", details: ex.Message);
+        }
+        finally
+        {
+            _loadingSites = false;
+        }
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value))
+            _selectedSiteId = WorkspaceSiteId.Value;
+        return Task.CompletedTask;
     }
 
     private async Task AutoRefreshAsync()
@@ -100,17 +170,21 @@
         catch (OperationCanceledException) { }
     }
 
-    private void Refresh() { _jobs = ExecutionService.GetJobs(); _activities = ExecutionService.GetActivities(); }
+    private void Refresh() { _jobs = ExecutionService.GetJobs(); _activities = ExecutionService.GetActivities(100); }
     private void RefreshWithNotice() { Refresh(); Notifications.Success(L.IsArabic ? "تم تحديث مركز التنفيذ." : "Execution Center refreshed."); }
-    private int Count(string status) => _jobs.Count(x => x.Status == status);
-    private void Pause(Guid id) => RunAction(() => ExecutionService.Pause(id), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
-    private void Resume(Guid id) => RunAction(() => ExecutionService.Resume(id), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
-    private void Retry(Guid id) => RunAction(() => ExecutionService.Retry(id), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
-    private void Cancel(Guid id) => RunAction(() => ExecutionService.Cancel(id), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
+    private int Count(string status) => SiteJobs.Count(x => x.Status == status);
+    private void Pause(Guid id) => RunOwnedAction(id, () => ExecutionService.Pause(id), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
+    private void Resume(Guid id) => RunOwnedAction(id, () => ExecutionService.Resume(id), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
+    private void Retry(Guid id) => RunOwnedAction(id, () => ExecutionService.Retry(id), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
+    private void Cancel(Guid id) => RunOwnedAction(id, () => ExecutionService.Cancel(id), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
 
-    private void RunAction(Action action, string successMessage)
+    private void RunOwnedAction(Guid id, Action action, string successMessage)
     {
-        try { action(); Refresh(); Notifications.Success(successMessage); }
+        try
+        {
+            var job = OwnedJobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job is not associated with a site owned by the signed-in user.");
+            action(); Refresh(); Notifications.Success(successMessage);
+        }
         catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
     }
 
