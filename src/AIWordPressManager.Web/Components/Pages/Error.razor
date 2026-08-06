@@ -1,3 +1,56 @@
 @page "/Error"
-<PageTitle>خطأ</PageTitle>
-<div class="empty-state"><h1>حدث خطأ غير متوقع</h1><p>راجع ملفات السجل ثم أعد تشغيل التطبيق.</p></div>
+@rendermode InteractiveServer
+@inject AppLanguageService L
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JS
+
+<PageTitle>@(L.IsArabic ? "خطأ غير متوقع" : "Unexpected error")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">ERROR CENTER</span>
+            <h1>@(L.IsArabic ? "حدث خطأ غير متوقع" : "An unexpected error occurred")</h1>
+            <p>@(L.IsArabic ? "تم تسجيل الخطأ. استخدم بيانات التتبع أدناه عند مراجعة السجلات أو طلب الدعم." : "The error was recorded. Use the tracking details below when reviewing logs or requesting support.")</p>
+        </div>
+        <span class="settings-badge danger">ERROR</span>
+    </section>
+
+    <section class="panel settings-section">
+        <header>
+            <div>
+                <span class="workspace-kicker">DIAGNOSTICS</span>
+                <h2>@(L.IsArabic ? "بيانات التتبع" : "Tracking information")</h2>
+                <p>@(L.IsArabic ? "لا تحتوي هذه الشاشة على تفاصيل تقنية حساسة." : "This screen does not expose sensitive technical details.")</p>
+            </div>
+        </header>
+
+        <div class="database-info-grid">
+            <div><small>@(L.IsArabic ? "رقم الخطأ" : "Error ID")</small><strong>@ErrorId</strong></div>
+            <div><small>@(L.IsArabic ? "رقم الارتباط" : "Correlation ID")</small><strong>@CorrelationId</strong></div>
+            <div><small>@(L.IsArabic ? "وقت الخطأ" : "Error time")</small><strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</strong></div>
+        </div>
+
+        <div class="settings-note">
+            <span>ⓘ</span>
+            <p>@(L.IsArabic ? "افتح شاشة السجلات والأخطاء وابحث برقم الخطأ أو رقم الارتباط للوصول إلى الحدث الكامل." : "Open Logs & Errors and search by Error ID or Correlation ID to locate the complete event.")</p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap" style="margin-top:1rem">
+            <button class="btn primary" @onclick="CopyAsync">@(L.IsArabic ? "نسخ بيانات الخطأ" : "Copy error details")</button>
+            <a class="btn" href="/logs">@(L.IsArabic ? "فتح السجلات" : "Open logs")</a>
+            <a class="btn" href="/">@(L.IsArabic ? "العودة للرئيسية" : "Back to dashboard")</a>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string ErrorId => HttpContextAccessor.HttpContext?.Items["ErrorId"]?.ToString() ?? HttpContextAccessor.HttpContext?.TraceIdentifier ?? "N/A";
+    private string CorrelationId => HttpContextAccessor.HttpContext?.Items["CorrelationId"]?.ToString() ?? HttpContextAccessor.HttpContext?.TraceIdentifier ?? "N/A";
+
+    private async Task CopyAsync()
+    {
+        var text = $"AI WordPress Manager Error{System.Environment.NewLine}Error ID: {ErrorId}{System.Environment.NewLine}Correlation ID: {CorrelationId}{System.Environment.NewLine}Time: {DateTimeOffset.Now:O}";
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+}
