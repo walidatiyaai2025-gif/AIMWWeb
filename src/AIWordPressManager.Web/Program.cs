@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHealthChecks();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -33,6 +34,7 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
+builder.Services.AddScoped<CurrentUserContext>();
 builder.Services.AddScoped<LocalAuthenticationService>();
 builder.Services.AddScoped<IWordPressConnectionTester, WordPressConnectionTester>();
 builder.Services.AddScoped<IWordPressApiClient, WordPressApiClient>();
