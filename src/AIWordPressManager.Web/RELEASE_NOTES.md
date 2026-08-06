@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.61.0 - 2026-08-06 - Filtered Operations CSV Export
+- Added one-click CSV export to the cross-site operations dashboard.
+- Exported only the operations currently matched by the active search, site, status, and date filters.
+- Added bilingual CSV column labels and UTF-8 BOM support for reliable Arabic display in Excel.
+- Added CSV escaping for quotes, line breaks, messages, and diagnostic details.
+- Added localized success and failure values plus duration and affected-record columns.
+
 ## 155.60.0 - 2026-08-06 - Site Reliability Dashboard
 - Added a site reliability dashboard at `/site-reliability` and `/operations/reliability`.
 - Added per-site success rates for connection and synchronization operations.
