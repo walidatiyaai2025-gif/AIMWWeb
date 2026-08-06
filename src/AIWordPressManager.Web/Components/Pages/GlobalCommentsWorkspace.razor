@@ -1,0 +1,187 @@
+@page "/module/comments"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject WordPressCommentsWebService CommentsService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مركز التعليقات" : "Comments Workspace")</PageTitle>
+
+@if (_loadingSites)
+{
+    <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل المواقع" : "Loading sites")" Message="@(L.IsArabic ? "يتم تجهيز مساحة إدارة التعليقات." : "Preparing the comments workspace.")" />
+}
+else
+{
+    <div class="comments-workspace">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "التفاعل والمراجعة" : "ENGAGEMENT")"
+                    Title="@(L.IsArabic ? "مركز تعليقات WordPress" : "WordPress Comments Workspace")"
+                    Subtitle="@(L.IsArabic ? "اختر موقعًا لعرض التعليقات ومراجعتها مباشرة من WordPress." : "Select a site to review live WordPress comments and moderation states.")">
+            <Actions>
+                <AppButton Href="/content" Text="@(L.IsArabic ? "مركز المحتوى" : "Content hub")" />
+                <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Disabled="@_working" OnClick="RefreshAsync" />
+            </Actions>
+        </AppToolbar>
+
+        <AppSection Eyebrow="@(L.IsArabic ? "اختيار المصدر" : "SOURCE")"
+                    Title="@(L.IsArabic ? "الموقع وحالة التعليق" : "Site and moderation status")">
+            <ChildContent>
+                <div class="filter-row">
+                    <select class="form-control" @bind="_selectedSiteId">
+                        <option value="">@(L.IsArabic ? "اختر موقع WordPress" : "Select a WordPress site")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                    <select class="form-control" @bind="_status">
+                        <option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
+                        <option value="approved">@(L.IsArabic ? "معتمدة" : "Approved")</option>
+                        <option value="hold">@(L.IsArabic ? "بانتظار المراجعة" : "Pending")</option>
+                        <option value="spam">@(L.IsArabic ? "مزعجة" : "Spam")</option>
+                        <option value="trash">@(L.IsArabic ? "سلة المهملات" : "Trash")</option>
+                    </select>
+                    <input class="form-control" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث في التعليقات..." : "Search comments...")" />
+                    <AppButton Variant="primary" Text="@(L.IsArabic ? "تحميل التعليقات" : "Load comments")" Busy="@_working" Disabled="@(_working || !SelectedSiteId.HasValue)" OnClick="LoadCommentsAsync" />
+                </div>
+            </ChildContent>
+        </AppSection>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+        }
+
+        @if (!SelectedSiteId.HasValue)
+        {
+            <AppCard>
+                <AppEmptyState Icon="◌" Title="@(L.IsArabic ? "اختر موقعًا للبدء" : "Select a site to begin")" Description="@(L.IsArabic ? "التعليقات تُقرأ مباشرة من WordPress وليست من الذاكرة المحلية." : "Comments are loaded live from WordPress rather than the local cache.")" />
+            </AppCard>
+        }
+        else if (_working && _result.Items.Count == 0)
+        {
+            <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل التعليقات" : "Loading comments")" Message="@(L.IsArabic ? "يتم الاتصال بموقع WordPress المحدد." : "Connecting to the selected WordPress site.")" />
+        }
+        else if (_result.Success)
+        {
+            <section class="app-stat-grid">
+                <AppStatCard Icon="◌" Label="@(L.IsArabic ? "إجمالي النتائج" : "Total comments")" Value="@_result.Total.ToString()" Description="@SelectedSiteName" />
+                <AppStatCard Icon="✓" Label="@(L.IsArabic ? "معتمدة" : "Approved")" Value="@ApprovedCount.ToString()" Tone="success" />
+                <AppStatCard Icon="◷" Label="@(L.IsArabic ? "تحتاج مراجعة" : "Pending")" Value="@PendingCount.ToString()" Tone="warning" />
+                <AppStatCard Icon="#" Label="@(L.IsArabic ? "الصفحة" : "Page")" Value="@_page.ToString()" Description="@($"{_result.TotalPages}")" Tone="info" />
+            </section>
+
+            <AppDataGrid TItem="WordPressCommentView"
+                         Items="@_result.Items"
+                         KeySelector="@(item => item.Id.ToString())"
+                         SearchKeySelector="@SearchKey"
+                         SortKeySelector="@(item => item.DateUtc?.Ticks ?? 0)"
+                         PageSize="20"
+                         EmptyTitle="@(L.IsArabic ? "لا توجد تعليقات" : "No comments")"
+                         EmptyDescription="@(L.IsArabic ? "لا توجد نتائج مطابقة للفلاتر الحالية." : "No comments match the current filters.")"
+                         SearchPlaceholder="@(L.IsArabic ? "بحث داخل الصفحة" : "Search current page")">
+                <Header>
+                    <th>@(L.IsArabic ? "الكاتب" : "Author")</th>
+                    <th>@(L.IsArabic ? "التعليق" : "Comment")</th>
+                    <th>@(L.IsArabic ? "الحالة" : "Status")</th>
+                    <th>@(L.IsArabic ? "التاريخ" : "Date")</th>
+                    <th></th>
+                </Header>
+                <RowTemplate Context="comment">
+                    <td><strong>@AuthorName(comment)</strong><small style="display:block">@comment.AuthorEmail</small></td>
+                    <td><div>@StripHtml(comment.Content)</div><small>@(L.IsArabic ? "المقال" : "Post") #@comment.PostId</small></td>
+                    <td><AppBadge Tone="@StatusTone(comment.Status)" Text="@StatusText(comment.Status)" /></td>
+                    <td>@FormatDate(comment.DateUtc)</td>
+                    <td><a class="btn compact primary" href="@($"/sites/{SelectedSiteId}/comments")">@(L.IsArabic ? "إدارة" : "Manage")</a></td>
+                </RowTemplate>
+            </AppDataGrid>
+
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap">
+                <AppButton Icon="‹" Text="@(L.IsArabic ? "السابق" : "Previous")" Disabled="@(_page <= 1 || _working)" OnClick="PreviousAsync" />
+                <AppBadge Tone="info" Text="@($"{_page} / {_result.TotalPages}")" />
+                <AppButton Icon="›" Text="@(L.IsArabic ? "التالي" : "Next")" Disabled="@(_page >= _result.TotalPages || _working)" OnClick="NextAsync" />
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private CommentPageResult _result = new(true, string.Empty, [], 0, 1);
+    private string _selectedSiteId = string.Empty;
+    private string _status = "all";
+    private string _search = string.Empty;
+    private string? _message;
+    private int _page = 1;
+    private bool _loadingSites = true;
+    private bool _working;
+    private bool _isError;
+
+    private Guid? SelectedSiteId => Guid.TryParse(_selectedSiteId, out var id) ? id : null;
+    private string SelectedSiteName => SelectedSiteId is Guid id ? _sites.FirstOrDefault(x => x.Id == id)?.Name ?? id.ToString("N")[..8] : string.Empty;
+    private int ApprovedCount => _result.Items.Count(x => x.Status == "approved");
+    private int PendingCount => _result.Items.Count(x => x.Status == "hold");
+
+    protected override void OnInitialized() => L.Changed += LanguageChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _sites = await SiteService.GetSitesAsync(); }
+        finally { _loadingSites = false; }
+    }
+
+    private async Task LoadCommentsAsync(MouseEventArgs _)
+    {
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task RefreshAsync(MouseEventArgs _)
+    {
+        _sites = await SiteService.GetSitesAsync();
+        if (SelectedSiteId.HasValue) await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (SelectedSiteId is not Guid siteId) return;
+        try
+        {
+            _working = true;
+            _message = null;
+            _result = await CommentsService.GetAsync(siteId, _status, _search, _page, 30);
+            _isError = !_result.Success;
+            if (!_result.Success) _message = L.TranslateMessage(_result.Message);
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+            _result = new(false, ex.Message, [], 0, 1);
+        }
+        finally { _working = false; }
+    }
+
+    private async Task PreviousAsync(MouseEventArgs _)
+    {
+        if (_page <= 1) return;
+        _page--;
+        await LoadAsync();
+    }
+
+    private async Task NextAsync(MouseEventArgs _)
+    {
+        if (_page >= _result.TotalPages) return;
+        _page++;
+        await LoadAsync();
+    }
+
+    private string AuthorName(WordPressCommentView item) => string.IsNullOrWhiteSpace(item.AuthorName) ? (L.IsArabic ? "مجهول" : "Anonymous") : item.AuthorName;
+    private static string SearchKey(WordPressCommentView item) => $"{item.AuthorName} {item.AuthorEmail} {item.Content} {item.Status} {item.PostId}";
+    private static string StripHtml(string value) => System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<.*?>", string.Empty);
+    private string FormatDate(DateTime? value) => value?.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") ?? "—";
+    private string StatusText(string status) => status switch { "approved" => L.IsArabic ? "معتمدة" : "Approved", "hold" => L.IsArabic ? "معلقة" : "Pending", "spam" => L.IsArabic ? "مزعجة" : "Spam", "trash" => L.IsArabic ? "محذوفة" : "Trash", _ => status };
+    private static string StatusTone(string status) => status switch { "approved" => "success", "hold" => "warning", "spam" or "trash" => "danger", _ => "neutral" };
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
