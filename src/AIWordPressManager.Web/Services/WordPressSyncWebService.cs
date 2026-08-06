@@ -12,14 +12,15 @@ public sealed class WordPressSyncWebService(
     IWordPressApiClient wordPressApiClient,
     IWordPressContentStore contentStore,
     ExecutionOperationTracker executionTracker,
-    AppNotificationService notifications)
+    AppNotificationService notifications,
+    SiteWebService siteService)
 {
     private const int PageSize = 100;
 
     public async Task<WordPressSyncViewResult> SynchronizeAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
-        var site = await dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken)
-            ?? throw new InvalidOperationException("Site was not found.");
+        await siteService.EnsureOwnershipAsync(siteId, cancellationToken);
+        var site = await dbContext.Sites.AsNoTracking().FirstAsync(x => x.Id == siteId, cancellationToken);
 
         notifications.Info($"Synchronization started for {site.Name}.", "Synchronization");
         var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 7);
@@ -90,6 +91,7 @@ public sealed class WordPressSyncWebService(
 
     public async Task<ContentExplorerView> GetExplorerAsync(Guid siteId, string? query = null, string type = "all", CancellationToken cancellationToken = default)
     {
+        await siteService.EnsureOwnershipAsync(siteId, cancellationToken);
         query = query?.Trim();
         var contentQuery = dbContext.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == siteId && x.IsAvailable);
         if (type is "post" or "page") contentQuery = contentQuery.Where(x => x.ContentType == type);
