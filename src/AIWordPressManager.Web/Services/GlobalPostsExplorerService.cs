@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class GlobalPostsExplorerService(AppDbContext dbContext)
+public sealed class GlobalPostsExplorerService(AppDbContext dbContext, CurrentUserContext currentUser)
 {
     public Task<GlobalPostsExplorerResult> SearchAsync(Guid? siteId, string? status, string? query, int page, int pageSize, CancellationToken cancellationToken = default) =>
         SearchPostsAsync(siteId, status, query, page, pageSize, cancellationToken);
@@ -12,17 +12,21 @@ public sealed class GlobalPostsExplorerService(AppDbContext dbContext)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 10, 100);
-        var source = dbContext.WordPressContentRecords.AsNoTracking().Where(x => x.ContentType == "post" && x.IsAvailable);
+        var ownerUserId = currentUser.RequireUserId();
+        var ownedSites = dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == ownerUserId);
+        var source = dbContext.WordPressContentRecords.AsNoTracking()
+            .Where(x => x.ContentType == "post" && x.IsAvailable && ownedSites.Any(site => site.Id == x.SiteId));
         source = ApplyFilters(source, siteId, status, query, false);
         var total = await source.CountAsync(cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
         page = Math.Min(page, totalPages);
         var items = await source.OrderByDescending(x => x.ModifiedAtUtc ?? x.LastSynchronizedAtUtc)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .Join(dbContext.Sites.AsNoTracking(), content => content.SiteId, site => site.Id,
+            .Join(ownedSites, content => content.SiteId, site => site.Id,
                 (content, site) => new GlobalPostExplorerItem(content.SiteId, site.Name, content.WordPressId, content.Title, content.Slug, content.Status, content.Link, content.RenderedExcerpt, content.ModifiedAtUtc, content.LastSynchronizedAtUtc))
             .ToListAsync(cancellationToken);
-        var summary = await dbContext.WordPressContentRecords.AsNoTracking().Where(x => x.ContentType == "post" && x.IsAvailable)
+        var summary = await dbContext.WordPressContentRecords.AsNoTracking()
+            .Where(x => x.ContentType == "post" && x.IsAvailable && ownedSites.Any(site => site.Id == x.SiteId))
             .GroupBy(_ => 1)
             .Select(g => new GlobalPostsSummary(g.Count(), g.Count(x => x.Status == "publish"), g.Count(x => x.Status == "draft"), g.Count(x => x.Status == "pending"), g.Count(x => x.Status == "future"), g.Select(x => x.SiteId).Distinct().Count(), g.Max(x => x.LastSynchronizedAtUtc)))
             .FirstOrDefaultAsync(cancellationToken) ?? new GlobalPostsSummary(0, 0, 0, 0, 0, 0, null);
@@ -33,17 +37,21 @@ public sealed class GlobalPostsExplorerService(AppDbContext dbContext)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 10, 100);
-        var source = dbContext.WordPressContentRecords.AsNoTracking().Where(x => x.ContentType == "page" && x.IsAvailable);
+        var ownerUserId = currentUser.RequireUserId();
+        var ownedSites = dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == ownerUserId);
+        var source = dbContext.WordPressContentRecords.AsNoTracking()
+            .Where(x => x.ContentType == "page" && x.IsAvailable && ownedSites.Any(site => site.Id == x.SiteId));
         source = ApplyFilters(source, siteId, status, query, true);
         var total = await source.CountAsync(cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
         page = Math.Min(page, totalPages);
         var items = await source.OrderByDescending(x => x.ModifiedAtUtc ?? x.LastSynchronizedAtUtc)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .Join(dbContext.Sites.AsNoTracking(), content => content.SiteId, site => site.Id,
+            .Join(ownedSites, content => content.SiteId, site => site.Id,
                 (content, site) => new GlobalPageExplorerItem(content.SiteId, site.Name, content.WordPressId, content.Title, content.Slug, content.Status, content.Link, content.RenderedExcerpt, content.ModifiedAtUtc, content.LastSynchronizedAtUtc))
             .ToListAsync(cancellationToken);
-        var summary = await dbContext.WordPressContentRecords.AsNoTracking().Where(x => x.ContentType == "page" && x.IsAvailable)
+        var summary = await dbContext.WordPressContentRecords.AsNoTracking()
+            .Where(x => x.ContentType == "page" && x.IsAvailable && ownedSites.Any(site => site.Id == x.SiteId))
             .GroupBy(_ => 1)
             .Select(g => new GlobalPagesSummary(g.Count(), g.Count(x => x.Status == "publish"), g.Count(x => x.Status == "draft"), g.Count(x => x.Status == "pending"), g.Count(x => x.Status == "private"), g.Select(x => x.SiteId).Distinct().Count(), g.Max(x => x.LastSynchronizedAtUtc)))
             .FirstOrDefaultAsync(cancellationToken) ?? new GlobalPagesSummary(0, 0, 0, 0, 0, 0, null);
