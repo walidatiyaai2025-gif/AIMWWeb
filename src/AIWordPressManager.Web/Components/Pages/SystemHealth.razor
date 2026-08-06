@@ -12,14 +12,10 @@
         <Actions>
             @if (snapshot is not null)
             {
-                <AppBadge Tone="@(snapshot.IsHealthy ? "success" : "danger")"
-                          Icon="●"
+                <AppBadge Tone="@(snapshot.IsHealthy ? "success" : "danger")" Icon="●"
                           Text="@(snapshot.IsHealthy ? (L.IsArabic ? "النظام سليم" : "System healthy") : (L.IsArabic ? "يحتاج مراجعة" : "Attention required"))" />
             }
-            <AppButton Variant="primary"
-                       Icon="↻"
-                       Busy="@isLoading"
-                       Disabled="@isLoading"
+            <AppButton Variant="primary" Icon="↻" Busy="@isLoading" Disabled="@isLoading"
                        Text="@(isLoading ? (L.IsArabic ? "جارٍ الفحص..." : "Checking...") : (L.IsArabic ? "إعادة الفحص" : "Run checks"))"
                        OnClick="RefreshClickedAsync" />
         </Actions>
@@ -33,67 +29,60 @@
     else
     {
         <section class="app-stat-grid">
-            <AppStatCard Icon="♥"
-                         Label="@(L.IsArabic ? "الحالة العامة" : "Overall status")"
+            <AppStatCard Icon="♥" Label="@(L.IsArabic ? "الحالة العامة" : "Overall status")"
                          Value="@(snapshot.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "تحذير" : "Warning"))"
-                         Description="@($"{HealthyCount} / {snapshot.Checks.Count}")"
-                         Tone="@(snapshot.IsHealthy ? "success" : "danger")" />
-            <AppStatCard Icon="✓"
-                         Label="@(L.IsArabic ? "الفحوصات السليمة" : "Healthy checks")"
-                         Value="@HealthyCount.ToString()"
-                         Description="@(L.IsArabic ? "تعمل بصورة طبيعية" : "Operating normally")"
-                         Tone="success" />
-            <AppStatCard Icon="!"
-                         Label="@(L.IsArabic ? "تحتاج مراجعة" : "Needs attention")"
-                         Value="@FailedCount.ToString()"
-                         Description="@(L.IsArabic ? "فحوصات غير سليمة" : "Unhealthy checks")"
+                         Description="@($"{HealthyCount} / {snapshot.Checks.Count}")" Tone="@(snapshot.IsHealthy ? "success" : "danger")" />
+            <AppStatCard Icon="✓" Label="@(L.IsArabic ? "الفحوصات السليمة" : "Healthy checks")"
+                         Value="@(HealthyCount.ToString())" Description="@(L.IsArabic ? "تعمل بصورة طبيعية" : "Operating normally")" Tone="success" />
+            <AppStatCard Icon="!" Label="@(L.IsArabic ? "تحتاج مراجعة" : "Needs attention")"
+                         Value="@(FailedCount.ToString())" Description="@(L.IsArabic ? "فحوصات غير سليمة" : "Unhealthy checks")"
                          Tone="@(FailedCount == 0 ? "success" : "danger")" />
-            <AppStatCard Icon="◷"
-                         Label="@(L.IsArabic ? "آخر فحص" : "Last checked")"
-                         Value="@FormatDate(snapshot.CheckedAtUtc)"
-                         Description="@($"v{snapshot.Version}")"
-                         Tone="info"
-                         ValueClass="health-date" />
+            <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر فحص" : "Last checked")"
+                         Value="@FormatDate(snapshot.CheckedAtUtc)" Description="@($"v{snapshot.Version}")" Tone="info" ValueClass="health-date" />
         </section>
 
         <section class="system-health-layout">
             <div class="system-health-main">
-                <AppSection Eyebrow="@(L.IsArabic ? "المكونات" : "COMPONENTS")"
-                            Title="@(L.IsArabic ? "حالة مكونات النظام" : "System component status")"
-                            Subtitle="@(L.IsArabic ? "كل بطاقة تمثل فحصًا فعليًا منفذًا بواسطة خدمة صحة النظام." : "Each card represents a real check executed by the system health service.")"
-                            BodyClass="health-check-grid">
-                    <ChildContent>
-                        @foreach (var check in snapshot.Checks)
-                        {
-                            <AppDetailsPanel Icon="@CheckIcon(check.Key)"
-                                             Eyebrow="@check.Target"
-                                             Title="@CheckTitle(check.Key)"
-                                             Description="@check.Details"
-                                             Tone="@(check.IsHealthy ? "success" : "danger")">
-                                <ChildContent>
-                                    <div class="health-component-status">
-                                        <AppBadge Tone="@(check.IsHealthy ? "success" : "danger")"
-                                                  Text="@(check.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "فشل" : "Failed"))" />
-                                        <AppProgressBar Value="@(check.IsHealthy ? 100 : 35)"
-                                                        Tone="@(check.IsHealthy ? "success" : "danger")"
-                                                        Label="@(L.IsArabic ? "نتيجة الفحص" : "Check result")" />
-                                    </div>
-                                </ChildContent>
-                            </AppDetailsPanel>
-                        }
-                    </ChildContent>
-                </AppSection>
+                <AppDataGrid TItem="SystemHealthCheck"
+                             Items="@snapshot.Checks"
+                             KeySelector="@(check => check.Key)"
+                             PageSize="10"
+                             Selectable="true"
+                             EmptyTitle="@(L.IsArabic ? "لا توجد فحوصات" : "No checks available")"
+                             EmptyDescription="@(L.IsArabic ? "لم تُرجع خدمة صحة النظام أي نتائج." : "The health service returned no diagnostic results.")"
+                             SelectedText="@(L.IsArabic ? "محدد" : "selected")"
+                             ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                             OfText="@(L.IsArabic ? "من" : "of")">
+                    <Toolbar>
+                        <div>
+                            <strong>@(L.IsArabic ? "حالة مكونات النظام" : "System component status")</strong>
+                            <small>@(L.IsArabic ? "نتائج فعلية من خدمة التشخيص" : "Live results from the diagnostics service")</small>
+                        </div>
+                        <AppBadge Tone="info" Text="@(snapshot.Checks.Count.ToString())" />
+                    </Toolbar>
+                    <Header>
+                        <th>@(L.IsArabic ? "المكوّن" : "Component")</th>
+                        <th>@(L.IsArabic ? "الحالة" : "Status")</th>
+                        <th>@(L.IsArabic ? "الهدف" : "Target")</th>
+                        <th>@(L.IsArabic ? "التفاصيل" : "Details")</th>
+                    </Header>
+                    <RowTemplate Context="check">
+                        <td><strong>@CheckTitle(check.Key)</strong></td>
+                        <td><AppBadge Tone="@(check.IsHealthy ? "success" : "danger")" Text="@(check.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "فشل" : "Failed"))" /></td>
+                        <td><code>@check.Target</code></td>
+                        <td>@check.Details</td>
+                    </RowTemplate>
+                </AppDataGrid>
             </div>
 
             <aside class="system-health-side">
                 <AppDetailsPanel Icon="@(snapshot.IsHealthy ? "✓" : "!")"
                                  Eyebrow="@(L.IsArabic ? "الصحة العامة" : "OVERALL HEALTH")"
                                  Title="@(snapshot.IsHealthy ? (L.IsArabic ? "المنصة تعمل بصورة جيدة" : "Platform is healthy") : (L.IsArabic ? "توجد عناصر تحتاج مراجعة" : "Some checks need attention"))"
-                                 Description="@(snapshot.IsHealthy ? (L.IsArabic ? "جميع الفحوصات الأساسية اجتازت الاختبار بنجاح." : "All essential diagnostics passed successfully.") : (L.IsArabic ? "راجع البطاقات الحمراء لتحديد سبب المشكلة." : "Review the red diagnostics cards to identify the issue."))"
+                                 Description="@(snapshot.IsHealthy ? (L.IsArabic ? "جميع الفحوصات الأساسية اجتازت الاختبار بنجاح." : "All essential diagnostics passed successfully.") : (L.IsArabic ? "راجع الصفوف غير السليمة لتحديد سبب المشكلة." : "Review unhealthy rows to identify the issue."))"
                                  Tone="@(snapshot.IsHealthy ? "success" : "warning")">
                     <ChildContent>
-                        <AppProgressBar Value="@HealthPercent"
-                                        Tone="@(snapshot.IsHealthy ? "success" : "warning")"
+                        <AppProgressBar Value="@HealthPercent" Tone="@(snapshot.IsHealthy ? "success" : "warning")"
                                         Label="@(L.IsArabic ? "مؤشر الصحة" : "Health score")" />
                     </ChildContent>
                 </AppDetailsPanel>
@@ -110,13 +99,10 @@
                     </ChildContent>
                 </AppSection>
 
-                <AppDetailsPanel Icon="≡"
-                                 Eyebrow="@(L.IsArabic ? "الإجراءات" : "ACTIONS")"
+                <AppDetailsPanel Icon="≡" Eyebrow="@(L.IsArabic ? "الإجراءات" : "ACTIONS")"
                                  Title="@(L.IsArabic ? "ماذا أفعل عند ظهور خطأ؟" : "What to do when a check fails")"
-                                 Description="@(L.IsArabic ? "أعد الفحص أولًا، ثم راجع مسار العنصر وتفاصيله. استخدم صفحة السجلات للحصول على معلومات إضافية." : "Run the checks again, review the target and details, then open Logs for deeper diagnostics.")">
-                    <Actions>
-                        <AppButton Href="/module/logs" Text="@(L.IsArabic ? "فتح السجلات" : "Open logs")" />
-                    </Actions>
+                                 Description="@(L.IsArabic ? "أعد الفحص أولًا، ثم راجع الهدف والتفاصيل وافتح السجلات عند الحاجة." : "Run checks again, review the target and details, then open Logs when needed.")">
+                    <Actions><AppButton Href="/module/logs" Text="@(L.IsArabic ? "فتح السجلات" : "Open logs")" /></Actions>
                 </AppDetailsPanel>
             </aside>
         </section>
@@ -149,15 +135,5 @@
         _ => key
     };
 
-    private static string CheckIcon(string key) => key switch
-    {
-        "application" => "◆",
-        "storage" => "▣",
-        "sqlite" => "DB",
-        "logs" => "≡",
-        _ => "●"
-    };
-
     private string FormatDate(DateTimeOffset value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
-    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
 }
