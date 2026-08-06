@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class GlobalContentHubService(AppDbContext dbContext)
+public static class GlobalContentHubService
 {
-    public async Task<GlobalContentHubView> GetAsync(CancellationToken cancellationToken = default)
+    public static async Task<GlobalContentHubView> GetAsync(
+        AppDbContext dbContext,
+        CancellationToken cancellationToken = default)
     {
         var sites = await dbContext.Sites
             .AsNoTracking()
@@ -77,7 +79,7 @@ public sealed class GlobalContentHubService(AppDbContext dbContext)
                 siteMedia?.LastSync,
                 siteCategories?.LastSync,
                 siteTags?.LastSync
-            }.Where(x => x.HasValue).Max();
+            }.Where(x => x.HasValue).DefaultIfEmpty().Max();
 
             return new GlobalContentSiteRow(
                 site.Id,
@@ -101,7 +103,7 @@ public sealed class GlobalContentHubService(AppDbContext dbContext)
             rows.Sum(x => x.Categories),
             rows.Sum(x => x.Tags),
             rows.Count(x => x.TotalRecords > 0),
-            rows.Count(x => x.Freshness == ContentCacheFreshness.Stale));
+            rows.Count(x => x.Freshness is ContentCacheFreshness.Stale or ContentCacheFreshness.Empty));
     }
 
     private static ContentCacheFreshness GetFreshness(DateTime? lastSync)
