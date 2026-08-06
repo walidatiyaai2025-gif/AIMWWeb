@@ -1,6 +1,7 @@
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Domain.Entities;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -14,29 +15,10 @@ public sealed class DatabaseInitializationService(
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Starting database initialization.");
-
-        var pendingBeforeMigration = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToArray();
-        logger.LogInformation("Found {PendingMigrationCount} pending database migration(s).", pendingBeforeMigration.Length);
         await dbContext.Database.MigrateAsync(cancellationToken);
 
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            CREATE TABLE IF NOT EXISTS SeoAuditSnapshots (
-                Id TEXT NOT NULL CONSTRAINT PK_SeoAuditSnapshots PRIMARY KEY,
-                SiteId TEXT NOT NULL,
-                Score INTEGER NOT NULL,
-                AuditedItems INTEGER NOT NULL,
-                HighIssues INTEGER NOT NULL,
-                MediumIssues INTEGER NOT NULL,
-                LowIssues INTEGER NOT NULL,
-                CapturedAtUtc TEXT NOT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                UpdatedAtUtc TEXT NOT NULL,
-                ConcurrencyToken BLOB NOT NULL,
-                CONSTRAINT FK_SeoAuditSnapshots_Sites_SiteId FOREIGN KEY (SiteId) REFERENCES Sites (Id) ON DELETE CASCADE
-            );
-            CREATE INDEX IF NOT EXISTS IX_SeoAuditSnapshots_SiteId_CapturedAtUtc ON SeoAuditSnapshots (SiteId, CapturedAtUtc);
-
             CREATE TABLE IF NOT EXISTS AuthUsers (
                 Id TEXT NOT NULL CONSTRAINT PK_AuthUsers PRIMARY KEY,
                 UserName TEXT NOT NULL,
@@ -53,27 +35,10 @@ public sealed class DatabaseInitializationService(
                 ConcurrencyToken BLOB NOT NULL
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_AuthUsers_NormalizedUserName ON AuthUsers (NormalizedUserName);
-
-            CREATE TABLE IF NOT EXISTS LoginAudits (
-                Id TEXT NOT NULL CONSTRAINT PK_LoginAudits PRIMARY KEY,
-                UserName TEXT NOT NULL,
-                Succeeded INTEGER NOT NULL,
-                Reason TEXT NOT NULL,
-                IpAddress TEXT NOT NULL,
-                UserAgent TEXT NOT NULL,
-                AttemptedAtUtc TEXT NOT NULL,
-                CreatedAtUtc TEXT NOT NULL,
-                UpdatedAtUtc TEXT NOT NULL,
-                ConcurrencyToken BLOB NOT NULL
-            );
-            CREATE INDEX IF NOT EXISTS IX_LoginAudits_AttemptedAtUtc ON LoginAudits (AttemptedAtUtc);
-            CREATE INDEX IF NOT EXISTS IX_LoginAudits_UserName_AttemptedAtUtc ON LoginAudits (UserName, AttemptedAtUtc);
             """,
             cancellationToken);
 
-        var pendingAfterMigration = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToArray();
-        if (pendingAfterMigration.Length > 0)
-            throw new InvalidOperationException($"Database migration did not complete. Pending migrations: {string.Join(", ", pendingAfterMigration)}");
+        await EnsureSiteOwnerColumnAsync(cancellationToken);
 
         if (!await dbContext.Database.CanConnectAsync(cancellationToken))
             throw new InvalidOperationException("The SQLite database could not be opened after migration.");
@@ -87,13 +52,56 @@ public sealed class DatabaseInitializationService(
         logger.LogInformation("Database initialization completed successfully.");
     }
 
+    private async Task EnsureSiteOwnerColumnAsync(CancellationToken cancellationToken)
+    {
+        var connection = (SqliteConnection)dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        var hasColumn = false;
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info('Sites');";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (string.Equals(reader.GetString(1), "OwnerUserId", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasColumn = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasColumn)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("ALTER TABLE Sites ADD COLUMN OwnerUserId TEXT NULL;", cancellationToken);
+            logger.LogInformation("Added OwnerUserId to Sites.");
+        }
+
+        var adminId = await dbContext.AuthUsers
+            .Where(x => x.NormalizedUserName == "ADMIN")
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (adminId.HasValue)
+        {
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE Sites SET OwnerUserId = {adminId.Value.ToString()} WHERE OwnerUserId IS NULL OR OwnerUserId = '';",
+                cancellationToken);
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId ON Sites (OwnerUserId);",
+            cancellationToken);
+    }
+
     private async Task SeedDefaultSiteAsync(CancellationToken cancellationToken)
     {
         const string normalizedUrl = "https://notonlybook.com";
         if (await dbContext.Sites.IgnoreQueryFilters().AnyAsync(x => x.SiteUrl == normalizedUrl, cancellationToken)) return;
         var site = new Site("NOB", new Uri(normalizedUrl), clock.UtcNow);
         dbContext.Sites.Add(site);
-        logger.LogInformation("Seeded the default site profile {SiteName} at {SiteUrl} without credentials.", site.Name, site.SiteUrl);
     }
 
     private async Task SeedSettingAsync(string key, string value, CancellationToken cancellationToken)
