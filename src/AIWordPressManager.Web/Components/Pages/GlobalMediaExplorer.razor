@@ -1,0 +1,115 @@
+@page "/module/media"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject GlobalMediaExplorerService Explorer
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مستكشف الوسائط" : "Media Explorer")</PageTitle>
+
+@if (_loading)
+{
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ تحميل مكتبة الوسائط المحلية..." : "Loading the local media library...")</div>
+}
+else
+{
+    <div class="global-media-page">
+        <section class="panel" style="padding:24px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap">
+                <div>
+                    <small style="font-weight:800;letter-spacing:.1em">@(L.IsArabic ? "مكتبة الوسائط المحلية" : "OFFLINE MEDIA LIBRARY")</small>
+                    <h1 style="margin:8px 0">@(L.IsArabic ? "مستكشف وسائط WordPress" : "WordPress Media Explorer")</h1>
+                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "اعرض الوسائط المتزامنة من جميع المواقع وابحث فيها حتى عند تعذر الاتصال بـWordPress." : "Browse and search synchronized media across every site, even while WordPress is unavailable.")</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                    <a class="btn" href="/module/posts">@(L.IsArabic ? "المقالات" : "Posts")</a>
+                    <a class="btn" href="/module/pages">@(L.IsArabic ? "الصفحات" : "Pages")</a>
+                    <a class="btn primary" href="/module/sync">@(L.IsArabic ? "فتح المزامنة" : "Open synchronization")</a>
+                </div>
+            </div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
+            @Stat(L.IsArabic ? "إجمالي الوسائط" : "Total media", _result.Summary.Total.ToString())
+            @Stat(L.IsArabic ? "صور" : "Images", _result.Summary.Images.ToString())
+            @Stat(L.IsArabic ? "فيديو" : "Videos", _result.Summary.Videos.ToString())
+            @Stat(L.IsArabic ? "صوت" : "Audio", _result.Summary.Audio.ToString())
+            @Stat(L.IsArabic ? "المواقع" : "Sites", _result.Summary.SiteCount.ToString())
+        </section>
+
+        <section class="panel" style="padding:18px;margin-bottom:18px">
+            <div style="display:grid;grid-template-columns:minmax(260px,1fr) repeat(3,minmax(150px,.45fr));gap:12px;align-items:end">
+                <label><span style="display:block;margin-bottom:6px">@(L.IsArabic ? "البحث" : "Search")</span><input class="form-control" @bind="_query" @bind:event="oninput" placeholder="@(L.IsArabic ? "العنوان أو الرابط المختصر أو نوع الملف..." : "Title, slug, or MIME type...")" /></label>
+                <label><span style="display:block;margin-bottom:6px">@(L.IsArabic ? "الموقع" : "Site")</span><select class="form-control" @bind="_siteFilter"><option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>@foreach (var site in _sites){<option value="@site.Id">@site.Name</option>}</select></label>
+                <label><span style="display:block;margin-bottom:6px">@(L.IsArabic ? "نوع الوسائط" : "Media type")</span><select class="form-control" @bind="_typeFilter"><option value="all">@(L.IsArabic ? "كل الأنواع" : "All types")</option><option value="image">@(L.IsArabic ? "صور" : "Images")</option><option value="video">@(L.IsArabic ? "فيديو" : "Video")</option><option value="audio">@(L.IsArabic ? "صوت" : "Audio")</option><option value="application">@(L.IsArabic ? "مستندات" : "Documents")</option></select></label>
+                <label><span style="display:block;margin-bottom:6px">@(L.IsArabic ? "حجم الصفحة" : "Page size")</span><select class="form-control" @bind="_pageSize"><option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="96">96</option></select></label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" @onclick="ResetAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button><button class="btn primary" @onclick="ApplyAsync">@(L.IsArabic ? "تطبيق الفلاتر" : "Apply filters")</button></div>
+        </section>
+
+        @if (_result.Items.Count == 0)
+        {
+            <section class="panel" style="padding:34px;text-align:center;opacity:.72">@(L.IsArabic ? "لا توجد وسائط مطابقة في البيانات المحلية." : "No matching media items were found in the local cache.")</section>
+        }
+        else
+        {
+            <section style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">
+                @foreach (var item in _result.Items)
+                {
+                    <article class="panel" style="overflow:hidden;display:flex;flex-direction:column">
+                        <div style="aspect-ratio:4/3;background:rgba(0,0,0,.16);display:grid;place-items:center;overflow:hidden">
+                            @if (IsImage(item))
+                            {
+                                <img src="@item.SourceUrl" alt="@PlainText(item.Title)" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover" />
+                            }
+                            else
+                            {
+                                <span style="font-size:2rem;font-weight:800;opacity:.72">@TypeIcon(item)</span>
+                            }
+                        </div>
+                        <div style="padding:14px;display:flex;flex-direction:column;gap:8px;flex:1">
+                            <strong>@PlainText(item.Title)</strong>
+                            <small style="opacity:.62">@item.MimeType</small>
+                            <small style="opacity:.72">@item.SiteName · @FormatDate(item.ModifiedAtUtc)</small>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">
+                                <a class="btn compact primary" href="@item.SourceUrl" target="_blank" rel="noopener">@(L.IsArabic ? "فتح الملف" : "Open file") ↗</a>
+                                <a class="btn compact" href="@($"/sites/{item.SiteId}/explorer")">@(L.IsArabic ? "الموقع" : "Site")</a>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </section>
+
+            <footer class="panel" style="display:flex;justify-content:space-between;align-items:center;padding:16px;gap:12px;margin-top:16px"><span>@(L.IsArabic ? $"صفحة {_result.Page} من {_result.TotalPages} · {_result.Total} نتيجة" : $"Page {_result.Page} of {_result.TotalPages} · {_result.Total} results")</span><div style="display:flex;gap:8px"><button class="btn compact" disabled="@(_result.Page <= 1)" @onclick="PreviousAsync">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_result.Page >= _result.TotalPages)" @onclick="NextAsync">@(L.IsArabic ? "التالي" : "Next")</button></div></footer>
+        }
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private string _query = string.Empty;
+    private string _siteFilter = string.Empty;
+    private string _typeFilter = "all";
+    private int _page = 1;
+    private int _pageSize = 24;
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private GlobalMediaExplorerResult _result = new([], 0, 1, 24, 1, new(0, 0, 0, 0, 0, 0, null));
+
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync(){_loading=true;try{_sites=await SiteService.GetSitesAsync();Guid? siteId=Guid.TryParse(_siteFilter,out var parsed)?parsed:null;_result=await Explorer.SearchAsync(siteId,_typeFilter,_query,_page,_pageSize);_page=_result.Page;}finally{_loading=false;}}
+    private async Task ApplyAsync(){_page=1;await LoadAsync();}
+    private async Task ResetAsync(){_query=string.Empty;_siteFilter=string.Empty;_typeFilter="all";_pageSize=24;_page=1;await LoadAsync();}
+    private async Task PreviousAsync(){if(_page<=1)return;_page--;await LoadAsync();}
+    private async Task NextAsync(){if(_page>=_result.TotalPages)return;_page++;await LoadAsync();}
+
+    private RenderFragment Stat(string label,string value)=>builder=>{builder.OpenElement(0,"article");builder.AddAttribute(1,"class","panel");builder.AddAttribute(2,"style","padding:18px");builder.OpenElement(3,"small");builder.AddContent(4,label);builder.CloseElement();builder.OpenElement(5,"strong");builder.AddAttribute(6,"style","display:block;font-size:1.65rem;margin-top:8px");builder.AddContent(7,value);builder.CloseElement();builder.CloseElement();};
+    private static bool IsImage(GlobalMediaExplorerItem item)=>item.MediaType.Equals("image",StringComparison.OrdinalIgnoreCase)||item.MimeType.StartsWith("image/",StringComparison.OrdinalIgnoreCase);
+    private static string TypeIcon(GlobalMediaExplorerItem item)=>item.MimeType.StartsWith("video/",StringComparison.OrdinalIgnoreCase)?"VIDEO":item.MimeType.StartsWith("audio/",StringComparison.OrdinalIgnoreCase)?"AUDIO":"FILE";
+    private string FormatDate(DateTime? value)=>value.HasValue?value.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm"):"—";
+    private static string PlainText(string value)=>System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value??string.Empty,"<[^>]+>",string.Empty)).Trim();
+    private void OnLanguageChanged()=>InvokeAsync(StateHasChanged);
+    public void Dispose()=>L.Changed-=OnLanguageChanged;
+}
