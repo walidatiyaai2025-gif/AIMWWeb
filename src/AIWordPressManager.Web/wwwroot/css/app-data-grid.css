@@ -1,5 +1,7 @@
 .app-data-grid{overflow:hidden;border:1px solid var(--ui-border);border-radius:var(--ui-radius-lg);background:var(--ui-surface);box-shadow:var(--ui-shadow)}
-.app-data-grid__toolbar{display:flex;align-items:center;justify-content:space-between;gap:var(--ui-space-3);padding:var(--ui-space-4);border-bottom:1px solid var(--ui-border)}
+.app-data-grid__commandbar{display:flex;align-items:center;justify-content:space-between;gap:var(--ui-space-3);padding:var(--ui-space-4);border-bottom:1px solid var(--ui-border)}
+.app-data-grid__commandbar-main,.app-data-grid__commandbar-actions{display:flex;align-items:center;gap:var(--ui-space-2);flex-wrap:wrap}
+.app-data-grid__commandbar-main{min-width:0;flex:1}
 .app-data-grid__viewport{overflow:auto}
 .app-data-grid table{width:100%;border-collapse:collapse;min-width:720px}
 .app-data-grid th,.app-data-grid td{padding:.85rem 1rem;border-bottom:1px solid var(--ui-border);text-align:start;vertical-align:middle}
@@ -11,6 +13,9 @@
 .app-data-grid input[type="checkbox"]{width:17px;height:17px;accent-color:var(--ui-accent);cursor:pointer}
 .app-data-grid__footer{display:flex;align-items:center;justify-content:space-between;gap:var(--ui-space-4);padding:var(--ui-space-4);background:var(--ui-surface-2)}
 .app-data-grid__summary{display:flex;align-items:center;gap:var(--ui-space-3);color:var(--ui-muted);font-size:.82rem}
+.app-data-grid__footer-controls{display:flex;align-items:center;gap:var(--ui-space-4)}
+.app-data-grid__page-size{display:flex;align-items:center;gap:.5rem;color:var(--ui-muted);font-size:.8rem;font-weight:700}
+.app-data-grid__page-size select{min-height:34px;padding:.25rem 1.8rem .25rem .55rem;border:1px solid var(--ui-border);border-radius:var(--ui-radius-sm);background:var(--ui-surface);color:var(--ui-text);font:inherit}
 .app-data-grid__pagination{display:flex;align-items:center;gap:var(--ui-space-2)}
 .app-data-grid__pagination>span{min-width:70px;text-align:center;color:var(--ui-muted);font-size:.82rem;font-weight:700}
-@media(max-width:700px){.app-data-grid__toolbar,.app-data-grid__footer{align-items:stretch;flex-direction:column}.app-data-grid__pagination{justify-content:space-between}.app-data-grid__summary{justify-content:space-between}}
+@media(max-width:700px){.app-data-grid__commandbar,.app-data-grid__footer{align-items:stretch;flex-direction:column}.app-data-grid__commandbar-actions,.app-data-grid__footer-controls{justify-content:space-between}.app-data-grid__footer-controls{align-items:stretch;flex-direction:column}.app-data-grid__pagination{justify-content:space-between}.app-data-grid__summary{justify-content:space-between}}
