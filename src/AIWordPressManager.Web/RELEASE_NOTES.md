@@ -1,5 +1,15 @@
 # AI WordPress Manager Release Notes
 
+## 155.68.0 - 2026-08-06 - Global Pages Explorer
+- Added a global pages explorer at `/module/pages` backed by the local SQLite cache.
+- Added cross-site search by title, slug, excerpt, and synchronized page content.
+- Added filtering by WordPress site and page status, including published, draft, pending, and private pages.
+- Added server-side pagination with 10, 25, 50, and 100 item page sizes.
+- Added total, published, draft, private, and represented-site summaries.
+- Added direct links to page editing, the per-site explorer, and the public WordPress page.
+- Consolidated post and page queries in the registered global content explorer service.
+- Kept the build identity visible as `v155.68.0 • agent/logs-error-center`.
+
 ## 155.67.0 - 2026-08-06 - Global Posts Explorer
 - Added a global posts explorer at `/module/posts` backed entirely by the local SQLite cache.
 - Added cross-site search by title, slug, and excerpt.
