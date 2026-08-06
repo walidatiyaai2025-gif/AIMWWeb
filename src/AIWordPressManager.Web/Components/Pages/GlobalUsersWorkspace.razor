@@ -1,0 +1,192 @@
+@page "/module/users"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject WordPressUsersWebService UsersService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مستخدمو WordPress" : "WordPress Users")</PageTitle>
+
+@if (_loadingSites)
+{
+    <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل المواقع" : "Loading sites")" Message="@(L.IsArabic ? "يتم تجهيز مساحة إدارة المستخدمين." : "Preparing the users workspace.")" />
+}
+else
+{
+    <div class="global-users-workspace">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "بيانات مباشرة" : "LIVE WORDPRESS DATA")"
+                    Title="@(L.IsArabic ? "مستخدمو WordPress" : "WordPress Users Workspace")"
+                    Subtitle="@(L.IsArabic ? "اختر موقعًا لعرض المستخدمين والأدوار مباشرة من WordPress." : "Select a site to review users and roles directly from WordPress.")">
+            <Actions>
+                @if (_selectedSiteId != Guid.Empty)
+                {
+                    <AppButton Href="@($"/sites/{_selectedSiteId}/users")" Variant="primary" Text="@(L.IsArabic ? "الإدارة الكاملة" : "Full user management")" />
+                }
+                <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Disabled="@(_working || _selectedSiteId == Guid.Empty)" Busy="@_working" OnClick="RefreshAsync" />
+            </Actions>
+        </AppToolbar>
+
+        <AppSection Eyebrow="@(L.IsArabic ? "الفلاتر" : "FILTERS")" Title="@(L.IsArabic ? "اختيار الموقع والمستخدمين" : "Select site and users")">
+            <ChildContent>
+                <div class="filter-row">
+                    <select class="form-control" @bind="_selectedSiteId" @bind:after="SiteChangedAsync">
+                        <option value="@Guid.Empty">@(L.IsArabic ? "اختر موقعًا" : "Select a site")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                    <input class="form-control" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "اسم المستخدم أو البريد..." : "Username, name, or email...")" />
+                    <select class="form-control" @bind="_role">
+                        <option value="all">@(L.IsArabic ? "كل الأدوار" : "All roles")</option>
+                        <option value="administrator">Administrator</option>
+                        <option value="editor">Editor</option>
+                        <option value="author">Author</option>
+                        <option value="contributor">Contributor</option>
+                        <option value="subscriber">Subscriber</option>
+                    </select>
+                    <AppButton Variant="primary" Text="@(L.IsArabic ? "بحث" : "Search")" Disabled="@(_working || _selectedSiteId == Guid.Empty)" OnClick="SearchAsync" />
+                </div>
+            </ChildContent>
+        </AppSection>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+        }
+
+        @if (_selectedSiteId == Guid.Empty)
+        {
+            <AppCard><AppEmptyState Icon="◎" Title="@(L.IsArabic ? "اختر موقع WordPress" : "Select a WordPress site")" Description="@(L.IsArabic ? "سيتم تحميل المستخدمين من الموقع المحدد مباشرة." : "Users will be loaded live from the selected site.")" /></AppCard>
+        }
+        else if (_working && _result.Items.Count == 0)
+        {
+            <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل المستخدمين" : "Loading users")" Message="@(L.IsArabic ? "يتم الاتصال بواجهة WordPress REST API." : "Connecting to the WordPress REST API.")" />
+        }
+        else if (!_result.Success)
+        {
+            <AppCard><AppEmptyState Icon="!" Title="@(L.IsArabic ? "تعذر تحميل المستخدمين" : "Could not load users")" Description="@L.TranslateMessage(_result.Message)" /></AppCard>
+        }
+        else
+        {
+            <section class="app-stat-grid">
+                <AppStatCard Icon="◎" Label="@(L.IsArabic ? "إجمالي المستخدمين" : "Total users")" Value="@_result.Total.ToString()" Description="@SelectedSiteName" />
+                <AppStatCard Icon="♛" Label="Administrator" Value="@RoleCount("administrator").ToString()" Description="@(L.IsArabic ? "في الصفحة الحالية" : "On current page")" Tone="warning" />
+                <AppStatCard Icon="✎" Label="Editor" Value="@RoleCount("editor").ToString()" Description="@(L.IsArabic ? "في الصفحة الحالية" : "On current page")" Tone="info" />
+                <AppStatCard Icon="#" Label="@(L.IsArabic ? "الصفحة" : "Page")" Value="@_page.ToString()" Description="@($"{(L.IsArabic ? "من" : "of")} {_result.TotalPages}")" />
+            </section>
+
+            <AppDataGrid TItem="WordPressUserView"
+                         Items="@_result.Items"
+                         KeySelector="@(user => user.Id.ToString())"
+                         SearchKeySelector="@UserSearchKey"
+                         SortKeySelector="@(user => user.Name)"
+                         PageSize="25"
+                         EmptyTitle="@(L.IsArabic ? "لا يوجد مستخدمون" : "No users found")"
+                         EmptyDescription="@(L.IsArabic ? "غيّر الفلاتر أو تحقق من صلاحيات حساب WordPress." : "Change the filters or verify the WordPress account permissions.")"
+                         SearchPlaceholder="@(L.IsArabic ? "بحث داخل النتائج..." : "Search current results...")"
+                         SearchAriaLabel="@(L.IsArabic ? "بحث المستخدمين" : "Search users")"
+                         SortText="@(L.IsArabic ? "ترتيب بالاسم" : "Sort by name")"
+                         ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                         ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                         OfText="@(L.IsArabic ? "من" : "of")"
+                         RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")">
+                <Header>
+                    <th>@(L.IsArabic ? "المستخدم" : "User")</th>
+                    <th>@(L.IsArabic ? "البريد" : "Email")</th>
+                    <th>@(L.IsArabic ? "الأدوار" : "Roles")</th>
+                    <th>@(L.IsArabic ? "تاريخ التسجيل" : "Registered")</th>
+                    <th></th>
+                </Header>
+                <RowTemplate Context="user">
+                    <td>
+                        <div class="user-row">
+                            @if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                            {
+                                <img src="@user.AvatarUrl" alt="" width="38" height="38" style="border-radius:50%" loading="lazy" />
+                            }
+                            <div><strong>@DisplayName(user)</strong><small>@@@user.Username · #@user.Id</small></div>
+                        </div>
+                    </td>
+                    <td>@(string.IsNullOrWhiteSpace(user.Email) ? "—" : user.Email)</td>
+                    <td>@foreach (var role in user.Roles){<AppBadge Tone="info" Text="@role" />}</td>
+                    <td>@FormatDate(user.RegisteredAt)</td>
+                    <td><AppButton Size="small" Href="@($"/sites/{_selectedSiteId}/users")" Text="@(L.IsArabic ? "إدارة" : "Manage")" /></td>
+                </RowTemplate>
+            </AppDataGrid>
+
+            <AppSection Title="@(L.IsArabic ? "صفحات WordPress" : "WordPress pages")">
+                <Actions>
+                    <AppButton Icon="‹" Text="@(L.IsArabic ? "السابق" : "Previous")" Disabled="@(_page <= 1 || _working)" OnClick="PreviousAsync" />
+                    <AppBadge Tone="info" Text="@($"{_page} / {_result.TotalPages}")" />
+                    <AppButton Icon="›" Text="@(L.IsArabic ? "التالي" : "Next")" Disabled="@(_page >= _result.TotalPages || _working)" OnClick="NextAsync" />
+                </Actions>
+            </AppSection>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private UserPageResult _result = new(true, string.Empty, Array.Empty<WordPressUserView>(), 0, 1);
+    private Guid _selectedSiteId;
+    private string _search = string.Empty;
+    private string _role = "all";
+    private string? _message;
+    private int _page = 1;
+    private bool _loadingSites = true;
+    private bool _working;
+    private bool _isError;
+
+    private string SelectedSiteName => _sites.FirstOrDefault(x => x.Id == _selectedSiteId)?.Name ?? "—";
+
+    protected override void OnInitialized() => L.Changed += LanguageChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _sites = await SiteService.GetSitesAsync(); }
+        finally { _loadingSites = false; }
+    }
+
+    private async Task SiteChangedAsync()
+    {
+        _page = 1;
+        _search = string.Empty;
+        _role = "all";
+        _message = null;
+        _result = new(true, string.Empty, Array.Empty<WordPressUserView>(), 0, 1);
+        if (_selectedSiteId != Guid.Empty) await LoadAsync();
+    }
+
+    private Task RefreshAsync(MouseEventArgs _) => LoadAsync();
+    private async Task SearchAsync(MouseEventArgs _) { _page = 1; await LoadAsync(); }
+    private async Task PreviousAsync(MouseEventArgs _) { if (_page > 1) { _page--; await LoadAsync(); } }
+    private async Task NextAsync(MouseEventArgs _) { if (_page < _result.TotalPages) { _page++; await LoadAsync(); } }
+
+    private async Task LoadAsync()
+    {
+        if (_selectedSiteId == Guid.Empty) return;
+        try
+        {
+            _working = true;
+            _message = null;
+            _result = await UsersService.GetAsync(_selectedSiteId, _search, _role, _page, 50);
+            _isError = !_result.Success;
+            if (!_result.Success) _message = L.TranslateMessage(_result.Message);
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+            _result = new(false, ex.Message, Array.Empty<WordPressUserView>(), 0, 1);
+        }
+        finally { _working = false; }
+    }
+
+    private int RoleCount(string role) => _result.Items.Count(x => x.Roles.Contains(role, StringComparer.OrdinalIgnoreCase));
+    private static string DisplayName(WordPressUserView user) => string.IsNullOrWhiteSpace(user.Name) ? user.Username : user.Name;
+    private static string UserSearchKey(WordPressUserView user) => $"{user.Id} {user.Username} {user.Name} {user.Email} {string.Join(' ', user.Roles)}";
+    private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
