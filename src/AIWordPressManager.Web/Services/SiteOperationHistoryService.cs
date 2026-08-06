@@ -27,14 +27,6 @@ public sealed class SiteOperationHistoryService
         }
     }
 
-    public SiteOperationHistoryItem? GetById(Guid operationId)
-    {
-        lock (_sync)
-        {
-            return Load().FirstOrDefault(x => x.Id == operationId);
-        }
-    }
-
     public IReadOnlyList<SiteOperationHistoryItem> GetAll(int take = 250)
     {
         lock (_sync)
@@ -43,6 +35,14 @@ public sealed class SiteOperationHistoryService
                 .OrderByDescending(x => x.StartedAtUtc)
                 .Take(Math.Clamp(take, 1, 2000))
                 .ToList();
+        }
+    }
+
+    public SiteOperationHistoryItem? GetById(Guid operationId)
+    {
+        lock (_sync)
+        {
+            return Load().FirstOrDefault(x => x.Id == operationId);
         }
     }
 
@@ -70,6 +70,65 @@ public sealed class SiteOperationHistoryService
                 TimeSpan.FromMilliseconds(averageMilliseconds),
                 items.Select(x => x.SiteId).Distinct().Count(),
                 items.OrderByDescending(x => x.StartedAtUtc).FirstOrDefault()?.StartedAtUtc);
+        }
+    }
+
+    public SiteOperationHistoryStorageInfo GetStorageInfo()
+    {
+        lock (_sync)
+        {
+            var items = Load();
+            var file = new FileInfo(_path);
+            return new SiteOperationHistoryStorageInfo(
+                _path,
+                items.Count,
+                file.Exists ? file.Length : 0,
+                items.Count == 0 ? null : items.Min(x => x.StartedAtUtc),
+                items.Count == 0 ? null : items.Max(x => x.StartedAtUtc),
+                items.Select(x => x.SiteId).Distinct().Count());
+        }
+    }
+
+    public SiteOperationCleanupPreview PreviewCleanup(int olderThanDays, int keepLatest = 100)
+    {
+        lock (_sync)
+        {
+            var items = Load().OrderByDescending(x => x.StartedAtUtc).ToList();
+            var safeDays = Math.Clamp(olderThanDays, 1, 3650);
+            var safeKeep = Math.Clamp(keepLatest, 0, 2000);
+            var cutoffUtc = DateTime.UtcNow.AddDays(-safeDays);
+            var protectedIds = items.Take(safeKeep).Select(x => x.Id).ToHashSet();
+            var removable = items.Where(x => x.StartedAtUtc < cutoffUtc && !protectedIds.Contains(x.Id)).ToList();
+
+            return new SiteOperationCleanupPreview(
+                items.Count,
+                removable.Count,
+                items.Count - removable.Count,
+                cutoffUtc,
+                safeKeep,
+                removable.Count == 0 ? null : removable.Min(x => x.StartedAtUtc),
+                removable.Count == 0 ? null : removable.Max(x => x.StartedAtUtc));
+        }
+    }
+
+    public SiteOperationCleanupResult Cleanup(int olderThanDays, int keepLatest = 100)
+    {
+        lock (_sync)
+        {
+            var items = Load().OrderByDescending(x => x.StartedAtUtc).ToList();
+            var preview = PreviewCleanup(olderThanDays, keepLatest);
+            if (preview.RemovableCount == 0)
+            {
+                return new SiteOperationCleanupResult(0, items.Count, preview.CutoffUtc, DateTime.UtcNow);
+            }
+
+            var protectedIds = items.Take(preview.KeepLatest).Select(x => x.Id).ToHashSet();
+            var retained = items
+                .Where(x => x.StartedAtUtc >= preview.CutoffUtc || protectedIds.Contains(x.Id))
+                .ToList();
+
+            Save(retained);
+            return new SiteOperationCleanupResult(items.Count - retained.Count, retained.Count, preview.CutoffUtc, DateTime.UtcNow);
         }
     }
 
@@ -138,3 +197,26 @@ public sealed record SiteOperationHistorySummary(
     TimeSpan AverageDuration,
     int SiteCount,
     DateTime? LastOperationAtUtc);
+
+public sealed record SiteOperationHistoryStorageInfo(
+    string FilePath,
+    int RecordCount,
+    long FileSizeBytes,
+    DateTime? OldestOperationAtUtc,
+    DateTime? NewestOperationAtUtc,
+    int SiteCount);
+
+public sealed record SiteOperationCleanupPreview(
+    int TotalCount,
+    int RemovableCount,
+    int RetainedCount,
+    DateTime CutoffUtc,
+    int KeepLatest,
+    DateTime? OldestRemovableAtUtc,
+    DateTime? NewestRemovableAtUtc);
+
+public sealed record SiteOperationCleanupResult(
+    int RemovedCount,
+    int RemainingCount,
+    DateTime CutoffUtc,
+    DateTime CompletedAtUtc);
