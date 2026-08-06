@@ -1,0 +1,130 @@
+@page "/sites/{Id:guid}/snapshot"
+@page "/sites/{Id:guid}/offline-data"
+@rendermode InteractiveServer
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject SiteWebService SiteService
+@inject WordPressSyncWebService SyncService
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "لقطة بيانات الموقع" : "Site Data Snapshot")</PageTitle>
+
+@if (_loading)
+{
+    <AppLoading Title="@(L.IsArabic ? "جارٍ قراءة البيانات المحلية" : "Loading local site data")" Message="@(L.IsArabic ? "يتم حساب المحتوى المحفوظ وآخر وقت مزامنة." : "Calculating cached content and synchronization freshness.")" />
+}
+else if (_site is null)
+{
+    <AppCard><AppEmptyState Icon="◎" Title="@(L.IsArabic ? "الموقع غير موجود" : "Site not found")" Description="@(L.IsArabic ? "تعذر العثور على الموقع داخل قاعدة البيانات المحلية." : "The site could not be found in the local database.")"><Actions><AppButton Href="/sites" Text="@(L.IsArabic ? "العودة للمواقع" : "Back to sites")" /></Actions></AppEmptyState></AppCard>
+}
+else
+{
+    <div class="site-snapshot-page">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "البيانات المحلية" : "LOCAL DATA")" Title="@_site.Name" Subtitle="@(L.IsArabic ? "راقب محتوى WordPress المخزن محليًا ومدى حداثة آخر مزامنة." : "Monitor locally cached WordPress content and synchronization freshness.")">
+            <Actions>
+                <AppButton Href="@($"/sites/{Id}")" Text="@(L.IsArabic ? "لوحة الموقع" : "Site dashboard")" />
+                <AppButton Href="@($"/sites/{Id}/explorer")" Text="@(L.IsArabic ? "مستكشف المحتوى" : "Content explorer")" />
+                <AppButton Icon="↻" Variant="primary" Text="@(_syncing ? (L.IsArabic ? "جارٍ المزامنة" : "Synchronizing") : (L.IsArabic ? "مزامنة الآن" : "Sync now"))" Busy="@_syncing" Disabled="@_syncing" OnClick="SynchronizeAsync" />
+            </Actions>
+        </AppToolbar>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")">@_message</div>
+        }
+
+        <section class="app-stat-grid">
+            <AppStatCard Icon="▤" Label="@(L.IsArabic ? "المقالات" : "Posts")" Value="@_snapshot.Posts.ToString()" Description="@(L.IsArabic ? "محفوظة محليًا" : "Cached locally")" />
+            <AppStatCard Icon="▧" Label="@(L.IsArabic ? "الصفحات" : "Pages")" Value="@_snapshot.Pages.ToString()" Description="@(L.IsArabic ? "محفوظة محليًا" : "Cached locally")" />
+            <AppStatCard Icon="◫" Label="@(L.IsArabic ? "الوسائط" : "Media")" Value="@_snapshot.Media.ToString()" Description="@(L.IsArabic ? "عناصر مكتبة الوسائط" : "Media library items")" />
+            <AppStatCard Icon="◉" Label="@(L.IsArabic ? "التصنيفات والوسوم" : "Terms")" Value="@((_snapshot.Categories + _snapshot.Tags).ToString())" Description="@(L.IsArabic ? $"{_snapshot.Categories} تصنيف، {_snapshot.Tags} وسم" : $"{_snapshot.Categories} categories, {_snapshot.Tags} tags")" />
+        </section>
+
+        <section class="snapshot-layout">
+            <AppCard Title="@(L.IsArabic ? "جاهزية العمل بدون اتصال" : "Offline readiness")" Subtitle="@(L.IsArabic ? "تُعرض الشاشات من SQLite حتى تكتمل المزامنة مع WordPress." : "Screens can load from SQLite while WordPress synchronization completes.")">
+                <div class="snapshot-readiness">
+                    <div class="snapshot-ring @FreshnessTone"><strong>@FreshnessPercent%</strong><span>@FreshnessLabel</span></div>
+                    <div class="snapshot-readiness-details">
+                        <div><span>@(L.IsArabic ? "إجمالي السجلات" : "Total cached records")</span><strong>@_snapshot.Total</strong></div>
+                        <div><span>@(L.IsArabic ? "آخر مزامنة" : "Last synchronization")</span><strong>@FormatDate(_snapshot.LastSyncUtc)</strong></div>
+                        <div><span>@(L.IsArabic ? "عمر البيانات" : "Cache age")</span><strong>@CacheAge</strong></div>
+                        <div><span>@(L.IsArabic ? "حالة الذاكرة المحلية" : "Local cache state")</span><AppBadge Tone="@FreshnessTone" Text="@FreshnessLabel" /></div>
+                    </div>
+                </div>
+            </AppCard>
+
+            <AppCard Title="@(L.IsArabic ? "توزيع المحتوى" : "Content distribution")">
+                @foreach (var item in Distribution)
+                {
+                    <div class="snapshot-bar-row"><div><span>@item.Label</span><strong>@item.Count</strong></div><AppProgressBar Value="@item.Percent" Label="@item.Label" /></div>
+                }
+            </AppCard>
+        </section>
+
+        <AppCard Title="@(L.IsArabic ? "إرشادات المزامنة" : "Synchronization guidance")">
+            <div class="snapshot-guidance">
+                <div><strong>@(L.IsArabic ? "حديثة" : "Fresh")</strong><span>@(L.IsArabic ? "أقل من 6 ساعات — لا يلزم إجراء." : "Less than 6 hours old — no action required.")</span></div>
+                <div><strong>@(L.IsArabic ? "تحتاج تحديث" : "Review")</strong><span>@(L.IsArabic ? "من 6 إلى 24 ساعة — يفضل تشغيل المزامنة." : "6 to 24 hours old — synchronization is recommended.")</span></div>
+                <div><strong>@(L.IsArabic ? "قديمة" : "Stale")</strong><span>@(L.IsArabic ? "أكثر من 24 ساعة أو لا توجد بيانات — نفذ المزامنة الآن." : "More than 24 hours old or empty — synchronize now.")</span></div>
+            </div>
+        </AppCard>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private bool _loading = true, _syncing, _isError;
+    private string? _message;
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private Snapshot _snapshot = Snapshot.Empty;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _loading = true;
+            _site = await SiteService.GetSiteAsync(Id);
+            if (_site is null) return;
+            var posts = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable && x.ContentType == "post"));
+            var pages = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable && x.ContentType == "page"));
+            var categories = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressCategoryRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable));
+            var tags = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressTagRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable));
+            var media = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressMediaRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable));
+            var contentSync = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.MaxAsync(Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id).Select(x => (DateTime?)x.LastSynchronizedAtUtc));
+            var mediaSync = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.MaxAsync(Db.WordPressMediaRecords.AsNoTracking().Where(x => x.SiteId == Id).Select(x => (DateTime?)x.LastSynchronizedAtUtc));
+            var lastSync = new[] { contentSync, mediaSync }.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty().Max();
+            _snapshot = new(posts, pages, categories, tags, media, lastSync == default ? null : lastSync);
+            _isError = false;
+        }
+        catch (Exception ex)
+        {
+            _isError = true; _message = L.TranslateMessage(ex.Message); Notifications.Error(_message, L.IsArabic ? "تعذر قراءة البيانات" : "Unable to read data", ex.ToString());
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task SynchronizeAsync(MouseEventArgs _)
+    {
+        try
+        {
+            _syncing = true; _message = null;
+            var result = await SyncService.SynchronizeAsync(Id);
+            _message = L.TranslateMessage(result.Message); _isError = !result.IsSuccess;
+            await LoadAsync();
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _syncing = false; }
+    }
+
+    private int FreshnessPercent => _snapshot.LastSyncUtc is null ? 0 : CacheHours < 6 ? 100 : CacheHours < 24 ? 65 : 25;
+    private string FreshnessTone => FreshnessPercent >= 80 ? "success" : FreshnessPercent >= 50 ? "warning" : "danger";
+    private string FreshnessLabel => FreshnessPercent >= 80 ? (L.IsArabic ? "حديثة" : "Fresh") : FreshnessPercent >= 50 ? (L.IsArabic ? "تحتاج تحديث" : "Review") : (L.IsArabic ? "قديمة" : "Stale");
+    private double CacheHours => _snapshot.LastSyncUtc is null ? double.MaxValue : (DateTime.UtcNow - _snapshot.LastSyncUtc.Value).TotalHours;
+    private string CacheAge => _snapshot.LastSyncUtc is null ? (L.IsArabic ? "لم تتم المزامنة" : "Never synchronized") : CacheHours < 1 ? (L.IsArabic ? "أقل من ساعة" : "Less than one hour") : CacheHours < 24 ? (L.IsArabic ? $"{Math.Floor(CacheHours)} ساعة" : $"{Math.Floor(CacheHours)} hours") : (L.IsArabic ? $"{Math.Floor(CacheHours / 24)} يوم" : $"{Math.Floor(CacheHours / 24)} days");
+    private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private IEnumerable<DistributionItem> Distribution { get { var max = Math.Max(1, new[] { _snapshot.Posts, _snapshot.Pages, _snapshot.Categories, _snapshot.Tags, _snapshot.Media }.Max()); yield return new(L.IsArabic ? "المقالات" : "Posts", _snapshot.Posts, _snapshot.Posts * 100 / max); yield return new(L.IsArabic ? "الصفحات" : "Pages", _snapshot.Pages, _snapshot.Pages * 100 / max); yield return new(L.IsArabic ? "الوسائط" : "Media", _snapshot.Media, _snapshot.Media * 100 / max); yield return new(L.IsArabic ? "التصنيفات" : "Categories", _snapshot.Categories, _snapshot.Categories * 100 / max); yield return new(L.IsArabic ? "الوسوم" : "Tags", _snapshot.Tags, _snapshot.Tags * 100 / max); } }
+    private sealed record Snapshot(int Posts, int Pages, int Categories, int Tags, int Media, DateTime? LastSyncUtc) { public int Total => Posts + Pages + Categories + Tags + Media; public static Snapshot Empty => new(0, 0, 0, 0, 0, null); }
+    private sealed record DistributionItem(string Label, int Count, int Percent);
+}
