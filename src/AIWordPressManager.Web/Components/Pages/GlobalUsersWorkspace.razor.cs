@@ -35,7 +35,12 @@ public partial class GlobalUsersWorkspace
         _role = "all";
         _message = null;
         _isError = false;
-        _result = new(true, string.Empty, Array.Empty<WordPressUserView>(), 0, 1);
+        _result = new(
+            true,
+            string.Empty,
+            Array.Empty<AIWordPressManager.Web.Services.WordPressUserView>(),
+            0,
+            1);
 
         if (_selectedSiteId != Guid.Empty)
             await LoadAsync();
