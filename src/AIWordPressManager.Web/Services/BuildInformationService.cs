@@ -13,11 +13,20 @@ public sealed class BuildInformationService
     {
         var assembly = typeof(BuildInformationService).Assembly;
         var assemblyName = assembly.GetName();
+        var assemblyPath = assembly.Location;
         var informational = assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;
 
-        var version = assemblyName.Version?.ToString(3) ?? "0.0.0";
+        var productVersion = !string.IsNullOrWhiteSpace(assemblyPath) && File.Exists(assemblyPath)
+            ? FileVersionInfo.GetVersionInfo(assemblyPath).ProductVersion
+            : null;
+
+        var version = NormalizeVersion(productVersion)
+            ?? NormalizeVersion(informational)
+            ?? assemblyName.Version?.ToString(3)
+            ?? "0.0.0";
+
         var branch = FirstNotEmpty(
             Environment.GetEnvironmentVariable("GITHUB_REF_NAME"),
             Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME"),
@@ -27,23 +36,34 @@ public sealed class BuildInformationService
             Environment.GetEnvironmentVariable("GITHUB_SHA"),
             Environment.GetEnvironmentVariable("BUILD_SOURCEVERSION"),
             TryGit("rev-parse --short HEAD"),
+            ExtractCommit(productVersion),
             ExtractCommit(informational),
             "unknown");
 
         if (commit.Length > 12) commit = commit[..12];
 
-        var assemblyPath = assembly.Location;
         var buildTimeUtc = File.Exists(assemblyPath)
             ? File.GetLastWriteTimeUtc(assemblyPath)
             : DateTime.UtcNow;
 
         return new BuildInformation(
             version,
-            informational ?? version,
+            informational ?? productVersion ?? version,
             branch,
             commit,
             buildTimeUtc,
             assemblyName.Name ?? "AIWordPressManager.Web");
+    }
+
+    private static string? NormalizeVersion(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        var normalized = value.Trim();
+        var plus = normalized.IndexOf('+');
+        if (plus >= 0) normalized = normalized[..plus];
+
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 
     private static string TryGit(string arguments)
@@ -58,7 +78,7 @@ public sealed class BuildInformationService
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WorkingDirectory = AppContext.BaseDirectory
+                WorkingDirectory = FindRepositoryDirectory()
             });
             if (process is null) return string.Empty;
             var output = process.StandardOutput.ReadToEnd().Trim();
@@ -69,6 +89,19 @@ public sealed class BuildInformationService
         {
             return string.Empty;
         }
+    }
+
+    private static string FindRepositoryDirectory()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (Directory.Exists(Path.Combine(directory.FullName, ".git")))
+                return directory.FullName;
+            directory = directory.Parent;
+        }
+
+        return AppContext.BaseDirectory;
     }
 
     private static string ExtractCommit(string? informational)
