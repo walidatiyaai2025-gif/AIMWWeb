@@ -12,6 +12,7 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class WordPressApiClient(
     AppDbContext dbContext,
+    CurrentUserContext currentUser,
     IHttpClientFactory httpClientFactory,
     ISecretProtectionService secretProtectionService,
     ILogger<WordPressApiClient> logger) : IWordPressApiClient
@@ -173,7 +174,7 @@ public sealed class WordPressApiClient(
             "Basic",
             Convert.ToBase64String(
                 Encoding.UTF8.GetBytes($"{connection.UserName}:{connection.ApplicationPassword}")));
-        request.Headers.UserAgent.ParseAdd("AIWordPressManager/154.1");
+        request.Headers.UserAgent.ParseAdd("AIWordPressManager/155.77");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return request;
     }
@@ -182,9 +183,12 @@ public sealed class WordPressApiClient(
         Guid siteId,
         CancellationToken cancellationToken)
     {
+        var ownerUserId = currentUser.RequireUserId();
         var site = await dbContext.Sites.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == siteId && !x.IsDeleted, cancellationToken)
-            ?? throw new InvalidOperationException("الموقع غير موجود.");
+            .FirstOrDefaultAsync(
+                x => x.Id == siteId && x.OwnerUserId == ownerUserId && !x.IsDeleted,
+                cancellationToken)
+            ?? throw new UnauthorizedAccessException("You do not have access to this WordPress site.");
 
         var credential = await dbContext.SiteCredentials.AsNoTracking()
             .FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken)
