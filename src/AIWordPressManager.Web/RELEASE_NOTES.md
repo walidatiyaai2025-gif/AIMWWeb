@@ -1,5 +1,15 @@
 # AI WordPress Manager Release Notes
 
+## 155.70.0 - 2026-08-06 - Global Taxonomy Explorer
+- Added a global taxonomy explorer at `/module/taxonomy` backed by the local SQLite cache.
+- Added combined category and tag browsing across all connected WordPress sites.
+- Added search by taxonomy name, slug, and site name.
+- Added filtering by site, taxonomy type, and minimum usage count.
+- Added server-side pagination with 10, 25, 50, and 100 item page sizes.
+- Added category, tag, used-term, unused-term, and total-assignment summaries.
+- Added direct links to each site's taxonomy manager and content explorer.
+- Kept the build identity visible as `v155.70.0 • agent/logs-error-center`.
+
 ## 155.69.0 - 2026-08-06 - Global Media Explorer
 - Added a global media explorer at `/module/media` backed by the local SQLite cache.
 - Added cross-site search by title, slug, MIME type, and source URL.
