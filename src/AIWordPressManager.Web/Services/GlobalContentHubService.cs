@@ -8,19 +8,27 @@ public static class GlobalContentHubService
     public static async Task<GlobalContentHubView> GetAsync(
         AppDbContext dbContext,
         Guid ownerUserId,
+        Guid? siteId = null,
         CancellationToken cancellationToken = default)
     {
         if (ownerUserId == Guid.Empty)
             return new GlobalContentHubView([], 0, 0, 0, 0, 0, 0, 0);
 
-        var sites = await dbContext.Sites
+        var sitesQuery = dbContext.Sites
             .AsNoTracking()
-            .Where(x => x.OwnerUserId == ownerUserId)
+            .Where(x => x.OwnerUserId == ownerUserId);
+
+        if (siteId.HasValue)
+            sitesQuery = sitesQuery.Where(x => x.Id == siteId.Value);
+
+        var sites = await sitesQuery
             .OrderBy(x => x.Name)
             .Select(x => new { x.Id, x.Name })
             .ToListAsync(cancellationToken);
 
         var ownedSiteIds = sites.Select(x => x.Id).ToArray();
+        if (ownedSiteIds.Length == 0)
+            return new GlobalContentHubView([], 0, 0, 0, 0, 0, 0, 0);
 
         var content = await dbContext.WordPressContentRecords
             .AsNoTracking()
