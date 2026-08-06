@@ -1,5 +1,13 @@
 # AI WordPress Manager Release Notes
 
+## 155.58.0 - 2026-08-06 - Site Operations Overview
+- Added a cross-site operations dashboard at `/site-operations` and `/operations/sites`.
+- Added unified filtering by site, result, operation, and diagnostic message.
+- Added 30-day success, failure, active-site, and average-duration summaries.
+- Added direct navigation from each operation to the related site connection center.
+- Registered the persistent site operation history service in dependency injection.
+- Added cross-site history and summary queries while keeping the existing per-site history behavior.
+
 ## 155.57.0 - 2026-08-06 - Site Data Snapshot
 - Added a per-site offline data snapshot at `/sites/{id}/snapshot` and `/sites/{id}/offline-data`.
 - Added cached counts for posts, pages, categories, tags, and media.
