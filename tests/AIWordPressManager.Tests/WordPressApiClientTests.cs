@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Domain.Entities;
@@ -6,6 +7,7 @@ using AIWordPressManager.Persistence;
 using AIWordPressManager.Tests.Fixtures;
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -15,6 +17,7 @@ namespace AIWordPressManager.Tests;
 public sealed class WordPressApiClientTests : IAsyncLifetime
 {
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
+    private readonly Guid _ownerId = Guid.NewGuid();
     private AppDbContext _db = null!;
     private Guid _siteId;
 
@@ -28,7 +31,7 @@ public sealed class WordPressApiClientTests : IAsyncLifetime
         await _db.Database.EnsureCreatedAsync();
 
         var now = DateTime.UtcNow;
-        var site = new Site("Test WordPress", new Uri("https://wordpress.test"), now);
+        var site = new Site("Test WordPress", new Uri("https://wordpress.test"), now, _ownerId);
         var credential = new SiteCredential(site.Id, "api-user", "app-password", now);
         _db.Sites.Add(site);
         _db.SiteCredentials.Add(credential);
@@ -135,11 +138,25 @@ public sealed class WordPressApiClientTests : IAsyncLifetime
         response.ErrorMessage.Should().Contain("JSON");
     }
 
-    private WordPressApiClient CreateClient(HttpMessageHandler handler) => new(
-        _db,
-        new FixedHttpClientFactory(handler),
-        new PassthroughSecretProtectionService(),
-        NullLogger<WordPressApiClient>.Instance);
+    private WordPressApiClient CreateClient(HttpMessageHandler handler)
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.NameIdentifier, _ownerId.ToString()),
+            new Claim(ClaimTypes.Name, "test-user")
+        ], "Test"));
+        var accessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        return new WordPressApiClient(
+            _db,
+            new CurrentUserContext(accessor),
+            new FixedHttpClientFactory(handler),
+            new PassthroughSecretProtectionService(),
+            NullLogger<WordPressApiClient>.Instance);
+    }
 
     private static string DecodeBasic(string? encoded) =>
         string.IsNullOrWhiteSpace(encoded)
