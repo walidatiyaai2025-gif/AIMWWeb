@@ -7,40 +7,288 @@
 
 <PageTitle>@L["UsersManager"]</PageTitle>
 
-@if (_loading) { <div class="loading-line">@L["LoadingUsers"]</div> }
-else if (_site is null) { <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div> }
+@if (_loading)
+{
+    <AppLoading Title="@L["LoadingUsers"]" Message="@(L.IsArabic ? "يتم تحميل مستخدمي WordPress وصلاحياتهم." : "Loading WordPress users and roles.")" />
+}
+else if (_site is null)
+{
+    <AppCard>
+        <AppEmptyState Icon="!" Title="@L["SiteNotFound"]">
+            <Actions><AppButton Href="/sites" Text="@L["BackToSites"]" /></Actions>
+        </AppEmptyState>
+    </AppCard>
+}
 else
 {
-<div class="page-heading"><div><h1>@L["UsersManager"]</h1><p>@_site.Name — @L["UsersIntro"]</p></div><div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div></div>
-@if (!string.IsNullOrWhiteSpace(_message)) { <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div> }
-<div class="stats-grid explorer-stats"><article class="stat-card"><span>@L["Users"]</span><strong>@_result.Total</strong><small>@L["CurrentFilter"]</small></article><article class="stat-card"><span>@L["CurrentPage"]</span><strong>@_page</strong><small>@L["OfPages"] @_result.TotalPages</small></article></div>
-<div class="panel explorer-toolbar"><div class="filter-row"><input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@L["SearchUsers"]" /><select @bind="_role"><option value="all">@L["AllRoles"]</option>@foreach(var role in Roles){<option value="@role.Key">@L[role.Value]</option>}</select><button class="btn primary" @onclick="ReloadFromFirstPageAsync">@L["Search"]</button><button class="btn" @onclick="LoadAsync">@L["Refresh"]</button><button class="btn primary" @onclick="StartCreate">@L["AddUser"]</button></div></div>
-<div class="editor-grid users-editor-grid">
-<section class="panel table-panel">
-@if (!_result.Success) { <div class="empty-state"><h3>@L["CouldNotLoadUsers"]</h3><p>@L.TranslateMessage(_result.Message)</p></div> }
-else if (_result.Items.Count == 0) { <div class="empty-state"><h3>@L["NoUsers"]</h3><p>@L["NoUsersHelp"]</p></div> }
-else { <table><thead><tr><th>@L["User"]</th><th>@L["Email"]</th><th>@L["Roles"]</th><th>@L["Registered"]</th><th>@L["Actions"]</th></tr></thead><tbody>@foreach(var user in _result.Items){<tr><td><div class="user-row">@if(!string.IsNullOrWhiteSpace(user.AvatarUrl)){<img class="avatar" src="@user.AvatarUrl" alt="" />}<div><strong>@(string.IsNullOrWhiteSpace(user.Name)?user.Username:user.Name)</strong><small>@@@user.Username</small></div></div></td><td>@user.Email</td><td>@string.Join(", ", user.Roles.Select(TranslateRole))</td><td>@FormatDate(user.RegisteredAt)</td><td><div class="table-actions"><button class="btn compact" @onclick="() => StartEdit(user)">@L["Edit"]</button><button class="btn compact" @onclick="() => DisableAsync(user)">@L["Disable"]</button><button class="btn compact danger" @onclick="() => DeleteAsync(user)">@L["Delete"]</button></div></td></tr>}</tbody></table> }
-<div class="pagination-bar"><button class="btn" disabled="@(_page<=1||_working)" @onclick="PreviousPageAsync">@L["Previous"]</button><span>@L["Page"] @_page @L["Of"] @_result.TotalPages</span><button class="btn" disabled="@(_page>=_result.TotalPages||_working)" @onclick="NextPageAsync">@L["Next"]</button></div>
-</section>
-<aside class="panel"><h3>@(_editingId>0?L["EditUser"]:L["CreateUser"])</h3><EditForm Model="_model" OnValidSubmit="SaveAsync"><div class="form-grid one-column">@if(_editingId==0){<label>@L["Username"]<InputText @bind-Value="_model.Username" /></label>}<label>@L["Email"]<InputText type="email" @bind-Value="_model.Email" /></label><label>@(_editingId>0?L["NewPasswordOptional"]:L["Password"])<InputText type="password" @bind-Value="_model.Password" /></label><label>@L["DisplayName"]<InputText @bind-Value="_model.Name" /></label><label>@L["FirstName"]<InputText @bind-Value="_model.FirstName" /></label><label>@L["LastName"]<InputText @bind-Value="_model.LastName" /></label><label>@L["Website"]<InputText @bind-Value="_model.Url" /></label><label>@L["Description"]<InputTextArea rows="4" @bind-Value="_model.Description" /></label><label>@L["Role"]<select value="@SelectedRole" @onchange="RoleChanged">@foreach(var role in Roles){<option value="@role.Key">@L[role.Value]</option>}</select></label></div><div class="actions form-actions"><button class="btn primary" disabled="@_working" type="submit">@(_working?L["Saving"]:L["Save"])</button><button class="btn" type="button" @onclick="ResetForm">@L["Cancel"]</button></div></EditForm></aside>
-</div>
+    <div class="users-manager-page">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "إدارة الوصول" : "ACCESS MANAGEMENT")"
+                    Title="@L["UsersManager"]"
+                    Subtitle="@($"{_site.Name} — {L["UsersIntro"]}")">
+            <Actions>
+                <AppButton Href="@($"/sites/{SiteId}/explorer")" Text="@L["BackToExplorer"]" />
+                <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
+                <AppButton Variant="primary" Icon="＋" Text="@L["AddUser"]" Disabled="@_working" OnClick="StartCreateClicked" />
+            </Actions>
+        </AppToolbar>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+        }
+
+        <section class="app-stat-grid">
+            <AppStatCard Icon="◎" Label="@L["Users"]" Value="@(_result.Total.ToString())" Description="@L["CurrentFilter"]" />
+            <AppStatCard Icon="▤" Label="@L["CurrentPage"]" Value="@(_page.ToString())" Description="@($"{L["OfPages"]} {_result.TotalPages}")" Tone="info" />
+            <AppStatCard Icon="✓" Label="@(L.IsArabic ? "المعروض حاليًا" : "Visible now")" Value="@(_result.Items.Count.ToString())" Description="@(L.IsArabic ? "مستخدم في الصفحة الحالية" : "users on current server page")" Tone="success" />
+            <AppStatCard Icon="◉" Label="@(L.IsArabic ? "الدور المحدد" : "Role filter")" Value="@RoleFilterText" Description="@(L.IsArabic ? "فلتر WordPress الحالي" : "Current WordPress filter")" Tone="warning" />
+        </section>
+
+        <AppCard Class="users-server-filters">
+            <div class="filter-row">
+                <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@L["SearchUsers"]" />
+                <select @bind="_role">
+                    <option value="all">@L["AllRoles"]</option>
+                    @foreach (var role in Roles)
+                    {
+                        <option value="@role.Key">@L[role.Value]</option>
+                    }
+                </select>
+                <AppButton Variant="primary" Text="@L["Search"]" Disabled="@_working" OnClick="SearchClickedAsync" />
+            </div>
+        </AppCard>
+
+        <div class="editor-grid users-editor-grid">
+            <section>
+                @if (!_result.Success)
+                {
+                    <AppCard>
+                        <AppEmptyState Icon="!" Title="@L["CouldNotLoadUsers"]" Description="@L.TranslateMessage(_result.Message)" />
+                    </AppCard>
+                }
+                else
+                {
+                    <AppDataGrid TItem="WordPressUserView"
+                                 Items="@_result.Items"
+                                 KeySelector="@(user => user.Id.ToString())"
+                                 SearchKeySelector="UserSearchKey"
+                                 SortKeySelector="UserSortKey"
+                                 CsvHeaders="@CsvHeaders"
+                                 CsvRowSelector="UserCsvRow"
+                                 CsvFileName="@CsvFileName"
+                                 PageSize="10"
+                                 Selectable="true"
+                                 Loading="@_working"
+                                 EmptyTitle="@L["NoUsers"]"
+                                 EmptyDescription="@L["NoUsersHelp"]"
+                                 SelectedText="@(L.IsArabic ? "محدد" : "selected")"
+                                 ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                                 OfText="@(L.IsArabic ? "من" : "of")"
+                                 RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+                                 SortText="@(L.IsArabic ? "ترتيب" : "Sort")"
+                                 ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                                 SearchPlaceholder="@(L.IsArabic ? "بحث داخل الصفحة الحالية..." : "Search current server page...")"
+                                 SearchAriaLabel="@L["SearchUsers"]">
+                        <Toolbar>
+                            <div class="users-grid-heading">
+                                <strong>@L["UsersManager"]</strong>
+                                <small>@(L.IsArabic ? "البحث الداخلي والتصدير يعملان على صفحة WordPress الحالية." : "Local search and export apply to the current WordPress server page.")</small>
+                            </div>
+                            <div class="users-server-pagination">
+                                <AppButton Icon="‹" Size="small" Disabled="@(_page <= 1 || _working)" OnClick="PreviousPageClickedAsync" />
+                                <AppBadge Tone="info" Text="@($"{_page} / {_result.TotalPages}")" />
+                                <AppButton Icon="›" Size="small" Disabled="@(_page >= _result.TotalPages || _working)" OnClick="NextPageClickedAsync" />
+                            </div>
+                        </Toolbar>
+                        <Header>
+                            <th>@L["User"]</th>
+                            <th>@L["Email"]</th>
+                            <th>@L["Roles"]</th>
+                            <th>@L["Registered"]</th>
+                            <th>@L["Actions"]</th>
+                        </Header>
+                        <RowTemplate Context="user">
+                            <td>
+                                <div class="user-row">
+                                    @if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                                    {
+                                        <img class="avatar" src="@user.AvatarUrl" alt="" />
+                                    }
+                                    <div><strong>@(string.IsNullOrWhiteSpace(user.Name) ? user.Username : user.Name)</strong><small>@@@user.Username</small></div>
+                                </div>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>@string.Join(", ", user.Roles.Select(TranslateRole))</td>
+                            <td>@FormatDate(user.RegisteredAt)</td>
+                            <td>
+                                <div class="table-actions">
+                                    <AppButton Size="small" Icon="✎" Text="@L["Edit"]" Disabled="@_working" OnClick="args => StartEdit(user)" />
+                                    <AppButton Size="small" Text="@L["Disable"]" Disabled="@_working" OnClick="args => DisableAsync(user)" />
+                                    <AppButton Size="small" Icon="⌫" Text="@L["Delete"]" Variant="danger" Disabled="@_working" OnClick="args => DeleteAsync(user)" />
+                                </div>
+                            </td>
+                        </RowTemplate>
+                    </AppDataGrid>
+                }
+            </section>
+
+            <aside>
+                <AppSection Title="@(_editingId > 0 ? L["EditUser"] : L["CreateUser"])"
+                            Subtitle="@(L.IsArabic ? "عدّل بيانات الحساب والأدوار ثم احفظها في WordPress." : "Edit account details and roles, then save them to WordPress.")">
+                    <ChildContent>
+                        <EditForm Model="_model" OnValidSubmit="SaveAsync">
+                            <div class="form-grid one-column">
+                                @if (_editingId == 0)
+                                {
+                                    <label>@L["Username"]<InputText @bind-Value="_model.Username" /></label>
+                                }
+                                <label>@L["Email"]<InputText type="email" @bind-Value="_model.Email" /></label>
+                                <label>@(_editingId > 0 ? L["NewPasswordOptional"] : L["Password"])<InputText type="password" @bind-Value="_model.Password" /></label>
+                                <label>@L["DisplayName"]<InputText @bind-Value="_model.Name" /></label>
+                                <label>@L["FirstName"]<InputText @bind-Value="_model.FirstName" /></label>
+                                <label>@L["LastName"]<InputText @bind-Value="_model.LastName" /></label>
+                                <label>@L["Website"]<InputText @bind-Value="_model.Url" /></label>
+                                <label>@L["Description"]<InputTextArea rows="4" @bind-Value="_model.Description" /></label>
+                                <label>@L["Role"]
+                                    <select value="@SelectedRole" @onchange="RoleChanged">
+                                        @foreach (var role in Roles)
+                                        {
+                                            <option value="@role.Key">@L[role.Value]</option>
+                                        }
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="actions form-actions">
+                                <AppButton Type="submit" Variant="primary" Text="@(_working ? L["Saving"] : L["Save"])" Busy="@_working" Disabled="@_working" />
+                                <AppButton Text="@L["Cancel"]" Disabled="@_working" OnClick="ResetFormClicked" />
+                            </div>
+                        </EditForm>
+                    </ChildContent>
+                </AppSection>
+            </aside>
+        </div>
+    </div>
 }
 
 @code {
-[Parameter] public Guid SiteId {get;set;}
-private AIWordPressManager.Domain.Entities.Site? _site; private UserPageResult _result=new(true,"",Array.Empty<WordPressUserView>(),0,1); private WordPressUserEditModel _model=new(); private string _search="",_role="all"; private string? _message; private int _page=1,_editingId; private bool _loading=true,_working,_isError;
-private static readonly Dictionary<string,string> Roles=new(){{"administrator","RoleAdministrator"},{"editor","RoleEditor"},{"author","RoleAuthor"},{"contributor","RoleContributor"},{"subscriber","RoleSubscriber"}};
-private string SelectedRole=>_model.Roles.FirstOrDefault()??"subscriber";
-protected override void OnInitialized()=>L.Changed+=Changed;
-protected override async Task OnParametersSetAsync(){_loading=true;_site=await SiteService.GetSiteAsync(SiteId);if(_site is not null)await LoadAsync();_loading=false;}
-private async Task LoadAsync(){try{_working=true;_result=await UsersService.GetAsync(SiteId,_search,_role,_page);_isError=!_result.Success;_message=_result.Success?null:L.TranslateMessage(_result.Message);}catch(Exception ex){_isError=true;_message=L.TranslateMessage(ex.Message);}finally{_working=false;}}
-private async Task ReloadFromFirstPageAsync(){_page=1;await LoadAsync();} private async Task PreviousPageAsync(){if(_page>1){_page--;await LoadAsync();}} private async Task NextPageAsync(){if(_page<_result.TotalPages){_page++;await LoadAsync();}}
-private void StartCreate(){_editingId=0;_model=new();_message=null;_isError=false;}
-private void StartEdit(WordPressUserView u){_editingId=u.Id;_model=new(){Username=u.Username,Email=u.Email,Name=u.Name,FirstName=u.FirstName,LastName=u.LastName,Url=u.Url,Description=u.Description,Roles=u.Roles.Count>0?u.Roles.ToArray():["subscriber"]};}
-private void ResetForm(){_editingId=0;_model=new();}
-private void RoleChanged(ChangeEventArgs e)=>_model.Roles=[e.Value?.ToString()??"subscriber"];
-private async Task SaveAsync(){try{_working=true;var r=_editingId>0?await UsersService.UpdateAsync(SiteId,_editingId,_model):await UsersService.CreateAsync(SiteId,_model);_isError=!r.Success;_message=L.TranslateMessage(r.Message);if(r.Success){ResetForm();await LoadAsync();}}catch(Exception ex){_isError=true;_message=L.TranslateMessage(ex.Message);}finally{_working=false;}}
-private async Task DisableAsync(WordPressUserView u){var r=await UsersService.RemoveRolesAsync(SiteId,u.Id);_isError=!r.Success;_message=L.TranslateMessage(r.Message);if(r.Success)await LoadAsync();}
-private async Task DeleteAsync(WordPressUserView u){var r=await UsersService.DeleteAsync(SiteId,u.Id);_isError=!r.Success;_message=L.TranslateMessage(r.Message);if(r.Success)await LoadAsync();}
-private string TranslateRole(string role)=>Roles.TryGetValue(role,out var key)?L[key]:role; private string FormatDate(DateTime? d)=>d is null?"—":d.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd":"MMM d, yyyy"); private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+    [Parameter] public Guid SiteId { get; set; }
+
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private UserPageResult _result = new(true, "", Array.Empty<WordPressUserView>(), 0, 1);
+    private WordPressUserEditModel _model = new();
+    private string _search = "", _role = "all";
+    private string? _message;
+    private int _page = 1, _editingId;
+    private bool _loading = true, _working, _isError;
+
+    private static readonly Dictionary<string, string> Roles = new()
+    {
+        { "administrator", "RoleAdministrator" }, { "editor", "RoleEditor" }, { "author", "RoleAuthor" },
+        { "contributor", "RoleContributor" }, { "subscriber", "RoleSubscriber" }
+    };
+
+    private string SelectedRole => _model.Roles.FirstOrDefault() ?? "subscriber";
+    private string RoleFilterText => _role == "all" ? L["AllRoles"] : TranslateRole(_role);
+    private IReadOnlyList<string> CsvHeaders => L.IsArabic
+        ? new[] { "المستخدم", "اسم المستخدم", "البريد الإلكتروني", "الأدوار", "تاريخ التسجيل" }
+        : new[] { "Name", "Username", "Email", "Roles", "Registered" };
+    private string CsvFileName => $"wordpress-users-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+
+    protected override void OnInitialized() => L.Changed += Changed;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _site = await SiteService.GetSiteAsync(SiteId);
+        if (_site is not null) await LoadAsync();
+        _loading = false;
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _working = true;
+            _result = await UsersService.GetAsync(SiteId, _search, _role, _page);
+            _isError = !_result.Success;
+            _message = _result.Success ? null : L.TranslateMessage(_result.Message);
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
+        finally { _working = false; }
+    }
+
+    private Task RefreshClickedAsync(MouseEventArgs _) => LoadAsync();
+    private async Task SearchClickedAsync(MouseEventArgs _) { _page = 1; await LoadAsync(); }
+    private async Task PreviousPageClickedAsync(MouseEventArgs _) { if (_page > 1) { _page--; await LoadAsync(); } }
+    private async Task NextPageClickedAsync(MouseEventArgs _) { if (_page < _result.TotalPages) { _page++; await LoadAsync(); } }
+    private Task StartCreateClicked(MouseEventArgs _) { StartCreate(); return Task.CompletedTask; }
+    private Task ResetFormClicked(MouseEventArgs _) { ResetForm(); return Task.CompletedTask; }
+
+    private void StartCreate() { _editingId = 0; _model = new(); _message = null; _isError = false; }
+    private Task StartEdit(WordPressUserView user)
+    {
+        _editingId = user.Id;
+        _model = new()
+        {
+            Username = user.Username, Email = user.Email, Name = user.Name, FirstName = user.FirstName,
+            LastName = user.LastName, Url = user.Url, Description = user.Description,
+            Roles = user.Roles.Count > 0 ? user.Roles.ToArray() : ["subscriber"]
+        };
+        return Task.CompletedTask;
+    }
+
+    private void ResetForm() { _editingId = 0; _model = new(); }
+    private void RoleChanged(ChangeEventArgs e) => _model.Roles = [e.Value?.ToString() ?? "subscriber"];
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            _working = true;
+            var result = _editingId > 0
+                ? await UsersService.UpdateAsync(SiteId, _editingId, _model)
+                : await UsersService.CreateAsync(SiteId, _model);
+            _isError = !result.Success;
+            _message = L.TranslateMessage(result.Message);
+            if (result.Success) { ResetForm(); await LoadAsync(); }
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _working = false; }
+    }
+
+    private async Task DisableAsync(WordPressUserView user)
+    {
+        var result = await UsersService.RemoveRolesAsync(SiteId, user.Id);
+        _isError = !result.Success;
+        _message = L.TranslateMessage(result.Message);
+        if (result.Success) await LoadAsync();
+    }
+
+    private async Task DeleteAsync(WordPressUserView user)
+    {
+        var result = await UsersService.DeleteAsync(SiteId, user.Id);
+        _isError = !result.Success;
+        _message = L.TranslateMessage(result.Message);
+        if (result.Success) await LoadAsync();
+    }
+
+    private string UserSearchKey(WordPressUserView user) => string.Join(' ', user.Name, user.Username, user.Email, string.Join(' ', user.Roles));
+    private string UserSortKey(WordPressUserView user) => string.IsNullOrWhiteSpace(user.Name) ? user.Username : user.Name;
+    private IReadOnlyList<string> UserCsvRow(WordPressUserView user) => new[]
+    {
+        string.IsNullOrWhiteSpace(user.Name) ? user.Username : user.Name,
+        user.Username,
+        user.Email,
+        string.Join(", ", user.Roles.Select(TranslateRole)),
+        FormatDate(user.RegisteredAt)
+    };
+
+    private string TranslateRole(string role) => Roles.TryGetValue(role, out var key) ? L[key] : role;
+    private string FormatDate(DateTime? date) => date is null ? "—" : date.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd" : "MMM d, yyyy");
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
 }
