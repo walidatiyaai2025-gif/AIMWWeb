@@ -1,0 +1,109 @@
+@page "/operations"
+@page "/operations/hub"
+@rendermode InteractiveServer
+@inject SiteWebService SiteService
+@inject SiteOperationHistoryService History
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مركز عمليات المواقع" : "Site Operations Hub")</PageTitle>
+
+@if (_loading)
+{
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ تحميل مركز العمليات..." : "Loading operations hub...")</div>
+}
+else
+{
+    <div class="operations-hub-page">
+        <section class="panel" style="padding:24px;margin-bottom:18px">
+            <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "التشغيل والمراقبة" : "OPERATIONS & MONITORING")</small>
+            <h1 style="margin:8px 0">@(L.IsArabic ? "مركز عمليات مواقع WordPress" : "WordPress Site Operations Hub")</h1>
+            <p style="margin:0;opacity:.75">@(L.IsArabic ? "نقطة وصول موحدة لسجل العمليات، الموثوقية، الاتصال والمزامنة." : "A single entry point for operation history, reliability, connection, and synchronization workflows.")</p>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
+            @Stat(L.IsArabic ? "إجمالي المواقع" : "Total sites", _sites.Count.ToString())
+            @Stat(L.IsArabic ? "عمليات 30 يومًا" : "30-day operations", _summary.Total.ToString())
+            @Stat(L.IsArabic ? "نسبة النجاح" : "Success rate", SuccessRate)
+            @Stat(L.IsArabic ? "عمليات فاشلة" : "Failed operations", _summary.Failed.ToString())
+            @Stat(L.IsArabic ? "متوسط المدة" : "Average duration", FormatDuration(_summary.AverageDuration))
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px">
+            @HubCard("≡", L.IsArabic ? "سجل عمليات المواقع" : "Site operation history", L.IsArabic ? "ابحث وفلتر وصدّر اختبارات الاتصال وعمليات المزامنة." : "Search, filter, and export connection tests and synchronization activity.", "/site-operations", L.IsArabic ? "فتح السجل" : "Open history")
+            @HubCard("◈", L.IsArabic ? "موثوقية المواقع" : "Site reliability", L.IsArabic ? "قارن معدل النجاح وحدد المواقع التي تحتاج متابعة." : "Compare success rates and identify sites requiring attention.", "/site-reliability", L.IsArabic ? "عرض الموثوقية" : "View reliability")
+            @HubCard("↻", L.IsArabic ? "مزامنة المحتوى" : "Content synchronization", L.IsArabic ? "شغّل المزامنة وراجع البيانات المحلية المخزنة." : "Run synchronization and review locally cached data.", "/module/sync", L.IsArabic ? "فتح المزامنة" : "Open synchronization")
+            @HubCard("◉", L.IsArabic ? "إدارة المواقع" : "Site management", L.IsArabic ? "أضف المواقع وعدّل الاتصال وبيانات الاعتماد." : "Add sites and manage connection profiles and credentials.", "/sites", L.IsArabic ? "إدارة المواقع" : "Manage sites")
+        </section>
+
+        <section class="panel" style="padding:20px">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+                <div><strong>@(L.IsArabic ? "آخر العمليات" : "Recent operations")</strong><div style="opacity:.7;font-size:.9rem">@(L.IsArabic ? "أحدث اختبارات الاتصال والمزامنة عبر كل المواقع." : "Latest connection and synchronization activity across all sites.")</div></div>
+                <a class="btn" href="/site-operations">@(L.IsArabic ? "عرض الكل" : "View all")</a>
+            </div>
+            @if (_recent.Count == 0)
+            {
+                <div style="padding:24px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد عمليات مسجلة بعد." : "No operations have been recorded yet.")</div>
+            }
+            else
+            {
+                <div style="display:grid;gap:10px">
+                    @foreach (var item in _recent)
+                    {
+                        <article style="display:grid;grid-template-columns:minmax(160px,.7fr) minmax(180px,.7fr) minmax(220px,1.5fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid rgba(128,128,128,.2);border-radius:10px">
+                            <div><strong>@SiteName(item.SiteId)</strong><small style="display:block;opacity:.65">@FormatDate(item.StartedAtUtc)</small></div>
+                            <div>@item.Operation</div>
+                            <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@item.Message</div>
+                            <span class="badge @(item.Succeeded ? "success" : "danger")">@(item.Succeeded ? (L.IsArabic ? "ناجحة" : "Success") : (L.IsArabic ? "فشلت" : "Failed"))</span>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private IReadOnlyList<SiteOperationHistoryItem> _recent = [];
+    private SiteOperationHistorySummary _summary = new(0, 0, 0, TimeSpan.Zero, 0, null);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            _recent = History.GetAll(8);
+            _summary = History.GetSummary(DateTime.UtcNow.AddDays(-30));
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string SuccessRate => _summary.Total == 0 ? "—" : $"{(_summary.Successful * 100.0 / _summary.Total):0.#}%";
+    private string SiteName(Guid siteId) => _sites.FirstOrDefault(x => x.Id == siteId)?.Name ?? siteId.ToString("N")[..8];
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private static string FormatDuration(TimeSpan value) => value.TotalSeconds < 1 ? $"{Math.Max(0, value.TotalMilliseconds):0} ms" : $"{value.TotalSeconds:0.0} s";
+
+    private RenderFragment Stat(string label, string value) => builder =>
+    {
+        builder.OpenElement(0, "article");
+        builder.AddAttribute(1, "class", "panel");
+        builder.AddAttribute(2, "style", "padding:18px");
+        builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement();
+        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private RenderFragment HubCard(string icon, string title, string description, string href, string action) => builder =>
+    {
+        builder.OpenElement(0, "article"); builder.AddAttribute(1, "class", "panel"); builder.AddAttribute(2, "style", "padding:20px;display:flex;flex-direction:column;gap:12px");
+        builder.OpenElement(3, "span"); builder.AddAttribute(4, "style", "font-size:1.8rem"); builder.AddContent(5, icon); builder.CloseElement();
+        builder.OpenElement(6, "strong"); builder.AddAttribute(7, "style", "font-size:1.05rem"); builder.AddContent(8, title); builder.CloseElement();
+        builder.OpenElement(9, "p"); builder.AddAttribute(10, "style", "margin:0;opacity:.72;line-height:1.55;flex:1"); builder.AddContent(11, description); builder.CloseElement();
+        builder.OpenElement(12, "a"); builder.AddAttribute(13, "class", "btn primary"); builder.AddAttribute(14, "href", href); builder.AddContent(15, action); builder.CloseElement();
+        builder.CloseElement();
+    };
+}
