@@ -6,12 +6,19 @@ namespace AIWordPressManager.Tests;
 [Collection(WorkflowTestCollection.Name)]
 public sealed class ExecutionCenterTests : IDisposable
 {
+    private readonly string _testDirectory;
+    private readonly string _databasePath;
     private readonly ExecutionCenterService _service;
 
     public ExecutionCenterTests()
     {
-        DeleteDatabase();
-        _service = new ExecutionCenterService();
+        _testDirectory = Path.Combine(Path.GetTempPath(), "AIWordPressManager.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_testDirectory);
+        _databasePath = Path.Combine(_testDirectory, "execution-center.db");
+        _service = new ExecutionCenterService(
+            _databasePath,
+            enableBackgroundWorker: false,
+            enableSeedData: false);
     }
 
     [Fact]
@@ -44,27 +51,39 @@ public sealed class ExecutionCenterTests : IDisposable
         var job = _service.Enqueue("Persistent job", "Test", "Test Site", 5);
         _service.Dispose();
 
-        using var restarted = new ExecutionCenterService();
+        using var restarted = new ExecutionCenterService(
+            _databasePath,
+            enableBackgroundWorker: false,
+            enableSeedData: false);
 
         restarted.GetJobs().Should().Contain(x => x.Id == job.Id);
-    }
-
-    private static void DeleteDatabase()
-    {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AIWordPressManager",
-            "Data");
-
-        foreach (var suffix in new[] { string.Empty, "-wal", "-shm" })
-        {
-            var path = Path.Combine(directory, "execution-center.db" + suffix);
-            if (File.Exists(path)) File.Delete(path);
-        }
     }
 
     public void Dispose()
     {
         _service.Dispose();
+        TryDeleteDirectory(_testDirectory);
+    }
+
+    private static void TryDeleteDirectory(string directory)
+    {
+        if (!Directory.Exists(directory)) return;
+
+        for (var attempt = 1; attempt <= 5; attempt++)
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+                return;
+            }
+            catch (IOException) when (attempt < 5)
+            {
+                Thread.Sleep(50 * attempt);
+            }
+            catch (UnauthorizedAccessException) when (attempt < 5)
+            {
+                Thread.Sleep(50 * attempt);
+            }
+        }
     }
 }
