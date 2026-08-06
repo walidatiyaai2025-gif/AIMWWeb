@@ -1,0 +1,11 @@
+.app-bulk-action-bar{position:sticky;bottom:1rem;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:var(--ui-space-4);padding:var(--ui-space-4);border:1px solid color-mix(in srgb,var(--ui-accent) 35%,var(--ui-border));border-radius:var(--ui-radius-lg);background:color-mix(in srgb,var(--ui-surface) 94%,var(--ui-accent) 6%);box-shadow:var(--ui-shadow-lg);overflow:hidden}
+.app-bulk-action-bar__summary,.app-bulk-action-bar__actions{display:flex;align-items:center;gap:var(--ui-space-3)}
+.app-bulk-action-bar__summary>div{display:grid;gap:.15rem}
+.app-bulk-action-bar__summary strong{font-size:.9rem}
+.app-bulk-action-bar__summary small{color:var(--ui-muted);font-size:.76rem}
+.app-bulk-action-bar__actions{justify-content:flex-end;flex-wrap:wrap}
+.app-bulk-action-bar__progress{position:absolute;inset:auto 0 0;height:3px;background:color-mix(in srgb,var(--ui-accent) 18%,transparent);overflow:hidden}
+.app-bulk-action-bar__progress span{display:block;width:35%;height:100%;background:var(--ui-accent);animation:app-bulk-progress 1.1s ease-in-out infinite}
+@keyframes app-bulk-progress{0%{transform:translateX(-120%)}100%{transform:translateX(390%)}}
+[dir="rtl"] .app-bulk-action-bar__progress span{animation-direction:reverse}
+@media(max-width:780px){.app-bulk-action-bar{position:relative;bottom:auto;align-items:stretch;flex-direction:column}.app-bulk-action-bar__actions{justify-content:stretch}.app-bulk-action-bar__actions .app-button{flex:1}}
