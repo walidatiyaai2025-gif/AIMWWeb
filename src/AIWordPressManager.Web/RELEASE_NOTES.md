@@ -1,5 +1,11 @@
 # AI WordPress Manager Release Notes
 
+## 155.66.0 - 2026-08-06 - Version and Branch Identity
+- Added reliable Git branch detection for local runs, GitHub Actions, and published builds.
+- Added embedded `GitBranch` assembly metadata as a safe fallback when Git is unavailable at runtime.
+- Added the active branch beside the version badge in the application top bar.
+- Kept the footer build identity linked to the full About Build screen.
+
 ## 155.65.0 - 2026-08-06 - Operation History Maintenance
 - Added an operation-history maintenance page at `/operations/maintenance` and `/site-operations/maintenance`.
 - Added storage file size, record count, represented-site count, and oldest/newest operation indicators.
