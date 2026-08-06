@@ -10,11 +10,19 @@ public sealed class AuthUserTests
     {
         var now = DateTime.UtcNow;
 
-        var user = new AuthUser("  Admin  ", "hash", now);
+        var user = new AuthUser("  Standard.User  ", "hash", now);
 
-        user.UserName.Should().Be("Admin");
-        user.NormalizedUserName.Should().Be("ADMIN");
+        user.UserName.Should().Be("Standard.User");
+        user.NormalizedUserName.Should().Be("STANDARD.USER");
         user.IsActive.Should().BeTrue();
+        user.Role.Should().Be("User");
+    }
+
+    [Fact]
+    public void Constructor_Uses_Explicit_Administrator_Role()
+    {
+        var user = new AuthUser("Admin", "hash", DateTime.UtcNow, "Administrator");
+
         user.Role.Should().Be("Administrator");
     }
 
