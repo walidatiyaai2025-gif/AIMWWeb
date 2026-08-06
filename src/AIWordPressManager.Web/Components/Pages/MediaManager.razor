@@ -10,78 +10,119 @@
 
 @if (_loading)
 {
-    <div class="loading-line">@L["LoadingMedia"]</div>
+    <AppLoading Title="@L["LoadingMedia"]" Message="@(L.IsArabic ? "جارٍ تحميل مكتبة الوسائط المحلية." : "Loading the local media library.")" />
 }
 else if (_site is null)
 {
-    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+    <AppEmptyState Icon="!" Title="@L["SiteNotFound"]" Description="@(L.IsArabic ? "تعذر العثور على الموقع المحدد." : "The selected site could not be found.")">
+        <Actions><AppButton Href="/sites" Text="@L["BackToSites"]" /></Actions>
+    </AppEmptyState>
 }
 else
 {
-    <div class="page-heading">
-        <div><h1>@L["MediaManager"]</h1><p>@_site.Name — @L["MediaManagerIntro"]</p></div>
-        <div class="actions"><button class="btn" @onclick="RefreshAsync" disabled="@_busy">@L["Refresh"]</button><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
-    </div>
+    <div class="media-manager-workspace">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "مكتبة ووردبريس" : "WORDPRESS LIBRARY")"
+                    Title="@L["MediaManager"]"
+                    Subtitle="@($"{_site.Name} — {L["MediaManagerIntro"]}")">
+            <Actions>
+                <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_busy" Disabled="@_busy" OnClick="RefreshClickedAsync" />
+                <AppButton Href="@($"/sites/{SiteId}/explorer")" Text="@L["BackToExplorer"]" />
+            </Actions>
+        </AppToolbar>
 
-    @if (!string.IsNullOrWhiteSpace(_message))
-    {
-        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
-    }
-
-    <section class="panel upload-panel">
-        <h3>@L["UploadMedia"]</h3>
-        <p>@L["UploadMediaHelp"]</p>
-        <div class="form-grid">
-            <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
-            <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
-            <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
-            <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
-        </div>
-        @if (_selectedFile is not null)
+        @if (!string.IsNullOrWhiteSpace(_message))
         {
-            <div class="selected-file"><strong>@_selectedFile.Name</strong><small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small></div>
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
         }
-        <div class="actions"><button class="btn primary" @onclick="UploadAsync" disabled="@(_busy || _selectedFile is null)">@(_busy ? L["Uploading"] : L["UploadToWordPress"])</button></div>
-    </section>
 
-    <section class="panel explorer-toolbar">
-        <div><strong>@L["MediaLibrary"]</strong><small class="block-muted">@string.Format(L["MediaCount"], _data?.Media.Count ?? 0)</small></div>
-        <input class="search-input" placeholder="@L["SearchMedia"]" @bind="_search" @bind:event="oninput" />
-    </section>
+        <section class="app-stat-grid">
+            <AppStatCard Icon="▣" Label="@L["MediaLibrary"]" Value="@MediaItems.Count.ToString()" Description="@L["MediaCount"]" Tone="accent" />
+            <AppStatCard Icon="▧" Label="@(L.IsArabic ? "الصور" : "Images")" Value="@ImageCount.ToString()" Description="@(L.IsArabic ? "عناصر صور" : "Image items")" Tone="success" />
+            <AppStatCard Icon="≡" Label="@(L.IsArabic ? "الملفات" : "Files")" Value="@FileCount.ToString()" Description="@(L.IsArabic ? "مستندات وملفات أخرى" : "Documents and other files")" Tone="info" />
+            <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر تعديل" : "Last modified")" Value="@LatestModified" Description="@(L.IsArabic ? "بيانات المزامنة المحلية" : "Local synchronization data")" Tone="warning" ValueClass="summary-date" />
+        </section>
 
-    @if (_data is null || !FilteredMedia.Any())
-    {
-        <div class="panel empty-state"><h3>@L["NoMedia"]</h3><p>@L["NoMediaHelp"]</p></div>
-    }
-    else
-    {
-        <div class="media-grid manager-grid">
-            @foreach (var item in FilteredMedia)
-            {
-                <article class="media-card">
-                    <div class="media-preview">
+        <AppSection Eyebrow="@(L.IsArabic ? "رفع ملف" : "UPLOAD")"
+                    Title="@L["UploadMedia"]"
+                    Subtitle="@L["UploadMediaHelp"]">
+            <ChildContent>
+                <div class="form-grid">
+                    <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
+                    <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
+                    <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
+                    <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
+                </div>
+                @if (_selectedFile is not null)
+                {
+                    <div class="selected-file"><strong>@_selectedFile.Name</strong><small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small></div>
+                }
+                <div class="actions">
+                    <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || _selectedFile is null)" OnClick="UploadClickedAsync" />
+                </div>
+            </ChildContent>
+        </AppSection>
+
+        <AppDataGrid TItem="MediaExplorerItem"
+                     Items="@MediaItems"
+                     KeySelector="@(item => item.WordPressId.ToString())"
+                     SearchKeySelector="@(item => $"{DisplayTitle(item.Title)} {item.MimeType} {item.MediaType} {item.SourceUrl}")"
+                     SortKeySelector="@(item => DisplayTitle(item.Title))"
+                     CsvHeaders="@CsvHeaders"
+                     CsvRowSelector="@(item => new[] { item.WordPressId.ToString(), DisplayTitle(item.Title), item.MediaType, item.MimeType, item.SourceUrl, FormatDate(item.ModifiedAtUtc) })"
+                     CsvFileName="@CsvFileName"
+                     PageSize="10"
+                     Selectable="true"
+                     Loading="@_busy"
+                     LoadingTitle="@(L.IsArabic ? "جارٍ تحديث الوسائط" : "Updating media")"
+                     EmptyTitle="@L["NoMedia"]"
+                     EmptyDescription="@L["NoMediaHelp"]"
+                     SearchPlaceholder="@L["SearchMedia"]"
+                     SearchAriaLabel="@L["SearchMedia"]"
+                     SortText="@(L.IsArabic ? "ترتيب بالعنوان" : "Sort by title")"
+                     ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                     RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+                     SelectedText="@(L.IsArabic ? "محدد" : "selected")"
+                     ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                     OfText="@(L.IsArabic ? "من" : "of")">
+            <Toolbar>
+                <div>
+                    <strong>@L["MediaLibrary"]</strong>
+                    <small class="block-muted">@string.Format(L["MediaCount"], MediaItems.Count)</small>
+                </div>
+                <AppBadge Tone="info" Text="@MediaItems.Count.ToString()" />
+            </Toolbar>
+            <Header>
+                <th>@(L.IsArabic ? "المعاينة" : "Preview")</th>
+                <th>@L["Title"]</th>
+                <th>@(L.IsArabic ? "النوع" : "Type")</th>
+                <th>@(L.IsArabic ? "آخر تعديل" : "Modified")</th>
+                <th>@L["Actions"]</th>
+            </Header>
+            <RowTemplate Context="item">
+                <td>
+                    <div class="media-preview media-preview--compact">
                         @if (item.MediaType == "image")
                         {
-                            <img src="@item.SourceUrl" alt="@item.Title" loading="lazy" />
+                            <img src="@item.SourceUrl" alt="@DisplayTitle(item.Title)" loading="lazy" />
                         }
                         else
                         {
                             <span>@L["File"]</span>
                         }
                     </div>
-                    <div>
-                        <strong title="@item.Title">@DisplayTitle(item.Title)</strong>
-                        <small>#@item.WordPressId · @item.MimeType</small>
-                        <small>@FormatDate(item.ModifiedAtUtc)</small>
-                        <div class="media-actions">
-                            <a class="btn compact" href="@item.SourceUrl" target="_blank">@L["OpenFile"]</a>
-                            <button class="btn compact danger" @onclick="() => DeleteAsync(item.WordPressId, item.Title)" disabled="@_busy">@L["Delete"]</button>
-                        </div>
+                </td>
+                <td><strong>@DisplayTitle(item.Title)</strong><small class="block-muted">#@item.WordPressId</small></td>
+                <td><AppBadge Tone="@(item.MediaType == "image" ? "success" : "info")" Text="@item.MimeType" /></td>
+                <td>@FormatDate(item.ModifiedAtUtc)</td>
+                <td>
+                    <div class="table-actions">
+                        <AppButton Href="@item.SourceUrl" Text="@L["OpenFile"]" Size="small" />
+                        <AppButton Variant="danger" Icon="⌫" Text="@L["Delete"]" Size="small" Disabled="@_busy" OnClick="args => DeleteAsync(item.WordPressId, item.Title)" />
                     </div>
-                </article>
-            }
-        </div>
-    }
+                </td>
+            </RowTemplate>
+        </AppDataGrid>
+    </div>
 }
 
 @code {
@@ -89,12 +130,18 @@ else
     private AIWordPressManager.Domain.Entities.Site? _site;
     private ContentExplorerView? _data;
     private IBrowserFile? _selectedFile;
-    private string _uploadTitle = string.Empty, _altText = string.Empty, _caption = string.Empty, _search = string.Empty;
+    private string _uploadTitle = string.Empty, _altText = string.Empty, _caption = string.Empty;
     private string? _message;
     private bool _loading = true, _busy, _isError;
 
-    private IEnumerable<MediaExplorerItem> FilteredMedia => (_data?.Media ?? Array.Empty<MediaExplorerItem>())
-        .Where(x => string.IsNullOrWhiteSpace(_search) || x.Title.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.MimeType.Contains(_search, StringComparison.OrdinalIgnoreCase));
+    private IReadOnlyList<MediaExplorerItem> MediaItems => (_data?.Media ?? Array.Empty<MediaExplorerItem>()).ToList();
+    private int ImageCount => MediaItems.Count(x => x.MediaType == "image");
+    private int FileCount => MediaItems.Count - ImageCount;
+    private string LatestModified => MediaItems.Where(x => x.ModifiedAtUtc.HasValue).OrderByDescending(x => x.ModifiedAtUtc).Select(x => FormatDate(x.ModifiedAtUtc)).FirstOrDefault() ?? L["Unknown"];
+    private IReadOnlyList<string> CsvHeaders => L.IsArabic
+        ? new[] { "المعرف", "العنوان", "نوع الوسائط", "نوع MIME", "الرابط", "آخر تعديل" }
+        : new[] { "Id", "Title", "Media type", "MIME type", "URL", "Modified" };
+    private string CsvFileName => $"media-{SiteId:N}-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
 
     protected override void OnInitialized() => L.Changed += Changed;
 
@@ -113,44 +160,59 @@ else
         _message = null;
     }
 
+    private Task UploadClickedAsync(MouseEventArgs _) => UploadAsync();
+    private Task RefreshClickedAsync(MouseEventArgs _) => RefreshAsync();
+
     private async Task UploadAsync()
     {
         if (_selectedFile is null) return;
-        _busy = true; _isError = false; _message = null;
-        var result = await MediaService.UploadAsync(SiteId, _selectedFile, _uploadTitle, _altText, _caption);
-        _isError = !result.IsSuccess;
-        _message = L.TranslateMessage(result.Message);
-        if (result.IsSuccess)
+        try
         {
-            await SyncService.SynchronizeAsync(SiteId);
-            _data = await SyncService.GetExplorerAsync(SiteId);
-            _selectedFile = null; _uploadTitle = string.Empty; _altText = string.Empty; _caption = string.Empty;
+            _busy = true; _isError = false; _message = null;
+            var result = await MediaService.UploadAsync(SiteId, _selectedFile, _uploadTitle, _altText, _caption);
+            _isError = !result.IsSuccess;
+            _message = L.TranslateMessage(result.Message);
+            if (result.IsSuccess)
+            {
+                await SyncService.SynchronizeAsync(SiteId);
+                _data = await SyncService.GetExplorerAsync(SiteId);
+                _selectedFile = null; _uploadTitle = string.Empty; _altText = string.Empty; _caption = string.Empty;
+            }
         }
-        _busy = false;
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _busy = false; }
     }
 
     private async Task DeleteAsync(int mediaId, string title)
     {
-        _busy = true; _isError = false; _message = null;
-        var result = await MediaService.DeleteAsync(SiteId, mediaId);
-        _isError = !result.IsSuccess;
-        _message = L.TranslateMessage(result.Message);
-        if (result.IsSuccess)
+        try
         {
-            await SyncService.SynchronizeAsync(SiteId);
-            _data = await SyncService.GetExplorerAsync(SiteId);
+            _busy = true; _isError = false; _message = null;
+            var result = await MediaService.DeleteAsync(SiteId, mediaId);
+            _isError = !result.IsSuccess;
+            _message = L.TranslateMessage(result.Message);
+            if (result.IsSuccess)
+            {
+                await SyncService.SynchronizeAsync(SiteId);
+                _data = await SyncService.GetExplorerAsync(SiteId);
+            }
         }
-        _busy = false;
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _busy = false; }
     }
 
     private async Task RefreshAsync()
     {
-        _busy = true;
-        var result = await SyncService.SynchronizeAsync(SiteId);
-        _isError = !result.IsSuccess;
-        _message = L.TranslateMessage(result.Message);
-        _data = await SyncService.GetExplorerAsync(SiteId);
-        _busy = false;
+        try
+        {
+            _busy = true;
+            var result = await SyncService.SynchronizeAsync(SiteId);
+            _isError = !result.IsSuccess;
+            _message = L.TranslateMessage(result.Message);
+            _data = await SyncService.GetExplorerAsync(SiteId);
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _busy = false; }
     }
 
     private string DisplayTitle(string value) => string.IsNullOrWhiteSpace(value) ? L["UntitledMedia"] : value;
