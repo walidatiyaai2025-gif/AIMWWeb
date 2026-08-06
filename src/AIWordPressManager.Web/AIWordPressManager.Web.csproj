@@ -3,13 +3,13 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>155.72.0</Version>
-    <AssemblyVersion>155.72.0.0</AssemblyVersion>
-    <FileVersion>155.72.0.0</FileVersion>
-    <InformationalVersion>155.72.0</InformationalVersion>
+    <Version>155.73.0</Version>
+    <AssemblyVersion>155.73.0.0</AssemblyVersion>
+    <FileVersion>155.73.0.0</FileVersion>
+    <InformationalVersion>155.73.0</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
-    <AssemblyMetadata Include="GitBranch" Value="agent/logs-error-center" />
+    <AssemblyMetadata Include="GitBranch" Value="main" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AIWordPressManager.Application\AIWordPressManager.Application.csproj" />
