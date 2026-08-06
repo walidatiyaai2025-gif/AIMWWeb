@@ -7,17 +7,24 @@ public static class GlobalContentHubService
 {
     public static async Task<GlobalContentHubView> GetAsync(
         AppDbContext dbContext,
+        Guid ownerUserId,
         CancellationToken cancellationToken = default)
     {
+        if (ownerUserId == Guid.Empty)
+            return new GlobalContentHubView([], 0, 0, 0, 0, 0, 0, 0);
+
         var sites = await dbContext.Sites
             .AsNoTracking()
+            .Where(x => x.OwnerUserId == ownerUserId)
             .OrderBy(x => x.Name)
             .Select(x => new { x.Id, x.Name })
             .ToListAsync(cancellationToken);
 
+        var ownedSiteIds = sites.Select(x => x.Id).ToArray();
+
         var content = await dbContext.WordPressContentRecords
             .AsNoTracking()
-            .Where(x => x.IsAvailable)
+            .Where(x => x.IsAvailable && ownedSiteIds.Contains(x.SiteId))
             .GroupBy(x => x.SiteId)
             .Select(group => new
             {
@@ -30,40 +37,22 @@ public static class GlobalContentHubService
             })
             .ToDictionaryAsync(x => x.SiteId, cancellationToken);
 
-        var media = await dbContext.WordPressMediaRecords
-            .AsNoTracking()
-            .Where(x => x.IsAvailable)
+        var media = await dbContext.WordPressMediaRecords.AsNoTracking()
+            .Where(x => x.IsAvailable && ownedSiteIds.Contains(x.SiteId))
             .GroupBy(x => x.SiteId)
-            .Select(group => new
-            {
-                SiteId = group.Key,
-                Count = group.Count(),
-                LastSync = group.Max(x => (DateTime?)x.LastSynchronizedAtUtc)
-            })
+            .Select(group => new { SiteId = group.Key, Count = group.Count(), LastSync = group.Max(x => (DateTime?)x.LastSynchronizedAtUtc) })
             .ToDictionaryAsync(x => x.SiteId, cancellationToken);
 
-        var categories = await dbContext.WordPressCategoryRecords
-            .AsNoTracking()
-            .Where(x => x.IsAvailable)
+        var categories = await dbContext.WordPressCategoryRecords.AsNoTracking()
+            .Where(x => x.IsAvailable && ownedSiteIds.Contains(x.SiteId))
             .GroupBy(x => x.SiteId)
-            .Select(group => new
-            {
-                SiteId = group.Key,
-                Count = group.Count(),
-                LastSync = group.Max(x => (DateTime?)x.LastSynchronizedAtUtc)
-            })
+            .Select(group => new { SiteId = group.Key, Count = group.Count(), LastSync = group.Max(x => (DateTime?)x.LastSynchronizedAtUtc) })
             .ToDictionaryAsync(x => x.SiteId, cancellationToken);
 
-        var tags = await dbContext.WordPressTagRecords
-            .AsNoTracking()
-            .Where(x => x.IsAvailable)
+        var tags = await dbContext.WordPressTagRecords.AsNoTracking()
+            .Where(x => x.IsAvailable && ownedSiteIds.Contains(x.SiteId))
             .GroupBy(x => x.SiteId)
-            .Select(group => new
-            {
-                SiteId = group.Key,
-                Count = group.Count(),
-                LastSync = group.Max(x => (DateTime?)x.LastSynchronizedAtUtc)
-            })
+            .Select(group => new { SiteId = group.Key, Count = group.Count(), LastSync = group.Max(x => (DateTime?)x.LastSynchronizedAtUtc) })
             .ToDictionaryAsync(x => x.SiteId, cancellationToken);
 
         var rows = sites.Select(site =>
@@ -73,35 +62,18 @@ public static class GlobalContentHubService
             categories.TryGetValue(site.Id, out var siteCategories);
             tags.TryGetValue(site.Id, out var siteTags);
 
-            var lastSync = new[]
-            {
-                siteContent?.LastSync,
-                siteMedia?.LastSync,
-                siteCategories?.LastSync,
-                siteTags?.LastSync
-            }.Where(x => x.HasValue).DefaultIfEmpty().Max();
+            var lastSync = new[] { siteContent?.LastSync, siteMedia?.LastSync, siteCategories?.LastSync, siteTags?.LastSync }
+                .Where(x => x.HasValue).DefaultIfEmpty().Max();
 
-            return new GlobalContentSiteRow(
-                site.Id,
-                site.Name,
-                siteContent?.Posts ?? 0,
-                siteContent?.Pages ?? 0,
-                siteMedia?.Count ?? 0,
-                siteCategories?.Count ?? 0,
-                siteTags?.Count ?? 0,
-                siteContent?.Published ?? 0,
-                siteContent?.Drafts ?? 0,
-                lastSync,
-                GetFreshness(lastSync));
+            return new GlobalContentSiteRow(site.Id, site.Name,
+                siteContent?.Posts ?? 0, siteContent?.Pages ?? 0, siteMedia?.Count ?? 0,
+                siteCategories?.Count ?? 0, siteTags?.Count ?? 0,
+                siteContent?.Published ?? 0, siteContent?.Drafts ?? 0,
+                lastSync, GetFreshness(lastSync));
         }).ToList();
 
-        return new GlobalContentHubView(
-            rows,
-            rows.Sum(x => x.Posts),
-            rows.Sum(x => x.Pages),
-            rows.Sum(x => x.Media),
-            rows.Sum(x => x.Categories),
-            rows.Sum(x => x.Tags),
+        return new GlobalContentHubView(rows, rows.Sum(x => x.Posts), rows.Sum(x => x.Pages),
+            rows.Sum(x => x.Media), rows.Sum(x => x.Categories), rows.Sum(x => x.Tags),
             rows.Count(x => x.TotalRecords > 0),
             rows.Count(x => x.Freshness is ContentCacheFreshness.Stale or ContentCacheFreshness.Empty));
     }
@@ -116,36 +88,9 @@ public static class GlobalContentHubService
     }
 }
 
-public sealed record GlobalContentHubView(
-    IReadOnlyList<GlobalContentSiteRow> Sites,
-    int Posts,
-    int Pages,
-    int Media,
-    int Categories,
-    int Tags,
-    int SitesWithCachedData,
-    int StaleSites);
-
-public sealed record GlobalContentSiteRow(
-    Guid SiteId,
-    string SiteName,
-    int Posts,
-    int Pages,
-    int Media,
-    int Categories,
-    int Tags,
-    int Published,
-    int Drafts,
-    DateTime? LastSynchronizedAtUtc,
-    ContentCacheFreshness Freshness)
+public sealed record GlobalContentHubView(IReadOnlyList<GlobalContentSiteRow> Sites, int Posts, int Pages, int Media, int Categories, int Tags, int SitesWithCachedData, int StaleSites);
+public sealed record GlobalContentSiteRow(Guid SiteId, string SiteName, int Posts, int Pages, int Media, int Categories, int Tags, int Published, int Drafts, DateTime? LastSynchronizedAtUtc, ContentCacheFreshness Freshness)
 {
     public int TotalRecords => Posts + Pages + Media + Categories + Tags;
 }
-
-public enum ContentCacheFreshness
-{
-    Empty,
-    Fresh,
-    Review,
-    Stale
-}
+public enum ContentCacheFreshness { Empty, Fresh, Review, Stale }
