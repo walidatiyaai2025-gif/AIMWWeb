@@ -1,6 +1,7 @@
 @page "/account/profile"
 @rendermode InteractiveServer
-@inject AccountProfileService AccountService
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceProvider Services
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 
@@ -71,6 +72,7 @@
 </div>
 
 @code {
+    private AccountProfileService AccountService => ActivatorUtilities.CreateInstance<AccountProfileService>(Services);
     private AccountProfileView? _profile;
     private bool _loading = true;
     private bool _working;
