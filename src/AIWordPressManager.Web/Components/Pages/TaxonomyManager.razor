@@ -9,82 +9,104 @@
 
 @if (_loading)
 {
-    <div class="loading-line">@L["LoadingTaxonomies"]</div>
+    <AppLoading Title="@L["LoadingTaxonomies"]" Message="@(L.IsArabic ? "يتم تحميل التصنيفات والوسوم من WordPress." : "Loading categories and tags from WordPress.")" />
 }
 else if (_site is null)
 {
-    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+    <AppCard><AppEmptyState Title="@L["SiteNotFound"]" Description="@(L.IsArabic ? "تعذر العثور على الموقع المحدد." : "The selected site could not be found.")"><Actions><AppButton Href="/sites" Text="@L["BackToSites"]" /></Actions></AppEmptyState></AppCard>
 }
 else
 {
     <div class="taxonomy-page">
-        <div class="page-heading">
-            <div><h1>@L["TaxonomyManager"]</h1><p>@_site.Name — @L["TaxonomyIntro"]</p></div>
-            <div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
-        </div>
+        <AppToolbar Eyebrow="@(L.IsArabic ? "تنظيم المحتوى" : "CONTENT ORGANIZATION")"
+                    Title="@L["TaxonomyManager"]"
+                    Subtitle="@($"{_site.Name} — {L["TaxonomyIntro"]}")">
+            <Actions>
+                <AppButton Href="@($"/sites/{SiteId}/explorer")" Text="@L["BackToExplorer"]" />
+                <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_saving" Disabled="@_saving" OnClick="RefreshClickedAsync" />
+                <AppButton Variant="primary" Icon="＋" Text="@L["AddNew"]" OnClick="StartCreateClicked" />
+            </Actions>
+        </AppToolbar>
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
             <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
         }
 
-        <div class="panel explorer-toolbar">
-            <div class="tabs">
-                <button class="tab @(_taxonomy == "categories" ? "active" : "")" @onclick="ShowCategories">@L["Categories"]</button>
-                <button class="tab @(_taxonomy == "tags" ? "active" : "")" @onclick="ShowTags">@L["Tags"]</button>
-            </div>
-            <div class="filter-row">
-                <input class="search-input" @bind="_query" @bind:event="oninput" placeholder="@L["SearchTaxonomy"]" />
-                <button class="btn primary" @onclick="StartCreate">@L["AddNew"]</button>
-            </div>
-        </div>
+        <section class="app-stat-grid">
+            <AppStatCard Icon="▤" Label="@(L.IsArabic ? "النوع الحالي" : "Current type")" Value="@CurrentTypeText" Description="@(L.IsArabic ? "مصدر WordPress" : "WordPress source")" Tone="accent" />
+            <AppStatCard Icon="#" Label="@(L.IsArabic ? "إجمالي العناصر" : "Total terms")" Value="@_terms.Count.ToString()" Description="@(L.IsArabic ? "في النوع الحالي" : "In current taxonomy")" Tone="info" />
+            <AppStatCard Icon="◉" Label="@(L.IsArabic ? "مستخدمة" : "In use")" Value="@UsedCount.ToString()" Description="@(L.IsArabic ? "مرتبطة بمحتوى" : "Assigned to content")" Tone="success" />
+            <AppStatCard Icon="○" Label="@(L.IsArabic ? "غير مستخدمة" : "Unused")" Value="@UnusedCount.ToString()" Description="@(L.IsArabic ? "بدون محتوى مرتبط" : "No assigned content")" Tone="warning" />
+        </section>
+
+        <AppSection Title="@(L.IsArabic ? "نوع التصنيف" : "Taxonomy type")" BodyClass="taxonomy-switcher-body">
+            <ChildContent>
+                <div class="tabs">
+                    <button class="tab @(_taxonomy == "categories" ? "active" : string.Empty)" @onclick="ShowCategories">@L["Categories"]</button>
+                    <button class="tab @(_taxonomy == "tags" ? "active" : string.Empty)" @onclick="ShowTags">@L["Tags"]</button>
+                </div>
+            </ChildContent>
+        </AppSection>
 
         <div class="editor-grid">
-            <section class="panel table-panel">
-                <table>
-                    <thead><tr><th>@L["Name"]</th><th>@L["Slug"]</th><th>@L["PostCount"]</th><th>@L["Actions"]</th></tr></thead>
-                    <tbody>
-                    @foreach (var item in FilteredTerms)
-                    {
-                        <tr>
-                            <td><strong>@item.Name</strong></td><td><code>@item.Slug</code></td><td>@item.Count</td>
-                            <td><div class="table-actions"><button class="btn compact" @onclick="() => StartEdit(item)">@L["Edit"]</button><button class="btn compact danger" @onclick="() => DeleteAsync(item)">@L["Delete"]</button></div></td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-                @if (!FilteredTerms.Any())
-                {
-                    <div class="empty-state"><p>@L["NoTaxonomies"]</p></div>
-                }
+            <section>
+                <AppDataGrid TItem="TaxonomyTermView"
+                             Items="@_terms"
+                             KeySelector="@(item => item.Id.ToString())"
+                             SearchKeySelector="@(item => $"{item.Name} {item.Slug} {item.Description}")"
+                             SortKeySelector="@(item => item.Name)"
+                             CsvHeaders="@CsvHeaders"
+                             CsvRowSelector="@(item => new[] { item.Id.ToString(), item.Name, item.Slug, item.Count.ToString(), item.ParentId.ToString(), item.Description ?? string.Empty })"
+                             CsvFileName="@CsvFileName"
+                             PageSize="10"
+                             Selectable="true"
+                             Loading="@_saving"
+                             SearchPlaceholder="@(L.IsArabic ? "ابحث بالاسم أو الرابط المختصر..." : "Search by name or slug...")"
+                             SearchAriaLabel="@(L.IsArabic ? "بحث التصنيفات" : "Search taxonomy terms")"
+                             SortText="@(L.IsArabic ? "ترتيب" : "Sort")"
+                             ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                             RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+                             SelectedText="@(L.IsArabic ? "محدد" : "selected")"
+                             ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                             OfText="@(L.IsArabic ? "من" : "of")"
+                             EmptyTitle="@L["NoTaxonomies"]"
+                             EmptyDescription="@(L.IsArabic ? "أضف عنصرًا جديدًا أو غيّر نوع التصنيف." : "Add a new term or switch taxonomy type.")">
+                    <Toolbar>
+                        <div><strong>@CurrentTypeText</strong><small>@(_taxonomy == "categories" ? (L.IsArabic ? "التصنيفات الهرمية" : "Hierarchical categories") : (L.IsArabic ? "وسوم غير هرمية" : "Non-hierarchical tags"))</small></div>
+                        <AppBadge Tone="info" Text="@_terms.Count.ToString()" />
+                    </Toolbar>
+                    <Header>
+                        <th>@L["Name"]</th><th>@L["Slug"]</th><th>@L["PostCount"]</th><th>@L["Actions"]</th>
+                    </Header>
+                    <RowTemplate Context="item">
+                        <td><strong>@item.Name</strong>@if(!string.IsNullOrWhiteSpace(item.Description)){<small class="block-muted">@item.Description</small>}</td>
+                        <td><code>@item.Slug</code></td>
+                        <td><AppBadge Tone="@(item.Count > 0 ? "success" : "neutral")" Text="@item.Count.ToString()" /></td>
+                        <td><div class="table-actions"><AppButton Size="small" Text="@L["Edit"]" OnClick="args => StartEdit(item)" /><AppButton Size="small" Variant="danger" Text="@L["Delete"]" Disabled="@_saving" OnClick="args => DeleteAsync(item)" /></div></td>
+                    </RowTemplate>
+                </AppDataGrid>
             </section>
 
-            <aside class="panel">
-                <h3>@(_editingId > 0 ? L["EditTaxonomy"] : L["CreateTaxonomy"])</h3>
-                <EditForm Model="_model" OnValidSubmit="SaveAsync">
-                    <DataAnnotationsValidator />
-                    <div class="form-grid one-column">
-                        <label>@L["Name"]<InputText @bind-Value="_model.Name" /></label>
-                        <label>@L["Slug"]<InputText @bind-Value="_model.Slug" /></label>
-                        <label>@L["Description"]<InputTextArea @bind-Value="_model.Description" rows="5" /></label>
-                        @if (_taxonomy == "categories")
-                        {
-                            <label>@L["ParentCategory"]
-                                <InputSelect @bind-Value="_model.ParentId">
-                                    <option value="0">@L["NoParent"]</option>
-                                    @foreach (var parent in _terms.Where(x => x.Id != _editingId))
-                                    {
-                                        <option value="@parent.Id">@parent.Name</option>
-                                    }
-                                </InputSelect>
-                            </label>
-                        }
-                    </div>
-                    <div class="actions form-actions">
-                        <button class="btn primary" type="submit" disabled="@_saving">@(_saving ? L["Saving"] : L["Save"])</button>
-                        <button class="btn" type="button" @onclick="ResetForm">@L["Cancel"]</button>
-                    </div>
-                </EditForm>
+            <aside>
+                <AppSection Eyebrow="@(_editingId > 0 ? (L.IsArabic ? "تعديل عنصر" : "EDIT TERM") : (L.IsArabic ? "عنصر جديد" : "NEW TERM"))"
+                            Title="@(_editingId > 0 ? L["EditTaxonomy"] : L["CreateTaxonomy"])">
+                    <ChildContent>
+                        <EditForm Model="_model" OnValidSubmit="SaveAsync">
+                            <DataAnnotationsValidator />
+                            <div class="form-grid one-column">
+                                <label>@L["Name"]<InputText @bind-Value="_model.Name" disabled="@_saving" /></label>
+                                <label>@L["Slug"]<InputText @bind-Value="_model.Slug" disabled="@_saving" /></label>
+                                <label>@L["Description"]<InputTextArea @bind-Value="_model.Description" rows="5" disabled="@_saving" /></label>
+                                @if (_taxonomy == "categories")
+                                {
+                                    <label>@L["ParentCategory"]<InputSelect @bind-Value="_model.ParentId" disabled="@_saving"><option value="0">@L["NoParent"]</option>@foreach (var parent in _terms.Where(x => x.Id != _editingId)){<option value="@parent.Id">@parent.Name</option>}</InputSelect></label>
+                                }
+                            </div>
+                            <div class="actions form-actions"><AppButton Type="submit" Variant="primary" Text="@(_saving ? L["Saving"] : L["Save"])" Busy="@_saving" Disabled="@_saving" /><AppButton Text="@L["Cancel"]" Disabled="@_saving" OnClick="ResetFormClicked" /></div>
+                        </EditForm>
+                    </ChildContent>
+                </AppSection>
             </aside>
         </div>
     </div>
@@ -95,30 +117,34 @@ else
     private AIWordPressManager.Domain.Entities.Site? _site;
     private IReadOnlyList<TaxonomyTermView> _terms = Array.Empty<TaxonomyTermView>();
     private TaxonomyTermEditModel _model = new();
-    private string _taxonomy = "categories", _query = string.Empty;
+    private string _taxonomy = "categories";
     private string? _message;
     private int _editingId;
     private bool _loading = true, _saving, _isError;
 
-    private IEnumerable<TaxonomyTermView> FilteredTerms => _terms.Where(x => string.IsNullOrWhiteSpace(_query) || x.Name.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Slug.Contains(_query, StringComparison.OrdinalIgnoreCase));
+    private int UsedCount => _terms.Count(x => x.Count > 0);
+    private int UnusedCount => _terms.Count - UsedCount;
+    private string CurrentTypeText => _taxonomy == "categories" ? L["Categories"] : L["Tags"];
+    private IReadOnlyList<string> CsvHeaders => L.IsArabic ? new[] { "المعرف", "الاسم", "الرابط المختصر", "عدد المقالات", "الأب", "الوصف" } : new[] { "Id", "Name", "Slug", "Post Count", "Parent Id", "Description" };
+    private string CsvFileName => $"taxonomy-{_taxonomy}-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
 
     protected override void OnInitialized() => L.Changed += Changed;
-    protected override async Task OnParametersSetAsync() { _loading = true; _site = await SiteService.GetSiteAsync(SiteId); await LoadAsync(); _loading = false; }
+    protected override async Task OnParametersSetAsync() { _loading = true; _site = await SiteService.GetSiteAsync(SiteId); if (_site is not null) await LoadAsync(); _loading = false; }
     private async Task LoadAsync() => _terms = await TaxonomyService.GetAsync(SiteId, _taxonomy);
+    private Task RefreshClickedAsync(MouseEventArgs _) => LoadAsync();
     private async Task ShowCategories() { _taxonomy = "categories"; ResetForm(); await LoadAsync(); }
     private async Task ShowTags() { _taxonomy = "tags"; ResetForm(); await LoadAsync(); }
-    private void StartCreate() => ResetForm();
+    private Task StartCreateClicked(MouseEventArgs _) { ResetForm(); return Task.CompletedTask; }
     private void StartEdit(TaxonomyTermView item) { _editingId = item.Id; _model = new() { Name = item.Name, Slug = item.Slug, Description = item.Description, ParentId = item.ParentId }; }
     private void ResetForm() { _editingId = 0; _model = new(); _message = null; _isError = false; }
+    private Task ResetFormClicked(MouseEventArgs _) { ResetForm(); return Task.CompletedTask; }
 
     private async Task SaveAsync()
     {
         try
         {
             _saving = true; _isError = false;
-            var result = _editingId > 0
-                ? await TaxonomyService.UpdateAsync(SiteId, _taxonomy, _editingId, _model)
-                : await TaxonomyService.CreateAsync(SiteId, _taxonomy, _model);
+            var result = _editingId > 0 ? await TaxonomyService.UpdateAsync(SiteId, _taxonomy, _editingId, _model) : await TaxonomyService.CreateAsync(SiteId, _taxonomy, _model);
             _isError = !result.Success; _message = L.TranslateMessage(result.Message);
             if (result.Success) { ResetForm(); _message = L.TranslateMessage(result.Message); await LoadAsync(); }
         }
@@ -130,11 +156,13 @@ else
     {
         try
         {
+            _saving = true;
             var result = await TaxonomyService.DeleteAsync(SiteId, _taxonomy, item.Id);
             _isError = !result.Success; _message = L.TranslateMessage(result.Message);
             if (result.Success) await LoadAsync();
         }
         catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _saving = false; }
     }
 
     private void Changed() => InvokeAsync(StateHasChanged);
