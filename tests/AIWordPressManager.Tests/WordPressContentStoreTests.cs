@@ -1,4 +1,5 @@
 using AIWordPressManager.Application.Abstractions.WordPress;
+using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using AIWordPressManager.Persistence.WordPress;
 using FluentAssertions;
@@ -15,7 +16,7 @@ public sealed class WordPressContentStoreTests
     public async Task Full_snapshot_marks_remote_deletions_unavailable()
     {
         await using var fixture = await StoreFixture.CreateAsync();
-        var siteId = Guid.NewGuid();
+        var siteId = await fixture.CreateSiteAsync();
 
         await fixture.Store.SaveSnapshotAsync(siteId, Snapshot(
             posts: [Post(1, "First"), Post(2, "Second")], totalPosts: 2));
@@ -34,7 +35,7 @@ public sealed class WordPressContentStoreTests
     public async Task Partial_snapshot_does_not_mark_missing_remote_items_unavailable()
     {
         await using var fixture = await StoreFixture.CreateAsync();
-        var siteId = Guid.NewGuid();
+        var siteId = await fixture.CreateSiteAsync();
 
         await fixture.Store.SaveSnapshotAsync(siteId, Snapshot(
             posts: [Post(1, "First"), Post(2, "Second")], totalPosts: 2));
@@ -50,7 +51,7 @@ public sealed class WordPressContentStoreTests
     public async Task Duplicate_remote_items_use_the_latest_modified_version()
     {
         await using var fixture = await StoreFixture.CreateAsync();
-        var siteId = Guid.NewGuid();
+        var siteId = await fixture.CreateSiteAsync();
         var older = DateTimeOffset.UtcNow.AddHours(-2);
         var newer = DateTimeOffset.UtcNow;
 
@@ -71,7 +72,7 @@ public sealed class WordPressContentStoreTests
     public async Task Reappearing_item_is_restored_to_available_state()
     {
         await using var fixture = await StoreFixture.CreateAsync();
-        var siteId = Guid.NewGuid();
+        var siteId = await fixture.CreateSiteAsync();
 
         await fixture.Store.SaveSnapshotAsync(siteId, Snapshot(posts: [Post(1, "First")], totalPosts: 1));
         await fixture.Store.SaveSnapshotAsync(siteId, Snapshot(posts: [], totalPosts: 0));
@@ -117,6 +118,17 @@ public sealed class WordPressContentStoreTests
 
         public AppDbContext Db { get; }
         public WordPressContentStore Store { get; }
+
+        public async Task<Guid> CreateSiteAsync()
+        {
+            var site = new Site(
+                $"Test Site {Guid.NewGuid():N}",
+                new Uri("https://example.test"),
+                DateTime.UtcNow);
+            Db.Sites.Add(site);
+            await Db.SaveChangesAsync();
+            return site.Id;
+        }
 
         public static async Task<StoreFixture> CreateAsync()
         {
