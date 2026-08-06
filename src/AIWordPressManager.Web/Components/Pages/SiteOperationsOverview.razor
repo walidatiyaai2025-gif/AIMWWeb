@@ -24,6 +24,7 @@ else
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                    <a class="btn" href="@CsvDownloadHref" download="@CsvFileName">⇩ @(L.IsArabic ? "تصدير CSV" : "Export CSV")</a>
                     <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
                 </div>
             </div>
@@ -174,6 +175,36 @@ else
                 items.FirstOrDefault()?.StartedAtUtc);
         }
     }
+
+    private string CsvFileName => $"site-operations-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+
+    private string CsvDownloadHref
+    {
+        get
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.AppendLine(L.IsArabic
+                ? "الوقت,الموقع,العملية,النتيجة,المدة بالمللي ثانية,السجلات,الرسالة,التفاصيل"
+                : "Time,Site,Operation,Result,DurationMs,Records,Message,Details");
+
+            foreach (var item in FilteredItems)
+            {
+                builder.Append(Csv(item.StartedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))).Append(',')
+                    .Append(Csv(SiteName(item.SiteId))).Append(',')
+                    .Append(Csv(item.Operation)).Append(',')
+                    .Append(Csv(item.Succeeded ? (L.IsArabic ? "ناجحة" : "Success") : (L.IsArabic ? "فشلت" : "Failed"))).Append(',')
+                    .Append(item.Duration.TotalMilliseconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture)).Append(',')
+                    .Append(item.AffectedRecords?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty).Append(',')
+                    .Append(Csv(item.Message)).Append(',')
+                    .Append(Csv(item.Details ?? string.Empty))
+                    .AppendLine();
+            }
+
+            return "data:text/csv;charset=utf-8,%EF%BB%BF" + Uri.EscapeDataString(builder.ToString());
+        }
+    }
+
+    private static string Csv(string value) => $"\"{value.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ")}\"";
 
     private void ResetFilters()
     {
