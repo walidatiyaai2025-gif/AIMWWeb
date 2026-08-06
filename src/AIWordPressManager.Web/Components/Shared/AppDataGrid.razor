@@ -1,7 +1,12 @@
 @typeparam TItem
 @inject IJSRuntime JS
 
-<div class="app-data-grid @Class">
+<div id="@_gridId" class="app-data-grid @Class">
+    @if (HasColumnChooser)
+    {
+        <style>@((MarkupString)ColumnVisibilityCss)</style>
+    }
+
     <div class="app-data-grid__commandbar">
         <div class="app-data-grid__commandbar-main">
             @if (SearchKeySelector is not null)
@@ -18,6 +23,29 @@
             }
         </div>
         <div class="app-data-grid__commandbar-actions">
+            @if (HasColumnChooser)
+            {
+                <div class="app-data-grid__columns">
+                    <AppButton Icon="☷" Text="@ColumnsText" Size="small" OnClick="ToggleColumnChooserAsync" />
+                    @if (_columnChooserOpen)
+                    {
+                        <div class="app-data-grid__columns-menu" role="menu">
+                            <strong>@ColumnsText</strong>
+                            @for (var index = 0; index < ColumnLabels.Count; index++)
+                            {
+                                var columnIndex = index;
+                                <label>
+                                    <input type="checkbox"
+                                           checked="@IsColumnVisible(columnIndex)"
+                                           @onchange="args => ColumnVisibilityChangedAsync(columnIndex, args)" />
+                                    <span>@ColumnLabels[columnIndex]</span>
+                                </label>
+                            }
+                            <button type="button" class="app-data-grid__columns-reset" @onclick="ResetColumnsAsync">@ResetColumnsText</button>
+                        </div>
+                    }
+                </div>
+            }
             @if (SortKeySelector is not null)
             {
                 <AppButton Icon="@(_sortDescending ? "↓" : "↑")" Text="@SortText" Size="small" OnClick="ToggleSortAsync" />
@@ -135,13 +163,22 @@
     [Parameter] public string ExportText { get; set; } = "Export CSV";
     [Parameter] public string SearchPlaceholder { get; set; } = "Search...";
     [Parameter] public string SearchAriaLabel { get; set; } = "Search data";
+    [Parameter] public IReadOnlyList<string> ColumnLabels { get; set; } = Array.Empty<string>();
+    [Parameter] public string? ColumnPreferenceKey { get; set; }
+    [Parameter] public string ColumnsText { get; set; } = "Columns";
+    [Parameter] public string ResetColumnsText { get; set; } = "Reset columns";
 
     private readonly HashSet<string> _selectedKeys = new(StringComparer.Ordinal);
+    private readonly HashSet<int> _hiddenColumns = new();
+    private readonly string _gridId = $"app-grid-{Guid.NewGuid():N}";
     private int CurrentPage { get; set; } = 1;
     private int _effectivePageSize;
     private bool _sortDescending;
+    private bool _columnChooserOpen;
+    private bool _columnPreferencesLoaded;
     private string _searchText = string.Empty;
 
+    private bool HasColumnChooser => ColumnLabels.Count > 0;
     private int SafePageSize => Math.Max(1, _effectivePageSize > 0 ? _effectivePageSize : PageSize);
     private IReadOnlyList<TItem> FilteredItems => string.IsNullOrWhiteSpace(_searchText) || SearchKeySelector is null
         ? Items
@@ -157,15 +194,40 @@
     private int FirstVisible => FilteredItems.Count == 0 ? 0 : ((CurrentPage - 1) * SafePageSize) + 1;
     private int LastVisible => Math.Min(CurrentPage * SafePageSize, FilteredItems.Count);
     private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {FilteredItems.Count}";
+    private string ColumnVisibilityCss => string.Join(Environment.NewLine, _hiddenColumns.Select(index =>
+    {
+        var position = index + 1 + (Selectable ? 1 : 0);
+        return $"#{_gridId} table tr > :nth-child({position}){{display:none!important;}}";
+    }));
 
     protected override void OnParametersSet()
     {
         if (_effectivePageSize <= 0) _effectivePageSize = Math.Max(1, PageSize);
         if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+        _hiddenColumns.RemoveWhere(index => index < 0 || index >= ColumnLabels.Count);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !HasColumnChooser || _columnPreferencesLoaded) return;
+        _columnPreferencesLoaded = true;
+
+        if (!string.IsNullOrWhiteSpace(ColumnPreferenceKey))
+        {
+            var saved = await JS.InvokeAsync<int[]?>("appGridPreferences.load", ColumnPreferenceKey);
+            if (saved is not null)
+            {
+                foreach (var index in saved.Where(index => index >= 0 && index < ColumnLabels.Count))
+                    _hiddenColumns.Add(index);
+                EnsureVisibleColumn();
+                StateHasChanged();
+            }
+        }
     }
 
     private string GetKey(TItem item) => KeySelector?.Invoke(item) ?? item?.GetHashCode().ToString() ?? string.Empty;
     private bool IsSelected(TItem item) => _selectedKeys.Contains(GetKey(item));
+    private bool IsColumnVisible(int index) => !_hiddenColumns.Contains(index);
 
     private async Task SearchChangedAsync(string value)
     {
@@ -195,6 +257,7 @@
     private Task PreviousPageAsync(MouseEventArgs _) { if (CurrentPage > 1) CurrentPage--; return Task.CompletedTask; }
     private Task NextPageAsync(MouseEventArgs _) { if (CurrentPage < TotalPages) CurrentPage++; return Task.CompletedTask; }
     private Task ToggleSortAsync(MouseEventArgs _) { _sortDescending = !_sortDescending; CurrentPage = 1; return Task.CompletedTask; }
+    private Task ToggleColumnChooserAsync(MouseEventArgs _) { _columnChooserOpen = !_columnChooserOpen; return Task.CompletedTask; }
     private Task ExportAsync(MouseEventArgs _) => ExportRequested.InvokeAsync(SortedItems.ToList());
 
     private async Task ExportCsvAsync(MouseEventArgs _)
@@ -212,5 +275,32 @@
             CurrentPage = 1;
         }
         return Task.CompletedTask;
+    }
+
+    private async Task ColumnVisibilityChangedAsync(int index, ChangeEventArgs args)
+    {
+        var visible = args.Value is true;
+        if (visible) _hiddenColumns.Remove(index); else _hiddenColumns.Add(index);
+        EnsureVisibleColumn();
+        await SaveColumnPreferencesAsync();
+    }
+
+    private async Task ResetColumnsAsync()
+    {
+        _hiddenColumns.Clear();
+        _columnChooserOpen = false;
+        await SaveColumnPreferencesAsync();
+    }
+
+    private void EnsureVisibleColumn()
+    {
+        if (ColumnLabels.Count > 0 && _hiddenColumns.Count >= ColumnLabels.Count)
+            _hiddenColumns.Remove(0);
+    }
+
+    private async Task SaveColumnPreferencesAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(ColumnPreferenceKey))
+            await JS.InvokeVoidAsync("appGridPreferences.save", ColumnPreferenceKey, _hiddenColumns.OrderBy(x => x).ToArray());
     }
 }
