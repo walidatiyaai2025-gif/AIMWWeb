@@ -1,0 +1,142 @@
+@typeparam TItem
+
+<div class="app-data-grid @Class">
+    @if (Toolbar is not null)
+    {
+        <div class="app-data-grid__toolbar">@Toolbar</div>
+    }
+
+    @if (Loading)
+    {
+        <AppLoading Title="@LoadingTitle" Message="@LoadingMessage" />
+    }
+    else if (Items is null || Items.Count == 0)
+    {
+        <AppEmptyState Icon="@EmptyIcon" Title="@EmptyTitle" Description="@EmptyDescription">
+            <Actions>@EmptyActions</Actions>
+        </AppEmptyState>
+    }
+    else
+    {
+        <div class="app-data-grid__viewport">
+            <table>
+                <thead>
+                    <tr>
+                        @if (Selectable)
+                        {
+                            <th class="app-data-grid__selection">
+                                <input type="checkbox"
+                                       checked="@AllPageSelected"
+                                       @onchange="TogglePageAsync"
+                                       aria-label="Select visible rows" />
+                            </th>
+                        }
+                        @Header
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in PagedItems)
+                    {
+                        <tr class="@(IsSelected(item) ? "is-selected" : string.Empty)" @key="GetKey(item)">
+                            @if (Selectable)
+                            {
+                                <td class="app-data-grid__selection">
+                                    <input type="checkbox"
+                                           checked="@IsSelected(item)"
+                                           @onchange="args => ToggleItemAsync(item, args)"
+                                           aria-label="Select row" />
+                                </td>
+                            }
+                            @RowTemplate(item)
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="app-data-grid__footer">
+            <div class="app-data-grid__summary">
+                @if (Selectable)
+                {
+                    <AppBadge Tone="info" Text="@($"{_selectedKeys.Count} {SelectedText}")" />
+                }
+                <span>@SummaryText</span>
+            </div>
+            <div class="app-data-grid__pagination">
+                <AppButton Icon="‹" Size="small" Disabled="@(CurrentPage <= 1)" OnClick="PreviousPageAsync" />
+                <span>@CurrentPage / @TotalPages</span>
+                <AppButton Icon="›" Size="small" Disabled="@(CurrentPage >= TotalPages)" OnClick="NextPageAsync" />
+            </div>
+        </footer>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<TItem> Items { get; set; } = Array.Empty<TItem>();
+    [Parameter, EditorRequired] public RenderFragment Header { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment<TItem> RowTemplate { get; set; } = default!;
+    [Parameter] public RenderFragment? Toolbar { get; set; }
+    [Parameter] public RenderFragment? EmptyActions { get; set; }
+    [Parameter] public Func<TItem, string>? KeySelector { get; set; }
+    [Parameter] public EventCallback<IReadOnlyCollection<string>> SelectionChanged { get; set; }
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public bool Selectable { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string LoadingTitle { get; set; } = "Loading data";
+    [Parameter] public string? LoadingMessage { get; set; }
+    [Parameter] public string EmptyIcon { get; set; } = "◎";
+    [Parameter] public string EmptyTitle { get; set; } = "No data";
+    [Parameter] public string? EmptyDescription { get; set; }
+    [Parameter] public string SelectedText { get; set; } = "selected";
+    [Parameter] public string ShowingText { get; set; } = "Showing";
+    [Parameter] public string OfText { get; set; } = "of";
+
+    private readonly HashSet<string> _selectedKeys = new(StringComparer.Ordinal);
+    private int CurrentPage { get; set; } = 1;
+    private int SafePageSize => Math.Max(1, PageSize);
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(Items.Count / (double)SafePageSize));
+    private IEnumerable<TItem> PagedItems => Items.Skip((CurrentPage - 1) * SafePageSize).Take(SafePageSize);
+    private bool AllPageSelected => PagedItems.Any() && PagedItems.All(IsSelected);
+    private int FirstVisible => Items.Count == 0 ? 0 : ((CurrentPage - 1) * SafePageSize) + 1;
+    private int LastVisible => Math.Min(CurrentPage * SafePageSize, Items.Count);
+    private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {Items.Count}";
+
+    protected override void OnParametersSet()
+    {
+        if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+    }
+
+    private string GetKey(TItem item) => KeySelector?.Invoke(item) ?? item?.GetHashCode().ToString() ?? string.Empty;
+    private bool IsSelected(TItem item) => _selectedKeys.Contains(GetKey(item));
+
+    private async Task ToggleItemAsync(TItem item, ChangeEventArgs args)
+    {
+        var key = GetKey(item);
+        if (args.Value is true) _selectedKeys.Add(key); else _selectedKeys.Remove(key);
+        await SelectionChanged.InvokeAsync(_selectedKeys.ToArray());
+    }
+
+    private async Task TogglePageAsync(ChangeEventArgs args)
+    {
+        var select = args.Value is true;
+        foreach (var item in PagedItems)
+        {
+            var key = GetKey(item);
+            if (select) _selectedKeys.Add(key); else _selectedKeys.Remove(key);
+        }
+        await SelectionChanged.InvokeAsync(_selectedKeys.ToArray());
+    }
+
+    private Task PreviousPageAsync(MouseEventArgs _)
+    {
+        if (CurrentPage > 1) CurrentPage--;
+        return Task.CompletedTask;
+    }
+
+    private Task NextPageAsync(MouseEventArgs _)
+    {
+        if (CurrentPage < TotalPages) CurrentPage++;
+        return Task.CompletedTask;
+    }
+}
