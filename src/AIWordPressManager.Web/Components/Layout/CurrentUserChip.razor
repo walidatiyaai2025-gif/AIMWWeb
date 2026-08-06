@@ -33,6 +33,7 @@
         </div>
 
         <nav class="account-links">
+            <a href="/account/profile"><span>◎</span><div><strong>@(L.IsArabic ? "حسابي" : "My account")</strong><small>@(L.IsArabic ? "بيانات الحساب وتغيير كلمة المرور" : "Profile details and password security")</small></div><b>›</b></a>
             <a href="/settings"><span>⚙</span><div><strong>@(L.IsArabic ? "الإعدادات" : "Settings")</strong><small>@(L.IsArabic ? "اللغة والمظهر والتفضيلات" : "Language, appearance and preferences")</small></div><b>›</b></a>
             <a href="/about-build"><span>ⓘ</span><div><strong>@(L.IsArabic ? "معلومات الإصدار" : "Build information")</strong><small>@(L.IsArabic ? "الفرع والنسخة وتفاصيل البناء" : "Branch, version and build details")</small></div><b>›</b></a>
             <a href="/system-health"><span>♥</span><div><strong>@(L.IsArabic ? "صحة النظام" : "System health")</strong><small>@(L.IsArabic ? "فحص الخدمات وقاعدة البيانات" : "Services and database status")</small></div><b>›</b></a>
@@ -45,15 +46,15 @@
 </details>
 
 @code {
-    private string UserName { get; set; } = "Admin";
-    private string Role { get; set; } = "Administrator";
+    private string UserName { get; set; } = "User";
+    private string Role { get; set; } = "User";
     private string Initials => string.Concat(UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var principal = state.User;
-        UserName = principal.Identity?.Name ?? "Admin";
-        Role = principal.FindFirstValue(ClaimTypes.Role) ?? "Administrator";
+        UserName = principal.Identity?.Name ?? (L.IsArabic ? "مستخدم" : "User");
+        Role = principal.FindFirstValue(ClaimTypes.Role) ?? "User";
     }
 }
