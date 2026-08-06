@@ -1,8 +1,17 @@
 @typeparam TItem
+@inject IJSRuntime JS
 
 <div class="app-data-grid @Class">
     <div class="app-data-grid__commandbar">
         <div class="app-data-grid__commandbar-main">
+            @if (SearchKeySelector is not null)
+            {
+                <AppSearchBox Value="@_searchText"
+                              ValueChanged="SearchChangedAsync"
+                              Placeholder="@SearchPlaceholder"
+                              AriaLabel="@SearchAriaLabel"
+                              Class="app-data-grid__search" />
+            }
             @if (Toolbar is not null)
             {
                 @Toolbar
@@ -11,18 +20,15 @@
         <div class="app-data-grid__commandbar-actions">
             @if (SortKeySelector is not null)
             {
-                <AppButton Icon="@(_sortDescending ? "↓" : "↑")"
-                           Text="@SortText"
-                           Size="small"
-                           OnClick="ToggleSortAsync" />
+                <AppButton Icon="@(_sortDescending ? "↓" : "↑")" Text="@SortText" Size="small" OnClick="ToggleSortAsync" />
             }
-            @if (ExportRequested.HasDelegate)
+            @if (CsvRowSelector is not null)
             {
-                <AppButton Icon="⇩"
-                           Text="@ExportText"
-                           Size="small"
-                           Disabled="@(Items.Count == 0)"
-                           OnClick="ExportAsync" />
+                <AppButton Icon="⇩" Text="@ExportText" Size="small" Disabled="@(FilteredItems.Count == 0)" OnClick="ExportCsvAsync" />
+            }
+            else if (ExportRequested.HasDelegate)
+            {
+                <AppButton Icon="⇩" Text="@ExportText" Size="small" Disabled="@(FilteredItems.Count == 0)" OnClick="ExportAsync" />
             }
         </div>
     </div>
@@ -31,7 +37,7 @@
     {
         <AppLoading Title="@LoadingTitle" Message="@LoadingMessage" />
     }
-    else if (Items is null || Items.Count == 0)
+    else if (FilteredItems.Count == 0)
     {
         <AppEmptyState Icon="@EmptyIcon" Title="@EmptyTitle" Description="@EmptyDescription">
             <Actions>@EmptyActions</Actions>
@@ -46,10 +52,7 @@
                         @if (Selectable)
                         {
                             <th class="app-data-grid__selection">
-                                <input type="checkbox"
-                                       checked="@AllPageSelected"
-                                       @onchange="TogglePageAsync"
-                                       aria-label="Select visible rows" />
+                                <input type="checkbox" checked="@AllPageSelected" @onchange="TogglePageAsync" aria-label="Select visible rows" />
                             </th>
                         }
                         @Header
@@ -62,10 +65,7 @@
                             @if (Selectable)
                             {
                                 <td class="app-data-grid__selection">
-                                    <input type="checkbox"
-                                           checked="@IsSelected(item)"
-                                           @onchange="args => ToggleItemAsync(item, args)"
-                                           aria-label="Select row" />
+                                    <input type="checkbox" checked="@IsSelected(item)" @onchange="args => ToggleItemAsync(item, args)" aria-label="Select row" />
                                 </td>
                             }
                             @RowTemplate(item)
@@ -111,6 +111,10 @@
     [Parameter] public RenderFragment? EmptyActions { get; set; }
     [Parameter] public Func<TItem, string>? KeySelector { get; set; }
     [Parameter] public Func<TItem, string?>? SortKeySelector { get; set; }
+    [Parameter] public Func<TItem, string?>? SearchKeySelector { get; set; }
+    [Parameter] public Func<TItem, IReadOnlyList<string>>? CsvRowSelector { get; set; }
+    [Parameter] public IReadOnlyList<string> CsvHeaders { get; set; } = Array.Empty<string>();
+    [Parameter] public string CsvFileName { get; set; } = "export.csv";
     [Parameter] public EventCallback<IReadOnlyCollection<string>> SelectionChanged { get; set; }
     [Parameter] public EventCallback<IReadOnlyList<TItem>> ExportRequested { get; set; }
     [Parameter] public int PageSize { get; set; } = 10;
@@ -129,24 +133,30 @@
     [Parameter] public string RowsPerPageText { get; set; } = "Rows";
     [Parameter] public string SortText { get; set; } = "Sort";
     [Parameter] public string ExportText { get; set; } = "Export CSV";
+    [Parameter] public string SearchPlaceholder { get; set; } = "Search...";
+    [Parameter] public string SearchAriaLabel { get; set; } = "Search data";
 
     private readonly HashSet<string> _selectedKeys = new(StringComparer.Ordinal);
     private int CurrentPage { get; set; } = 1;
     private int _effectivePageSize;
     private bool _sortDescending;
+    private string _searchText = string.Empty;
 
     private int SafePageSize => Math.Max(1, _effectivePageSize > 0 ? _effectivePageSize : PageSize);
-    private IEnumerable<TItem> SortedItems => SortKeySelector is null
+    private IReadOnlyList<TItem> FilteredItems => string.IsNullOrWhiteSpace(_searchText) || SearchKeySelector is null
         ? Items
+        : Items.Where(x => (SearchKeySelector(x) ?? string.Empty).Contains(_searchText.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList();
+    private IEnumerable<TItem> SortedItems => SortKeySelector is null
+        ? FilteredItems
         : (_sortDescending
-            ? Items.OrderByDescending(x => SortKeySelector(x), StringComparer.CurrentCultureIgnoreCase)
-            : Items.OrderBy(x => SortKeySelector(x), StringComparer.CurrentCultureIgnoreCase));
-    private int TotalPages => Math.Max(1, (int)Math.Ceiling(Items.Count / (double)SafePageSize));
+            ? FilteredItems.OrderByDescending(x => SortKeySelector(x), StringComparer.CurrentCultureIgnoreCase)
+            : FilteredItems.OrderBy(x => SortKeySelector(x), StringComparer.CurrentCultureIgnoreCase));
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredItems.Count / (double)SafePageSize));
     private IReadOnlyList<TItem> PagedItems => SortedItems.Skip((CurrentPage - 1) * SafePageSize).Take(SafePageSize).ToList();
     private bool AllPageSelected => PagedItems.Count > 0 && PagedItems.All(IsSelected);
-    private int FirstVisible => Items.Count == 0 ? 0 : ((CurrentPage - 1) * SafePageSize) + 1;
-    private int LastVisible => Math.Min(CurrentPage * SafePageSize, Items.Count);
-    private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {Items.Count}";
+    private int FirstVisible => FilteredItems.Count == 0 ? 0 : ((CurrentPage - 1) * SafePageSize) + 1;
+    private int LastVisible => Math.Min(CurrentPage * SafePageSize, FilteredItems.Count);
+    private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {FilteredItems.Count}";
 
     protected override void OnParametersSet()
     {
@@ -156,6 +166,13 @@
 
     private string GetKey(TItem item) => KeySelector?.Invoke(item) ?? item?.GetHashCode().ToString() ?? string.Empty;
     private bool IsSelected(TItem item) => _selectedKeys.Contains(GetKey(item));
+
+    private async Task SearchChangedAsync(string value)
+    {
+        _searchText = value;
+        CurrentPage = 1;
+        await Task.CompletedTask;
+    }
 
     private async Task ToggleItemAsync(TItem item, ChangeEventArgs args)
     {
@@ -175,26 +192,17 @@
         await SelectionChanged.InvokeAsync(_selectedKeys.ToArray());
     }
 
-    private Task PreviousPageAsync(MouseEventArgs _)
-    {
-        if (CurrentPage > 1) CurrentPage--;
-        return Task.CompletedTask;
-    }
-
-    private Task NextPageAsync(MouseEventArgs _)
-    {
-        if (CurrentPage < TotalPages) CurrentPage++;
-        return Task.CompletedTask;
-    }
-
-    private Task ToggleSortAsync(MouseEventArgs _)
-    {
-        _sortDescending = !_sortDescending;
-        CurrentPage = 1;
-        return Task.CompletedTask;
-    }
-
+    private Task PreviousPageAsync(MouseEventArgs _) { if (CurrentPage > 1) CurrentPage--; return Task.CompletedTask; }
+    private Task NextPageAsync(MouseEventArgs _) { if (CurrentPage < TotalPages) CurrentPage++; return Task.CompletedTask; }
+    private Task ToggleSortAsync(MouseEventArgs _) { _sortDescending = !_sortDescending; CurrentPage = 1; return Task.CompletedTask; }
     private Task ExportAsync(MouseEventArgs _) => ExportRequested.InvokeAsync(SortedItems.ToList());
+
+    private async Task ExportCsvAsync(MouseEventArgs _)
+    {
+        if (CsvRowSelector is null) return;
+        var rows = SortedItems.Select(CsvRowSelector).ToList();
+        await JS.InvokeVoidAsync("appCsv.download", CsvFileName, CsvHeaders, rows);
+    }
 
     private Task PageSizeChangedAsync(ChangeEventArgs args)
     {
