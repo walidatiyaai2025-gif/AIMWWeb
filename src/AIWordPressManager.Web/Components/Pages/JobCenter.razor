@@ -1,0 +1,228 @@
+@page "/module/execution"
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@using AIWordPressManager.Infrastructure.Jobs
+@inject BackgroundJobManagementService Jobs
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مركز العمليات" : "Job Center")</PageTitle>
+
+<div class="job-center-workspace">
+    <AppToolbar Eyebrow="@(L.IsArabic ? "البنية التحتية" : "INFRASTRUCTURE")"
+                Title="@(L.IsArabic ? "مركز العمليات" : "Job Center")"
+                Subtitle="@(L.IsArabic ? "مراقبة العمليات الخلفية واختبار محرك التنفيذ الموحد." : "Monitor background work and test the shared execution engine.")">
+        <Actions>
+            <AppButton Icon="↻" Text="@L["Refresh"]" OnClick="RefreshClickedAsync" />
+            <AppButton Variant="primary" Icon="▶" Text="@(L.IsArabic ? "تشغيل اختبار" : "Run test job")" Busy="@_creating" Disabled="@_creating" OnClick="CreateTestJobAsync" />
+        </Actions>
+    </AppToolbar>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+    }
+
+    <section class="app-stat-grid">
+        <AppStatCard Icon="◷" Label="@(L.IsArabic ? "في الانتظار" : "Queued")" Value="@Count(BackgroundJobStatus.Queued).ToString()" Description="@(L.IsArabic ? "لم تبدأ بعد" : "Waiting to start")" Tone="warning" />
+        <AppStatCard Icon="▶" Label="@(L.IsArabic ? "قيد التنفيذ" : "Running")" Value="@Count(BackgroundJobStatus.Running).ToString()" Description="@(L.IsArabic ? "تعمل الآن" : "Active now")" Tone="info" />
+        <AppStatCard Icon="✓" Label="@(L.IsArabic ? "مكتملة" : "Succeeded")" Value="@Count(BackgroundJobStatus.Succeeded).ToString()" Description="@(L.IsArabic ? "تمت بنجاح" : "Completed successfully")" Tone="success" />
+        <AppStatCard Icon="!" Label="@(L.IsArabic ? "فاشلة" : "Failed")" Value="@Count(BackgroundJobStatus.Failed).ToString()" Description="@(L.IsArabic ? "تحتاج مراجعة" : "Needs review")" Tone="danger" />
+    </section>
+
+    <AppSection Eyebrow="@(L.IsArabic ? "اختبار المحرك" : "ENGINE TEST")"
+                Title="@(L.IsArabic ? "إنشاء عملية تجريبية" : "Create a test job")"
+                Subtitle="@(L.IsArabic ? "عملية آمنة لا تتصل بووردبريس أو قاعدة البيانات." : "A safe job that does not touch WordPress or the database.")">
+        <ChildContent>
+            <div class="filter-row">
+                <label>
+                    <span>@(L.IsArabic ? "المدة بالثواني" : "Duration in seconds")</span>
+                    <input type="number" min="1" max="120" @bind="_durationSeconds" />
+                </label>
+                <label>
+                    <span>@(L.IsArabic ? "الرسالة" : "Message")</span>
+                    <input @bind="_testMessage" />
+                </label>
+                <AppButton Variant="primary" Text="@(L.IsArabic ? "إضافة إلى الطابور" : "Add to queue")" Busy="@_creating" Disabled="@_creating" OnClick="CreateTestJobAsync" />
+            </div>
+        </ChildContent>
+    </AppSection>
+
+    <AppSection Eyebrow="@(L.IsArabic ? "المراقبة الحية" : "LIVE MONITOR")"
+                Title="@(L.IsArabic ? "العمليات الأخيرة" : "Recent jobs")"
+                Subtitle="@(L.IsArabic ? "يتم تحديث البيانات تلقائيًا كل ثانيتين." : "Data refreshes automatically every two seconds.")">
+        <ChildContent>
+            @if (_items.Count == 0)
+            {
+                <AppEmptyState Icon="◷"
+                               Title="@(L.IsArabic ? "لا توجد عمليات بعد" : "No jobs yet")"
+                               Description="@(L.IsArabic ? "شغّل عملية اختبار للتأكد من عمل المحرك." : "Run a test job to verify the engine.")" />
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>@(L.IsArabic ? "العملية" : "Job")</th>
+                                <th>@(L.IsArabic ? "الحالة" : "Status")</th>
+                                <th>@(L.IsArabic ? "التقدم" : "Progress")</th>
+                                <th>@(L.IsArabic ? "المحاولة" : "Attempt")</th>
+                                <th>@(L.IsArabic ? "الإنشاء" : "Created")</th>
+                                <th>@(L.IsArabic ? "الإجراءات" : "Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var job in _items)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@job.Name</strong>
+                                        <small>@job.Type · @job.Id.ToString("N")[..8]</small>
+                                        @if (!string.IsNullOrWhiteSpace(job.ErrorMessage))
+                                        {
+                                            <small class="text-danger">@job.ErrorMessage</small>
+                                        }
+                                    </td>
+                                    <td><AppBadge Tone="@StatusTone(job.Status)" Text="@StatusText(job.Status)" /></td>
+                                    <td>
+                                        <div class="job-progress-track" aria-label="@($"{job.Progress}%")">
+                                            <span style="width:@($"{job.Progress}%")"></span>
+                                        </div>
+                                        <small>@job.Progress% @job.ProgressMessage</small>
+                                    </td>
+                                    <td>@job.Attempt / @job.MaximumAttempts</td>
+                                    <td>@FormatDate(job.CreatedAtUtc)</td>
+                                    <td>
+                                        @if (job.Status is BackgroundJobStatus.Queued or BackgroundJobStatus.Running)
+                                        {
+                                            <AppButton Size="small" Variant="danger" Text="@(L.IsArabic ? "إلغاء" : "Cancel")" OnClick="args => CancelAsync(job.Id)" />
+                                        }
+                                        else
+                                        {
+                                            <span>—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </ChildContent>
+    </AppSection>
+</div>
+
+<style>
+.job-progress-track{height:8px;min-width:150px;border-radius:999px;background:rgba(148,163,184,.2);overflow:hidden}.job-progress-track span{display:block;height:100%;border-radius:inherit;background:var(--accent,#c5a45d);transition:width .25s ease}.job-center-workspace label{display:grid;gap:6px;min-width:180px}.job-center-workspace label span{font-size:.78rem;opacity:.75}.job-center-workspace .text-danger{color:#ef4444;display:block;max-width:420px;white-space:normal}
+</style>
+
+@code {
+    private readonly CancellationTokenSource _disposeCancellation = new();
+    private IReadOnlyList<BackgroundJobSnapshot> _items = Array.Empty<BackgroundJobSnapshot>();
+    private int _durationSeconds = 10;
+    private string _testMessage = "Infrastructure engine test";
+    private bool _creating;
+    private bool _isError;
+    private string? _message;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+        _ = AutoRefreshAsync(_disposeCancellation.Token);
+    }
+
+    private int Count(BackgroundJobStatus status) => _items.Count(x => x.Status == status);
+
+    private Task RefreshClickedAsync(MouseEventArgs _)
+    {
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    private void Refresh()
+    {
+        _items = Jobs.GetRecent(200);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CreateTestJobAsync(MouseEventArgs _)
+    {
+        try
+        {
+            _creating = true;
+            _isError = false;
+            var id = await Jobs.EnqueueSystemDelayAsync(
+                Math.Clamp(_durationSeconds, 1, 120),
+                _testMessage,
+                requestedBy: "job-center",
+                cancellationToken: _disposeCancellation.Token);
+            _message = L.IsArabic ? $"تمت إضافة العملية {id.ToString("N")[..8]} إلى الطابور." : $"Job {id.ToString("N")[..8]} was queued.";
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    private Task CancelAsync(Guid id)
+    {
+        var cancelled = Jobs.Cancel(id);
+        _isError = !cancelled;
+        _message = cancelled
+            ? (L.IsArabic ? "تم إرسال طلب الإلغاء." : "Cancellation requested.")
+            : (L.IsArabic ? "تعذر إلغاء العملية." : "The job could not be cancelled.");
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    private async Task AutoRefreshAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                _items = Jobs.GetRecent(200);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private string StatusText(BackgroundJobStatus status) => status switch
+    {
+        BackgroundJobStatus.Queued => L.IsArabic ? "في الانتظار" : "Queued",
+        BackgroundJobStatus.Running => L.IsArabic ? "قيد التنفيذ" : "Running",
+        BackgroundJobStatus.Succeeded => L.IsArabic ? "مكتملة" : "Succeeded",
+        BackgroundJobStatus.Failed => L.IsArabic ? "فاشلة" : "Failed",
+        BackgroundJobStatus.Cancelled => L.IsArabic ? "ملغاة" : "Cancelled",
+        _ => status.ToString()
+    };
+
+    private static string StatusTone(BackgroundJobStatus status) => status switch
+    {
+        BackgroundJobStatus.Succeeded => "success",
+        BackgroundJobStatus.Running => "info",
+        BackgroundJobStatus.Queued => "warning",
+        BackgroundJobStatus.Failed => "danger",
+        BackgroundJobStatus.Cancelled => "neutral",
+        _ => "neutral"
+    };
+
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
+
+    public ValueTask DisposeAsync()
+    {
+        _disposeCancellation.Cancel();
+        _disposeCancellation.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
