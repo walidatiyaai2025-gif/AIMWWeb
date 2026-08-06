@@ -16,26 +16,22 @@
 else if (_item is null)
 {
     <section class="panel" style="padding:28px">
-        <h1 style="margin-top:0">@(L.IsArabic ? "العملية غير موجودة" : "Operation not found")</h1>
-        <p style="opacity:.75">@(L.IsArabic ? "لم يعد سجل العملية متاحًا أو تم تنظيف سجل العمليات." : "The operation record is no longer available or the history was cleared.")</p>
-        <a class="btn primary" href="/site-operations">@(L.IsArabic ? "العودة إلى سجل العمليات" : "Back to operation history")</a>
+        <h1>@(L.IsArabic ? "العملية غير موجودة" : "Operation not found")</h1>
+        <p>@(L.IsArabic ? "لم يعد سجل العملية متاحًا." : "The operation record is no longer available.")</p>
+        <a class="btn primary" href="/site-operations">@(L.IsArabic ? "العودة" : "Back")</a>
     </section>
 }
 else
 {
     <div class="operation-details-page">
         <section class="panel" style="padding:24px;margin-bottom:18px">
-            <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap">
-                <div>
-                    <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "التشخيص التشغيلي" : "OPERATION DIAGNOSTICS")</small>
-                    <h1 style="margin:8px 0">@_item.Operation</h1>
-                    <p style="margin:0;opacity:.76">@_item.Message</p>
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    <button type="button" class="btn" @onclick="CopyReportAsync">⧉ @(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
-                    <a class="btn" href="/site-operations">@(L.IsArabic ? "كل العمليات" : "All operations")</a>
-                    <a class="btn primary" href="@($"/sites/{_item.SiteId}/connection")">@(L.IsArabic ? "مركز اتصال الموقع" : "Site connection center")</a>
-                </div>
+            <small>@(L.IsArabic ? "التشخيص التشغيلي" : "OPERATION DIAGNOSTICS")</small>
+            <h1>@_item.Operation</h1>
+            <p>@_item.Message</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn" @onclick="CopyReportAsync">@(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
+                <a class="btn" href="/site-operations">@(L.IsArabic ? "كل العمليات" : "All operations")</a>
+                <a class="btn primary" href="@($"/sites/{_item.SiteId}/connection")">@(L.IsArabic ? "مركز الاتصال" : "Connection center")</a>
             </div>
         </section>
 
@@ -49,36 +45,26 @@ else
             @Stat(L.IsArabic ? "الموقع" : "Site", _siteName)
             @Stat(L.IsArabic ? "وقت البدء" : "Started", FormatDate(_item.StartedAtUtc))
             @Stat(L.IsArabic ? "المدة" : "Duration", FormatDuration(_item.Duration))
-            @Stat(L.IsArabic ? "السجلات المتأثرة" : "Affected records", _item.AffectedRecords?.ToString() ?? "—")
+            @Stat(L.IsArabic ? "السجلات" : "Records", _item.AffectedRecords?.ToString() ?? "—")
         </section>
 
         <section class="panel" style="padding:22px;margin-bottom:18px">
-            <h2 style="margin-top:0">@(L.IsArabic ? "بيانات التتبع" : "Trace information")</h2>
-            <dl style="display:grid;grid-template-columns:minmax(170px,.35fr) 1fr;gap:10px 18px;margin:0">
-                <dt>@(L.IsArabic ? "معرف العملية" : "Operation ID")</dt><dd style="margin:0;word-break:break-all"><code>@_item.Id</code></dd>
-                <dt>@(L.IsArabic ? "معرف الموقع" : "Site ID")</dt><dd style="margin:0;word-break:break-all"><code>@_item.SiteId</code></dd>
-                <dt>@(L.IsArabic ? "وقت الانتهاء" : "Completed")</dt><dd style="margin:0">@FormatDate(_item.CompletedAtUtc)</dd>
-                <dt>@(L.IsArabic ? "المدة بالمللي ثانية" : "Duration milliseconds")</dt><dd style="margin:0">@Math.Max(0, _item.Duration.TotalMilliseconds).ToString("0")</dd>
-            </dl>
+            <h2>@(L.IsArabic ? "بيانات التتبع" : "Trace information")</h2>
+            <p><strong>Operation ID:</strong> <code>@_item.Id</code></p>
+            <p><strong>Site ID:</strong> <code>@_item.SiteId</code></p>
+            <p><strong>Completed:</strong> @FormatDate(_item.CompletedAtUtc)</p>
+            <p><strong>Duration ms:</strong> @Math.Max(0, _item.Duration.TotalMilliseconds).ToString("0")</p>
         </section>
 
         <section class="panel" style="padding:22px">
-            <h2 style="margin-top:0">@(L.IsArabic ? "التفاصيل الفنية" : "Technical details")</h2>
-            @if (string.IsNullOrWhiteSpace(_item.Details))
-            {
-                <p style="opacity:.72;margin-bottom:0">@(L.IsArabic ? "لم يتم تسجيل تفاصيل فنية إضافية لهذه العملية." : "No additional technical details were recorded for this operation.")</p>
-            }
-            else
-            {
-                <pre style="white-space:pre-wrap;word-break:break-word;margin:0;padding:16px;border-radius:10px;background:rgba(0,0,0,.18);max-height:520px;overflow:auto">@_item.Details</pre>
-            }
+            <h2>@(L.IsArabic ? "التفاصيل الفنية" : "Technical details")</h2>
+            <pre style="white-space:pre-wrap;word-break:break-word">@(_item.Details ?? (L.IsArabic ? "لا توجد تفاصيل." : "No details."))</pre>
         </section>
     </div>
 }
 
 @code {
     [Parameter] public Guid OperationId { get; set; }
-
     private bool _loading = true;
     private SiteOperationHistoryItem? _item;
     private string _siteName = string.Empty;
@@ -99,34 +85,30 @@ else
                 _siteName = sites.FirstOrDefault(x => x.Id == _item.SiteId)?.Name ?? _item.SiteId.ToString("N")[..8];
             }
         }
-        finally
-        {
-            _loading = false;
-        }
+        finally { _loading = false; }
     }
 
     private async Task CopyReportAsync()
     {
         if (_item is null) return;
-
-        var report = $"""
-AI WordPress Manager - Operation Diagnostic Report
-Operation ID: {_item.Id}
-Site: {_siteName}
-Site ID: {_item.SiteId}
-Operation: {_item.Operation}
-Result: {(_item.Succeeded ? "Success" : "Failed")}
-Started UTC: {_item.StartedAtUtc:O}
-Completed UTC: {_item.CompletedAtUtc:O}
-Duration ms: {Math.Max(0, _item.Duration.TotalMilliseconds):0}
-Affected records: {_item.AffectedRecords?.ToString() ?? "N/A"}
-Message: {_item.Message}
-Details:
-{_item.Details ?? "N/A"}
-""";
-
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", report);
-        _copyMessage = L.IsArabic ? "تم نسخ تقرير العملية إلى الحافظة." : "Operation report copied to the clipboard.";
+        var lines = new[]
+        {
+            "AI WordPress Manager - Operation Diagnostic Report",
+            "Operation ID: " + _item.Id,
+            "Site: " + _siteName,
+            "Site ID: " + _item.SiteId,
+            "Operation: " + _item.Operation,
+            "Result: " + (_item.Succeeded ? "Success" : "Failed"),
+            "Started UTC: " + _item.StartedAtUtc.ToString("O"),
+            "Completed UTC: " + _item.CompletedAtUtc.ToString("O"),
+            "Duration ms: " + Math.Max(0, _item.Duration.TotalMilliseconds).ToString("0", System.Globalization.CultureInfo.InvariantCulture),
+            "Affected records: " + (_item.AffectedRecords?.ToString() ?? "N/A"),
+            "Message: " + _item.Message,
+            "Details:",
+            _item.Details ?? "N/A"
+        };
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(Environment.NewLine, lines));
+        _copyMessage = L.IsArabic ? "تم نسخ التقرير." : "Report copied.";
     }
 
     private RenderFragment Stat(string label, string value) => builder =>
@@ -134,18 +116,13 @@ Details:
         builder.OpenElement(0, "article");
         builder.AddAttribute(1, "class", "panel");
         builder.AddAttribute(2, "style", "padding:18px");
-        builder.OpenElement(3, "small");
-        builder.AddContent(4, label);
-        builder.CloseElement();
-        builder.OpenElement(5, "strong");
-        builder.AddAttribute(6, "style", "display:block;font-size:1.2rem;margin-top:8px;word-break:break-word");
-        builder.AddContent(7, value);
-        builder.CloseElement();
+        builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement();
+        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement();
         builder.CloseElement();
     };
 
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
-    private static string FormatDuration(TimeSpan value) => value.TotalSeconds < 1 ? $"{Math.Max(0, value.TotalMilliseconds):0} ms" : $"{value.TotalSeconds:0.0} s";
-    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    private static string FormatDuration(TimeSpan value) => value.TotalSeconds < 1 ? Math.Max(0, value.TotalMilliseconds).ToString("0") + " ms" : value.TotalSeconds.ToString("0.0") + " s";
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= OnLanguageChanged;
 }
