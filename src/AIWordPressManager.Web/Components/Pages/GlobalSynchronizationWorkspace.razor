@@ -1,0 +1,256 @@
+@page "/module/sync"
+@rendermode InteractiveServer
+@implements IDisposable
+@using Microsoft.AspNetCore.Components
+@using AIWordPressManager.Domain.Entities
+@inject SiteWebService SiteService
+@inject WordPressSyncWebService SyncService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مزامنة WordPress" : "WordPress Synchronization")</PageTitle>
+
+@if (_loadingSites)
+{
+    <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل المواقع" : "Loading sites")"
+                Message="@(L.IsArabic ? "يتم تجهيز مركز المزامنة." : "Preparing the synchronization workspace.")" />
+}
+else
+{
+    <div class="synchronization-workspace">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "المزامنة والعمل دون اتصال" : "SYNC & OFFLINE")"
+                    Title="@(L.IsArabic ? "مركز مزامنة WordPress" : "WordPress Synchronization Workspace")"
+                    Subtitle="@(L.IsArabic ? "نزّل أحدث المقالات والصفحات والوسائط والتصنيفات إلى قاعدة SQLite المحلية." : "Download the latest posts, pages, media, and taxonomies into the local SQLite cache.")">
+            <Actions>
+                @if (_selectedSiteId != Guid.Empty)
+                {
+                    <AppButton Href="@($"/sites/{_selectedSiteId}/explorer")"
+                               Text="@(L.IsArabic ? "فتح المحتوى المحلي" : "Open local content")" />
+                }
+                <AppButton Icon="↻"
+                           Variant="primary"
+                           Text="@(L.IsArabic ? "بدء المزامنة" : "Start synchronization")"
+                           Busy="@_working"
+                           Disabled="@(_working || _selectedSiteId == Guid.Empty)"
+                           OnClick="RunSynchronizationAsync" />
+            </Actions>
+        </AppToolbar>
+
+        <AppSection Eyebrow="@(L.IsArabic ? "مساحة العمل" : "WORKSPACE")"
+                    Title="@(L.IsArabic ? "اختر موقع WordPress" : "Select a WordPress site")"
+                    Subtitle="@(L.IsArabic ? "تظهر فقط المواقع التابعة لحسابك الحالي." : "Only sites owned by the signed-in account are available.")">
+            <ChildContent>
+                <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+                    <label style="min-width:280px;flex:1">
+                        <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "الموقع" : "Site")</span>
+                        <select class="form-control" @bind="_selectedSiteId" @bind:after="SiteChangedAsync">
+                            <option value="@Guid.Empty">@(L.IsArabic ? "اختر موقعًا" : "Select a site")</option>
+                            @foreach (var site in _sites)
+                            {
+                                <option value="@site.Id">@site.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <AppButton Icon="↻"
+                               Text="@(L.IsArabic ? "تحديث الحالة" : "Refresh status")"
+                               Disabled="@(_working || _selectedSiteId == Guid.Empty)"
+                               OnClick="RefreshStatusAsync" />
+                </div>
+            </ChildContent>
+        </AppSection>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")" style="margin:16px 0">
+                <strong>@_message</strong>
+                @if (_lastResult is not null && !_isError)
+                {
+                    <small style="display:block;margin-top:6px">
+                        @(L.IsArabic ? $"السجلات التي تم تنزيلها: {_lastResult.DownloadedRecords}" : $"Downloaded records: {_lastResult.DownloadedRecords}")
+                    </small>
+                }
+            </div>
+        }
+
+        @if (_selectedSiteId == Guid.Empty)
+        {
+            <AppCard>
+                <AppEmptyState Icon="↻"
+                               Title="@(L.IsArabic ? "اختر موقعًا لبدء المزامنة" : "Select a site to synchronize")"
+                               Description="@(L.IsArabic ? "يمكنك إضافة موقع جديد من شاشة المواقع ثم العودة إلى هنا." : "Add a site from the Sites screen, then return here to synchronize it.")">
+                    <Actions>
+                        <AppButton Href="/sites/connect" Variant="primary" Text="@(L.IsArabic ? "إضافة موقع" : "Connect a site")" />
+                    </Actions>
+                </AppEmptyState>
+            </AppCard>
+        }
+        else if (_loadingSnapshot)
+        {
+            <AppLoading Title="@(L.IsArabic ? "جارٍ قراءة البيانات المحلية" : "Reading local cache")"
+                        Message="@(L.IsArabic ? "يتم حساب حالة المحتوى وآخر مزامنة." : "Calculating content totals and the last synchronization time.")" />
+        }
+        else if (_snapshot is not null)
+        {
+            <section class="app-stat-grid" style="margin-top:18px">
+                <AppStatCard Icon="▤" Label="@(L.IsArabic ? "المقالات" : "Posts")" Value="@_snapshot.Totals.Posts.ToString()" />
+                <AppStatCard Icon="▧" Label="@(L.IsArabic ? "الصفحات" : "Pages")" Value="@_snapshot.Totals.Pages.ToString()" />
+                <AppStatCard Icon="▣" Label="@(L.IsArabic ? "الوسائط" : "Media")" Value="@_snapshot.Totals.Media.ToString()" />
+                <AppStatCard Icon="#" Label="@(L.IsArabic ? "التصنيفات" : "Categories")" Value="@_snapshot.Totals.Categories.ToString()" />
+                <AppStatCard Icon="⌁" Label="@(L.IsArabic ? "الوسوم" : "Tags")" Value="@_snapshot.Totals.Tags.ToString()" />
+                <AppStatCard Icon="◷"
+                             Label="@(L.IsArabic ? "آخر مزامنة" : "Last synchronization")"
+                             Value="@FormatDate(_snapshot.LastSynchronizedAtUtc)"
+                             Tone="info" />
+            </section>
+
+            <AppSection Eyebrow="@(L.IsArabic ? "حالة التخزين المحلي" : "LOCAL CACHE")"
+                        Title="@SelectedSiteName"
+                        Subtitle="@(L.IsArabic ? "البيانات التالية محفوظة محليًا ويمكن تصفحها عند تعذر الاتصال بـWordPress." : "This data is stored locally and remains available when WordPress is unreachable.")"
+                        Class="panel"
+                        BodyClass="">
+                <ChildContent>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                        <AppBadge Tone="@CacheTone" Text="@CacheStatusText" />
+                        <span>@(L.IsArabic ? $"إجمالي السجلات المحلية: {TotalCachedRecords}" : $"Total cached records: {TotalCachedRecords}")</span>
+                    </div>
+                </ChildContent>
+                <Actions>
+                    <AppButton Href="@($"/content?siteId={_selectedSiteId}")" Text="@(L.IsArabic ? "مركز المحتوى" : "Content hub")" />
+                    <AppButton Href="@($"/sites/{_selectedSiteId}/snapshot")" Text="@(L.IsArabic ? "لقطة البيانات" : "Data snapshot")" />
+                </Actions>
+            </AppSection>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<Site> _sites = [];
+    private Guid _selectedSiteId;
+    private ContentExplorerView? _snapshot;
+    private WordPressSyncViewResult? _lastResult;
+    private bool _loadingSites = true;
+    private bool _loadingSnapshot;
+    private bool _working;
+    private bool _isError;
+    private bool _initialized;
+    private string? _message;
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "siteId")]
+    public Guid? WorkspaceSiteId { get; set; }
+
+    private string SelectedSiteName => _sites.FirstOrDefault(x => x.Id == _selectedSiteId)?.Name ?? "—";
+    private int TotalCachedRecords => _snapshot is null ? 0 : _snapshot.Totals.Posts + _snapshot.Totals.Pages + _snapshot.Totals.Media + _snapshot.Totals.Categories + _snapshot.Totals.Tags;
+    private string CacheTone => !_snapshot?.LastSynchronizedAtUtc.HasValue ?? true ? "warning" : "success";
+    private string CacheStatusText => _snapshot?.LastSynchronizedAtUtc.HasValue == true
+        ? (L.IsArabic ? "بيانات محلية متاحة" : "Local cache available")
+        : (L.IsArabic ? "لم تتم المزامنة بعد" : "Not synchronized yet");
+
+    protected override void OnInitialized() => L.Changed += LanguageChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            if (WorkspaceSiteId.HasValue && _sites.Any(x => x.Id == WorkspaceSiteId.Value))
+                _selectedSiteId = WorkspaceSiteId.Value;
+            _initialized = true;
+            if (_selectedSiteId != Guid.Empty)
+                await LoadSnapshotAsync();
+        }
+        finally
+        {
+            _loadingSites = false;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_initialized)
+            return;
+
+        var nextSiteId = WorkspaceSiteId.HasValue && _sites.Any(x => x.Id == WorkspaceSiteId.Value)
+            ? WorkspaceSiteId.Value
+            : Guid.Empty;
+
+        if (_selectedSiteId == nextSiteId)
+            return;
+
+        _selectedSiteId = nextSiteId;
+        ResetResult();
+        if (_selectedSiteId != Guid.Empty)
+            await LoadSnapshotAsync();
+    }
+
+    private async Task SiteChangedAsync()
+    {
+        ResetResult();
+        if (_selectedSiteId != Guid.Empty)
+            await LoadSnapshotAsync();
+    }
+
+    private async Task RefreshStatusAsync(MouseEventArgs _)
+    {
+        if (_selectedSiteId != Guid.Empty)
+            await LoadSnapshotAsync();
+    }
+
+    private async Task RunSynchronizationAsync(MouseEventArgs _)
+    {
+        if (_selectedSiteId == Guid.Empty)
+            return;
+
+        try
+        {
+            _working = true;
+            _message = null;
+            _isError = false;
+            _lastResult = await SyncService.SynchronizeAsync(_selectedSiteId);
+            _message = L.TranslateMessage(_lastResult.Message);
+            await LoadSnapshotAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private async Task LoadSnapshotAsync()
+    {
+        try
+        {
+            _loadingSnapshot = true;
+            _snapshot = await SyncService.GetExplorerAsync(_selectedSiteId);
+        }
+        catch (Exception ex)
+        {
+            _snapshot = null;
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
+        finally
+        {
+            _loadingSnapshot = false;
+        }
+    }
+
+    private void ResetResult()
+    {
+        _snapshot = null;
+        _lastResult = null;
+        _message = null;
+        _isError = false;
+    }
+
+    private string FormatDate(DateTime? value) => value.HasValue
+        ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm")
+        : "—";
+
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
