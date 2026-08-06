@@ -6,53 +6,50 @@ namespace AIWordPressManager.Web.Services;
 public sealed class DashboardLiveService(
     AppDbContext dbContext,
     SiteWebService siteService,
+    CurrentUserContext currentUser,
     ExecutionCenterService executionCenter)
 {
     public async Task<DashboardLiveView> GetAsync(CancellationToken cancellationToken = default)
     {
+        var ownerUserId = currentUser.RequireUserId();
+        var ownedSites = await dbContext.Sites.AsNoTracking()
+            .Where(x => x.OwnerUserId == ownerUserId)
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken);
+
+        var ownedSiteIds = ownedSites.Select(x => x.Id).ToArray();
+        var ownedSiteNames = ownedSites.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var siteSummaryTask = siteService.GetSummaryAsync(cancellationToken);
         var postsTask = dbContext.WordPressContentRecords.AsNoTracking()
-            .CountAsync(x => x.IsAvailable && x.ContentType == "post", cancellationToken);
+            .CountAsync(x => ownedSiteIds.Contains(x.SiteId) && x.IsAvailable && x.ContentType == "post", cancellationToken);
         var pagesTask = dbContext.WordPressContentRecords.AsNoTracking()
-            .CountAsync(x => x.IsAvailable && x.ContentType == "page", cancellationToken);
+            .CountAsync(x => ownedSiteIds.Contains(x.SiteId) && x.IsAvailable && x.ContentType == "page", cancellationToken);
         var mediaTask = dbContext.WordPressMediaRecords.AsNoTracking()
-            .CountAsync(x => x.IsAvailable, cancellationToken);
+            .CountAsync(x => ownedSiteIds.Contains(x.SiteId) && x.IsAvailable, cancellationToken);
 
         await Task.WhenAll(siteSummaryTask, postsTask, pagesTask, mediaTask);
 
         var lastSync = await dbContext.WordPressContentRecords.AsNoTracking()
+            .Where(x => ownedSiteIds.Contains(x.SiteId))
             .Select(x => (DateTime?)x.LastSynchronizedAtUtc)
             .MaxAsync(cancellationToken);
 
-        var jobs = executionCenter.GetJobs();
+        var jobs = executionCenter.GetJobs()
+            .Where(x => string.IsNullOrWhiteSpace(x.SiteName) || ownedSiteNames.Contains(x.SiteName))
+            .ToArray();
+
         var running = jobs.Count(x => x.Status is "Running" or "Waiting" or "Paused");
         var failed = jobs.Count(x => x.Status == "Failed");
         var completed = jobs.Count(x => x.Status == "Completed");
         var recentJobs = jobs.Take(5).Select(x => new DashboardJobView(
-            x.Id,
-            x.Title,
-            x.SiteName,
-            x.Status,
-            x.Progress,
-            x.CreatedAtUtc,
-            x.CompletedAtUtc,
-            x.Error)).ToArray();
+            x.Id, x.Title, x.SiteName, x.Status, x.Progress, x.CreatedAtUtc, x.CompletedAtUtc, x.Error)).ToArray();
 
         var siteSummary = await siteSummaryTask;
         var healthScore = CalculateHealthScore(siteSummary.TotalSites, siteSummary.ConnectedSites, failed);
 
-        return new DashboardLiveView(
-            siteSummary,
-            await postsTask,
-            await pagesTask,
-            await mediaTask,
-            running,
-            completed,
-            failed,
-            healthScore,
-            lastSync,
-            recentJobs,
-            DateTime.UtcNow);
+        return new DashboardLiveView(siteSummary, await postsTask, await pagesTask, await mediaTask,
+            running, completed, failed, healthScore, lastSync, recentJobs, DateTime.UtcNow);
     }
 
     private static int CalculateHealthScore(int totalSites, int connectedSites, int failedJobs)
@@ -64,25 +61,5 @@ public sealed class DashboardLiveService(
     }
 }
 
-public sealed record DashboardLiveView(
-    DashboardSummary Sites,
-    int Posts,
-    int Pages,
-    int Media,
-    int ActiveJobs,
-    int CompletedJobs,
-    int FailedJobs,
-    int HealthScore,
-    DateTime? LastSynchronizationAtUtc,
-    IReadOnlyList<DashboardJobView> RecentJobs,
-    DateTime GeneratedAtUtc);
-
-public sealed record DashboardJobView(
-    Guid Id,
-    string Title,
-    string SiteName,
-    string Status,
-    int Progress,
-    DateTime CreatedAtUtc,
-    DateTime? CompletedAtUtc,
-    string? Error);
+public sealed record DashboardLiveView(DashboardSummary Sites, int Posts, int Pages, int Media, int ActiveJobs, int CompletedJobs, int FailedJobs, int HealthScore, DateTime? LastSynchronizationAtUtc, IReadOnlyList<DashboardJobView> RecentJobs, DateTime GeneratedAtUtc);
+public sealed record DashboardJobView(Guid Id, string Title, string SiteName, string Status, int Progress, DateTime CreatedAtUtc, DateTime? CompletedAtUtc, string? Error);
