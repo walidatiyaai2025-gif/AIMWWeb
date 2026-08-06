@@ -2,7 +2,6 @@
 @page "/module/execution"
 @rendermode InteractiveServer
 @implements IDisposable
-@using AIWordPressManager.Domain.Entities
 @inject ExecutionCenterService ExecutionService
 @inject SiteWebService SiteService
 @inject AppNotificationService Notifications
@@ -103,9 +102,9 @@
 @code {
     private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(2));
     private readonly CancellationTokenSource _cts = new();
-    private IReadOnlyList<Site> _ownedSites = [];
-    private IReadOnlyList<ExecutionJob> _jobs = [];
-    private IReadOnlyList<ExecutionActivity> _activities = [];
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _ownedSites = [];
+    private IReadOnlyList<AIWordPressManager.Web.Services.ExecutionJob> _jobs = [];
+    private IReadOnlyList<AIWordPressManager.Web.Services.ExecutionActivity> _activities = [];
     private Guid _selectedSiteId;
     private string _query = string.Empty;
     private string _status = "all";
@@ -116,10 +115,10 @@
 
     private HashSet<string> OwnedSiteNames => _ownedSites.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
     private string? SelectedSiteName => _selectedSiteId == Guid.Empty ? null : _ownedSites.FirstOrDefault(x => x.Id == _selectedSiteId)?.Name;
-    private IEnumerable<ExecutionJob> OwnedJobs => _jobs.Where(x => OwnedSiteNames.Contains(x.SiteName));
-    private IEnumerable<ExecutionJob> SiteJobs => string.IsNullOrWhiteSpace(SelectedSiteName) ? OwnedJobs : OwnedJobs.Where(x => x.SiteName.Equals(SelectedSiteName, StringComparison.OrdinalIgnoreCase));
-    private IEnumerable<ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
-    private IEnumerable<ExecutionActivity> VisibleActivities
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> OwnedJobs => _jobs.Where(x => OwnedSiteNames.Contains(x.SiteName));
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => string.IsNullOrWhiteSpace(SelectedSiteName) ? OwnedJobs : OwnedJobs.Where(x => x.SiteName.Equals(SelectedSiteName, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionActivity> VisibleActivities
     {
         get
         {
@@ -182,7 +181,7 @@
     {
         try
         {
-            var job = OwnedJobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job is not associated with a site owned by the signed-in user.");
+            _ = OwnedJobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job is not associated with a site owned by the signed-in user.");
             action(); Refresh(); Notifications.Success(successMessage);
         }
         catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
