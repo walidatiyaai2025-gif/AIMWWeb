@@ -10,105 +10,73 @@
 
 @if (_loading)
 {
-    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ تحميل سجل العمليات..." : "Loading operation history...")</div>
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ التحميل..." : "Loading operation history...")</div>
 }
 else
 {
     <div class="site-operations-page">
         <section class="panel" style="padding:24px;margin-bottom:18px">
-            <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
-                <div>
-                    <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "المراقبة التشغيلية" : "OPERATIONS MONITORING")</small>
-                    <h1 style="margin:8px 0">@(L.IsArabic ? "عمليات مواقع WordPress" : "WordPress Site Operations")</h1>
-                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة لكل المواقع." : "A unified view of connection tests and synchronization activity across all sites.")</p>
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
-                    <a class="btn" href="@CsvDownloadHref" download="@CsvFileName">⇩ @(L.IsArabic ? "تصدير CSV" : "Export CSV")</a>
-                    <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
-                </div>
+            <h1>@(L.IsArabic ? "عمليات مواقع WordPress" : "WordPress Site Operations")</h1>
+            <p>@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة." : "A unified view of connection tests and synchronization activity.")</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" @onclick="ReloadAsync">@(L.IsArabic ? "تحديث" : "Refresh")</button>
+                <a class="btn" href="@CsvDownloadHref" download="@CsvFileName">@(L.IsArabic ? "تصدير CSV" : "Export CSV")</a>
+                <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
             </div>
         </section>
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
-            @Stat(L.IsArabic ? "العمليات الظاهرة" : "Visible operations", FilteredSummary.Total.ToString())
+            @Stat(L.IsArabic ? "الإجمالي" : "Total", FilteredSummary.Total.ToString())
             @Stat(L.IsArabic ? "ناجحة" : "Successful", FilteredSummary.Successful.ToString())
             @Stat(L.IsArabic ? "فاشلة" : "Failed", FilteredSummary.Failed.ToString())
-            @Stat(L.IsArabic ? "المواقع النشطة" : "Active sites", FilteredSummary.SiteCount.ToString())
+            @Stat(L.IsArabic ? "المواقع" : "Sites", FilteredSummary.SiteCount.ToString())
             @Stat(L.IsArabic ? "متوسط المدة" : "Average duration", FormatDuration(FilteredSummary.AverageDuration))
         </section>
 
         <section class="panel" style="padding:18px;margin-bottom:18px">
-            <div style="display:grid;grid-template-columns:minmax(220px,1fr) repeat(4,minmax(150px,.45fr));gap:12px;align-items:end">
-                <label>
-                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "البحث" : "Search")</span>
-                    <input class="form-control" placeholder="@(L.IsArabic ? "الموقع أو العملية أو الرسالة..." : "Site, operation, or message...")" @bind="_query" @bind:event="oninput" />
-                </label>
-                <label>
-                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "الموقع" : "Site")</span>
-                    <select class="form-control" @bind="_siteFilter">
-                        <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
-                        @foreach (var site in _sites)
-                        {
-                            <option value="@site.Id">@site.Name</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "النتيجة" : "Result")</span>
-                    <select class="form-control" @bind="_statusFilter">
-                        <option value="all">@(L.IsArabic ? "كل النتائج" : "All results")</option>
-                        <option value="success">@(L.IsArabic ? "الناجحة فقط" : "Successful only")</option>
-                        <option value="failed">@(L.IsArabic ? "الفاشلة فقط" : "Failed only")</option>
-                    </select>
-                </label>
-                <label>
-                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "من تاريخ" : "From")</span>
-                    <input type="date" class="form-control" @bind="_fromDate" />
-                </label>
-                <label>
-                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "إلى تاريخ" : "To")</span>
-                    <input type="date" class="form-control" @bind="_toDate" />
-                </label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                <input class="form-control" placeholder="@(L.IsArabic ? "بحث..." : "Search...")" @bind="_query" @bind:event="oninput" />
+                <select class="form-control" @bind="_siteFilter">
+                    <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
+                    @foreach (var site in _sites)
+                    {
+                        <option value="@site.Id">@site.Name</option>
+                    }
+                </select>
+                <select class="form-control" @bind="_statusFilter">
+                    <option value="all">@(L.IsArabic ? "كل النتائج" : "All results")</option>
+                    <option value="success">@(L.IsArabic ? "ناجحة" : "Successful")</option>
+                    <option value="failed">@(L.IsArabic ? "فاشلة" : "Failed")</option>
+                </select>
+                <input type="date" class="form-control" @bind="_fromDate" />
+                <input type="date" class="form-control" @bind="_toDate" />
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">
-                <small style="opacity:.72">@(L.IsArabic ? $"عرض {FilteredSummary.Total} من أصل {_items.Count} عملية" : $"Showing {FilteredSummary.Total} of {_items.Count} operations")</small>
-                <button type="button" class="btn" @onclick="ResetFilters">@(L.IsArabic ? "إعادة ضبط الفلاتر" : "Reset filters")</button>
-            </div>
+            <button type="button" class="btn" style="margin-top:12px" @onclick="ResetFilters">@(L.IsArabic ? "إعادة الضبط" : "Reset filters")</button>
         </section>
 
         <section class="panel" style="overflow:auto">
-            <table style="width:100%;border-collapse:collapse;min-width:920px">
-                <thead>
-                    <tr>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "الوقت" : "Time")</th>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "الموقع" : "Site")</th>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "العملية" : "Operation")</th>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "النتيجة" : "Result")</th>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "المدة" : "Duration")</th>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "السجلات" : "Records")</th>
-                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "الرسالة" : "Message")</th>
-                        <th style="text-align:start;padding:14px"></th>
-                    </tr>
-                </thead>
+            <table style="width:100%;border-collapse:collapse;min-width:900px">
+                <thead><tr>
+                    <th>Time</th><th>Site</th><th>Operation</th><th>Result</th><th>Duration</th><th>Records</th><th>Message</th><th></th>
+                </tr></thead>
                 <tbody>
-                    @if (!FilteredItems.Any())
+                    @if (FilteredItems.Count == 0)
                     {
-                        <tr><td colspan="8" style="padding:28px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد عمليات مطابقة." : "No matching operations were found.")</td></tr>
+                        <tr><td colspan="8" style="padding:28px;text-align:center">@(L.IsArabic ? "لا توجد نتائج." : "No matching operations.")</td></tr>
                     }
                     else
                     {
                         @foreach (var item in FilteredItems)
                         {
                             <tr style="border-top:1px solid rgba(128,128,128,.2)">
-                                <td style="padding:14px;white-space:nowrap">@FormatDate(item.StartedAtUtc)</td>
-                                <td style="padding:14px"><a href="@($"/sites/{item.SiteId}")">@SiteName(item.SiteId)</a></td>
-                                <td style="padding:14px">@item.Operation</td>
-                                <td style="padding:14px"><span class="badge @(item.Succeeded ? "success" : "danger")">@(item.Succeeded ? (L.IsArabic ? "ناجحة" : "Success") : (L.IsArabic ? "فشلت" : "Failed"))</span></td>
-                                <td style="padding:14px">@FormatDuration(item.Duration)</td>
-                                <td style="padding:14px">@(item.AffectedRecords?.ToString() ?? "—")</td>
-                                <td style="padding:14px;max-width:360px">@item.Message</td>
-                                <td style="padding:14px"><a class="btn" href="@($"/sites/{item.SiteId}/connection")">@(L.IsArabic ? "فتح" : "Open")</a></td>
+                                <td>@FormatDate(item.StartedAtUtc)</td>
+                                <td>@SiteName(item.SiteId)</td>
+                                <td>@item.Operation</td>
+                                <td><span class="badge @(item.Succeeded ? "success" : "danger")">@(item.Succeeded ? "Success" : "Failed")</span></td>
+                                <td>@FormatDuration(item.Duration)</td>
+                                <td>@(item.AffectedRecords?.ToString() ?? "—")</td>
+                                <td>@item.Message</td>
+                                <td><a class="btn" href="@($"/operations/sites/{item.Id}")">@(L.IsArabic ? "تفاصيل" : "Details")</a></td>
                             </tr>
                         }
                     }
@@ -139,17 +107,14 @@ else
             _sites = await SiteService.GetSitesAsync();
             _items = History.GetAll(2000);
         }
-        finally
-        {
-            _loading = false;
-        }
+        finally { _loading = false; }
     }
 
     private IReadOnlyList<SiteOperationHistoryItem> FilteredItems => _items.Where(item =>
     {
-        var localDate = item.StartedAtUtc.ToLocalTime().Date;
-        if (localDate < _fromDate.Date || localDate > _toDate.Date) return false;
-        if (!string.IsNullOrWhiteSpace(_siteFilter) && Guid.TryParse(_siteFilter, out var selectedSite) && item.SiteId != selectedSite) return false;
+        var date = item.StartedAtUtc.ToLocalTime().Date;
+        if (date < _fromDate.Date || date > _toDate.Date) return false;
+        if (!string.IsNullOrWhiteSpace(_siteFilter) && Guid.TryParse(_siteFilter, out var siteId) && item.SiteId != siteId) return false;
         if (_statusFilter == "success" && !item.Succeeded) return false;
         if (_statusFilter == "failed" && item.Succeeded) return false;
         if (string.IsNullOrWhiteSpace(_query)) return true;
@@ -165,46 +130,37 @@ else
         get
         {
             var items = FilteredItems;
-            var averageTicks = items.Count == 0 ? 0L : (long)items.Average(x => x.Duration.Ticks);
-            return new SiteOperationHistorySummary(
-                items.Count,
-                items.Count(x => x.Succeeded),
-                items.Count(x => !x.Succeeded),
-                TimeSpan.FromTicks(averageTicks),
-                items.Select(x => x.SiteId).Distinct().Count(),
-                items.FirstOrDefault()?.StartedAtUtc);
+            var ticks = items.Count == 0 ? 0L : (long)items.Average(x => x.Duration.Ticks);
+            return new SiteOperationHistorySummary(items.Count, items.Count(x => x.Succeeded), items.Count(x => !x.Succeeded), TimeSpan.FromTicks(ticks), items.Select(x => x.SiteId).Distinct().Count(), items.FirstOrDefault()?.StartedAtUtc);
         }
     }
 
-    private string CsvFileName => $"site-operations-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+    private string CsvFileName => "site-operations-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv";
+    private string CsvDownloadHref => "data:text/csv;charset=utf-8,%EF%BB%BF" + Uri.EscapeDataString(BuildCsv());
 
-    private string CsvDownloadHref
+    private string BuildCsv()
     {
-        get
+        var builder = new System.Text.StringBuilder();
+        builder.AppendLine("Time,Site,Operation,Result,DurationMs,Records,Message,Details");
+        foreach (var item in FilteredItems)
         {
-            var builder = new System.Text.StringBuilder();
-            builder.AppendLine(L.IsArabic
-                ? "الوقت,الموقع,العملية,النتيجة,المدة بالمللي ثانية,السجلات,الرسالة,التفاصيل"
-                : "Time,Site,Operation,Result,DurationMs,Records,Message,Details");
-
-            foreach (var item in FilteredItems)
+            var cells = new[]
             {
-                builder.Append(Csv(item.StartedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))).Append(',')
-                    .Append(Csv(SiteName(item.SiteId))).Append(',')
-                    .Append(Csv(item.Operation)).Append(',')
-                    .Append(Csv(item.Succeeded ? (L.IsArabic ? "ناجحة" : "Success") : (L.IsArabic ? "فشلت" : "Failed"))).Append(',')
-                    .Append(item.Duration.TotalMilliseconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture)).Append(',')
-                    .Append(item.AffectedRecords?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty).Append(',')
-                    .Append(Csv(item.Message)).Append(',')
-                    .Append(Csv(item.Details ?? string.Empty))
-                    .AppendLine();
-            }
-
-            return "data:text/csv;charset=utf-8,%EF%BB%BF" + Uri.EscapeDataString(builder.ToString());
+                item.StartedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+                SiteName(item.SiteId), item.Operation, item.Succeeded ? "Success" : "Failed",
+                item.Duration.TotalMilliseconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture),
+                item.AffectedRecords?.ToString() ?? string.Empty, item.Message, item.Details ?? string.Empty
+            };
+            builder.AppendLine(string.Join(",", cells.Select(EscapeCsv)));
         }
+        return builder.ToString();
     }
 
-    private static string Csv(string value) => $"\"{value.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ")}\"";
+    private static string EscapeCsv(string value)
+    {
+        var cleaned = (value ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Replace("\"", "\"\"");
+        return "\"" + cleaned + "\"";
+    }
 
     private void ResetFilters()
     {
@@ -217,17 +173,15 @@ else
 
     private RenderFragment Stat(string label, string value) => builder =>
     {
-        builder.OpenElement(0, "article");
-        builder.AddAttribute(1, "class", "panel");
-        builder.AddAttribute(2, "style", "padding:18px");
+        builder.OpenElement(0, "article"); builder.AddAttribute(1, "class", "panel"); builder.AddAttribute(2, "style", "padding:18px");
         builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement();
-        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement();
+        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement();
         builder.CloseElement();
     };
 
     private string SiteName(Guid siteId) => _sites.FirstOrDefault(x => x.Id == siteId)?.Name ?? siteId.ToString("N")[..8];
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-    private static string FormatDuration(TimeSpan value) => value.TotalSeconds < 1 ? $"{Math.Max(0, value.TotalMilliseconds):0} ms" : $"{value.TotalSeconds:0.0} s";
-    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    private static string FormatDuration(TimeSpan value) => value.TotalSeconds < 1 ? Math.Max(0, value.TotalMilliseconds).ToString("0") + " ms" : value.TotalSeconds.ToString("0.0") + " s";
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= OnLanguageChanged;
 }
