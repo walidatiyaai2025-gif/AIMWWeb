@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.55.0 - 2026-08-06 - Site Connection Operations Center
+- Added a dedicated connection and synchronization center for each WordPress site.
+- Added saved-credential status, connection retesting, smart synchronization, and direct operational shortcuts.
+- Added persistent local operation history for connection tests and synchronization attempts.
+- Added operation duration, success or failure status, affected record counts, and diagnostic report copying.
+- Added safe per-site operation-history clearing without exposing saved Application Passwords.
+
 ## 155.54.0 - 2026-08-06 - WordPress Site Onboarding
 - Added a guided three-step WordPress site connection workflow.
 - Added site profile validation before saving.
