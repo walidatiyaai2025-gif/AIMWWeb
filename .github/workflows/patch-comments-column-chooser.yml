@@ -1,0 +1,81 @@
+name: Patch Comments Column Chooser
+
+on:
+  push:
+    branches:
+      - feature/stable-ui-framework
+    paths:
+      - .github/workflows/patch-comments-column-chooser.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feature/stable-ui-framework
+          fetch-depth: 0
+
+      - name: Patch Comments Manager
+        shell: pwsh
+        run: |
+          $path = 'src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor'
+          $text = Get-Content $path -Raw
+
+          $old = @'
+                         RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")">
+'@
+          $new = @'
+                         RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+                         ColumnLabels="@CommentColumnLabels"
+                         ColumnPreferenceKey="@($"comments-grid-columns-{SiteId}")"
+                         ColumnsText="@(L.IsArabic ? "الأعمدة" : "Columns")"
+                         ResetColumnsText="@(L.IsArabic ? "إظهار كل الأعمدة" : "Show all columns")">
+'@
+          if (-not $text.Contains($old)) { throw 'AppDataGrid insertion point was not found.' }
+          $text = $text.Replace($old, $new)
+
+          $marker = @'
+    private string CsvFileName => $"wordpress-comments-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+'@
+          $replacement = @'
+    private string CsvFileName => $"wordpress-comments-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+    private IReadOnlyList<string> CommentColumnLabels => L.IsArabic
+        ? new[] { "الكاتب", "التعليق", "الحالة", "التاريخ", "الإجراءات" }
+        : new[] { "Author", "Comment", "Status", "Date", "Actions" };
+'@
+          if (-not $text.Contains($marker)) { throw 'Comment column label insertion point was not found.' }
+          $text = $text.Replace($marker, $replacement)
+          Set-Content $path $text -Encoding utf8
+
+          $project = 'src/AIWordPressManager.Web/AIWordPressManager.Web.csproj'
+          $xml = Get-Content $project -Raw
+          $xml = $xml.Replace('<Version>155.49.2</Version>', '<Version>155.49.3</Version>')
+          $xml = $xml.Replace('<AssemblyVersion>155.49.2.0</AssemblyVersion>', '<AssemblyVersion>155.49.3.0</AssemblyVersion>')
+          $xml = $xml.Replace('<FileVersion>155.49.2.0</FileVersion>', '<FileVersion>155.49.3.0</FileVersion>')
+          $xml = $xml.Replace('<InformationalVersion>155.49.2</InformationalVersion>', '<InformationalVersion>155.49.3</InformationalVersion>')
+          Set-Content $project $xml -Encoding utf8
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build .\AIWordPressManager.Web.sln --configuration Debug
+
+      - name: Commit patch
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor src/AIWordPressManager.Web/AIWordPressManager.Web.csproj
+          if (git diff --cached --quiet) { exit 0 }
+          git commit -m "feat: enable comments grid column chooser [skip ci]"
+          git push origin feature/stable-ui-framework
