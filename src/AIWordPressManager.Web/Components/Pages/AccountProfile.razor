@@ -1,0 +1,150 @@
+@page "/account/profile"
+@rendermode InteractiveServer
+@inject AccountProfileService AccountService
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "حسابي" : "My Account")</PageTitle>
+
+<div class="settings-page">
+    <AppToolbar
+        Eyebrow="@(L.IsArabic ? "إعدادات الحساب" : "ACCOUNT SETTINGS")"
+        Title="@(L.IsArabic ? "حسابي" : "My Account")"
+        Subtitle="@(L.IsArabic ? "راجع بيانات حسابك وحدّث كلمة المرور بأمان." : "Review your account details and update your password securely.")" />
+
+    @if (_loading)
+    {
+        <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل الحساب" : "Loading account")" />
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <AppCard>
+            <AppEmptyState Icon="!" Title="@(L.IsArabic ? "تعذر تحميل الحساب" : "Account could not be loaded")" Description="@_error" />
+        </AppCard>
+    }
+    else if (_profile is not null)
+    {
+        <section class="app-stat-grid">
+            <AppStatCard Icon="◎" Label="@(L.IsArabic ? "اسم المستخدم" : "Username")" Value="@_profile.UserName" Description="@_profile.UserId.ToString()" Tone="accent" />
+            <AppStatCard Icon="◆" Label="@(L.IsArabic ? "الدور" : "Role")" Value="@_profile.Role" Description="@(_profile.IsActive ? (L.IsArabic ? "الحساب نشط" : "Account active") : (L.IsArabic ? "الحساب موقوف" : "Account inactive"))" Tone="info" />
+            <AppStatCard Icon="◉" Label="@(L.IsArabic ? "المواقع" : "Sites")" Value="@_profile.SiteCount.ToString()" Description="@(L.IsArabic ? "مواقع WordPress المملوكة للحساب" : "WordPress sites owned by this account")" Tone="success" />
+            <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر دخول" : "Last login")" Value="@FormatDate(_profile.LastLoginAtUtc)" Description="@(L.IsArabic ? "تاريخ إنشاء الحساب" : "Account created") @FormatDate(_profile.CreatedAtUtc)" Tone="neutral" />
+        </section>
+
+        <AppCard Eyebrow="@(L.IsArabic ? "الأمان" : "SECURITY")"
+                 Title="@(L.IsArabic ? "تغيير كلمة المرور" : "Change password")"
+                 Subtitle="@(L.IsArabic ? "أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة قوية." : "Enter your current password, then choose a strong new password.")">
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <div class="alert @(_isError ? "error" : "success")">@_message</div>
+            }
+
+            <div class="site-create-grid">
+                <label>
+                    <span>@(L.IsArabic ? "كلمة المرور الحالية" : "Current password")</span>
+                    <InputText @bind-Value="_currentPassword" type="password" autocomplete="current-password" disabled="@_working" />
+                </label>
+                <label>
+                    <span>@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")</span>
+                    <InputText @bind-Value="_newPassword" type="password" autocomplete="new-password" disabled="@_working" />
+                </label>
+                <label>
+                    <span>@(L.IsArabic ? "تأكيد كلمة المرور الجديدة" : "Confirm new password")</span>
+                    <InputText @bind-Value="_confirmPassword" type="password" autocomplete="new-password" disabled="@_working" />
+                </label>
+            </div>
+
+            <div class="site-form-hint">
+                ⓘ @(L.IsArabic ? "يجب ألا تقل عن 8 أحرف وأن تحتوي على حرف كبير وحرف صغير ورقم." : "Use at least 8 characters with uppercase, lowercase, and a number.")
+            </div>
+
+            <div class="actions" style="margin-top:1.25rem">
+                <AppButton Variant="primary"
+                           Icon="🔒"
+                           Text="@(_working ? (L.IsArabic ? "جارٍ التغيير" : "Changing") : (L.IsArabic ? "تغيير كلمة المرور" : "Change password"))"
+                           Busy="@_working"
+                           Disabled="@_working"
+                           OnClick="ChangePasswordAsync" />
+            </div>
+        </AppCard>
+    }
+</div>
+
+@code {
+    private AccountProfileView? _profile;
+    private bool _loading = true;
+    private bool _working;
+    private bool _isError;
+    private string? _error;
+    private string _message = string.Empty;
+    private string _currentPassword = string.Empty;
+    private string _newPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _profile = await AccountService.GetAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ChangePasswordAsync(MouseEventArgs _)
+    {
+        try
+        {
+            _working = true;
+            _message = string.Empty;
+            _isError = false;
+
+            var result = await AccountService.ChangePasswordAsync(_currentPassword, _newPassword, _confirmPassword);
+            _isError = !result.IsSuccess;
+            _message = L.IsArabic ? Translate(result.Message) : result.Message;
+
+            if (result.IsSuccess)
+            {
+                _currentPassword = string.Empty;
+                _newPassword = string.Empty;
+                _confirmPassword = string.Empty;
+                Notifications.Success(_message);
+            }
+            else
+            {
+                Notifications.Error(_message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+            Notifications.Error(_message);
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private string FormatDate(DateTime? value) => value is null
+        ? (L.IsArabic ? "غير متاح" : "Not available")
+        : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+
+    private static string Translate(string message) => message switch
+    {
+        "The current password is incorrect." => "كلمة المرور الحالية غير صحيحة.",
+        "The new password must contain at least 8 characters." => "يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف.",
+        "The new password must contain uppercase, lowercase, and numeric characters." => "يجب أن تحتوي كلمة المرور الجديدة على حرف كبير وحرف صغير ورقم.",
+        "Password confirmation does not match." => "تأكيد كلمة المرور غير مطابق.",
+        "The new password must be different from the current password." => "يجب أن تختلف كلمة المرور الجديدة عن الحالية.",
+        "Password changed successfully." => "تم تغيير كلمة المرور بنجاح.",
+        _ => message
+    };
+}
