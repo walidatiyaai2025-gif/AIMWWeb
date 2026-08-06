@@ -10,23 +10,27 @@ namespace AIWordPressManager.Web.Services;
 public sealed class SiteWebService(
     AppDbContext dbContext,
     IWordPressConnectionTester connectionTester,
-    ISecretProtectionService secretProtectionService)
+    ISecretProtectionService secretProtectionService,
+    CurrentUserContext currentUser)
 {
+    private Guid OwnerId => currentUser.UserId;
+
     public Task<List<Site>> GetSitesAsync(CancellationToken cancellationToken = default) =>
-        dbContext.Sites.AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
+        dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == OwnerId).OrderBy(x => x.Name).ToListAsync(cancellationToken);
 
     public Task<Site?> GetSiteAsync(Guid id, CancellationToken cancellationToken = default) =>
-        dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == OwnerId, cancellationToken);
 
     public async Task<SiteCredentialSummary?> GetCredentialSummaryAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
+        await RequireOwnedSiteAsync(siteId, false, cancellationToken);
         var credential = await dbContext.SiteCredentials.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
         return credential is null ? null : new SiteCredentialSummary(credential.UserName, true);
     }
 
     public async Task<DashboardSummary> GetSummaryAsync(CancellationToken cancellationToken = default)
     {
-        var sites = await dbContext.Sites.AsNoTracking().ToListAsync(cancellationToken);
+        var sites = await dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == OwnerId).ToListAsync(cancellationToken);
         var lastCheck = sites.Where(x => x.LastConnectionTestAtUtc.HasValue).Select(x => x.LastConnectionTestAtUtc).OrderByDescending(x => x).FirstOrDefault();
         return new DashboardSummary(sites.Count, sites.Count(x => x.ConnectionStatus == SiteConnectionStatus.Connected), sites.Count(x => x.ConnectionStatus is SiteConnectionStatus.Unreachable or SiteConnectionStatus.AuthenticationFailed or SiteConnectionStatus.LimitedPermissions), lastCheck);
     }
@@ -36,7 +40,7 @@ public sealed class SiteWebService(
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
         await EnsureUniqueUrlAsync(normalizedUri, null, cancellationToken);
-        var site = new Site(name.Trim(), normalizedUri, DateTime.UtcNow);
+        var site = new Site(name.Trim(), normalizedUri, DateTime.UtcNow, OwnerId);
         dbContext.Sites.Add(site);
         await dbContext.SaveChangesAsync(cancellationToken);
         return site.Id;
@@ -47,7 +51,7 @@ public sealed class SiteWebService(
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
         await EnsureUniqueUrlAsync(normalizedUri, siteId, cancellationToken);
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken) ?? throw new InvalidOperationException("Site not found.");
+        var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var now = DateTime.UtcNow;
         site.SetName(name.Trim(), now);
         site.SetSiteUrl(normalizedUri, now);
@@ -56,18 +60,17 @@ public sealed class SiteWebService(
 
     public async Task SetDisabledAsync(Guid siteId, bool disabled, CancellationToken cancellationToken = default)
     {
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken) ?? throw new InvalidOperationException("Site not found.");
+        var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         site.RecordConnectionStatus(disabled ? SiteConnectionStatus.Disabled : SiteConnectionStatus.Unknown, DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RemoveCredentialAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
+        var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
-        if (credential is null) return;
-        dbContext.SiteCredentials.Remove(credential);
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken);
-        site?.RecordConnectionStatus(SiteConnectionStatus.AuthenticationFailed, DateTime.UtcNow);
+        if (credential is not null) dbContext.SiteCredentials.Remove(credential);
+        site.RecordConnectionStatus(SiteConnectionStatus.AuthenticationFailed, DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -79,34 +82,46 @@ public sealed class SiteWebService(
         var cleanPassword = applicationPassword.Trim();
         if (cleanUserName.Length > 100) throw new InvalidOperationException("WordPress username is too long.");
         if (cleanPassword.Length < 8) throw new InvalidOperationException("Application Password is too short.");
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken) ?? throw new InvalidOperationException("Site not found.");
+
+        var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var result = await connectionTester.TestAsync(new WordPressConnectionRequest(site.SiteUrl, cleanUserName, cleanPassword), cancellationToken);
-        var classifiedStatus = ClassifyConnectionStatus(result);
-        ApplyConnectionResult(site, result, classifiedStatus);
-        if (classifiedStatus is SiteConnectionStatus.Connected or SiteConnectionStatus.LimitedPermissions)
+        var status = ClassifyConnectionStatus(result);
+        ApplyConnectionResult(site, result, status);
+
+        if (status is SiteConnectionStatus.Connected or SiteConnectionStatus.LimitedPermissions)
         {
             var protectedPassword = await secretProtectionService.ProtectAsync(cleanPassword, cancellationToken);
             var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
             if (credential is null) dbContext.SiteCredentials.Add(new SiteCredential(siteId, cleanUserName, protectedPassword, DateTime.UtcNow));
-            else { credential.SetUserName(cleanUserName, DateTime.UtcNow); credential.SetProtectedApplicationPassword(protectedPassword, DateTime.UtcNow); }
+            else
+            {
+                credential.SetUserName(cleanUserName, DateTime.UtcNow);
+                credential.SetProtectedApplicationPassword(protectedPassword, DateTime.UtcNow);
+            }
         }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return new ConnectionTestViewResult(result.IsSuccess, result.Message, result.Diagnostics);
     }
 
     public async Task<ConnectionTestViewResult> RetestAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken) ?? throw new InvalidOperationException("Site not found.");
+        var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var credential = await dbContext.SiteCredentials.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
         if (credential is null) return new(false, "Enter and save the WordPress credentials first.", null);
+
         string password;
-        try { password = await secretProtectionService.UnprotectAsync(credential.ProtectedApplicationPassword, cancellationToken); }
+        try
+        {
+            password = await secretProtectionService.UnprotectAsync(credential.ProtectedApplicationPassword, cancellationToken);
+        }
         catch (Exception ex)
         {
             site.RecordConnectionStatus(SiteConnectionStatus.AuthenticationFailed, DateTime.UtcNow);
             await dbContext.SaveChangesAsync(cancellationToken);
             return new(false, "The encrypted Application Password could not be read. Re-enter the credentials.", ex.Message);
         }
+
         var result = await connectionTester.TestAsync(new WordPressConnectionRequest(site.SiteUrl, credential.UserName, password), cancellationToken);
         ApplyConnectionResult(site, result, ClassifyConnectionStatus(result));
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -115,17 +130,28 @@ public sealed class SiteWebService(
 
     public async Task DeleteSiteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == OwnerId, cancellationToken);
         if (site is null) return;
         site.SoftDelete(DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task EnsureOwnershipAsync(Guid siteId, CancellationToken cancellationToken = default) =>
+        _ = await RequireOwnedSiteAsync(siteId, false, cancellationToken);
+
+    private async Task<Site> RequireOwnedSiteAsync(Guid siteId, bool tracked, CancellationToken cancellationToken)
+    {
+        var query = tracked ? dbContext.Sites.AsQueryable() : dbContext.Sites.AsNoTracking();
+        return await query.FirstOrDefaultAsync(x => x.Id == siteId && x.OwnerUserId == OwnerId, cancellationToken)
+            ?? throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
+    }
+
     private async Task EnsureUniqueUrlAsync(Uri uri, Guid? exceptSiteId, CancellationToken cancellationToken)
     {
         var normalizedKey = uri.GetLeftPart(UriPartial.Authority).TrimEnd('/').ToLowerInvariant();
-        var sites = await dbContext.Sites.AsNoTracking().Select(x => new { x.Id, x.SiteUrl }).ToListAsync(cancellationToken);
-        if (sites.Any(x => x.Id != exceptSiteId && x.SiteUrl.TrimEnd('/').ToLowerInvariant() == normalizedKey)) throw new InvalidOperationException("This site has already been added.");
+        var sites = await dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == OwnerId).Select(x => new { x.Id, x.SiteUrl }).ToListAsync(cancellationToken);
+        if (sites.Any(x => x.Id != exceptSiteId && x.SiteUrl.TrimEnd('/').ToLowerInvariant() == normalizedKey))
+            throw new InvalidOperationException("This site has already been added to your account.");
     }
 
     private static void ValidateName(string? name)
@@ -136,9 +162,9 @@ public sealed class SiteWebService(
 
     private static Uri NormalizeSiteUri(string? value)
     {
-        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) throw new InvalidOperationException("Enter a valid site URL starting with http or https.");
-        var builder = new UriBuilder(uri) { Query = string.Empty, Fragment = string.Empty, Host = uri.Host.ToLowerInvariant(), Path = "/" };
-        return builder.Uri;
+        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            throw new InvalidOperationException("Enter a valid site URL starting with http or https.");
+        return new UriBuilder(uri) { Query = string.Empty, Fragment = string.Empty, Host = uri.Host.ToLowerInvariant(), Path = "/" }.Uri;
     }
 
     private static void ApplyConnectionResult(Site site, WordPressConnectionResult result, SiteConnectionStatus status)
