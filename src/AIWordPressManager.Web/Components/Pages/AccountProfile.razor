@@ -29,7 +29,7 @@
             <AppStatCard Icon="◎" Label="@(L.IsArabic ? "اسم المستخدم" : "Username")" Value="@_profile.UserName" Description="@_profile.UserId.ToString()" Tone="accent" />
             <AppStatCard Icon="◆" Label="@(L.IsArabic ? "الدور" : "Role")" Value="@_profile.Role" Description="@(_profile.IsActive ? (L.IsArabic ? "الحساب نشط" : "Account active") : (L.IsArabic ? "الحساب موقوف" : "Account inactive"))" Tone="info" />
             <AppStatCard Icon="◉" Label="@(L.IsArabic ? "المواقع" : "Sites")" Value="@_profile.SiteCount.ToString()" Description="@(L.IsArabic ? "مواقع WordPress المملوكة للحساب" : "WordPress sites owned by this account")" Tone="success" />
-            <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر دخول" : "Last login")" Value="@FormatDate(_profile.LastLoginAtUtc)" Description="@(L.IsArabic ? "تاريخ إنشاء الحساب" : "Account created") @FormatDate(_profile.CreatedAtUtc)" Tone="neutral" />
+            <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر دخول" : "Last login")" Value="@FormatDate(_profile.LastLoginAtUtc)" Description="@($"{(L.IsArabic ? "تاريخ إنشاء الحساب" : "Account created")}: {FormatDate(_profile.CreatedAtUtc)}")" Tone="neutral" />
         </section>
 
         <AppCard Eyebrow="@(L.IsArabic ? "الأمان" : "SECURITY")"
