@@ -46,17 +46,27 @@
                 <AppDataGrid TItem="SystemHealthCheck"
                              Items="@snapshot.Checks"
                              KeySelector="@(check => check.Key)"
+                             SearchKeySelector="@HealthSearchText"
+                             SortKeySelector="@(check => CheckTitle(check.Key))"
+                             CsvHeaders="@CsvHeaders"
+                             CsvRowSelector="@HealthCsvRow"
+                             CsvFileName="@CsvFileName"
                              PageSize="10"
                              Selectable="true"
-                             EmptyTitle="@(L.IsArabic ? "لا توجد فحوصات" : "No checks available")"
-                             EmptyDescription="@(L.IsArabic ? "لم تُرجع خدمة صحة النظام أي نتائج." : "The health service returned no diagnostic results.")"
+                             SearchPlaceholder="@(L.IsArabic ? "ابحث في المكوّن أو الحالة أو المسار أو التفاصيل..." : "Search component, status, target, or details...")"
+                             SearchAriaLabel="@(L.IsArabic ? "بحث نتائج صحة النظام" : "Search system health results")"
+                             SortText="@(L.IsArabic ? "ترتيب" : "Sort")"
+                             ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                             RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+                             EmptyTitle="@(L.IsArabic ? "لا توجد نتائج مطابقة" : "No matching checks")"
+                             EmptyDescription="@(L.IsArabic ? "غيّر كلمات البحث أو أعد تشغيل الفحص." : "Change the search text or run the checks again.")"
                              SelectedText="@(L.IsArabic ? "محدد" : "selected")"
                              ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
                              OfText="@(L.IsArabic ? "من" : "of")">
                     <Toolbar>
-                        <div>
+                        <div class="health-grid-title">
                             <strong>@(L.IsArabic ? "حالة مكونات النظام" : "System component status")</strong>
-                            <small>@(L.IsArabic ? "نتائج فعلية من خدمة التشخيص" : "Live results from the diagnostics service")</small>
+                            <small>@(L.IsArabic ? "يمكن البحث والترتيب والتصدير من نفس الجدول" : "Search, sort, select, and export from one grid")</small>
                         </div>
                         <AppBadge Tone="info" Text="@(snapshot.Checks.Count.ToString())" />
                     </Toolbar>
@@ -68,7 +78,7 @@
                     </Header>
                     <RowTemplate Context="check">
                         <td><strong>@CheckTitle(check.Key)</strong></td>
-                        <td><AppBadge Tone="@(check.IsHealthy ? "success" : "danger")" Text="@(check.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "فشل" : "Failed"))" /></td>
+                        <td><AppBadge Tone="@(check.IsHealthy ? "success" : "danger")" Text="@CheckStatus(check)" /></td>
                         <td><code>@check.Target</code></td>
                         <td>@check.Details</td>
                     </RowTemplate>
@@ -115,6 +125,10 @@
     private int HealthyCount => snapshot?.Checks.Count(x => x.IsHealthy) ?? 0;
     private int FailedCount => snapshot?.Checks.Count(x => !x.IsHealthy) ?? 0;
     private int HealthPercent => snapshot is null || snapshot.Checks.Count == 0 ? 0 : (int)Math.Round(HealthyCount * 100d / snapshot.Checks.Count);
+    private IReadOnlyList<string> CsvHeaders => L.IsArabic
+        ? new[] { "المكوّن", "الحالة", "الهدف", "التفاصيل", "وقت الفحص", "الإصدار" }
+        : new[] { "Component", "Status", "Target", "Details", "Checked At", "Version" };
+    private string CsvFileName => $"system-health-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
 
     protected override Task OnInitializedAsync() => RefreshAsync();
     private Task RefreshClickedAsync(MouseEventArgs _) => RefreshAsync();
@@ -133,6 +147,27 @@
         "sqlite" => L.IsArabic ? "قاعدة بيانات SQLite" : "SQLite database",
         "logs" => L.IsArabic ? "مجلد السجلات" : "Logs directory",
         _ => key
+    };
+
+    private string CheckStatus(SystemHealthCheck check) => check.IsHealthy
+        ? (L.IsArabic ? "سليم" : "Healthy")
+        : (L.IsArabic ? "فشل" : "Failed");
+
+    private string HealthSearchText(SystemHealthCheck check) => string.Join(' ',
+        check.Key,
+        CheckTitle(check.Key),
+        CheckStatus(check),
+        check.Target,
+        check.Details);
+
+    private IReadOnlyList<string> HealthCsvRow(SystemHealthCheck check) => new[]
+    {
+        CheckTitle(check.Key),
+        CheckStatus(check),
+        check.Target,
+        check.Details,
+        snapshot is null ? string.Empty : FormatDate(snapshot.CheckedAtUtc),
+        snapshot?.Version ?? string.Empty
     };
 
     private string FormatDate(DateTimeOffset value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm:ss" : "MMM d, yyyy HH:mm:ss");
