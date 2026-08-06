@@ -76,6 +76,10 @@ else
                                  CsvHeaders="@CsvHeaders"
                                  CsvRowSelector="UserCsvRow"
                                  CsvFileName="@CsvFileName"
+                                 ColumnLabels="@UserColumnLabels"
+                                 ColumnPreferenceKey="@($"users-grid-columns-{SiteId}")"
+                                 ColumnsText="@(L.IsArabic ? "الأعمدة" : "Columns")"
+                                 ResetColumnsText="@(L.IsArabic ? "إظهار كل الأعمدة" : "Show all columns")"
                                  PageSize="10"
                                  Selectable="true"
                                  Loading="@_working"
@@ -189,6 +193,9 @@ else
 
     private string SelectedRole => _model.Roles.FirstOrDefault() ?? "subscriber";
     private string RoleFilterText => _role == "all" ? L["AllRoles"] : TranslateRole(_role);
+    private IReadOnlyList<string> UserColumnLabels => L.IsArabic
+        ? new[] { "المستخدم", "البريد الإلكتروني", "الأدوار", "تاريخ التسجيل", "الإجراءات" }
+        : new[] { "User", "Email", "Roles", "Registered", "Actions" };
     private IReadOnlyList<string> CsvHeaders => L.IsArabic
         ? new[] { "المستخدم", "اسم المستخدم", "البريد الإلكتروني", "الأدوار", "تاريخ التسجيل" }
         : new[] { "Name", "Username", "Email", "Roles", "Registered" };
