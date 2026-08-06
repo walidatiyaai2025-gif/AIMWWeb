@@ -1,0 +1,190 @@
+@page "/module/schedules"
+@page "/automation-schedules"
+@rendermode InteractiveServer
+@implements IDisposable
+@using AIWordPressManager.Domain.Entities
+@inject AutomationCenterService Automation
+@inject SiteWebService SiteService
+@inject AppNotificationService Notifications
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "جدولة المهام" : "Automation Schedules")</PageTitle>
+
+<div class="automation-schedules-page">
+    <AppToolbar Eyebrow="@(L.IsArabic ? "الأتمتة" : "AUTOMATION")"
+                Title="@(L.IsArabic ? "جدولة مهام WordPress" : "WordPress Automation Schedules")"
+                Subtitle="@(L.IsArabic ? "أنشئ جداول للمزامنة وتدقيق SEO لمواقعك فقط." : "Create synchronization and SEO audit schedules for your owned sites.")">
+        <Actions>
+            <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" OnClick="RefreshAsync" />
+        </Actions>
+    </AppToolbar>
+
+    @if (_loading)
+    {
+        <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل الجداول" : "Loading schedules")" />
+    }
+    else if (_sites.Count == 0)
+    {
+        <AppCard>
+            <AppEmptyState Icon="◷"
+                           Title="@(L.IsArabic ? "لا توجد مواقع" : "No sites available")"
+                           Description="@(L.IsArabic ? "أضف موقع WordPress أولًا ثم أنشئ جدولًا له." : "Connect a WordPress site before creating a schedule.")">
+                <Actions><AppButton Href="/sites/connect" Variant="primary" Text="@(L.IsArabic ? "إضافة موقع" : "Connect a site")" /></Actions>
+            </AppEmptyState>
+        </AppCard>
+    }
+    else
+    {
+        <div class="automation-grid" style="display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start">
+            <AppCard Title="@(L.IsArabic ? (_edit.Id == Guid.Empty ? "جدول جديد" : "تعديل الجدول") : (_edit.Id == Guid.Empty ? "New schedule" : "Edit schedule"))"
+                     Subtitle="@(L.IsArabic ? "حدد الموقع ونوع العملية والتكرار." : "Choose the site, operation, and recurrence.")">
+                <EditForm Model="_edit" OnValidSubmit="SaveAsync">
+                    <DataAnnotationsValidator />
+                    <div class="form-grid" style="display:grid;gap:12px">
+                        <label><span>@(L.IsArabic ? "اسم المهمة" : "Job name")</span><InputText class="form-control" @bind-Value="_edit.Name" /></label>
+                        <label><span>@(L.IsArabic ? "الموقع" : "Site")</span>
+                            <InputSelect class="form-control" @bind-Value="_edit.SiteId">
+                                <option value="@Guid.Empty">@(L.IsArabic ? "اختر موقعًا" : "Select a site")</option>
+                                @foreach (var site in _sites) { <option value="@site.Id">@site.Name</option> }
+                            </InputSelect>
+                        </label>
+                        <label><span>@(L.IsArabic ? "نوع المهمة" : "Job type")</span>
+                            <InputSelect class="form-control" @bind-Value="_edit.Type">
+                                <option value="Synchronization">Synchronization</option>
+                                <option value="SEO Audit">SEO Audit</option>
+                            </InputSelect>
+                        </label>
+                        <label><span>@(L.IsArabic ? "التكرار" : "Frequency")</span>
+                            <InputSelect class="form-control" @bind-Value="_edit.Frequency">
+                                <option value="hourly">@(L.IsArabic ? "كل عدد من الساعات" : "Every N hours")</option>
+                                <option value="daily">@(L.IsArabic ? "يومي" : "Daily")</option>
+                                <option value="weekly">@(L.IsArabic ? "أسبوعي" : "Weekly")</option>
+                                <option value="monthly">@(L.IsArabic ? "شهري" : "Monthly")</option>
+                            </InputSelect>
+                        </label>
+                        <label><span>@(L.IsArabic ? "الفاصل" : "Interval")</span><InputNumber class="form-control" @bind-Value="_edit.IntervalValue" min="1" max="365" /></label>
+                        <label><span>@(L.IsArabic ? "وقت التشغيل UTC" : "Run time UTC")</span><InputText class="form-control" @bind-Value="_edit.TimeOfDay" placeholder="08:00" /></label>
+                        <label><span>@(L.IsArabic ? "عدد إعادة المحاولة" : "Retry count")</span><InputNumber class="form-control" @bind-Value="_edit.RetryCount" min="0" max="10" /></label>
+                        <label style="display:flex;gap:8px;align-items:center"><InputCheckbox @bind-Value="_edit.Enabled" /> @(L.IsArabic ? "مفعلة" : "Enabled")</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <AppButton Type="submit" Variant="primary" Busy="@_saving" Disabled="@_saving" Text="@(L.IsArabic ? "حفظ الجدول" : "Save schedule")" />
+                            @if (_edit.Id != Guid.Empty) { <AppButton Text="@(L.IsArabic ? "إلغاء التعديل" : "Cancel edit")" OnClick="CancelEdit" /> }
+                        </div>
+                    </div>
+                </EditForm>
+            </AppCard>
+
+            <AppSection Title="@(L.IsArabic ? "الجداول الحالية" : "Current schedules")"
+                        Subtitle="@(L.IsArabic ? $"إجمالي {_jobs.Count} جدول" : $"{_jobs.Count} schedules")">
+                <ChildContent>
+                    @if (_jobs.Count == 0)
+                    {
+                        <AppEmptyState Icon="◷" Title="@(L.IsArabic ? "لا توجد جداول" : "No schedules yet")" Description="@(L.IsArabic ? "أنشئ أول جدول من النموذج." : "Create the first schedule using the form.")" />
+                    }
+                    else
+                    {
+                        <div style="display:grid;gap:12px">
+                            @foreach (var job in FilteredJobs)
+                            {
+                                <AppCard Title="@job.Name" Subtitle="@($"{job.SiteName} · {job.Type}")">
+                                    <div style="display:grid;gap:8px">
+                                        <div style="display:flex;gap:8px;flex-wrap:wrap"><AppBadge Tone="@(job.Enabled ? "success" : "neutral")" Text="@(job.Enabled ? (L.IsArabic ? "مفعلة" : "Enabled") : (L.IsArabic ? "معطلة" : "Disabled"))" /><AppBadge Tone="info" Text="@job.LastStatus" /></div>
+                                        <span>@(L.IsArabic ? "التكرار" : "Frequency"): @FrequencyText(job)</span>
+                                        <span>@(L.IsArabic ? "التشغيل القادم" : "Next run"): @FormatDate(job.NextRunUtc)</span>
+                                        <span>@(L.IsArabic ? "آخر تشغيل" : "Last run"): @FormatDate(job.LastRunUtc)</span>
+                                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                            <AppButton Size="small" Text="@(L.IsArabic ? "تعديل" : "Edit")" OnClick="_ => Edit(job)" />
+                                            <AppButton Size="small" Text="@(L.IsArabic ? "تشغيل الآن" : "Run now")" OnClick="_ => QueueNow(job)" />
+                                            <AppButton Size="small" Text="@(job.Enabled ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))" OnClick="_ => Toggle(job)" />
+                                            <AppButton Size="small" Variant="danger" Text="@(L.IsArabic ? "حذف" : "Delete")" OnClick="_ => Delete(job)" />
+                                        </div>
+                                    </div>
+                                </AppCard>
+                            }
+                        </div>
+                    }
+                </ChildContent>
+            </AppSection>
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<Site> _sites = [];
+    private List<AutomationJob> _jobs = [];
+    private AutomationJobEditModel _edit = NewModel();
+    private bool _loading = true;
+    private bool _saving;
+
+    [Parameter, SupplyParameterFromQuery(Name = "siteId")]
+    public Guid? WorkspaceSiteId { get; set; }
+
+    private IEnumerable<AutomationJob> FilteredJobs => WorkspaceSiteId.HasValue
+        ? _jobs.Where(x => x.SiteId == WorkspaceSiteId.Value)
+        : _jobs;
+
+    protected override void OnInitialized() => L.Changed += LanguageChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _loading = false;
+    }
+
+    private async Task LoadAsync()
+    {
+        _sites = await SiteService.GetSitesAsync();
+        var allowedIds = _sites.Select(x => x.Id).ToHashSet();
+        _jobs = Automation.GetJobs().Where(x => allowedIds.Contains(x.SiteId)).OrderBy(x => x.NextRunUtc).ToList();
+        if (WorkspaceSiteId.HasValue && allowedIds.Contains(WorkspaceSiteId.Value) && _edit.Id == Guid.Empty)
+            _edit.SiteId = WorkspaceSiteId.Value;
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            _saving = true;
+            var site = _sites.FirstOrDefault(x => x.Id == _edit.SiteId) ?? throw new UnauthorizedAccessException("The selected site does not belong to the signed-in user.");
+            _edit.SiteName = site.Name;
+            _edit.IntervalValue = Math.Clamp(_edit.IntervalValue, 1, 365);
+            _edit.RetryCount = Math.Clamp(_edit.RetryCount, 0, 10);
+            Automation.Save(_edit);
+            Notifications.Success(L.IsArabic ? "تم حفظ الجدول." : "Schedule saved.");
+            _edit = NewModel(WorkspaceSiteId);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر حفظ الجدول." : "The schedule could not be saved.", details: ex.Message); }
+        finally { _saving = false; }
+    }
+
+    private void Edit(AutomationJob job)
+    {
+        EnsureOwned(job);
+        _edit = new AutomationJobEditModel { Id = job.Id, Name = job.Name, SiteId = job.SiteId, SiteName = job.SiteName, Type = job.Type, Frequency = job.Frequency, IntervalValue = job.IntervalValue, TimeOfDay = job.TimeOfDay, Enabled = job.Enabled, RetryCount = job.RetryCount };
+    }
+
+    private void QueueNow(AutomationJob job) => RunOwned(job, () => Automation.QueueNow(job.Id), L.IsArabic ? "تمت جدولة التشغيل الفوري." : "The job was queued to run now.");
+    private void Toggle(AutomationJob job) => RunOwned(job, () => Automation.SetEnabled(job.Id, !job.Enabled), L.IsArabic ? "تم تحديث حالة الجدول." : "Schedule status updated.");
+    private void Delete(AutomationJob job) => RunOwned(job, () => Automation.Delete(job.Id), L.IsArabic ? "تم حذف الجدول." : "Schedule deleted.");
+
+    private void RunOwned(AutomationJob job, Action action, string success)
+    {
+        try { EnsureOwned(job); action(); Notifications.Success(success); _ = InvokeAsync(LoadAndRefreshAsync); }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
+    }
+
+    private void EnsureOwned(AutomationJob job)
+    {
+        if (!_sites.Any(x => x.Id == job.SiteId)) throw new UnauthorizedAccessException("This automation does not belong to the signed-in user.");
+    }
+
+    private async Task LoadAndRefreshAsync() { await LoadAsync(); StateHasChanged(); }
+    private async Task RefreshAsync(MouseEventArgs _) { await LoadAsync(); Notifications.Success(L.IsArabic ? "تم تحديث الجداول." : "Schedules refreshed."); }
+    private void CancelEdit(MouseEventArgs _) => _edit = NewModel(WorkspaceSiteId);
+    private static AutomationJobEditModel NewModel(Guid? siteId = null) => new() { SiteId = siteId ?? Guid.Empty, Enabled = true, Frequency = "daily", IntervalValue = 1, TimeOfDay = "08:00", RetryCount = 3 };
+    private string FrequencyText(AutomationJob job) => job.Frequency switch { "hourly" => $"{job.IntervalValue}h", "weekly" => $"{job.IntervalValue} week(s) · {job.TimeOfDay} UTC", "monthly" => $"{job.IntervalValue} month(s) · {job.TimeOfDay} UTC", _ => $"{job.IntervalValue} day(s) · {job.TimeOfDay} UTC" };
+    private string FormatDate(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") : "—";
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
