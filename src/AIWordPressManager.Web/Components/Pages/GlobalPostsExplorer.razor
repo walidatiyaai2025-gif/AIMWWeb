@@ -1,0 +1,242 @@
+@page "/module/posts"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject GlobalPostsExplorerService Explorer
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مستكشف المقالات" : "Posts Explorer")</PageTitle>
+
+@if (_loading)
+{
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ تحميل المقالات المحلية..." : "Loading locally cached posts...")</div>
+}
+else
+{
+    <div class="global-posts-page">
+        <section class="panel" style="padding:24px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap">
+                <div>
+                    <small style="font-weight:800;letter-spacing:.1em">@(L.IsArabic ? "إدارة المحتوى المحلية" : "OFFLINE CONTENT MANAGEMENT")</small>
+                    <h1 style="margin:8px 0">@(L.IsArabic ? "مستكشف مقالات WordPress" : "WordPress Posts Explorer")</h1>
+                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "اعرض وابحث في المقالات المتزامنة من جميع المواقع حتى عند عدم توفر اتصال WordPress." : "Browse and search synchronized posts across every site, even while WordPress is unavailable.")</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                    <a class="btn primary" href="/module/sync">@(L.IsArabic ? "فتح المزامنة" : "Open synchronization")</a>
+                </div>
+            </div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
+            @Stat(L.IsArabic ? "إجمالي المقالات" : "Total posts", _result.Summary.Total.ToString())
+            @Stat(L.IsArabic ? "منشورة" : "Published", _result.Summary.Published.ToString())
+            @Stat(L.IsArabic ? "مسودات" : "Drafts", _result.Summary.Drafts.ToString())
+            @Stat(L.IsArabic ? "قيد المراجعة" : "Pending", _result.Summary.Pending.ToString())
+            @Stat(L.IsArabic ? "المواقع" : "Sites", _result.Summary.SiteCount.ToString())
+        </section>
+
+        <section class="panel" style="padding:18px;margin-bottom:18px">
+            <div style="display:grid;grid-template-columns:minmax(260px,1fr) repeat(3,minmax(150px,.45fr));gap:12px;align-items:end">
+                <label>
+                    <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "البحث" : "Search")</span>
+                    <input class="form-control" @bind="_query" @bind:event="oninput" placeholder="@(L.IsArabic ? "العنوان أو الرابط المختصر أو المقتطف..." : "Title, slug, or excerpt...")" />
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "الموقع" : "Site")</span>
+                    <select class="form-control" @bind="_siteFilter">
+                        <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "الحالة" : "Status")</span>
+                    <select class="form-control" @bind="_statusFilter">
+                        <option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
+                        <option value="publish">@(L.IsArabic ? "منشور" : "Published")</option>
+                        <option value="draft">@(L.IsArabic ? "مسودة" : "Draft")</option>
+                        <option value="pending">@(L.IsArabic ? "قيد المراجعة" : "Pending")</option>
+                        <option value="future">@(L.IsArabic ? "مجدول" : "Scheduled")</option>
+                    </select>
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "حجم الصفحة" : "Page size")</span>
+                    <select class="form-control" @bind="_pageSize">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+                <button class="btn" @onclick="ResetAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button>
+                <button class="btn primary" @onclick="ApplyAsync">@(L.IsArabic ? "تطبيق الفلاتر" : "Apply filters")</button>
+            </div>
+        </section>
+
+        <section class="panel" style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:980px">
+                <thead>
+                    <tr>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "العنوان" : "Title")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الموقع" : "Site")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الحالة" : "Status")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر تعديل" : "Modified")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر مزامنة" : "Last sync")</th>
+                        <th style="padding:14px;text-align:start"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_result.Items.Count == 0)
+                    {
+                        <tr><td colspan="6" style="padding:32px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد مقالات مطابقة في البيانات المحلية." : "No matching posts were found in the local cache.")</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in _result.Items)
+                        {
+                            <tr style="border-top:1px solid rgba(128,128,128,.2)">
+                                <td style="padding:14px;max-width:420px">
+                                    <strong style="display:block">@PlainText(item.Title)</strong>
+                                    <small style="display:block;opacity:.62;margin-top:4px">/@item.Slug</small>
+                                    @if (!string.IsNullOrWhiteSpace(item.RenderedExcerpt))
+                                    {
+                                        <small style="display:block;opacity:.72;margin-top:6px">@TrimExcerpt(item.RenderedExcerpt)</small>
+                                    }
+                                </td>
+                                <td style="padding:14px"><a href="@($"/sites/{item.SiteId}")">@item.SiteName</a></td>
+                                <td style="padding:14px"><span class="badge @StatusClass(item.Status)">@TranslateStatus(item.Status)</span></td>
+                                <td style="padding:14px;white-space:nowrap">@FormatDate(item.ModifiedAtUtc)</td>
+                                <td style="padding:14px;white-space:nowrap">@FormatDate(item.LastSynchronizedAtUtc)</td>
+                                <td style="padding:14px">
+                                    <div style="display:flex;gap:6px;justify-content:flex-end">
+                                        <a class="btn compact primary" href="@($"/sites/{item.SiteId}/content/post/{item.WordPressId}/edit")">@(L.IsArabic ? "تعديل" : "Edit")</a>
+                                        <a class="btn compact" href="@($"/sites/{item.SiteId}/explorer")">@(L.IsArabic ? "المستكشف" : "Explorer")</a>
+                                        @if (!string.IsNullOrWhiteSpace(item.Link))
+                                        {
+                                            <a class="btn compact" href="@item.Link" target="_blank" rel="noopener">↗</a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            <footer style="display:flex;justify-content:space-between;align-items:center;padding:16px;gap:12px;border-top:1px solid rgba(128,128,128,.2)">
+                <span>@(L.IsArabic ? $"صفحة {_result.Page} من {_result.TotalPages} · {_result.Total} نتيجة" : $"Page {_result.Page} of {_result.TotalPages} · {_result.Total} results")</span>
+                <div style="display:flex;gap:8px">
+                    <button class="btn compact" disabled="@(_result.Page <= 1)" @onclick="PreviousAsync">@(L.IsArabic ? "السابق" : "Previous")</button>
+                    <button class="btn compact" disabled="@(_result.Page >= _result.TotalPages)" @onclick="NextAsync">@(L.IsArabic ? "التالي" : "Next")</button>
+                </div>
+            </footer>
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private string _query = string.Empty;
+    private string _siteFilter = string.Empty;
+    private string _statusFilter = "all";
+    private int _page = 1;
+    private int _pageSize = 25;
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private GlobalPostsExplorerResult _result = new([], 0, 1, 25, 1, new(0, 0, 0, 0, 0, 0, null));
+
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            Guid? siteId = Guid.TryParse(_siteFilter, out var parsedSite) ? parsedSite : null;
+            _result = await Explorer.SearchAsync(siteId, _statusFilter, _query, _page, _pageSize);
+            _page = _result.Page;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ApplyAsync()
+    {
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task ResetAsync()
+    {
+        _query = string.Empty;
+        _siteFilter = string.Empty;
+        _statusFilter = "all";
+        _pageSize = 25;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task PreviousAsync()
+    {
+        if (_page <= 1) return;
+        _page--;
+        await LoadAsync();
+    }
+
+    private async Task NextAsync()
+    {
+        if (_page >= _result.TotalPages) return;
+        _page++;
+        await LoadAsync();
+    }
+
+    private RenderFragment Stat(string label, string value) => builder =>
+    {
+        builder.OpenElement(0, "article");
+        builder.AddAttribute(1, "class", "panel");
+        builder.AddAttribute(2, "style", "padding:18px");
+        builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement();
+        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private string TranslateStatus(string status) => status switch
+    {
+        "publish" => L.IsArabic ? "منشور" : "Published",
+        "draft" => L.IsArabic ? "مسودة" : "Draft",
+        "pending" => L.IsArabic ? "قيد المراجعة" : "Pending",
+        "future" => L.IsArabic ? "مجدول" : "Scheduled",
+        "private" => L.IsArabic ? "خاص" : "Private",
+        _ => status
+    };
+
+    private static string StatusClass(string status) => status switch
+    {
+        "publish" => "success",
+        "draft" => "warning",
+        "pending" => "warning",
+        "future" => "success",
+        _ => string.Empty
+    };
+
+    private string FormatDate(DateTime? value) => value.HasValue
+        ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm")
+        : "—";
+
+    private static string PlainText(string value) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<[^>]+>", string.Empty)).Trim();
+    private static string TrimExcerpt(string value)
+    {
+        var plain = PlainText(value);
+        return plain.Length <= 140 ? plain : plain[..137] + "...";
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
+}
