@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
+@inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</PageTitle>
 
@@ -11,8 +12,8 @@
     <section class="panel backup-hero">
         <div>
             <span class="workspace-kicker">DATA PROTECTION</span>
-            <h1>@(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</h1>
-            <p>@(L.IsArabic ? "أنشئ نسخة ZIP موثقة من قواعد بيانات التطبيق المحلية وتحقق من سلامتها قبل نقلها إلى مكان آمن." : "Create a verified ZIP archive of the local application databases and validate it before moving it to safe storage.")</p>
+            <h1>@(L.IsArabic ? "مركز النسخ والاستعادة الآمنة" : "Backup & Restore Safety Center")</h1>
+            <p>@(L.IsArabic ? "أنشئ نسخة موثقة، افحص محتواها، وشغّل فحص الجاهزية قبل أي استعادة." : "Create a verified archive, inspect its contents, and run restore readiness checks before any recovery operation.")</p>
         </div>
         <button class="btn primary" disabled="@_working" @onclick="CreateAsync">＋ @(_working ? (L.IsArabic ? "جارٍ الإنشاء..." : "Creating...") : (L.IsArabic ? "إنشاء نسخة" : "Create backup"))</button>
     </section>
@@ -21,7 +22,7 @@
         <article class="panel"><small>@(L.IsArabic ? "إجمالي النسخ" : "Total backups")</small><strong>@_items.Count</strong></article>
         <article class="panel"><small>@(L.IsArabic ? "نسخ سليمة" : "Verified")</small><strong>@_items.Count(x => x.IsValid)</strong></article>
         <article class="panel"><small>@(L.IsArabic ? "إجمالي الحجم" : "Total size")</small><strong>@FormatBytes(_items.Sum(x => x.SizeBytes))</strong></article>
-        <article class="panel"><small>@(L.IsArabic ? "آخر نسخة" : "Latest backup")</small><strong class="small-value">@LatestText</strong></article>
+        <article class="panel"><small>@(L.IsArabic ? "سجل العمليات" : "Audit events")</small><strong>@_history.Count</strong></article>
     </section>
 
     <section class="panel backup-toolbar">
@@ -31,6 +32,7 @@
         </label>
         <div>
             <button class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn" @onclick="CopyPathAsync">@(L.IsArabic ? "نسخ المسار" : "Copy path")</button>
             <code>@_backups.BackupDirectory</code>
         </div>
     </section>
@@ -45,16 +47,18 @@
         {
             @foreach (var item in _items)
             {
-                <article class="backup-row">
+                <article class="backup-row @(ReferenceEquals(_selected, item) ? "active" : string.Empty)">
                     <div class="backup-icon">▣</div>
                     <div class="backup-main">
                         <strong>@item.FileName</strong>
                         <small>@FormatDate(item.CreatedAtUtc) · @FormatBytes(item.SizeBytes) · @item.DatabaseCount @(L.IsArabic ? "قاعدة" : "databases")</small>
+                        @if (!string.IsNullOrWhiteSpace(item.Note)){<small>@item.Note</small>}
                         <code>SHA-256 @item.Sha256[..Math.Min(20, item.Sha256.Length)]…</code>
                     </div>
                     <span class="badge @(item.IsValid ? "success" : "danger")">@(item.IsValid ? (L.IsArabic ? "سليمة" : "Verified") : (L.IsArabic ? "غير سليمة" : "Invalid"))</span>
                     <div class="backup-actions">
-                        <button class="btn compact" @onclick="() => Verify(item)">✓ @(L.IsArabic ? "تحقق" : "Verify")</button>
+                        <button class="btn compact" @onclick="() => Inspect(item)">⌕ @(L.IsArabic ? "فحص" : "Inspect")</button>
+                        <button class="btn compact" @onclick="() => Preflight(item)">✓ @(L.IsArabic ? "جاهزية" : "Preflight")</button>
                         <button class="btn compact danger" @onclick="() => Delete(item)">× @(L.IsArabic ? "حذف" : "Delete")</button>
                     </div>
                 </article>
@@ -62,24 +66,69 @@
         }
     </section>
 
-    <section class="panel backup-warning">
-        <strong>@(L.IsArabic ? "سياسة الاستعادة الآمنة" : "Safe restore policy")</strong>
-        <p>@(L.IsArabic ? "النسخ تُحفظ في المسار الموضح أعلاه. الاستعادة أثناء تشغيل التطبيق غير مفعلة لتجنب استبدال قواعد بيانات SQLite المفتوحة أو إتلافها." : "Archives are stored in the directory shown above. In-process restore remains disabled to avoid replacing open SQLite databases or corrupting active data.")</p>
+    @if (_inspection is not null)
+    {
+        <section class="panel backup-list">
+            <header><div><span class="workspace-kicker">INSPECTION</span><h2>@(L.IsArabic ? "تفاصيل النسخة" : "Backup inspection")</h2></div><span class="badge @(_inspection.IsValid ? "success" : "danger")">@(_inspection.IsValid ? "VALID" : "INVALID")</span></header>
+            <div class="database-info-grid">
+                <div><small>@(L.IsArabic ? "إصدار الملف" : "Manifest version")</small><strong>@_inspection.ManifestVersion</strong></div>
+                <div><small>@(L.IsArabic ? "الجهاز المصدر" : "Source machine")</small><strong>@(_inspection.MachineName ?? "—")</strong></div>
+                <div><small>@(L.IsArabic ? "الحجم بعد الفك" : "Uncompressed size")</small><strong>@FormatBytes(_inspection.UncompressedBytes)</strong></div>
+                <div><small>@(L.IsArabic ? "قواعد البيانات" : "Databases")</small><strong>@_inspection.DatabaseCount</strong></div>
+            </div>
+            <div class="settings-note"><span>ⓘ</span><p>@_inspection.Message</p></div>
+            @foreach (var file in _inspection.Files)
+            {
+                <div class="backup-row"><div class="backup-icon">DB</div><div class="backup-main"><strong>@file.Name</strong><small>@FormatBytes(file.SizeBytes)</small></div></div>
+            }
+        </section>
+    }
+
+    @if (_readiness is not null)
+    {
+        <section class="panel backup-list">
+            <header><div><span class="workspace-kicker">RESTORE PREFLIGHT</span><h2>@(L.IsArabic ? "فحص جاهزية الاستعادة" : "Restore readiness")</h2></div><span class="badge @(_readiness.IsReady ? "success" : "danger")">@(_readiness.IsReady ? "READY" : "BLOCKED")</span></header>
+            @foreach (var check in _readiness.Checks)
+            {
+                <article class="backup-row"><div class="backup-icon">@(check.Passed ? "✓" : "!")</div><div class="backup-main"><strong>@(L.IsArabic ? check.NameAr : check.Name)</strong><small>@check.Message</small></div><span class="badge @(check.Passed ? "success" : "danger")">@(check.Passed ? (L.IsArabic ? "اجتاز" : "Passed") : (L.IsArabic ? "موقوف" : "Blocked"))</span></article>
+            }
+            <div class="settings-note"><span>⚠</span><p>@(L.IsArabic ? "الاستعادة داخل التطبيق تظل محظورة. يجب إيقاف التطبيق ثم تنفيذ الاستعادة دون اتصال لتجنب استبدال ملفات SQLite المفتوحة." : "In-process restore remains blocked. Stop the application and perform an offline restore to avoid replacing open SQLite files.")</p></div>
+        </section>
+    }
+
+    <section class="panel backup-list">
+        <header><div><span class="workspace-kicker">AUDIT TRAIL</span><h2>@(L.IsArabic ? "سجل العمليات" : "Backup audit trail")</h2></div></header>
+        @if (_history.Count == 0)
+        {
+            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد عمليات مسجلة." : "No recorded operations yet.")</p></div>
+        }
+        else
+        {
+            @foreach (var entry in _history.Take(20))
+            {
+                <article class="backup-row"><div class="backup-icon">@(entry.Succeeded ? "✓" : "!")</div><div class="backup-main"><strong>@entry.Action · @entry.FileName</strong><small>@FormatDate(entry.TimestampUtc) · @entry.Message</small></div><span class="badge @(entry.Succeeded ? "success" : "danger")">@(entry.Succeeded ? "OK" : "FAILED")</span></article>
+            }
+        }
     </section>
 </div>
 
 @code {
     private readonly BackupManagementService _backups = new();
     private List<BackupFileInfo> _items = [];
+    private List<BackupAuditEntry> _history = [];
+    private BackupFileInfo? _selected;
+    private BackupInspectionResult? _inspection;
+    private RestoreReadinessResult? _readiness;
     private string _note = string.Empty;
     private bool _working;
-    private string LatestText => _items.OrderByDescending(x => x.CreatedAtUtc).Select(x => FormatDate(x.CreatedAtUtc)).FirstOrDefault() ?? "—";
 
     protected override void OnInitialized(){L.Changed += Changed; Reload();}
-    private void Reload(){try{_items=_backups.GetBackups().ToList();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل تحميل النسخ":"Failed to load backups",ex.ToString());}}
-    private Task CreateAsync(){try{_working=true;var item=_backups.CreateBackup(_note);_note=string.Empty;Reload();Notifications.Success(L.IsArabic?$"تم إنشاء النسخة {item.FileName}.":$"Backup {item.FileName} was created.");}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل إنشاء النسخة":"Backup failed",ex.ToString());}finally{_working=false;}return Task.CompletedTask;}
-    private void Verify(BackupFileInfo item){var result=_backups.Verify(item.FileName);if(result.IsValid)Notifications.Success(L.IsArabic?"تم التحقق من النسخة بنجاح.":result.Message);else Notifications.Error(L.TranslateMessage(result.Message),L.IsArabic?"فشل التحقق":"Verification failed");Reload();}
-    private void Delete(BackupFileInfo item){try{_backups.Delete(item.FileName);Reload();Notifications.Success(L.IsArabic?"تم حذف النسخة.":"Backup deleted.");}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل الحذف":"Delete failed",ex.ToString());}}
+    private void Reload(){try{_items=_backups.GetBackups().ToList();_history=_backups.GetHistory().ToList();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل تحميل النسخ":"Failed to load backups",ex.ToString());}}
+    private Task CreateAsync(){try{_working=true;var item=_backups.CreateBackup(_note);_note=string.Empty;Reload();_selected=_items.FirstOrDefault(x=>x.FileName==item.FileName);Notifications.Success(L.IsArabic?$"تم إنشاء النسخة {item.FileName}.":$"Backup {item.FileName} was created.");}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل إنشاء النسخة":"Backup failed",ex.ToString());}finally{_working=false;}return Task.CompletedTask;}
+    private void Inspect(BackupFileInfo item){_selected=item;_inspection=_backups.Inspect(item.FileName);_readiness=null;Reload();}
+    private void Preflight(BackupFileInfo item){_selected=item;_inspection=_backups.Inspect(item.FileName);_readiness=_backups.CheckRestoreReadiness(item.FileName);Reload();}
+    private void Delete(BackupFileInfo item){try{_backups.Delete(item.FileName);if(_selected?.FileName==item.FileName){_selected=null;_inspection=null;_readiness=null;}Reload();Notifications.Success(L.IsArabic?"تم حذف النسخة.":"Backup deleted.");}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل الحذف":"Delete failed",ex.ToString());}}
+    private async Task CopyPathAsync()=>await JS.InvokeVoidAsync("navigator.clipboard.writeText",_backups.BackupDirectory);
     private string FormatDate(DateTime value)=>value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
     private static string FormatBytes(long value)=>value switch{>=1073741824=>$"{value/1073741824d:0.00} GB",>=1048576=>$"{value/1048576d:0.00} MB",>=1024=>$"{value/1024d:0.0} KB",_=>$"{value} B"};
     private void Changed()=>InvokeAsync(StateHasChanged);
