@@ -1,0 +1,107 @@
+@page "/configuration-validation"
+@page "/module/configuration"
+@rendermode InteractiveServer
+@inject AppLanguageService L
+@inject IConfiguration Configuration
+@inject IWebHostEnvironment Environment
+@inject IJSRuntime JS
+
+<PageTitle>@(L.IsArabic ? "التحقق من الإعدادات" : "Configuration Validation")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">CONFIGURATION</span>
+            <h1>@(L.IsArabic ? "مركز التحقق من الإعدادات" : "Configuration Validation Center")</h1>
+            <p>@(L.IsArabic ? "فحص إعدادات التشغيل والتخزين والأمان قبل الاعتماد أو النشر." : "Validate runtime, storage, and security settings before approval or deployment.")</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn" @onclick="CopyReportAsync">@(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
+            <button class="btn primary" @onclick="RunValidation">↻ @(L.IsArabic ? "إعادة الفحص" : "Run validation")</button>
+        </div>
+    </section>
+
+    @if (_report is null)
+    {
+        <section class="panel empty-state"><p>@(L.IsArabic ? "جاري تجهيز الفحص..." : "Preparing validation...")</p></section>
+    }
+    else
+    {
+        <section class="settings-summary-grid">
+            <article class="panel settings-summary-card"><span>✓</span><div><small>@(L.IsArabic ? "صحيح" : "Valid")</small><strong>@ValidCount</strong></div></article>
+            <article class="panel settings-summary-card"><span>!</span><div><small>@(L.IsArabic ? "تحذيرات" : "Warnings")</small><strong>@_report.WarningCount</strong></div></article>
+            <article class="panel settings-summary-card"><span>×</span><div><small>@(L.IsArabic ? "أخطاء حرجة" : "Critical errors")</small><strong>@_report.CriticalCount</strong></div></article>
+            <article class="panel settings-summary-card"><span>◷</span><div><small>@(L.IsArabic ? "آخر فحص" : "Last checked")</small><strong>@_report.CheckedAtUtc.ToLocalTime().ToString("HH:mm:ss")</strong></div></article>
+        </section>
+
+        <section class="panel settings-section">
+            <header>
+                <div>
+                    <span class="workspace-kicker">READINESS</span>
+                    <h2>@(_report.IsHealthy ? (L.IsArabic ? "الإعدادات جاهزة" : "Configuration is ready") : (L.IsArabic ? "توجد أخطاء تمنع الاعتماد" : "Blocking configuration errors found"))</h2>
+                    <p>@(L.IsArabic ? "راجع البنود التالية ونفّذ الإجراء المقترح لكل تحذير أو خطأ." : "Review each item and apply the recommended action for warnings or errors.")</p>
+                </div>
+                <span class="settings-badge @(_report.IsHealthy ? "success" : "danger")">@(_report.IsHealthy ? "READY" : "ACTION REQUIRED")</span>
+            </header>
+
+            <div class="database-info-grid">
+                @foreach (var item in _report.Items)
+                {
+                    <article class="panel" style="padding:1rem">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <small>@(L.IsArabic ? item.TitleAr : item.Title)</small>
+                                <strong style="display:block;margin:.35rem 0;word-break:break-word">@item.Value</strong>
+                            </div>
+                            <span class="settings-badge @StatusClass(item.Status)">@StatusText(item.Status)</span>
+                        </div>
+                        <p style="margin:.75rem 0 0">@(L.IsArabic ? item.MessageAr : item.Message)</p>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private ConfigurationValidationReport? _report;
+    private int ValidCount => _report?.Items.Count(x => x.Status == ValidationStatus.Valid) ?? 0;
+
+    protected override void OnInitialized() => RunValidation();
+
+    private void RunValidation()
+    {
+        _report = new ConfigurationValidationService(Configuration, Environment).Validate();
+    }
+
+    private string StatusClass(ValidationStatus status) => status switch
+    {
+        ValidationStatus.Valid => "success",
+        ValidationStatus.Warning => "warning",
+        ValidationStatus.Error => "danger",
+        _ => string.Empty
+    };
+
+    private string StatusText(ValidationStatus status) => status switch
+    {
+        ValidationStatus.Valid => L.IsArabic ? "صحيح" : "Valid",
+        ValidationStatus.Warning => L.IsArabic ? "تحذير" : "Warning",
+        ValidationStatus.Error => L.IsArabic ? "خطأ" : "Error",
+        _ => status.ToString()
+    };
+
+    private async Task CopyReportAsync()
+    {
+        if (_report is null) return;
+        var lines = new List<string>
+        {
+            "AI WordPress Manager - Configuration Validation",
+            $"Checked: {_report.CheckedAtUtc:O}",
+            $"Critical: {_report.CriticalCount}",
+            $"Warnings: {_report.WarningCount}",
+            string.Empty
+        };
+        lines.AddRange(_report.Items.Select(x => $"[{x.Status}] {x.Title}: {x.Value}{System.Environment.NewLine}{x.Message}"));
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(System.Environment.NewLine, lines));
+    }
+}
