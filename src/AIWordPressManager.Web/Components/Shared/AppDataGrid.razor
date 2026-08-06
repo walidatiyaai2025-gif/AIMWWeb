@@ -1,10 +1,31 @@
 @typeparam TItem
 
 <div class="app-data-grid @Class">
-    @if (Toolbar is not null)
-    {
-        <div class="app-data-grid__toolbar">@Toolbar</div>
-    }
+    <div class="app-data-grid__commandbar">
+        <div class="app-data-grid__commandbar-main">
+            @if (Toolbar is not null)
+            {
+                @Toolbar
+            }
+        </div>
+        <div class="app-data-grid__commandbar-actions">
+            @if (SortKeySelector is not null)
+            {
+                <AppButton Icon="@(_sortDescending ? "↓" : "↑")"
+                           Text="@SortText"
+                           Size="small"
+                           OnClick="ToggleSortAsync" />
+            }
+            @if (ExportRequested.HasDelegate)
+            {
+                <AppButton Icon="⇩"
+                           Text="@ExportText"
+                           Size="small"
+                           Disabled="@(Items.Count == 0)"
+                           OnClick="ExportAsync" />
+            }
+        </div>
+    </div>
 
     @if (Loading)
     {
@@ -62,10 +83,21 @@
                 }
                 <span>@SummaryText</span>
             </div>
-            <div class="app-data-grid__pagination">
-                <AppButton Icon="‹" Size="small" Disabled="@(CurrentPage <= 1)" OnClick="PreviousPageAsync" />
-                <span>@CurrentPage / @TotalPages</span>
-                <AppButton Icon="›" Size="small" Disabled="@(CurrentPage >= TotalPages)" OnClick="NextPageAsync" />
+            <div class="app-data-grid__footer-controls">
+                <label class="app-data-grid__page-size">
+                    <span>@RowsPerPageText</span>
+                    <select value="@_effectivePageSize" @onchange="PageSizeChangedAsync">
+                        @foreach (var option in PageSizeOptions)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </select>
+                </label>
+                <div class="app-data-grid__pagination">
+                    <AppButton Icon="‹" Size="small" Disabled="@(CurrentPage <= 1)" OnClick="PreviousPageAsync" />
+                    <span>@CurrentPage / @TotalPages</span>
+                    <AppButton Icon="›" Size="small" Disabled="@(CurrentPage >= TotalPages)" OnClick="NextPageAsync" />
+                </div>
             </div>
         </footer>
     }
@@ -78,8 +110,11 @@
     [Parameter] public RenderFragment? Toolbar { get; set; }
     [Parameter] public RenderFragment? EmptyActions { get; set; }
     [Parameter] public Func<TItem, string>? KeySelector { get; set; }
+    [Parameter] public Func<TItem, string?>? SortKeySelector { get; set; }
     [Parameter] public EventCallback<IReadOnlyCollection<string>> SelectionChanged { get; set; }
+    [Parameter] public EventCallback<IReadOnlyList<TItem>> ExportRequested { get; set; }
     [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public IReadOnlyList<int> PageSizeOptions { get; set; } = new[] { 5, 10, 25, 50 };
     [Parameter] public bool Selectable { get; set; }
     [Parameter] public bool Loading { get; set; }
     [Parameter] public string Class { get; set; } = string.Empty;
@@ -91,19 +126,31 @@
     [Parameter] public string SelectedText { get; set; } = "selected";
     [Parameter] public string ShowingText { get; set; } = "Showing";
     [Parameter] public string OfText { get; set; } = "of";
+    [Parameter] public string RowsPerPageText { get; set; } = "Rows";
+    [Parameter] public string SortText { get; set; } = "Sort";
+    [Parameter] public string ExportText { get; set; } = "Export CSV";
 
     private readonly HashSet<string> _selectedKeys = new(StringComparer.Ordinal);
     private int CurrentPage { get; set; } = 1;
-    private int SafePageSize => Math.Max(1, PageSize);
+    private int _effectivePageSize;
+    private bool _sortDescending;
+
+    private int SafePageSize => Math.Max(1, _effectivePageSize > 0 ? _effectivePageSize : PageSize);
+    private IEnumerable<TItem> SortedItems => SortKeySelector is null
+        ? Items
+        : (_sortDescending
+            ? Items.OrderByDescending(x => SortKeySelector(x), StringComparer.CurrentCultureIgnoreCase)
+            : Items.OrderBy(x => SortKeySelector(x), StringComparer.CurrentCultureIgnoreCase));
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(Items.Count / (double)SafePageSize));
-    private IEnumerable<TItem> PagedItems => Items.Skip((CurrentPage - 1) * SafePageSize).Take(SafePageSize);
-    private bool AllPageSelected => PagedItems.Any() && PagedItems.All(IsSelected);
+    private IReadOnlyList<TItem> PagedItems => SortedItems.Skip((CurrentPage - 1) * SafePageSize).Take(SafePageSize).ToList();
+    private bool AllPageSelected => PagedItems.Count > 0 && PagedItems.All(IsSelected);
     private int FirstVisible => Items.Count == 0 ? 0 : ((CurrentPage - 1) * SafePageSize) + 1;
     private int LastVisible => Math.Min(CurrentPage * SafePageSize, Items.Count);
     private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {Items.Count}";
 
     protected override void OnParametersSet()
     {
+        if (_effectivePageSize <= 0) _effectivePageSize = Math.Max(1, PageSize);
         if (CurrentPage > TotalPages) CurrentPage = TotalPages;
     }
 
@@ -137,6 +184,25 @@
     private Task NextPageAsync(MouseEventArgs _)
     {
         if (CurrentPage < TotalPages) CurrentPage++;
+        return Task.CompletedTask;
+    }
+
+    private Task ToggleSortAsync(MouseEventArgs _)
+    {
+        _sortDescending = !_sortDescending;
+        CurrentPage = 1;
+        return Task.CompletedTask;
+    }
+
+    private Task ExportAsync(MouseEventArgs _) => ExportRequested.InvokeAsync(SortedItems.ToList());
+
+    private Task PageSizeChangedAsync(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value > 0)
+        {
+            _effectivePageSize = value;
+            CurrentPage = 1;
+        }
         return Task.CompletedTask;
     }
 }
