@@ -9,101 +9,167 @@
 
 @if (_loading)
 {
-    <div class="loading-line">@L["LoadingComments"]</div>
+    <AppLoading Title="@L["LoadingComments"]"
+                Message="@(L.IsArabic ? "يتم تحميل التعليقات وحالات المراجعة من WordPress." : "Loading comments and moderation states from WordPress.")" />
 }
 else if (_site is null)
 {
-    <div class="empty-state"><h1>@L["SiteNotFound"]</h1><a class="btn" href="/sites">@L["BackToSites"]</a></div>
+    <AppCard>
+        <AppEmptyState Icon="!" Title="@L["SiteNotFound"]">
+            <Actions><AppButton Href="/sites" Text="@L["BackToSites"]" /></Actions>
+        </AppEmptyState>
+    </AppCard>
 }
 else
 {
-    <div class="page-heading">
-        <div><h1>@L["CommentsManager"]</h1><p>@_site.Name — @L["CommentsIntro"]</p></div>
-        <div class="actions"><a class="btn" href="@($"/sites/{SiteId}/explorer")">@L["BackToExplorer"]</a></div>
-    </div>
+    <div class="comments-manager-workspace">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "إدارة التفاعل" : "ENGAGEMENT")"
+                    Title="@L["CommentsManager"]"
+                    Subtitle="@($"{_site.Name} — {L["CommentsIntro"]}")">
+            <Actions>
+                <AppButton Href="@($"/sites/{SiteId}/explorer")" Text="@L["BackToExplorer"]" />
+                <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
+            </Actions>
+        </AppToolbar>
 
-    @if (!string.IsNullOrWhiteSpace(_message))
-    {
-        <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
-    }
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
+        }
 
-    <div class="stats-grid explorer-stats">
-        <article class="stat-card"><span>@L["Comments"]</span><strong>@_result.Total</strong><small>@L["CurrentFilter"]</small></article>
-        <article class="stat-card"><span>@L["CurrentPage"]</span><strong>@_page</strong><small>@L["OfPages"] @_result.TotalPages</small></article>
-    </div>
+        <section class="app-stat-grid">
+            <AppStatCard Icon="☏" Label="@L["Comments"]" Value="@_result.Total.ToString()" Description="@L["CurrentFilter"]" />
+            <AppStatCard Icon="✓" Label="@L["Approved"]" Value="@ApprovedCount.ToString()" Description="@(L.IsArabic ? "في الصفحة الحالية" : "On current page")" Tone="success" />
+            <AppStatCard Icon="◷" Label="@L["PendingComment"]" Value="@PendingCount.ToString()" Description="@(L.IsArabic ? "تحتاج مراجعة" : "Needs moderation")" Tone="warning" />
+            <AppStatCard Icon="#" Label="@L["CurrentPage"]" Value="@_page.ToString()" Description="@($"{L["OfPages"]} {_result.TotalPages}")" Tone="info" />
+        </section>
 
-    <div class="panel explorer-toolbar">
-        <div class="filter-row">
-            <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@L["SearchComments"]" />
-            <select @bind="_status">
-                <option value="all">@L["All"]</option>
-                <option value="approved">@L["Approved"]</option>
-                <option value="hold">@L["PendingComment"]</option>
-                <option value="spam">@L["Spam"]</option>
-                <option value="trash">@L["Trash"]</option>
-            </select>
-            <button class="btn primary" @onclick="ReloadFromFirstPageAsync">@L["Search"]</button>
-            <button class="btn" @onclick="LoadAsync">@L["Refresh"]</button>
-        </div>
-    </div>
+        <AppSection Eyebrow="@(L.IsArabic ? "الفلاتر" : "FILTERS")"
+                    Title="@(L.IsArabic ? "تصفية تعليقات WordPress" : "Filter WordPress comments")">
+            <ChildContent>
+                <div class="filter-row">
+                    <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@L["SearchComments"]" />
+                    <select @bind="_status">
+                        <option value="all">@L["All"]</option>
+                        <option value="approved">@L["Approved"]</option>
+                        <option value="hold">@L["PendingComment"]</option>
+                        <option value="spam">@L["Spam"]</option>
+                        <option value="trash">@L["Trash"]</option>
+                    </select>
+                    <AppButton Variant="primary" Text="@L["Search"]" Disabled="@_working" OnClick="SearchClickedAsync" />
+                    <AppButton Text="@L["Refresh"]" Disabled="@_working" OnClick="RefreshClickedAsync" />
+                </div>
+            </ChildContent>
+        </AppSection>
 
-    @if (!_result.Success)
-    {
-        <div class="panel empty-state"><h3>@L["CouldNotLoadComments"]</h3><p>@L.TranslateMessage(_result.Message)</p></div>
-    }
-    else if (_result.Items.Count == 0)
-    {
-        <div class="panel empty-state"><h3>@L["NoComments"]</h3><p>@L["NoCommentsHelp"]</p></div>
-    }
-    else
-    {
-        <div class="comments-list">
-            @foreach (var comment in _result.Items)
-            {
-                <article class="panel comment-card">
-                    <div class="comment-head">
-                        <div>
-                            <strong>@(string.IsNullOrWhiteSpace(comment.AuthorName) ? L["Anonymous"] : comment.AuthorName)</strong>
-                            <small>@comment.AuthorEmail</small>
-                        </div>
-                        <div class="comment-meta">
-                            <span class="badge @StatusClass(comment.Status)">@TranslateStatus(comment.Status)</span>
-                            <small>@FormatDate(comment.DateUtc)</small>
-                        </div>
+        @if (!_result.Success)
+        {
+            <AppCard>
+                <AppEmptyState Icon="!" Title="@L["CouldNotLoadComments"]" Description="@L.TranslateMessage(_result.Message)" />
+            </AppCard>
+        }
+        else
+        {
+            <AppDataGrid TItem="WordPressCommentView"
+                         Items="@_result.Items"
+                         KeySelector="@(comment => comment.Id.ToString())"
+                         SearchKeySelector="@CommentSearchKey"
+                         SortKeySelector="@(comment => comment.AuthorName)"
+                         CsvHeaders="@CsvHeaders"
+                         CsvRowSelector="@CommentCsvRow"
+                         CsvFileName="@CsvFileName"
+                         PageSize="10"
+                         Selectable="true"
+                         EmptyTitle="@L["NoComments"]"
+                         EmptyDescription="@L["NoCommentsHelp"]"
+                         SearchPlaceholder="@L["SearchComments"]"
+                         SearchAriaLabel="@L["SearchComments"]"
+                         SortText="@(L.IsArabic ? "ترتيب بالكاتب" : "Sort by author")"
+                         ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                         SelectedText="@(L.IsArabic ? "محدد" : "selected")"
+                         ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                         OfText="@(L.IsArabic ? "من" : "of")"
+                         RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")">
+                <Toolbar>
+                    <div>
+                        <strong>@(L.IsArabic ? "تعليقات الصفحة الحالية" : "Current WordPress page")</strong>
+                        <small>@($"{L["Page"]} {_page} {L["Of"]} {_result.TotalPages}")</small>
                     </div>
-                    <div class="comment-content">@((MarkupString)comment.Content)</div>
-                    <div class="comment-links">
-                        <small>@L["PostId"]: @comment.PostId · @L["CommentId"]: @comment.Id</small>
-                        @if (!string.IsNullOrWhiteSpace(comment.Link)) { <a href="@comment.Link" target="_blank">@L["Open"] ↗</a> }
-                    </div>
-                    <div class="table-actions comment-actions">
-                        @if (comment.Status != "approved") { <button class="btn compact primary" @onclick="() => RunAsync(() => CommentsService.ApproveAsync(SiteId, comment.Id))">@L["Approve"]</button> }
-                        @if (comment.Status != "hold") { <button class="btn compact" @onclick="() => RunAsync(() => CommentsService.HoldAsync(SiteId, comment.Id))">@L["Unapprove"]</button> }
-                        @if (comment.Status != "spam") { <button class="btn compact" @onclick="() => RunAsync(() => CommentsService.SpamAsync(SiteId, comment.Id))">@L["MarkSpam"]</button> }
-                        @if (comment.Status != "trash") { <button class="btn compact danger" @onclick="() => RunAsync(() => CommentsService.TrashAsync(SiteId, comment.Id))">@L["MoveToTrash"]</button> }
-                        @if (comment.Status == "trash") { <button class="btn compact danger" @onclick="() => RunAsync(() => CommentsService.DeleteAsync(SiteId, comment.Id, true))">@L["DeletePermanently"]</button> }
-                        <button class="btn compact" @onclick="() => StartReply(comment)">@L["Reply"]</button>
-                    </div>
-                    @if (_replyingTo == comment.Id)
-                    {
-                        <div class="reply-box">
-                            <textarea rows="4" @bind="_replyText" placeholder="@L["WriteReply"]"></textarea>
-                            <div class="actions">
-                                <button class="btn primary" disabled="@_working" @onclick="() => SendReplyAsync(comment)">@L["SendReply"]</button>
-                                <button class="btn" @onclick="CancelReply">@L["Cancel"]</button>
+                    <AppBadge Tone="info" Text="@_result.Items.Count.ToString()" />
+                </Toolbar>
+                <Header>
+                    <th>@L["User"]</th>
+                    <th>@(L.IsArabic ? "التعليق" : "Comment")</th>
+                    <th>@L["Status"]</th>
+                    <th>@L["Registered"]</th>
+                    <th>@L["Actions"]</th>
+                </Header>
+                <RowTemplate Context="comment">
+                    <td>
+                        <div class="user-row">
+                            <div>
+                                <strong>@AuthorName(comment)</strong>
+                                <small>@comment.AuthorEmail</small>
                             </div>
                         </div>
-                    }
-                </article>
-            }
-        </div>
+                    </td>
+                    <td>
+                        <div class="comment-content">@((MarkupString)comment.Content)</div>
+                        <small>@L["PostId"]: @comment.PostId · @L["CommentId"]: @comment.Id</small>
+                        @if (!string.IsNullOrWhiteSpace(comment.Link))
+                        {
+                            <a href="@comment.Link" target="_blank" rel="noopener">@L["Open"] ↗</a>
+                        }
+                        @if (_replyingTo == comment.Id)
+                        {
+                            <div class="reply-box">
+                                <textarea rows="4" @bind="_replyText" placeholder="@L["WriteReply"]"></textarea>
+                                <div class="actions">
+                                    <AppButton Variant="primary" Text="@L["SendReply"]" Busy="@_working" Disabled="@_working" OnClick="args => SendReplyAsync(comment)" />
+                                    <AppButton Text="@L["Cancel"]" Disabled="@_working" OnClick="CancelReplyClicked" />
+                                </div>
+                            </div>
+                        }
+                    </td>
+                    <td><AppBadge Tone="@StatusTone(comment.Status)" Text="@TranslateStatus(comment.Status)" /></td>
+                    <td>@FormatDate(comment.DateUtc)</td>
+                    <td>
+                        <div class="table-actions comment-actions">
+                            @if (comment.Status != "approved")
+                            {
+                                <AppButton Size="small" Variant="primary" Text="@L["Approve"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.ApproveAsync(SiteId, comment.Id))" />
+                            }
+                            @if (comment.Status != "hold")
+                            {
+                                <AppButton Size="small" Text="@L["Unapprove"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.HoldAsync(SiteId, comment.Id))" />
+                            }
+                            @if (comment.Status != "spam")
+                            {
+                                <AppButton Size="small" Text="@L["MarkSpam"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.SpamAsync(SiteId, comment.Id))" />
+                            }
+                            @if (comment.Status != "trash")
+                            {
+                                <AppButton Size="small" Variant="danger" Text="@L["MoveToTrash"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.TrashAsync(SiteId, comment.Id))" />
+                            }
+                            @if (comment.Status == "trash")
+                            {
+                                <AppButton Size="small" Variant="danger" Text="@L["DeletePermanently"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.DeleteAsync(SiteId, comment.Id, true))" />
+                            }
+                            <AppButton Size="small" Text="@L["Reply"]" Disabled="@_working" OnClick="args => StartReplyClicked(comment)" />
+                        </div>
+                    </td>
+                </RowTemplate>
+            </AppDataGrid>
 
-        <div class="panel pagination-bar">
-            <button class="btn" disabled="@(_page <= 1 || _working)" @onclick="PreviousPageAsync">@L["Previous"]</button>
-            <span>@L["Page"] @_page @L["Of"] @_result.TotalPages</span>
-            <button class="btn" disabled="@(_page >= _result.TotalPages || _working)" @onclick="NextPageAsync">@L["Next"]</button>
-        </div>
-    }
+            <AppSection Title="@(L.IsArabic ? "صفحات WordPress" : "WordPress pages")">
+                <Actions>
+                    <AppButton Icon="‹" Text="@L["Previous"]" Disabled="@(_page <= 1 || _working)" OnClick="PreviousPageClickedAsync" />
+                    <AppBadge Tone="info" Text="@($"{L["Page"]} {_page} {L["Of"]} {_result.TotalPages}")" />
+                    <AppButton Icon="›" Text="@L["Next"]" Disabled="@(_page >= _result.TotalPages || _working)" OnClick="NextPageClickedAsync" />
+                </Actions>
+            </AppSection>
+        }
+    </div>
 }
 
 @code {
@@ -115,7 +181,15 @@ else
     private int _page = 1, _replyingTo;
     private bool _loading = true, _working, _isError;
 
+    private int ApprovedCount => _result.Items.Count(x => x.Status == "approved");
+    private int PendingCount => _result.Items.Count(x => x.Status == "hold");
+    private IReadOnlyList<string> CsvHeaders => L.IsArabic
+        ? new[] { "المعرّف", "الكاتب", "البريد الإلكتروني", "الحالة", "رقم المقال", "التاريخ", "المحتوى", "الرابط" }
+        : new[] { "Id", "Author", "Email", "Status", "Post Id", "Date", "Content", "Link" };
+    private string CsvFileName => $"wordpress-comments-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+
     protected override void OnInitialized() => L.Changed += Changed;
+
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
@@ -141,6 +215,13 @@ else
         }
         finally { _working = false; }
     }
+
+    private Task RefreshClickedAsync(MouseEventArgs _) => LoadAsync();
+    private Task SearchClickedAsync(MouseEventArgs _) => ReloadFromFirstPageAsync();
+    private Task PreviousPageClickedAsync(MouseEventArgs _) => PreviousPageAsync();
+    private Task NextPageClickedAsync(MouseEventArgs _) => NextPageAsync();
+    private Task CancelReplyClicked(MouseEventArgs _) { CancelReply(); return Task.CompletedTask; }
+    private Task StartReplyClicked(WordPressCommentView comment) { StartReply(comment); return Task.CompletedTask; }
 
     private async Task ReloadFromFirstPageAsync() { _page = 1; await LoadAsync(); }
     private async Task PreviousPageAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
@@ -169,12 +250,26 @@ else
         finally { _working = false; }
     }
 
+    private string AuthorName(WordPressCommentView comment) => string.IsNullOrWhiteSpace(comment.AuthorName) ? L["Anonymous"] : comment.AuthorName;
+    private string CommentSearchKey(WordPressCommentView comment) => $"{comment.Id} {comment.AuthorName} {comment.AuthorEmail} {comment.Status} {comment.PostId} {comment.Content}";
+    private IReadOnlyList<string> CommentCsvRow(WordPressCommentView comment) => new[]
+    {
+        comment.Id.ToString(), AuthorName(comment), comment.AuthorEmail, TranslateStatus(comment.Status),
+        comment.PostId.ToString(), FormatDate(comment.DateUtc), StripHtml(comment.Content), comment.Link ?? string.Empty
+    };
+
     private string TranslateStatus(string status) => status switch
     {
         "approved" => L["Approved"], "hold" => L["PendingComment"], "spam" => L["Spam"], "trash" => L["Trash"], _ => status
     };
-    private static string StatusClass(string status) => status == "approved" ? "success" : status is "spam" or "trash" ? "danger" : string.Empty;
+
+    private static string StatusTone(string status) => status switch
+    {
+        "approved" => "success", "hold" => "warning", "spam" or "trash" => "danger", _ => "neutral"
+    };
+
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-    private void Changed() => InvokeAsync(StateHasChanged);
+    private static string StripHtml(string value) => System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<.*?>", string.Empty);
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= Changed;
 }
