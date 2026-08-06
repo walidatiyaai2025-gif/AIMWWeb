@@ -98,9 +98,14 @@ try {
 
         Invoke-Native "git.exe" @("remote", "set-url", "origin", $RepositoryUrl) "Could not set Git remote."
         Invoke-Native "git.exe" @("fetch", "origin", "--prune") "Git fetch failed."
-        Invoke-Native "git.exe" @("checkout", $Branch) "Could not checkout branch $Branch."
+
+        Write-Step "Discarding local source changes before branch switch..."
+        Invoke-Native "git.exe" @("reset", "--hard", "HEAD") "Could not discard local tracked changes."
+        Invoke-Native "git.exe" @("clean", "-fd") "Could not remove local untracked files."
+
+        Invoke-Native "git.exe" @("checkout", "-f", $Branch) "Could not checkout branch $Branch."
         Invoke-Native "git.exe" @("reset", "--hard", "origin/$Branch") "Could not reset to origin/$Branch."
-        Invoke-Native "git.exe" @("clean", "-fd") "Could not clean untracked files."
+        Invoke-Native "git.exe" @("clean", "-fd") "Could not clean repository after update."
     }
     else {
         if (Test-Path $InstallPath) {
