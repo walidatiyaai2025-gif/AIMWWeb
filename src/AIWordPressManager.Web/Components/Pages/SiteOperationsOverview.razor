@@ -30,28 +30,49 @@ else
         </section>
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
-            @Stat(L.IsArabic ? "إجمالي العمليات" : "Total operations", _summary.Total.ToString())
-            @Stat(L.IsArabic ? "ناجحة" : "Successful", _summary.Successful.ToString())
-            @Stat(L.IsArabic ? "فاشلة" : "Failed", _summary.Failed.ToString())
-            @Stat(L.IsArabic ? "المواقع النشطة" : "Active sites", _summary.SiteCount.ToString())
-            @Stat(L.IsArabic ? "متوسط المدة" : "Average duration", FormatDuration(_summary.AverageDuration))
+            @Stat(L.IsArabic ? "العمليات الظاهرة" : "Visible operations", FilteredSummary.Total.ToString())
+            @Stat(L.IsArabic ? "ناجحة" : "Successful", FilteredSummary.Successful.ToString())
+            @Stat(L.IsArabic ? "فاشلة" : "Failed", FilteredSummary.Failed.ToString())
+            @Stat(L.IsArabic ? "المواقع النشطة" : "Active sites", FilteredSummary.SiteCount.ToString())
+            @Stat(L.IsArabic ? "متوسط المدة" : "Average duration", FormatDuration(FilteredSummary.AverageDuration))
         </section>
 
         <section class="panel" style="padding:18px;margin-bottom:18px">
-            <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,.5fr) minmax(180px,.5fr);gap:12px">
-                <input class="form-control" placeholder="@(L.IsArabic ? "بحث في الموقع أو الرسالة..." : "Search site or message...")" @bind="_query" @bind:event="oninput" />
-                <select class="form-control" @bind="_siteFilter">
-                    <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
-                    @foreach (var site in _sites)
-                    {
-                        <option value="@site.Id">@site.Name</option>
-                    }
-                </select>
-                <select class="form-control" @bind="_statusFilter">
-                    <option value="all">@(L.IsArabic ? "كل النتائج" : "All results")</option>
-                    <option value="success">@(L.IsArabic ? "الناجحة فقط" : "Successful only")</option>
-                    <option value="failed">@(L.IsArabic ? "الفاشلة فقط" : "Failed only")</option>
-                </select>
+            <div style="display:grid;grid-template-columns:minmax(220px,1fr) repeat(4,minmax(150px,.45fr));gap:12px;align-items:end">
+                <label>
+                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "البحث" : "Search")</span>
+                    <input class="form-control" placeholder="@(L.IsArabic ? "الموقع أو العملية أو الرسالة..." : "Site, operation, or message...")" @bind="_query" @bind:event="oninput" />
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "الموقع" : "Site")</span>
+                    <select class="form-control" @bind="_siteFilter">
+                        <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "النتيجة" : "Result")</span>
+                    <select class="form-control" @bind="_statusFilter">
+                        <option value="all">@(L.IsArabic ? "كل النتائج" : "All results")</option>
+                        <option value="success">@(L.IsArabic ? "الناجحة فقط" : "Successful only")</option>
+                        <option value="failed">@(L.IsArabic ? "الفاشلة فقط" : "Failed only")</option>
+                    </select>
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "من تاريخ" : "From")</span>
+                    <input type="date" class="form-control" @bind="_fromDate" />
+                </label>
+                <label>
+                    <span style="display:block;margin-bottom:6px;font-size:.85rem">@(L.IsArabic ? "إلى تاريخ" : "To")</span>
+                    <input type="date" class="form-control" @bind="_toDate" />
+                </label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">
+                <small style="opacity:.72">@(L.IsArabic ? $"عرض {FilteredSummary.Total} من أصل {_items.Count} عملية" : $"Showing {FilteredSummary.Total} of {_items.Count} operations")</small>
+                <button type="button" class="btn" @onclick="ResetFilters">@(L.IsArabic ? "إعادة ضبط الفلاتر" : "Reset filters")</button>
             </div>
         </section>
 
@@ -101,9 +122,10 @@ else
     private string _query = string.Empty;
     private string _siteFilter = string.Empty;
     private string _statusFilter = "all";
+    private DateTime _fromDate = DateTime.Today.AddDays(-30);
+    private DateTime _toDate = DateTime.Today;
     private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
     private IReadOnlyList<SiteOperationHistoryItem> _items = [];
-    private SiteOperationHistorySummary _summary = new(0, 0, 0, TimeSpan.Zero, 0, null);
 
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
     protected override async Task OnInitializedAsync() => await ReloadAsync();
@@ -114,8 +136,7 @@ else
         try
         {
             _sites = await SiteService.GetSitesAsync();
-            _items = History.GetAll(500);
-            _summary = History.GetSummary(DateTime.UtcNow.AddDays(-30));
+            _items = History.GetAll(2000);
         }
         finally
         {
@@ -123,8 +144,10 @@ else
         }
     }
 
-    private IEnumerable<SiteOperationHistoryItem> FilteredItems => _items.Where(item =>
+    private IReadOnlyList<SiteOperationHistoryItem> FilteredItems => _items.Where(item =>
     {
+        var localDate = item.StartedAtUtc.ToLocalTime().Date;
+        if (localDate < _fromDate.Date || localDate > _toDate.Date) return false;
         if (!string.IsNullOrWhiteSpace(_siteFilter) && Guid.TryParse(_siteFilter, out var selectedSite) && item.SiteId != selectedSite) return false;
         if (_statusFilter == "success" && !item.Succeeded) return false;
         if (_statusFilter == "failed" && item.Succeeded) return false;
@@ -134,7 +157,32 @@ else
             || item.Operation.Contains(search, StringComparison.OrdinalIgnoreCase)
             || item.Message.Contains(search, StringComparison.OrdinalIgnoreCase)
             || (item.Details?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
-    });
+    }).OrderByDescending(x => x.StartedAtUtc).ToList();
+
+    private SiteOperationHistorySummary FilteredSummary
+    {
+        get
+        {
+            var items = FilteredItems;
+            var averageTicks = items.Count == 0 ? 0L : (long)items.Average(x => x.Duration.Ticks);
+            return new SiteOperationHistorySummary(
+                items.Count,
+                items.Count(x => x.Succeeded),
+                items.Count(x => !x.Succeeded),
+                TimeSpan.FromTicks(averageTicks),
+                items.Select(x => x.SiteId).Distinct().Count(),
+                items.FirstOrDefault()?.StartedAtUtc);
+        }
+    }
+
+    private void ResetFilters()
+    {
+        _query = string.Empty;
+        _siteFilter = string.Empty;
+        _statusFilter = "all";
+        _fromDate = DateTime.Today.AddDays(-30);
+        _toDate = DateTime.Today;
+    }
 
     private RenderFragment Stat(string label, string value) => builder =>
     {
