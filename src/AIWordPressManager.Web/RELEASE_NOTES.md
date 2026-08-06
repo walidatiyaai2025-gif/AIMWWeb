@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.60.0 - 2026-08-06 - Site Reliability Dashboard
+- Added a site reliability dashboard at `/site-reliability` and `/operations/reliability`.
+- Added per-site success rates for connection and synchronization operations.
+- Added 7, 30, and 90-day analysis periods with a configurable minimum operation count.
+- Added overall success rate, measured-site count, and sites-needing-attention indicators.
+- Added reliability classifications, last failure timestamps, and direct navigation to each site connection center.
+
 ## 155.59.0 - 2026-08-06 - Operations Date Filtering
 - Added from/to date filtering to the cross-site operations dashboard.
 - Added dynamic success, failure, active-site, and average-duration summaries based on the visible result set.
