@@ -2,6 +2,7 @@
 @page "/sites/onboarding"
 @rendermode InteractiveServer
 @inject SiteWebService SiteService
+@inject WordPressSyncWebService SyncService
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject NavigationManager Navigation
@@ -12,7 +13,7 @@
     <AppToolbar
         Eyebrow="@(L.IsArabic ? "إعداد الاتصال" : "SITE ONBOARDING")"
         Title="@(L.IsArabic ? "ربط موقع WordPress جديد" : "Connect a New WordPress Site")"
-        Subtitle="@(L.IsArabic ? "أضف الموقع، احفظ بيانات الاعتماد المشفرة، واختبر REST API في خطوات واضحة." : "Add the site, protect its credentials, and validate the REST API in a guided workflow.")">
+        Subtitle="@(L.IsArabic ? "أضف الموقع، احفظ بيانات الاعتماد المشفرة، اختبر REST API، ثم ابدأ المزامنة الأولية." : "Add the site, protect its credentials, validate the REST API, then run the initial synchronization.")">
         <Actions>
             <AppButton Href="/sites" Icon="←" Text="@(L.IsArabic ? "العودة للمواقع" : "Back to sites")" />
         </Actions>
@@ -22,7 +23,7 @@
         <AppStatCard Icon="1" Label="@(L.IsArabic ? "بيانات الموقع" : "Site profile")" Value="@StepState(1)" Description="@(L.IsArabic ? "الاسم والرابط" : "Name and URL")" Tone="@StepTone(1)" />
         <AppStatCard Icon="2" Label="@(L.IsArabic ? "بيانات WordPress" : "WordPress credentials")" Value="@StepState(2)" Description="@(L.IsArabic ? "اسم المستخدم وكلمة مرور التطبيق" : "Username and Application Password")" Tone="@StepTone(2)" />
         <AppStatCard Icon="3" Label="@(L.IsArabic ? "اختبار الاتصال" : "Connection test")" Value="@StepState(3)" Description="REST API" Tone="@StepTone(3)" />
-        <AppStatCard Icon="✓" Label="@(L.IsArabic ? "الجاهزية" : "Readiness")" Value="@ReadinessText" Description="@(L.IsArabic ? "حالة الإعداد الحالية" : "Current onboarding status")" Tone="@ReadinessTone" />
+        <AppStatCard Icon="4" Label="@(L.IsArabic ? "المزامنة الأولية" : "Initial sync")" Value="@SyncStateText" Description="@(L.IsArabic ? "المحتوى والوسائط" : "Content and media")" Tone="@SyncTone" />
     </section>
 
     @if (!string.IsNullOrWhiteSpace(_message))
@@ -46,7 +47,7 @@
         {
             <div class="site-create-grid">
                 <label><span>@(L.IsArabic ? "اسم مستخدم WordPress" : "WordPress username")</span><InputText @bind-Value="_userName" disabled="@_working" autocomplete="username" /></label>
-                <label><span>@(L.IsArabic ? "Application Password" : "Application Password")</span><InputText @bind-Value="_applicationPassword" type="password" disabled="@_working" autocomplete="new-password" /></label>
+                <label><span>Application Password</span><InputText @bind-Value="_applicationPassword" type="password" disabled="@_working" autocomplete="new-password" /></label>
             </div>
             <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم تشفير كلمة مرور التطبيق قبل حفظها محليًا، ولا تُعرض مرة أخرى." : "The Application Password is encrypted before local storage and is never displayed again.")</div>
             <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "أنشئ Application Password من WordPress: المستخدمون ← الملف الشخصي ← Application Passwords. لا تستخدم كلمة مرور تسجيل الدخول العادية." : "Create an Application Password in WordPress under Users → Profile → Application Passwords. Do not use the normal login password.")</p></div>
@@ -69,6 +70,13 @@
                     }
                 </div>
             }
+            @if (_syncResult is not null)
+            {
+                <div class="alert @(_syncResult.IsSuccess ? "success" : "error")">
+                    <strong>@(L.IsArabic ? "نتيجة المزامنة الأولية" : "Initial synchronization result")</strong>
+                    <div style="margin-top:.5rem">@_syncResult.Message</div>
+                </div>
+            }
         }
 
         <div class="actions" style="margin-top:1.25rem">
@@ -82,10 +90,14 @@
             }
             else if (!_completed)
             {
-                <AppButton Variant="primary" Icon="↻" Text="@(_working ? (L.IsArabic ? "جارٍ الاختبار" : "Testing") : (L.IsArabic ? "حفظ واختبار الاتصال" : "Save and test connection"))" Busy="@_working" Disabled="@_working" OnClick="SaveAndTestAsync" />
+                <AppButton Variant="primary" Icon="↻" Text="@(_working ? WorkingText : (L.IsArabic ? "حفظ واختبار ومزامنة" : "Save, test and synchronize"))" Busy="@_working" Disabled="@_working" OnClick="SaveTestAndSyncAsync" />
             }
             else
             {
+                @if (!_syncSucceeded)
+                {
+                    <AppButton Icon="↻" Text="@(L.IsArabic ? "إعادة المزامنة" : "Retry synchronization")" Busy="@_working" Disabled="@_working" OnClick="RetrySyncAsync" />
+                }
                 <AppButton Variant="primary" Icon="✓" Text="@(L.IsArabic ? "فتح لوحة الموقع" : "Open site dashboard")" OnClick="OpenSiteAsync" />
                 <AppButton Href="/sites" Text="@(L.IsArabic ? "عرض كل المواقع" : "View all sites")" />
             }
@@ -95,30 +107,38 @@
 
 @code {
     private int _step = 1;
-    private bool _working, _isError, _completed;
+    private bool _working, _isError, _completed, _syncStarted, _syncSucceeded;
     private Guid? _siteId;
     private string _name = string.Empty, _url = string.Empty, _userName = string.Empty, _applicationPassword = string.Empty, _message = string.Empty;
     private ConnectionTestViewResult? _testResult;
+    private WordPressSyncViewResult? _syncResult;
 
     private string StepTitle => _step switch
     {
         1 => L.IsArabic ? "بيانات الموقع الأساسية" : "Site profile",
         2 => L.IsArabic ? "بيانات اعتماد WordPress" : "WordPress credentials",
-        _ => L.IsArabic ? "التحقق النهائي من الاتصال" : "Final connection validation"
+        _ => L.IsArabic ? "التحقق النهائي والمزامنة" : "Final validation and synchronization"
     };
+
     private string StepSubtitle => _step switch
     {
         1 => L.IsArabic ? "أدخل اسمًا واضحًا والرابط الرئيسي للموقع." : "Enter a clear display name and the primary site URL.",
         2 => L.IsArabic ? "استخدم Application Password مخصصًا لهذا التطبيق." : "Use a dedicated Application Password for this manager.",
-        _ => L.IsArabic ? "سيتم حفظ الموقع ثم اختبار REST API والصلاحيات." : "The site will be saved, then its REST API and permissions will be tested."
+        _ => L.IsArabic ? "سيتم حفظ الموقع واختبار REST API ثم تنزيل البيانات الأولية." : "The site will be saved, its REST API validated, then its initial data downloaded."
     };
-    private string ReadinessText => _completed ? (L.IsArabic ? "جاهز" : "Ready") : (L.IsArabic ? "قيد الإعداد" : "In progress");
-    private string ReadinessTone => _completed ? "success" : _isError ? "warning" : "info";
+
+    private string WorkingText => _syncStarted
+        ? (L.IsArabic ? "جارٍ تنفيذ المزامنة الأولية" : "Running initial synchronization")
+        : (L.IsArabic ? "جارٍ حفظ الموقع واختبار الاتصال" : "Saving site and testing connection");
+
     private string TestStatusText => _testResult is null ? (L.IsArabic ? "لم يبدأ" : "Not started") : _testResult.IsSuccess ? (L.IsArabic ? "ناجح" : "Successful") : (L.IsArabic ? "فشل" : "Failed");
+    private string SyncStateText => _syncSucceeded ? (L.IsArabic ? "مكتملة" : "Complete") : _syncStarted && _working ? (L.IsArabic ? "جارية" : "Running") : _syncResult is not null ? (L.IsArabic ? "تحتاج إعادة" : "Retry needed") : (L.IsArabic ? "منتظرة" : "Pending");
+    private string SyncTone => _syncSucceeded ? "success" : _syncResult is not null ? "warning" : _syncStarted ? "info" : "neutral";
     private string StepState(int step) => _completed || _step > step ? (L.IsArabic ? "مكتمل" : "Complete") : _step == step ? (L.IsArabic ? "حالي" : "Current") : (L.IsArabic ? "منتظر" : "Pending");
     private string StepTone(int step) => _completed || _step > step ? "success" : _step == step ? "info" : "neutral";
 
     private Task PreviousAsync(MouseEventArgs _) { if (_step > 1) _step--; ClearMessage(); return Task.CompletedTask; }
+
     private Task NextAsync(MouseEventArgs _)
     {
         ClearMessage();
@@ -136,33 +156,84 @@
         return Task.CompletedTask;
     }
 
-    private async Task SaveAndTestAsync(MouseEventArgs _)
+    private async Task SaveTestAndSyncAsync(MouseEventArgs _)
     {
         try
         {
-            _working = true; ClearMessage();
+            _working = true;
+            _syncStarted = false;
+            ClearMessage();
             _siteId ??= await SiteService.AddSiteAsync(_name, _url);
             _testResult = await SiteService.SaveCredentialAndTestAsync(_siteId.Value, _userName, _applicationPassword);
             _applicationPassword = string.Empty;
-            if (_testResult.IsSuccess)
-            {
-                _completed = true; _isError = false;
-                _message = L.IsArabic ? "تم حفظ الموقع وتأكيد الاتصال بنجاح." : "The site was saved and the connection was validated successfully.";
-                Notifications.Success(_message);
-            }
-            else
+
+            if (!_testResult.IsSuccess)
             {
                 _isError = true;
                 _message = L.TranslateMessage(_testResult.Message);
                 Notifications.Error(_message, L.IsArabic ? "فشل اختبار الاتصال" : "Connection test failed", _testResult.Diagnostics);
+                return;
             }
+
+            _completed = true;
+            _isError = false;
+            _message = L.IsArabic ? "تم حفظ الموقع وتأكيد الاتصال. بدأت المزامنة الأولية." : "The site was saved and validated. Initial synchronization has started.";
+            Notifications.Success(_message);
+            await RunInitialSyncAsync();
         }
         catch (Exception ex)
         {
-            _isError = true; _message = L.TranslateMessage(ex.Message);
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
             Notifications.Error(_message, L.IsArabic ? "فشل إعداد الموقع" : "Site onboarding failed", ex.ToString());
         }
-        finally { _working = false; }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private async Task RetrySyncAsync(MouseEventArgs _)
+    {
+        if (!_siteId.HasValue) return;
+        try
+        {
+            _working = true;
+            ClearMessage();
+            await RunInitialSyncAsync();
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private async Task RunInitialSyncAsync()
+    {
+        if (!_siteId.HasValue) return;
+        _syncStarted = true;
+        _syncSucceeded = false;
+        _syncResult = null;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await SiteService.EnsureOwnershipAsync(_siteId.Value);
+            _syncResult = await SyncService.SynchronizeAsync(_siteId.Value);
+            _syncSucceeded = _syncResult.IsSuccess;
+            _isError = !_syncSucceeded;
+            _message = _syncSucceeded
+                ? (L.IsArabic ? "اكتمل ربط الموقع والمزامنة الأولية بنجاح." : "Site onboarding and initial synchronization completed successfully.")
+                : (L.IsArabic ? "تم ربط الموقع، لكن المزامنة الأولية تحتاج إلى إعادة المحاولة." : "The site is connected, but the initial synchronization needs to be retried.");
+        }
+        catch (Exception ex)
+        {
+            _syncSucceeded = false;
+            _syncResult = new WordPressSyncViewResult(false, L.TranslateMessage(ex.Message), WordPressSyncSummary.Empty, DateTime.UtcNow, false, 0);
+            _isError = true;
+            _message = L.IsArabic ? "تم حفظ وربط الموقع، لكن تعذرت المزامنة الأولية. يمكنك إعادة المحاولة دون إدخال البيانات مرة أخرى." : "The site was saved and connected, but initial synchronization failed. You can retry without entering the credentials again.";
+            Notifications.Error(_message, L.IsArabic ? "فشل المزامنة الأولية" : "Initial synchronization failed", ex.ToString());
+        }
     }
 
     private Task OpenSiteAsync(MouseEventArgs _)
@@ -170,6 +241,7 @@
         if (_siteId.HasValue) Navigation.NavigateTo($"/sites/{_siteId.Value}");
         return Task.CompletedTask;
     }
+
     private Task FailAsync(string message) { _isError = true; _message = message; return Task.CompletedTask; }
     private void ClearMessage() { _message = string.Empty; _isError = false; }
 }
