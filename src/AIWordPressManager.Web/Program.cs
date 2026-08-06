@@ -36,6 +36,7 @@ builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
 builder.Services.AddScoped<CurrentUserContext>();
 builder.Services.AddScoped<LocalAuthenticationService>();
+builder.Services.AddScoped<AccountProfileService>();
 builder.Services.AddScoped<IWordPressConnectionTester, WordPressConnectionTester>();
 builder.Services.AddScoped<IWordPressApiClient, WordPressApiClient>();
 builder.Services.AddScoped<SiteWebService>();
