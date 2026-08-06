@@ -1,5 +1,13 @@
 # AI WordPress Manager Release Notes
 
+## 155.62.0 - 2026-08-06 - Site Operations Hub
+- Added a unified operations hub at `/operations` and `/operations/hub`.
+- Added 30-day site-operation totals, success rate, failure count, and average duration summaries.
+- Added direct cards for operation history, site reliability, synchronization, and site management.
+- Added a recent cross-site activity feed with localized status presentation.
+- Added operations and reliability shortcuts to the global Quick Actions menu.
+- Updated the Add Site quick action to use the guided `/sites/connect` workflow.
+
 ## 155.61.0 - 2026-08-06 - Filtered Operations CSV Export
 - Added one-click CSV export to the cross-site operations dashboard.
 - Exported only the operations currently matched by the active search, site, status, and date filters.
