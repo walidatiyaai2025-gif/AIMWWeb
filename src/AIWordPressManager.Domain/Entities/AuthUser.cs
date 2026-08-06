@@ -6,17 +6,18 @@ public sealed class AuthUser : Entity
 {
     private AuthUser() { }
 
-    public AuthUser(string userName, string passwordHash, DateTime utcNow)
+    public AuthUser(string userName, string passwordHash, DateTime utcNow, string role = "User")
     {
         SetUserName(userName, utcNow);
         SetPasswordHash(passwordHash, utcNow);
+        SetRole(role, utcNow);
         IsActive = true;
     }
 
     public string UserName { get; private set; } = string.Empty;
     public string NormalizedUserName { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
-    public string Role { get; private set; } = "Administrator";
+    public string Role { get; private set; } = "User";
     public bool IsActive { get; private set; }
     public int FailedAccessCount { get; private set; }
     public DateTime? LockedUntilUtc { get; private set; }
@@ -35,6 +36,13 @@ public sealed class AuthUser : Entity
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
         PasswordHash = value;
+        MarkUpdated(utcNow);
+    }
+
+    public void SetRole(string value, DateTime utcNow)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        Role = value.Trim();
         MarkUpdated(utcNow);
     }
 
