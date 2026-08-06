@@ -6,18 +6,18 @@ public sealed class ExecutionCenterService : IDisposable
 {
     private readonly object _sync = new();
     private readonly string _connectionString;
-    private readonly Timer _timer;
+    private readonly Timer? _timer;
     private bool _ticking;
 
-    public ExecutionCenterService()
+    public ExecutionCenterService(
+        string? databasePath = null,
+        bool enableBackgroundWorker = true,
+        bool enableSeedData = true)
     {
-        var dataDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AIWordPressManager",
-            "Data");
-        Directory.CreateDirectory(dataDirectory);
+        databasePath = ResolveDatabasePath(databasePath);
+        var directory = Path.GetDirectoryName(databasePath);
+        if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
 
-        var databasePath = Path.Combine(dataDirectory, "execution-center.db");
         _connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
@@ -27,8 +27,9 @@ public sealed class ExecutionCenterService : IDisposable
 
         InitializeDatabase();
         RecoverInterruptedJobs();
-        SeedIfEmpty();
-        _timer = new Timer(_ => TickSafely(), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+        if (enableSeedData) SeedIfEmpty();
+        if (enableBackgroundWorker)
+            _timer = new Timer(_ => TickSafely(), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
     }
 
     public IReadOnlyList<ExecutionJob> GetJobs()
@@ -80,7 +81,13 @@ public sealed class ExecutionCenterService : IDisposable
         }
     }
 
-    public ExecutionJob Enqueue(string title, string type, string siteName, int totalItems)
+    public ExecutionJob Enqueue(
+        string title,
+        string type,
+        string siteName,
+        int totalItems,
+        string? idempotencyKey = null,
+        string? correlationId = null)
     {
         var job = new ExecutionJob(
             Guid.NewGuid(),
@@ -374,9 +381,19 @@ public sealed class ExecutionCenterService : IDisposable
         return connection;
     }
 
+    private static string ResolveDatabasePath(string? databasePath)
+    {
+        if (!string.IsNullOrWhiteSpace(databasePath)) return Path.GetFullPath(databasePath);
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AIWordPressManager",
+            "Data",
+            "execution-center.db");
+    }
+
     private static string FormatDate(DateTime value) => value.ToUniversalTime().ToString("O");
     private static DateTime ParseDate(string value) => DateTime.Parse(value, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
-    public void Dispose() => _timer.Dispose();
+    public void Dispose() => _timer?.Dispose();
 }
 
 public sealed record ExecutionJob(Guid Id, string Title, string Type, string SiteName, string Status, int Progress, int TotalItems, int ProcessedItems, DateTime CreatedAtUtc, DateTime? StartedAtUtc, DateTime? CompletedAtUtc, string? Error);
