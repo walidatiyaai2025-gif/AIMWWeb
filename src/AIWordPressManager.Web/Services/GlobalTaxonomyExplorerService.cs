@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class GlobalTaxonomyExplorerService(AppDbContext dbContext)
+public sealed class GlobalTaxonomyExplorerService(AppDbContext dbContext, CurrentUserContext currentUser)
 {
     public async Task<GlobalTaxonomyExplorerResult> SearchAsync(
         Guid? siteId,
@@ -19,40 +19,20 @@ public sealed class GlobalTaxonomyExplorerService(AppDbContext dbContext)
         minimumUsage = Math.Max(0, minimumUsage);
         var type = string.IsNullOrWhiteSpace(taxonomyType) ? "all" : taxonomyType.Trim().ToLowerInvariant();
         var search = query?.Trim();
+        var ownerUserId = currentUser.RequireUserId();
+        var ownedSites = dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == ownerUserId);
 
         var categories = dbContext.WordPressCategoryRecords
             .AsNoTracking()
             .Where(x => x.IsAvailable && x.PostCount >= minimumUsage)
-            .Join(
-                dbContext.Sites.AsNoTracking(),
-                item => item.SiteId,
-                site => site.Id,
-                (item, site) => new GlobalTaxonomyItem(
-                    item.SiteId,
-                    site.Name,
-                    item.WordPressId,
-                    "category",
-                    item.Name,
-                    item.Slug,
-                    item.PostCount,
-                    item.LastSynchronizedAtUtc));
+            .Join(ownedSites, item => item.SiteId, site => site.Id,
+                (item, site) => new GlobalTaxonomyItem(item.SiteId, site.Name, item.WordPressId, "category", item.Name, item.Slug, item.PostCount, item.LastSynchronizedAtUtc));
 
         var tags = dbContext.WordPressTagRecords
             .AsNoTracking()
             .Where(x => x.IsAvailable && x.PostCount >= minimumUsage)
-            .Join(
-                dbContext.Sites.AsNoTracking(),
-                item => item.SiteId,
-                site => site.Id,
-                (item, site) => new GlobalTaxonomyItem(
-                    item.SiteId,
-                    site.Name,
-                    item.WordPressId,
-                    "tag",
-                    item.Name,
-                    item.Slug,
-                    item.PostCount,
-                    item.LastSynchronizedAtUtc));
+            .Join(ownedSites, item => item.SiteId, site => site.Id,
+                (item, site) => new GlobalTaxonomyItem(item.SiteId, site.Name, item.WordPressId, "tag", item.Name, item.Slug, item.PostCount, item.LastSynchronizedAtUtc));
 
         IQueryable<GlobalTaxonomyItem> source = type switch
         {
@@ -62,9 +42,7 @@ public sealed class GlobalTaxonomyExplorerService(AppDbContext dbContext)
         };
 
         if (siteId.HasValue)
-        {
             source = source.Where(x => x.SiteId == siteId.Value);
-        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -78,41 +56,19 @@ public sealed class GlobalTaxonomyExplorerService(AppDbContext dbContext)
         var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
         page = Math.Min(page, totalPages);
 
-        var items = await source
-            .OrderByDescending(x => x.PostCount)
-            .ThenBy(x => x.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
+        var items = await source.OrderByDescending(x => x.PostCount).ThenBy(x => x.Name)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
 
-        var categorySummary = await dbContext.WordPressCategoryRecords
-            .AsNoTracking()
-            .Where(x => x.IsAvailable)
+        var categorySummary = await dbContext.WordPressCategoryRecords.AsNoTracking()
+            .Where(x => x.IsAvailable && ownedSites.Any(site => site.Id == x.SiteId))
             .GroupBy(_ => 1)
-            .Select(group => new
-            {
-                Count = group.Count(),
-                Used = group.Count(x => x.PostCount > 0),
-                Unused = group.Count(x => x.PostCount == 0),
-                Usage = group.Sum(x => x.PostCount),
-                Sites = group.Select(x => x.SiteId).Distinct().Count(),
-                LastSync = group.Max(x => x.LastSynchronizedAtUtc)
-            })
+            .Select(group => new { Count = group.Count(), Used = group.Count(x => x.PostCount > 0), Unused = group.Count(x => x.PostCount == 0), Usage = group.Sum(x => x.PostCount), Sites = group.Select(x => x.SiteId).Distinct().Count(), LastSync = group.Max(x => x.LastSynchronizedAtUtc) })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var tagSummary = await dbContext.WordPressTagRecords
-            .AsNoTracking()
-            .Where(x => x.IsAvailable)
+        var tagSummary = await dbContext.WordPressTagRecords.AsNoTracking()
+            .Where(x => x.IsAvailable && ownedSites.Any(site => site.Id == x.SiteId))
             .GroupBy(_ => 1)
-            .Select(group => new
-            {
-                Count = group.Count(),
-                Used = group.Count(x => x.PostCount > 0),
-                Unused = group.Count(x => x.PostCount == 0),
-                Usage = group.Sum(x => x.PostCount),
-                Sites = group.Select(x => x.SiteId).Distinct().Count(),
-                LastSync = group.Max(x => x.LastSynchronizedAtUtc)
-            })
+            .Select(group => new { Count = group.Count(), Used = group.Count(x => x.PostCount > 0), Unused = group.Count(x => x.PostCount == 0), Usage = group.Sum(x => x.PostCount), Sites = group.Select(x => x.SiteId).Distinct().Count(), LastSync = group.Max(x => x.LastSynchronizedAtUtc) })
             .FirstOrDefaultAsync(cancellationToken);
 
         var summary = new GlobalTaxonomySummary(
@@ -135,29 +91,6 @@ public sealed class GlobalTaxonomyExplorerService(AppDbContext dbContext)
     }
 }
 
-public sealed record GlobalTaxonomyExplorerResult(
-    IReadOnlyList<GlobalTaxonomyItem> Items,
-    int Total,
-    int Page,
-    int PageSize,
-    int TotalPages,
-    GlobalTaxonomySummary Summary);
-
-public sealed record GlobalTaxonomyItem(
-    Guid SiteId,
-    string SiteName,
-    int WordPressId,
-    string TaxonomyType,
-    string Name,
-    string Slug,
-    int PostCount,
-    DateTime LastSynchronizedAtUtc);
-
-public sealed record GlobalTaxonomySummary(
-    int Categories,
-    int Tags,
-    int UsedTerms,
-    int UnusedTerms,
-    int TotalAssignments,
-    int SiteCount,
-    DateTime? LastSynchronizedAtUtc);
+public sealed record GlobalTaxonomyExplorerResult(IReadOnlyList<GlobalTaxonomyItem> Items, int Total, int Page, int PageSize, int TotalPages, GlobalTaxonomySummary Summary);
+public sealed record GlobalTaxonomyItem(Guid SiteId, string SiteName, int WordPressId, string TaxonomyType, string Name, string Slug, int PostCount, DateTime LastSynchronizedAtUtc);
+public sealed record GlobalTaxonomySummary(int Categories, int Tags, int UsedTerms, int UnusedTerms, int TotalAssignments, int SiteCount, DateTime? LastSynchronizedAtUtc);
