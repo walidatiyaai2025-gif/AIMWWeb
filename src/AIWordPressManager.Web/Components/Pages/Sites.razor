@@ -4,7 +4,6 @@
 @inject SiteWebService SiteService
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
-@inject IJSRuntime JS
 <PageTitle>@L["Sites"]</PageTitle>
 
 <div class="sites-page sites-workspace">
@@ -113,17 +112,33 @@
                         <AppButton Href="@($"/sites/{site.Id}")" Variant="primary" Text="@L["Open"]" />
                         <AppButton Icon="↻" Disabled="@busy" Busy="@busy" OnClick="args => RetestAsync(site.Id)" />
                         <AppButton Icon="✎" Disabled="@busy" OnClick="args => OpenEditForm(site)" />
-                        <AppButton Icon="⌫" Variant="danger" Disabled="@busy" OnClick="args => DeleteAsync(site.Id, site.Name)" />
+                        <AppButton Icon="⌫" Variant="danger" Disabled="@busy" OnClick="args => RequestDelete(site.Id, site.Name)" />
                     </div>
                 </AppCard>
             }
         </section>
     }
+
+    <AppConfirmDialog Open="@_deleteDialogOpen"
+                      OpenChanged="DeleteDialogOpenChangedAsync"
+                      Eyebrow="@(L.IsArabic ? "تأكيد الحذف" : "DELETE CONFIRMATION")"
+                      Title="@(L.IsArabic ? "حذف الموقع" : "Delete site")"
+                      Message="@(L.IsArabic ? $"هل تريد حذف الموقع «{_deleteSiteName}»؟" : $"Delete site ‘{_deleteSiteName}’?")"
+                      Details="@(L.IsArabic ? "سيتم حذف بيانات الاتصال المحلية لهذا الموقع. لا يمكن التراجع عن هذه العملية." : "The local connection profile for this site will be removed. This action cannot be undone.")"
+                      ConfirmText="@(L.IsArabic ? "حذف الموقع" : "Delete site")"
+                      CancelText="@L["Cancel"]"
+                      ConfirmVariant="danger"
+                      ConfirmIcon="⌫"
+                      Busy="@_deleting"
+                      OnConfirm="ConfirmDeleteAsync"
+                      OnCancel="CancelDeleteAsync" />
 </div>
 
 @code {
     private bool _loading = true, _refreshing, _saving, _showForm, _isError;
-    private Guid? _editingId, _busySiteId;
+    private Guid? _editingId, _busySiteId, _deleteSiteId;
+    private bool _deleteDialogOpen, _deleting;
+    private string _deleteSiteName = string.Empty;
     private string? _message;
     private string _searchInput = string.Empty;
     private string _search = string.Empty;
@@ -225,19 +240,58 @@
         finally { _busySiteId = null; }
     }
 
-    private async Task DeleteAsync(Guid id, string name)
+    private Task RequestDelete(Guid id, string name)
     {
-        if (!await JS.InvokeAsync<bool>("confirm", L.IsArabic ? $"هل تريد حذف الموقع «{name}»؟" : $"Delete site ‘{name}’?")) return;
+        _deleteSiteId = id;
+        _deleteSiteName = name;
+        _deleteDialogOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task DeleteDialogOpenChangedAsync(bool value)
+    {
+        if (_deleting) return Task.CompletedTask;
+        _deleteDialogOpen = value;
+        if (!value) ClearDeleteRequest();
+        return Task.CompletedTask;
+    }
+
+    private Task CancelDeleteAsync()
+    {
+        if (!_deleting) ClearDeleteRequest();
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteSiteId is not { } id || _deleting) return;
+
         try
         {
+            _deleting = true;
             _busySiteId = id;
             await SiteService.DeleteSiteAsync(id);
             _sites.RemoveAll(x => x.Id == id);
             ApplyFilters();
             Notifications.Success(L["DeletedSuccess"], L["Sites"]);
+            _deleteDialogOpen = false;
+            ClearDeleteRequest();
         }
-        catch (Exception ex) { Fail(L.TranslateMessage(ex.Message), ex.ToString()); }
-        finally { _busySiteId = null; }
+        catch (Exception ex)
+        {
+            Fail(L.TranslateMessage(ex.Message), ex.ToString());
+        }
+        finally
+        {
+            _deleting = false;
+            _busySiteId = null;
+        }
+    }
+
+    private void ClearDeleteRequest()
+    {
+        _deleteSiteId = null;
+        _deleteSiteName = string.Empty;
     }
 
     private void Warn(string message) { _isError = true; _message = message; Notifications.Warning(message, L["Sites"]); }
