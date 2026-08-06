@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: patch-comments-column-chooser
+  cancel-in-progress: true
+
 jobs:
   patch-and-build:
     runs-on: windows-latest
