@@ -59,6 +59,7 @@ builder.Services.AddSingleton<NotificationInboxService>();
 builder.Services.AddSingleton<ExecutionOperationTracker>();
 builder.Services.AddSingleton<AutomationCenterService>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
+builder.Services.AddSingleton<SiteOperationHistoryService>();
 builder.Services.AddHostedService<AutomationSchedulerService>();
 builder.Services.AddHostedService<BulkContentOperationWorker>();
 
