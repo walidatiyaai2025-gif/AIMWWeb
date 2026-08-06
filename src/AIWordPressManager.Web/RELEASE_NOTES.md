@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.63.0 - 2026-08-06 - Operations Navigation Integration
+- Added Operations Hub, Site Operations, and Site Reliability to the main sidebar.
+- Added the three operations pages to the global command palette in Arabic and English.
+- Updated navigation grouping so operations routes keep the Operations section expanded.
+- Added accurate breadcrumb and page-title resolution for operations routes.
+- Improved route matching by prioritizing the most specific command path.
+
 ## 155.62.0 - 2026-08-06 - Site Operations Hub
 - Added a unified operations hub at `/operations` and `/operations/hub`.
 - Added 30-day site-operation totals, success rate, failure count, and average duration summaries.
