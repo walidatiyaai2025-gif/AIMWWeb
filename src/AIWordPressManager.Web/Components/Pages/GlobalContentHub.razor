@@ -1,0 +1,138 @@
+@page "/content"
+@page "/module/content"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject GlobalContentHubService ContentHub
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "مركز إدارة المحتوى" : "Content Management Hub")</PageTitle>
+
+@if (_loading)
+{
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ تحميل ملخص المحتوى المحلي..." : "Loading local content summary...")</div>
+}
+else
+{
+    <div class="global-content-hub">
+        <section class="panel" style="padding:24px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap">
+                <div>
+                    <small style="font-weight:800;letter-spacing:.1em">@(L.IsArabic ? "مساحة المحتوى الموحدة" : "UNIFIED CONTENT WORKSPACE")</small>
+                    <h1 style="margin:8px 0">@(L.IsArabic ? "مركز إدارة محتوى WordPress" : "WordPress Content Management Hub")</h1>
+                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "ملخص موحد للمقالات والصفحات والوسائط والتصنيفات والوسوم المخزنة محليًا لكل المواقع." : "A unified view of locally cached posts, pages, media, categories, and tags across every site.")</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                    <a class="btn primary" href="/module/sync">@(L.IsArabic ? "فتح المزامنة" : "Open synchronization")</a>
+                </div>
+            </div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:18px">
+            @Stat(L.IsArabic ? "المقالات" : "Posts", _view.Posts, "/module/posts")
+            @Stat(L.IsArabic ? "الصفحات" : "Pages", _view.Pages, "/module/pages")
+            @Stat(L.IsArabic ? "الوسائط" : "Media", _view.Media, "/module/media")
+            @Stat(L.IsArabic ? "التصنيفات" : "Categories", _view.Categories, "/module/taxonomy")
+            @Stat(L.IsArabic ? "الوسوم" : "Tags", _view.Tags, "/module/taxonomy")
+            @Stat(L.IsArabic ? "مواقع بها Cache" : "Sites with cache", _view.SitesWithCachedData, "/sites")
+        </section>
+
+        @if (_view.StaleSites > 0)
+        {
+            <div class="alert warning" style="margin-bottom:18px">
+                <strong>@(L.IsArabic ? $"هناك {_view.StaleSites} موقع ببيانات محلية قديمة أو غير موجودة." : $"{_view.StaleSites} site(s) have stale or missing local data.")</strong>
+                <span style="display:block;margin-top:6px">@(L.IsArabic ? "شغّل المزامنة لتحديث البيانات قبل تنفيذ تعديلات جماعية." : "Run synchronization before performing broad content changes.")</span>
+            </div>
+        }
+
+        <section class="panel" style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:1080px">
+                <thead>
+                    <tr>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الموقع" : "Site")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "المقالات" : "Posts")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الصفحات" : "Pages")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الوسائط" : "Media")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "التصنيفات" : "Categories")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الوسوم" : "Tags")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر مزامنة" : "Last sync")</th>
+                        <th style="padding:14px;text-align:start">@(L.IsArabic ? "الحالة" : "Cache status")</th>
+                        <th style="padding:14px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_view.Sites.Count == 0)
+                    {
+                        <tr><td colspan="9" style="padding:32px;text-align:center;opacity:.72">@(L.IsArabic ? "لم تتم إضافة مواقع WordPress بعد." : "No WordPress sites have been added yet.")</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var site in _view.Sites)
+                        {
+                            <tr style="border-top:1px solid rgba(128,128,128,.2)">
+                                <td style="padding:14px"><a href="@($"/sites/{site.SiteId}")"><strong>@site.SiteName</strong></a><small style="display:block;opacity:.65;margin-top:4px">@site.TotalRecords @(L.IsArabic ? "سجل محلي" : "local records")</small></td>
+                                <td style="padding:14px">@site.Posts <small style="display:block;opacity:.65">@site.Published @(L.IsArabic ? "منشور" : "published") · @site.Drafts @(L.IsArabic ? "مسودة" : "drafts")</small></td>
+                                <td style="padding:14px">@site.Pages</td>
+                                <td style="padding:14px">@site.Media</td>
+                                <td style="padding:14px">@site.Categories</td>
+                                <td style="padding:14px">@site.Tags</td>
+                                <td style="padding:14px;white-space:nowrap">@FormatDate(site.LastSynchronizedAtUtc)</td>
+                                <td style="padding:14px"><span class="badge @FreshnessClass(site.Freshness)">@FreshnessText(site.Freshness)</span></td>
+                                <td style="padding:14px"><div style="display:flex;gap:6px;justify-content:flex-end"><a class="btn compact primary" href="@($"/sites/{site.SiteId}/explorer")">@(L.IsArabic ? "المحتوى" : "Content")</a><a class="btn compact" href="@($"/sites/{site.SiteId}/snapshot")">@(L.IsArabic ? "اللقطة" : "Snapshot")</a></div></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private GlobalContentHubView _view = new([], 0, 0, 0, 0, 0, 0, 0);
+
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try { _view = await ContentHub.GetAsync(); }
+        finally { _loading = false; }
+    }
+
+    private RenderFragment Stat(string label, int value, string href) => builder =>
+    {
+        builder.OpenElement(0, "a");
+        builder.AddAttribute(1, "class", "panel");
+        builder.AddAttribute(2, "href", href);
+        builder.AddAttribute(3, "style", "display:block;padding:18px;text-decoration:none;color:inherit");
+        builder.OpenElement(4, "small"); builder.AddContent(5, label); builder.CloseElement();
+        builder.OpenElement(6, "strong"); builder.AddAttribute(7, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(8, value); builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private string FreshnessText(ContentCacheFreshness freshness) => freshness switch
+    {
+        ContentCacheFreshness.Fresh => L.IsArabic ? "حديث" : "Fresh",
+        ContentCacheFreshness.Review => L.IsArabic ? "يحتاج مراجعة" : "Review",
+        ContentCacheFreshness.Stale => L.IsArabic ? "قديم" : "Stale",
+        _ => L.IsArabic ? "لا توجد بيانات" : "No data"
+    };
+
+    private static string FreshnessClass(ContentCacheFreshness freshness) => freshness switch
+    {
+        ContentCacheFreshness.Fresh => "success",
+        ContentCacheFreshness.Review => "warning",
+        ContentCacheFreshness.Stale => "danger",
+        _ => string.Empty
+    };
+
+    private string FormatDate(DateTime? value) => value.HasValue
+        ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm")
+        : "—";
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
+}
