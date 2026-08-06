@@ -1,0 +1,131 @@
+@page "/sites/{Id:guid}/settings"
+@rendermode InteractiveServer
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+@inject NavigationManager Navigation
+
+<PageTitle>@(L.IsArabic ? "إعدادات الموقع" : "Site Settings")</PageTitle>
+
+@if (_loading)
+{
+    <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل إعدادات الموقع" : "Loading site settings")" Message="@(L.IsArabic ? "يتم قراءة الملف وبيانات الاعتماد المحلية." : "Reading the local profile and credential state.")" />
+}
+else if (_site is null)
+{
+    <AppCard><AppEmptyState Icon="◎" Title="@(L.IsArabic ? "الموقع غير موجود" : "Site not found")" Description="@(L.IsArabic ? "تعذر العثور على سجل الموقع." : "The site record could not be found.")"><Actions><AppButton Href="/sites" Text="@(L.IsArabic ? "العودة للمواقع" : "Back to sites")" /></Actions></AppEmptyState></AppCard>
+}
+else
+{
+    <div class="site-settings-page">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "إدارة الموقع" : "SITE ADMINISTRATION")" Title="@(L.IsArabic ? "إعدادات الموقع" : "Site Settings")" Subtitle="@_site.Name">
+            <Actions><AppButton Href="@($"/sites/{Id}")" Text="@(L.IsArabic ? "لوحة الموقع" : "Site dashboard")" /><AppButton Href="@($"/sites/{Id}/connection")" Text="@(L.IsArabic ? "مركز الاتصال" : "Connection center")" /></Actions>
+        </AppToolbar>
+
+        @if (!string.IsNullOrWhiteSpace(_message)) { <div class="alert @(_error ? "error" : "success")">@_message</div> }
+
+        <section class="settings-grid">
+            <AppCard Title="@(L.IsArabic ? "الملف الأساسي" : "Site profile")" Subtitle="@(L.IsArabic ? "غيّر الاسم أو رابط WordPress الأساسي." : "Change the display name or primary WordPress URL.")">
+                <EditForm Model="_profile" OnSubmit="SaveProfileAsync">
+                    <div class="form-grid">
+                        <label><span>@(L.IsArabic ? "اسم الموقع" : "Site name")</span><InputText @bind-Value="_profile.Name" disabled="@_busy" /></label>
+                        <label><span>@(L.IsArabic ? "رابط الموقع" : "Site URL")</span><InputText @bind-Value="_profile.Url" disabled="@_busy" /></label>
+                    </div>
+                    <div class="actions"><AppButton Type="submit" Variant="primary" Busy="@_busy" Disabled="@_busy" Text="@(L.IsArabic ? "حفظ التغييرات" : "Save changes")" /></div>
+                </EditForm>
+            </AppCard>
+
+            <AppCard Title="@(L.IsArabic ? "بيانات اعتماد WordPress" : "WordPress credentials")" Subtitle="@(L.IsArabic ? "حدّث Application Password أو امسح الاعتماد المحلي." : "Replace the Application Password or remove the local credential.")">
+                <div class="credential-summary"><span>@(L.IsArabic ? "الحالة" : "Status")</span><strong>@(_credential?.HasSavedPassword == true ? (L.IsArabic ? "محفوظ ومشفر" : "Saved and encrypted") : (L.IsArabic ? "غير محفوظ" : "Not saved"))</strong></div>
+                <EditForm Model="_credentialInput" OnSubmit="SaveCredentialAsync">
+                    <div class="form-grid"><label><span>@(L.IsArabic ? "اسم المستخدم" : "Username")</span><InputText @bind-Value="_credentialInput.UserName" disabled="@_busy" /></label><label><span>Application Password</span><InputText type="password" @bind-Value="_credentialInput.Password" disabled="@_busy" /></label></div>
+                    <div class="actions"><AppButton Type="submit" Variant="primary" Busy="@_busy" Disabled="@_busy" Text="@(L.IsArabic ? "حفظ واختبار" : "Save and test")" /><AppButton Variant="danger" Disabled="@(_busy || _credential?.HasSavedPassword != true)" OnClick="RemoveCredentialClicked" Text="@(L.IsArabic ? "مسح الاعتماد" : "Remove credential")" /></div>
+                </EditForm>
+            </AppCard>
+
+            <AppCard Title="@(L.IsArabic ? "حالة التشغيل" : "Operational state")" Subtitle="@(L.IsArabic ? "عطّل الموقع مؤقتًا بدون حذف بياناته." : "Temporarily disable the site without deleting its data.")">
+                <p>@(L.IsArabic ? $"الحالة الحالية: {StatusText()}" : $"Current state: {StatusText()}")</p>
+                <AppButton Variant="@(_site.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled ? "primary" : "danger")" Disabled="@_busy" OnClick="ToggleDisabledClicked" Text="@(_site.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled ? (L.IsArabic ? "إعادة التفعيل" : "Enable site") : (L.IsArabic ? "تعطيل الموقع" : "Disable site"))" />
+            </AppCard>
+
+            <AppCard Title="@(L.IsArabic ? "منطقة الخطر" : "Danger zone")" Subtitle="@(L.IsArabic ? "الحذف يزيل الموقع من القوائم ويوقف استخدامه داخل التطبيق." : "Deletion removes the site from active lists and stops its use in the application.")">
+                <label class="confirm-label"><span>@(L.IsArabic ? "اكتب اسم الموقع للتأكيد" : "Type the site name to confirm")</span><InputText @bind-Value="_deleteConfirmation" disabled="@_busy" /></label>
+                <AppButton Variant="danger" Disabled="@(_busy || !string.Equals(_deleteConfirmation, _site.Name, StringComparison.Ordinal))" OnClick="DeleteClicked" Text="@(L.IsArabic ? "حذف الموقع" : "Delete site")" />
+            </AppCard>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private bool _loading = true, _busy, _error;
+    private string? _message;
+    private string _deleteConfirmation = string.Empty;
+    private AIWordPressManager.Domain.Entities.Site? _site;
+    private SiteCredentialSummary? _credential;
+    private ProfileInput _profile = new();
+    private CredentialInput _credentialInput = new();
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _loading = true;
+            _site = await SiteService.GetSiteAsync(Id);
+            _credential = await SiteService.GetCredentialSummaryAsync(Id);
+            if (_site is not null) _profile = new() { Name = _site.Name, Url = _site.SiteUrl };
+            if (_credential is not null) _credentialInput.UserName = _credential.UserName;
+        }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _loading = false; }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        try { _busy = true; await SiteService.UpdateSiteAsync(Id, _profile.Name, _profile.Url); Success(L.IsArabic ? "تم تحديث بيانات الموقع." : "Site profile updated."); await LoadAsync(); }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task SaveCredentialAsync()
+    {
+        try
+        {
+            _busy = true;
+            var result = await SiteService.SaveCredentialAndTestAsync(Id, _credentialInput.UserName, _credentialInput.Password);
+            _credentialInput.Password = string.Empty;
+            if (result.IsSuccess) Success(L.IsArabic ? "تم حفظ الاعتماد واختبار الاتصال بنجاح." : "Credential saved and connection tested successfully."); else Fail(result.Message);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task RemoveCredentialClicked(MouseEventArgs _)
+    {
+        try { _busy = true; await SiteService.RemoveCredentialAsync(Id); Success(L.IsArabic ? "تم مسح الاعتماد المشفر." : "Encrypted credential removed."); await LoadAsync(); }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task ToggleDisabledClicked(MouseEventArgs _)
+    {
+        if (_site is null) return;
+        try { _busy = true; var disable = _site.ConnectionStatus != AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled; await SiteService.SetDisabledAsync(Id, disable); Success(disable ? (L.IsArabic ? "تم تعطيل الموقع." : "Site disabled.") : (L.IsArabic ? "تمت إعادة تفعيل الموقع." : "Site enabled.")); await LoadAsync(); }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteClicked(MouseEventArgs _)
+    {
+        try { _busy = true; await SiteService.DeleteSiteAsync(Id); Navigation.NavigateTo("/sites", true); }
+        catch (Exception ex) { Fail(ex.Message); _busy = false; }
+    }
+
+    private string StatusText() => _site?.ConnectionStatus.ToString() ?? "—";
+    private void Success(string message) { _error = false; _message = message; }
+    private void Fail(string message) { _error = true; _message = L.TranslateMessage(message); }
+    private sealed class ProfileInput { public string Name { get; set; } = string.Empty; public string Url { get; set; } = string.Empty; }
+    private sealed class CredentialInput { public string UserName { get; set; } = string.Empty; public string Password { get; set; } = string.Empty; }
+}
