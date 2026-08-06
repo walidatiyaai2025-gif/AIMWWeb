@@ -49,12 +49,14 @@
 
     private static readonly QuickAction[] Actions =
     [
-        new("＋", "Add site", "إضافة موقع", "Connect another WordPress website", "ربط موقع WordPress جديد", "/sites?new=1", "primary"),
+        new("＋", "Add site", "إضافة موقع", "Connect another WordPress website", "ربط موقع WordPress جديد", "/sites/connect", "primary"),
         new("▤", "Create content", "إنشاء محتوى", "Open the content workspace", "فتح مساحة إدارة المحتوى", "/module/posts", "content"),
         new("▣", "Upload media", "رفع وسائط", "Open the media library", "فتح مكتبة الوسائط", "/module/media", "media"),
         new("↻", "Run synchronization", "تشغيل المزامنة", "Refresh local WordPress data", "تحديث بيانات WordPress المحلية", "/module/sync", "sync"),
+        new("◎", "Operations hub", "مركز عمليات المواقع", "Open site monitoring and operation history", "فتح مراقبة المواقع وسجل العمليات", "/operations", "execution"),
+        new("◈", "Site reliability", "موثوقية المواقع", "Compare connection and synchronization success rates", "مقارنة نجاح الاتصال والمزامنة", "/site-reliability", "seo"),
         new("▶", "Execution center", "مركز التنفيذ", "Review active and queued jobs", "مراجعة المهام النشطة والمنتظرة", "/module/execution", "execution"),
-        new("◈", "SEO audit", "تدقيق SEO", "Analyze site optimization issues", "تحليل مشكلات تحسين الظهور", "/module/seo-audit", "seo")
+        new("◇", "SEO audit", "تدقيق SEO", "Analyze site optimization issues", "تحليل مشكلات تحسين الظهور", "/module/seo-audit", "seo")
     ];
 
     private void Toggle() => _open = !_open;
