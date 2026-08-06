@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.56.0 - 2026-08-06 - Site Settings and Lifecycle
+- Added a dedicated settings page for each WordPress site.
+- Added profile editing with normalized URL and duplicate-site validation.
+- Added safe Application Password replacement and encrypted credential removal.
+- Added temporary site disable and re-enable operations without deleting local data.
+- Added guarded site deletion that requires typing the exact site name.
+
 ## 155.55.0 - 2026-08-06 - Site Connection Operations Center
 - Added a dedicated connection and synchronization center for each WordPress site.
 - Added saved-credential status, connection retesting, smart synchronization, and direct operational shortcuts.
