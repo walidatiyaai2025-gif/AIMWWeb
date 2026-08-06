@@ -75,7 +75,7 @@ else
                          Items="@_result.Items"
                          KeySelector="@(item => item.Id.ToString())"
                          SearchKeySelector="@SearchKey"
-                         SortKeySelector="@(item => item.DateUtc?.Ticks ?? 0)"
+                         SortKeySelector="@(item => (item.DateUtc?.Ticks ?? 0).ToString("D20"))"
                          PageSize="20"
                          EmptyTitle="@(L.IsArabic ? "لا توجد تعليقات" : "No comments")"
                          EmptyDescription="@(L.IsArabic ? "لا توجد نتائج مطابقة للفلاتر الحالية." : "No comments match the current filters.")"
