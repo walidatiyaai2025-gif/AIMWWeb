@@ -1,4 +1,4 @@
-name: Patch Comments Column Chooser
+name: Patch Comments Grid
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: patch-comments-column-chooser
+  group: patch-comments-grid
   cancel-in-progress: true
 
 jobs:
@@ -31,38 +31,61 @@ jobs:
           $path = 'src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor'
           $text = Get-Content $path -Raw
 
-          $old = @'
-                         RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")">
-'@
-          $new = @'
-                         RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+          if ($text -notmatch 'ColumnPreferenceKey=') {
+            $text = $text -replace 'RowsPerPageText="@\(L\.IsArabic \? "صفوف" : "Rows"\)"\s*>', @'
+RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
                          ColumnLabels="@CommentColumnLabels"
                          ColumnPreferenceKey="@($"comments-grid-columns-{SiteId}")"
                          ColumnsText="@(L.IsArabic ? "الأعمدة" : "Columns")"
                          ResetColumnsText="@(L.IsArabic ? "إظهار كل الأعمدة" : "Show all columns")">
 '@
-          if (-not $text.Contains($old)) { throw 'AppDataGrid insertion point was not found.' }
-          $text = $text.Replace($old, $new)
+          }
 
-          $marker = @'
-    private string CsvFileName => $"wordpress-comments-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
-'@
-          $replacement = @'
+          if ($text -notmatch 'CommentColumnLabels') {
+            $marker = '    private string CsvFileName => $"wordpress-comments-{DateTime.Now:yyyyMMdd-HHmmss}.csv";'
+            $replacement = @'
     private string CsvFileName => $"wordpress-comments-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
     private IReadOnlyList<string> CommentColumnLabels => L.IsArabic
         ? new[] { "الكاتب", "التعليق", "الحالة", "التاريخ", "الإجراءات" }
         : new[] { "Author", "Comment", "Status", "Date", "Actions" };
 '@
-          if (-not $text.Contains($marker)) { throw 'Comment column label insertion point was not found.' }
-          $text = $text.Replace($marker, $replacement)
+            if (-not $text.Contains($marker)) { throw 'Comment labels insertion point was not found.' }
+            $text = $text.Replace($marker, $replacement)
+          }
+
+          $oldSection = @'
+            <AppSection Title="@(L.IsArabic ? "صفحات WordPress" : "WordPress pages")">
+                <Actions>
+                    <AppButton Icon="‹" Text="@L["Previous"]" Disabled="@(_page <= 1 || _working)" OnClick="PreviousPageClickedAsync" />
+                    <AppBadge Tone="info" Text="@($"{L["Page"]} {_page} {L["Of"]} {_result.TotalPages}")" />
+                    <AppButton Icon="›" Text="@L["Next"]" Disabled="@(_page >= _result.TotalPages || _working)" OnClick="NextPageClickedAsync" />
+                </Actions>
+            </AppSection>
+'@
+          $newSection = @'
+            <AppSection Title="@(L.IsArabic ? "صفحات WordPress" : "WordPress pages")">
+                <Header>
+                    <AppButton Icon="‹" Text="@L["Previous"]" Disabled="@(_page <= 1 || _working)" OnClick="PreviousPageClickedAsync" />
+                    <AppBadge Tone="info" Text="@($"{L["Page"]} {_page} {L["Of"]} {_result.TotalPages}")" />
+                    <AppButton Icon="›" Text="@L["Next"]" Disabled="@(_page >= _result.TotalPages || _working)" OnClick="NextPageClickedAsync" />
+                </Header>
+                <ChildContent>
+                    <span class="visually-hidden">@($"{L["Page"]} {_page} {L["Of"]} {_result.TotalPages}")</span>
+                </ChildContent>
+            </AppSection>
+'@
+          if ($text.Contains($oldSection)) {
+            $text = $text.Replace($oldSection, $newSection)
+          }
+
           Set-Content $path $text -Encoding utf8
 
           $project = 'src/AIWordPressManager.Web/AIWordPressManager.Web.csproj'
           $xml = Get-Content $project -Raw
-          $xml = $xml.Replace('<Version>155.49.2</Version>', '<Version>155.49.3</Version>')
-          $xml = $xml.Replace('<AssemblyVersion>155.49.2.0</AssemblyVersion>', '<AssemblyVersion>155.49.3.0</AssemblyVersion>')
-          $xml = $xml.Replace('<FileVersion>155.49.2.0</FileVersion>', '<FileVersion>155.49.3.0</FileVersion>')
-          $xml = $xml.Replace('<InformationalVersion>155.49.2</InformationalVersion>', '<InformationalVersion>155.49.3</InformationalVersion>')
+          $xml = [regex]::Replace($xml, '<Version>[^<]+</Version>', '<Version>155.49.4</Version>', 1)
+          $xml = [regex]::Replace($xml, '<AssemblyVersion>[^<]+</AssemblyVersion>', '<AssemblyVersion>155.49.4.0</AssemblyVersion>', 1)
+          $xml = [regex]::Replace($xml, '<FileVersion>[^<]+</FileVersion>', '<FileVersion>155.49.4.0</FileVersion>', 1)
+          $xml = [regex]::Replace($xml, '<InformationalVersion>[^<]+</InformationalVersion>', '<InformationalVersion>155.49.4</InformationalVersion>', 1)
           Set-Content $project $xml -Encoding utf8
 
       - name: Setup .NET
@@ -81,5 +104,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor src/AIWordPressManager.Web/AIWordPressManager.Web.csproj
           if (git diff --cached --quiet) { exit 0 }
-          git commit -m "feat: enable comments grid column chooser [skip ci]"
+          git commit -m "fix: comments grid columns and pagination section [skip ci]"
           git push origin feature/stable-ui-framework
