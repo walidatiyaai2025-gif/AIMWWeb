@@ -1,0 +1,47 @@
+@if (SelectedCount > 0)
+{
+    <section class="app-bulk-action-bar @Class" role="region" aria-live="polite">
+        <div class="app-bulk-action-bar__summary">
+            <AppBadge Tone="info" Text="@SelectedCount.ToString()" />
+            <div>
+                <strong>@SummaryText</strong>
+                @if (!string.IsNullOrWhiteSpace(Description))
+                {
+                    <small>@Description</small>
+                }
+            </div>
+        </div>
+
+        <div class="app-bulk-action-bar__actions">
+            @Actions
+            @if (ClearRequested.HasDelegate)
+            {
+                <AppButton Icon="×"
+                           Size="small"
+                           Disabled="@Busy"
+                           Text="@ClearText"
+                           OnClick="ClearAsync" />
+            }
+        </div>
+
+        @if (Busy)
+        {
+            <div class="app-bulk-action-bar__progress" aria-hidden="true"><span></span></div>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public int SelectedCount { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string SelectedText { get; set; } = "items selected";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string ClearText { get; set; } = "Clear";
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public EventCallback ClearRequested { get; set; }
+
+    private string SummaryText => $"{SelectedCount} {SelectedText}";
+
+    private Task ClearAsync(MouseEventArgs _) => ClearRequested.InvokeAsync();
+}
