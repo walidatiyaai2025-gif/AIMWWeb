@@ -1,5 +1,6 @@
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Tests;
 
@@ -104,6 +105,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
     public void Dispose()
     {
         _executionCenter.Dispose();
+        SqliteConnection.ClearAllPools();
         TryDeleteDirectory(_testDirectory);
     }
 
@@ -111,20 +113,24 @@ public sealed class ApprovalWorkflowTests : IDisposable
     {
         if (!Directory.Exists(directory)) return;
 
-        for (var attempt = 1; attempt <= 5; attempt++)
+        for (var attempt = 1; attempt <= 20; attempt++)
         {
             try
             {
+                SqliteConnection.ClearAllPools();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
                 Directory.Delete(directory, recursive: true);
                 return;
             }
-            catch (IOException) when (attempt < 5)
+            catch (IOException) when (attempt < 20)
             {
-                Thread.Sleep(50 * attempt);
+                Thread.Sleep(100);
             }
-            catch (UnauthorizedAccessException) when (attempt < 5)
+            catch (UnauthorizedAccessException) when (attempt < 20)
             {
-                Thread.Sleep(50 * attempt);
+                Thread.Sleep(100);
             }
         }
     }
