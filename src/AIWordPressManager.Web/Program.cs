@@ -41,6 +41,7 @@ builder.Services.AddScoped<DashboardLiveService>();
 builder.Services.AddScoped<WordPressSyncWebService>();
 builder.Services.AddScoped<GlobalPostsExplorerService>();
 builder.Services.AddScoped<GlobalMediaExplorerService>();
+builder.Services.AddScoped<GlobalTaxonomyExplorerService>();
 builder.Services.AddScoped<IWordPressPostEditorService, WordPressPostEditorWebService>();
 builder.Services.AddScoped<WordPressMediaWebService>();
 builder.Services.AddScoped<WordPressTaxonomyWebService>();
