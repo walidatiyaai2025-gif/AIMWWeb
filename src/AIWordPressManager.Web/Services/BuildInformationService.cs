@@ -16,12 +16,15 @@ public sealed class BuildInformationService
         var informational = assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion;
+        var metadata = assembly.GetCustomAttributes<AssemblyMetadataAttribute>().ToList();
 
         var version = assemblyName.Version?.ToString(3) ?? "0.0.0";
         var branch = FirstNotEmpty(
+            Environment.GetEnvironmentVariable("GITHUB_HEAD_REF"),
             Environment.GetEnvironmentVariable("GITHUB_REF_NAME"),
             Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME"),
             TryGit("rev-parse --abbrev-ref HEAD"),
+            metadata.FirstOrDefault(x => x.Key == "GitBranch")?.Value,
             "unknown");
         var commit = FirstNotEmpty(
             Environment.GetEnvironmentVariable("GITHUB_SHA"),
@@ -48,26 +51,59 @@ public sealed class BuildInformationService
 
     private static string TryGit(string arguments)
     {
-        try
+        foreach (var directory in GitWorkingDirectories())
         {
-            using var process = Process.Start(new ProcessStartInfo
+            try
             {
-                FileName = "git",
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = AppContext.BaseDirectory
-            });
-            if (process is null) return string.Empty;
-            var output = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit(1500);
-            return process.ExitCode == 0 ? output : string.Empty;
+                using var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = directory
+                });
+                if (process is null) continue;
+
+                var output = process.StandardOutput.ReadToEnd().Trim();
+                process.WaitForExit(1500);
+                if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                {
+                    return output;
+                }
+            }
+            catch
+            {
+                // Try the next candidate directory.
+            }
         }
-        catch
+
+        return string.Empty;
+    }
+
+    private static IEnumerable<string> GitWorkingDirectories()
+    {
+        var candidates = new[]
         {
-            return string.Empty;
+            Directory.GetCurrentDirectory(),
+            AppContext.BaseDirectory
+        };
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var candidate in candidates)
+        {
+            var current = new DirectoryInfo(candidate);
+            while (current is not null)
+            {
+                if (seen.Add(current.FullName))
+                {
+                    yield return current.FullName;
+                }
+
+                current = current.Parent;
+            }
         }
     }
 
