@@ -1,8 +1,12 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using AIWordPressManager.Domain.Entities
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
+@inject SiteWebService SitesService
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <QuickActions />
 <NotificationCenter />
@@ -27,13 +31,43 @@
             </div>
         </header>
 
+        <div class="workspace-switcher">
+            <label for="active-workspace">@(L.IsArabic ? "مساحة عمل الموقع" : "Site workspace")</label>
+            @if (_loadingSites)
+            {
+                <div class="workspace-loading">@(L.IsArabic ? "جارٍ تحميل المواقع..." : "Loading sites...")</div>
+            }
+            else if (_sites.Count == 0)
+            {
+                <a class="workspace-empty" href="/sites/connect">＋ @(L.IsArabic ? "أضف موقعك الأول" : "Connect your first site")</a>
+            }
+            else
+            {
+                <select id="active-workspace" value="@SelectedSiteValue" @onchange="ChangeWorkspaceAsync">
+                    <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
+                    @foreach (var site in _sites)
+                    {
+                        <option value="@site.Id">@site.Name</option>
+                    }
+                </select>
+                @if (_activeSite is not null)
+                {
+                    <div class="workspace-actions">
+                        <a href="/sites/@_activeSite.Id">@(L.IsArabic ? "لوحة الموقع" : "Site dashboard")</a>
+                        <a href="/sites/@_activeSite.Id/content">@(L.IsArabic ? "المحتوى" : "Content")</a>
+                        <a href="/sites/@_activeSite.Id/settings">@(L.IsArabic ? "الإعدادات" : "Settings")</a>
+                    </div>
+                }
+            }
+        </div>
+
         <div class="account-meta">
             <div><span>◉</span><div><small>@(L.IsArabic ? "الحالة" : "Status")</small><strong>@(L.IsArabic ? "متصل" : "Online")</strong></div></div>
             <div><span>ⓘ</span><div><small>@(L.IsArabic ? "الإصدار" : "Version")</small><strong>@BuildInfo.Current.Version</strong></div></div>
         </div>
 
         <nav class="account-links">
-            <a href="/account/profile"><span>◎</span><div><strong>@(L.IsArabic ? "حسابي" : "My account")</strong><small>@(L.IsArabic ? "بيانات الحساب وتغيير كلمة المرور" : "Profile details and password security")</small></div><b>›</b></a>
+            <a href="/account/profile"><span>◎</span><div><strong>@(L.IsArabic ? "حسابي" : "My account")</strong><small>@(L.IsArabic ? "الملف الشخصي وكلمة المرور" : "Profile and password")</small></div><b>›</b></a>
             <a href="/settings"><span>⚙</span><div><strong>@(L.IsArabic ? "الإعدادات" : "Settings")</strong><small>@(L.IsArabic ? "اللغة والمظهر والتفضيلات" : "Language, appearance and preferences")</small></div><b>›</b></a>
             <a href="/about-build"><span>ⓘ</span><div><strong>@(L.IsArabic ? "معلومات الإصدار" : "Build information")</strong><small>@(L.IsArabic ? "الفرع والنسخة وتفاصيل البناء" : "Branch, version and build details")</small></div><b>›</b></a>
             <a href="/system-health"><span>♥</span><div><strong>@(L.IsArabic ? "صحة النظام" : "System health")</strong><small>@(L.IsArabic ? "فحص الخدمات وقاعدة البيانات" : "Services and database status")</small></div><b>›</b></a>
@@ -46,15 +80,56 @@
 </details>
 
 @code {
+    private readonly List<Site> _sites = [];
+    private Site? _activeSite;
+    private bool _loadingSites = true;
+    private bool _workspaceRestored;
     private string UserName { get; set; } = "User";
     private string Role { get; set; } = "User";
     private string Initials => string.Concat(UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    private string SelectedSiteValue => _activeSite?.Id.ToString() ?? string.Empty;
+    private string StorageKey => $"aiwm.workspace.{UserName.ToLowerInvariant()}";
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var principal = state.User;
-        UserName = principal.Identity?.Name ?? (L.IsArabic ? "مستخدم" : "User");
+        UserName = principal.Identity?.Name ?? "User";
         Role = principal.FindFirstValue(ClaimTypes.Role) ?? "User";
+
+        _sites.AddRange(await SitesService.GetSitesAsync());
+        _loadingSites = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _workspaceRestored || _sites.Count == 0)
+            return;
+
+        _workspaceRestored = true;
+        var savedValue = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+        if (Guid.TryParse(savedValue, out var savedSiteId))
+            _activeSite = _sites.FirstOrDefault(x => x.Id == savedSiteId);
+
+        StateHasChanged();
+    }
+
+    private async Task ChangeWorkspaceAsync(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        if (!Guid.TryParse(value, out var siteId))
+        {
+            _activeSite = null;
+            await JS.InvokeVoidAsync("localStorage.removeItem", StorageKey);
+            Navigation.NavigateTo("/sites");
+            return;
+        }
+
+        _activeSite = _sites.FirstOrDefault(x => x.Id == siteId);
+        if (_activeSite is null)
+            return;
+
+        await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, _activeSite.Id.ToString());
+        Navigation.NavigateTo($"/sites/{_activeSite.Id}");
     }
 }
