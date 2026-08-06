@@ -1,0 +1,142 @@
+@page "/operations/maintenance"
+@page "/site-operations/maintenance"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteOperationHistoryService History
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "صيانة سجل العمليات" : "Operation History Maintenance")</PageTitle>
+
+<div class="operations-maintenance-page">
+    <section class="panel" style="padding:24px;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+            <div>
+                <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "إدارة التخزين" : "STORAGE MANAGEMENT")</small>
+                <h1 style="margin:8px 0">@(L.IsArabic ? "صيانة سجل عمليات المواقع" : "Site Operation History Maintenance")</h1>
+                <p style="margin:0;opacity:.75">@(L.IsArabic ? "عاين أثر التنظيف قبل حذف أي سجل، مع حماية أحدث العمليات تلقائيًا." : "Preview cleanup impact before deleting records, while automatically protecting the newest operations.")</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                <a class="btn" href="/site-operations">@(L.IsArabic ? "سجل العمليات" : "Operation history")</a>
+                <a class="btn primary" href="/operations">@(L.IsArabic ? "مركز العمليات" : "Operations hub")</a>
+            </div>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <section class="panel" style="padding:14px 18px;margin-bottom:18px">@_message</section>
+    }
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
+        @Stat(L.IsArabic ? "إجمالي السجلات" : "Total records", _storage.RecordCount.ToString())
+        @Stat(L.IsArabic ? "حجم الملف" : "File size", FormatBytes(_storage.FileSizeBytes))
+        @Stat(L.IsArabic ? "عدد المواقع" : "Sites represented", _storage.SiteCount.ToString())
+        @Stat(L.IsArabic ? "أقدم عملية" : "Oldest operation", FormatDate(_storage.OldestOperationAtUtc))
+        @Stat(L.IsArabic ? "أحدث عملية" : "Newest operation", FormatDate(_storage.NewestOperationAtUtc))
+    </section>
+
+    <section class="panel" style="padding:22px;margin-bottom:18px">
+        <h2 style="margin-top:0">@(L.IsArabic ? "سياسة التنظيف" : "Cleanup policy")</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end">
+            <label>
+                <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "حذف العمليات الأقدم من" : "Delete operations older than")</span>
+                <select class="form-control" @bind="_olderThanDays" @bind:after="RefreshPreview">
+                    <option value="30">30 @(L.IsArabic ? "يومًا" : "days")</option>
+                    <option value="60">60 @(L.IsArabic ? "يومًا" : "days")</option>
+                    <option value="90">90 @(L.IsArabic ? "يومًا" : "days")</option>
+                    <option value="180">180 @(L.IsArabic ? "يومًا" : "days")</option>
+                    <option value="365">365 @(L.IsArabic ? "يومًا" : "days")</option>
+                </select>
+            </label>
+            <label>
+                <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "الاحتفاظ دائمًا بأحدث" : "Always keep the newest")</span>
+                <select class="form-control" @bind="_keepLatest" @bind:after="RefreshPreview">
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="250">250</option>
+                    <option value="500">500</option>
+                </select>
+            </label>
+            <button type="button" class="btn" @onclick="RefreshPreview">@(L.IsArabic ? "تحديث المعاينة" : "Refresh preview")</button>
+        </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px">
+        @Stat(L.IsArabic ? "سيتم حذفها" : "Will be removed", _preview.RemovableCount.ToString())
+        @Stat(L.IsArabic ? "سيتم الاحتفاظ بها" : "Will be retained", _preview.RetainedCount.ToString())
+        @Stat(L.IsArabic ? "تاريخ القطع" : "Cutoff date", FormatDate(_preview.CutoffUtc))
+        @Stat(L.IsArabic ? "أحدث سجل قابل للحذف" : "Newest removable", FormatDate(_preview.NewestRemovableAtUtc))
+    </section>
+
+    <section class="panel" style="padding:22px">
+        <h2 style="margin-top:0">@(L.IsArabic ? "تأكيد التنظيف" : "Confirm cleanup")</h2>
+        <p style="opacity:.75">@(L.IsArabic ? "لن يتم حذف أي عملية إلا بعد كتابة كلمة CLEANUP. لا يمكن التراجع عن العملية." : "No operation will be deleted until you type CLEANUP. This action cannot be undone.")</p>
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+            <label style="min-width:260px;flex:1">
+                <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "اكتب CLEANUP للتأكيد" : "Type CLEANUP to confirm")</span>
+                <input class="form-control" @bind="_confirmation" autocomplete="off" />
+            </label>
+            <button type="button" class="btn danger" disabled="@(!CanCleanup)" @onclick="RunCleanup">
+                @(L.IsArabic ? $"حذف {_preview.RemovableCount} سجل" : $"Delete {_preview.RemovableCount} records")
+            </button>
+        </div>
+        <small style="display:block;margin-top:14px;opacity:.65;word-break:break-all">@_storage.FilePath</small>
+    </section>
+</div>
+
+@code {
+    private int _olderThanDays = 90;
+    private int _keepLatest = 100;
+    private string _confirmation = string.Empty;
+    private string? _message;
+    private SiteOperationHistoryStorageInfo _storage = new(string.Empty, 0, 0, null, null, 0);
+    private SiteOperationCleanupPreview _preview = new(0, 0, 0, DateTime.UtcNow, 100, null, null);
+
+    protected override void OnInitialized()
+    {
+        L.Changed += OnLanguageChanged;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        _storage = History.GetStorageInfo();
+        RefreshPreview();
+    }
+
+    private void RefreshPreview()
+    {
+        _preview = History.PreviewCleanup(_olderThanDays, _keepLatest);
+        _message = null;
+    }
+
+    private bool CanCleanup => _preview.RemovableCount > 0 && string.Equals(_confirmation.Trim(), "CLEANUP", StringComparison.Ordinal);
+
+    private void RunCleanup()
+    {
+        if (!CanCleanup) return;
+        var result = History.Cleanup(_olderThanDays, _keepLatest);
+        _confirmation = string.Empty;
+        _message = L.IsArabic
+            ? $"تم حذف {result.RemovedCount} سجل، والمتبقي {result.RemainingCount} سجل."
+            : $"Removed {result.RemovedCount} records; {result.RemainingCount} records remain.";
+        _storage = History.GetStorageInfo();
+        _preview = History.PreviewCleanup(_olderThanDays, _keepLatest);
+    }
+
+    private RenderFragment Stat(string label, string value) => builder =>
+    {
+        builder.OpenElement(0, "article");
+        builder.AddAttribute(1, "class", "panel");
+        builder.AddAttribute(2, "style", "padding:18px");
+        builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement();
+        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.2rem;margin-top:8px;word-break:break-word"); builder.AddContent(7, value); builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private string FormatDate(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") : "—";
+    private static string FormatBytes(long bytes) => bytes < 1024 ? $"{bytes} B" : bytes < 1024 * 1024 ? $"{bytes / 1024d:0.#} KB" : $"{bytes / 1024d / 1024d:0.#} MB";
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
+}
