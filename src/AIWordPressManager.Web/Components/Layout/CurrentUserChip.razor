@@ -52,9 +52,13 @@
                 </select>
                 @if (_activeSite is not null)
                 {
+                    <div class="workspace-current">
+                        <span>●</span>
+                        <strong>@_activeSite.Name</strong>
+                    </div>
                     <div class="workspace-actions">
                         <a href="/sites/@_activeSite.Id">@(L.IsArabic ? "لوحة الموقع" : "Site dashboard")</a>
-                        <a href="/sites/@_activeSite.Id/content">@(L.IsArabic ? "المحتوى" : "Content")</a>
+                        <a href="/sites/@_activeSite.Id/explorer">@(L.IsArabic ? "المحتوى" : "Content")</a>
                         <a href="/sites/@_activeSite.Id/settings">@(L.IsArabic ? "الإعدادات" : "Settings")</a>
                     </div>
                 }
@@ -121,7 +125,7 @@
         {
             _activeSite = null;
             await JS.InvokeVoidAsync("localStorage.removeItem", StorageKey);
-            Navigation.NavigateTo("/sites");
+            Navigation.NavigateTo(RemoveSiteQuery(CurrentRelativePath()));
             return;
         }
 
@@ -130,6 +134,67 @@
             return;
 
         await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, _activeSite.Id.ToString());
-        Navigation.NavigateTo($"/sites/{_activeSite.Id}");
+        Navigation.NavigateTo(BuildWorkspaceDestination(_activeSite.Id));
+    }
+
+    private string BuildWorkspaceDestination(Guid siteId)
+    {
+        var path = CurrentRelativePath();
+
+        if (path.StartsWith("/sites/", StringComparison.OrdinalIgnoreCase))
+        {
+            var segments = path.Split('?', 2)[0].Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length >= 2 && Guid.TryParse(segments[1], out _))
+            {
+                var suffix = segments.Length > 2 ? "/" + string.Join('/', segments.Skip(2)) : string.Empty;
+                return $"/sites/{siteId}{suffix}";
+            }
+        }
+
+        if (path.StartsWith("/module/", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/content", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/operations", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/site-operations", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/site-reliability", StringComparison.OrdinalIgnoreCase))
+        {
+            return AddOrReplaceSiteQuery(path, siteId);
+        }
+
+        return $"/sites/{siteId}";
+    }
+
+    private string CurrentRelativePath()
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        return "/" + relative.TrimStart('/');
+    }
+
+    private static string AddOrReplaceSiteQuery(string relativePath, Guid siteId)
+    {
+        var split = relativePath.Split('?', 2);
+        var basePath = split[0];
+        var query = split.Length > 1
+            ? Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(split[1])
+                .Where(x => !string.Equals(x.Key, "siteId", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(x => x.Value.Select(value => new KeyValuePair<string, string?>(x.Key, value)))
+                .ToDictionary(x => x.Key, x => x.Value)
+            : new Dictionary<string, string?>();
+
+        query["siteId"] = siteId.ToString();
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(basePath, query);
+    }
+
+    private static string RemoveSiteQuery(string relativePath)
+    {
+        var split = relativePath.Split('?', 2);
+        if (split.Length == 1)
+            return relativePath.StartsWith("/sites/", StringComparison.OrdinalIgnoreCase) ? "/sites" : relativePath;
+
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(split[1])
+            .Where(x => !string.Equals(x.Key, "siteId", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(x => x.Value.Select(value => new KeyValuePair<string, string?>(x.Key, value)))
+            .ToDictionary(x => x.Key, x => x.Value);
+
+        return query.Count == 0 ? split[0] : Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(split[0], query);
     }
 }
