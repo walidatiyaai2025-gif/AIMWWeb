@@ -1,5 +1,6 @@
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Tests;
 
@@ -50,6 +51,7 @@ public sealed class ExecutionCenterTests : IDisposable
     {
         var job = _service.Enqueue("Persistent job", "Test", "Test Site", 5);
         _service.Dispose();
+        SqliteConnection.ClearAllPools();
 
         using var restarted = new ExecutionCenterService(
             _databasePath,
@@ -62,6 +64,7 @@ public sealed class ExecutionCenterTests : IDisposable
     public void Dispose()
     {
         _service.Dispose();
+        SqliteConnection.ClearAllPools();
         TryDeleteDirectory(_testDirectory);
     }
 
@@ -69,20 +72,24 @@ public sealed class ExecutionCenterTests : IDisposable
     {
         if (!Directory.Exists(directory)) return;
 
-        for (var attempt = 1; attempt <= 5; attempt++)
+        for (var attempt = 1; attempt <= 20; attempt++)
         {
             try
             {
+                SqliteConnection.ClearAllPools();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
                 Directory.Delete(directory, recursive: true);
                 return;
             }
-            catch (IOException) when (attempt < 5)
+            catch (IOException) when (attempt < 20)
             {
-                Thread.Sleep(50 * attempt);
+                Thread.Sleep(100);
             }
-            catch (UnauthorizedAccessException) when (attempt < 5)
+            catch (UnauthorizedAccessException) when (attempt < 20)
             {
-                Thread.Sleep(50 * attempt);
+                Thread.Sleep(100);
             }
         }
     }
