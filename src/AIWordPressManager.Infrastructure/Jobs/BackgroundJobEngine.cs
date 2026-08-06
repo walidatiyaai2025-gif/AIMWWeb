@@ -88,17 +88,7 @@ public interface IBackgroundJobQueue
     IReadOnlyList<BackgroundJobSnapshot> GetRecent(int take = 100);
 }
 
-internal sealed class QueuedBackgroundJob
-{
-    public QueuedBackgroundJob(Guid id, BackgroundJobRequest request)
-    {
-        Id = id;
-        Request = request;
-    }
-
-    public Guid Id { get; }
-    public BackgroundJobRequest Request { get; }
-}
+internal sealed record QueuedBackgroundJob(Guid Id, BackgroundJobRequest Request);
 
 public sealed class InMemoryBackgroundJobQueue : IBackgroundJobQueue
 {
@@ -158,10 +148,14 @@ public sealed class InMemoryBackgroundJobQueue : IBackgroundJobQueue
             .Select(x => x.ToSnapshot())
             .ToArray();
 
+    internal ValueTask RequeueAsync(QueuedBackgroundJob job, CancellationToken cancellationToken) =>
+        _channel.Writer.WriteAsync(job, cancellationToken);
+
     internal CancellationToken GetCancellationToken(Guid jobId) =>
         _cancellations.TryGetValue(jobId, out var source) ? source.Token : CancellationToken.None;
 
-    internal bool TryGetState(Guid jobId, out JobState state) => _jobs.TryGetValue(jobId, out state!);
+    internal bool TryGetState(Guid jobId, out JobState state) =>
+        _jobs.TryGetValue(jobId, out state!);
 
     internal void ReleaseCancellation(Guid jobId)
     {
@@ -198,6 +192,7 @@ public sealed class InMemoryBackgroundJobQueue : IBackgroundJobQueue
                 Attempt++;
                 Status = BackgroundJobStatus.Running;
                 StartedAtUtc ??= DateTime.UtcNow;
+                CompletedAtUtc = null;
                 ErrorMessage = null;
             }
         }
@@ -294,9 +289,7 @@ public sealed class BackgroundJobDispatcher : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await foreach (var queuedJob in _queue.Reader.ReadAllAsync(stoppingToken))
-        {
             await ExecuteJobAsync(queuedJob, stoppingToken);
-        }
     }
 
     private async Task ExecuteJobAsync(QueuedBackgroundJob queuedJob, CancellationToken stoppingToken)
@@ -341,14 +334,19 @@ public sealed class BackgroundJobDispatcher : BackgroundService
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Background job {JobId} ({JobType}) failed on attempt {Attempt}.", queuedJob.Id, queuedJob.Request.Type, state.Attempt);
+            _logger.LogError(
+                exception,
+                "Background job {JobId} ({JobType}) failed on attempt {Attempt}.",
+                queuedJob.Id,
+                queuedJob.Request.Type,
+                state.Attempt);
 
             if (state.Attempt < queuedJob.Request.MaximumAttempts && !stoppingToken.IsCancellationRequested)
             {
                 state.MarkQueuedForRetry(exception);
                 var delay = TimeSpan.FromSeconds(Math.Min(30, Math.Pow(2, state.Attempt)));
                 await Task.Delay(delay, stoppingToken);
-                await _queue.EnqueueExistingAsync(queuedJob, stoppingToken);
+                await _queue.RequeueAsync(queuedJob, stoppingToken);
                 return;
             }
 
@@ -360,16 +358,4 @@ public sealed class BackgroundJobDispatcher : BackgroundService
                 _queue.ReleaseCancellation(queuedJob.Id);
         }
     }
-}
-
-internal static class BackgroundJobQueueRetryExtensions
-{
-    public static ValueTask EnqueueExistingAsync(
-        this InMemoryBackgroundJobQueue queue,
-        QueuedBackgroundJob job,
-        CancellationToken cancellationToken) =>
-        queue.Writer.WriteAsync(job, cancellationToken);
-
-    private static ChannelWriter<QueuedBackgroundJob> Writer(this InMemoryBackgroundJobQueue queue) =>
-        throw new NotSupportedException();
 }
