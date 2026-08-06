@@ -26,18 +26,18 @@ public sealed class ApprovalWorkflowService
     private readonly string _connectionString;
     private readonly ExecutionCenterService _executionCenter;
 
-    public ApprovalWorkflowService(ExecutionCenterService executionCenter)
+    public ApprovalWorkflowService(
+        ExecutionCenterService executionCenter,
+        string? databasePath = null)
     {
         _executionCenter = executionCenter;
-        var dataDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AIWordPressManager",
-            "Data");
-        Directory.CreateDirectory(dataDirectory);
+        databasePath = ResolveDatabasePath(databasePath);
+        var directory = Path.GetDirectoryName(databasePath);
+        if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
 
         _connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = Path.Combine(dataDirectory, "approval-workflow.db"),
+            DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
@@ -387,6 +387,16 @@ public sealed class ApprovalWorkflowService
         var connection = new SqliteConnection(_connectionString);
         connection.Open();
         return connection;
+    }
+
+    private static string ResolveDatabasePath(string? databasePath)
+    {
+        if (!string.IsNullOrWhiteSpace(databasePath)) return Path.GetFullPath(databasePath);
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AIWordPressManager",
+            "Data",
+            "approval-workflow.db");
     }
 
     private static string NormalizeJson(object? value)
