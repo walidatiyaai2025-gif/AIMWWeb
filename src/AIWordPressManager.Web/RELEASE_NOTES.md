@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.54.0 - 2026-08-06 - WordPress Site Onboarding
+- Added a guided three-step WordPress site connection workflow.
+- Added site profile validation before saving.
+- Added secure Application Password guidance and encrypted credential storage.
+- Added save-and-test REST API validation with clear diagnostics.
+- Added direct navigation to the connected site dashboard after successful onboarding.
+
 ## 155.53.0 - 2026-08-06 - Phase 1 Foundation Complete
 - Added a live About Build and Release Notes center.
 - Release notes are loaded from a versioned Markdown source instead of hard-coded UI text.
