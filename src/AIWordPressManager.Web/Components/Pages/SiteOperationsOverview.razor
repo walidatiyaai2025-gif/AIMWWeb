@@ -1,0 +1,154 @@
+@page "/site-operations"
+@page "/operations/sites"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject SiteOperationHistoryService History
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "عمليات المواقع" : "Site Operations")</PageTitle>
+
+@if (_loading)
+{
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ تحميل سجل العمليات..." : "Loading operation history...")</div>
+}
+else
+{
+    <div class="site-operations-page">
+        <section class="panel" style="padding:24px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+                <div>
+                    <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "المراقبة التشغيلية" : "OPERATIONS MONITORING")</small>
+                    <h1 style="margin:8px 0">@(L.IsArabic ? "عمليات مواقع WordPress" : "WordPress Site Operations")</h1>
+                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة لكل المواقع." : "A unified view of connection tests and synchronization activity across all sites.")</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                    <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
+                </div>
+            </div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
+            @Stat(L.IsArabic ? "إجمالي العمليات" : "Total operations", _summary.Total.ToString())
+            @Stat(L.IsArabic ? "ناجحة" : "Successful", _summary.Successful.ToString())
+            @Stat(L.IsArabic ? "فاشلة" : "Failed", _summary.Failed.ToString())
+            @Stat(L.IsArabic ? "المواقع النشطة" : "Active sites", _summary.SiteCount.ToString())
+            @Stat(L.IsArabic ? "متوسط المدة" : "Average duration", FormatDuration(_summary.AverageDuration))
+        </section>
+
+        <section class="panel" style="padding:18px;margin-bottom:18px">
+            <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,.5fr) minmax(180px,.5fr);gap:12px">
+                <input class="form-control" placeholder="@(L.IsArabic ? "بحث في الموقع أو الرسالة..." : "Search site or message...")" @bind="_query" @bind:event="oninput" />
+                <select class="form-control" @bind="_siteFilter">
+                    <option value="">@(L.IsArabic ? "كل المواقع" : "All sites")</option>
+                    @foreach (var site in _sites)
+                    {
+                        <option value="@site.Id">@site.Name</option>
+                    }
+                </select>
+                <select class="form-control" @bind="_statusFilter">
+                    <option value="all">@(L.IsArabic ? "كل النتائج" : "All results")</option>
+                    <option value="success">@(L.IsArabic ? "الناجحة فقط" : "Successful only")</option>
+                    <option value="failed">@(L.IsArabic ? "الفاشلة فقط" : "Failed only")</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="panel" style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:920px">
+                <thead>
+                    <tr>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "الوقت" : "Time")</th>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "الموقع" : "Site")</th>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "العملية" : "Operation")</th>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "النتيجة" : "Result")</th>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "المدة" : "Duration")</th>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "السجلات" : "Records")</th>
+                        <th style="text-align:start;padding:14px">@(L.IsArabic ? "الرسالة" : "Message")</th>
+                        <th style="text-align:start;padding:14px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!FilteredItems.Any())
+                    {
+                        <tr><td colspan="8" style="padding:28px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد عمليات مطابقة." : "No matching operations were found.")</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in FilteredItems)
+                        {
+                            <tr style="border-top:1px solid rgba(128,128,128,.2)">
+                                <td style="padding:14px;white-space:nowrap">@FormatDate(item.StartedAtUtc)</td>
+                                <td style="padding:14px"><a href="@($"/sites/{item.SiteId}")">@SiteName(item.SiteId)</a></td>
+                                <td style="padding:14px">@item.Operation</td>
+                                <td style="padding:14px"><span class="badge @(item.Succeeded ? "success" : "danger")">@(item.Succeeded ? (L.IsArabic ? "ناجحة" : "Success") : (L.IsArabic ? "فشلت" : "Failed"))</span></td>
+                                <td style="padding:14px">@FormatDuration(item.Duration)</td>
+                                <td style="padding:14px">@(item.AffectedRecords?.ToString() ?? "—")</td>
+                                <td style="padding:14px;max-width:360px">@item.Message</td>
+                                <td style="padding:14px"><a class="btn" href="@($"/sites/{item.SiteId}/connection")">@(L.IsArabic ? "فتح" : "Open")</a></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private string _query = string.Empty;
+    private string _siteFilter = string.Empty;
+    private string _statusFilter = "all";
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private IReadOnlyList<SiteOperationHistoryItem> _items = [];
+    private SiteOperationHistorySummary _summary = new(0, 0, 0, TimeSpan.Zero, 0, null);
+
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            _items = History.GetAll(500);
+            _summary = History.GetSummary(DateTime.UtcNow.AddDays(-30));
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<SiteOperationHistoryItem> FilteredItems => _items.Where(item =>
+    {
+        if (!string.IsNullOrWhiteSpace(_siteFilter) && Guid.TryParse(_siteFilter, out var selectedSite) && item.SiteId != selectedSite) return false;
+        if (_statusFilter == "success" && !item.Succeeded) return false;
+        if (_statusFilter == "failed" && item.Succeeded) return false;
+        if (string.IsNullOrWhiteSpace(_query)) return true;
+        var search = _query.Trim();
+        return SiteName(item.SiteId).Contains(search, StringComparison.OrdinalIgnoreCase)
+            || item.Operation.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || item.Message.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || (item.Details?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+    });
+
+    private RenderFragment Stat(string label, string value) => builder =>
+    {
+        builder.OpenElement(0, "article");
+        builder.AddAttribute(1, "class", "panel");
+        builder.AddAttribute(2, "style", "padding:18px");
+        builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement();
+        builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private string SiteName(Guid siteId) => _sites.FirstOrDefault(x => x.Id == siteId)?.Name ?? siteId.ToString("N")[..8];
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private static string FormatDuration(TimeSpan value) => value.TotalSeconds < 1 ? $"{Math.Max(0, value.TotalMilliseconds):0} ms" : $"{value.TotalSeconds:0.0} s";
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
+}
