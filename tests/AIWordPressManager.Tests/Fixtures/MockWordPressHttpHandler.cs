@@ -124,12 +124,14 @@ public sealed class MockWordPressHttpHandler : HttpMessageHandler
     private static bool CredentialsMatch(AuthenticationHeaderValue? authorization, string? userName, string? password)
     {
         if (userName is null && password is null) return true;
-        if (!string.Equals(authorization?.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) ||
-            string.IsNullOrWhiteSpace(authorization.Parameter)) return false;
+        if (!string.Equals(authorization?.Scheme, "Basic", StringComparison.OrdinalIgnoreCase)) return false;
+
+        var parameter = authorization?.Parameter;
+        if (string.IsNullOrWhiteSpace(parameter)) return false;
 
         try
         {
-            var value = Encoding.UTF8.GetString(Convert.FromBase64String(authorization.Parameter));
+            var value = Encoding.UTF8.GetString(Convert.FromBase64String(parameter));
             return string.Equals(value, $"{userName}:{password}", StringComparison.Ordinal);
         }
         catch (FormatException)
