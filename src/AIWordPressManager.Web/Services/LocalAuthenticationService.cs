@@ -137,7 +137,15 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
             ExpiresUtc = rememberMe ? DateTimeOffset.UtcNow.AddDays(14) : null
         });
 
-        return LoginResult.Succeeded(ResolveRedirectPath(returnUrl, user.LastPage));
+        var hasOwnedSites = await dbContext.Sites
+            .AsNoTracking()
+            .AnyAsync(x => x.OwnerUserId == user.Id, cancellationToken);
+
+        var redirectPath = hasOwnedSites
+            ? ResolveRedirectPath(returnUrl, user.LastPage)
+            : "/sites/connect";
+
+        return LoginResult.Succeeded(redirectPath);
     }
 
     public async Task<IReadOnlyList<LoginAuditDto>> GetRecentAuditsAsync(int take = 100, CancellationToken cancellationToken = default)
