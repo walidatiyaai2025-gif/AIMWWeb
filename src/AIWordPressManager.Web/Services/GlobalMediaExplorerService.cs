@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class GlobalMediaExplorerService(AppDbContext dbContext)
+public sealed class GlobalMediaExplorerService(AppDbContext dbContext, CurrentUserContext currentUser)
 {
     public async Task<GlobalMediaExplorerResult> SearchAsync(
         Guid? siteId,
@@ -15,10 +15,13 @@ public sealed class GlobalMediaExplorerService(AppDbContext dbContext)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 12, 100);
+        var ownerUserId = currentUser.RequireUserId();
+        var ownedSites = dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == ownerUserId);
 
         var source = dbContext.WordPressMediaRecords
             .AsNoTracking()
-            .Where(x => x.IsAvailable);
+            .Where(x => x.IsAvailable)
+            .Where(x => ownedSites.Any(site => site.Id == x.SiteId));
 
         if (siteId.HasValue)
             source = source.Where(x => x.SiteId == siteId.Value);
@@ -48,7 +51,7 @@ public sealed class GlobalMediaExplorerService(AppDbContext dbContext)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Join(
-                dbContext.Sites.AsNoTracking(),
+                ownedSites,
                 media => media.SiteId,
                 site => site.Id,
                 (media, site) => new GlobalMediaExplorerItem(
@@ -64,9 +67,7 @@ public sealed class GlobalMediaExplorerService(AppDbContext dbContext)
                     media.LastSynchronizedAtUtc))
             .ToListAsync(cancellationToken);
 
-        var summary = await dbContext.WordPressMediaRecords
-            .AsNoTracking()
-            .Where(x => x.IsAvailable)
+        var summary = await source
             .GroupBy(_ => 1)
             .Select(group => new GlobalMediaSummary(
                 group.Count(),
@@ -83,31 +84,6 @@ public sealed class GlobalMediaExplorerService(AppDbContext dbContext)
     }
 }
 
-public sealed record GlobalMediaExplorerResult(
-    IReadOnlyList<GlobalMediaExplorerItem> Items,
-    int Total,
-    int Page,
-    int PageSize,
-    int TotalPages,
-    GlobalMediaSummary Summary);
-
-public sealed record GlobalMediaExplorerItem(
-    Guid SiteId,
-    string SiteName,
-    int WordPressId,
-    string Title,
-    string Slug,
-    string MediaType,
-    string MimeType,
-    string SourceUrl,
-    DateTime? ModifiedAtUtc,
-    DateTime LastSynchronizedAtUtc);
-
-public sealed record GlobalMediaSummary(
-    int Total,
-    int Images,
-    int Videos,
-    int Audio,
-    int Documents,
-    int SiteCount,
-    DateTime? LastSynchronizedAtUtc);
+public sealed record GlobalMediaExplorerResult(IReadOnlyList<GlobalMediaExplorerItem> Items, int Total, int Page, int PageSize, int TotalPages, GlobalMediaSummary Summary);
+public sealed record GlobalMediaExplorerItem(Guid SiteId, string SiteName, int WordPressId, string Title, string Slug, string MediaType, string MimeType, string SourceUrl, DateTime? ModifiedAtUtc, DateTime LastSynchronizedAtUtc);
+public sealed record GlobalMediaSummary(int Total, int Images, int Videos, int Audio, int Documents, int SiteCount, DateTime? LastSynchronizedAtUtc);
