@@ -1,5 +1,15 @@
 # AI WordPress Manager Release Notes
 
+## 155.69.0 - 2026-08-06 - Global Media Explorer
+- Added a global media explorer at `/module/media` backed by the local SQLite cache.
+- Added cross-site search by title, slug, MIME type, and source URL.
+- Added filtering by WordPress site and media type for images, video, audio, and documents.
+- Added server-side pagination with 12, 24, 48, and 96 item page sizes.
+- Added total-media, image, video, audio, and represented-site summaries.
+- Added responsive media cards with lazy-loaded image previews and safe file-type placeholders.
+- Added direct links to the original media file and the related site content explorer.
+- Kept the build identity visible as `v155.69.0 • agent/logs-error-center`.
+
 ## 155.68.0 - 2026-08-06 - Global Pages Explorer
 - Added a global pages explorer at `/module/pages` backed by the local SQLite cache.
 - Added cross-site search by title, slug, excerpt, and synchronized page content.
