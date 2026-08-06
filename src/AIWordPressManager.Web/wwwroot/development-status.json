@@ -1,8 +1,8 @@
 {
   "product": "AI WordPress Manager",
   "branch": "main",
-  "baselineVersion": "155.92.0",
-  "updatedAtUtc": "2026-08-06T22:16:00Z",
+  "baselineVersion": "155.93.6",
+  "updatedAtUtc": "2026-08-06T23:10:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -102,7 +102,7 @@
     { "id": "REL-005", "phase": 8, "area": "Monitoring", "nameAr": "مراقبة الأداء والذاكرة", "nameEn": "Performance and memory monitoring", "status": "planned", "priority": "medium", "version": null, "notes": "Server-side metrics and thresholds are pending." },
     { "id": "REL-006", "phase": 8, "area": "Retention", "nameAr": "سياسة الاحتفاظ والتنظيف", "nameEn": "Retention and cleanup policy", "status": "planned", "priority": "medium", "version": null, "notes": "Logs, history, cache, and backup retention need configurable policies." },
 
-    { "id": "QAT-001", "phase": 9, "area": "Testing", "nameAr": "اختبارات وحدات", "nameEn": "Unit tests", "status": "planned", "priority": "critical", "version": null, "notes": "Core domain and service rules require automated coverage." },
+    { "id": "QAT-001", "phase": 9, "area": "Testing", "nameAr": "اختبارات وحدات", "nameEn": "Unit tests", "status": "completed", "priority": "critical", "version": "155.93.6", "notes": "A 68-test xUnit suite now covers core domain and service rules. Remaining SQLite cleanup and end-to-end verification are tracked separately." },
     { "id": "QAT-002", "phase": 9, "area": "Testing", "nameAr": "اختبارات تكامل SQLite وWordPress", "nameEn": "SQLite and WordPress integration tests", "status": "planned", "priority": "critical", "version": null, "notes": "Use controlled test doubles and test databases." },
     { "id": "QAT-003", "phase": 9, "area": "Security Testing", "nameAr": "اختبارات عزل المستخدمين والصلاحيات", "nameEn": "Tenant isolation and authorization tests", "status": "planned", "priority": "critical", "version": null, "notes": "Must test URL, API, local cache, jobs, and schedules." },
     { "id": "QAT-004", "phase": 9, "area": "CI/CD", "nameAr": "GitHub Actions للبناء والاختبارات", "nameEn": "GitHub Actions build and test workflow", "status": "planned", "priority": "critical", "version": null, "notes": "Clean restore, build, tests, and artifact publication." },
