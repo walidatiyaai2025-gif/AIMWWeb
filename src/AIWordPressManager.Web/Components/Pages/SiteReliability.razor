@@ -1,0 +1,128 @@
+@page "/site-reliability"
+@page "/operations/reliability"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
+@inject SiteOperationHistoryService History
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "موثوقية المواقع" : "Site Reliability")</PageTitle>
+
+@if (_loading)
+{
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ حساب مؤشرات الموثوقية..." : "Calculating reliability metrics...")</div>
+}
+else
+{
+    <div class="site-reliability-page">
+        <section class="panel" style="padding:24px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
+                <div>
+                    <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "مراقبة الاعتمادية" : "RELIABILITY MONITORING")</small>
+                    <h1 style="margin:8px 0">@(L.IsArabic ? "موثوقية مواقع WordPress" : "WordPress Site Reliability")</h1>
+                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "مقارنة نجاح الاتصال والمزامنة لكل موقع خلال الفترة المحددة." : "Compare connection and synchronization success across sites for the selected period.")</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                    <a class="btn" href="/site-operations">@(L.IsArabic ? "سجل العمليات" : "Operation history")</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" style="padding:18px;margin-bottom:18px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end">
+                <label><span>@(L.IsArabic ? "الفترة" : "Period")</span><select class="form-control" @bind="_periodDays"><option value="7">7 @(L.IsArabic ? "أيام" : "days")</option><option value="30">30 @(L.IsArabic ? "يومًا" : "days")</option><option value="90">90 @(L.IsArabic ? "يومًا" : "days")</option></select></label>
+                <label><span>@(L.IsArabic ? "الحد الأدنى للعمليات" : "Minimum operations")</span><select class="form-control" @bind="_minimumOperations"><option value="1">1</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select></label>
+                <button class="btn primary" @onclick="ApplyFilters">@(L.IsArabic ? "تطبيق" : "Apply")</button>
+            </div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
+            @Stat(L.IsArabic ? "المواقع المقاسة" : "Measured sites", ReliabilityRows.Count.ToString())
+            @Stat(L.IsArabic ? "إجمالي العمليات" : "Total operations", ReliabilityRows.Sum(x => x.Total).ToString())
+            @Stat(L.IsArabic ? "معدل النجاح العام" : "Overall success rate", $"{OverallSuccessRate:0.0}%")
+            @Stat(L.IsArabic ? "مواقع تحتاج متابعة" : "Sites needing attention", ReliabilityRows.Count(x => x.SuccessRate < 90).ToString())
+        </section>
+
+        <section class="panel" style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:880px">
+                <thead><tr><th style="text-align:start;padding:14px">@(L.IsArabic ? "الموقع" : "Site")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "العمليات" : "Operations")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الناجحة" : "Successful")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الفاشلة" : "Failed")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "معدل النجاح" : "Success rate")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "آخر فشل" : "Last failure")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الحالة" : "Status")</th><th style="padding:14px"></th></tr></thead>
+                <tbody>
+                    @if (!ReliabilityRows.Any())
+                    {
+                        <tr><td colspan="8" style="padding:28px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد بيانات كافية للفترة المحددة." : "There is not enough data for the selected period.")</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in ReliabilityRows)
+                        {
+                            <tr style="border-top:1px solid rgba(128,128,128,.2)">
+                                <td style="padding:14px"><strong>@row.SiteName</strong></td>
+                                <td style="padding:14px">@row.Total</td><td style="padding:14px">@row.Successful</td><td style="padding:14px">@row.Failed</td>
+                                <td style="padding:14px"><strong>@row.SuccessRate.ToString("0.0")%</strong></td>
+                                <td style="padding:14px">@(row.LastFailureUtc is null ? "—" : FormatDate(row.LastFailureUtc.Value))</td>
+                                <td style="padding:14px"><span class="badge @Tone(row.SuccessRate)">@StatusLabel(row.SuccessRate)</span></td>
+                                <td style="padding:14px"><a class="btn" href="@($"/sites/{row.SiteId}/connection")">@(L.IsArabic ? "فتح" : "Open")</a></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private int _periodDays = 30;
+    private int _minimumOperations = 1;
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private IReadOnlyList<SiteOperationHistoryItem> _items = [];
+    private List<ReliabilityRow> ReliabilityRows { get; set; } = [];
+
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            _items = History.GetAll(5000);
+            BuildRows();
+        }
+        finally { _loading = false; }
+    }
+
+    private void ApplyFilters() => BuildRows();
+
+    private void BuildRows()
+    {
+        var fromUtc = DateTime.UtcNow.AddDays(-Math.Clamp(_periodDays, 1, 365));
+        var scoped = _items.Where(x => x.StartedAtUtc >= fromUtc).ToList();
+        ReliabilityRows = scoped.GroupBy(x => x.SiteId)
+            .Select(group =>
+            {
+                var total = group.Count();
+                var successful = group.Count(x => x.Succeeded);
+                var failed = total - successful;
+                var lastFailure = group.Where(x => !x.Succeeded).OrderByDescending(x => x.StartedAtUtc).Select(x => (DateTime?)x.StartedAtUtc).FirstOrDefault();
+                return new ReliabilityRow(group.Key, SiteName(group.Key), total, successful, failed, total == 0 ? 0 : successful * 100d / total, lastFailure);
+            })
+            .Where(x => x.Total >= Math.Clamp(_minimumOperations, 1, 1000))
+            .OrderBy(x => x.SuccessRate)
+            .ThenByDescending(x => x.Total)
+            .ToList();
+    }
+
+    private double OverallSuccessRate => ReliabilityRows.Sum(x => x.Total) == 0 ? 0 : ReliabilityRows.Sum(x => x.Successful) * 100d / ReliabilityRows.Sum(x => x.Total);
+    private string SiteName(Guid siteId) => _sites.FirstOrDefault(x => x.Id == siteId)?.Name ?? siteId.ToString("N")[..8];
+    private string StatusLabel(double rate) => rate >= 98 ? (L.IsArabic ? "ممتازة" : "Excellent") : rate >= 90 ? (L.IsArabic ? "مستقرة" : "Stable") : rate >= 75 ? (L.IsArabic ? "تحتاج متابعة" : "Review") : (L.IsArabic ? "حرجة" : "Critical");
+    private static string Tone(double rate) => rate >= 98 ? "success" : rate >= 90 ? "info" : rate >= 75 ? "warning" : "danger";
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private RenderFragment Stat(string label, string value) => builder => { builder.OpenElement(0, "article"); builder.AddAttribute(1, "class", "panel"); builder.AddAttribute(2, "style", "padding:18px"); builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement(); builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement(); builder.CloseElement(); };
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
+    private sealed record ReliabilityRow(Guid SiteId, string SiteName, int Total, int Successful, int Failed, double SuccessRate, DateTime? LastFailureUtc);
+}
