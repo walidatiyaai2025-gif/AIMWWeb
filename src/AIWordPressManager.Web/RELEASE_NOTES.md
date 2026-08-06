@@ -1,5 +1,12 @@
 # AI WordPress Manager Release Notes
 
+## 155.57.0 - 2026-08-06 - Site Data Snapshot
+- Added a per-site offline data snapshot at `/sites/{id}/snapshot` and `/sites/{id}/offline-data`.
+- Added cached counts for posts, pages, categories, tags, and media.
+- Added last synchronization time, cache age, freshness classification, and offline readiness scoring.
+- Added content distribution indicators and direct smart synchronization from the snapshot screen.
+- Kept the screen fully backed by local SQLite data so it remains useful while WordPress is unavailable.
+
 ## 155.56.0 - 2026-08-06 - Site Settings and Lifecycle
 - Added a dedicated settings page for each WordPress site.
 - Added profile editing with normalized URL and duplicate-site validation.
