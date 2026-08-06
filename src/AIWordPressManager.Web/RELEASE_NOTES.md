@@ -1,5 +1,11 @@
 # AI WordPress Manager Release Notes
 
+## 155.59.0 - 2026-08-06 - Operations Date Filtering
+- Added from/to date filtering to the cross-site operations dashboard.
+- Added dynamic success, failure, active-site, and average-duration summaries based on the visible result set.
+- Added visible-versus-total operation counts and one-click filter reset.
+- Increased the loaded operation history limit to support broader operational review.
+
 ## 155.58.0 - 2026-08-06 - Site Operations Overview
 - Added a cross-site operations dashboard at `/site-operations` and `/operations/sites`.
 - Added unified filtering by site, result, operation, and diagnostic message.
