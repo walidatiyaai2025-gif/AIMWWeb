@@ -20,6 +20,8 @@ public static class DependencyInjection
 
         services.AddSingleton<InMemoryBackgroundJobQueue>();
         services.AddSingleton<IBackgroundJobQueue>(sp => sp.GetRequiredService<InMemoryBackgroundJobQueue>());
+        services.AddSingleton<BackgroundJobManagementService>();
+        services.AddScoped<IBackgroundJobHandler, SystemDelayJobHandler>();
         services.AddHostedService<BackgroundJobDispatcher>();
 
         services.AddSingleton<IAIPromptRegistry, AIPromptRegistry>();
