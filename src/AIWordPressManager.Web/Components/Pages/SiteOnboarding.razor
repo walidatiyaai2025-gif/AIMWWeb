@@ -1,0 +1,175 @@
+@page "/sites/connect"
+@page "/sites/onboarding"
+@rendermode InteractiveServer
+@inject SiteWebService SiteService
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+@inject NavigationManager Navigation
+
+<PageTitle>@(L.IsArabic ? "ربط موقع WordPress" : "Connect WordPress Site")</PageTitle>
+
+<div class="sites-page sites-workspace">
+    <AppToolbar
+        Eyebrow="@(L.IsArabic ? "إعداد الاتصال" : "SITE ONBOARDING")"
+        Title="@(L.IsArabic ? "ربط موقع WordPress جديد" : "Connect a New WordPress Site")"
+        Subtitle="@(L.IsArabic ? "أضف الموقع، احفظ بيانات الاعتماد المشفرة، واختبر REST API في خطوات واضحة." : "Add the site, protect its credentials, and validate the REST API in a guided workflow.")">
+        <Actions>
+            <AppButton Href="/sites" Icon="←" Text="@(L.IsArabic ? "العودة للمواقع" : "Back to sites")" />
+        </Actions>
+    </AppToolbar>
+
+    <section class="app-stat-grid">
+        <AppStatCard Icon="1" Label="@(L.IsArabic ? "بيانات الموقع" : "Site profile")" Value="@StepState(1)" Description="@(L.IsArabic ? "الاسم والرابط" : "Name and URL")" Tone="@StepTone(1)" />
+        <AppStatCard Icon="2" Label="@(L.IsArabic ? "بيانات WordPress" : "WordPress credentials")" Value="@StepState(2)" Description="@(L.IsArabic ? "اسم المستخدم وكلمة مرور التطبيق" : "Username and Application Password")" Tone="@StepTone(2)" />
+        <AppStatCard Icon="3" Label="@(L.IsArabic ? "اختبار الاتصال" : "Connection test")" Value="@StepState(3)" Description="REST API" Tone="@StepTone(3)" />
+        <AppStatCard Icon="✓" Label="@(L.IsArabic ? "الجاهزية" : "Readiness")" Value="@ReadinessText" Description="@(L.IsArabic ? "حالة الإعداد الحالية" : "Current onboarding status")" Tone="@ReadinessTone" />
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")">@_message</div>
+    }
+
+    <AppCard Class="site-create-panel"
+             Eyebrow="@($"STEP {_step} OF 3")"
+             Title="@StepTitle"
+             Subtitle="@StepSubtitle">
+        @if (_step == 1)
+        {
+            <div class="site-create-grid">
+                <label><span>@(L.IsArabic ? "اسم الموقع داخل النظام" : "Site name in the manager")</span><InputText @bind-Value="_name" disabled="@_working" placeholder="My WordPress Site" /></label>
+                <label><span>@(L.IsArabic ? "رابط الموقع" : "Site URL")</span><InputText @bind-Value="_url" disabled="@_working" placeholder="https://example.com" /></label>
+            </div>
+            <div class="site-form-hint">ⓘ @(L.IsArabic ? "استخدم الرابط الرئيسي للموقع. سيقوم النظام بتطبيعه ومنع التكرار." : "Use the main site URL. The manager normalizes it and blocks duplicates.")</div>
+        }
+        else if (_step == 2)
+        {
+            <div class="site-create-grid">
+                <label><span>@(L.IsArabic ? "اسم مستخدم WordPress" : "WordPress username")</span><InputText @bind-Value="_userName" disabled="@_working" autocomplete="username" /></label>
+                <label><span>@(L.IsArabic ? "Application Password" : "Application Password")</span><InputText @bind-Value="_applicationPassword" type="password" disabled="@_working" autocomplete="new-password" /></label>
+            </div>
+            <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم تشفير كلمة مرور التطبيق قبل حفظها محليًا، ولا تُعرض مرة أخرى." : "The Application Password is encrypted before local storage and is never displayed again.")</div>
+            <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "أنشئ Application Password من WordPress: المستخدمون ← الملف الشخصي ← Application Passwords. لا تستخدم كلمة مرور تسجيل الدخول العادية." : "Create an Application Password in WordPress under Users → Profile → Application Passwords. Do not use the normal login password.")</p></div>
+        }
+        else
+        {
+            <div class="database-info-grid">
+                <div><small>@(L.IsArabic ? "الموقع" : "Site")</small><strong>@_name</strong></div>
+                <div><small>@(L.IsArabic ? "الرابط" : "URL")</small><strong>@_url</strong></div>
+                <div><small>@(L.IsArabic ? "المستخدم" : "Username")</small><strong>@_userName</strong></div>
+                <div><small>@(L.IsArabic ? "حالة الاختبار" : "Test status")</small><strong>@TestStatusText</strong></div>
+            </div>
+            @if (_testResult is not null)
+            {
+                <div class="alert @(_testResult.IsSuccess ? "success" : "error")">
+                    <strong>@_testResult.Message</strong>
+                    @if (!string.IsNullOrWhiteSpace(_testResult.Diagnostics))
+                    {
+                        <pre style="white-space:pre-wrap;margin:.75rem 0 0">@_testResult.Diagnostics</pre>
+                    }
+                </div>
+            }
+        }
+
+        <div class="actions" style="margin-top:1.25rem">
+            @if (_step > 1 && !_completed)
+            {
+                <AppButton Icon="←" Text="@(L.IsArabic ? "السابق" : "Previous")" Disabled="@_working" OnClick="PreviousAsync" />
+            }
+            @if (_step < 3)
+            {
+                <AppButton Variant="primary" Icon="→" Text="@(L.IsArabic ? "التالي" : "Continue")" Busy="@_working" Disabled="@_working" OnClick="NextAsync" />
+            }
+            else if (!_completed)
+            {
+                <AppButton Variant="primary" Icon="↻" Text="@(_working ? (L.IsArabic ? "جارٍ الاختبار" : "Testing") : (L.IsArabic ? "حفظ واختبار الاتصال" : "Save and test connection"))" Busy="@_working" Disabled="@_working" OnClick="SaveAndTestAsync" />
+            }
+            else
+            {
+                <AppButton Variant="primary" Icon="✓" Text="@(L.IsArabic ? "فتح لوحة الموقع" : "Open site dashboard")" OnClick="OpenSiteAsync" />
+                <AppButton Href="/sites" Text="@(L.IsArabic ? "عرض كل المواقع" : "View all sites")" />
+            }
+        </div>
+    </AppCard>
+</div>
+
+@code {
+    private int _step = 1;
+    private bool _working, _isError, _completed;
+    private Guid? _siteId;
+    private string _name = string.Empty, _url = string.Empty, _userName = string.Empty, _applicationPassword = string.Empty, _message = string.Empty;
+    private ConnectionTestViewResult? _testResult;
+
+    private string StepTitle => _step switch
+    {
+        1 => L.IsArabic ? "بيانات الموقع الأساسية" : "Site profile",
+        2 => L.IsArabic ? "بيانات اعتماد WordPress" : "WordPress credentials",
+        _ => L.IsArabic ? "التحقق النهائي من الاتصال" : "Final connection validation"
+    };
+    private string StepSubtitle => _step switch
+    {
+        1 => L.IsArabic ? "أدخل اسمًا واضحًا والرابط الرئيسي للموقع." : "Enter a clear display name and the primary site URL.",
+        2 => L.IsArabic ? "استخدم Application Password مخصصًا لهذا التطبيق." : "Use a dedicated Application Password for this manager.",
+        _ => L.IsArabic ? "سيتم حفظ الموقع ثم اختبار REST API والصلاحيات." : "The site will be saved, then its REST API and permissions will be tested."
+    };
+    private string ReadinessText => _completed ? (L.IsArabic ? "جاهز" : "Ready") : (L.IsArabic ? "قيد الإعداد" : "In progress");
+    private string ReadinessTone => _completed ? "success" : _isError ? "warning" : "info";
+    private string TestStatusText => _testResult is null ? (L.IsArabic ? "لم يبدأ" : "Not started") : _testResult.IsSuccess ? (L.IsArabic ? "ناجح" : "Successful") : (L.IsArabic ? "فشل" : "Failed");
+    private string StepState(int step) => _completed || _step > step ? (L.IsArabic ? "مكتمل" : "Complete") : _step == step ? (L.IsArabic ? "حالي" : "Current") : (L.IsArabic ? "منتظر" : "Pending");
+    private string StepTone(int step) => _completed || _step > step ? "success" : _step == step ? "info" : "neutral";
+
+    private Task PreviousAsync(MouseEventArgs _) { if (_step > 1) _step--; ClearMessage(); return Task.CompletedTask; }
+    private Task NextAsync(MouseEventArgs _)
+    {
+        ClearMessage();
+        if (_step == 1)
+        {
+            if (string.IsNullOrWhiteSpace(_name)) return FailAsync(L.IsArabic ? "اسم الموقع مطلوب." : "Site name is required.");
+            if (!Uri.TryCreate(_url?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) return FailAsync(L.IsArabic ? "أدخل رابطًا صحيحًا يبدأ بـ http أو https." : "Enter a valid URL starting with http or https.");
+        }
+        else if (_step == 2)
+        {
+            if (string.IsNullOrWhiteSpace(_userName)) return FailAsync(L.IsArabic ? "اسم مستخدم WordPress مطلوب." : "WordPress username is required.");
+            if (string.IsNullOrWhiteSpace(_applicationPassword) || _applicationPassword.Trim().Length < 8) return FailAsync(L.IsArabic ? "Application Password مطلوب ويجب ألا يقل عن 8 أحرف." : "Application Password is required and must contain at least 8 characters.");
+        }
+        _step++;
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveAndTestAsync(MouseEventArgs _)
+    {
+        try
+        {
+            _working = true; ClearMessage();
+            _siteId ??= await SiteService.AddSiteAsync(_name, _url);
+            _testResult = await SiteService.SaveCredentialAndTestAsync(_siteId.Value, _userName, _applicationPassword);
+            _applicationPassword = string.Empty;
+            if (_testResult.IsSuccess)
+            {
+                _completed = true; _isError = false;
+                _message = L.IsArabic ? "تم حفظ الموقع وتأكيد الاتصال بنجاح." : "The site was saved and the connection was validated successfully.";
+                Notifications.Success(_message);
+            }
+            else
+            {
+                _isError = true;
+                _message = L.TranslateMessage(_testResult.Message);
+                Notifications.Error(_message, L.IsArabic ? "فشل اختبار الاتصال" : "Connection test failed", _testResult.Diagnostics);
+            }
+        }
+        catch (Exception ex)
+        {
+            _isError = true; _message = L.TranslateMessage(ex.Message);
+            Notifications.Error(_message, L.IsArabic ? "فشل إعداد الموقع" : "Site onboarding failed", ex.ToString());
+        }
+        finally { _working = false; }
+    }
+
+    private Task OpenSiteAsync(MouseEventArgs _)
+    {
+        if (_siteId.HasValue) Navigation.NavigateTo($"/sites/{_siteId.Value}");
+        return Task.CompletedTask;
+    }
+    private Task FailAsync(string message) { _isError = true; _message = message; return Task.CompletedTask; }
+    private void ClearMessage() { _message = string.Empty; _isError = false; }
+}
