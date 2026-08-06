@@ -1,0 +1,65 @@
+name: Wire Background Jobs API
+
+on:
+  push:
+    branches:
+      - feature/stable-ui-framework
+    paths:
+      - .github/workflows/patch-background-jobs-api.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wire-background-jobs-api
+  cancel-in-progress: true
+
+jobs:
+  patch-build-commit:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feature/stable-ui-framework
+          fetch-depth: 0
+
+      - name: Patch Program and version
+        shell: pwsh
+        run: |
+          $programPath = 'src/AIWordPressManager.Web/Program.cs'
+          $program = Get-Content $programPath -Raw
+          $anchor = 'app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new { jobs = service.GetJobs(), history = service.GetHistory(100) }));'
+          if (-not $program.Contains($anchor)) { throw 'Program API insertion point was not found.' }
+          if (-not $program.Contains('app.MapBackgroundJobsApi();')) {
+              $program = $program.Replace($anchor, "$anchor`r`napp.MapBackgroundJobsApi();")
+              Set-Content $programPath $program -Encoding utf8
+          }
+
+          $projectPath = 'src/AIWordPressManager.Web/AIWordPressManager.Web.csproj'
+          $project = Get-Content $projectPath -Raw
+          $project = [regex]::Replace($project, '<Version>[^<]+</Version>', '<Version>155.50.2</Version>', 1)
+          $project = [regex]::Replace($project, '<AssemblyVersion>[^<]+</AssemblyVersion>', '<AssemblyVersion>155.50.2.0</AssemblyVersion>', 1)
+          $project = [regex]::Replace($project, '<FileVersion>[^<]+</FileVersion>', '<FileVersion>155.50.2.0</FileVersion>', 1)
+          $project = [regex]::Replace($project, '<InformationalVersion>[^<]+</InformationalVersion>', '<InformationalVersion>155.50.2</InformationalVersion>', 1)
+          Set-Content $projectPath $project -Encoding utf8
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build .\AIWordPressManager.Web.sln --configuration Debug
+
+      - name: Commit
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AIWordPressManager.Web/Program.cs src/AIWordPressManager.Web/AIWordPressManager.Web.csproj
+          if (git diff --cached --quiet) { exit 0 }
+          git commit -m "feat: expose background jobs API [skip ci]"
+          git push origin feature/stable-ui-framework
