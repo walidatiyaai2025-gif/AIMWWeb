@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using Microsoft.AspNetCore.Authentication;
@@ -20,15 +21,65 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
         if (user is null)
         {
-            user = new AuthUser("Admin", "temporary", now);
+            user = new AuthUser("Admin", "temporary", now, "Administrator");
             user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
             dbContext.AuthUsers.Add(user);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        else if (!string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase))
+        {
+            user.SetRole("Administrator", now);
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         var unownedSites = await dbContext.Sites.IgnoreQueryFilters().Where(x => x.OwnerUserId == null).ToListAsync(cancellationToken);
         foreach (var site in unownedSites) site.AssignOwner(user.Id, now);
         if (unownedSites.Count > 0) await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<RegistrationResult> RegisterAsync(
+        string userName,
+        string password,
+        string confirmPassword,
+        CancellationToken cancellationToken = default)
+    {
+        var cleanUserName = (userName ?? string.Empty).Trim();
+        var safePassword = password ?? string.Empty;
+        var safeConfirmation = confirmPassword ?? string.Empty;
+
+        if (cleanUserName.Length is < 3 or > 64)
+            return RegistrationResult.Failed("Username must be between 3 and 64 characters.");
+
+        if (!Regex.IsMatch(cleanUserName, "^[A-Za-z0-9._-]+$"))
+            return RegistrationResult.Failed("Username can contain letters, numbers, dots, underscores, and hyphens only.");
+
+        if (safePassword.Length < 8)
+            return RegistrationResult.Failed("Password must contain at least 8 characters.");
+
+        if (!safePassword.Any(char.IsUpper) || !safePassword.Any(char.IsLower) || !safePassword.Any(char.IsDigit))
+            return RegistrationResult.Failed("Password must contain uppercase, lowercase, and numeric characters.");
+
+        if (!string.Equals(safePassword, safeConfirmation, StringComparison.Ordinal))
+            return RegistrationResult.Failed("Password confirmation does not match.");
+
+        var normalized = cleanUserName.ToUpperInvariant();
+        if (await dbContext.AuthUsers.AnyAsync(x => x.NormalizedUserName == normalized, cancellationToken))
+            return RegistrationResult.Failed("This username is already registered.");
+
+        var now = DateTime.UtcNow;
+        var user = new AuthUser(cleanUserName, "temporary", now, "User");
+        user.SetPasswordHash(_hasher.HashPassword(user, safePassword), now);
+        dbContext.AuthUsers.Add(user);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return RegistrationResult.Succeeded(user.Id);
+        }
+        catch (DbUpdateException)
+        {
+            return RegistrationResult.Failed("This username is already registered.");
+        }
     }
 
     public Task<LoginResult> SignInAsync(HttpContext context, string userName, string password, bool rememberMe, CancellationToken cancellationToken = default) =>
@@ -118,13 +169,19 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
     }
 
     private static bool IsSafeLocalPath(string? path) => !string.IsNullOrWhiteSpace(path) && path.StartsWith('/') && !path.StartsWith("//") && !Uri.TryCreate(path, UriKind.Absolute, out _);
-    private static bool IsAuthenticationPath(string path) => path.StartsWith("/login", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/logout", StringComparison.OrdinalIgnoreCase);
+    private static bool IsAuthenticationPath(string path) => path.StartsWith("/login", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/logout", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/register", StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed record LoginResult(bool IsSuccess, string Message, string RedirectPath)
 {
     public static LoginResult Failed(string message) => new(false, message, "/login");
     public static LoginResult Succeeded(string path) => new(true, string.Empty, path);
+}
+
+public sealed record RegistrationResult(bool IsSuccess, string Message, Guid? UserId)
+{
+    public static RegistrationResult Failed(string message) => new(false, message, null);
+    public static RegistrationResult Succeeded(Guid userId) => new(true, string.Empty, userId);
 }
 
 public sealed record LoginAuditDto(Guid Id, string UserName, bool Succeeded, string Reason, string IpAddress, string UserAgent, DateTime AttemptedAtUtc);
