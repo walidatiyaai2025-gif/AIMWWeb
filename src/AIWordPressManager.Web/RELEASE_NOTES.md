@@ -1,5 +1,14 @@
 # AI WordPress Manager Release Notes
 
+## 155.67.0 - 2026-08-06 - Global Posts Explorer
+- Added a global posts explorer at `/module/posts` backed entirely by the local SQLite cache.
+- Added cross-site search by title, slug, and excerpt.
+- Added filtering by WordPress site and publication status.
+- Added 10, 25, 50, and 100 item page sizes with server-side pagination.
+- Added global published, draft, pending, total-post, and represented-site summaries.
+- Added direct links to the post editor, per-site content explorer, and the public WordPress post.
+- Kept the version and active branch visible together as `v155.67.0 • agent/logs-error-center`.
+
 ## 155.66.0 - 2026-08-06 - Version and Branch Identity
 - Added reliable Git branch detection for local runs, GitHub Actions, and published builds.
 - Added embedded `GitBranch` assembly metadata as a safe fallback when Git is unavailable at runtime.
