@@ -2,7 +2,7 @@
 @page "/module/content"
 @rendermode InteractiveServer
 @implements IDisposable
-@inject GlobalContentHubService ContentHub
+@inject AIWordPressManager.Persistence.AppDbContext DbContext
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "مركز إدارة المحتوى" : "Content Management Hub")</PageTitle>
@@ -98,7 +98,7 @@ else
     private async Task LoadAsync()
     {
         _loading = true;
-        try { _view = await ContentHub.GetAsync(); }
+        try { _view = await GlobalContentHubService.GetAsync(DbContext); }
         finally { _loading = false; }
     }
 
