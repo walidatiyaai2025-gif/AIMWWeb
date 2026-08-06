@@ -1,5 +1,14 @@
 # AI WordPress Manager Release Notes
 
+## 155.64.0 - 2026-08-06 - Operation Diagnostic Details
+- Added a dedicated operation-details page at `/operations/sites/{operationId}` and `/site-operations/{operationId}`.
+- Added operation, site, result, timing, duration, affected-record, message, and technical-detail views.
+- Added safe not-found handling when an operation record is no longer available.
+- Added one-click clipboard copying for a complete diagnostic report.
+- Added direct navigation back to operation history and the related site connection center.
+- Added operation lookup by ID to the persistent history service.
+- Moved CI verification from `windows-latest` to `ubuntu-latest` and added concurrency cancellation to reduce queued builds.
+
 ## 155.63.0 - 2026-08-06 - Operations Navigation Integration
 - Added Operations Hub, Site Operations, and Site Reliability to the main sidebar.
 - Added the three operations pages to the global command palette in Arabic and English.
