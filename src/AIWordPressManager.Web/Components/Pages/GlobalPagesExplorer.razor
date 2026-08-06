@@ -1,7 +1,7 @@
 @page "/module/pages"
 @rendermode InteractiveServer
 @implements IDisposable
-@inject GlobalPagesExplorerService Explorer
+@inject GlobalPostsExplorerService Explorer
 @inject SiteWebService SiteService
 @inject AppLanguageService L
 
@@ -89,7 +89,7 @@ else
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
-    private async Task LoadAsync(){_loading=true;try{_sites=await SiteService.GetSitesAsync();Guid? siteId=Guid.TryParse(_siteFilter,out var parsed)?parsed:null;_result=await Explorer.SearchAsync(siteId,_statusFilter,_query,_page,_pageSize);_page=_result.Page;}finally{_loading=false;}}
+    private async Task LoadAsync(){_loading=true;try{_sites=await SiteService.GetSitesAsync();Guid? siteId=Guid.TryParse(_siteFilter,out var parsed)?parsed:null;_result=await Explorer.SearchPagesAsync(siteId,_statusFilter,_query,_page,_pageSize);_page=_result.Page;}finally{_loading=false;}}
     private async Task ApplyAsync(){_page=1;await LoadAsync();}
     private async Task ResetAsync(){_query=string.Empty;_siteFilter=string.Empty;_statusFilter="all";_pageSize=25;_page=1;await LoadAsync();}
     private async Task PreviousAsync(){if(_page<=1)return;_page--;await LoadAsync();}
