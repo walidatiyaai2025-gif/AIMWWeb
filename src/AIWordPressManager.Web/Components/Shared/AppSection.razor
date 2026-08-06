@@ -22,7 +22,10 @@
             }
         </header>
     }
-    <div class="app-section__body @BodyClass">@ChildContent</div>
+    @if (ChildContent is not null)
+    {
+        <div class="app-section__body @BodyClass">@ChildContent</div>
+    }
 </section>
 
 @code {
@@ -34,6 +37,6 @@
     [Parameter] public string BodyClass { get; set; } = string.Empty;
     [Parameter] public RenderFragment? Header { get; set; }
     [Parameter] public RenderFragment? Actions { get; set; }
-    [Parameter, EditorRequired] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
     private RenderFragment? HeaderContent => Header ?? Actions;
 }
