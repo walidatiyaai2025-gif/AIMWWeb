@@ -1,0 +1,96 @@
+name: Patch Content Explorer V2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-content-explorer-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/system-health
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Patch ContentExplorer
+        shell: pwsh
+        run: |
+          $path = 'src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor'
+          $text = Get-Content $path -Raw
+
+          $oldHero = @'
+        <section class="explorer-hero panel">
+            <div>
+                <span class="workspace-kicker">@(L.IsArabic ? "مركز إدارة المحتوى" : "CONTENT OPERATIONS")</span>
+                <h1>@L["WordPressExplorer"]</h1>
+                <p><strong>@_site.Name</strong> · @L["ExplorerIntro"]</p>
+            </div>
+            <div class="explorer-hero-actions">
+                <a class="btn" href="@($"/sites/{Id}")">← @L["SiteDetailsButton"]</a>
+                <a class="btn" href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</a>
+                <button class="btn primary" @onclick="SynchronizeAsync" disabled="@_syncing">
+                    @(_syncing ? (L.IsArabic ? "المزامنة تعمل في الخلفية" : "Syncing in background") : $"↻ {L["SyncNow"]}")
+                </button>
+            </div>
+        </section>
+'@
+          $newHero = @'
+        <AppToolbar Eyebrow="@(L.IsArabic ? "مركز إدارة المحتوى" : "CONTENT OPERATIONS")"
+                    Title="@L["WordPressExplorer"]"
+                    Subtitle="@($"{_site.Name} · {L["ExplorerIntro"]}")">
+            <Actions>
+                <AppButton Href="@($"/sites/{Id}")" Text="@L["SiteDetailsButton"]" />
+                <AppButton Href="/module/execution" Text="@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")" />
+                <AppButton Variant="primary" Icon="↻" Busy="@_syncing" Disabled="@_syncing"
+                           Text="@(_syncing ? (L.IsArabic ? "المزامنة تعمل في الخلفية" : "Syncing in background") : L["SyncNow"])"
+                           OnClick="SynchronizeClickedAsync" />
+            </Actions>
+        </AppToolbar>
+'@
+          if ($text.Contains($oldHero)) { $text = $text.Replace($oldHero, $newHero) }
+
+          $oldStats = @'
+        <section class="explorer-summary-grid">
+            <article class="panel explorer-summary-card"><span>▤</span><div><small>@L["Posts"]</small><strong>@(_data?.Totals.Posts ?? 0)</strong><p>@(L.IsArabic ? "مقال محفوظ محليًا" : "Locally cached posts")</p></div></article>
+            <article class="panel explorer-summary-card"><span>▧</span><div><small>@L["Pages"]</small><strong>@(_data?.Totals.Pages ?? 0)</strong><p>@(L.IsArabic ? "صفحة ثابتة" : "Static pages")</p></div></article>
+            <article class="panel explorer-summary-card"><span>#</span><div><small>@L["CategoriesTags"]</small><strong>@((_data?.Totals.Categories ?? 0) + (_data?.Totals.Tags ?? 0))</strong><p>@(_data?.Totals.Categories ?? 0) @L["Category"] · @(_data?.Totals.Tags ?? 0) @L["Tag"]</p></div></article>
+            <article class="panel explorer-summary-card"><span>▣</span><div><small>@L["Media"]</small><strong>@(_data?.Totals.Media ?? 0)</strong><p>@L["LastSync"]: @FormatDate(_data?.LastSynchronizedAtUtc)</p></div></article>
+        </section>
+'@
+          $newStats = @'
+        <section class="app-stat-grid">
+            <AppStatCard Icon="▤" Label="@L["Posts"]" Value="@((_data?.Totals.Posts ?? 0).ToString())" Description="@(L.IsArabic ? "مقال محفوظ محليًا" : "Locally cached posts")" />
+            <AppStatCard Icon="▧" Label="@L["Pages"]" Value="@((_data?.Totals.Pages ?? 0).ToString())" Description="@(L.IsArabic ? "صفحة ثابتة" : "Static pages")" Tone="info" />
+            <AppStatCard Icon="#" Label="@L["CategoriesTags"]" Value="@(((_data?.Totals.Categories ?? 0) + (_data?.Totals.Tags ?? 0)).ToString())" Description="@($"{_data?.Totals.Categories ?? 0} {L["Category"]} · {_data?.Totals.Tags ?? 0} {L["Tag"]}")" Tone="warning" />
+            <AppStatCard Icon="▣" Label="@L["Media"]" Value="@((_data?.Totals.Media ?? 0).ToString())" Description="@($"{L["LastSync"]}: {FormatDate(_data?.LastSynchronizedAtUtc)}")" Tone="success" />
+        </section>
+'@
+          if ($text.Contains($oldStats)) { $text = $text.Replace($oldStats, $newStats) }
+
+          $text = $text.Replace('    private async Task SynchronizeAsync()', '    private Task SynchronizeClickedAsync(MouseEventArgs _) => SynchronizeAsync();`n`n    private async Task SynchronizeAsync()')
+          Set-Content $path $text -Encoding utf8
+
+          $proj = 'src/AIWordPressManager.Web/AIWordPressManager.Web.csproj'
+          $p = Get-Content $proj -Raw
+          $p = $p.Replace('<Version>155.47.0</Version>', '<Version>155.48.0</Version>')
+          $p = $p.Replace('<AssemblyVersion>155.47.0.0</AssemblyVersion>', '<AssemblyVersion>155.48.0.0</AssemblyVersion>')
+          $p = $p.Replace('<FileVersion>155.47.0.0</FileVersion>', '<FileVersion>155.48.0.0</FileVersion>')
+          $p = $p.Replace('<InformationalVersion>155.47.0</InformationalVersion>', '<InformationalVersion>155.48.0</InformationalVersion>')
+          Set-Content $proj $p -Encoding utf8
+      - name: Build
+        run: dotnet build AIWordPressManager.Web.sln --configuration Debug
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor src/AIWordPressManager.Web/AIWordPressManager.Web.csproj
+          git diff --cached --quiet || git commit -m "feat: modernize content explorer workspace"
+          git push origin feature/system-health
