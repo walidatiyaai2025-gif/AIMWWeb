@@ -1,5 +1,13 @@
 # AI WordPress Manager Release Notes
 
+## 155.65.0 - 2026-08-06 - Operation History Maintenance
+- Added an operation-history maintenance page at `/operations/maintenance` and `/site-operations/maintenance`.
+- Added storage file size, record count, represented-site count, and oldest/newest operation indicators.
+- Added cleanup preview by retention age while protecting a configurable number of the newest records.
+- Added typed `CLEANUP` confirmation before irreversible deletion.
+- Added cleanup result reporting and immediate storage-stat refresh.
+- Added maintenance access from the Operations Hub.
+
 ## 155.64.0 - 2026-08-06 - Operation Diagnostic Details
 - Added a dedicated operation-details page at `/operations/sites/{operationId}` and `/site-operations/{operationId}`.
 - Added operation, site, result, timing, duration, affected-record, message, and technical-detail views.
