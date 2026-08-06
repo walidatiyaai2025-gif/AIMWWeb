@@ -1,6 +1,7 @@
 @page "/sites/{Id:guid}/snapshot"
 @page "/sites/{Id:guid}/offline-data"
 @rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
 @inject AIWordPressManager.Persistence.AppDbContext Db
 @inject SiteWebService SiteService
 @inject WordPressSyncWebService SyncService
@@ -87,13 +88,13 @@ else
             _loading = true;
             _site = await SiteService.GetSiteAsync(Id);
             if (_site is null) return;
-            var posts = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable && x.ContentType == "post"));
-            var pages = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable && x.ContentType == "page"));
-            var categories = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressCategoryRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable));
-            var tags = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressTagRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable));
-            var media = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Db.WordPressMediaRecords.AsNoTracking().Where(x => x.SiteId == Id && x.IsAvailable));
-            var contentSync = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.MaxAsync(Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id).Select(x => (DateTime?)x.LastSynchronizedAtUtc));
-            var mediaSync = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.MaxAsync(Db.WordPressMediaRecords.AsNoTracking().Where(x => x.SiteId == Id).Select(x => (DateTime?)x.LastSynchronizedAtUtc));
+            var posts = await Db.WordPressContentRecords.AsNoTracking().CountAsync(x => x.SiteId == Id && x.IsAvailable && x.ContentType == "post");
+            var pages = await Db.WordPressContentRecords.AsNoTracking().CountAsync(x => x.SiteId == Id && x.IsAvailable && x.ContentType == "page");
+            var categories = await Db.WordPressCategoryRecords.AsNoTracking().CountAsync(x => x.SiteId == Id && x.IsAvailable);
+            var tags = await Db.WordPressTagRecords.AsNoTracking().CountAsync(x => x.SiteId == Id && x.IsAvailable);
+            var media = await Db.WordPressMediaRecords.AsNoTracking().CountAsync(x => x.SiteId == Id && x.IsAvailable);
+            var contentSync = await Db.WordPressContentRecords.AsNoTracking().Where(x => x.SiteId == Id).MaxAsync(x => (DateTime?)x.LastSynchronizedAtUtc);
+            var mediaSync = await Db.WordPressMediaRecords.AsNoTracking().Where(x => x.SiteId == Id).MaxAsync(x => (DateTime?)x.LastSynchronizedAtUtc);
             var lastSync = new[] { contentSync, mediaSync }.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty().Max();
             _snapshot = new(posts, pages, categories, tags, media, lastSync == default ? null : lastSync);
             _isError = false;
