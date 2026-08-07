@@ -9,17 +9,14 @@ namespace AIWordPressManager.Web.Services;
 public sealed class SiteMailProfileService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
-    ISecretProtectionService secretProtectionService,
-    AccountEmailSettingsService accountEmailSettingsService)
+    ISecretProtectionService secretProtectionService)
 {
     private Guid OwnerId => currentUser.UserId;
 
     public async Task<SiteMailProfileView> GetAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
         await RequireOwnedSiteAsync(siteId, cancellationToken);
-        var profile = await dbContext.SiteMailProfiles.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken);
-
+        var profile = await dbContext.SiteMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken);
         return profile is null ? SiteMailProfileView.Default(siteId) : ToView(profile);
     }
 
@@ -27,19 +24,11 @@ public sealed class SiteMailProfileService(
     {
         ArgumentNullException.ThrowIfNull(input);
         await RequireOwnedSiteAsync(siteId, cancellationToken);
-
         var profile = await dbContext.SiteMailProfiles.FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken);
         var now = DateTime.UtcNow;
-        if (profile is null)
-        {
-            profile = new SiteMailProfile(siteId, OwnerId, now);
-            dbContext.SiteMailProfiles.Add(profile);
-        }
+        if (profile is null) { profile = new SiteMailProfile(siteId, OwnerId, now); dbContext.SiteMailProfiles.Add(profile); }
 
-        if (input.UseAccountProfile)
-        {
-            profile.ConfigureInheritance(true, input.IsEnabled, now);
-        }
+        if (input.UseAccountProfile) profile.ConfigureInheritance(true, input.IsEnabled, now);
         else
         {
             ValidateEmail(input.FromAddress, "From address");
@@ -52,7 +41,6 @@ public sealed class SiteMailProfileService(
             if (input.Password.Length > 2048) throw new InvalidOperationException("SMTP password is too long.");
             profile.SetProtectedPassword(await secretProtectionService.ProtectAsync(input.Password, cancellationToken), now);
         }
-
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToView(profile);
     }
@@ -69,33 +57,33 @@ public sealed class SiteMailProfileService(
     public async Task<SiteMailDeliveryProfile?> GetDeliveryProfileAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
         await RequireOwnedSiteAsync(siteId, cancellationToken);
-        var profile = await dbContext.SiteMailProfiles.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken);
-
+        var profile = await dbContext.SiteMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken);
         if (profile is null || !profile.IsEnabled) return null;
-        if (profile.UseAccountProfile) return await accountEmailSettingsService.GetDeliveryProfileAsync(cancellationToken);
+
+        if (profile.UseAccountProfile)
+        {
+            var account = await dbContext.AccountMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.OwnerUserId == OwnerId, cancellationToken);
+            if (account is null || !account.IsEnabled) return null;
+            string? accountPassword = null;
+            if (!string.IsNullOrWhiteSpace(account.ProtectedPassword)) accountPassword = await secretProtectionService.UnprotectAsync(account.ProtectedPassword, cancellationToken);
+            return new SiteMailDeliveryProfile(account.Host, account.Port, account.UserName, accountPassword, account.FromAddress, account.FromName, account.ReplyToAddress, account.EnableSsl);
+        }
 
         string? password = null;
-        if (!string.IsNullOrWhiteSpace(profile.ProtectedPassword))
-            password = await secretProtectionService.UnprotectAsync(profile.ProtectedPassword, cancellationToken);
-
+        if (!string.IsNullOrWhiteSpace(profile.ProtectedPassword)) password = await secretProtectionService.UnprotectAsync(profile.ProtectedPassword, cancellationToken);
         return new SiteMailDeliveryProfile(profile.Host, profile.Port, profile.UserName, password, profile.FromAddress, profile.FromName, profile.ReplyToAddress, profile.EnableSsl);
     }
 
     private async Task RequireOwnedSiteAsync(Guid siteId, CancellationToken cancellationToken)
     {
-        var ownsSite = await dbContext.Sites.AsNoTracking().AnyAsync(x => x.Id == siteId && x.OwnerUserId == OwnerId, cancellationToken);
-        if (!ownsSite) throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
+        if (!await dbContext.Sites.AsNoTracking().AnyAsync(x => x.Id == siteId && x.OwnerUserId == OwnerId, cancellationToken))
+            throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
     }
 
     private static void ValidateEmail(string? value, string label)
     {
         if (string.IsNullOrWhiteSpace(value)) throw new InvalidOperationException($"{label} is required.");
-        try
-        {
-            var parsed = new MailAddress(value.Trim());
-            if (!string.Equals(parsed.Address, value.Trim(), StringComparison.OrdinalIgnoreCase)) throw new FormatException();
-        }
+        try { var parsed = new MailAddress(value.Trim()); if (!string.Equals(parsed.Address, value.Trim(), StringComparison.OrdinalIgnoreCase)) throw new FormatException(); }
         catch (FormatException) { throw new InvalidOperationException($"{label} is not a valid email address."); }
     }
 
