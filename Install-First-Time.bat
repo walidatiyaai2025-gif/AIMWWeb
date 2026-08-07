@@ -13,76 +13,46 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set "SETUP_TOOL=%~dp0Setup-Tool.ps1"
-set "BOOTSTRAP_TOOL="
-set "BOOTSTRAP_BRANCH=main"
-set "GIT_CHECK_LOG=%TEMP%\AIWM-Git-Check-%RANDOM%-%RANDOM%.log"
-
-rem If this folder is already a Git repository, prefer the newest Setup-Tool.ps1
-rem from the current remote branch. This prevents an outdated local setup script
-rem from failing before it has a chance to update the repository.
-if exist "%~dp0.git" (
-    where git.exe >nul 2>&1
-    if not errorlevel 1 (
-        rem Git may reject a repository copied/installed by another Windows user or
-        rem an elevated installer. Trust only this exact repository when Git reports
-        rem dubious ownership, then retry the bootstrap normally.
-        git.exe -C "%~dp0" status --porcelain >nul 2>"%GIT_CHECK_LOG%"
-        if errorlevel 1 (
-            findstr /I /C:"dubious ownership" "%GIT_CHECK_LOG%" >nul 2>&1
-            if not errorlevel 1 (
-                echo [WARNING] Git repository ownership differs from the current Windows user.
-                echo [INFO] Trusting this exact installation directory for the current user...
-                git.exe config --global --add safe.directory "%~dp0" >nul 2>&1
-                if errorlevel 1 (
-                    echo [WARNING] Could not add the repository to Git safe.directory. The local Setup Tool will be used.
-                ) else (
-                    echo [SUCCESS] Repository added to Git safe.directory.
-                )
-            )
-        )
-        del /q "%GIT_CHECK_LOG%" >nul 2>&1
-
-        for /f "usebackq delims=" %%B in (`git.exe -C "%~dp0" rev-parse --abbrev-ref HEAD 2^>nul`) do set "BOOTSTRAP_BRANCH=%%B"
-        if /I "%BOOTSTRAP_BRANCH%"=="HEAD" set "BOOTSTRAP_BRANCH=main"
-
-        echo [INFO] Checking for the latest Setup Tool on origin/%BOOTSTRAP_BRANCH%...
-        git.exe -C "%~dp0" fetch origin "%BOOTSTRAP_BRANCH%" --quiet 2>nul
-        if not errorlevel 1 (
-            set "BOOTSTRAP_TOOL=%TEMP%\AIWM-Setup-Tool-%RANDOM%-%RANDOM%.ps1"
-            git.exe -C "%~dp0" show "origin/%BOOTSTRAP_BRANCH%:Setup-Tool.ps1" > "%BOOTSTRAP_TOOL%" 2>nul
-            if errorlevel 1 (
-                del /q "%BOOTSTRAP_TOOL%" >nul 2>&1
-                set "BOOTSTRAP_TOOL="
-            ) else (
-                echo [SUCCESS] Latest Setup Tool loaded from origin/%BOOTSTRAP_BRANCH%.
-                set "SETUP_TOOL=%BOOTSTRAP_TOOL%"
-            )
-        ) else (
-            echo [WARNING] Could not refresh the Setup Tool from GitHub. Using the local copy.
-        )
-    )
-)
-
-if exist "%GIT_CHECK_LOG%" del /q "%GIT_CHECK_LOG%" >nul 2>&1
-
-if not exist "%SETUP_TOOL%" (
+if not exist "%~dp0Setup-Tool.ps1" (
     echo.
-    echo [ERROR] Setup-Tool.ps1 was not found locally and could not be loaded from GitHub.
-    echo Expected local file: %~dp0Setup-Tool.ps1
+    echo [ERROR] Setup-Tool.ps1 was not found next to this BAT file.
+    echo Expected: %~dp0Setup-Tool.ps1
     echo.
     pause
     exit /b 1
 )
 
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SETUP_TOOL%" %*
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Setup-Tool.ps1" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 
-if defined BOOTSTRAP_TOOL del /q "%BOOTSTRAP_TOOL%" >nul 2>&1
+if "%EXIT_CODE%"=="0" goto :end
 
-if not "%EXIT_CODE%"=="0" (
-    echo.
-    echo [ERROR] Setup operation stopped with exit code %EXIT_CODE%.
+echo.
+echo ============================================================
+echo [ERROR] Setup operation stopped with exit code %EXIT_CODE%.
+echo ============================================================
+
+set "LATEST_LOG="
+for /f "delims=" %%F in ('dir /b /a-d /o-d "%TEMP%\AIWordPressManager-Setup\setup-*.log" 2^>nul') do (
+    if not defined LATEST_LOG set "LATEST_LOG=%TEMP%\AIWordPressManager-Setup\%%F"
 )
 
+if defined LATEST_LOG (
+    echo.
+    echo Diagnostic log: %LATEST_LOG%
+    echo.
+    echo ---------------- Last diagnostic lines ----------------
+    powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "Get-Content -LiteralPath $env:LATEST_LOG -Tail 80 -ErrorAction SilentlyContinue" 2>nul
+    echo ---------------------------------------------------------
+) else (
+    echo.
+    echo [WARNING] No setup diagnostic log was found in:
+    echo %TEMP%\AIWordPressManager-Setup
+)
+
+echo.
+echo The setup window will remain open so the error can be copied.
+if /I not "%CI%"=="true" pause
+
+:end
 exit /b %EXIT_CODE%
