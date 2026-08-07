@@ -146,6 +146,16 @@ function Enable-GitSafeDirectoryIfRequired {
     Write-Success "Repository added to Git safe.directory."
 }
 
+function Get-PathDepth {
+    param(
+        [Parameter(Mandatory)][string]$RootPath,
+        [Parameter(Mandatory)][string]$FilePath
+    )
+
+    $relativePath = $FilePath.Substring($RootPath.TrimEnd('\', '/').Length).TrimStart('\', '/')
+    return ($relativePath -split '[\\/]').Count
+}
+
 function Find-SolutionFile {
     param([Parameter(Mandatory)][string]$RootPath)
 
@@ -158,24 +168,18 @@ function Find-SolutionFile {
         throw "No solution file (*.sln) was found under: $RootPath"
     }
 
-    if ($solutions.Count -eq 1) {
-        return $solutions[0].FullName
+    $selected = $solutions |
+        Sort-Object `
+            @{ Expression = { Get-PathDepth -RootPath $RootPath -FilePath $_.FullName }; Ascending = $true },
+            @{ Expression = { if ($_.BaseName -match '(?i)wordpress|web|manager') { 0 } else { 1 } }; Ascending = $true },
+            @{ Expression = { $_.FullName }; Ascending = $true } |
+        Select-Object -First 1
+
+    if ($solutions.Count -gt 1) {
+        Write-WarningMessage "Multiple solution files were found. The best match was selected automatically."
     }
 
-    Write-Host ""
-    Write-Host "Multiple solution files were found:" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $solutions.Count; $i++) {
-        Write-Host "[$($i + 1)] $($solutions[$i].FullName)"
-    }
-
-    while ($true) {
-        $selection = Read-Host "Select a solution number"
-        $number = 0
-        if ([int]::TryParse($selection, [ref]$number) -and $number -ge 1 -and $number -le $solutions.Count) {
-            return $solutions[$number - 1].FullName
-        }
-        Write-WarningMessage "Invalid selection."
-    }
+    return $selected.FullName
 }
 
 function Find-WebProject {
@@ -193,24 +197,18 @@ function Find-WebProject {
         throw "No ASP.NET Core Web project was found under: $RootPath"
     }
 
-    if ($projects.Count -eq 1) {
-        return $projects[0].FullName
+    $selected = $projects |
+        Sort-Object `
+            @{ Expression = { if ($_.BaseName -match '(?i)wordpress.*web|web') { 0 } else { 1 } }; Ascending = $true },
+            @{ Expression = { Get-PathDepth -RootPath $RootPath -FilePath $_.FullName }; Ascending = $true },
+            @{ Expression = { $_.FullName }; Ascending = $true } |
+        Select-Object -First 1
+
+    if ($projects.Count -gt 1) {
+        Write-WarningMessage "Multiple ASP.NET Core Web projects were found. The best match was selected automatically."
     }
 
-    Write-Host ""
-    Write-Host "Multiple ASP.NET Core Web projects were found:" -ForegroundColor Yellow
-    for ($i = 0; $i -lt $projects.Count; $i++) {
-        Write-Host "[$($i + 1)] $($projects[$i].FullName)"
-    }
-
-    while ($true) {
-        $selection = Read-Host "Select a web project number"
-        $number = 0
-        if ([int]::TryParse($selection, [ref]$number) -and $number -ge 1 -and $number -le $projects.Count) {
-            return $projects[$number - 1].FullName
-        }
-        Write-WarningMessage "Invalid selection."
-    }
+    return $selected.FullName
 }
 
 function Test-ServerUrl {
@@ -281,7 +279,7 @@ try {
             throw "The branch '$Branch' does not exist in the remote repository."
         }
 
-        Write-Step "Cloning the repository..."
+        Write-Step "Cloning the latest branch state..."
         Invoke-Native "git.exe" @("clone", "--branch", $Branch, "--single-branch", $RepositoryUrl, $InstallPath) "Git clone failed."
         Enable-GitSafeDirectoryIfRequired -RepositoryPath $InstallPath
     }
@@ -303,8 +301,8 @@ try {
         Invoke-Native "git.exe" @("remote", "set-url", "origin", $RepositoryUrl) "Could not update origin URL."
     }
 
-    Write-Step "Downloading the latest repository state..."
-    Invoke-Native "git.exe" @("fetch", "origin", "--prune") "Git fetch failed."
+    Write-Step "Downloading the latest commit from origin/$Branch..."
+    Invoke-Native "git.exe" @("fetch", "origin", $Branch, "--prune", "--tags") "Git fetch failed."
 
     & git.exe show-ref --verify --quiet "refs/remotes/origin/$Branch"
     if ($LASTEXITCODE -ne 0) {
@@ -319,14 +317,20 @@ try {
         Invoke-Native "git.exe" @("switch", "--create", $Branch, "--track", "origin/$Branch") "Could not create local branch '$Branch'."
     }
 
-    Write-Step "Resetting repository to origin/$Branch..."
+    Write-Step "Applying the latest remote branch state..."
     Invoke-Native "git.exe" @("reset", "--hard", "origin/$Branch") "Git reset failed."
+
+    $currentCommit = ((Invoke-Native "git.exe" @("rev-parse", "HEAD") "Could not read current commit." -CaptureOutput) | Out-String).Trim()
+    $currentCommitInfo = ((Invoke-Native "git.exe" @("log", "-1", "--format=%h | %ci | %s") "Could not read commit information." -CaptureOutput) | Out-String).Trim()
+    Write-Success "Latest branch commit applied: $currentCommit"
+    Write-Host "Commit: $currentCommitInfo" -ForegroundColor Gray
 
     Write-Step "Removing untracked build files..."
     Invoke-Native "git.exe" @("clean", "-fd", "-e", "appsettings.Production.json") "Git clean failed."
 
+    Write-Step "Detecting the solution automatically..."
     $solutionFile = Find-SolutionFile -RootPath $InstallPath
-    Write-Host "Solution: $solutionFile" -ForegroundColor Gray
+    Write-Host "Selected solution: $solutionFile" -ForegroundColor Gray
 
     Write-Step "Cleaning old build output..."
     Get-ChildItem -Path $InstallPath -Directory -Recurse -Force -ErrorAction SilentlyContinue |
@@ -338,7 +342,7 @@ try {
 
     Write-Step "Building the application in $Configuration mode..."
     Invoke-Native "dotnet.exe" @("build", $solutionFile, "--configuration", $Configuration, "--no-restore") "Application build failed."
-    Write-Success "Application build completed successfully."
+    Write-Success "Application build completed successfully from commit $currentCommit."
 
     if ($SkipStart) {
         Write-Success "Installation/update completed. Application startup was skipped."
@@ -350,8 +354,9 @@ try {
         exit 0
     }
 
+    Write-Step "Detecting the ASP.NET Core Web project automatically..."
     $webProject = Find-WebProject -RootPath $InstallPath
-    Write-Host "Web project: $webProject" -ForegroundColor Gray
+    Write-Host "Selected web project: $webProject" -ForegroundColor Gray
 
     $serverUrl = Read-RequiredValue -Prompt "Enter the server URL to listen on, for example http://0.0.0.0:7148"
     while (-not (Test-ServerUrl -Url $serverUrl)) {
@@ -364,6 +369,7 @@ try {
     Write-Host ""
     Write-Host "====================================================" -ForegroundColor DarkCyan
     Write-Host " Starting AI WordPress Manager" -ForegroundColor White
+    Write-Host " Commit: $currentCommit" -ForegroundColor Gray
     Write-Host " URL: $serverUrl" -ForegroundColor Green
     Write-Host " Press Ctrl+C to stop the application." -ForegroundColor Yellow
     Write-Host "====================================================" -ForegroundColor DarkCyan
