@@ -68,6 +68,24 @@ public sealed class AccountEmailSettingsServiceTests
     }
 
     [Fact]
+    public async Task Diagnostics_Profile_Is_Available_Before_Outbound_Email_Is_Enabled()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var owner = await fixture.AddUserAsync();
+        var service = fixture.CreateService(owner.Id);
+
+        await service.SaveProfileAsync(new AccountMailProfileInput(
+            "smtp.example.com", 587, "mailer@example.com", "Secret!123",
+            "alerts@example.com", "Dashboard", string.Empty, true, false));
+
+        (await service.GetDeliveryProfileAsync()).Should().BeNull();
+        var testProfile = await service.GetTestProfileAsync();
+        testProfile.Host.Should().Be("smtp.example.com");
+        testProfile.Password.Should().Be("Secret!123");
+        testProfile.FromAddress.Should().Be("alerts@example.com");
+    }
+
+    [Fact]
     public async Task Each_Account_Only_Sees_Its_Own_Email_Settings()
     {
         await using var fixture = await Fixture.CreateAsync();
