@@ -61,22 +61,16 @@ function Stop-WithError([string]$Message) {
         Write-Host "Last command   : $script:LastCommand" -ForegroundColor DarkGray
         Write-Host "Exit code      : $script:LastExitCode" -ForegroundColor DarkGray
     }
-    if ([Environment]::UserInteractive -and -not $NonInteractive) {
-        Read-Host "Press Enter to close"
-    }
+    if ([Environment]::UserInteractive -and -not $NonInteractive) { Read-Host "Press Enter to close" }
     exit 1
 }
 
 function Read-RequiredValue {
     param([string]$Prompt, [string]$DefaultValue = "")
-
     if ($NonInteractive) {
-        if ([string]::IsNullOrWhiteSpace($DefaultValue)) {
-            throw "Required value missing in non-interactive mode: $Prompt"
-        }
+        if ([string]::IsNullOrWhiteSpace($DefaultValue)) { throw "Required value missing in non-interactive mode: $Prompt" }
         return $DefaultValue
     }
-
     while ($true) {
         $display = if ([string]::IsNullOrWhiteSpace($DefaultValue)) { $Prompt } else { "$Prompt [$DefaultValue]" }
         $entered = Read-Host $display
@@ -88,10 +82,8 @@ function Read-RequiredValue {
 
 function Read-YesNo {
     param([string]$Prompt, [bool]$DefaultYes = $true)
-
     if ($NonInteractive) { return $DefaultYes }
     $suffix = if ($DefaultYes) { "[Y/n]" } else { "[y/N]" }
-
     while ($true) {
         $answer = Read-Host "$Prompt $suffix"
         if ([string]::IsNullOrWhiteSpace($answer)) { return $DefaultYes }
@@ -117,27 +109,20 @@ function Invoke-Native {
 
     $script:LastCommand = "$FilePath $($Arguments -join ' ')"
     Write-Log "COMMAND: $script:LastCommand" "DEBUG"
-
     $oldPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
         $output = @(& $FilePath @Arguments 2>&1)
         $exitCode = $LASTEXITCODE
     }
-    finally {
-        $ErrorActionPreference = $oldPreference
-    }
+    finally { $ErrorActionPreference = $oldPreference }
 
     $script:LastExitCode = $exitCode
     $script:LastOutput = ($output | Out-String).Trim()
-    if (-not [string]::IsNullOrWhiteSpace($script:LastOutput)) {
-        Add-Content -LiteralPath $script:LogPath -Value $script:LastOutput -Encoding UTF8
-    }
+    if (-not [string]::IsNullOrWhiteSpace($script:LastOutput)) { Add-Content -LiteralPath $script:LogPath -Value $script:LastOutput -Encoding UTF8 }
 
     if ($exitCode -ne 0 -and -not $AllowFailure) {
-        if ([string]::IsNullOrWhiteSpace($script:LastOutput)) {
-            throw "$FailureMessage Exit code: $exitCode"
-        }
+        if ([string]::IsNullOrWhiteSpace($script:LastOutput)) { throw "$FailureMessage Exit code: $exitCode" }
         throw "$FailureMessage`n$script:LastOutput`nExit code: $exitCode"
     }
 
@@ -147,7 +132,6 @@ function Invoke-Native {
             if (-not [string]::IsNullOrWhiteSpace($text)) { Write-Host $text }
         }
     }
-
     if ($CaptureOutput) { return $output }
 }
 
@@ -159,9 +143,7 @@ function Test-NativeSuccess {
 
 function Resolve-FullPath([string]$Path) {
     $expanded = [Environment]::ExpandEnvironmentVariables($Path.Trim())
-    if ($expanded.StartsWith("~")) {
-        $expanded = Join-Path $HOME $expanded.Substring(1).TrimStart("\", "/")
-    }
+    if ($expanded.StartsWith("~")) { $expanded = Join-Path $HOME $expanded.Substring(1).TrimStart("\", "/") }
     return [System.IO.Path]::GetFullPath($expanded)
 }
 
@@ -172,59 +154,41 @@ function Normalize-GitRemote([string]$Url) {
 
 function Ensure-Prerequisites {
     Write-Step "Checking Git..."
-    if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) {
-        throw "Git is missing. Install Git for Windows and run this tool again."
-    }
+    if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) { throw "Git is missing. Install Git for Windows and run this tool again." }
     $gitVersion = ((Invoke-Native "git.exe" @("--version") "Could not read Git version." -CaptureOutput) | Out-String).Trim()
     Write-Success $gitVersion
 
     Write-Step "Checking .NET 8 SDK..."
-    if (-not (Get-Command dotnet.exe -ErrorAction SilentlyContinue)) {
-        throw ".NET SDK is missing. Install the .NET 8 SDK and run this tool again."
-    }
+    if (-not (Get-Command dotnet.exe -ErrorAction SilentlyContinue)) { throw ".NET SDK is missing. Install the .NET 8 SDK and run this tool again." }
     $sdks = @(Invoke-Native "dotnet.exe" @("--list-sdks") "Could not list .NET SDKs." -CaptureOutput)
     $sdk8 = @($sdks | Where-Object { $_.ToString() -match '^\s*8\.' })
-    if ($sdk8.Count -eq 0) {
-        throw ".NET 8 SDK was not found. Installing only the runtime is not enough for build operations."
-    }
+    if ($sdk8.Count -eq 0) { throw ".NET 8 SDK was not found. Installing only the runtime is not enough for build operations." }
     Write-Success (".NET 8 SDK found: " + $sdk8[0].ToString().Trim())
 }
 
 function Resolve-InstallPath {
     if ([string]::IsNullOrWhiteSpace($script:ResolvedInstallPath)) {
         $value = $InstallPath
-        if ([string]::IsNullOrWhiteSpace($value)) {
-            $value = Read-RequiredValue "Enter the full installation/repository directory"
-        }
+        if ([string]::IsNullOrWhiteSpace($value)) { $value = Read-RequiredValue "Enter the full installation/repository directory" }
         $script:ResolvedInstallPath = Resolve-FullPath $value
     }
     return $script:ResolvedInstallPath
 }
 
 function Assert-ValidBranch {
-    if (-not (Test-NativeSuccess "git.exe" @("check-ref-format", "--branch", $Branch))) {
-        throw "Invalid Git branch name: $Branch"
-    }
+    if (-not (Test-NativeSuccess "git.exe" @("check-ref-format", "--branch", $Branch))) { throw "Invalid Git branch name: $Branch" }
 }
 
 function Enable-GitSafeDirectoryIfRequired([string]$Path) {
     $result = Invoke-Native "git.exe" @("-C", $Path, "status", "--porcelain") "Could not inspect repository." -AllowFailure -CaptureOutput
     if ($script:LastExitCode -eq 0) { return }
-
     $text = ($result | Out-String)
-    if ($text -notmatch "dubious ownership") {
-        throw "Git cannot access the repository.`n$text"
-    }
-
+    if ($text -notmatch "dubious ownership") { throw "Git cannot access the repository.`n$text" }
     Write-WarningMessage "Git detected dubious ownership for this repository."
-    if (-not (Read-YesNo "Trust this repository for the current Windows user?" $true)) {
-        throw "Repository trust was declined."
-    }
-
+    if (-not (Read-YesNo "Trust this repository for the current Windows user?" $true)) { throw "Repository trust was declined." }
     $safePath = $Path.Replace("\", "/")
     $existing = @(Invoke-Native "git.exe" @("config", "--global", "--get-all", "safe.directory") "Could not read safe.directory." -AllowFailure -CaptureOutput)
-    $existingText = @($existing | ForEach-Object { $_.ToString().Trim() })
-    if ($existingText -notcontains $safePath) {
+    if (@($existing | ForEach-Object { $_.ToString().Trim() }) -notcontains $safePath) {
         Invoke-Native "git.exe" @("config", "--global", "--add", "safe.directory", $safePath) "Could not add safe.directory."
         Write-Success "Repository added to Git safe.directory."
     }
@@ -233,23 +197,17 @@ function Enable-GitSafeDirectoryIfRequired([string]$Path) {
 function Ensure-Origin {
     $originResult = Invoke-Native "git.exe" @("remote", "get-url", "origin") "Could not read origin." -AllowFailure -CaptureOutput
     $origin = ($originResult | Out-String).Trim()
-
     if ($script:LastExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($origin)) {
-        if (-not (Read-YesNo "No origin remote exists. Add the configured GitHub repository as origin?" $true)) {
-            throw "A Git origin remote is required."
-        }
+        if (-not (Read-YesNo "No origin remote exists. Add the configured GitHub repository as origin?" $true)) { throw "A Git origin remote is required." }
         Invoke-Native "git.exe" @("remote", "add", "origin", $RepositoryUrl) "Could not add origin."
         Write-Success "Origin remote added."
         return
     }
-
     if ((Normalize-GitRemote $origin) -ne (Normalize-GitRemote $RepositoryUrl)) {
         Write-WarningMessage "The current origin points to a different repository."
         Write-Host "Current   : $origin"
         Write-Host "Configured: $RepositoryUrl"
-        if (-not (Read-YesNo "Replace origin with the configured repository?" $false)) {
-            throw "Repository synchronization cancelled because origin does not match."
-        }
+        if (-not (Read-YesNo "Replace origin with the configured repository?" $false)) { throw "Repository synchronization cancelled because origin does not match." }
         Invoke-Native "git.exe" @("remote", "set-url", "origin", $RepositoryUrl) "Could not update origin."
         Write-Success "Origin remote updated."
     }
@@ -257,7 +215,6 @@ function Ensure-Origin {
 
 function Ensure-Repository([bool]$AllowClone) {
     $path = Resolve-InstallPath
-
     if (-not (Test-Path -LiteralPath $path)) {
         if (-not $AllowClone) { throw "Repository directory does not exist: $path" }
         $parent = Split-Path $path -Parent
@@ -271,16 +228,10 @@ function Ensure-Repository([bool]$AllowClone) {
             Write-Step "Empty directory detected. Cloning '$Branch'..."
             Invoke-Native "git.exe" @("clone", "--branch", $Branch, "--single-branch", $RepositoryUrl, $path) "Git clone failed."
         }
-        else {
-            throw "The selected directory exists but is not a Git repository: $path`nChoose the existing repository directory or an empty directory for first installation."
-        }
+        else { throw "The selected directory exists but is not a Git repository: $path`nChoose the existing repository directory or an empty directory for first installation." }
     }
-
     Enable-GitSafeDirectoryIfRequired $path
-    if (-not $script:LocationWasPushed) {
-        Push-Location $path
-        $script:LocationWasPushed = $true
-    }
+    if (-not $script:LocationWasPushed) { Push-Location $path; $script:LocationWasPushed = $true }
     Assert-ValidBranch
     Ensure-Origin
 }
@@ -293,16 +244,12 @@ function Get-TrackedFiles([string]$Pattern) {
 function Find-SolutionFile([string]$Root) {
     $files = @(Get-TrackedFiles "*.sln")
     if ($files.Count -eq 0) { throw "No tracked solution (*.sln) exists in branch '$Branch'." }
-
     $items = @()
     foreach ($relative in $files) {
         $full = [System.IO.Path]::GetFullPath((Join-Path $Root $relative))
-        if (Test-Path -LiteralPath $full) {
-            $items += [pscustomobject]@{ Relative = $relative; FullName = $full; Depth = (($relative -split '[\\/]').Count - 1) }
-        }
+        if (Test-Path -LiteralPath $full) { $items += [pscustomobject]@{ Relative=$relative; FullName=$full; Depth=(($relative -split '[\\/]').Count - 1) } }
     }
     if ($items.Count -eq 0) { throw "Solution files are tracked by Git but are missing from disk." }
-
     $selected = $items | Sort-Object Depth, @{Expression={$_.Relative.Length}}, Relative | Select-Object -First 1
     if ($items.Count -gt 1) { Write-WarningMessage "Multiple solutions found. Automatically selected: $($selected.Relative)" }
     return $selected.FullName
@@ -312,9 +259,7 @@ function Get-TrackedProjects([string]$Root) {
     $items = @()
     foreach ($relative in @(Get-TrackedFiles "*.csproj")) {
         $full = [System.IO.Path]::GetFullPath((Join-Path $Root $relative))
-        if (Test-Path -LiteralPath $full) {
-            $items += [pscustomobject]@{ Relative = $relative; FullName = $full; Directory = (Split-Path $full -Parent); Depth = (($relative -split '[\\/]').Count - 1) }
-        }
+        if (Test-Path -LiteralPath $full) { $items += [pscustomobject]@{ Relative=$relative; FullName=$full; Directory=(Split-Path $full -Parent); Depth=(($relative -split '[\\/]').Count - 1) } }
     }
     return $items
 }
@@ -340,25 +285,19 @@ function Get-WorkingTreeChanges {
 function Protect-LocalChanges {
     $changes = @(Get-WorkingTreeChanges)
     if ($changes.Count -eq 0) { return }
-
     Write-WarningMessage "Uncommitted local changes were detected. They will not be deleted automatically."
     $changes | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
-
     $policy = $LocalChangesPolicy
     if ($policy -eq "Ask") {
         if ($NonInteractive) { $policy = "Abort" }
         else {
-            Write-Host ""
             Write-Host "1. Save changes in Git stash and continue"
             Write-Host "2. Abort and leave files untouched"
             Write-Host "3. DISCARD uncommitted changes" -ForegroundColor Red
             $answer = Read-Host "Select [1-3]"
-            if ($answer -eq "1") { $policy = "Stash" }
-            elseif ($answer -eq "3") { $policy = "Discard" }
-            else { $policy = "Abort" }
+            if ($answer -eq "1") { $policy = "Stash" } elseif ($answer -eq "3") { $policy = "Discard" } else { $policy = "Abort" }
         }
     }
-
     if ($policy -eq "Stash") {
         $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
         Invoke-Native "git.exe" @("stash", "push", "--include-untracked", "-m", "AIWM Setup Tool backup $stamp") "Could not stash local changes."
@@ -366,17 +305,13 @@ function Protect-LocalChanges {
         Write-WarningMessage "The stash is not restored automatically to avoid merge conflicts."
         return
     }
-
     if ($policy -eq "Discard") {
-        if (-not $NonInteractive -and -not (Read-YesNo "Permanently discard ALL uncommitted changes?" $false)) {
-            throw "Discard cancelled."
-        }
+        if (-not $NonInteractive -and -not (Read-YesNo "Permanently discard ALL uncommitted changes?" $false)) { throw "Discard cancelled." }
         Invoke-Native "git.exe" @("reset", "--hard", "HEAD") "Could not discard tracked changes."
         Invoke-Native "git.exe" @("clean", "-fd") "Could not discard untracked files."
         Write-WarningMessage "Uncommitted changes were discarded by explicit request."
         return
     }
-
     throw "Operation cancelled because local uncommitted changes exist."
 }
 
@@ -384,9 +319,7 @@ function Fetch-RemoteBranch {
     Write-Step "Fetching latest origin/$Branch..."
     $refSpec = "+refs/heads/${Branch}:refs/remotes/origin/${Branch}"
     Invoke-Native "git.exe" @("fetch", "origin", $refSpec, "--prune", "--tags") "Git fetch failed. Check network, GitHub authentication, proxy/firewall, repository URL, and branch name."
-    if (-not (Test-NativeSuccess "git.exe" @("show-ref", "--verify", "--quiet", "refs/remotes/origin/$Branch"))) {
-        throw "Remote branch origin/$Branch was not found after fetch."
-    }
+    if (-not (Test-NativeSuccess "git.exe" @("show-ref", "--verify", "--quiet", "refs/remotes/origin/$Branch"))) { throw "Remote branch origin/$Branch was not found after fetch." }
 }
 
 function Get-CurrentBranch {
@@ -395,11 +328,7 @@ function Get-CurrentBranch {
 
 function Switch-ConfiguredBranch {
     $current = Get-CurrentBranch
-    if ($current -eq $Branch) {
-        Write-Success "Already using branch '$Branch'."
-        return
-    }
-
+    if ($current -eq $Branch) { Write-Success "Already using branch '$Branch'."; return }
     if (Test-NativeSuccess "git.exe" @("show-ref", "--verify", "--quiet", "refs/heads/$Branch")) {
         Write-Step "Switching from '$current' to '$Branch'..."
         Invoke-Native "git.exe" @("switch", "--quiet", $Branch) "Could not switch to branch '$Branch'."
@@ -410,17 +339,33 @@ function Switch-ConfiguredBranch {
     }
 }
 
+function Protect-LocalCommits {
+    $aheadText = ((Invoke-Native "git.exe" @("rev-list", "--count", "origin/$Branch..HEAD") "Could not inspect local commits." -CaptureOutput) | Out-String).Trim()
+    $ahead = 0
+    [void][int]::TryParse($aheadText, [ref]$ahead)
+    if ($ahead -le 0) { return }
+
+    Write-WarningMessage "Local '$Branch' contains $ahead commit(s) that are not present on origin/$Branch."
+    if ($NonInteractive) { throw "Local commits would be replaced by update. Push them first or run interactively to create a backup branch." }
+    if (-not (Read-YesNo "Create a local backup branch for these commits before updating?" $true)) { throw "Update cancelled to protect local commits." }
+
+    $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $safeBranchPart = ($Branch -replace '[^A-Za-z0-9._-]', '-')
+    $backupBranch = "setup-backup/$safeBranchPart-$stamp"
+    Invoke-Native "git.exe" @("branch", $backupBranch, "HEAD") "Could not create backup branch for local commits."
+    Write-Success "Local commits preserved on branch: $backupBranch"
+}
+
 function Sync-FromGitHub {
     Protect-LocalChanges
     Fetch-RemoteBranch
     Switch-ConfiguredBranch
+    Protect-LocalCommits
     Write-Step "Applying latest origin/$Branch commit..."
     Invoke-Native "git.exe" @("reset", "--hard", "origin/$Branch") "Could not reset repository to origin/$Branch."
-
     $local = ((Invoke-Native "git.exe" @("rev-parse", "HEAD") "Could not read local commit." -CaptureOutput) | Out-String).Trim()
     $remote = ((Invoke-Native "git.exe" @("rev-parse", "origin/$Branch") "Could not read remote commit." -CaptureOutput) | Out-String).Trim()
     if ($local -ne $remote) { throw "Local HEAD does not match origin/$Branch after update." }
-
     $summary = ((Invoke-Native "git.exe" @("log", "-1", "--pretty=format:%h %cd %s", "--date=iso") "Could not read latest commit." -CaptureOutput) | Out-String).Trim()
     Write-Success "Repository synchronized: $summary"
 }
@@ -438,38 +383,26 @@ function Stop-DotNetProcessesWithConsent {
 
 function Clean-BuildOutput([string]$Root) {
     if ($SkipClean) { Write-WarningMessage "Build cleanup skipped."; return }
-
     $failed = @()
     foreach ($project in @(Get-TrackedProjects $Root)) {
         foreach ($name in @("bin", "obj")) {
             $folder = Join-Path $project.Directory $name
-            if (Test-Path -LiteralPath $folder) {
-                try { Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction Stop }
-                catch { $failed += $folder }
-            }
+            if (Test-Path -LiteralPath $folder) { try { Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction Stop } catch { $failed += $folder } }
         }
     }
-
     if ($failed.Count -eq 0) { return }
     Write-WarningMessage "Some build folders are locked."
     $failed | ForEach-Object { Write-Host "  $_" -ForegroundColor Yellow }
-    if (-not (Stop-DotNetProcessesWithConsent)) {
-        throw "Build files are locked. Stop the application using these folders and run the setup tool again."
-    }
-    foreach ($folder in $failed) {
-        if (Test-Path -LiteralPath $folder) { Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction Stop }
-    }
+    if (-not (Stop-DotNetProcessesWithConsent)) { throw "Build files are locked. Stop the application using these folders and run the setup tool again." }
+    foreach ($folder in $failed) { if (Test-Path -LiteralPath $folder) { Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction Stop } }
 }
 
 function Restore-Packages([string]$Solution) {
     Write-Step "Restoring NuGet packages..."
     Invoke-Native "dotnet.exe" @("restore", $Solution) "NuGet restore failed." -AllowFailure
     if ($script:LastExitCode -eq 0) { Write-Success "NuGet restore completed."; return }
-
     Write-WarningMessage "NuGet restore failed."
-    if (-not (Read-YesNo "Clear NuGet caches and retry?" $true)) {
-        throw "NuGet restore failed. Review the diagnostic log."
-    }
+    if (-not (Read-YesNo "Clear NuGet caches and retry?" $true)) { throw "NuGet restore failed. Review the diagnostic log." }
     Invoke-Native "dotnet.exe" @("nuget", "locals", "all", "--clear") "Could not clear NuGet caches."
     Invoke-Native "dotnet.exe" @("restore", $Solution) "NuGet restore failed again after cache cleanup."
     Write-Success "NuGet restore completed after cache cleanup."
@@ -520,7 +453,6 @@ function Run-Application([string]$Root) {
         $url = Read-RequiredValue "Enter server URL"
     }
     Assert-PortAvailable $url
-
     $env:ASPNETCORE_ENVIRONMENT = if ($Configuration -eq "Release") { "Production" } else { "Development" }
     Write-Host ""
     Write-Host "====================================================" -ForegroundColor DarkCyan
@@ -536,15 +468,12 @@ function Push-ToGitHub {
     Fetch-RemoteBranch
     $current = Get-CurrentBranch
     if ($current -ne $Branch) { throw "Current branch is '$current'. The setup tool only pushes the configured '$Branch' branch." }
-
     $changes = @(Get-WorkingTreeChanges)
     if ($changes.Count -gt 0) { Write-WarningMessage "Uncommitted files exist. They cannot be pushed until they are committed." }
-
     $aheadText = ((Invoke-Native "git.exe" @("rev-list", "--count", "origin/$Branch..HEAD") "Could not calculate commits ahead." -CaptureOutput) | Out-String).Trim()
     $ahead = 0
     [void][int]::TryParse($aheadText, [ref]$ahead)
     if ($ahead -eq 0) { Write-Success "Nothing to push."; return }
-
     Write-Host "$ahead committed change(s) are ready to push." -ForegroundColor Yellow
     if (-not (Read-YesNo "Push committed changes to origin/$Branch?" $false)) { throw "Push cancelled." }
     Invoke-Native "git.exe" @("push", "origin", $Branch) "Git push failed. Check authentication, branch protection, and network access."
@@ -555,21 +484,17 @@ function Diagnose {
     Write-Host ""
     Write-Host "================ DIAGNOSTIC REPORT ================" -ForegroundColor DarkCyan
     $issues = New-Object System.Collections.Generic.List[string]
-
     if (Get-Command git.exe -ErrorAction SilentlyContinue) {
         $text = ((Invoke-Native "git.exe" @("--version") "Git check failed." -AllowFailure -CaptureOutput) | Out-String).Trim()
         Write-Host "Git          : $text"
     }
     else { Write-Host "Git          : MISSING" -ForegroundColor Red; $issues.Add("Git is missing.") }
-
     if (Get-Command dotnet.exe -ErrorAction SilentlyContinue) {
         $sdks = @(Invoke-Native "dotnet.exe" @("--list-sdks") ".NET check failed." -AllowFailure -CaptureOutput)
         $has8 = @($sdks | Where-Object { $_.ToString() -match '^\s*8\.' }).Count -gt 0
-        if ($has8) { Write-Host "NET 8 SDK    : FOUND" -ForegroundColor Green }
-        else { Write-Host "NET 8 SDK    : MISSING" -ForegroundColor Red; $issues.Add(".NET 8 SDK is missing.") }
+        if ($has8) { Write-Host "NET 8 SDK    : FOUND" -ForegroundColor Green } else { Write-Host "NET 8 SDK    : MISSING" -ForegroundColor Red; $issues.Add(".NET 8 SDK is missing.") }
     }
     else { Write-Host "dotnet       : MISSING" -ForegroundColor Red; $issues.Add("dotnet.exe is missing.") }
-
     if (-not [string]::IsNullOrWhiteSpace($InstallPath)) {
         $path = Resolve-FullPath $InstallPath
         Write-Host "Repository   : $path"
@@ -593,10 +518,8 @@ function Diagnose {
         }
     }
     else { Write-Host "Repository   : not supplied; pass -InstallPath for repository checks" -ForegroundColor Yellow }
-
     if ($issues.Count -eq 0) { Write-Success "No blocking setup problems detected." }
     else {
-        Write-Host ""
         Write-Host "Detected problems:" -ForegroundColor Red
         foreach ($issue in $issues) { Write-Host " - $issue" -ForegroundColor Red }
         Write-Log ("Diagnostic issues: " + ($issues -join " | ")) "ERROR"
@@ -635,34 +558,26 @@ try {
     Write-Host "====================================================" -ForegroundColor DarkCyan
     Write-Host "Diagnostic log: $script:LogPath" -ForegroundColor DarkGray
     Write-Log "Setup started. Mode=$Mode Branch=$Branch Configuration=$Configuration" "INFO"
-
     if ($Mode -eq "Interactive") {
         if ($NonInteractive) { throw "Interactive mode cannot be used with -NonInteractive." }
         $Mode = Show-Menu
         if ($Mode -eq "Exit") { Write-Success "No changes were made."; exit 0 }
     }
-
     if ($Mode -eq "Diagnose") { Diagnose; exit 0 }
-
     Ensure-Prerequisites
     $canClone = ($Mode -eq "InstallOrUpdate")
     Ensure-Repository $canClone
     $root = Resolve-InstallPath
-
     if ($Mode -eq "InstallOrUpdate") {
         Sync-FromGitHub
         Build-Application $root
         if (-not $SkipStart -and (Read-YesNo "Build succeeded. Start AI WordPress Manager now?" $true)) { Run-Application $root }
     }
-    elseif ($Mode -eq "Pull") {
-        Sync-FromGitHub
-        Write-Success "Repository update completed. Build was not run."
-    }
+    elseif ($Mode -eq "Pull") { Sync-FromGitHub; Write-Success "Repository update completed. Build was not run." }
     elseif ($Mode -eq "Push") { Push-ToGitHub }
     elseif ($Mode -eq "Build") { Build-Application $root }
     elseif ($Mode -eq "Test") { Test-Application $root }
     elseif ($Mode -eq "Run") { Run-Application $root }
-
     Write-Host ""
     Write-Success "Setup operation completed successfully."
     Write-Host "Diagnostic log: $script:LogPath" -ForegroundColor DarkGray
