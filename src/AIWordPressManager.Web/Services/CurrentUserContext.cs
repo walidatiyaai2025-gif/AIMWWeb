@@ -23,5 +23,14 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
         return Guid.TryParse(value, out userId);
     }
 
+    public bool IsInRole(string role) => accessor.HttpContext?.User.IsInRole(role) == true;
+
+    public Guid RequireAdministrator()
+    {
+        if (!IsAuthenticated || !IsInRole("Administrator"))
+            throw new UnauthorizedAccessException("Administrator access is required.");
+        return RequireUserId();
+    }
+
     public string UserName => accessor.HttpContext?.User.Identity?.Name ?? string.Empty;
 }
