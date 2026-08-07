@@ -4,6 +4,7 @@
 @inject SiteWebService Sites
 @inject AIWordPressManager.Persistence.AppDbContext Db
 @inject CurrentUserContext CurrentUser
+@inject AIWordPressManager.Application.Abstractions.ISecretProtectionService SecretProtection
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 
@@ -13,8 +14,8 @@
     <section class="panel settings-hero">
         <div>
             <span class="workspace-kicker">EMAIL</span>
-            <h1>@(L.IsArabic ? "إعدادات تنبيهات البريد للموقع" : "Site email notification settings")</h1>
-            <p>@(L.IsArabic ? "أضف حتى ثلاثة عناوين بريد لكل موقع. إعدادات الإرسال والجدولة ستستخدم هذه القائمة لاحقًا." : "Add up to three notification recipients per site. Outbound mail and schedules will use this list in the next implementation slices.")</p>
+            <h1>@(L.IsArabic ? "إعدادات بريد الموقع" : "Site email settings")</h1>
+            <p>@(L.IsArabic ? "أدر عناوين التنبيه وإعداد الإرسال الخاص بالموقع. كلمات المرور تحفظ مشفرة ولا يتم عرضها بعد الحفظ." : "Manage notification recipients and the site's outbound mail profile. Passwords are stored encrypted and are never displayed after saving.")</p>
         </div>
     </section>
 
@@ -45,36 +46,56 @@
     @if (_selectedSiteId.HasValue)
     {
         <section class="panel settings-section">
+            <header><div><h2>@(L.IsArabic ? "إعداد الإرسال" : "Outbound mail profile")</h2><p>@(L.IsArabic ? "استخدم إعداد الحساب العام أو خصص SMTP لهذا الموقع." : "Use the account/dashboard profile or configure SMTP specifically for this site.")</p></div></header>
+
+            <label class="d-flex gap-2 align-items-center mt-2">
+                <input type="checkbox" @bind="_mailForm.UseAccountProfile" disabled="@_busy" />
+                @(L.IsArabic ? "استخدام إعداد بريد الداشبورد/الحساب" : "Use dashboard/account mail profile")
+            </label>
+
+            @if (!_mailForm.UseAccountProfile)
+            {
+                <div class="grid-2 mt-3">
+                    <div><label>SMTP Host</label><input class="form-control" @bind="_mailForm.Host" maxlength="255" disabled="@_busy" /></div>
+                    <div><label>SMTP Port</label><input class="form-control" type="number" min="1" max="65535" @bind="_mailForm.Port" disabled="@_busy" /></div>
+                    <div><label>@(L.IsArabic ? "اسم المستخدم" : "Username")</label><input class="form-control" @bind="_mailForm.UserName" maxlength="320" disabled="@_busy" /></div>
+                    <div>
+                        <label>@(L.IsArabic ? "كلمة المرور" : "Password")</label>
+                        <input class="form-control" type="password" @bind="_mailForm.Password" maxlength="2048" disabled="@_busy" autocomplete="new-password" />
+                        <small>@(_mailProfile.HasSavedPassword ? (L.IsArabic ? "يوجد سر محفوظ ومشفر. اترك الحقل فارغًا للاحتفاظ به." : "An encrypted password is saved. Leave this blank to keep it.") : (L.IsArabic ? "لا يوجد سر محفوظ." : "No password is currently stored."))</small>
+                    </div>
+                    <div><label>@(L.IsArabic ? "بريد المرسل" : "From address")</label><input class="form-control" type="email" @bind="_mailForm.FromAddress" maxlength="320" disabled="@_busy" /></div>
+                    <div><label>@(L.IsArabic ? "اسم المرسل" : "From name")</label><input class="form-control" @bind="_mailForm.FromName" maxlength="160" disabled="@_busy" /></div>
+                    <div><label>@(L.IsArabic ? "الرد إلى" : "Reply-to address")</label><input class="form-control" type="email" @bind="_mailForm.ReplyToAddress" maxlength="320" disabled="@_busy" /></div>
+                </div>
+                <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_mailForm.EnableSsl" disabled="@_busy" /> TLS / SSL</label>
+            }
+
+            <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_mailForm.IsEnabled" disabled="@_busy" /> @(L.IsArabic ? "تفعيل إرسال البريد لهذا الموقع" : "Enable outbound email for this site")</label>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn primary" @onclick="SaveMailProfileAsync" disabled="@_busy">@(L.IsArabic ? "حفظ إعداد البريد" : "Save mail profile")</button>
+                @if (_mailProfile.HasSavedPassword && !_mailForm.UseAccountProfile)
+                {
+                    <button class="btn" @onclick="ClearMailPasswordAsync" disabled="@_busy">@(L.IsArabic ? "مسح كلمة المرور المحفوظة" : "Clear saved password")</button>
+                }
+            </div>
+            <p class="help mt-2">@(L.IsArabic ? "اختبار الاتصال والإرسال التجريبي سيتم ضمن EML-005؛ حفظ الإعداد هنا لا يعني أن SMTP تم اختباره بعد." : "Connection validation and test-send belong to EML-005; saving here does not claim that SMTP connectivity has been verified yet.")</p>
+        </section>
+
+        <section class="panel settings-section">
             <header><div><h2>@(L.IsArabic ? "إضافة عنوان" : "Add recipient")</h2></div></header>
             <div class="grid-2">
-                <div>
-                    <label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label>
-                    <input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" />
-                </div>
-                <div>
-                    <label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label>
-                    <input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" />
-                </div>
+                <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+                <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
             </div>
-            <button class="btn primary" @onclick="AddAsync" disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))">
-                @(L.IsArabic ? "إضافة البريد" : "Add email")
-            </button>
-            @if (_recipients.Count >= 3)
-            {
-                <p class="help">@(L.IsArabic ? "تم الوصول للحد الأقصى: ثلاثة عناوين لكل موقع." : "Maximum reached: three recipients per site.")</p>
-            }
+            <button class="btn primary" @onclick="AddAsync" disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))">@(L.IsArabic ? "إضافة البريد" : "Add email")</button>
+            @if (_recipients.Count >= 3) { <p class="help">@(L.IsArabic ? "تم الوصول للحد الأقصى: ثلاثة عناوين لكل موقع." : "Maximum reached: three recipients per site.")</p> }
         </section>
 
         <section class="panel settings-section">
             <header><div><h2>@(L.IsArabic ? "عناوين التنبيه" : "Notification recipients")</h2></div></header>
-            @if (_loading)
-            {
-                <p>@(L.IsArabic ? "جاري التحميل..." : "Loading...")</p>
-            }
-            else if (_recipients.Count == 0)
-            {
-                <p>@(L.IsArabic ? "لا توجد عناوين بريد لهذا الموقع بعد." : "No email recipients are configured for this site yet.")</p>
-            }
+            @if (_loading) { <p>@(L.IsArabic ? "جاري التحميل..." : "Loading...")</p> }
+            else if (_recipients.Count == 0) { <p>@(L.IsArabic ? "لا توجد عناوين بريد لهذا الموقع بعد." : "No email recipients are configured for this site yet.")</p> }
             else
             {
                 <div class="database-info-grid">
@@ -83,25 +104,15 @@
                         <article class="panel" style="padding:1rem">
                             @if (_editingId == item.Id)
                             {
-                                <div class="grid-2">
-                                    <input class="form-control" type="email" @bind="_editEmail" maxlength="320" />
-                                    <input class="form-control" @bind="_editDisplayName" maxlength="120" />
-                                </div>
+                                <div class="grid-2"><input class="form-control" type="email" @bind="_editEmail" maxlength="320" /><input class="form-control" @bind="_editDisplayName" maxlength="120" /></div>
                                 <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_editEnabled" /> @(L.IsArabic ? "مفعل" : "Enabled")</label>
-                                <div class="d-flex gap-2 mt-2">
-                                    <button class="btn primary" @onclick="SaveEditAsync" disabled="@_busy">@(L.IsArabic ? "حفظ" : "Save")</button>
-                                    <button class="btn" @onclick="CancelEdit" disabled="@_busy">@(L.IsArabic ? "إلغاء" : "Cancel")</button>
-                                </div>
+                                <div class="d-flex gap-2 mt-2"><button class="btn primary" @onclick="SaveEditAsync" disabled="@_busy">@(L.IsArabic ? "حفظ" : "Save")</button><button class="btn" @onclick="CancelEdit" disabled="@_busy">@(L.IsArabic ? "إلغاء" : "Cancel")</button></div>
                             }
                             else
                             {
-                                <strong>@item.EmailAddress</strong>
-                                <p>@(string.IsNullOrWhiteSpace(item.DisplayName) ? "—" : item.DisplayName)</p>
+                                <strong>@item.EmailAddress</strong><p>@(string.IsNullOrWhiteSpace(item.DisplayName) ? "—" : item.DisplayName)</p>
                                 <span class="settings-badge @(item.IsEnabled ? "success" : "warning")">@(item.IsEnabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</span>
-                                <div class="d-flex gap-2 mt-2">
-                                    <button class="btn" @onclick="() => BeginEdit(item)" disabled="@_busy">@(L.IsArabic ? "تعديل" : "Edit")</button>
-                                    <button class="btn" @onclick="() => DeleteAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "حذف" : "Delete")</button>
-                                </div>
+                                <div class="d-flex gap-2 mt-2"><button class="btn" @onclick="() => BeginEdit(item)" disabled="@_busy">@(L.IsArabic ? "تعديل" : "Edit")</button><button class="btn" @onclick="() => DeleteAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "حذف" : "Delete")</button></div>
                             }
                         </article>
                     }
@@ -113,20 +124,19 @@
 
 @code {
     [Parameter] public Guid? SiteId { get; set; }
-
     private List<AIWordPressManager.Domain.Entities.Site> _sites = [];
     private IReadOnlyList<SiteEmailRecipientView> _recipients = [];
+    private SiteMailProfileView _mailProfile = SiteMailProfileView.Default(Guid.Empty);
+    private MailProfileForm _mailForm = new();
     private Guid? _selectedSiteId;
-    private bool _loading;
-    private bool _busy;
+    private bool _loading, _busy;
     private string? _error;
-    private string _newEmail = string.Empty;
-    private string _newDisplayName = string.Empty;
+    private string _newEmail = string.Empty, _newDisplayName = string.Empty;
     private Guid? _editingId;
-    private string _editEmail = string.Empty;
-    private string _editDisplayName = string.Empty;
+    private string _editEmail = string.Empty, _editDisplayName = string.Empty;
     private bool _editEnabled = true;
     private SiteEmailRecipientService RecipientService => new(Db, CurrentUser);
+    private SiteMailProfileService MailService => new(Db, CurrentUser, SecretProtection);
     private string SelectedSiteIdText => _selectedSiteId?.ToString() ?? string.Empty;
 
     protected override async Task OnParametersSetAsync()
@@ -137,55 +147,63 @@
         await LoadAsync();
     }
 
-    private async Task SiteChangedAsync(ChangeEventArgs args)
-    {
-        _selectedSiteId = Guid.TryParse(args.Value?.ToString(), out var id) ? id : null;
-        _editingId = null;
-        await LoadAsync();
-    }
+    private async Task SiteChangedAsync(ChangeEventArgs args) { _selectedSiteId = Guid.TryParse(args.Value?.ToString(), out var id) ? id : null; _editingId = null; await LoadAsync(); }
 
     private async Task LoadAsync()
     {
         _error = null;
-        if (!_selectedSiteId.HasValue) { _recipients = []; return; }
+        if (!_selectedSiteId.HasValue) { _recipients = []; _mailProfile = SiteMailProfileView.Default(Guid.Empty); _mailForm = new(); return; }
         _loading = true;
-        try { _recipients = await RecipientService.GetAsync(_selectedSiteId.Value); }
+        try
+        {
+            _recipients = await RecipientService.GetAsync(_selectedSiteId.Value);
+            _mailProfile = await MailService.GetAsync(_selectedSiteId.Value);
+            _mailForm = MailProfileForm.From(_mailProfile);
+        }
         catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
         finally { _loading = false; }
+    }
+
+    private async Task SaveMailProfileAsync()
+    {
+        if (!_selectedSiteId.HasValue) return;
+        _busy = true; _error = null;
+        try
+        {
+            _mailProfile = await MailService.SaveAsync(_selectedSiteId.Value, new SiteMailProfileInput(_mailForm.UseAccountProfile, _mailForm.Host, _mailForm.Port, _mailForm.UserName, _mailForm.Password, _mailForm.FromAddress, _mailForm.FromName, _mailForm.ReplyToAddress, _mailForm.EnableSsl, _mailForm.IsEnabled));
+            _mailForm = MailProfileForm.From(_mailProfile);
+            Notifications.Success(L.IsArabic ? "تم حفظ إعداد البريد بصورة آمنة." : "Mail profile saved securely.");
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ClearMailPasswordAsync()
+    {
+        if (!_selectedSiteId.HasValue) return;
+        _busy = true; _error = null;
+        try { await MailService.ClearPasswordAsync(_selectedSiteId.Value); _mailProfile = await MailService.GetAsync(_selectedSiteId.Value); _mailForm = MailProfileForm.From(_mailProfile); Notifications.Success(L.IsArabic ? "تم مسح كلمة المرور المشفرة." : "Saved SMTP password cleared."); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
     }
 
     private async Task AddAsync()
     {
         if (!_selectedSiteId.HasValue) return;
         _busy = true; _error = null;
-        try
-        {
-            await RecipientService.AddAsync(_selectedSiteId.Value, _newEmail, _newDisplayName);
-            _newEmail = string.Empty; _newDisplayName = string.Empty;
-            await LoadAsync();
-            Notifications.Success(L.IsArabic ? "تمت إضافة البريد." : "Email recipient added.");
-        }
+        try { await RecipientService.AddAsync(_selectedSiteId.Value, _newEmail, _newDisplayName); _newEmail = string.Empty; _newDisplayName = string.Empty; await LoadAsync(); Notifications.Success(L.IsArabic ? "تمت إضافة البريد." : "Email recipient added."); }
         catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
         finally { _busy = false; }
     }
 
-    private void BeginEdit(SiteEmailRecipientView item)
-    {
-        _editingId = item.Id; _editEmail = item.EmailAddress; _editDisplayName = item.DisplayName ?? string.Empty; _editEnabled = item.IsEnabled;
-    }
-
+    private void BeginEdit(SiteEmailRecipientView item) { _editingId = item.Id; _editEmail = item.EmailAddress; _editDisplayName = item.DisplayName ?? string.Empty; _editEnabled = item.IsEnabled; }
     private void CancelEdit() => _editingId = null;
 
     private async Task SaveEditAsync()
     {
         if (!_selectedSiteId.HasValue || !_editingId.HasValue) return;
         _busy = true; _error = null;
-        try
-        {
-            await RecipientService.UpdateAsync(_selectedSiteId.Value, _editingId.Value, _editEmail, _editDisplayName, _editEnabled);
-            _editingId = null; await LoadAsync();
-            Notifications.Success(L.IsArabic ? "تم تحديث البريد." : "Email recipient updated.");
-        }
+        try { await RecipientService.UpdateAsync(_selectedSiteId.Value, _editingId.Value, _editEmail, _editDisplayName, _editEnabled); _editingId = null; await LoadAsync(); Notifications.Success(L.IsArabic ? "تم تحديث البريد." : "Email recipient updated."); }
         catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
         finally { _busy = false; }
     }
@@ -194,14 +212,36 @@
     {
         if (!_selectedSiteId.HasValue) return;
         _busy = true; _error = null;
-        try
-        {
-            await RecipientService.DeleteAsync(_selectedSiteId.Value, id);
-            if (_editingId == id) _editingId = null;
-            await LoadAsync();
-            Notifications.Success(L.IsArabic ? "تم حذف البريد." : "Email recipient deleted.");
-        }
+        try { await RecipientService.DeleteAsync(_selectedSiteId.Value, id); if (_editingId == id) _editingId = null; await LoadAsync(); Notifications.Success(L.IsArabic ? "تم حذف البريد." : "Email recipient deleted."); }
         catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
         finally { _busy = false; }
+    }
+
+    private sealed class MailProfileForm
+    {
+        public bool UseAccountProfile { get; set; } = true;
+        public string Host { get; set; } = string.Empty;
+        public int Port { get; set; } = 587;
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string FromAddress { get; set; } = string.Empty;
+        public string FromName { get; set; } = string.Empty;
+        public string ReplyToAddress { get; set; } = string.Empty;
+        public bool EnableSsl { get; set; } = true;
+        public bool IsEnabled { get; set; }
+
+        public static MailProfileForm From(SiteMailProfileView value) => new()
+        {
+            UseAccountProfile = value.UseAccountProfile,
+            Host = value.Host,
+            Port = value.Port,
+            UserName = value.UserName,
+            Password = string.Empty,
+            FromAddress = value.FromAddress,
+            FromName = value.FromName,
+            ReplyToAddress = value.ReplyToAddress,
+            EnableSsl = value.EnableSsl,
+            IsEnabled = value.IsEnabled
+        };
     }
 }
