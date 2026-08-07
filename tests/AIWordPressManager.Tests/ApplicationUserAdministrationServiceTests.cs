@@ -118,8 +118,7 @@ public sealed class ApplicationUserAdministrationServiceTests
                 new Claim(ClaimTypes.Role, actorRole)
             ], "Test");
             var httpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
-            var accessor = new HttpContextAccessor { HttpContext = httpContext };
-            var currentUser = new CurrentUserContext(accessor);
+            var currentUser = new CurrentUserContext(new IsolatedHttpContextAccessor(httpContext));
             return new Fixture(connection, context, actor, new ApplicationUserAdministrationService(context, currentUser));
         }
 
@@ -136,5 +135,10 @@ public sealed class ApplicationUserAdministrationServiceTests
             await Context.DisposeAsync();
             await _connection.DisposeAsync();
         }
+    }
+
+    private sealed class IsolatedHttpContextAccessor(HttpContext context) : IHttpContextAccessor
+    {
+        public HttpContext? HttpContext { get; set; } = context;
     }
 }
