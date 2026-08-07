@@ -59,11 +59,27 @@ public sealed class SiteMailProfileService(
         await RequireOwnedSiteAsync(siteId, cancellationToken);
         var profile = await dbContext.SiteMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken);
         if (profile is null || !profile.IsEnabled) return null;
+        return await BuildDeliveryProfileAsync(profile, requireInheritedProfileEnabled: true, cancellationToken);
+    }
 
+    public async Task<SiteMailDeliveryProfile> GetTestProfileAsync(Guid siteId, CancellationToken cancellationToken = default)
+    {
+        await RequireOwnedSiteAsync(siteId, cancellationToken);
+        var profile = await dbContext.SiteMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId && x.OwnerUserId == OwnerId, cancellationToken)
+            ?? throw new InvalidOperationException("Save the site mail profile before running diagnostics.");
+        return await BuildDeliveryProfileAsync(profile, requireInheritedProfileEnabled: false, cancellationToken)
+            ?? throw new InvalidOperationException("The inherited account SMTP profile has not been configured yet.");
+    }
+
+    private async Task<SiteMailDeliveryProfile?> BuildDeliveryProfileAsync(
+        SiteMailProfile profile,
+        bool requireInheritedProfileEnabled,
+        CancellationToken cancellationToken)
+    {
         if (profile.UseAccountProfile)
         {
             var account = await dbContext.AccountMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.OwnerUserId == OwnerId, cancellationToken);
-            if (account is null || !account.IsEnabled) return null;
+            if (account is null || (requireInheritedProfileEnabled && !account.IsEnabled)) return null;
             string? accountPassword = null;
             if (!string.IsNullOrWhiteSpace(account.ProtectedPassword)) accountPassword = await secretProtectionService.UnprotectAsync(account.ProtectedPassword, cancellationToken);
             return new SiteMailDeliveryProfile(account.Host, account.Port, account.UserName, accountPassword, account.FromAddress, account.FromName, account.ReplyToAddress, account.EnableSsl);
