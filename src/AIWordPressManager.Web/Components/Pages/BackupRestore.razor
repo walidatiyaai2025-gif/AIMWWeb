@@ -28,11 +28,11 @@
     <section class="panel backup-toolbar">
         <label>
             <span>@(L.IsArabic ? "ملاحظة النسخة" : "Backup note")</span>
-            <input @bind="_note" placeholder="@(L.IsArabic ? "مثال: قبل تحديث النظام" : "Example: before system update")" />
+            <input @bind="_note" disabled="@_working" placeholder="@(L.IsArabic ? "مثال: قبل تحديث النظام" : "Example: before system update")" />
         </label>
         <div>
-            <button class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
-            <button class="btn" @onclick="CopyPathAsync">@(L.IsArabic ? "نسخ المسار" : "Copy path")</button>
+            <button class="btn" disabled="@_working" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn" disabled="@_working" @onclick="CopyPathAsync">@(L.IsArabic ? "نسخ المسار" : "Copy path")</button>
             <code>@_backups.BackupDirectory</code>
         </div>
     </section>
@@ -57,9 +57,9 @@
                     </div>
                     <span class="badge @(item.IsValid ? "success" : "danger")">@(item.IsValid ? (L.IsArabic ? "سليمة" : "Verified") : (L.IsArabic ? "غير سليمة" : "Invalid"))</span>
                     <div class="backup-actions">
-                        <button class="btn compact" @onclick="() => Inspect(item)">⌕ @(L.IsArabic ? "فحص" : "Inspect")</button>
-                        <button class="btn compact" @onclick="() => Preflight(item)">✓ @(L.IsArabic ? "جاهزية" : "Preflight")</button>
-                        <button class="btn compact danger" @onclick="() => Delete(item)">× @(L.IsArabic ? "حذف" : "Delete")</button>
+                        <button class="btn compact" disabled="@_working" @onclick="() => Inspect(item)">⌕ @(L.IsArabic ? "فحص" : "Inspect")</button>
+                        <button class="btn compact" disabled="@_working" @onclick="() => Preflight(item)">✓ @(L.IsArabic ? "جاهزية" : "Preflight")</button>
+                        <button class="btn compact danger" disabled="@_working" @onclick="() => Delete(item)">× @(L.IsArabic ? "حذف" : "Delete")</button>
                     </div>
                 </article>
             }
@@ -121,16 +121,150 @@
     private RestoreReadinessResult? _readiness;
     private string _note = string.Empty;
     private bool _working;
+    private bool _disposed;
 
-    protected override void OnInitialized(){L.Changed += Changed; Reload();}
-    private void Reload(){try{_items=_backups.GetBackups().ToList();_history=_backups.GetHistory().ToList();}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل تحميل النسخ":"Failed to load backups",ex.ToString());}}
-    private Task CreateAsync(){try{_working=true;var item=_backups.CreateBackup(_note);_note=string.Empty;Reload();_selected=_items.FirstOrDefault(x=>x.FileName==item.FileName);Notifications.Success(L.IsArabic?$"تم إنشاء النسخة {item.FileName}.":$"Backup {item.FileName} was created.");}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل إنشاء النسخة":"Backup failed",ex.ToString());}finally{_working=false;}return Task.CompletedTask;}
-    private void Inspect(BackupFileInfo item){_selected=item;_inspection=_backups.Inspect(item.FileName);_readiness=null;Reload();}
-    private void Preflight(BackupFileInfo item){_selected=item;_inspection=_backups.Inspect(item.FileName);_readiness=_backups.CheckRestoreReadiness(item.FileName);Reload();}
-    private void Delete(BackupFileInfo item){try{_backups.Delete(item.FileName);if(_selected?.FileName==item.FileName){_selected=null;_inspection=null;_readiness=null;}Reload();Notifications.Success(L.IsArabic?"تم حذف النسخة.":"Backup deleted.");}catch(Exception ex){Notifications.Error(L.TranslateMessage(ex.Message),L.IsArabic?"فشل الحذف":"Delete failed",ex.ToString());}}
-    private async Task CopyPathAsync()=>await JS.InvokeVoidAsync("navigator.clipboard.writeText",_backups.BackupDirectory);
-    private string FormatDate(DateTime value)=>value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm":"MMM d, yyyy HH:mm");
-    private static string FormatBytes(long value)=>value switch{>=1073741824=>$"{value/1073741824d:0.00} GB",>=1048576=>$"{value/1048576d:0.00} MB",>=1024=>$"{value/1024d:0.0} KB",_=>$"{value} B"};
-    private void Changed()=>InvokeAsync(StateHasChanged);
-    public void Dispose()=>L.Changed-=Changed;
+    protected override void OnInitialized()
+    {
+        L.Changed += Changed;
+        Reload();
+    }
+
+    private void Reload()
+    {
+        if (_disposed) return;
+
+        try
+        {
+            _items = _backups.GetBackups().ToList();
+            _history = _backups.GetHistory().ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex, L.IsArabic ? "فشل تحميل النسخ" : "Failed to load backups");
+        }
+    }
+
+    private Task CreateAsync()
+    {
+        if (_working || _disposed) return Task.CompletedTask;
+
+        try
+        {
+            _working = true;
+            var item = _backups.CreateBackup(_note);
+            if (_disposed) return Task.CompletedTask;
+
+            _note = string.Empty;
+            Reload();
+            _selected = _items.FirstOrDefault(x => x.FileName == item.FileName);
+            Notifications.Success(L.IsArabic ? $"تم إنشاء النسخة {item.FileName}." : $"Backup {item.FileName} was created.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex, L.IsArabic ? "فشل إنشاء النسخة" : "Backup failed");
+        }
+        finally
+        {
+            if (!_disposed) _working = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void Inspect(BackupFileInfo item)
+    {
+        RunOperation(() =>
+        {
+            _selected = item;
+            _inspection = _backups.Inspect(item.FileName);
+            _readiness = null;
+            Reload();
+        }, L.IsArabic ? "فشل فحص النسخة" : "Backup inspection failed");
+    }
+
+    private void Preflight(BackupFileInfo item)
+    {
+        RunOperation(() =>
+        {
+            _selected = item;
+            _inspection = _backups.Inspect(item.FileName);
+            _readiness = _backups.CheckRestoreReadiness(item.FileName);
+            Reload();
+        }, L.IsArabic ? "فشل فحص الجاهزية" : "Preflight check failed");
+    }
+
+    private void Delete(BackupFileInfo item)
+    {
+        RunOperation(() =>
+        {
+            _backups.Delete(item.FileName);
+            if (_selected?.FileName == item.FileName)
+            {
+                _selected = null;
+                _inspection = null;
+                _readiness = null;
+            }
+
+            Reload();
+            if (!_disposed)
+                Notifications.Success(L.IsArabic ? "تم حذف النسخة." : "Backup deleted.");
+        }, L.IsArabic ? "فشل الحذف" : "Delete failed");
+    }
+
+    private void RunOperation(Action action, string errorTitle)
+    {
+        if (_working || _disposed) return;
+
+        try
+        {
+            _working = true;
+            action();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex, errorTitle);
+        }
+        finally
+        {
+            if (!_disposed) _working = false;
+        }
+    }
+
+    private async Task CopyPathAsync()
+    {
+        if (_working || _disposed) return;
+
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _backups.BackupDirectory);
+            if (!_disposed)
+                Notifications.Success(L.IsArabic ? "تم نسخ مسار النسخ الاحتياطية." : "Backup path copied.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex, L.IsArabic ? "تعذر نسخ المسار" : "Could not copy the backup path");
+        }
+    }
+
+    private void ShowError(Exception ex, string title)
+    {
+        if (_disposed) return;
+        Notifications.Error(L.TranslateMessage(ex.Message), title, ex.ToString());
+    }
+
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private static string FormatBytes(long value) => value switch { >= 1073741824 => $"{value / 1073741824d:0.00} GB", >= 1048576 => $"{value / 1048576d:0.00} MB", >= 1024 => $"{value / 1024d:0.0} KB", _ => $"{value} B" };
+
+    private void Changed()
+    {
+        if (_disposed) return;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        L.Changed -= Changed;
+    }
 }
