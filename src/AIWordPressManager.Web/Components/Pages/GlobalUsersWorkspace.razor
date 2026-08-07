@@ -134,9 +134,11 @@ else
     private string _role = "all";
     private string? _message;
     private int _page = 1;
+    private int _loadVersion;
     private bool _loadingSites = true;
     private bool _working;
     private bool _isError;
+    private bool _disposed;
 
     private string SelectedSiteName => _sites.FirstOrDefault(x => x.Id == _selectedSiteId)?.Name ?? "—";
 
@@ -144,16 +146,26 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try { _sites = await SiteService.GetSitesAsync(); }
-        finally { _loadingSites = false; }
+        try
+        {
+            var sites = await SiteService.GetSitesAsync();
+            if (!_disposed) _sites = sites;
+        }
+        finally
+        {
+            if (!_disposed) _loadingSites = false;
+        }
     }
 
     private async Task SiteChangedAsync()
     {
+        Interlocked.Increment(ref _loadVersion);
         _page = 1;
         _search = string.Empty;
         _role = "all";
         _message = null;
+        _isError = false;
+        _working = false;
         _result = new(true, string.Empty, Array.Empty<WordPressUserView>(), 0, 1);
         if (_selectedSiteId != Guid.Empty) await LoadAsync();
     }
@@ -165,28 +177,55 @@ else
 
     private async Task LoadAsync()
     {
-        if (_selectedSiteId == Guid.Empty) return;
+        if (_disposed || _selectedSiteId == Guid.Empty) return;
+
+        var requestVersion = Interlocked.Increment(ref _loadVersion);
+        var siteId = _selectedSiteId;
+        var search = _search;
+        var role = _role;
+        var page = _page;
+
         try
         {
             _working = true;
             _message = null;
-            _result = await UsersService.GetAsync(_selectedSiteId, _search, _role, _page, 50);
-            _isError = !_result.Success;
-            if (!_result.Success) _message = L.TranslateMessage(_result.Message);
+            var result = await UsersService.GetAsync(siteId, search, role, page, 50);
+
+            if (_disposed || requestVersion != _loadVersion || siteId != _selectedSiteId) return;
+
+            _result = result;
+            _isError = !result.Success;
+            _message = result.Success ? null : L.TranslateMessage(result.Message);
         }
         catch (Exception ex)
         {
+            if (_disposed || requestVersion != _loadVersion || siteId != _selectedSiteId) return;
+
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
             _result = new(false, ex.Message, Array.Empty<WordPressUserView>(), 0, 1);
         }
-        finally { _working = false; }
+        finally
+        {
+            if (!_disposed && requestVersion == _loadVersion)
+                _working = false;
+        }
     }
 
     private int RoleCount(string role) => _result.Items.Count(x => x.Roles.Contains(role, StringComparer.OrdinalIgnoreCase));
     private static string DisplayName(WordPressUserView user) => string.IsNullOrWhiteSpace(user.Name) ? user.Username : user.Name;
     private static string UserSearchKey(WordPressUserView user) => $"{user.Id} {user.Username} {user.Name} {user.Email} {string.Join(' ', user.Roles)}";
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
-    public void Dispose() => L.Changed -= LanguageChanged;
+    private void LanguageChanged()
+    {
+        if (!_disposed) _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        Interlocked.Increment(ref _loadVersion);
+        L.Changed -= LanguageChanged;
+    }
 }
