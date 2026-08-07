@@ -14,24 +14,20 @@ Set-StrictMode -Version Latest
 $OriginalLocation = Get-Location
 $LocationWasPushed = $false
 
-function Write-Step {
-    param([Parameter(Mandatory)][string]$Message)
+function Write-Step([string]$Message) {
     Write-Host ""
     Write-Host "[INFO] $Message" -ForegroundColor Cyan
 }
 
-function Write-Success {
-    param([Parameter(Mandatory)][string]$Message)
+function Write-Success([string]$Message) {
     Write-Host "[SUCCESS] $Message" -ForegroundColor Green
 }
 
-function Write-WarningMessage {
-    param([Parameter(Mandatory)][string]$Message)
+function Write-WarningMessage([string]$Message) {
     Write-Host "[WARNING] $Message" -ForegroundColor Yellow
 }
 
-function Stop-WithError {
-    param([Parameter(Mandatory)][string]$Message)
+function Stop-WithError([string]$Message) {
     Write-Host ""
     Write-Host "[ERROR] $Message" -ForegroundColor Red
     if ([Environment]::UserInteractive) {
@@ -51,8 +47,8 @@ function Read-RequiredValue {
             Read-Host $Prompt
         }
         else {
-            $inputValue = Read-Host "$Prompt [$DefaultValue]"
-            if ([string]::IsNullOrWhiteSpace($inputValue)) { $DefaultValue } else { $inputValue }
+            $entered = Read-Host "$Prompt [$DefaultValue]"
+            if ([string]::IsNullOrWhiteSpace($entered)) { $DefaultValue } else { $entered }
         }
 
         if (-not [string]::IsNullOrWhiteSpace($value)) {
@@ -104,119 +100,115 @@ function Invoke-Native {
     }
 
     & $FilePath @Arguments
-    $exitCode = $LASTEXITCODE
-    if ($exitCode -ne 0) {
-        throw "$FailureMessage Exit code: $exitCode"
+    if ($LASTEXITCODE -ne 0) {
+        throw "$FailureMessage Exit code: $LASTEXITCODE"
     }
 }
 
-function Resolve-FullPath {
-    param([Parameter(Mandatory)][string]$Path)
-
-    $expandedPath = [Environment]::ExpandEnvironmentVariables($Path.Trim())
-    if ($expandedPath.StartsWith("~")) {
-        $expandedPath = Join-Path $HOME $expandedPath.Substring(1).TrimStart("\", "/")
+function Resolve-FullPath([string]$Path) {
+    $expanded = [Environment]::ExpandEnvironmentVariables($Path.Trim())
+    if ($expanded.StartsWith("~")) {
+        $expanded = Join-Path $HOME $expanded.Substring(1).TrimStart("\", "/")
     }
-
-    return [System.IO.Path]::GetFullPath($expandedPath)
+    return [System.IO.Path]::GetFullPath($expanded)
 }
 
-function Enable-GitSafeDirectoryIfRequired {
-    param([Parameter(Mandatory)][string]$RepositoryPath)
+function Normalize-GitRemote([string]$Url) {
+    if ([string]::IsNullOrWhiteSpace($Url)) { return "" }
+    return $Url.Trim().TrimEnd("/").ToLowerInvariant() -replace '\.git$', ''
+}
 
-    $statusOutput = & git.exe -C $RepositoryPath status --porcelain 2>&1
-    $statusExitCode = $LASTEXITCODE
-    $statusText = ($statusOutput | Out-String)
+function Enable-GitSafeDirectoryIfRequired([string]$RepositoryPath) {
+    $output = & git.exe -C $RepositoryPath status --porcelain 2>&1
+    if ($LASTEXITCODE -eq 0) { return }
 
-    if ($statusExitCode -eq 0) { return }
-
-    if ($statusText -notmatch "dubious ownership") {
-        throw "Git could not access the repository.`n$statusText"
+    $text = ($output | Out-String)
+    if ($text -notmatch "dubious ownership") {
+        throw "Git could not access the repository.`n$text"
     }
 
     Write-WarningMessage "Git detected that this repository is owned by another Windows account."
-    Write-Host "Repository: $RepositoryPath" -ForegroundColor Gray
-
-    if (-not (Read-YesNo -Prompt "Add this repository to Git safe.directory for the current user?" -DefaultYes $true)) {
+    if (-not (Read-YesNo -Prompt "Trust this repository for the current user?" -DefaultYes $true)) {
         throw "Git access was cancelled because the repository is not trusted."
     }
 
-    $gitSafePath = $RepositoryPath.Replace("\", "/")
-    Invoke-Native "git.exe" @("config", "--global", "--add", "safe.directory", $gitSafePath) "Could not add safe.directory."
-    Write-Success "Repository added to Git safe.directory."
+    $safePath = $RepositoryPath.Replace("\", "/")
+    Invoke-Native "git.exe" @("config", "--global", "--add", "safe.directory", $safePath) "Could not add safe.directory."
 }
 
-function Get-PathDepth {
+function Get-RelativeDepth {
     param(
         [Parameter(Mandatory)][string]$RootPath,
         [Parameter(Mandatory)][string]$FilePath
     )
 
-    $relativePath = $FilePath.Substring($RootPath.TrimEnd('\', '/').Length).TrimStart('\', '/')
-    return ($relativePath -split '[\\/]').Count
+    $root = [System.IO.Path]::GetFullPath($RootPath).TrimEnd("\", "/")
+    $directory = [System.IO.Path]::GetDirectoryName([System.IO.Path]::GetFullPath($FilePath))
+    if ($directory.Equals($root, [System.StringComparison]::OrdinalIgnoreCase)) { return 0 }
+
+    $relative = $directory.Substring($root.Length).TrimStart("\", "/")
+    if ([string]::IsNullOrWhiteSpace($relative)) { return 0 }
+    return ($relative -split '[\/]').Count
 }
 
-function Find-SolutionFile {
-    param([Parameter(Mandatory)][string]$RootPath)
+function Find-SolutionFile([string]$RootPath) {
+    $rootSolutions = @(Get-ChildItem -LiteralPath $RootPath -Filter "*.sln" -File -ErrorAction SilentlyContinue)
+    if ($rootSolutions.Count -gt 0) {
+        return ($rootSolutions | Sort-Object Name | Select-Object -First 1).FullName
+    }
 
     $solutions = @(
         Get-ChildItem -Path $RootPath -Filter "*.sln" -File -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '[\\/](bin|obj|\.git)[\\/]' }
+        Where-Object {
+            $_.FullName -notmatch '[\/](bin|obj|\.git|tests|TestResults)[\/]' -and
+            -not (Test-Path -LiteralPath (Join-Path $_.Directory.FullName ".git"))
+        } |
+        Sort-Object `
+            @{ Expression = { Get-RelativeDepth -RootPath $RootPath -FilePath $_.FullName }; Ascending = $true },
+            @{ Expression = { $_.FullName.Length }; Ascending = $true },
+            @{ Expression = { $_.Name }; Ascending = $true }
     )
 
     if ($solutions.Count -eq 0) {
-        throw "No solution file (*.sln) was found under: $RootPath"
+        throw "No solution file (*.sln) was found in the current branch under: $RootPath"
     }
-
-    $selected = $solutions |
-        Sort-Object `
-            @{ Expression = { Get-PathDepth -RootPath $RootPath -FilePath $_.FullName }; Ascending = $true },
-            @{ Expression = { if ($_.BaseName -match '(?i)wordpress|web|manager') { 0 } else { 1 } }; Ascending = $true },
-            @{ Expression = { $_.FullName }; Ascending = $true } |
-        Select-Object -First 1
 
     if ($solutions.Count -gt 1) {
-        Write-WarningMessage "Multiple solution files were found. The best match was selected automatically."
+        Write-WarningMessage "Multiple solution files exist. The closest one to the repository root was selected automatically."
     }
 
-    return $selected.FullName
+    return $solutions[0].FullName
 }
 
 function Find-WebProject {
-    param([Parameter(Mandatory)][string]$RootPath)
+    param(
+        [Parameter(Mandatory)][string]$RootPath,
+        [Parameter(Mandatory)][string]$SolutionPath
+    )
 
+    $solutionDirectory = Split-Path $SolutionPath -Parent
     $projects = @(
-        Get-ChildItem -Path $RootPath -Filter "*.csproj" -File -Recurse -ErrorAction SilentlyContinue |
+        Get-ChildItem -Path $solutionDirectory -Filter "*.csproj" -File -Recurse -ErrorAction SilentlyContinue |
         Where-Object {
-            $_.FullName -notmatch '[\\/](bin|obj|tests|\.git)[\\/]' -and
-            (Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue) -match 'Microsoft\.NET\.Sdk\.Web'
-        }
+            $_.FullName -notmatch '[\/](bin|obj|tests|TestResults|\.git)[\/]' -and
+            (Get-Content -LiteralPath $_.FullName -Raw -ErrorAction SilentlyContinue) -match 'Microsoft\.NET\.Sdk\.Web'
+        } |
+        Sort-Object `
+            @{ Expression = { Get-RelativeDepth -RootPath $solutionDirectory -FilePath $_.FullName }; Ascending = $true },
+            @{ Expression = { $_.FullName.Length }; Ascending = $true }
     )
 
     if ($projects.Count -eq 0) {
-        throw "No ASP.NET Core Web project was found under: $RootPath"
+        throw "No ASP.NET Core Web project was found for solution: $SolutionPath"
     }
 
-    $selected = $projects |
-        Sort-Object `
-            @{ Expression = { if ($_.BaseName -match '(?i)wordpress.*web|web') { 0 } else { 1 } }; Ascending = $true },
-            @{ Expression = { Get-PathDepth -RootPath $RootPath -FilePath $_.FullName }; Ascending = $true },
-            @{ Expression = { $_.FullName }; Ascending = $true } |
-        Select-Object -First 1
-
-    if ($projects.Count -gt 1) {
-        Write-WarningMessage "Multiple ASP.NET Core Web projects were found. The best match was selected automatically."
-    }
-
-    return $selected.FullName
+    return $projects[0].FullName
 }
 
-function Test-ServerUrl {
-    param([Parameter(Mandatory)][string]$Url)
-
-    $parsedUri = $null
-    if (-not [Uri]::TryCreate($Url, [UriKind]::Absolute, [ref]$parsedUri)) { return $false }
-    return $parsedUri.Scheme -in @("http", "https")
+function Test-ServerUrl([string]$Url) {
+    $parsed = $null
+    if (-not [Uri]::TryCreate($Url, [UriKind]::Absolute, [ref]$parsed)) { return $false }
+    return $parsed.Scheme -in @("http", "https")
 }
 
 try {
@@ -234,15 +226,15 @@ try {
         throw ".NET SDK is not installed or dotnet.exe is not available in PATH."
     }
 
-    $sdkList = @(& dotnet.exe --list-sdks)
-    if (-not ($sdkList | Where-Object { $_ -match '^\s*8\.' })) {
+    $sdks = @(& dotnet.exe --list-sdks)
+    if (-not ($sdks | Where-Object { $_ -match '^\s*8\.' })) {
         throw ".NET 8 SDK was not found. A runtime-only installation is not enough for building."
     }
 
     if ([string]::IsNullOrWhiteSpace($InstallPath)) {
         $InstallPath = Read-RequiredValue -Prompt "Enter the full installation directory"
     }
-    $InstallPath = Resolve-FullPath -Path $InstallPath
+    $InstallPath = Resolve-FullPath $InstallPath
 
     if ([string]::IsNullOrWhiteSpace($Branch)) {
         $Branch = Read-RequiredValue -Prompt "Enter the Git branch" -DefaultValue "main"
@@ -258,55 +250,46 @@ try {
         if (-not (Test-Path -LiteralPath (Join-Path $InstallPath ".git"))) {
             throw "The selected directory exists but is not a Git repository: $InstallPath"
         }
-        Enable-GitSafeDirectoryIfRequired -RepositoryPath $InstallPath
+        Enable-GitSafeDirectoryIfRequired $InstallPath
     }
     else {
-        $parentDirectory = Split-Path $InstallPath -Parent
-        if ([string]::IsNullOrWhiteSpace($parentDirectory)) {
-            throw "Could not determine the parent directory for: $InstallPath"
+        $parent = Split-Path $InstallPath -Parent
+        if (-not (Test-Path -LiteralPath $parent)) {
+            New-Item -ItemType Directory -Path $parent -Force | Out-Null
         }
 
-        if (-not (Test-Path -LiteralPath $parentDirectory)) {
-            New-Item -ItemType Directory -Path $parentDirectory -Force | Out-Null
-        }
-
-        Write-Step "Checking that branch '$Branch' exists..."
+        Write-Step "Checking branch '$Branch'..."
         $remoteBranch = & git.exe ls-remote --heads $RepositoryUrl $Branch 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            throw "Could not query the Git repository.`n$($remoteBranch | Out-String)"
-        }
-        if (-not $remoteBranch) {
-            throw "The branch '$Branch' does not exist in the remote repository."
+        if ($LASTEXITCODE -ne 0 -or -not $remoteBranch) {
+            throw "The branch '$Branch' could not be found in the remote repository."
         }
 
         Write-Step "Cloning the latest branch state..."
         Invoke-Native "git.exe" @("clone", "--branch", $Branch, "--single-branch", $RepositoryUrl, $InstallPath) "Git clone failed."
-        Enable-GitSafeDirectoryIfRequired -RepositoryPath $InstallPath
+        Enable-GitSafeDirectoryIfRequired $InstallPath
     }
 
     Push-Location $InstallPath
     $LocationWasPushed = $true
 
     Write-Step "Checking origin remote..."
-    $existingOrigin = ((Invoke-Native "git.exe" @("remote", "get-url", "origin") "Could not read origin." -CaptureOutput) | Out-String).Trim()
-    if ($existingOrigin -ne $RepositoryUrl) {
-        Write-WarningMessage "The existing origin does not match the requested repository."
-        Write-Host "Current origin  : $existingOrigin"
+    $currentOrigin = ((Invoke-Native "git.exe" @("remote", "get-url", "origin") "Could not read origin." -CaptureOutput) | Out-String).Trim()
+    if ((Normalize-GitRemote $currentOrigin) -ne (Normalize-GitRemote $RepositoryUrl)) {
+        Write-WarningMessage "The existing origin points to a different repository."
+        Write-Host "Current origin  : $currentOrigin"
         Write-Host "Requested origin: $RepositoryUrl"
-
         if (-not (Read-YesNo -Prompt "Replace the current origin URL?" -DefaultYes $false)) {
-            throw "Repository update cancelled because the origin URL does not match."
+            throw "Repository update was cancelled."
         }
-
         Invoke-Native "git.exe" @("remote", "set-url", "origin", $RepositoryUrl) "Could not update origin URL."
     }
 
-    Write-Step "Downloading the latest commit from origin/$Branch..."
+    Write-Step "Fetching the latest commit from origin/$Branch..."
     Invoke-Native "git.exe" @("fetch", "origin", $Branch, "--prune", "--tags") "Git fetch failed."
 
     & git.exe show-ref --verify --quiet "refs/remotes/origin/$Branch"
     if ($LASTEXITCODE -ne 0) {
-        throw "The remote branch origin/$Branch was not found after fetching."
+        throw "Remote branch origin/$Branch was not found after fetch."
     }
 
     & git.exe show-ref --verify --quiet "refs/heads/$Branch"
@@ -317,24 +300,22 @@ try {
         Invoke-Native "git.exe" @("switch", "--create", $Branch, "--track", "origin/$Branch") "Could not create local branch '$Branch'."
     }
 
-    Write-Step "Applying the latest remote branch state..."
+    Write-Step "Applying the latest origin/$Branch commit..."
     Invoke-Native "git.exe" @("reset", "--hard", "origin/$Branch") "Git reset failed."
 
-    $currentCommit = ((Invoke-Native "git.exe" @("rev-parse", "HEAD") "Could not read current commit." -CaptureOutput) | Out-String).Trim()
-    $currentCommitInfo = ((Invoke-Native "git.exe" @("log", "-1", "--format=%h | %ci | %s") "Could not read commit information." -CaptureOutput) | Out-String).Trim()
-    Write-Success "Latest branch commit applied: $currentCommit"
-    Write-Host "Commit: $currentCommitInfo" -ForegroundColor Gray
+    $commit = ((Invoke-Native "git.exe" @("log", "-1", "--pretty=format:%h %cd %s", "--date=iso") "Could not read the latest commit." -CaptureOutput) | Out-String).Trim()
+    Write-Success "Latest branch commit: $commit"
 
     Write-Step "Removing untracked build files..."
     Invoke-Native "git.exe" @("clean", "-fd", "-e", "appsettings.Production.json") "Git clean failed."
 
     Write-Step "Detecting the solution automatically..."
-    $solutionFile = Find-SolutionFile -RootPath $InstallPath
-    Write-Host "Selected solution: $solutionFile" -ForegroundColor Gray
+    $solutionFile = Find-SolutionFile $InstallPath
+    Write-Success "Selected solution: $solutionFile"
 
     Write-Step "Cleaning old build output..."
-    Get-ChildItem -Path $InstallPath -Directory -Recurse -Force -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -in @("bin", "obj") -and $_.FullName -notmatch '[\\/]\.git[\\/]' } |
+    Get-ChildItem -Path (Split-Path $solutionFile -Parent) -Directory -Recurse -Force -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -in @("bin", "obj") -and $_.FullName -notmatch '[\/]\.git[\/]' } |
         ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
 
     Write-Step "Restoring NuGet packages..."
@@ -342,7 +323,7 @@ try {
 
     Write-Step "Building the application in $Configuration mode..."
     Invoke-Native "dotnet.exe" @("build", $solutionFile, "--configuration", $Configuration, "--no-restore") "Application build failed."
-    Write-Success "Application build completed successfully from commit $currentCommit."
+    Write-Success "Application build completed successfully."
 
     if ($SkipStart) {
         Write-Success "Installation/update completed. Application startup was skipped."
@@ -354,12 +335,11 @@ try {
         exit 0
     }
 
-    Write-Step "Detecting the ASP.NET Core Web project automatically..."
-    $webProject = Find-WebProject -RootPath $InstallPath
-    Write-Host "Selected web project: $webProject" -ForegroundColor Gray
+    $webProject = Find-WebProject -RootPath $InstallPath -SolutionPath $solutionFile
+    Write-Success "Selected Web project: $webProject"
 
-    $serverUrl = Read-RequiredValue -Prompt "Enter the server URL to listen on, for example http://0.0.0.0:7148"
-    while (-not (Test-ServerUrl -Url $serverUrl)) {
+    $serverUrl = Read-RequiredValue -Prompt "Enter the server URL, for example http://0.0.0.0:7148"
+    while (-not (Test-ServerUrl $serverUrl)) {
         Write-WarningMessage "Enter a valid absolute HTTP or HTTPS URL."
         $serverUrl = Read-RequiredValue -Prompt "Enter the server URL"
     }
@@ -369,7 +349,6 @@ try {
     Write-Host ""
     Write-Host "====================================================" -ForegroundColor DarkCyan
     Write-Host " Starting AI WordPress Manager" -ForegroundColor White
-    Write-Host " Commit: $currentCommit" -ForegroundColor Gray
     Write-Host " URL: $serverUrl" -ForegroundColor Green
     Write-Host " Press Ctrl+C to stop the application." -ForegroundColor Yellow
     Write-Host "====================================================" -ForegroundColor DarkCyan
@@ -384,7 +363,7 @@ try {
     ) "The application stopped with an error."
 }
 catch {
-    Stop-WithError -Message $_.Exception.Message
+    Stop-WithError $_.Exception.Message
 }
 finally {
     if ($LocationWasPushed) {
