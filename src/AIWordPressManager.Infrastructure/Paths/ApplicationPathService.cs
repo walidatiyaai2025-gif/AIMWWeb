@@ -18,29 +18,15 @@ public sealed class ApplicationPathService : IApplicationPathService
 
     public string GetApplicationDataDirectory()
     {
-        string path;
-        if (_portableMode)
-        {
-            path = Path.Combine(AppContext.BaseDirectory, "Data");
-        }
-        else if (string.Equals(_environmentName, "Development", StringComparison.OrdinalIgnoreCase))
-        {
-            path = Path.Combine(AppContext.BaseDirectory, "Data");
-        }
-        else
-        {
-            path = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "AIWordPressManager",
-                "Data");
-        }
-
-        return EnsureDirectory(path);
+        var path = Path.Combine(GetStorageRoot(), "Data");
+        EnsureDirectory(path);
+        MigrateLegacyDevelopmentDirectory("Data", path);
+        return path;
     }
 
     public string GetDatabasePath()
     {
-        var fileName = string.Equals(_environmentName, "Development", StringComparison.OrdinalIgnoreCase)
+        var fileName = IsDevelopment
             ? "AIWordPressManager.Development.db"
             : "AIWordPressManager.db";
         return Path.Combine(GetApplicationDataDirectory(), fileName);
@@ -52,12 +38,52 @@ public sealed class ApplicationPathService : IApplicationPathService
     public string GetExportsDirectory() => GetSiblingDirectory("Exports");
     public string GetTemporaryDirectory() => GetSiblingDirectory("Temp");
 
+    private bool IsDevelopment =>
+        string.Equals(_environmentName, "Development", StringComparison.OrdinalIgnoreCase);
+
+    private string GetStorageRoot()
+    {
+        if (_portableMode)
+            return AppContext.BaseDirectory;
+
+        var root = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AIWordPressManager");
+
+        return IsDevelopment
+            ? Path.Combine(root, "Development")
+            : root;
+    }
+
     private string GetSiblingDirectory(string name)
     {
-        var root = _portableMode || string.Equals(_environmentName, "Development", StringComparison.OrdinalIgnoreCase)
-            ? AppContext.BaseDirectory
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager");
-        return EnsureDirectory(Path.Combine(root, name));
+        var path = EnsureDirectory(Path.Combine(GetStorageRoot(), name));
+        MigrateLegacyDevelopmentDirectory(name, path);
+        return path;
+    }
+
+    private void MigrateLegacyDevelopmentDirectory(string name, string destination)
+    {
+        if (_portableMode || !IsDevelopment)
+            return;
+
+        var legacy = Path.Combine(AppContext.BaseDirectory, name);
+        if (!Directory.Exists(legacy))
+            return;
+
+        foreach (var sourceFile in Directory.EnumerateFiles(legacy, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(legacy, sourceFile);
+            var destinationFile = Path.Combine(destination, relative);
+            if (File.Exists(destinationFile))
+                continue;
+
+            var destinationDirectory = Path.GetDirectoryName(destinationFile);
+            if (!string.IsNullOrWhiteSpace(destinationDirectory))
+                Directory.CreateDirectory(destinationDirectory);
+
+            File.Copy(sourceFile, destinationFile, overwrite: false);
+        }
     }
 
     private static string EnsureDirectory(string path)
