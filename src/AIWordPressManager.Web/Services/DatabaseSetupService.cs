@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using Microsoft.Data.Sqlite;
@@ -26,12 +27,19 @@ public sealed class DatabaseSetupService(
     IConfiguration configuration,
     IWebHostEnvironment environment,
     IApplicationPathService paths,
+    ISecretProtectionService secretProtection,
     IServiceScopeFactory scopeFactory,
     ILogger<DatabaseSetupService> logger)
 {
     private static readonly HashSet<string> SupportedProviders = new(StringComparer.OrdinalIgnoreCase)
     {
         "SQLite", "SqlServer", "PostgreSQL", "MySQL", "MariaDB"
+    };
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     public bool IsComplete => configuration.GetValue<bool>("Database:SetupComplete");
@@ -42,9 +50,14 @@ public sealed class DatabaseSetupService(
 
     public static string GetConfigurationPath(string environmentName)
     {
+        var applicationRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AIWordPressManager");
+
         var root = string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase)
-            ? Path.Combine(AppContext.BaseDirectory, "Data")
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Config");
+            ? Path.Combine(applicationRoot, "Development", "Config")
+            : Path.Combine(applicationRoot, "Config");
+
         Directory.CreateDirectory(root);
         return Path.Combine(root, "setup.database.json");
     }
@@ -61,10 +74,155 @@ public sealed class DatabaseSetupService(
             "AIWordPressManager.db");
     }
 
+    private static string GetDevelopmentDatabasePath()
+    {
+        var root = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AIWordPressManager",
+            "Development",
+            "Data");
+        Directory.CreateDirectory(root);
+        return Path.Combine(root, "AIWordPressManager.Development.db");
+    }
+
+    public static string? ValidateExistingConfigurationFile(string configPath)
+    {
+        if (!File.Exists(configPath))
+            return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(configPath));
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new JsonException("Database setup configuration root must be a JSON object.");
+
+            if (!document.RootElement.TryGetProperty("Database", out var databaseSection) ||
+                databaseSection.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var setupComplete = databaseSection.TryGetProperty("SetupComplete", out var completeElement) &&
+                                completeElement.ValueKind is JsonValueKind.True or JsonValueKind.False &&
+                                completeElement.GetBoolean();
+            var provider = databaseSection.TryGetProperty("Provider", out var providerElement)
+                ? providerElement.GetString() ?? "SQLite"
+                : "SQLite";
+
+            if (!setupComplete || !provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            if (!databaseSection.TryGetProperty("ConnectionString", out var connectionElement))
+                return null;
+
+            var connectionString = connectionElement.GetString();
+            if (string.IsNullOrWhiteSpace(connectionString))
+                return null;
+
+            try
+            {
+                var builder = new SqliteConnectionStringBuilder(connectionString);
+                var dataSource = builder.DataSource;
+                if (string.IsNullOrWhiteSpace(dataSource) || File.Exists(dataSource))
+                    return null;
+
+                WriteConfigurationFile(
+                    configPath,
+                    "SQLite",
+                    connectionString,
+                    protectedConnectionString: null,
+                    complete: false);
+
+                var message = $"Configured SQLite database file was not found: {dataSource}. Setup was marked incomplete instead of creating a new database silently.";
+                Console.Error.WriteLine($"[WARNING] {message}");
+                return message;
+            }
+            catch (ArgumentException)
+            {
+                WriteConfigurationFile(
+                    configPath,
+                    "SQLite",
+                    connectionString,
+                    protectedConnectionString: null,
+                    complete: false);
+
+                const string message = "Configured SQLite connection string is invalid. Setup was marked incomplete.";
+                Console.Error.WriteLine($"[WARNING] {message}");
+                return message;
+            }
+        }
+        catch (JsonException)
+        {
+            var directory = Path.GetDirectoryName(configPath)
+                ?? throw new InvalidOperationException("Database setup configuration directory could not be resolved.");
+            Directory.CreateDirectory(directory);
+
+            var backupPath = Path.Combine(
+                directory,
+                $"setup.database.invalid-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json");
+            File.Move(configPath, backupPath, overwrite: false);
+
+            WriteConfigurationFile(
+                configPath,
+                "SQLite",
+                connectionString: null,
+                protectedConnectionString: null,
+                complete: false);
+
+            var message = $"Invalid database setup JSON was preserved at '{backupPath}'. The application will return to first-run setup.";
+            Console.Error.WriteLine($"[WARNING] {message}");
+            return message;
+        }
+    }
+
     public static void BootstrapLegacySqliteIfNeeded(string environmentName)
     {
         var configPath = GetConfigurationPath(environmentName);
-        if (File.Exists(configPath)) return;
+        if (File.Exists(configPath))
+        {
+            ValidateExistingConfigurationFile(configPath);
+            return;
+        }
+
+        var isDevelopment = string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase);
+        if (isDevelopment)
+        {
+            var legacyConfigPath = Path.Combine(AppContext.BaseDirectory, "Data", "setup.database.json");
+            if (File.Exists(legacyConfigPath))
+            {
+                MigrateLegacyDevelopmentConfiguration(legacyConfigPath, configPath);
+                if (File.Exists(configPath))
+                {
+                    ValidateExistingConfigurationFile(configPath);
+                    return;
+                }
+            }
+
+            var legacyDatabasePath = GetLegacyDatabasePath(environmentName);
+            var stableDatabasePath = GetDevelopmentDatabasePath();
+            if (File.Exists(legacyDatabasePath) && !File.Exists(stableDatabasePath))
+            {
+                File.Copy(legacyDatabasePath, stableDatabasePath, overwrite: false);
+            }
+
+            if (File.Exists(stableDatabasePath))
+            {
+                var stableConnectionString = new SqliteConnectionStringBuilder
+                {
+                    DataSource = stableDatabasePath,
+                    ForeignKeys = true,
+                    Pooling = true
+                }.ToString();
+
+                WriteConfigurationFile(
+                    configPath,
+                    "SQLite",
+                    stableConnectionString,
+                    protectedConnectionString: null,
+                    complete: true);
+                return;
+            }
+        }
 
         var legacyPath = GetLegacyDatabasePath(environmentName);
         if (!File.Exists(legacyPath)) return;
@@ -76,17 +234,115 @@ public sealed class DatabaseSetupService(
             Pooling = true
         }.ToString();
 
-        WriteConfigurationFile(configPath, "SQLite", connectionString, true);
+        WriteConfigurationFile(
+            configPath,
+            "SQLite",
+            connectionString,
+            protectedConnectionString: null,
+            complete: true);
+    }
+
+    private static void MigrateLegacyDevelopmentConfiguration(string legacyConfigPath, string configPath)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(legacyConfigPath));
+            if (!document.RootElement.TryGetProperty("Database", out var databaseSection))
+            {
+                File.Copy(legacyConfigPath, configPath, overwrite: false);
+                return;
+            }
+
+            var provider = databaseSection.TryGetProperty("Provider", out var providerElement)
+                ? providerElement.GetString() ?? "SQLite"
+                : "SQLite";
+
+            if (!provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(legacyConfigPath, configPath, overwrite: false);
+                return;
+            }
+
+            var complete = databaseSection.TryGetProperty("SetupComplete", out var completeElement) &&
+                           completeElement.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? completeElement.GetBoolean()
+                : true;
+
+            var sourceDatabasePath = GetLegacyDatabasePath("Development");
+            if (databaseSection.TryGetProperty("ConnectionString", out var connectionElement))
+            {
+                var legacyConnectionString = connectionElement.GetString();
+                if (!string.IsNullOrWhiteSpace(legacyConnectionString))
+                {
+                    try
+                    {
+                        var builder = new SqliteConnectionStringBuilder(legacyConnectionString);
+                        if (!string.IsNullOrWhiteSpace(builder.DataSource))
+                            sourceDatabasePath = builder.DataSource;
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Fall back to the historical development database path.
+                    }
+                }
+            }
+
+            var stableDatabasePath = GetDevelopmentDatabasePath();
+            if (File.Exists(sourceDatabasePath) && !File.Exists(stableDatabasePath))
+                File.Copy(sourceDatabasePath, stableDatabasePath, overwrite: false);
+
+            var stableConnectionString = new SqliteConnectionStringBuilder
+            {
+                DataSource = stableDatabasePath,
+                ForeignKeys = true,
+                Pooling = true
+            }.ToString();
+
+            WriteConfigurationFile(
+                configPath,
+                "SQLite",
+                stableConnectionString,
+                protectedConnectionString: null,
+                complete: complete);
+        }
+        catch (JsonException)
+        {
+            var directory = Path.GetDirectoryName(configPath)!;
+            Directory.CreateDirectory(directory);
+            var backupPath = Path.Combine(
+                directory,
+                $"setup.database.legacy-invalid-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json");
+            File.Copy(legacyConfigPath, backupPath, overwrite: false);
+            WriteConfigurationFile(
+                configPath,
+                "SQLite",
+                connectionString: null,
+                protectedConnectionString: null,
+                complete: false);
+        }
+        catch (IOException)
+        {
+            if (!File.Exists(configPath)) throw;
+        }
     }
 
     public async Task ApplyAsync(DatabaseSetupRequest request, CancellationToken cancellationToken = default)
     {
         var provider = NormalizeProvider(request.Provider);
         var connectionString = BuildConnectionString(provider, request);
+        var isSqlite = provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase);
+        var protectedConnectionString = isSqlite
+            ? null
+            : await secretProtection.ProtectAsync(connectionString, cancellationToken);
 
         logger.LogInformation("Applying database setup for provider {Provider}.", provider);
 
-        WriteConfigurationFile(ConfigurationPath, provider, connectionString, false);
+        WriteConfigurationFile(
+            ConfigurationPath,
+            provider,
+            isSqlite ? connectionString : null,
+            protectedConnectionString,
+            complete: false);
         ReloadConfiguration();
 
         try
@@ -118,12 +374,16 @@ public sealed class DatabaseSetupService(
                     throw new InvalidOperationException(accountResult.Message);
             }
 
-            // Preserve existing accounts on recovery and assign any legacy unowned sites
-            // to the existing/custom administrator without creating a duplicate admin.
             await authentication.SeedAsync(cancellationToken);
 
-            WriteConfigurationFile(ConfigurationPath, provider, connectionString, true);
+            WriteConfigurationFile(
+                ConfigurationPath,
+                provider,
+                isSqlite ? connectionString : null,
+                protectedConnectionString,
+                complete: true);
             ReloadConfiguration();
+
             logger.LogInformation(
                 "Database setup completed for provider {Provider}. Existing accounts detected: {ExistingAccounts}.",
                 provider,
@@ -131,7 +391,12 @@ public sealed class DatabaseSetupService(
         }
         catch
         {
-            WriteConfigurationFile(ConfigurationPath, provider, connectionString, false);
+            WriteConfigurationFile(
+                ConfigurationPath,
+                provider,
+                isSqlite ? connectionString : null,
+                protectedConnectionString,
+                complete: false);
             ReloadConfiguration();
             throw;
         }
@@ -149,7 +414,8 @@ public sealed class DatabaseSetupService(
             ? string.Empty
             : $"<div class=\"error\"><strong>Setup failed</strong><div>{WebUtility.HtmlEncode(error)}</div></div>";
 
-        static string Selected(string actual, string expected) => actual.Equals(expected, StringComparison.OrdinalIgnoreCase) ? " selected" : string.Empty;
+        static string Selected(string actual, string expected) =>
+            actual.Equals(expected, StringComparison.OrdinalIgnoreCase) ? " selected" : string.Empty;
         static string H(string value) => WebUtility.HtmlEncode(value);
 
         return $$$"""
@@ -178,7 +444,7 @@ public sealed class DatabaseSetupService(
           <option value="PostgreSQL"{{{Selected(provider,"PostgreSQL")}}}>PostgreSQL</option>
           <option value="MySQL"{{{Selected(provider,"MySQL")}}}>MySQL</option>
           <option value="MariaDB"{{{Selected(provider,"MariaDB")}}}>MariaDB</option>
-        </select><div class="help">SQLite is recommended for one server. Choose a server database for shared or managed infrastructure.</div></div>
+        </select><div class="help">SQLite is recommended for one server. Server database credentials are encrypted before they are stored locally.</div></div>
 
         <div id="sqliteFields" class="provider-fields"><div class="full"><label>SQLite database file</label><input name="sqlitePath" value="{{{H(sqlitePath)}}}"><div class="help">The application creates the file and parent directory when possible.</div></div></div>
 
@@ -192,12 +458,12 @@ public sealed class DatabaseSetupService(
           <div class="full"><label class="row"><input type="checkbox" name="trustServerCertificate" value="true"> Trust server certificate</label><div class="help">Use only when the database uses an internal or self-signed TLS certificate.</div></div>
         </div>
 
-        <div class="section-title"><h2>Administrator account</h2><p>Required for a new/empty database. If the selected database already contains application accounts, the existing accounts are preserved and these fields are ignored.</p></div>
+        <div class="section-title"><h2>Administrator account</h2><p>Required for a new/empty database. Existing application accounts are preserved when reconnecting to an existing database.</p></div>
         <div class="full"><label>Administrator username</label><input name="adminUserName" value="{{{H(adminUser)}}}" minlength="3" maxlength="64" autocomplete="username"></div>
         <div><label>Administrator password</label><input name="adminPassword" type="password" minlength="8" autocomplete="new-password"><div class="help">For a new database: at least 8 characters with uppercase, lowercase and a number.</div></div>
         <div><label>Confirm administrator password</label><input name="adminConfirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
       </div>
-      <div class="actions"><div class="note">Setup is stored locally on this machine and is not committed to Git.</div><button class="primary" type="submit">Test, initialize and continue →</button></div>
+      <div class="actions"><div class="note">Setup is stored locally on this machine and is never committed to Git.</div><button class="primary" type="submit">Test, initialize and continue →</button></div>
     </form>
   </div>
 </div>
@@ -214,14 +480,23 @@ providerChanged();
     {
         if (provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
         {
-            var file = string.IsNullOrWhiteSpace(request.SqlitePath) ? DefaultSqlitePath : Path.GetFullPath(request.SqlitePath.Trim());
+            var file = string.IsNullOrWhiteSpace(request.SqlitePath)
+                ? DefaultSqlitePath
+                : Path.GetFullPath(request.SqlitePath.Trim());
             var parent = Path.GetDirectoryName(file);
             if (!string.IsNullOrWhiteSpace(parent)) Directory.CreateDirectory(parent);
-            return new SqliteConnectionStringBuilder { DataSource = file, ForeignKeys = true, Pooling = true }.ToString();
+            return new SqliteConnectionStringBuilder
+            {
+                DataSource = file,
+                ForeignKeys = true,
+                Pooling = true
+            }.ToString();
         }
 
-        if (string.IsNullOrWhiteSpace(request.Host)) throw new InvalidOperationException("Database server/host is required.");
-        if (string.IsNullOrWhiteSpace(request.DatabaseName)) throw new InvalidOperationException("Database name is required.");
+        if (string.IsNullOrWhiteSpace(request.Host))
+            throw new InvalidOperationException("Database server/host is required.");
+        if (string.IsNullOrWhiteSpace(request.DatabaseName))
+            throw new InvalidOperationException("Database name is required.");
 
         var builder = new DbConnectionStringBuilder();
         if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
@@ -230,19 +505,25 @@ providerChanged();
             builder["Initial Catalog"] = request.DatabaseName;
             builder["Encrypt"] = true;
             builder["TrustServerCertificate"] = request.TrustServerCertificate;
+
             if (request.IntegratedSecurity)
+            {
                 builder["Integrated Security"] = true;
+            }
             else
             {
                 RequireCredentials(request);
                 builder["User ID"] = request.UserName!;
                 builder["Password"] = request.Password!;
             }
+
             return builder.ConnectionString;
         }
 
         builder["Host"] = request.Host;
-        builder["Port"] = request.Port is > 0 ? request.Port.Value : provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase) ? 5432 : 3306;
+        builder["Port"] = request.Port is > 0
+            ? request.Port.Value
+            : provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase) ? 5432 : 3306;
         builder["Database"] = request.DatabaseName;
         RequireCredentials(request);
         builder[provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase) ? "Username" : "User ID"] = request.UserName!;
@@ -251,7 +532,8 @@ providerChanged();
         if (provider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
         {
             builder["SSL Mode"] = "Prefer";
-            if (request.TrustServerCertificate) builder["Trust Server Certificate"] = true;
+            if (request.TrustServerCertificate)
+                builder["Trust Server Certificate"] = true;
         }
         else
         {
@@ -263,23 +545,32 @@ providerChanged();
 
     private static void RequireCredentials(DatabaseSetupRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.UserName)) throw new InvalidOperationException("Database user is required.");
-        if (string.IsNullOrWhiteSpace(request.Password)) throw new InvalidOperationException("Database password is required.");
+        if (string.IsNullOrWhiteSpace(request.UserName))
+            throw new InvalidOperationException("Database user is required.");
+        if (string.IsNullOrWhiteSpace(request.Password))
+            throw new InvalidOperationException("Database password is required.");
     }
 
     private static string NormalizeProvider(string provider)
     {
         if (string.IsNullOrWhiteSpace(provider)) return "SQLite";
-        if (!SupportedProviders.Contains(provider)) throw new InvalidOperationException($"Unsupported database provider: {provider}");
+        if (!SupportedProviders.Contains(provider))
+            throw new InvalidOperationException($"Unsupported database provider: {provider}");
         return SupportedProviders.First(x => x.Equals(provider, StringComparison.OrdinalIgnoreCase));
     }
 
     private void ReloadConfiguration()
     {
-        if (configuration is IConfigurationRoot root) root.Reload();
+        if (configuration is IConfigurationRoot root)
+            root.Reload();
     }
 
-    private static void WriteConfigurationFile(string path, string provider, string connectionString, bool complete)
+    private static void WriteConfigurationFile(
+        string path,
+        string provider,
+        string? connectionString,
+        string? protectedConnectionString,
+        bool complete)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var payload = new
@@ -289,10 +580,12 @@ providerChanged();
                 SetupComplete = complete,
                 Provider = provider,
                 ConnectionString = connectionString,
+                ProtectedConnectionString = protectedConnectionString,
                 ConfiguredAtUtc = DateTime.UtcNow
             }
         };
-        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+
+        var json = JsonSerializer.Serialize(payload, JsonOptions);
         var temp = path + ".tmp";
         File.WriteAllText(temp, json);
         File.Move(temp, path, true);
