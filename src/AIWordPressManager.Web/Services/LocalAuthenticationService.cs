@@ -223,7 +223,17 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, context.Connection.RemoteIpAddress?.ToString(), context.Request.Headers.UserAgent.ToString(), utcNow));
     }
 
-    private static bool IsSafeLocalPath(string? path) => !string.IsNullOrWhiteSpace(path) && path.StartsWith('/') && !path.StartsWith("//") && !Uri.TryCreate(path, UriKind.Absolute, out _);
+    private static bool IsSafeLocalPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path[0] != '/' || path.StartsWith("//", StringComparison.Ordinal))
+            return false;
+
+        // Root-relative application paths are valid on every supported OS. Do not use
+        // Uri.TryCreate(..., Absolute) here because Unix runtimes can interpret a path
+        // such as "/sites" as an absolute file URI and incorrectly reject it.
+        return !path.Contains('\\') && !path.Contains('\r') && !path.Contains('\n');
+    }
+
     private static bool IsAuthenticationPath(string path) => path.StartsWith("/login", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/logout", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/register", StringComparison.OrdinalIgnoreCase);
 }
 
