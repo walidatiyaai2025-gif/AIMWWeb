@@ -1,5 +1,4 @@
 @page "/automation-center"
-@page "/module/schedules"
 @rendermode InteractiveServer
 @implements IDisposable
 @using AIWordPressManager.Domain.Entities
@@ -18,8 +17,8 @@
             <p>@(L.IsArabic ? "إدارة مهام المزامنة وتدقيق SEO وتشغيلها ومتابعة سجل التنفيذ." : "Manage synchronization and SEO audit jobs and review execution history.")</p>
         </div>
         <div class="automation-hero-actions">
-            <button class="btn" @onclick="Refresh">@(L.IsArabic ? "تحديث" : "Refresh")</button>
-            <button class="btn primary" @onclick="NewJob">@(L.IsArabic ? "مهمة جديدة" : "New job")</button>
+            <button class="btn" @onclick="Refresh" disabled="@_saving">@(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn primary" @onclick="NewJob" disabled="@_saving">@(L.IsArabic ? "مهمة جديدة" : "New job")</button>
         </div>
     </section>
 
@@ -55,10 +54,10 @@
                             </div>
                         </div>
                         <div class="automation-job-actions">
-                            <button class="btn compact" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button>
-                            <button class="btn compact" @onclick="() => RunNow(job)">@(L.IsArabic ? "تشغيل" : "Run")</button>
-                            <button class="btn compact" @onclick="() => Toggle(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
-                            <button class="btn danger compact" @onclick="() => Delete(job)">@(L.IsArabic ? "حذف" : "Delete")</button>
+                            <button class="btn compact" disabled="@_saving" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button>
+                            <button class="btn compact" disabled="@_saving" @onclick="() => RunNow(job)">@(L.IsArabic ? "تشغيل" : "Run")</button>
+                            <button class="btn compact" disabled="@_saving" @onclick="() => Toggle(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
+                            <button class="btn danger compact" disabled="@_saving" @onclick="() => Delete(job)">@(L.IsArabic ? "حذف" : "Delete")</button>
                         </div>
                     </article>
                 }
@@ -102,14 +101,15 @@
 </div>
 
 @code {
-    private List<AutomationJob> _jobs = new List<AutomationJob>();
-    private List<AutomationHistoryItem> _history = new List<AutomationHistoryItem>();
-    private List<Site> _sites = new List<Site>();
-    private AutomationJobEditModel _model = new AutomationJobEditModel();
+    private List<AutomationJob> _jobs = new();
+    private List<AutomationHistoryItem> _history = new();
+    private List<Site> _sites = new();
+    private AutomationJobEditModel _model = new();
     private string _siteIdText = string.Empty;
     private string _search = string.Empty;
     private string _statusFilter = string.Empty;
     private bool _saving;
+    private bool _disposed;
 
     private string TimeText => Convert.ToString(_model.TimeOfDay) ?? string.Empty;
 
@@ -117,31 +117,36 @@
         (string.IsNullOrWhiteSpace(_search) || x.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) || x.SiteName.Contains(_search, StringComparison.OrdinalIgnoreCase)) &&
         (string.IsNullOrWhiteSpace(_statusFilter) || (_statusFilter == "enabled" && x.Enabled) || (_statusFilter == "disabled" && !x.Enabled)));
 
-    protected override void OnInitialized()
-    {
-        L.Changed += Changed;
-    }
+    protected override void OnInitialized() => L.Changed += Changed;
 
     protected override async Task OnInitializedAsync()
     {
-        _sites = await SiteService.GetSitesAsync();
+        var sites = await SiteService.GetSitesAsync();
+        if (_disposed) return;
+        _sites = sites.ToList();
         Refresh();
     }
 
     private void Refresh()
     {
-        _jobs = Automation.GetJobs().ToList();
-        _history = Automation.GetHistory(100).ToList();
+        if (_disposed) return;
+        var allowedSiteIds = _sites.Select(x => x.Id).ToHashSet();
+        _jobs = Automation.GetJobs().Where(x => allowedSiteIds.Contains(x.SiteId)).ToList();
+        var allowedJobNames = _jobs.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _history = Automation.GetHistory(100).Where(x => allowedJobNames.Contains(x.JobName)).ToList();
     }
 
     private void NewJob()
     {
+        if (_disposed || _saving) return;
         _model = new AutomationJobEditModel();
         _siteIdText = string.Empty;
     }
 
     private void Edit(AutomationJob job)
     {
+        if (_disposed || _saving) return;
+        EnsureOwned(job);
         _model = new AutomationJobEditModel
         {
             Id = job.Id,
@@ -160,69 +165,92 @@
 
     private void SiteChanged(ChangeEventArgs e)
     {
+        if (_disposed || _saving) return;
         _siteIdText = e.Value?.ToString() ?? string.Empty;
         if (Guid.TryParse(_siteIdText, out var id))
         {
             _model.SiteId = id;
             _model.SiteName = _sites.FirstOrDefault(x => x.Id == id)?.Name ?? string.Empty;
         }
+        else
+        {
+            _model.SiteId = Guid.Empty;
+            _model.SiteName = string.Empty;
+        }
     }
 
     private void TimeChanged(ChangeEventArgs e)
     {
+        if (_disposed || _saving) return;
         _model.TimeOfDay = e.Value?.ToString() ?? string.Empty;
     }
 
     private void Save()
     {
+        if (_disposed || _saving) return;
         try
         {
             _saving = true;
+            var site = _sites.FirstOrDefault(x => x.Id == _model.SiteId)
+                ?? throw new UnauthorizedAccessException("The selected site does not belong to the signed-in user.");
+            _model.SiteName = site.Name;
             Automation.Save(_model);
+            if (_disposed) return;
             Notifications.Success(L.IsArabic ? "تم حفظ المهمة." : "Job saved.");
             NewJob();
             Refresh();
         }
         catch (Exception ex)
         {
-            Notifications.Error(L.TranslateMessage(ex.Message));
+            if (!_disposed) Notifications.Error(L.TranslateMessage(ex.Message));
         }
         finally
         {
-            _saving = false;
+            if (!_disposed) _saving = false;
         }
     }
 
-    private void Toggle(AutomationJob job)
+    private void Toggle(AutomationJob job) => RunOwned(job, () => Automation.SetEnabled(job.Id, !job.Enabled));
+    private void RunNow(AutomationJob job) => RunOwned(job, () => Automation.QueueNow(job.Id));
+    private void Delete(AutomationJob job) => RunOwned(job, () => Automation.Delete(job.Id));
+
+    private void RunOwned(AutomationJob job, Action action)
     {
-        Automation.SetEnabled(job.Id, !job.Enabled);
-        Refresh();
+        if (_disposed || _saving) return;
+        try
+        {
+            EnsureOwned(job);
+            action();
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            if (!_disposed) Notifications.Error(L.TranslateMessage(ex.Message));
+        }
     }
 
-    private void RunNow(AutomationJob job)
+    private void EnsureOwned(AutomationJob job)
     {
-        Automation.QueueNow(job.Id);
-        Refresh();
+        if (!_sites.Any(x => x.Id == job.SiteId))
+            throw new UnauthorizedAccessException("This automation does not belong to the signed-in user.");
     }
 
-    private void Delete(AutomationJob job)
-    {
-        Automation.Delete(job.Id);
-        Refresh();
-    }
-
-    private string ScheduleText(AutomationJob job)
-    {
-        return job.Frequency + " · " + Convert.ToString(job.TimeOfDay) + " UTC";
-    }
+    private static string ScheduleText(AutomationJob job) =>
+        job.Frequency + " · " + Convert.ToString(job.TimeOfDay) + " UTC";
 
     private void Changed()
     {
-        _ = InvokeAsync(StateHasChanged);
+        if (_disposed) return;
+        _ = InvokeAsync(() =>
+        {
+            if (!_disposed) StateHasChanged();
+        });
     }
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         L.Changed -= Changed;
     }
 }
