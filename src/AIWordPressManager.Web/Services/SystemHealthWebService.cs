@@ -1,11 +1,20 @@
 using AIWordPressManager.Application.Abstractions;
+using AIWordPressManager.Application.Abstractions.AI;
+using AIWordPressManager.Application.Abstractions.WordPress;
+using AIWordPressManager.Persistence;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
 public sealed class SystemHealthWebService(
     IApplicationPathService paths,
     IWebHostEnvironment environment,
+    IConfiguration configuration,
+    AppDbContext dbContext,
+    ISecretProtectionService secretProtectionService,
+    IWordPressConnectionTester connectionTester,
+    IEnumerable<IAIProvider> aiProviders,
     ILogger<SystemHealthWebService> logger)
 {
     public async Task<SystemHealthSnapshot> CheckAsync(CancellationToken cancellationToken = default)
@@ -62,12 +71,98 @@ public sealed class SystemHealthWebService(
         checks.Add(new("logs", Directory.Exists(logsDirectory), logsDirectory,
             Directory.Exists(logsDirectory) ? "Logs directory is available." : "Logs directory has not been created yet."));
 
+        await AddWordPressChecksAsync(checks, cancellationToken);
+        AddAIProviderChecks(checks);
+
         return new SystemHealthSnapshot(
             checks.All(x => x.IsHealthy),
             DateTimeOffset.UtcNow,
             typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown",
             checks);
     }
+
+    private async Task AddWordPressChecksAsync(List<SystemHealthCheck> checks, CancellationToken cancellationToken)
+    {
+        List<AIWordPressManager.Domain.Entities.Site> sites;
+        try
+        {
+            sites = await dbContext.Sites.AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.Name)
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unable to load WordPress sites for health checks.");
+            checks.Add(new("wordpress", false, "configured-sites", $"Unable to load configured sites: {ex.Message}"));
+            return;
+        }
+
+        if (sites.Count == 0)
+        {
+            checks.Add(new("wordpress", true, "configured-sites", "No WordPress sites are configured yet."));
+            return;
+        }
+
+        var credentials = await dbContext.SiteCredentials.AsNoTracking()
+            .ToDictionaryAsync(x => x.SiteId, cancellationToken);
+
+        foreach (var site in sites)
+        {
+            if (!credentials.TryGetValue(site.Id, out var credential))
+            {
+                checks.Add(new($"wordpress:{site.Id:N}", false, site.SiteUrl, $"{site.Name}: credentials are not configured."));
+                continue;
+            }
+
+            try
+            {
+                var password = await secretProtectionService.UnprotectAsync(credential.ProtectedApplicationPassword, cancellationToken);
+                var result = await connectionTester.TestAsync(
+                    new WordPressConnectionRequest(site.SiteUrl, credential.UserName, password),
+                    cancellationToken);
+
+                checks.Add(new(
+                    $"wordpress:{site.Id:N}",
+                    result.IsSuccess,
+                    site.SiteUrl,
+                    $"{site.Name}: {result.Message}{(string.IsNullOrWhiteSpace(result.Diagnostics) ? string.Empty : $" | {result.Diagnostics}")}"));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "WordPress health check failed for site {SiteId} ({SiteName}).", site.Id, site.Name);
+                checks.Add(new($"wordpress:{site.Id:N}", false, site.SiteUrl, $"{site.Name}: {ex.Message}"));
+            }
+        }
+    }
+
+    private void AddAIProviderChecks(List<SystemHealthCheck> checks)
+    {
+        foreach (var provider in aiProviders)
+        {
+            var (configured, details) = provider.Name switch
+            {
+                "OpenAI" => HasValue("AI:OpenAI:ApiKey")
+                    ? (true, "API key is configured.")
+                    : (false, "API key is not configured."),
+                "Gemini" => HasValue("AI:Gemini:ApiKey")
+                    ? (true, "API key is configured.")
+                    : (false, "API key is not configured."),
+                "Puter" => HasValue("AI:Puter:Endpoint")
+                    ? (true, HasValue("AI:Puter:Token") ? "Endpoint and token are configured." : "Endpoint is configured; token is optional/not configured.")
+                    : (false, "Endpoint is not configured."),
+                _ => (true, "Provider is registered; no configuration rule is defined.")
+            };
+
+            checks.Add(new($"ai:{provider.Name.ToLowerInvariant()}", configured, provider.Name, details));
+        }
+    }
+
+    private bool HasValue(string key) => !string.IsNullOrWhiteSpace(configuration[key]);
 }
 
 public sealed record SystemHealthSnapshot(
