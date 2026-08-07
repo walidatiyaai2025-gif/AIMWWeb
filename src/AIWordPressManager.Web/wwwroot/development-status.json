@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-07T22:29:00Z",
+  "updatedAtUtc": "2026-08-07T23:12:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -43,7 +43,7 @@
     { "id": "IDN-005", "phase": 2, "area": "Tenancy", "nameAr": "عزل مواقع المستخدم", "nameEn": "Owned-site filtering", "status": "completed", "priority": "critical", "version": "155.76.0", "notes": "Site listing, update, credentials, testing, and deletion are owner-scoped." },
     { "id": "IDN-006", "phase": 2, "area": "Tenancy", "nameAr": "عزل WordPress REST API", "nameEn": "WordPress REST API ownership guard", "status": "completed", "priority": "critical", "version": "155.77.0", "notes": "Central API client validates ownership before requests." },
     { "id": "IDN-007", "phase": 2, "area": "Tenancy", "nameAr": "عزل الكاش المحلي", "nameEn": "Local cache tenant isolation", "status": "completed", "priority": "critical", "version": "155.77.0-155.82.0", "notes": "Content explorers, dashboard, content hub, and sync cache are owner-scoped." },
-    { "id": "IDN-008", "phase": 2, "area": "Security", "nameAr": "إدارة المستخدمين داخل التطبيق", "nameEn": "Application user administration", "status": "planned", "priority": "critical", "version": null, "notes": "Create, edit, disable, unlock, reset password, and audit users." },
+    { "id": "IDN-008", "phase": 2, "area": "Security", "nameAr": "إدارة المستخدمين داخل التطبيق", "nameEn": "Application user administration", "status": "completed", "priority": "critical", "version": "155.105.0", "notes": "Administrator-only application-user workspace supports list/search, create/edit, enable/disable, unlock, password reset, and recent login-audit review; service-level authorization, self-disable/self-demotion protection, last-active-administrator continuity, password hashing, bilingual RTL/LTR UI, and automated verification are included." },
     { "id": "IDN-009", "phase": 2, "area": "Security", "nameAr": "الأدوار والصلاحيات الدقيقة", "nameEn": "Roles and granular permissions", "status": "planned", "priority": "critical", "version": null, "notes": "Role and permission engine not yet implemented." },
     { "id": "IDN-010", "phase": 2, "area": "Security", "nameAr": "قفل الحساب ومحاولات الدخول", "nameEn": "Account lockout and failed sign-in tracking", "status": "completed", "priority": "high", "version": "155.103.0", "notes": "Five failed sign-ins lock the account for 15 minutes; active and expired lockout behavior, post-expiry attempt reset, successful reset, and existing login audit tracking are covered by automated verification." },
     { "id": "IDN-011", "phase": 2, "area": "Security", "nameAr": "إدارة الجلسات وتسجيل الخروج من كل الأجهزة", "nameEn": "Session management and sign-out all", "status": "planned", "priority": "high", "version": null, "notes": "Session inventory and revocation are pending." },
