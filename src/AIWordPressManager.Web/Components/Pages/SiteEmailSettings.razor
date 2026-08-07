@@ -1,0 +1,207 @@
+@page "/module/site-email-settings"
+@page "/sites/{SiteId:guid}/email-settings"
+@rendermode InteractiveServer
+@inject SiteWebService Sites
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject CurrentUserContext CurrentUser
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "إعدادات بريد الموقع" : "Site Email Settings")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">EMAIL</span>
+            <h1>@(L.IsArabic ? "إعدادات تنبيهات البريد للموقع" : "Site email notification settings")</h1>
+            <p>@(L.IsArabic ? "أضف حتى ثلاثة عناوين بريد لكل موقع. إعدادات الإرسال والجدولة ستستخدم هذه القائمة لاحقًا." : "Add up to three notification recipients per site. Outbound mail and schedules will use this list in the next implementation slices.")</p>
+        </div>
+    </section>
+
+    <section class="panel settings-section">
+        <div class="grid-2">
+            <div>
+                <label>@(L.IsArabic ? "الموقع" : "Site")</label>
+                <select class="form-select" value="@SelectedSiteIdText" @onchange="SiteChangedAsync" disabled="@_busy">
+                    <option value="">@(L.IsArabic ? "اختر موقعًا" : "Select a site")</option>
+                    @foreach (var site in _sites)
+                    {
+                        <option value="@site.Id">@site.Name</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label>@(L.IsArabic ? "العناوين المستخدمة" : "Configured recipients")</label>
+                <div><strong>@_recipients.Count / 3</strong></div>
+            </div>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <section class="panel"><p class="text-danger">@_error</p></section>
+    }
+
+    @if (_selectedSiteId.HasValue)
+    {
+        <section class="panel settings-section">
+            <header><div><h2>@(L.IsArabic ? "إضافة عنوان" : "Add recipient")</h2></div></header>
+            <div class="grid-2">
+                <div>
+                    <label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label>
+                    <input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" />
+                </div>
+                <div>
+                    <label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label>
+                    <input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" />
+                </div>
+            </div>
+            <button class="btn primary" @onclick="AddAsync" disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))">
+                @(L.IsArabic ? "إضافة البريد" : "Add email")
+            </button>
+            @if (_recipients.Count >= 3)
+            {
+                <p class="help">@(L.IsArabic ? "تم الوصول للحد الأقصى: ثلاثة عناوين لكل موقع." : "Maximum reached: three recipients per site.")</p>
+            }
+        </section>
+
+        <section class="panel settings-section">
+            <header><div><h2>@(L.IsArabic ? "عناوين التنبيه" : "Notification recipients")</h2></div></header>
+            @if (_loading)
+            {
+                <p>@(L.IsArabic ? "جاري التحميل..." : "Loading...")</p>
+            }
+            else if (_recipients.Count == 0)
+            {
+                <p>@(L.IsArabic ? "لا توجد عناوين بريد لهذا الموقع بعد." : "No email recipients are configured for this site yet.")</p>
+            }
+            else
+            {
+                <div class="database-info-grid">
+                    @foreach (var item in _recipients)
+                    {
+                        <article class="panel" style="padding:1rem">
+                            @if (_editingId == item.Id)
+                            {
+                                <div class="grid-2">
+                                    <input class="form-control" type="email" @bind="_editEmail" maxlength="320" />
+                                    <input class="form-control" @bind="_editDisplayName" maxlength="120" />
+                                </div>
+                                <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_editEnabled" /> @(L.IsArabic ? "مفعل" : "Enabled")</label>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button class="btn primary" @onclick="SaveEditAsync" disabled="@_busy">@(L.IsArabic ? "حفظ" : "Save")</button>
+                                    <button class="btn" @onclick="CancelEdit" disabled="@_busy">@(L.IsArabic ? "إلغاء" : "Cancel")</button>
+                                </div>
+                            }
+                            else
+                            {
+                                <strong>@item.EmailAddress</strong>
+                                <p>@(string.IsNullOrWhiteSpace(item.DisplayName) ? "—" : item.DisplayName)</p>
+                                <span class="settings-badge @(item.IsEnabled ? "success" : "warning")">@(item.IsEnabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</span>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button class="btn" @onclick="() => BeginEdit(item)" disabled="@_busy">@(L.IsArabic ? "تعديل" : "Edit")</button>
+                                    <button class="btn" @onclick="() => DeleteAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "حذف" : "Delete")</button>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? SiteId { get; set; }
+
+    private List<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private IReadOnlyList<SiteEmailRecipientView> _recipients = [];
+    private Guid? _selectedSiteId;
+    private bool _loading;
+    private bool _busy;
+    private string? _error;
+    private string _newEmail = string.Empty;
+    private string _newDisplayName = string.Empty;
+    private Guid? _editingId;
+    private string _editEmail = string.Empty;
+    private string _editDisplayName = string.Empty;
+    private bool _editEnabled = true;
+    private SiteEmailRecipientService RecipientService => new(Db, CurrentUser);
+    private string SelectedSiteIdText => _selectedSiteId?.ToString() ?? string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _sites = await Sites.GetSitesAsync();
+        if (SiteId.HasValue && _sites.Any(x => x.Id == SiteId.Value)) _selectedSiteId = SiteId;
+        else if (!_selectedSiteId.HasValue && _sites.Count == 1) _selectedSiteId = _sites[0].Id;
+        await LoadAsync();
+    }
+
+    private async Task SiteChangedAsync(ChangeEventArgs args)
+    {
+        _selectedSiteId = Guid.TryParse(args.Value?.ToString(), out var id) ? id : null;
+        _editingId = null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        if (!_selectedSiteId.HasValue) { _recipients = []; return; }
+        _loading = true;
+        try { _recipients = await RecipientService.GetAsync(_selectedSiteId.Value); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
+        finally { _loading = false; }
+    }
+
+    private async Task AddAsync()
+    {
+        if (!_selectedSiteId.HasValue) return;
+        _busy = true; _error = null;
+        try
+        {
+            await RecipientService.AddAsync(_selectedSiteId.Value, _newEmail, _newDisplayName);
+            _newEmail = string.Empty; _newDisplayName = string.Empty;
+            await LoadAsync();
+            Notifications.Success(L.IsArabic ? "تمت إضافة البريد." : "Email recipient added.");
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private void BeginEdit(SiteEmailRecipientView item)
+    {
+        _editingId = item.Id; _editEmail = item.EmailAddress; _editDisplayName = item.DisplayName ?? string.Empty; _editEnabled = item.IsEnabled;
+    }
+
+    private void CancelEdit() => _editingId = null;
+
+    private async Task SaveEditAsync()
+    {
+        if (!_selectedSiteId.HasValue || !_editingId.HasValue) return;
+        _busy = true; _error = null;
+        try
+        {
+            await RecipientService.UpdateAsync(_selectedSiteId.Value, _editingId.Value, _editEmail, _editDisplayName, _editEnabled);
+            _editingId = null; await LoadAsync();
+            Notifications.Success(L.IsArabic ? "تم تحديث البريد." : "Email recipient updated.");
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        if (!_selectedSiteId.HasValue) return;
+        _busy = true; _error = null;
+        try
+        {
+            await RecipientService.DeleteAsync(_selectedSiteId.Value, id);
+            if (_editingId == id) _editingId = null;
+            await LoadAsync();
+            Notifications.Success(L.IsArabic ? "تم حذف البريد." : "Email recipient deleted.");
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+}
