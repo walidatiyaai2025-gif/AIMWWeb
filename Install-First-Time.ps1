@@ -43,13 +43,8 @@ function Read-RequiredValue {
     )
 
     while ($true) {
-        $value = if ([string]::IsNullOrWhiteSpace($DefaultValue)) {
-            Read-Host $Prompt
-        }
-        else {
-            $entered = Read-Host "$Prompt [$DefaultValue]"
-            if ([string]::IsNullOrWhiteSpace($entered)) { $DefaultValue } else { $entered }
-        }
+        $entered = Read-Host $(if ([string]::IsNullOrWhiteSpace($DefaultValue)) { $Prompt } else { "$Prompt [$DefaultValue]" })
+        $value = if ([string]::IsNullOrWhiteSpace($entered)) { $DefaultValue } else { $entered }
 
         if (-not [string]::IsNullOrWhiteSpace($value)) {
             return $value.Trim()
@@ -66,6 +61,7 @@ function Read-YesNo {
     )
 
     $suffix = if ($DefaultYes) { "[Y/n]" } else { "[y/N]" }
+
     while ($true) {
         $answer = Read-Host "$Prompt $suffix"
         if ([string]::IsNullOrWhiteSpace($answer)) { return $DefaultYes }
@@ -99,21 +95,43 @@ function Invoke-Native {
         throw "$FailureMessage`n$details`nExit code: $exitCode"
     }
 
-    if ($CaptureOutput) { return $output }
+    if ($CaptureOutput) {
+        return $output
+    }
+
     $output | ForEach-Object { Write-Host $_ }
 }
 
 function Resolve-FullPath([string]$Path) {
     $expanded = [Environment]::ExpandEnvironmentVariables($Path.Trim())
+
     if ($expanded.StartsWith("~")) {
         $expanded = Join-Path $HOME $expanded.Substring(1).TrimStart("\", "/")
     }
+
     return [System.IO.Path]::GetFullPath($expanded)
 }
 
 function Normalize-GitRemote([string]$Url) {
     if ([string]::IsNullOrWhiteSpace($Url)) { return "" }
     return ($Url.Trim().TrimEnd("/") -replace '\.git$', '').ToLowerInvariant()
+}
+
+function Test-PathInsideDirectory {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Directory
+    )
+
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $fullDirectory = [System.IO.Path]::GetFullPath($Directory).TrimEnd("\", "/")
+
+    if ($fullPath.Equals($fullDirectory, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $true
+    }
+
+    $prefix = $fullDirectory + [System.IO.Path]::DirectorySeparatorChar
+    return $fullPath.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)
 }
 
 function Enable-GitSafeDirectoryIfRequired([string]$RepositoryPath) {
@@ -131,36 +149,49 @@ function Enable-GitSafeDirectoryIfRequired([string]$RepositoryPath) {
     }
 
     $safePath = $RepositoryPath.Replace("\", "/")
-    Invoke-Native "git.exe" @("config", "--global", "--add", "safe.directory", $safePath) "Could not add safe.directory."
+    $existingSafeDirectories = @(& git.exe config --global --get-all safe.directory 2>$null)
+
+    if ($existingSafeDirectories -notcontains $safePath) {
+        Invoke-Native "git.exe" @("config", "--global", "--add", "safe.directory", $safePath) "Could not add safe.directory."
+    }
+}
+
+function Assert-ValidBranch([string]$BranchName) {
+    & git.exe check-ref-format --branch $BranchName *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw "The Git branch name is invalid: $BranchName"
+    }
 }
 
 function Get-TrackedFiles([string]$Pattern) {
-    $items = @(& git.exe ls-files $Pattern 2>$null)
+    $items = @(& git.exe ls-files -- $Pattern 2>$null)
     if ($LASTEXITCODE -ne 0) {
-        throw "Could not read tracked files from Git."
+        throw "Could not read tracked '$Pattern' files from Git."
     }
+
     return @($items | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 }
 
 function Find-SolutionFile([string]$RootPath) {
     $tracked = @(Get-TrackedFiles "*.sln")
     if ($tracked.Count -eq 0) {
-        throw "No tracked solution file (*.sln) exists in the current branch."
+        throw "No tracked solution file (*.sln) exists in the selected branch."
     }
 
     $candidates = @($tracked | ForEach-Object {
-        $full = Join-Path $RootPath $_
-        if (Test-Path -LiteralPath $full) {
+        $fullPath = [System.IO.Path]::GetFullPath((Join-Path $RootPath $_))
+
+        if (Test-Path -LiteralPath $fullPath) {
             [pscustomobject]@{
                 Relative = $_
-                FullName = [System.IO.Path]::GetFullPath($full)
+                FullName = $fullPath
                 Depth = (($_ -split '[\\/]').Count - 1)
             }
         }
     } | Where-Object { $_ })
 
     if ($candidates.Count -eq 0) {
-        throw "Tracked solution files were listed by Git but none exist on disk after reset."
+        throw "Git listed solution files, but none exist on disk after updating the branch."
     }
 
     $selected = $candidates |
@@ -168,10 +199,25 @@ function Find-SolutionFile([string]$RootPath) {
         Select-Object -First 1
 
     if ($candidates.Count -gt 1) {
-        Write-WarningMessage "Multiple tracked solution files exist. The one closest to the repository root was selected automatically."
+        Write-WarningMessage "Multiple tracked solutions exist. The solution closest to the repository root was selected automatically."
     }
 
     return $selected.FullName
+}
+
+function Get-TrackedProjects([string]$RootPath) {
+    return @(Get-TrackedFiles "*.csproj" | ForEach-Object {
+        $fullPath = [System.IO.Path]::GetFullPath((Join-Path $RootPath $_))
+
+        if (Test-Path -LiteralPath $fullPath) {
+            [pscustomobject]@{
+                Relative = $_
+                FullName = $fullPath
+                Directory = Split-Path $fullPath -Parent
+                Depth = (($_ -split '[\\/]').Count - 1)
+            }
+        }
+    } | Where-Object { $_ })
 }
 
 function Find-WebProject {
@@ -181,25 +227,11 @@ function Find-WebProject {
     )
 
     $solutionDirectory = Split-Path $SolutionPath -Parent
-    $tracked = @(Get-TrackedFiles "*.csproj")
-
-    $projects = @($tracked | ForEach-Object {
-        $full = [System.IO.Path]::GetFullPath((Join-Path $RootPath $_))
-        if (
-            (Test-Path -LiteralPath $full) -and
-            $full.StartsWith($solutionDirectory, [System.StringComparison]::OrdinalIgnoreCase) -and
-            $_ -notmatch '(^|[\\/])(tests?|TestResults)([\\/]|$)'
-        ) {
-            $content = Get-Content -LiteralPath $full -Raw -ErrorAction SilentlyContinue
-            if ($content -match 'Microsoft\.NET\.Sdk\.Web') {
-                [pscustomobject]@{
-                    FullName = $full
-                    Relative = $_
-                    Depth = (($_ -split '[\\/]').Count - 1)
-                }
-            }
-        }
-    } | Where-Object { $_ })
+    $projects = @(Get-TrackedProjects $RootPath | Where-Object {
+        (Test-PathInsideDirectory -Path $_.FullName -Directory $solutionDirectory) -and
+        $_.Relative -notmatch '(^|[\\/])(tests?|TestResults)([\\/]|$)' -and
+        (Get-Content -LiteralPath $_.FullName -Raw -ErrorAction SilentlyContinue) -match 'Microsoft\.NET\.Sdk\.Web'
+    })
 
     if ($projects.Count -eq 0) {
         throw "No tracked ASP.NET Core Web project was found for the selected solution."
@@ -208,6 +240,19 @@ function Find-WebProject {
     return ($projects |
         Sort-Object Depth, @{ Expression = { $_.Relative.Length } }, Relative |
         Select-Object -First 1).FullName
+}
+
+function Remove-TrackedProjectBuildOutput([string]$RootPath) {
+    $projectDirectories = @(Get-TrackedProjects $RootPath | Select-Object -ExpandProperty Directory -Unique)
+
+    foreach ($projectDirectory in $projectDirectories) {
+        foreach ($folderName in @("bin", "obj")) {
+            $buildFolder = Join-Path $projectDirectory $folderName
+            if (Test-Path -LiteralPath $buildFolder) {
+                Remove-Item -LiteralPath $buildFolder -Recurse -Force -ErrorAction Stop
+            }
+        }
+    }
 }
 
 function Test-ServerUrl([string]$Url) {
@@ -244,6 +289,7 @@ try {
     if ([string]::IsNullOrWhiteSpace($Branch)) {
         $Branch = Read-RequiredValue -Prompt "Enter the Git branch" -DefaultValue "main"
     }
+    Assert-ValidBranch $Branch
 
     Write-Host ""
     Write-Host "Installation directory : $InstallPath"
@@ -255,6 +301,7 @@ try {
         if (-not (Test-Path -LiteralPath (Join-Path $InstallPath ".git"))) {
             throw "The selected directory exists but is not a Git repository: $InstallPath"
         }
+
         Enable-GitSafeDirectoryIfRequired $InstallPath
     }
     else {
@@ -262,6 +309,7 @@ try {
         if ([string]::IsNullOrWhiteSpace($parent)) {
             throw "Could not determine the parent directory for: $InstallPath"
         }
+
         if (-not (Test-Path -LiteralPath $parent)) {
             New-Item -ItemType Directory -Path $parent -Force | Out-Null
         }
@@ -282,18 +330,22 @@ try {
 
     Write-Step "Checking origin remote..."
     $currentOrigin = ((Invoke-Native "git.exe" @("remote", "get-url", "origin") "Could not read origin." -CaptureOutput) | Out-String).Trim()
+
     if ((Normalize-GitRemote $currentOrigin) -ne (Normalize-GitRemote $RepositoryUrl)) {
         Write-WarningMessage "The existing origin points to a different repository."
         Write-Host "Current origin  : $currentOrigin"
         Write-Host "Requested origin: $RepositoryUrl"
+
         if (-not (Read-YesNo -Prompt "Replace the current origin URL?" -DefaultYes $false)) {
             throw "Repository update was cancelled."
         }
+
         Invoke-Native "git.exe" @("remote", "set-url", "origin", $RepositoryUrl) "Could not update origin URL."
     }
 
     Write-Step "Fetching the latest commit from origin/$Branch..."
-    Invoke-Native "git.exe" @("fetch", "origin", "+refs/heads/$Branch`:refs/remotes/origin/$Branch", "--prune", "--tags") "Git fetch failed."
+    $refSpec = "+refs/heads/${Branch}:refs/remotes/origin/${Branch}"
+    Invoke-Native "git.exe" @("fetch", "origin", $refSpec, "--prune", "--tags") "Git fetch failed."
 
     & git.exe show-ref --verify --quiet "refs/remotes/origin/$Branch"
     if ($LASTEXITCODE -ne 0) {
@@ -313,6 +365,7 @@ try {
 
     $localCommit = ((Invoke-Native "git.exe" @("rev-parse", "HEAD") "Could not read local commit." -CaptureOutput) | Out-String).Trim()
     $remoteCommit = ((Invoke-Native "git.exe" @("rev-parse", "origin/$Branch") "Could not read remote commit." -CaptureOutput) | Out-String).Trim()
+
     if ($localCommit -ne $remoteCommit) {
         throw "The local repository did not reach the latest origin/$Branch commit."
     }
@@ -324,10 +377,8 @@ try {
     $solutionFile = Find-SolutionFile $InstallPath
     Write-Success "Selected solution: $solutionFile"
 
-    Write-Step "Cleaning old build output only..."
-    Get-ChildItem -Path (Split-Path $solutionFile -Parent) -Directory -Recurse -Force -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -in @("bin", "obj") -and $_.FullName -notmatch '[\/]\.git[\/]' } |
-        ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+    Write-Step "Cleaning tracked project build output..."
+    Remove-TrackedProjectBuildOutput $InstallPath
 
     Write-Step "Restoring NuGet packages..."
     Invoke-Native "dotnet.exe" @("restore", $solutionFile) "NuGet restore failed."
