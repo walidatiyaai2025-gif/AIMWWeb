@@ -3,10 +3,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>155.94.14</Version>
-    <AssemblyVersion>155.94.14.0</AssemblyVersion>
-    <FileVersion>155.94.14.0</FileVersion>
-    <InformationalVersion>155.94.14</InformationalVersion>
+    <Version>155.95.0</Version>
+    <AssemblyVersion>155.95.0.0</AssemblyVersion>
+    <FileVersion>155.95.0.0</FileVersion>
+    <InformationalVersion>155.95.0</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyMetadata Include="GitBranch" Value="main" />
