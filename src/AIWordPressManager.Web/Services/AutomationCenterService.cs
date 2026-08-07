@@ -1,3 +1,4 @@
+using AIWordPressManager.Application.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Web.Services;
@@ -7,13 +8,42 @@ public sealed class AutomationCenterService
     private readonly object _sync = new();
     private readonly string _connectionString;
 
-    public AutomationCenterService()
+    public AutomationCenterService(IApplicationPathService paths)
     {
-        var dataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Data");
-        Directory.CreateDirectory(dataDirectory);
+        var dataDirectory = paths.GetApplicationDataDirectory();
+        var databasePath = Path.Combine(dataDirectory, "automation-center.db");
+
+        // Prior versions always stored this database in the production LocalAppData
+        // folder, even when the app was running in Development. Preserve those jobs
+        // when the corrected environment-specific path is used for the first time.
+        var legacyPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AIWordPressManager",
+            "Data",
+            "automation-center.db");
+
+        if (!Path.GetFullPath(databasePath).Equals(Path.GetFullPath(legacyPath), StringComparison.OrdinalIgnoreCase) &&
+            File.Exists(legacyPath) &&
+            !File.Exists(databasePath))
+        {
+            try
+            {
+                File.Copy(legacyPath, databasePath, overwrite: false);
+            }
+            catch (IOException)
+            {
+                // Keep startup resilient if the legacy database is in use. A fresh
+                // environment-specific store can still be created safely below.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // A permissions issue in the legacy location must not block startup.
+            }
+        }
+
         _connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = Path.Combine(dataDirectory, "automation-center.db"),
+            DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
