@@ -163,28 +163,59 @@ public sealed class EmailOutboxService(AppDbContext dbContext) : IEmailOutbox
         DateTime utcNow,
         CancellationToken cancellationToken = default)
     {
-        var stale = await dbContext.EmailOutboxMessages
+        var stale = await dbContext.EmailOutboxMessages.AsNoTracking()
             .Where(x => x.Status == EmailOutboxMessage.SendingStatus && x.ClaimedAtUtc != null && x.ClaimedAtUtc <= staleBeforeUtc)
+            .OrderBy(x => x.ClaimedAtUtc)
+            .Take(100)
+            .Select(x => new
+            {
+                x.Id,
+                x.ClaimToken,
+                x.ClaimedAtUtc,
+                x.AttemptCount,
+                x.MaxAttempts
+            })
             .ToListAsync(cancellationToken);
 
-        foreach (var message in stale)
+        var recovered = 0;
+        foreach (var candidate in stale)
         {
-            var startedAt = message.ClaimedAtUtc ?? utcNow;
-            message.RecoverStaleClaim(utcNow.Add(RetryDelay(message.AttemptCount)), utcNow);
+            var terminal = candidate.AttemptCount >= candidate.MaxAttempts;
+            var nextAttempt = terminal ? utcNow : utcNow.Add(RetryDelay(candidate.AttemptCount));
+            const string error = "Previous delivery attempt did not complete before the worker stopped.";
+
+            var affected = await dbContext.EmailOutboxMessages
+                .Where(x =>
+                    x.Id == candidate.Id &&
+                    x.Status == EmailOutboxMessage.SendingStatus &&
+                    x.ClaimToken == candidate.ClaimToken &&
+                    x.ClaimedAtUtc != null &&
+                    x.ClaimedAtUtc <= staleBeforeUtc)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Status, terminal ? EmailOutboxMessage.FailedStatus : EmailOutboxMessage.RetryWaitingStatus)
+                    .SetProperty(x => x.NextAttemptAtUtc, nextAttempt)
+                    .SetProperty(x => x.ClaimToken, (string?)null)
+                    .SetProperty(x => x.ClaimedAtUtc, (DateTime?)null)
+                    .SetProperty(x => x.LastError, error)
+                    .SetProperty(x => x.UpdatedAtUtc, utcNow), cancellationToken);
+
+            if (affected != 1) continue;
+
             dbContext.EmailDeliveryAttempts.Add(new EmailDeliveryAttempt(
-                message.Id,
-                Math.Max(1, message.AttemptCount),
-                message.Status,
-                startedAt,
+                candidate.Id,
+                Math.Max(1, candidate.AttemptCount),
+                terminal ? EmailOutboxMessage.FailedStatus : EmailOutboxMessage.RetryWaitingStatus,
+                candidate.ClaimedAtUtc ?? utcNow,
                 utcNow,
                 null,
                 "WorkerRestart",
-                message.LastError,
+                error,
                 utcNow));
+            recovered++;
         }
 
-        if (stale.Count > 0) await dbContext.SaveChangesAsync(cancellationToken);
-        return stale.Count;
+        if (recovered > 0) await dbContext.SaveChangesAsync(cancellationToken);
+        return recovered;
     }
 
     private async Task<EmailOutboxMessage> RequireClaimedAsync(
