@@ -49,6 +49,7 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         if (schedule.SiteId.HasValue) await EnsureOwnedSiteAsync(schedule.SiteId.Value, ownerId, cancellationToken);
         var now = DateTime.UtcNow;
         var nextRun = CalculateNext(input, now);
+        schedule.SetCulture(input.Culture, now);
         ApplyTiming(schedule, input, nextRun, now);
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToView(schedule);
@@ -68,6 +69,7 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         var now = DateTime.UtcNow;
         var nextRun = CalculateNext(input, now);
         var schedule = new EmailSchedule(ownerId, siteId, scope, input.ReportType, input.TemplateKey, input.TimezoneId, now);
+        schedule.SetCulture(input.Culture, now);
         ApplyTiming(schedule, input, nextRun, now);
         dbContext.EmailSchedules.Add(schedule);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -80,7 +82,7 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         .Select(x => new EmailScheduleView(
             x.Id, x.SiteId, x.Scope, x.ReportType, x.TemplateKey, x.TimezoneId, x.Frequency,
             x.TimeOfDay, x.Weekday, x.MonthDay, x.IsEnabled, x.RetryCount, x.RetryDelayMinutes,
-            x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError));
+            x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError, x.Culture));
 
     private async Task EnsureOwnedSiteAsync(Guid siteId, Guid ownerId, CancellationToken cancellationToken)
     {
@@ -94,7 +96,6 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         _ = EmailScheduleCalculator.ResolveTimeZone(input.TimezoneId);
         if (string.IsNullOrWhiteSpace(input.ReportType)) throw new ArgumentException("Report type is required.");
         if (string.IsNullOrWhiteSpace(input.TemplateKey)) throw new ArgumentException("Template key is required.");
-
         if (scope == EmailSchedule.AccountScope && !string.Equals(input.TemplateKey, EmailTemplateKeys.DashboardDigest, StringComparison.Ordinal))
             throw new InvalidOperationException("Account schedules currently support the dashboard digest template.");
         if (scope == EmailSchedule.SiteScope && !string.Equals(input.TemplateKey, EmailTemplateKeys.SiteOperationalReport, StringComparison.Ordinal))
@@ -111,7 +112,7 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
     private static EmailScheduleView ToView(EmailSchedule x) => new(
         x.Id, x.SiteId, x.Scope, x.ReportType, x.TemplateKey, x.TimezoneId, x.Frequency,
         x.TimeOfDay, x.Weekday, x.MonthDay, x.IsEnabled, x.RetryCount, x.RetryDelayMinutes,
-        x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError);
+        x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError, x.Culture);
 }
 
 public sealed record EmailScheduleInput(
@@ -124,7 +125,8 @@ public sealed record EmailScheduleInput(
     int? MonthDay,
     int RetryCount,
     int RetryDelayMinutes,
-    bool IsEnabled);
+    bool IsEnabled,
+    string Culture = "en");
 
 public sealed record EmailScheduleView(
     Guid Id,
@@ -143,4 +145,5 @@ public sealed record EmailScheduleView(
     DateTime NextRunUtc,
     DateTime? LastRunUtc,
     string LastStatus,
-    string? LastError);
+    string? LastError,
+    string Culture = "en");
