@@ -1,5 +1,6 @@
 @page "/account/profile"
 @rendermode InteractiveServer
+@implements IDisposable
 @using Microsoft.Extensions.DependencyInjection
 @inject IServiceProvider Services
 @inject AppLanguageService L
@@ -77,6 +78,7 @@
     private bool _loading = true;
     private bool _working;
     private bool _isError;
+    private bool _disposed;
     private string? _error;
     private string _message = string.Empty;
     private string _currentPassword = string.Empty;
@@ -87,20 +89,26 @@
     {
         try
         {
-            _profile = await AccountService.GetAsync();
+            var profile = await AccountService.GetAsync();
+            if (_disposed) return;
+            _profile = profile;
         }
         catch (Exception ex)
         {
+            if (_disposed) return;
             _error = ex.Message;
         }
         finally
         {
-            _loading = false;
+            if (!_disposed)
+                _loading = false;
         }
     }
 
     private async Task ChangePasswordAsync(MouseEventArgs _)
     {
+        if (_disposed || _working) return;
+
         try
         {
             _working = true;
@@ -108,6 +116,8 @@
             _isError = false;
 
             var result = await AccountService.ChangePasswordAsync(_currentPassword, _newPassword, _confirmPassword);
+            if (_disposed) return;
+
             _isError = !result.IsSuccess;
             _message = L.IsArabic ? Translate(result.Message) : result.Message;
 
@@ -125,13 +135,15 @@
         }
         catch (Exception ex)
         {
+            if (_disposed) return;
             _isError = true;
             _message = ex.Message;
             Notifications.Error(_message);
         }
         finally
         {
-            _working = false;
+            if (!_disposed)
+                _working = false;
         }
     }
 
@@ -149,4 +161,9 @@
         "Password changed successfully." => "تم تغيير كلمة المرور بنجاح.",
         _ => message
     };
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
 }
