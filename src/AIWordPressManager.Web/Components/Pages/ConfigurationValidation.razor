@@ -5,6 +5,7 @@
 @inject AppNotificationService Notifications
 @inject IConfiguration Configuration
 @inject IWebHostEnvironment Environment
+@inject AIWordPressManager.Application.Abstractions.IApplicationPathService Paths
 @inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "التحقق من الإعدادات" : "Configuration Validation")</PageTitle>
@@ -84,7 +85,7 @@
         try
         {
             _error = null;
-            _report = new ConfigurationValidationService(Configuration, Environment).Validate();
+            _report = new ConfigurationValidationService(Configuration, Environment, Paths).Validate();
         }
         catch (Exception ex)
         {
