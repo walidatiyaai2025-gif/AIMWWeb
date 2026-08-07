@@ -12,15 +12,15 @@ public sealed class EmailSchedule : Entity
     public const string WeeklyFrequency = "Weekly";
     public const string MonthlyFrequency = "Monthly";
 
-    private EmailSchedule()
-    {
-    }
+    private EmailSchedule() { }
 
     public EmailSchedule(Guid ownerUserId, Guid? siteId, string scope, string reportType, string templateKey, string timezoneId, DateTime utcNow)
     {
         if (ownerUserId == Guid.Empty) throw new ArgumentException("Owner user ID is required.", nameof(ownerUserId));
         if (string.Equals(scope, SiteScope, StringComparison.OrdinalIgnoreCase) && (!siteId.HasValue || siteId == Guid.Empty))
             throw new ArgumentException("Site schedules require a site ID.", nameof(siteId));
+        if (string.Equals(scope, AccountScope, StringComparison.OrdinalIgnoreCase) && siteId.HasValue)
+            throw new ArgumentException("Account schedules cannot reference a site.", nameof(siteId));
 
         OwnerUserId = ownerUserId;
         SiteId = siteId;
@@ -34,7 +34,7 @@ public sealed class EmailSchedule : Entity
         RetryDelayMinutes = 5;
         IsEnabled = false;
         LastStatus = "NeverRun";
-        NextRunUtc = utcNow;
+        NextRunUtc = DateTime.SpecifyKind(utcNow, DateTimeKind.Utc);
         MarkUpdated(utcNow);
     }
 
@@ -55,6 +55,8 @@ public sealed class EmailSchedule : Entity
     public DateTime? LastRunUtc { get; private set; }
     public string LastStatus { get; private set; } = "NeverRun";
     public string? LastError { get; private set; }
+    public string? ClaimToken { get; private set; }
+    public DateTime? ClaimedAtUtc { get; private set; }
 
     public void Configure(
         string timezoneId,
@@ -71,8 +73,8 @@ public sealed class EmailSchedule : Entity
         var normalizedFrequency = NormalizeFrequency(frequency);
         var normalizedTimezone = NormalizeRequired(timezoneId, 120, nameof(timezoneId));
         if (timeOfDay < TimeSpan.Zero || timeOfDay >= TimeSpan.FromDays(1)) throw new ArgumentOutOfRangeException(nameof(timeOfDay));
-        if (normalizedFrequency == WeeklyFrequency && (weekday is < 0 or > 6)) throw new ArgumentOutOfRangeException(nameof(weekday));
-        if (normalizedFrequency == MonthlyFrequency && (monthDay is < 1 or > 31)) throw new ArgumentOutOfRangeException(nameof(monthDay));
+        if (normalizedFrequency == WeeklyFrequency && (weekday is < 0 or > 6 || weekday is null)) throw new ArgumentOutOfRangeException(nameof(weekday));
+        if (normalizedFrequency == MonthlyFrequency && (monthDay is < 1 or > 31 || monthDay is null)) throw new ArgumentOutOfRangeException(nameof(monthDay));
         if (retryCount is < 0 or > 10) throw new ArgumentOutOfRangeException(nameof(retryCount));
         if (retryDelayMinutes is < 1 or > 1440) throw new ArgumentOutOfRangeException(nameof(retryDelayMinutes));
 
@@ -84,7 +86,9 @@ public sealed class EmailSchedule : Entity
         RetryCount = retryCount;
         RetryDelayMinutes = retryDelayMinutes;
         IsEnabled = enabled;
-        NextRunUtc = nextRunUtc;
+        NextRunUtc = DateTime.SpecifyKind(nextRunUtc, DateTimeKind.Utc);
+        ClaimToken = null;
+        ClaimedAtUtc = null;
         MarkUpdated(utcNow);
     }
 
@@ -92,8 +96,18 @@ public sealed class EmailSchedule : Entity
     {
         LastRunUtc = utcNow;
         LastStatus = NormalizeRequired(status, 32, nameof(status));
-        LastError = string.IsNullOrWhiteSpace(error) ? null : error.Trim()[..Math.Min(error.Trim().Length, 1000)];
-        NextRunUtc = nextRunUtc;
+        LastError = NormalizeError(error);
+        NextRunUtc = DateTime.SpecifyKind(nextRunUtc, DateTimeKind.Utc);
+        ClaimToken = null;
+        ClaimedAtUtc = null;
+        MarkUpdated(utcNow);
+    }
+
+    public void Disable(DateTime utcNow)
+    {
+        IsEnabled = false;
+        ClaimToken = null;
+        ClaimedAtUtc = null;
         MarkUpdated(utcNow);
     }
 
@@ -119,5 +133,12 @@ public sealed class EmailSchedule : Entity
         var clean = value.Trim();
         if (clean.Length > maxLength) throw new ArgumentException($"Value exceeds {maxLength} characters.", parameterName);
         return clean;
+    }
+
+    private static string? NormalizeError(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var clean = value.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return clean.Length <= 1000 ? clean : clean[..1000];
     }
 }
