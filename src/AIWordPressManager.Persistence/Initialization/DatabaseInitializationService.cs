@@ -24,8 +24,6 @@ public sealed class DatabaseInitializationService(
         }
         else
         {
-            // New non-SQLite installations are created from the complete current EF model.
-            // This avoids replaying legacy SQLite-specific compatibility SQL.
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
         }
 
@@ -75,6 +73,22 @@ public sealed class DatabaseInitializationService(
             );
             CREATE INDEX IF NOT EXISTS IX_LoginAudits_AttemptedAtUtc ON LoginAudits (AttemptedAtUtc);
             CREATE INDEX IF NOT EXISTS IX_LoginAudits_UserName_AttemptedAtUtc ON LoginAudits (UserName, AttemptedAtUtc);
+
+            CREATE TABLE IF NOT EXISTS SiteEmailRecipients (
+                Id TEXT NOT NULL CONSTRAINT PK_SiteEmailRecipients PRIMARY KEY,
+                SiteId TEXT NOT NULL,
+                OwnerUserId TEXT NOT NULL,
+                EmailAddress TEXT NOT NULL,
+                NormalizedEmailAddress TEXT NOT NULL,
+                DisplayName TEXT NULL,
+                IsEnabled INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL,
+                CONSTRAINT FK_SiteEmailRecipients_Sites_SiteId FOREIGN KEY (SiteId) REFERENCES Sites (Id) ON DELETE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_SiteEmailRecipients_SiteId_NormalizedEmailAddress ON SiteEmailRecipients (SiteId, NormalizedEmailAddress);
+            CREATE INDEX IF NOT EXISTS IX_SiteEmailRecipients_OwnerUserId_SiteId ON SiteEmailRecipients (OwnerUserId, SiteId);
             """,
             cancellationToken);
 
