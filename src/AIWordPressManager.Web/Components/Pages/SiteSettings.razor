@@ -47,6 +47,7 @@ else
                 <div class="actions">
                     <AppButton Href="@($"/sites/{Id}/email-settings")" Variant="primary" Text="@(L.IsArabic ? "إدارة إعداد البريد" : "Manage email settings")" />
                     <AppButton Href="@($"/sites/{Id}/email-diagnostics")" Text="@(L.IsArabic ? "تشخيص SMTP" : "SMTP diagnostics")" />
+                    <AppButton Href="@($"/email/schedules?siteId={Id}")" Text="@(L.IsArabic ? "جدولة التقارير" : "Email schedules")" />
                     <AppButton Href="/email/history" Text="@(L.IsArabic ? "سجل الإرسال" : "Delivery history")" />
                 </div>
             </AppCard>
