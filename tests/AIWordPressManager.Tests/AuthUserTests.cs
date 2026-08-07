@@ -37,6 +37,32 @@ public sealed class AuthUserTests
 
         user.FailedAccessCount.Should().Be(5);
         user.LockedUntilUtc.Should().Be(now.AddSeconds(4).AddMinutes(15));
+        user.IsLockedOut(now.AddMinutes(1)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Lockout_Is_Not_Active_After_Expiry()
+    {
+        var now = new DateTime(2026, 8, 5, 10, 0, 0, DateTimeKind.Utc);
+        var user = new AuthUser("Admin", "hash", now);
+        for (var i = 0; i < 5; i++) user.RecordFailedLogin(now);
+
+        user.IsLockedOut(now.AddMinutes(14)).Should().BeTrue();
+        user.IsLockedOut(now.AddMinutes(15)).Should().BeFalse();
+        user.IsLockedOut(now.AddMinutes(16)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void First_Failure_After_Expired_Lockout_Starts_A_New_Attempt_Window()
+    {
+        var now = new DateTime(2026, 8, 5, 10, 0, 0, DateTimeKind.Utc);
+        var user = new AuthUser("Admin", "hash", now);
+        for (var i = 0; i < 5; i++) user.RecordFailedLogin(now);
+
+        user.RecordFailedLogin(now.AddMinutes(16));
+
+        user.FailedAccessCount.Should().Be(1);
+        user.LockedUntilUtc.Should().BeNull();
     }
 
     [Fact]
