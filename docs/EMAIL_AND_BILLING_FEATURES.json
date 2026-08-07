@@ -1,7 +1,7 @@
 {
   "program": "Email communications and subscription billing",
   "branch": "main",
-  "updatedAtUtc": "2026-08-07T21:10:00Z",
+  "updatedAtUtc": "2026-08-07T21:25:00Z",
   "phases": [
     {
       "id": 10,
@@ -22,7 +22,7 @@
     { "id": "EML-003", "phase": 10, "area": "Dashboard Email", "nameAr": "إعدادات إيميل الداشبورد والحساب", "nameEn": "Dashboard/account email profile and recipients", "status": "in_progress", "priority": "critical", "dependencies": ["EML-004"], "notes": "Implemented account SMTP profile, up to three dashboard recipients, encrypted credentials, SQLite compatibility, account UI and site inheritance. Awaiting clean build/runtime verification." },
     { "id": "EML-004", "phase": 10, "area": "Security", "nameAr": "تشفير بيانات اعتماد البريد", "nameEn": "Encrypted email credentials and rotation", "status": "in_progress", "priority": "critical", "dependencies": [], "notes": "SMTP passwords use the existing secret-protection abstraction, remain write-only in UI, can be rotated or cleared, and are decrypted only for delivery/diagnostics. Awaiting clean build/runtime verification." },
     { "id": "EML-005", "phase": 10, "area": "Diagnostics", "nameAr": "اختبار إعدادات البريد وإرسال رسالة تجريبية", "nameEn": "Email validation and test send", "status": "in_progress", "priority": "high", "dependencies": ["EML-002", "EML-003"], "notes": "Implemented shared DNS/TCP diagnostics, sanitized TLS/auth/SMTP test-send reporting, account diagnostics UI, site diagnostics workspace, and test-profile separation from outbound-enabled state. Awaiting clean build/runtime verification against real SMTP providers." },
-    { "id": "EML-006", "phase": 10, "area": "Templates", "nameAr": "قوالب البريد بالعربية والإنجليزية", "nameEn": "Bilingual email templates", "status": "planned", "priority": "high", "dependencies": [], "notes": "HTML escaping and reusable template keys for site, dashboard, security, and billing." },
+    { "id": "EML-006", "phase": 10, "area": "Templates", "nameAr": "قوالب البريد بالعربية والإنجليزية", "nameEn": "Bilingual email templates", "status": "in_progress", "priority": "high", "dependencies": [], "notes": "Implemented application-level renderer abstraction, six stable bilingual template keys, RTL/LTR HTML and plain-text bodies, HTML encoding, subject newline sanitization, required-token validation, catalog metadata and regression tests. Awaiting clean build/test verification before completion." },
     { "id": "EML-007", "phase": 10, "area": "Scheduling", "nameAr": "جدولة تقارير البريد لكل موقع", "nameEn": "Per-site email report schedules", "status": "planned", "priority": "critical", "dependencies": ["EML-001", "EML-005", "EML-009", "OPS-005"], "notes": "Timezone-safe hourly/daily/weekly/monthly schedules with owner context." },
     { "id": "EML-008", "phase": 10, "area": "Scheduling", "nameAr": "جدولة ملخص الداشبورد", "nameEn": "Dashboard digest schedules", "status": "planned", "priority": "high", "dependencies": ["EML-003", "EML-009", "OPS-005"], "notes": "Account-level digest independent of individual site schedules." },
     { "id": "EML-009", "phase": 10, "area": "Delivery", "nameAr": "Outbox ومحاولات الإرسال وإعادة المحاولة", "nameEn": "Email outbox, retries, idempotency, and correlation", "status": "planned", "priority": "critical", "dependencies": ["OPS-005"], "notes": "Persist before sending, atomic claim, retry/backoff, restart recovery, no duplicate sends." },
