@@ -421,8 +421,10 @@ function Build-Application([string]$Root) {
 
 function Test-Application([string]$Root) {
     $solution = Find-SolutionFile $Root
-    Write-Step "Running tests..."
-    Invoke-Native "dotnet.exe" @("test", $solution, "--configuration", $Configuration, "--no-build") "Tests failed. Review failing tests in the diagnostic log."
+    Write-Success "Selected solution: $solution"
+    Restore-Packages $solution
+    Write-Step "Building test assemblies and running tests in $Configuration mode..."
+    Invoke-Native "dotnet.exe" @("test", $solution, "--configuration", $Configuration, "--no-restore") "Tests failed. Review failing tests in the diagnostic log."
     Write-Success "Tests completed successfully."
 }
 
