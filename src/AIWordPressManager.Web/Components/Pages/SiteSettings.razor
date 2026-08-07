@@ -44,7 +44,10 @@ else
 
             <AppCard Title="@(L.IsArabic ? "تنبيهات البريد الإلكتروني" : "Email notifications")" Subtitle="@(L.IsArabic ? "حدد من عنوان إلى ثلاثة عناوين بريد تستقبل تقارير وتنبيهات هذا الموقع." : "Configure one to three recipients for this site's reports and notifications.")">
                 <p>@(L.IsArabic ? "إعداد عناوين الاستلام مستقل لكل موقع ومحمي بعزل الحسابات." : "Recipient settings are site-specific and tenant isolated.")</p>
-                <AppButton Href="@($"/sites/{Id}/email-settings")" Variant="primary" Text="@(L.IsArabic ? "إدارة عناوين البريد" : "Manage email recipients")" />
+                <div class="actions">
+                    <AppButton Href="@($"/sites/{Id}/email-settings")" Variant="primary" Text="@(L.IsArabic ? "إدارة إعداد البريد" : "Manage email settings")" />
+                    <AppButton Href="@($"/sites/{Id}/email-diagnostics")" Text="@(L.IsArabic ? "تشخيص SMTP" : "SMTP diagnostics")" />
+                </div>
             </AppCard>
 
             <AppCard Title="@(L.IsArabic ? "حالة التشغيل" : "Operational state")" Subtitle="@(L.IsArabic ? "عطّل الموقع مؤقتًا بدون حذف بياناته." : "Temporarily disable the site without deleting its data.")">
