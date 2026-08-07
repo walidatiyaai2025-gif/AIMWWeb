@@ -152,7 +152,7 @@ public sealed class DatabaseSetupService(
         static string Selected(string actual, string expected) => actual.Equals(expected, StringComparison.OrdinalIgnoreCase) ? " selected" : string.Empty;
         static string H(string value) => WebUtility.HtmlEncode(value);
 
-        return $$"""
+        return $$$"""
 <!doctype html>
 <html lang="en">
 <head>
@@ -168,32 +168,32 @@ public sealed class DatabaseSetupService(
   <div class="brand"><div class="logo">AI</div><div><h1>AI WordPress Manager</h1><p>First-run setup</p></div></div>
   <div class="steps"><div class="step active"><strong>1. Database</strong><br>Choose storage and connection</div><div class="step active"><strong>2. Administrator</strong><br>Create the first admin when needed</div><div class="step"><strong>3. Sign in</strong><br>Continue to the application</div></div>
   <div class="card">
-    {{errorHtml}}
+    {{{errorHtml}}}
     <form method="post" action="/setup">
       <div class="grid">
         <div class="section-title"><h2>Database</h2><p>Select the provider and enter only the fields required for that provider.</p></div>
         <div class="full"><label>Database provider</label><select id="provider" name="provider" onchange="providerChanged()">
-          <option value="SQLite"{{Selected(provider,"SQLite")}}>SQLite — easiest / local database</option>
-          <option value="SqlServer"{{Selected(provider,"SqlServer")}}>Microsoft SQL Server</option>
-          <option value="PostgreSQL"{{Selected(provider,"PostgreSQL")}}>PostgreSQL</option>
-          <option value="MySQL"{{Selected(provider,"MySQL")}}>MySQL</option>
-          <option value="MariaDB"{{Selected(provider,"MariaDB")}}>MariaDB</option>
+          <option value="SQLite"{{{Selected(provider,"SQLite")}}}>SQLite — easiest / local database</option>
+          <option value="SqlServer"{{{Selected(provider,"SqlServer")}}}>Microsoft SQL Server</option>
+          <option value="PostgreSQL"{{{Selected(provider,"PostgreSQL")}}}>PostgreSQL</option>
+          <option value="MySQL"{{{Selected(provider,"MySQL")}}}>MySQL</option>
+          <option value="MariaDB"{{{Selected(provider,"MariaDB")}}}>MariaDB</option>
         </select><div class="help">SQLite is recommended for one server. Choose a server database for shared or managed infrastructure.</div></div>
 
-        <div id="sqliteFields" class="provider-fields"><div class="full"><label>SQLite database file</label><input name="sqlitePath" value="{{H(sqlitePath)}}"><div class="help">The application creates the file and parent directory when possible.</div></div></div>
+        <div id="sqliteFields" class="provider-fields"><div class="full"><label>SQLite database file</label><input name="sqlitePath" value="{{{H(sqlitePath)}}}"><div class="help">The application creates the file and parent directory when possible.</div></div></div>
 
         <div id="serverFields" class="provider-fields">
-          <div><label>Database server / host</label><input name="host" value="{{H(host)}}" placeholder="db-server or 127.0.0.1"></div>
+          <div><label>Database server / host</label><input name="host" value="{{{H(host)}}}" placeholder="db-server or 127.0.0.1"></div>
           <div><label>Port (optional)</label><input id="port" name="port" type="number" min="1" max="65535" placeholder="Default provider port"></div>
-          <div><label>Database name</label><input name="databaseName" value="{{H(database)}}"></div>
-          <div id="userField"><label>Database user</label><input name="userName" value="{{H(user)}}" autocomplete="username"></div>
+          <div><label>Database name</label><input name="databaseName" value="{{{H(database)}}}"></div>
+          <div id="userField"><label>Database user</label><input name="userName" value="{{{H(user)}}}" autocomplete="username"></div>
           <div id="passwordField"><label>Database password</label><input name="password" type="password" autocomplete="current-password"></div>
           <div id="sqlOptions" class="full"><label class="row"><input id="integratedSecurity" type="checkbox" name="integratedSecurity" value="true" onchange="authChanged()"> Use Windows / Integrated authentication</label></div>
           <div class="full"><label class="row"><input type="checkbox" name="trustServerCertificate" value="true"> Trust server certificate</label><div class="help">Use only when the database uses an internal or self-signed TLS certificate.</div></div>
         </div>
 
         <div class="section-title"><h2>Administrator account</h2><p>Required for a new/empty database. If the selected database already contains application accounts, the existing accounts are preserved and these fields are ignored.</p></div>
-        <div class="full"><label>Administrator username</label><input name="adminUserName" value="{{H(adminUser)}}" minlength="3" maxlength="64" autocomplete="username"></div>
+        <div class="full"><label>Administrator username</label><input name="adminUserName" value="{{{H(adminUser)}}}" minlength="3" maxlength="64" autocomplete="username"></div>
         <div><label>Administrator password</label><input name="adminPassword" type="password" minlength="8" autocomplete="new-password"><div class="help">For a new database: at least 8 characters with uppercase, lowercase and a number.</div></div>
         <div><label>Confirm administrator password</label><input name="adminConfirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
       </div>
