@@ -11,6 +11,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<SiteMailProfile> SiteMailProfiles => Set<SiteMailProfile>();
     public DbSet<AccountEmailRecipient> AccountEmailRecipients => Set<AccountEmailRecipient>();
     public DbSet<AccountMailProfile> AccountMailProfiles => Set<AccountMailProfile>();
+    public DbSet<EmailOutboxMessage> EmailOutboxMessages => Set<EmailOutboxMessage>();
+    public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts => Set<EmailDeliveryAttempt>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -99,6 +101,38 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.FromName).HasMaxLength(160).IsRequired();
             entity.Property(x => x.ReplyToAddress).HasMaxLength(320).IsRequired();
             entity.HasOne<AuthUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailOutboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.OwnerUserId, x.IdempotencyKey }).IsUnique();
+            entity.HasIndex(x => new { x.Status, x.NextAttemptAtUtc });
+            entity.HasIndex(x => x.CorrelationId);
+            entity.HasIndex(x => new { x.OwnerUserId, x.CreatedAtUtc });
+            entity.Property(x => x.TemplateKey).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.Subject).HasMaxLength(500).IsRequired();
+            entity.Property(x => x.HtmlBody).IsRequired();
+            entity.Property(x => x.TextBody).IsRequired();
+            entity.Property(x => x.RecipientsJson).IsRequired();
+            entity.Property(x => x.IdempotencyKey).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CorrelationId).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.ClaimToken).HasMaxLength(100);
+            entity.Property(x => x.LastError).HasMaxLength(1000);
+            entity.HasOne<AuthUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Site>().WithMany().HasForeignKey(x => x.SiteId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<EmailDeliveryAttempt>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.OutboxMessageId, x.AttemptNumber }).IsUnique();
+            entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.ProviderSummary).HasMaxLength(500);
+            entity.Property(x => x.ErrorCategory).HasMaxLength(100);
+            entity.Property(x => x.SanitizedError).HasMaxLength(1000);
+            entity.HasOne<EmailOutboxMessage>().WithMany().HasForeignKey(x => x.OutboxMessageId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
