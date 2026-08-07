@@ -18,6 +18,7 @@ public partial class AddEmailSchedules : Migration
                 Scope = table.Column<string>(type: "TEXT", maxLength: 16, nullable: false),
                 ReportType = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
                 TemplateKey = table.Column<string>(type: "TEXT", maxLength: 160, nullable: false),
+                Culture = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false, defaultValue: "en"),
                 TimezoneId = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
                 Frequency = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
                 TimeOfDay = table.Column<TimeSpan>(type: "TEXT", nullable: false),
