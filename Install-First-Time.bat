@@ -24,7 +24,6 @@ set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" (
     echo.
     echo [ERROR] Install or update stopped with exit code %EXIT_CODE%.
-    pause
 )
 
 exit /b %EXIT_CODE%
