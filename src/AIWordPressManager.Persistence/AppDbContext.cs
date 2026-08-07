@@ -7,6 +7,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     public DbSet<Site> Sites => Set<Site>();
     public DbSet<SiteCredential> SiteCredentials => Set<SiteCredential>();
+    public DbSet<SiteEmailRecipient> SiteEmailRecipients => Set<SiteEmailRecipient>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -48,6 +49,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Reason).HasMaxLength(256).IsRequired();
             entity.Property(x => x.IpAddress).HasMaxLength(64).IsRequired();
             entity.Property(x => x.UserAgent).HasMaxLength(1024).IsRequired();
+        });
+
+        modelBuilder.Entity<SiteEmailRecipient>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.SiteId, x.NormalizedEmailAddress }).IsUnique();
+            entity.HasIndex(x => new { x.OwnerUserId, x.SiteId });
+            entity.Property(x => x.EmailAddress).HasMaxLength(320).IsRequired();
+            entity.Property(x => x.NormalizedEmailAddress).HasMaxLength(320).IsRequired();
+            entity.Property(x => x.DisplayName).HasMaxLength(120);
+            entity.HasOne<Site>().WithMany().HasForeignKey(x => x.SiteId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
