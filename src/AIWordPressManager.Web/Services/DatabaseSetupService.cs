@@ -17,7 +17,10 @@ public sealed record DatabaseSetupRequest(
     string? UserName,
     string? Password,
     bool IntegratedSecurity,
-    bool TrustServerCertificate);
+    bool TrustServerCertificate,
+    string? AdminUserName = null,
+    string? AdminPassword = null,
+    string? AdminConfirmPassword = null);
 
 public sealed class DatabaseSetupService(
     IConfiguration configuration,
@@ -81,6 +84,13 @@ public sealed class DatabaseSetupService(
         var provider = NormalizeProvider(request.Provider);
         var connectionString = BuildConnectionString(provider, request);
 
+        if (string.IsNullOrWhiteSpace(request.AdminUserName))
+            throw new InvalidOperationException("Administrator username is required.");
+        if (string.IsNullOrWhiteSpace(request.AdminPassword))
+            throw new InvalidOperationException("Administrator password is required.");
+        if (string.IsNullOrWhiteSpace(request.AdminConfirmPassword))
+            throw new InvalidOperationException("Administrator password confirmation is required.");
+
         logger.LogInformation("Applying first-run database setup for provider {Provider}.", provider);
 
         WriteConfigurationFile(ConfigurationPath, provider, connectionString, false);
@@ -92,9 +102,17 @@ public sealed class DatabaseSetupService(
             await scope.ServiceProvider
                 .GetRequiredService<IDatabaseInitializationService>()
                 .InitializeAsync(cancellationToken);
-            await scope.ServiceProvider
+
+            var accountResult = await scope.ServiceProvider
                 .GetRequiredService<LocalAuthenticationService>()
-                .SeedAsync(cancellationToken);
+                .CreateInitialAdministratorAsync(
+                    request.AdminUserName,
+                    request.AdminPassword,
+                    request.AdminConfirmPassword,
+                    cancellationToken);
+
+            if (!accountResult.IsSuccess)
+                throw new InvalidOperationException(accountResult.Message);
 
             WriteConfigurationFile(ConfigurationPath, provider, connectionString, true);
             ReloadConfiguration();
@@ -115,6 +133,7 @@ public sealed class DatabaseSetupService(
         var host = previous?.Host ?? "localhost";
         var database = previous?.DatabaseName ?? "AIWordPressManager";
         var user = previous?.UserName ?? string.Empty;
+        var adminUser = previous?.AdminUserName ?? "Admin";
         var errorHtml = string.IsNullOrWhiteSpace(error)
             ? string.Empty
             : $"<div class=\"error\"><strong>Setup failed</strong><div>{WebUtility.HtmlEncode(error)}</div></div>";
@@ -130,38 +149,44 @@ public sealed class DatabaseSetupService(
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI WordPress Manager - First Run Setup</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#090d14;color:#edf2f7;min-height:100vh}.shell{max-width:980px;margin:0 auto;padding:36px 20px 60px}.brand{display:flex;gap:14px;align-items:center;margin-bottom:26px}.logo{width:52px;height:52px;border-radius:14px;background:#d7b45a;color:#151515;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{margin:0;font-size:25px}.brand p{margin:4px 0 0;color:#9aa7b8}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.step{background:#121925;border:1px solid #273244;border-radius:12px;padding:12px;color:#9aa7b8}.step.active{border-color:#d7b45a;color:#fff}.card{background:#111823;border:1px solid #273244;border-radius:18px;padding:26px;box-shadow:0 20px 60px #0006}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.full{grid-column:1/-1}label{display:block;font-size:13px;color:#b8c2d1;margin-bottom:6px}input,select{width:100%;padding:12px 13px;background:#0b111a;border:1px solid #344155;color:#fff;border-radius:9px;outline:none}input:focus,select:focus{border-color:#d7b45a}.help{font-size:12px;color:#8491a5;margin-top:6px}.row{display:flex;align-items:center;gap:10px}.row input[type=checkbox]{width:auto}.actions{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}.primary{border:0;background:#d7b45a;color:#111827;padding:13px 22px;border-radius:9px;font-weight:800;cursor:pointer}.note{color:#9aa7b8;font-size:13px}.error{background:#431c24;border:1px solid #a94455;color:#ffd7dc;padding:14px;border-radius:10px;margin-bottom:18px}.provider-fields{display:none}.provider-fields.show{display:contents}@media(max-width:700px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.steps{grid-template-columns:1fr}.actions{align-items:stretch;flex-direction:column}.primary{width:100%}}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#090d14;color:#edf2f7;min-height:100vh}.shell{max-width:980px;margin:0 auto;padding:36px 20px 60px}.brand{display:flex;gap:14px;align-items:center;margin-bottom:26px}.logo{width:52px;height:52px;border-radius:14px;background:#d7b45a;color:#151515;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{margin:0;font-size:25px}.brand p{margin:4px 0 0;color:#9aa7b8}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.step{background:#121925;border:1px solid #273244;border-radius:12px;padding:12px;color:#9aa7b8}.step.active{border-color:#d7b45a;color:#fff}.card{background:#111823;border:1px solid #273244;border-radius:18px;padding:26px;box-shadow:0 20px 60px #0006}.section-title{grid-column:1/-1;margin:8px 0 0;padding-top:14px;border-top:1px solid #273244}.section-title:first-child{border-top:0;padding-top:0}.section-title h2{font-size:17px;margin:0 0 4px}.section-title p{margin:0;color:#8491a5;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.full{grid-column:1/-1}label{display:block;font-size:13px;color:#b8c2d1;margin-bottom:6px}input,select{width:100%;padding:12px 13px;background:#0b111a;border:1px solid #344155;color:#fff;border-radius:9px;outline:none}input:focus,select:focus{border-color:#d7b45a}.help{font-size:12px;color:#8491a5;margin-top:6px}.row{display:flex;align-items:center;gap:10px}.row input[type=checkbox]{width:auto}.actions{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}.primary{border:0;background:#d7b45a;color:#111827;padding:13px 22px;border-radius:9px;font-weight:800;cursor:pointer}.note{color:#9aa7b8;font-size:13px}.error{background:#431c24;border:1px solid #a94455;color:#ffd7dc;padding:14px;border-radius:10px;margin-bottom:18px}.provider-fields{display:none}.provider-fields.show{display:contents}@media(max-width:700px){.grid{grid-template-columns:1fr}.full,.section-title{grid-column:auto}.steps{grid-template-columns:1fr}.actions{align-items:stretch;flex-direction:column}.primary{width:100%}}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="brand"><div class="logo">AI</div><div><h1>AI WordPress Manager</h1><p>First-run database setup</p></div></div>
-  <div class="steps"><div class="step active"><strong>1. Database</strong><br>Choose where application data is stored</div><div class="step"><strong>2. Initialize</strong><br>Test connection and create schema</div><div class="step"><strong>3. Sign in</strong><br>Continue to the application</div></div>
+  <div class="brand"><div class="logo">AI</div><div><h1>AI WordPress Manager</h1><p>First-run setup</p></div></div>
+  <div class="steps"><div class="step active"><strong>1. Database</strong><br>Choose storage and connection</div><div class="step active"><strong>2. Administrator</strong><br>Create the first admin account</div><div class="step"><strong>3. Sign in</strong><br>Continue to the application</div></div>
   <div class="card">
     {{errorHtml}}
     <form method="post" action="/setup">
       <div class="grid">
+        <div class="section-title"><h2>Database</h2><p>Select the provider and enter only the fields required for that provider.</p></div>
         <div class="full"><label>Database provider</label><select id="provider" name="provider" onchange="providerChanged()">
           <option value="SQLite"{{Selected(provider,"SQLite")}}>SQLite — easiest / local database</option>
           <option value="SqlServer"{{Selected(provider,"SqlServer")}}>Microsoft SQL Server</option>
           <option value="PostgreSQL"{{Selected(provider,"PostgreSQL")}}>PostgreSQL</option>
           <option value="MySQL"{{Selected(provider,"MySQL")}}>MySQL</option>
           <option value="MariaDB"{{Selected(provider,"MariaDB")}}>MariaDB</option>
-        </select><div class="help">SQLite is recommended for a single-server installation. Choose a server database for shared or managed infrastructure.</div></div>
+        </select><div class="help">SQLite is recommended for one server. Choose a server database for shared or managed infrastructure.</div></div>
 
-        <div id="sqliteFields" class="provider-fields"><div class="full"><label>SQLite database file</label><input name="sqlitePath" value="{{H(sqlitePath)}}"><div class="help">The application will create the file and parent directory when possible.</div></div></div>
+        <div id="sqliteFields" class="provider-fields"><div class="full"><label>SQLite database file</label><input name="sqlitePath" value="{{H(sqlitePath)}}"><div class="help">The application creates the file and parent directory when possible.</div></div></div>
 
         <div id="serverFields" class="provider-fields">
           <div><label>Database server / host</label><input name="host" value="{{H(host)}}" placeholder="db-server or 127.0.0.1"></div>
           <div><label>Port (optional)</label><input id="port" name="port" type="number" min="1" max="65535" placeholder="Default provider port"></div>
           <div><label>Database name</label><input name="databaseName" value="{{H(database)}}"></div>
           <div id="userField"><label>Database user</label><input name="userName" value="{{H(user)}}" autocomplete="username"></div>
-          <div id="passwordField"><label>Password</label><input name="password" type="password" autocomplete="current-password"></div>
+          <div id="passwordField"><label>Database password</label><input name="password" type="password" autocomplete="current-password"></div>
           <div id="sqlOptions" class="full"><label class="row"><input id="integratedSecurity" type="checkbox" name="integratedSecurity" value="true" onchange="authChanged()"> Use Windows / Integrated authentication</label></div>
-          <div class="full"><label class="row"><input type="checkbox" name="trustServerCertificate" value="true"> Trust server certificate</label><div class="help">Use only when your database server uses an internal or self-signed TLS certificate.</div></div>
+          <div class="full"><label class="row"><input type="checkbox" name="trustServerCertificate" value="true"> Trust server certificate</label><div class="help">Use only when the database uses an internal or self-signed TLS certificate.</div></div>
         </div>
+
+        <div class="section-title"><h2>Administrator account</h2><p>This becomes the first application administrator. No default password will be created.</p></div>
+        <div class="full"><label>Administrator username</label><input name="adminUserName" value="{{H(adminUser)}}" required minlength="3" maxlength="64" autocomplete="username"></div>
+        <div><label>Administrator password</label><input name="adminPassword" type="password" required minlength="8" autocomplete="new-password"><div class="help">At least 8 characters with uppercase, lowercase and a number.</div></div>
+        <div><label>Confirm administrator password</label><input name="adminConfirmPassword" type="password" required minlength="8" autocomplete="new-password"></div>
       </div>
-      <div class="actions"><div class="note">Nothing is written to the Git repository. Database setup is stored locally on this machine.</div><button class="primary" type="submit">Test, initialize and continue →</button></div>
+      <div class="actions"><div class="note">Setup is stored locally on this machine and is not committed to Git.</div><button class="primary" type="submit">Test, initialize and continue →</button></div>
     </form>
   </div>
 </div>
