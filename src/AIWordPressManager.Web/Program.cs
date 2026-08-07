@@ -12,6 +12,10 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+DatabaseSetupService.BootstrapLegacySqliteIfNeeded(builder.Environment.EnvironmentName);
+var databaseSetupConfigPath = DatabaseSetupService.GetConfigurationPath(builder.Environment.EnvironmentName);
+builder.Configuration.AddJsonFile(databaseSetupConfigPath, optional: true, reloadOnChange: true);
+
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
@@ -34,6 +38,7 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
+builder.Services.AddScoped<DatabaseSetupService>();
 builder.Services.AddScoped<CurrentUserContext>();
 builder.Services.AddScoped<LocalAuthenticationService>();
 builder.Services.AddScoped<AccountProfileService>();
@@ -79,15 +84,71 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.Use(async (context, next) =>
+{
+    var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
+    var setupComplete = configuration.GetValue<bool>("Database:SetupComplete");
+    var path = context.Request.Path;
+
+    if (!setupComplete &&
+        !path.StartsWithSegments("/setup") &&
+        !path.StartsWithSegments("/health/live") &&
+        !path.StartsWithSegments("/_framework") &&
+        !path.StartsWithSegments("/_blazor"))
+    {
+        context.Response.Redirect("/setup");
+        return;
+    }
+
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-using (var scope = app.Services.CreateScope())
+if (builder.Configuration.GetValue<bool>("Database:SetupComplete"))
 {
+    using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<IDatabaseInitializationService>().InitializeAsync();
     await scope.ServiceProvider.GetRequiredService<LocalAuthenticationService>().SeedAsync();
 }
+
+app.MapGet("/setup", (DatabaseSetupService setup) =>
+{
+    if (setup.IsComplete) return Results.Redirect("/login");
+    return Results.Content(setup.RenderPage(), "text/html; charset=utf-8");
+}).AllowAnonymous();
+
+app.MapPost("/setup", async (HttpContext context, DatabaseSetupService setup, CancellationToken cancellationToken) =>
+{
+    var form = await context.Request.ReadFormAsync(cancellationToken);
+    int? port = null;
+    if (int.TryParse(form["port"].ToString(), out var parsedPort)) port = parsedPort;
+
+    var request = new DatabaseSetupRequest(
+        form["provider"].ToString(),
+        form["sqlitePath"].ToString(),
+        form["host"].ToString(),
+        port,
+        form["databaseName"].ToString(),
+        form["userName"].ToString(),
+        form["password"].ToString(),
+        form["integratedSecurity"] == "true",
+        form["trustServerCertificate"] == "true");
+
+    try
+    {
+        await setup.ApplyAsync(request, cancellationToken);
+        return Results.Redirect("/login");
+    }
+    catch (Exception ex)
+    {
+        var message = app.Environment.IsDevelopment() ? ex.ToString() : ex.Message;
+        return Results.Content(setup.RenderPage(message, request), "text/html; charset=utf-8", statusCode: StatusCodes.Status400BadRequest);
+    }
+}).AllowAnonymous().DisableAntiforgery();
 
 app.MapGet("/login", (HttpContext context) =>
 {
@@ -121,7 +182,7 @@ app.Use(async (context, next) =>
     await next();
     if (context.User.Identity?.IsAuthenticated != true || context.Request.Method != HttpMethods.Get || context.Response.StatusCode >= 400) return;
     var path = context.Request.Path.Value ?? "/";
-    if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/_", StringComparison.OrdinalIgnoreCase) || path == "/login") return;
+    if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/_", StringComparison.OrdinalIgnoreCase) || path == "/login" || path == "/setup") return;
     using var scope = context.RequestServices.CreateScope();
     await scope.ServiceProvider.GetRequiredService<LocalAuthenticationService>().SaveLastPageAsync(context.User, path + context.Request.QueryString);
 });
@@ -177,5 +238,5 @@ app.MapPost("/api/sites/{siteId:guid}/content/status", async (Guid siteId, BulkS
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode().RequireAuthorization();
 app.Run();
 
-public sealed record AIGenerateApiRequest(string Content, string? PromptKey, string? Culture, string? SystemPrompt, string? Model, double? Temperature, int? MaxOutputTokens, Guid? SiteId, string? UserId);
+public sealed record AIGenerateApiRequest(string Content, string? PromptKey, string? Culture, string? SystemPrompt, string? Model, double? Temperature, int? MaxOutputTokens, Guid? SiteId, string? UserId, string? PromptKeyOverride = null);
 public sealed record PlannerAIRequest(string? Culture, string? UserId);
