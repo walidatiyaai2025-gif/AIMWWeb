@@ -1,0 +1,197 @@
+@page "/email/history"
+@rendermode InteractiveServer
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject CurrentUserContext CurrentUser
+@inject SiteWebService Sites
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "سجل إرسال البريد" : "Email Delivery History")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">EMAIL HISTORY</span>
+            <h1>@(L.IsArabic ? "سجل إرسال البريد" : "Email delivery history")</h1>
+            <p>@(L.IsArabic ? "تابع الرسائل المجدولة والمحاولات وإعادة الإرسال والأخطاء بدون عرض بيانات اعتماد SMTP أو محتوى حساس." : "Inspect queued messages, attempts, retries and sanitized failures without exposing SMTP credentials or sensitive message bodies.")</p>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <section class="panel"><p class="text-danger">@_error</p></section>
+    }
+
+    <section class="panel settings-section">
+        <header><div><h2>@(L.IsArabic ? "الفلاتر" : "Filters")</h2></div><button class="btn" @onclick="LoadAsync" disabled="@_busy">@(L.IsArabic ? "تحديث" : "Refresh")</button></header>
+        <div class="grid-2 mt-3">
+            <div>
+                <label>@(L.IsArabic ? "الموقع" : "Site")</label>
+                <select class="form-select" @bind="_siteFilter" disabled="@_busy">
+                    <option value="">@(L.IsArabic ? "كل الرسائل" : "All messages")</option>
+                    @foreach (var site in _sites)
+                    {
+                        <option value="@site.Id">@site.Name</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label>@(L.IsArabic ? "الحالة" : "Status")</label>
+                <select class="form-select" @bind="_statusFilter" disabled="@_busy">
+                    <option value="">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
+                    @foreach (var status in Statuses)
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label>Correlation ID</label>
+                <input class="form-control" @bind="_correlationFilter" maxlength="100" disabled="@_busy" />
+            </div>
+            <div class="d-flex align-items-end gap-2">
+                <button class="btn primary" @onclick="ApplyFiltersAsync" disabled="@_busy">@(L.IsArabic ? "تطبيق" : "Apply")</button>
+                <button class="btn" @onclick="ClearFiltersAsync" disabled="@_busy">@(L.IsArabic ? "مسح" : "Clear")</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel settings-section">
+        <header><div><h2>@(L.IsArabic ? "الرسائل" : "Messages")</h2><p>@(L.IsArabic ? $"عدد النتائج: {_items.Count}" : $"Results: {_items.Count}")</p></div></header>
+        @if (_loading)
+        {
+            <p>@(L.IsArabic ? "جاري التحميل..." : "Loading...")</p>
+        }
+        else if (_items.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد رسائل بريد مسجلة بهذه الفلاتر." : "No email messages match the current filters.")</p>
+        }
+        else
+        {
+            <div style="overflow:auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>@(L.IsArabic ? "الحالة" : "Status")</th>
+                            <th>@(L.IsArabic ? "النطاق" : "Scope")</th>
+                            <th>@(L.IsArabic ? "العنوان" : "Subject")</th>
+                            <th>@(L.IsArabic ? "المحاولات" : "Attempts")</th>
+                            <th>@(L.IsArabic ? "الإنشاء" : "Created")</th>
+                            <th>Correlation</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _items)
+                        {
+                            <tr>
+                                <td><span class="settings-badge @StatusClass(item.Status)">@item.Status</span></td>
+                                <td>@item.Scope</td>
+                                <td><strong>@item.Subject</strong><div class="help">@item.TemplateKey</div></td>
+                                <td>@item.AttemptCount / @item.MaxAttempts</td>
+                                <td>@FormatDate(item.CreatedAtUtc)</td>
+                                <td><code>@item.CorrelationId</code></td>
+                                <td><button class="btn" @onclick="() => ShowDetailsAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "تفاصيل" : "Details")</button></td>
+                            </tr>
+                            @if (_selected?.Message.Id == item.Id)
+                            {
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="panel" style="padding:1rem;margin:.5rem 0">
+                                            <div class="grid-2">
+                                                <div><strong>@(L.IsArabic ? "آخر خطأ" : "Last error")</strong><p>@(string.IsNullOrWhiteSpace(item.LastError) ? "—" : item.LastError)</p></div>
+                                                <div><strong>Idempotency Key</strong><p><code>@item.IdempotencyKey</code></p></div>
+                                                <div><strong>@(L.IsArabic ? "الإرسال" : "Sent")</strong><p>@(item.SentAtUtc.HasValue ? FormatDate(item.SentAtUtc.Value) : "—")</p></div>
+                                                <div><strong>@(L.IsArabic ? "المحاولة القادمة" : "Next attempt")</strong><p>@FormatDate(item.NextAttemptAtUtc)</p></div>
+                                            </div>
+                                            <h3 class="mt-3">@(L.IsArabic ? "محاولات الإرسال" : "Delivery attempts")</h3>
+                                            @if (_selected.Attempts.Count == 0)
+                                            {
+                                                <p>@(L.IsArabic ? "لم تبدأ أي محاولة بعد." : "No delivery attempt has started yet.")</p>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var attempt in _selected.Attempts)
+                                                {
+                                                    <article class="panel" style="padding:.8rem;margin:.5rem 0">
+                                                        <strong>#@attempt.AttemptNumber · @attempt.Status</strong>
+                                                        <div class="help">@FormatDate(attempt.StartedAtUtc) → @(attempt.FinishedAtUtc.HasValue ? FormatDate(attempt.FinishedAtUtc.Value) : "—")</div>
+                                                        @if (!string.IsNullOrWhiteSpace(attempt.ErrorCategory)) { <div><strong>@attempt.ErrorCategory</strong></div> }
+                                                        @if (!string.IsNullOrWhiteSpace(attempt.SanitizedError)) { <p class="text-danger">@attempt.SanitizedError</p> }
+                                                        @if (!string.IsNullOrWhiteSpace(attempt.ProviderSummary)) { <p>@attempt.ProviderSummary</p> }
+                                                    </article>
+                                                }
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private static readonly string[] Statuses = ["Queued", "Sending", "RetryWaiting", "Sent", "Failed", "Cancelled"];
+    private EmailDeliveryHistoryService Service => new(Db, CurrentUser);
+    private List<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private IReadOnlyList<EmailDeliveryHistoryItem> _items = [];
+    private EmailDeliveryHistoryDetails? _selected;
+    private string _siteFilter = string.Empty;
+    private string _statusFilter = string.Empty;
+    private string _correlationFilter = string.Empty;
+    private bool _loading = true, _busy;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sites = await Sites.GetSitesAsync();
+        await LoadAsync();
+    }
+
+    private async Task ApplyFiltersAsync() => await LoadAsync();
+
+    private async Task ClearFiltersAsync()
+    {
+        _siteFilter = string.Empty;
+        _statusFilter = string.Empty;
+        _correlationFilter = string.Empty;
+        _selected = null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true; _busy = true; _error = null;
+        try
+        {
+            Guid? siteId = Guid.TryParse(_siteFilter, out var parsed) ? parsed : null;
+            _items = await Service.GetAsync(siteId, _statusFilter, _correlationFilter, 200);
+            if (_selected is not null && !_items.Any(x => x.Id == _selected.Message.Id)) _selected = null;
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
+        finally { _loading = false; _busy = false; }
+    }
+
+    private async Task ShowDetailsAsync(Guid id)
+    {
+        if (_busy) return;
+        _busy = true; _error = null;
+        try { _selected = _selected?.Message.Id == id ? null : await Service.GetDetailsAsync(id); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private static string StatusClass(string status) => status switch
+    {
+        "Sent" => "success",
+        "Failed" or "Cancelled" => "danger",
+        "RetryWaiting" => "warning",
+        "Sending" => "info",
+        _ => "neutral"
+    };
+
+    private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+}
