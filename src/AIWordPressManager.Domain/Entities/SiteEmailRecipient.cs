@@ -2,7 +2,7 @@ using AIWordPressManager.Domain.Common;
 
 namespace AIWordPressManager.Domain.Entities;
 
-public sealed class SiteEmailRecipient : AuditableEntity
+public sealed class SiteEmailRecipient : Entity
 {
     private SiteEmailRecipient()
     {
