@@ -1,8 +1,8 @@
 {
   "product": "AI WordPress Manager",
   "branch": "main",
-  "baselineVersion": "155.93.6",
-  "updatedAtUtc": "2026-08-06T23:10:00Z",
+  "baselineVersion": "155.94.0",
+  "updatedAtUtc": "2026-08-07T00:25:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -24,7 +24,7 @@
   "features": [
     { "id": "GOV-001", "phase": 0, "area": "Governance", "nameAr": "الخطة الرئيسية للبرنامج", "nameEn": "Program master plan", "status": "completed", "priority": "critical", "version": "155.93.0", "notes": "Central developer plan, phases, gates, and handoff rules." },
     { "id": "GOV-002", "phase": 0, "area": "Governance", "nameAr": "سجل الوظائف بصيغة JSON", "nameEn": "Machine-readable feature registry", "status": "completed", "priority": "critical", "version": "155.93.0", "notes": "Canonical source for feature and phase status." },
-    { "id": "GOV-003", "phase": 0, "area": "Governance", "nameAr": "لوحة حالة التطوير HTML", "nameEn": "HTML development status dashboard", "status": "completed", "priority": "high", "version": "155.93.0", "notes": "Interactive totals, filters, phases, and feature list." },
+    { "id": "GOV-003", "phase": 0, "area": "Governance", "nameAr": "لوحة حالة التطوير HTML", "nameEn": "HTML development status dashboard", "status": "completed", "priority": "high", "version": "155.94.0", "notes": "Tabbed dashboard with functional metrics, filters, CSV export, task ID copy, phase navigation, and verification guidance." },
     { "id": "GOV-004", "phase": 0, "area": "Governance", "nameAr": "تعريف الإنجاز وقواعد التسليم", "nameEn": "Definition of Done and handoff rules", "status": "completed", "priority": "high", "version": "155.93.0", "notes": "Included in the master plan." },
     { "id": "GOV-005", "phase": 0, "area": "Governance", "nameAr": "تحديث حالة الوظائف آليًا من الاختبارات", "nameEn": "Automatic status updates from verification", "status": "planned", "priority": "medium", "version": null, "notes": "Future CI integration; registry is currently maintained by developers." },
 
@@ -102,12 +102,12 @@
     { "id": "REL-005", "phase": 8, "area": "Monitoring", "nameAr": "مراقبة الأداء والذاكرة", "nameEn": "Performance and memory monitoring", "status": "planned", "priority": "medium", "version": null, "notes": "Server-side metrics and thresholds are pending." },
     { "id": "REL-006", "phase": 8, "area": "Retention", "nameAr": "سياسة الاحتفاظ والتنظيف", "nameEn": "Retention and cleanup policy", "status": "planned", "priority": "medium", "version": null, "notes": "Logs, history, cache, and backup retention need configurable policies." },
 
-    { "id": "QAT-001", "phase": 9, "area": "Testing", "nameAr": "اختبارات وحدات", "nameEn": "Unit tests", "status": "completed", "priority": "critical", "version": "155.93.6", "notes": "A 68-test xUnit suite now covers core domain and service rules. Remaining SQLite cleanup and end-to-end verification are tracked separately." },
-    { "id": "QAT-002", "phase": 9, "area": "Testing", "nameAr": "اختبارات تكامل SQLite وWordPress", "nameEn": "SQLite and WordPress integration tests", "status": "planned", "priority": "critical", "version": null, "notes": "Use controlled test doubles and test databases." },
+    { "id": "QAT-001", "phase": 9, "area": "Testing", "nameAr": "اختبارات وحدات", "nameEn": "Unit tests", "status": "completed", "priority": "critical", "version": "155.93.6", "notes": "A 68-test xUnit suite now covers core domain and service rules. Remaining end-to-end verification is tracked separately." },
+    { "id": "QAT-002", "phase": 9, "area": "Testing", "nameAr": "اختبارات تكامل SQLite وWordPress", "nameEn": "SQLite and WordPress integration tests", "status": "completed", "priority": "critical", "version": "155.94.0", "notes": "Integration coverage uses isolated temporary SQLite databases, in-memory EF Core SQLite, controlled WordPress HTTP handlers, snapshot deletion/restoration checks, duplicate resolution, API ownership, and restart persistence." },
     { "id": "QAT-003", "phase": 9, "area": "Security Testing", "nameAr": "اختبارات عزل المستخدمين والصلاحيات", "nameEn": "Tenant isolation and authorization tests", "status": "planned", "priority": "critical", "version": null, "notes": "Must test URL, API, local cache, jobs, and schedules." },
     { "id": "QAT-004", "phase": 9, "area": "CI/CD", "nameAr": "GitHub Actions للبناء والاختبارات", "nameEn": "GitHub Actions build and test workflow", "status": "planned", "priority": "critical", "version": null, "notes": "Clean restore, build, tests, and artifact publication." },
     { "id": "QAT-005", "phase": 9, "area": "Quality", "nameAr": "اختبار الوصولية والاستجابة", "nameEn": "Accessibility and responsive testing", "status": "planned", "priority": "high", "version": null, "notes": "Keyboard, contrast, RTL, mobile, and screen-reader checks." },
     { "id": "QAT-006", "phase": 9, "area": "Release", "nameAr": "حزمة نشر وإجراءات ترقية ورجوع", "nameEn": "Deployment package, upgrade, and rollback", "status": "planned", "priority": "critical", "version": null, "notes": "Production deployment documentation and automation are pending." },
-    { "id": "QAT-007", "phase": 9, "area": "Verification", "nameAr": "تأكيد Build وتشغيل النسخة الحالية", "nameEn": "Verify current clean build and runtime", "status": "in_progress", "priority": "critical", "version": "155.92.0", "notes": "Recent commits are not yet confirmed by a clean build and full runtime smoke test in the target environment." }
+    { "id": "QAT-007", "phase": 9, "area": "Verification", "nameAr": "تأكيد Build وتشغيل النسخة الحالية", "nameEn": "Verify current clean build and runtime", "status": "in_progress", "priority": "critical", "version": "155.94.0", "notes": "Build succeeds; full test pass and runtime smoke test in the target environment remain required." }
   ]
 }
