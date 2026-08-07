@@ -49,6 +49,24 @@ public sealed class AuthUser : Entity
         MarkUpdated(utcNow);
     }
 
+    public void SetActive(bool isActive, DateTime utcNow)
+    {
+        IsActive = isActive;
+        if (!isActive)
+        {
+            FailedAccessCount = 0;
+            LockedUntilUtc = null;
+        }
+        MarkUpdated(utcNow);
+    }
+
+    public void Unlock(DateTime utcNow)
+    {
+        FailedAccessCount = 0;
+        LockedUntilUtc = null;
+        MarkUpdated(utcNow);
+    }
+
     public bool IsLockedOut(DateTime utcNow) => LockedUntilUtc is { } lockedUntil && lockedUntil > utcNow;
 
     public void RecordSuccessfulLogin(DateTime utcNow)
