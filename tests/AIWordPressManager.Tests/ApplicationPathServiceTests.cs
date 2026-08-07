@@ -23,8 +23,8 @@ public sealed class ApplicationPathServiceTests
             "AIWordPressManager",
             "Development"));
 
-        dataDirectory.Should().StartWith(expectedRoot, StringComparison.OrdinalIgnoreCase);
-        dataDirectory.Should().NotStartWith(Path.GetFullPath(AppContext.BaseDirectory), StringComparison.OrdinalIgnoreCase);
+        dataDirectory.StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase).Should().BeTrue();
+        dataDirectory.StartsWith(Path.GetFullPath(AppContext.BaseDirectory), StringComparison.OrdinalIgnoreCase).Should().BeFalse();
         service.GetDatabasePath().Should().EndWith("AIWordPressManager.Development.db");
     }
 
