@@ -109,6 +109,7 @@
     private string _query = string.Empty;
     private string _status = "all";
     private bool _loadingSites = true;
+    private bool _disposed;
 
     [Parameter, SupplyParameterFromQuery(Name = "siteId")]
     public Guid? WorkspaceSiteId { get; set; }
@@ -164,9 +165,18 @@
     {
         try
         {
-            while (await _timer.WaitForNextTickAsync(_cts.Token)) await InvokeAsync(() => { Refresh(); StateHasChanged(); });
+            while (!_disposed && await _timer.WaitForNextTickAsync(_cts.Token))
+            {
+                await InvokeAsync(() =>
+                {
+                    if (_disposed) return;
+                    Refresh();
+                    StateHasChanged();
+                });
+            }
         }
         catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
     }
 
     private void Refresh() { _jobs = ExecutionService.GetJobs(); _activities = ExecutionService.GetActivities(100); }
@@ -190,6 +200,18 @@
     private static string StatusClass(string status) => status.ToLowerInvariant();
     private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة مؤقتًا", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status };
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-    private void Changed() => _ = InvokeAsync(StateHasChanged);
-    public void Dispose() { L.Changed -= Changed; _cts.Cancel(); _cts.Dispose(); _timer.Dispose(); }
+    private void Changed()
+    {
+        if (!_disposed) _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        L.Changed -= Changed;
+        _cts.Cancel();
+        _timer.Dispose();
+        _cts.Dispose();
+    }
 }
