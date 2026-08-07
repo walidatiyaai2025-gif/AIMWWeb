@@ -138,6 +138,7 @@
     private string _search = string.Empty, _statusFilter = "all", _riskFilter = "all", _reviewer = "Admin", _notes = string.Empty;
     private Guid? _expandedId;
     private bool _loading = true, _working, _executeImmediately = true;
+    private bool _disposed;
 
     private IEnumerable<ApprovalItem> FilteredItems => _allItems.Where(item =>
         (_statusFilter == "all" || item.Status.ToString() == _statusFilter) &&
@@ -149,6 +150,7 @@
 
     private Task LoadAsync()
     {
+        if (_disposed) return Task.CompletedTask;
         _loading = true;
         _allItems = ApprovalService.GetItems(null, 500);
         _loading = false;
@@ -157,6 +159,7 @@
 
     private void ToggleDetails(ApprovalItem item)
     {
+        if (_disposed) return;
         if (_expandedId == item.Id) { _expandedId = null; _audit = Array.Empty<ApprovalAuditEntry>(); return; }
         _expandedId = item.Id;
         _notes = item.ReviewerNotes ?? string.Empty;
@@ -165,30 +168,46 @@
 
     private async Task ApproveAsync(ApprovalItem item)
     {
+        if (_disposed || _working) return;
         try
         {
             _working = true;
             var result = ApprovalService.Approve(item.Id, _reviewer, _notes, _executeImmediately);
+            if (_disposed) return;
             Notifications.Success(L.IsArabic ? "تم اعتماد العنصر." : "Approval completed.", result.Status.ToString());
             await LoadAsync();
-            _audit = ApprovalService.GetAudit(item.Id, 100);
+            if (!_disposed) _audit = ApprovalService.GetAudit(item.Id, 100);
         }
-        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر اعتماد العنصر." : "Approval failed.", details: ex.Message); }
-        finally { _working = false; }
+        catch (Exception ex)
+        {
+            if (!_disposed) Notifications.Error(L.IsArabic ? "تعذر اعتماد العنصر." : "Approval failed.", details: ex.Message);
+        }
+        finally
+        {
+            if (!_disposed) _working = false;
+        }
     }
 
     private async Task RejectAsync(ApprovalItem item)
     {
+        if (_disposed || _working) return;
         try
         {
             _working = true;
             ApprovalService.Reject(item.Id, _reviewer, _notes);
+            if (_disposed) return;
             Notifications.Warning(L.IsArabic ? "تم رفض العنصر." : "Approval rejected.");
             await LoadAsync();
-            _audit = ApprovalService.GetAudit(item.Id, 100);
+            if (!_disposed) _audit = ApprovalService.GetAudit(item.Id, 100);
         }
-        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر رفض العنصر." : "Rejection failed.", details: ex.Message); }
-        finally { _working = false; }
+        catch (Exception ex)
+        {
+            if (!_disposed) Notifications.Error(L.IsArabic ? "تعذر رفض العنصر." : "Rejection failed.", details: ex.Message);
+        }
+        finally
+        {
+            if (!_disposed) _working = false;
+        }
     }
 
     private int Count(ApprovalStatus status) => _allItems.Count(x => x.Status == status);
@@ -198,6 +217,16 @@
     private static string RiskClass(ApprovalRiskLevel risk) => risk.ToString().ToLowerInvariant();
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private static string PrettyJson(string value) { try { using var document = System.Text.Json.JsonDocument.Parse(value); return System.Text.Json.JsonSerializer.Serialize(document.RootElement, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }); } catch { return value; } }
-    private void Changed() => InvokeAsync(StateHasChanged);
-    public void Dispose() => L.Changed -= Changed;
+
+    private void Changed()
+    {
+        if (!_disposed) _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        L.Changed -= Changed;
+    }
 }
