@@ -14,9 +14,34 @@ public sealed class DatabaseInitializationService(
 {
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting database initialization.");
-        await dbContext.Database.MigrateAsync(cancellationToken);
+        var provider = dbContext.Database.ProviderName ?? "unknown";
+        logger.LogInformation("Starting database initialization using provider {Provider}.", provider);
 
+        if (provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            await dbContext.Database.MigrateAsync(cancellationToken);
+            await EnsureSqliteCompatibilityAsync(cancellationToken);
+        }
+        else
+        {
+            // New non-SQLite installations are created from the complete current EF model.
+            // This avoids replaying legacy SQLite-specific compatibility SQL.
+            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+        }
+
+        if (!await dbContext.Database.CanConnectAsync(cancellationToken))
+            throw new InvalidOperationException($"The configured database ({provider}) could not be opened after initialization.");
+
+        await SeedSettingAsync("Application.Language", "en", cancellationToken);
+        await SeedSettingAsync("Application.Theme", "Dark", cancellationToken);
+        await SeedSettingAsync("Application.PortableMode", "false", cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Database initialization completed successfully using provider {Provider}.", provider);
+    }
+
+    private async Task EnsureSqliteCompatibilityAsync(CancellationToken cancellationToken)
+    {
         await dbContext.Database.ExecuteSqlRawAsync(
             """
             CREATE TABLE IF NOT EXISTS AuthUsers (
@@ -38,21 +63,10 @@ public sealed class DatabaseInitializationService(
             """,
             cancellationToken);
 
-        await EnsureSiteOwnerColumnAsync(cancellationToken);
-
-        if (!await dbContext.Database.CanConnectAsync(cancellationToken))
-            throw new InvalidOperationException("The SQLite database could not be opened after migration.");
-
-        await SeedSettingAsync("Application.Language", "en", cancellationToken);
-        await SeedSettingAsync("Application.Theme", "Dark", cancellationToken);
-        await SeedSettingAsync("Application.PortableMode", "false", cancellationToken);
-        await SeedDefaultSiteAsync(cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        logger.LogInformation("Database initialization completed successfully.");
+        await EnsureSqliteSiteOwnerColumnAsync(cancellationToken);
     }
 
-    private async Task EnsureSiteOwnerColumnAsync(CancellationToken cancellationToken)
+    private async Task EnsureSqliteSiteOwnerColumnAsync(CancellationToken cancellationToken)
     {
         var connection = (SqliteConnection)dbContext.Database.GetDbConnection();
         if (connection.State != System.Data.ConnectionState.Open)
@@ -94,14 +108,6 @@ public sealed class DatabaseInitializationService(
         await dbContext.Database.ExecuteSqlRawAsync(
             "CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId ON Sites (OwnerUserId);",
             cancellationToken);
-    }
-
-    private async Task SeedDefaultSiteAsync(CancellationToken cancellationToken)
-    {
-        const string normalizedUrl = "https://notonlybook.com";
-        if (await dbContext.Sites.IgnoreQueryFilters().AnyAsync(x => x.SiteUrl == normalizedUrl, cancellationToken)) return;
-        var site = new Site("NOB", new Uri(normalizedUrl), clock.UtcNow);
-        dbContext.Sites.Add(site);
     }
 
     private async Task SeedSettingAsync(string key, string value, CancellationToken cancellationToken)
