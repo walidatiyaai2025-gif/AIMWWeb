@@ -13,15 +13,12 @@ public sealed class EmailTemplateRendererTests
     {
         var keys = _renderer.GetCatalog().Select(x => x.Key).ToArray();
 
-        keys.Should().Contain(new[]
-        {
-            EmailTemplateKeys.SiteOperationalReport,
-            EmailTemplateKeys.SiteSeoSummary,
-            EmailTemplateKeys.SiteSyncFailure,
-            EmailTemplateKeys.DashboardDigest,
-            EmailTemplateKeys.SecurityAlert,
-            EmailTemplateKeys.BillingEvent
-        });
+        keys.Should().Contain(EmailTemplateKeys.SiteOperationalReport);
+        keys.Should().Contain(EmailTemplateKeys.SiteSeoSummary);
+        keys.Should().Contain(EmailTemplateKeys.SiteSyncFailure);
+        keys.Should().Contain(EmailTemplateKeys.DashboardDigest);
+        keys.Should().Contain(EmailTemplateKeys.SecurityAlert);
+        keys.Should().Contain(EmailTemplateKeys.BillingEvent);
     }
 
     [Fact]
