@@ -69,6 +69,8 @@ public sealed class EmailOutboxService(AppDbContext dbContext) : IEmailOutbox
         DateTime utcNow,
         CancellationToken cancellationToken = default)
     {
+        DetachTrackedOutboxMessages();
+
         for (var attempt = 0; attempt < 5; attempt++)
         {
             var candidateId = await dbContext.EmailOutboxMessages.AsNoTracking()
@@ -163,6 +165,8 @@ public sealed class EmailOutboxService(AppDbContext dbContext) : IEmailOutbox
         DateTime utcNow,
         CancellationToken cancellationToken = default)
     {
+        DetachTrackedOutboxMessages();
+
         var stale = await dbContext.EmailOutboxMessages
             .Where(x => x.Status == EmailOutboxMessage.SendingStatus && x.ClaimedAtUtc != null && x.ClaimedAtUtc <= staleBeforeUtc)
             .ToListAsync(cancellationToken);
@@ -194,10 +198,26 @@ public sealed class EmailOutboxService(AppDbContext dbContext) : IEmailOutbox
     {
         if (messageId == Guid.Empty) throw new ArgumentException("Message ID is required.", nameof(messageId));
         ArgumentException.ThrowIfNullOrWhiteSpace(claimToken);
+
+        DetachTrackedOutboxMessage(messageId);
+
         return await dbContext.EmailOutboxMessages.FirstOrDefaultAsync(
                    x => x.Id == messageId && x.Status == EmailOutboxMessage.SendingStatus && x.ClaimToken == claimToken,
                    cancellationToken)
                ?? throw new InvalidOperationException("Email outbox claim is no longer valid.");
+    }
+
+    private void DetachTrackedOutboxMessages()
+    {
+        foreach (var entry in dbContext.ChangeTracker.Entries<EmailOutboxMessage>().ToList())
+            entry.State = EntityState.Detached;
+    }
+
+    private void DetachTrackedOutboxMessage(Guid messageId)
+    {
+        var tracked = dbContext.ChangeTracker.Entries<EmailOutboxMessage>()
+            .FirstOrDefault(x => x.Entity.Id == messageId);
+        if (tracked is not null) tracked.State = EntityState.Detached;
     }
 
     private static List<string> NormalizeRecipients(IReadOnlyList<string>? recipients)
