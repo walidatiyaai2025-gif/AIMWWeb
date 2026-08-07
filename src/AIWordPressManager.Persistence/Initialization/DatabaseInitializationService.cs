@@ -144,6 +144,54 @@ public sealed class DatabaseInitializationService(
                 CONSTRAINT FK_AccountMailProfiles_AuthUsers_OwnerUserId FOREIGN KEY (OwnerUserId) REFERENCES AuthUsers (Id) ON DELETE CASCADE
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_AccountMailProfiles_OwnerUserId ON AccountMailProfiles (OwnerUserId);
+
+            CREATE TABLE IF NOT EXISTS EmailOutboxMessages (
+                Id TEXT NOT NULL CONSTRAINT PK_EmailOutboxMessages PRIMARY KEY,
+                OwnerUserId TEXT NOT NULL,
+                SiteId TEXT NULL,
+                ScheduleId TEXT NULL,
+                TemplateKey TEXT NOT NULL,
+                Subject TEXT NOT NULL,
+                HtmlBody TEXT NOT NULL,
+                TextBody TEXT NOT NULL,
+                RecipientsJson TEXT NOT NULL,
+                IdempotencyKey TEXT NOT NULL,
+                CorrelationId TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                AttemptCount INTEGER NOT NULL,
+                MaxAttempts INTEGER NOT NULL,
+                NextAttemptAtUtc TEXT NOT NULL,
+                ClaimedAtUtc TEXT NULL,
+                ClaimToken TEXT NULL,
+                SentAtUtc TEXT NULL,
+                LastError TEXT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL,
+                CONSTRAINT FK_EmailOutboxMessages_AuthUsers_OwnerUserId FOREIGN KEY (OwnerUserId) REFERENCES AuthUsers (Id) ON DELETE CASCADE,
+                CONSTRAINT FK_EmailOutboxMessages_Sites_SiteId FOREIGN KEY (SiteId) REFERENCES Sites (Id) ON DELETE SET NULL
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_EmailOutboxMessages_OwnerUserId_IdempotencyKey ON EmailOutboxMessages (OwnerUserId, IdempotencyKey);
+            CREATE INDEX IF NOT EXISTS IX_EmailOutboxMessages_Status_NextAttemptAtUtc ON EmailOutboxMessages (Status, NextAttemptAtUtc);
+            CREATE INDEX IF NOT EXISTS IX_EmailOutboxMessages_CorrelationId ON EmailOutboxMessages (CorrelationId);
+            CREATE INDEX IF NOT EXISTS IX_EmailOutboxMessages_OwnerUserId_CreatedAtUtc ON EmailOutboxMessages (OwnerUserId, CreatedAtUtc);
+
+            CREATE TABLE IF NOT EXISTS EmailDeliveryAttempts (
+                Id TEXT NOT NULL CONSTRAINT PK_EmailDeliveryAttempts PRIMARY KEY,
+                OutboxMessageId TEXT NOT NULL,
+                AttemptNumber INTEGER NOT NULL,
+                Status TEXT NOT NULL,
+                StartedAtUtc TEXT NOT NULL,
+                FinishedAtUtc TEXT NULL,
+                ProviderSummary TEXT NULL,
+                ErrorCategory TEXT NULL,
+                SanitizedError TEXT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL,
+                CONSTRAINT FK_EmailDeliveryAttempts_EmailOutboxMessages_OutboxMessageId FOREIGN KEY (OutboxMessageId) REFERENCES EmailOutboxMessages (Id) ON DELETE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_EmailDeliveryAttempts_OutboxMessageId_AttemptNumber ON EmailDeliveryAttempts (OutboxMessageId, AttemptNumber);
             """,
             cancellationToken);
 
