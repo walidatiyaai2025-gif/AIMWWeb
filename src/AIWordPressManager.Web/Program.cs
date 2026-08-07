@@ -43,6 +43,7 @@ builder.Services.AddScoped<DatabaseSetupService>();
 builder.Services.AddScoped<CurrentUserContext>();
 builder.Services.AddScoped<LocalAuthenticationService>();
 builder.Services.AddScoped<AccountProfileService>();
+builder.Services.AddScoped<EmailScheduleService>();
 builder.Services.AddScoped<IWordPressConnectionTester, WordPressConnectionTester>();
 builder.Services.AddScoped<IWordPressApiClient, WordPressApiClient>();
 builder.Services.AddScoped<SiteWebService>();
@@ -76,6 +77,7 @@ builder.Services.AddSingleton<SiteOperationHistoryService>();
 builder.Services.AddHostedService<AutomationSchedulerService>();
 builder.Services.AddHostedService<BulkContentOperationWorker>();
 builder.Services.AddHostedService<EmailOutboxWorker>();
+builder.Services.AddHostedService<EmailScheduleWorker>();
 
 var app = builder.Build();
 
