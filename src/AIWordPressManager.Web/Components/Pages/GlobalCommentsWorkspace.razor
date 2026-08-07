@@ -19,7 +19,7 @@ else
                     Subtitle="@(L.IsArabic ? "اختر موقعًا لعرض التعليقات ومراجعتها مباشرة من WordPress." : "Select a site to review live WordPress comments and moderation states.")">
             <Actions>
                 <AppButton Href="/content" Text="@(L.IsArabic ? "مركز المحتوى" : "Content hub")" />
-                <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Disabled="@_working" OnClick="RefreshAsync" />
+                <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Disabled="@(_working || !SelectedSiteId.HasValue)" OnClick="RefreshAsync" />
             </Actions>
         </AppToolbar>
 
@@ -27,7 +27,7 @@ else
                     Title="@(L.IsArabic ? "الموقع وحالة التعليق" : "Site and moderation status")">
             <ChildContent>
                 <div class="filter-row">
-                    <select class="form-control" @bind="_selectedSiteId">
+                    <select class="form-control" @bind="_selectedSiteId" @bind:after="SiteChangedAsync">
                         <option value="">@(L.IsArabic ? "اختر موقع WordPress" : "Select a WordPress site")</option>
                         @foreach (var site in _sites)
                         {
@@ -113,6 +113,7 @@ else
     private string _search = string.Empty;
     private string? _message;
     private int _page = 1;
+    private int _loadVersion;
     private bool _loadingSites = true;
     private bool _working;
     private bool _isError;
@@ -130,6 +131,17 @@ else
         finally { _loadingSites = false; }
     }
 
+    private Task SiteChangedAsync()
+    {
+        _loadVersion++;
+        _page = 1;
+        _message = null;
+        _isError = false;
+        _working = false;
+        _result = new(true, string.Empty, [], 0, 1);
+        return Task.CompletedTask;
+    }
+
     private async Task LoadCommentsAsync(MouseEventArgs _)
     {
         _page = 1;
@@ -145,21 +157,33 @@ else
     private async Task LoadAsync()
     {
         if (SelectedSiteId is not Guid siteId) return;
+
+        var requestVersion = ++_loadVersion;
         try
         {
             _working = true;
             _message = null;
-            _result = await CommentsService.GetAsync(siteId, _status, _search, _page, 30);
+            var result = await CommentsService.GetAsync(siteId, _status, _search, _page, 30);
+
+            if (requestVersion != _loadVersion || SelectedSiteId != siteId) return;
+
+            _result = result;
             _isError = !_result.Success;
             if (!_result.Success) _message = L.TranslateMessage(_result.Message);
         }
         catch (Exception ex)
         {
+            if (requestVersion != _loadVersion || SelectedSiteId != siteId) return;
+
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
             _result = new(false, ex.Message, [], 0, 1);
         }
-        finally { _working = false; }
+        finally
+        {
+            if (requestVersion == _loadVersion)
+                _working = false;
+        }
     }
 
     private async Task PreviousAsync(MouseEventArgs _)
