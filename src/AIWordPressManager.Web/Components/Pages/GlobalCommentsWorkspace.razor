@@ -117,6 +117,7 @@ else
     private bool _loadingSites = true;
     private bool _working;
     private bool _isError;
+    private bool _disposed;
 
     private Guid? SelectedSiteId => Guid.TryParse(_selectedSiteId, out var id) ? id : null;
     private string SelectedSiteName => SelectedSiteId is Guid id ? _sites.FirstOrDefault(x => x.Id == id)?.Name ?? id.ToString("N")[..8] : string.Empty;
@@ -127,8 +128,15 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try { _sites = await SiteService.GetSitesAsync(); }
-        finally { _loadingSites = false; }
+        try
+        {
+            var sites = await SiteService.GetSitesAsync();
+            if (!_disposed) _sites = sites;
+        }
+        finally
+        {
+            if (!_disposed) _loadingSites = false;
+        }
     }
 
     private Task SiteChangedAsync()
@@ -150,13 +158,18 @@ else
 
     private async Task RefreshAsync(MouseEventArgs _)
     {
-        _sites = await SiteService.GetSitesAsync();
+        if (_disposed) return;
+
+        var sites = await SiteService.GetSitesAsync();
+        if (_disposed) return;
+
+        _sites = sites;
         if (SelectedSiteId.HasValue) await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
-        if (SelectedSiteId is not Guid siteId) return;
+        if (_disposed || SelectedSiteId is not Guid siteId) return;
 
         var requestVersion = ++_loadVersion;
         try
@@ -165,7 +178,7 @@ else
             _message = null;
             var result = await CommentsService.GetAsync(siteId, _status, _search, _page, 30);
 
-            if (requestVersion != _loadVersion || SelectedSiteId != siteId) return;
+            if (_disposed || requestVersion != _loadVersion || SelectedSiteId != siteId) return;
 
             _result = result;
             _isError = !_result.Success;
@@ -173,7 +186,7 @@ else
         }
         catch (Exception ex)
         {
-            if (requestVersion != _loadVersion || SelectedSiteId != siteId) return;
+            if (_disposed || requestVersion != _loadVersion || SelectedSiteId != siteId) return;
 
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
@@ -181,7 +194,7 @@ else
         }
         finally
         {
-            if (requestVersion == _loadVersion)
+            if (!_disposed && requestVersion == _loadVersion)
                 _working = false;
         }
     }
@@ -206,6 +219,17 @@ else
     private string FormatDate(DateTime? value) => value?.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") ?? "—";
     private string StatusText(string status) => status switch { "approved" => L.IsArabic ? "معتمدة" : "Approved", "hold" => L.IsArabic ? "معلقة" : "Pending", "spam" => L.IsArabic ? "مزعجة" : "Spam", "trash" => L.IsArabic ? "محذوفة" : "Trash", _ => status };
     private static string StatusTone(string status) => status switch { "approved" => "success", "hold" => "warning", "spam" or "trash" => "danger", _ => "neutral" };
-    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
-    public void Dispose() => L.Changed -= LanguageChanged;
+
+    private void LanguageChanged()
+    {
+        if (!_disposed) _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _loadVersion++;
+        L.Changed -= LanguageChanged;
+    }
 }
