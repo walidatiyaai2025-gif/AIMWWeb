@@ -59,14 +59,13 @@ public sealed class DpapiSecretProtectionService : ISecretProtectionService
 
         if (!protectedValue.StartsWith(Prefix, StringComparison.Ordinal))
         {
-            throw new CryptographicException("The stored secret uses an unsupported legacy encryption format. Please enter and save the credential again.");
+            throw new CryptographicException(
+                "The stored secret uses an unsupported legacy encryption format. Please enter and save the credential again.");
         }
 
         var payload = Convert.FromBase64String(protectedValue[Prefix.Length..]);
         if (payload.Length < NonceSize + TagSize)
-        {
             throw new CryptographicException("The encrypted value is invalid.");
-        }
 
         var nonce = payload.AsSpan(0, NonceSize);
         var tag = payload.AsSpan(NonceSize, TagSize);
@@ -87,27 +86,64 @@ public sealed class DpapiSecretProtectionService : ISecretProtectionService
 
     private static byte[] LoadOrCreateKey()
     {
-        var dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
-        var keyPath = Path.Combine(dataDirectory, ".secret-key");
+        var stableDirectory = GetStableSecurityDirectory();
+        var stableKeyPath = Path.Combine(stableDirectory, ".secret-key");
+        var legacyKeyPath = Path.Combine(AppContext.BaseDirectory, "Data", ".secret-key");
 
         lock (KeyLock)
         {
-            Directory.CreateDirectory(dataDirectory);
+            Directory.CreateDirectory(stableDirectory);
 
-            if (File.Exists(keyPath))
+            if (File.Exists(stableKeyPath))
+                return ReadAndValidateKey(stableKeyPath);
+
+            // Earlier builds stored the key under AppContext.BaseDirectory/Data. That folder
+            // may live inside bin/Release or bin/Debug and can be removed by a clean build.
+            // Preserve the old key when it still exists so previously encrypted secrets remain readable.
+            if (File.Exists(legacyKeyPath))
             {
-                var existingKey = Convert.FromBase64String(File.ReadAllText(keyPath).Trim());
-                if (existingKey.Length != KeySize)
-                {
-                    throw new CryptographicException("The application encryption key has an invalid length.");
-                }
-
-                return existingKey;
+                var legacyKey = ReadAndValidateKey(legacyKeyPath);
+                WriteKeyAtomically(stableKeyPath, legacyKey);
+                return legacyKey;
             }
 
             var newKey = RandomNumberGenerator.GetBytes(KeySize);
-            File.WriteAllText(keyPath, Convert.ToBase64String(newKey));
+            WriteKeyAtomically(stableKeyPath, newKey);
             return newKey;
         }
+    }
+
+    private static string GetStableSecurityDirectory()
+    {
+        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (!string.IsNullOrWhiteSpace(localApplicationData))
+            return Path.Combine(localApplicationData, "AIWordPressManager", "Security");
+
+        // Fallback for unusual service/container environments where LocalApplicationData is unavailable.
+        return Path.Combine(AppContext.BaseDirectory, "Data", "Security");
+    }
+
+    private static byte[] ReadAndValidateKey(string path)
+    {
+        try
+        {
+            var key = Convert.FromBase64String(File.ReadAllText(path).Trim());
+            if (key.Length != KeySize)
+                throw new CryptographicException("The application encryption key has an invalid length.");
+            return key;
+        }
+        catch (FormatException ex)
+        {
+            throw new CryptographicException("The application encryption key is not valid Base64 data.", ex);
+        }
+    }
+
+    private static void WriteKeyAtomically(string path, byte[] key)
+    {
+        var directory = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(directory);
+        var temp = path + ".tmp";
+        File.WriteAllText(temp, Convert.ToBase64String(key));
+        File.Move(temp, path, true);
     }
 }
