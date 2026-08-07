@@ -245,6 +245,7 @@ public sealed class AutomationSchedulerService(
     AutomationCenterService automation,
     ExecutionCenterService execution,
     IServiceScopeFactory scopeFactory,
+    IConfiguration configuration,
     ILogger<AutomationSchedulerService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -256,6 +257,9 @@ public sealed class AutomationSchedulerService(
 
     private async Task ProcessDueJobsAsync(CancellationToken cancellationToken)
     {
+        if (!configuration.GetValue<bool>("Database:SetupComplete"))
+            return;
+
         IReadOnlyList<AutomationJob> dueJobs;
         try { dueJobs = automation.ClaimDueJobs(DateTime.UtcNow); }
         catch (Exception ex) { logger.LogError(ex, "Failed to claim due automation jobs"); return; }
