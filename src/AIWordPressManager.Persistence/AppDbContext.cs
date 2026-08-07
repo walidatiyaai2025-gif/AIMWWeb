@@ -8,6 +8,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Site> Sites => Set<Site>();
     public DbSet<SiteCredential> SiteCredentials => Set<SiteCredential>();
     public DbSet<SiteEmailRecipient> SiteEmailRecipients => Set<SiteEmailRecipient>();
+    public DbSet<SiteMailProfile> SiteMailProfiles => Set<SiteMailProfile>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -59,6 +60,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.EmailAddress).HasMaxLength(320).IsRequired();
             entity.Property(x => x.NormalizedEmailAddress).HasMaxLength(320).IsRequired();
             entity.Property(x => x.DisplayName).HasMaxLength(120);
+            entity.HasOne<Site>().WithMany().HasForeignKey(x => x.SiteId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SiteMailProfile>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.SiteId).IsUnique();
+            entity.HasIndex(x => new { x.OwnerUserId, x.SiteId });
+            entity.Property(x => x.Host).HasMaxLength(255).IsRequired();
+            entity.Property(x => x.UserName).HasMaxLength(320).IsRequired();
+            entity.Property(x => x.ProtectedPassword);
+            entity.Property(x => x.FromAddress).HasMaxLength(320).IsRequired();
+            entity.Property(x => x.FromName).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.ReplyToAddress).HasMaxLength(320).IsRequired();
             entity.HasOne<Site>().WithMany().HasForeignKey(x => x.SiteId).OnDelete(DeleteBehavior.Cascade);
         });
     }
