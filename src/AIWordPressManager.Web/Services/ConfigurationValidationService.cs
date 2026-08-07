@@ -1,24 +1,37 @@
+using AIWordPressManager.Application.Abstractions;
+
 namespace AIWordPressManager.Web.Services;
 
 public sealed class ConfigurationValidationService
 {
+    private static readonly HashSet<string> SupportedProviders = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "SQLite", "SqlServer", "PostgreSQL", "Postgres", "MySQL", "MariaDB"
+    };
+
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _environment;
+    private readonly IApplicationPathService _paths;
 
-    public ConfigurationValidationService(IConfiguration configuration, IWebHostEnvironment environment)
+    public ConfigurationValidationService(
+        IConfiguration configuration,
+        IWebHostEnvironment environment,
+        IApplicationPathService paths)
     {
         _configuration = configuration;
         _environment = environment;
+        _paths = paths;
     }
 
     public ConfigurationValidationReport Validate()
     {
         var checks = new List<ConfigurationValidationItem>();
-        var localRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager");
-        var logsPath = Path.Combine(localRoot, "Logs");
-        var backupPath = Path.Combine(localRoot, "Backups");
 
-        checks.Add(CheckDirectory("local-data", "Local application data", "بيانات التطبيق المحلية", localRoot, true));
+        var dataPath = _paths.GetApplicationDataDirectory();
+        var logsPath = _paths.GetLogsDirectory();
+        var backupPath = _paths.GetBackupsDirectory();
+
+        checks.Add(CheckDirectory("local-data", "Application data", "بيانات التطبيق", dataPath, true));
         checks.Add(CheckDirectory("logs", "Logs directory", "مجلد السجلات", logsPath, true));
         checks.Add(CheckDirectory("backups", "Backup directory", "مجلد النسخ الاحتياطية", backupPath, true));
 
@@ -32,17 +45,41 @@ public sealed class ConfigurationValidationService
             string.IsNullOrWhiteSpace(environmentName) ? "Set ASPNETCORE_ENVIRONMENT." : "Environment name is available.",
             string.IsNullOrWhiteSpace(environmentName) ? "قم بتعيين ASPNETCORE_ENVIRONMENT." : "اسم البيئة متاح."));
 
-        var sqliteConnection = _configuration.GetConnectionString("DefaultConnection")
-            ?? _configuration["ConnectionStrings:Sqlite"]
-            ?? _configuration["ConnectionStrings:Default"];
+        var provider = (_configuration["Database:Provider"] ?? "SQLite").Trim();
+        var setupComplete = _configuration.GetValue<bool>("Database:SetupComplete");
+        var providerSupported = SupportedProviders.Contains(provider);
+        var connectionConfigured = HasDatabaseConnectionConfiguration(provider);
+
+        var databaseStatus = !providerSupported
+            ? ValidationStatus.Error
+            : setupComplete && connectionConfigured
+                ? ValidationStatus.Valid
+                : ValidationStatus.Warning;
+
+        var databaseMessage = !providerSupported
+            ? $"Database provider '{provider}' is not supported by the current build."
+            : !setupComplete
+                ? "Database first-run setup has not been completed."
+                : connectionConfigured
+                    ? "Database provider and connection settings are configured. Credentials are not included in this report."
+                    : "Database setup is marked complete but its connection settings are missing.";
+
+        var databaseMessageAr = !providerSupported
+            ? $"مزود قاعدة البيانات '{provider}' غير مدعوم في الإصدار الحالي."
+            : !setupComplete
+                ? "لم يكتمل إعداد قاعدة البيانات لأول تشغيل."
+                : connectionConfigured
+                    ? "مزود قاعدة البيانات وإعدادات الاتصال موجودة. لا يتم عرض بيانات الاعتماد في هذا التقرير."
+                    : "الإعداد مسجل كمكتمل لكن بيانات اتصال قاعدة البيانات غير موجودة.";
+
         checks.Add(new ConfigurationValidationItem(
-            "sqlite-connection",
-            "SQLite connection",
-            "اتصال SQLite",
-            string.IsNullOrWhiteSpace(sqliteConnection) ? ValidationStatus.Warning : ValidationStatus.Valid,
-            string.IsNullOrWhiteSpace(sqliteConnection) ? "Code default" : Mask(sqliteConnection),
-            string.IsNullOrWhiteSpace(sqliteConnection) ? "No explicit connection string was found; the application will use its code default." : "SQLite connection configuration is present.",
-            string.IsNullOrWhiteSpace(sqliteConnection) ? "لم يتم العثور على Connection String صريح؛ سيستخدم التطبيق القيمة الافتراضية من الكود." : "إعداد اتصال SQLite موجود."));
+            "database-setup",
+            "Database setup",
+            "إعداد قاعدة البيانات",
+            databaseStatus,
+            provider,
+            databaseMessage,
+            databaseMessageAr));
 
         var allowedHosts = _configuration["AllowedHosts"];
         checks.Add(new ConfigurationValidationItem(
@@ -70,6 +107,18 @@ public sealed class ConfigurationValidationService
         return new ConfigurationValidationReport(DateTime.UtcNow, checks, critical, warnings);
     }
 
+    private bool HasDatabaseConnectionConfiguration(string provider)
+    {
+        if (provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+        {
+            return !string.IsNullOrWhiteSpace(_configuration["Database:ConnectionString"])
+                || File.Exists(_paths.GetDatabasePath());
+        }
+
+        return !string.IsNullOrWhiteSpace(_configuration["Database:ProtectedConnectionString"])
+            || !string.IsNullOrWhiteSpace(_configuration["Database:ConnectionString"]);
+    }
+
     private static ConfigurationValidationItem CheckDirectory(string key, string title, string titleAr, string path, bool create)
     {
         try
@@ -84,12 +133,6 @@ public sealed class ConfigurationValidationService
         {
             return new ConfigurationValidationItem(key, title, titleAr, ValidationStatus.Error, path, $"Directory is not writable: {ex.Message}", $"المجلد غير قابل للكتابة: {ex.Message}");
         }
-    }
-
-    private static string Mask(string value)
-    {
-        if (value.Length <= 12) return "Configured";
-        return value[..6] + "..." + value[^4..];
     }
 }
 
