@@ -111,6 +111,39 @@ public sealed class DatabaseInitializationService(
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_SiteMailProfiles_SiteId ON SiteMailProfiles (SiteId);
             CREATE INDEX IF NOT EXISTS IX_SiteMailProfiles_OwnerUserId_SiteId ON SiteMailProfiles (OwnerUserId, SiteId);
+
+            CREATE TABLE IF NOT EXISTS AccountEmailRecipients (
+                Id TEXT NOT NULL CONSTRAINT PK_AccountEmailRecipients PRIMARY KEY,
+                OwnerUserId TEXT NOT NULL,
+                EmailAddress TEXT NOT NULL,
+                NormalizedEmailAddress TEXT NOT NULL,
+                DisplayName TEXT NULL,
+                IsEnabled INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL,
+                CONSTRAINT FK_AccountEmailRecipients_AuthUsers_OwnerUserId FOREIGN KEY (OwnerUserId) REFERENCES AuthUsers (Id) ON DELETE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_AccountEmailRecipients_OwnerUserId_NormalizedEmailAddress ON AccountEmailRecipients (OwnerUserId, NormalizedEmailAddress);
+
+            CREATE TABLE IF NOT EXISTS AccountMailProfiles (
+                Id TEXT NOT NULL CONSTRAINT PK_AccountMailProfiles PRIMARY KEY,
+                OwnerUserId TEXT NOT NULL,
+                Host TEXT NOT NULL,
+                Port INTEGER NOT NULL,
+                UserName TEXT NOT NULL,
+                ProtectedPassword TEXT NULL,
+                FromAddress TEXT NOT NULL,
+                FromName TEXT NOT NULL,
+                ReplyToAddress TEXT NOT NULL,
+                EnableSsl INTEGER NOT NULL,
+                IsEnabled INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL,
+                CONSTRAINT FK_AccountMailProfiles_AuthUsers_OwnerUserId FOREIGN KEY (OwnerUserId) REFERENCES AuthUsers (Id) ON DELETE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_AccountMailProfiles_OwnerUserId ON AccountMailProfiles (OwnerUserId);
             """,
             cancellationToken);
 
