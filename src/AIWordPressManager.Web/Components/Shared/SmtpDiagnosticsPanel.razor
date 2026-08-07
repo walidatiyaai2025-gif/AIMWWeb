@@ -1,0 +1,92 @@
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<div class="settings-subsection mt-3">
+    <h3>@(L.IsArabic ? "اختبار وتشخيص SMTP" : "SMTP diagnostics & test")</h3>
+    <p class="help">@(L.IsArabic ? "يتم اختبار الإعداد المحفوظ فقط. التشخيص يفحص DNS والمنفذ، والإرسال التجريبي يتحقق من TLS والمصادقة وقبول الرسالة." : "Only the saved profile is tested. Diagnostics checks DNS and the TCP port; test-send verifies TLS, authentication, and message submission.")</p>
+
+    <div class="grid-2 mt-2">
+        <div>
+            <label>@(L.IsArabic ? "بريد الاختبار" : "Test recipient")</label>
+            <input class="form-control" type="email" @bind="_testRecipient" maxlength="320" disabled="@_busy" />
+        </div>
+        <div class="d-flex gap-2 align-items-end">
+            <button class="btn" @onclick="DiagnoseAsync" disabled="@_busy">@(L.IsArabic ? "فحص الاتصال" : "Diagnose connection")</button>
+            <button class="btn primary" @onclick="SendTestAsync" disabled="@(_busy || string.IsNullOrWhiteSpace(_testRecipient))">@(L.IsArabic ? "إرسال بريد تجريبي" : "Send test email")</button>
+        </div>
+    </div>
+
+    @if (_result is not null)
+    {
+        <div class="panel mt-3" style="padding:1rem">
+            <div class="d-flex gap-2 align-items-center">
+                <span class="settings-badge @(_result.IsSuccess ? "success" : "warning")">@(_result.IsSuccess ? "PASS" : "FAIL")</span>
+                <strong>@_result.Message</strong>
+            </div>
+            <small>@_result.DurationMilliseconds ms</small>
+            <div class="database-info-grid mt-2">
+                @foreach (var step in _result.Steps)
+                {
+                    <div>
+                        <small>@step.Name</small>
+                        <strong>@(step.IsSuccess ? "✓" : "✕") @step.Message</strong>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Func<Task<SiteMailDeliveryProfile>> GetProfileAsync { get; set; } = default!;
+    [Parameter] public string? SuggestedRecipient { get; set; }
+
+    private readonly SmtpDiagnosticsService _diagnostics = new();
+    private string _testRecipient = string.Empty;
+    private bool _busy;
+    private SmtpDiagnosticResult? _result;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(_testRecipient) && !string.IsNullOrWhiteSpace(SuggestedRecipient))
+            _testRecipient = SuggestedRecipient.Trim();
+    }
+
+    private async Task DiagnoseAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            var profile = await GetProfileAsync();
+            _result = await _diagnostics.DiagnoseAsync(profile);
+            if (_result.IsSuccess) Notifications.Success(L.IsArabic ? "نجح فحص اتصال SMTP الأساسي." : "SMTP connection diagnostics passed.");
+            else Notifications.Error(_result.Message);
+        }
+        catch (Exception ex)
+        {
+            _result = new SmtpDiagnosticResult(false, L.TranslateMessage(ex.Message), [], 0);
+            Notifications.Error(_result.Message);
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task SendTestAsync()
+    {
+        if (_busy || string.IsNullOrWhiteSpace(_testRecipient)) return;
+        _busy = true;
+        try
+        {
+            var profile = await GetProfileAsync();
+            _result = await _diagnostics.SendTestAsync(profile, _testRecipient);
+            if (_result.IsSuccess) Notifications.Success(L.IsArabic ? "تم إرسال البريد التجريبي بنجاح." : "Test email sent successfully.");
+            else Notifications.Error(_result.Message);
+        }
+        catch (Exception ex)
+        {
+            _result = new SmtpDiagnosticResult(false, L.TranslateMessage(ex.Message), [], 0);
+            Notifications.Error(_result.Message);
+        }
+        finally { _busy = false; }
+    }
+}
