@@ -42,6 +42,11 @@ else
                 </EditForm>
             </AppCard>
 
+            <AppCard Title="@(L.IsArabic ? "تنبيهات البريد الإلكتروني" : "Email notifications")" Subtitle="@(L.IsArabic ? "حدد من عنوان إلى ثلاثة عناوين بريد تستقبل تقارير وتنبيهات هذا الموقع." : "Configure one to three recipients for this site's reports and notifications.")">
+                <p>@(L.IsArabic ? "إعداد عناوين الاستلام مستقل لكل موقع ومحمي بعزل الحسابات." : "Recipient settings are site-specific and tenant isolated.")</p>
+                <AppButton Href="@($"/sites/{Id}/email-settings")" Variant="primary" Text="@(L.IsArabic ? "إدارة عناوين البريد" : "Manage email recipients")" />
+            </AppCard>
+
             <AppCard Title="@(L.IsArabic ? "حالة التشغيل" : "Operational state")" Subtitle="@(L.IsArabic ? "عطّل الموقع مؤقتًا بدون حذف بياناته." : "Temporarily disable the site without deleting its data.")">
                 <p>@(L.IsArabic ? $"الحالة الحالية: {StatusText()}" : $"Current state: {StatusText()}")</p>
                 <AppButton Variant="@(_site.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled ? "primary" : "danger")" Disabled="@_busy" OnClick="ToggleDisabledClicked" Text="@(_site.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled ? (L.IsArabic ? "إعادة التفعيل" : "Enable site") : (L.IsArabic ? "تعطيل الموقع" : "Disable site"))" />
