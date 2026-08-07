@@ -12,7 +12,9 @@ public sealed class ApplicationPathService : IApplicationPathService
     {
         _portableMode = configuration.GetValue<bool>("Application:PortableMode");
         _environmentName = configuration["DOTNET_ENVIRONMENT"]
+            ?? configuration["ASPNETCORE_ENVIRONMENT"]
             ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
             ?? "Production";
     }
 
@@ -71,18 +73,42 @@ public sealed class ApplicationPathService : IApplicationPathService
         if (!Directory.Exists(legacy))
             return;
 
-        foreach (var sourceFile in Directory.EnumerateFiles(legacy, "*", SearchOption.AllDirectories))
+        try
         {
-            var relative = Path.GetRelativePath(legacy, sourceFile);
-            var destinationFile = Path.Combine(destination, relative);
-            if (File.Exists(destinationFile))
-                continue;
+            foreach (var sourceFile in Directory.EnumerateFiles(legacy, "*", SearchOption.AllDirectories))
+            {
+                var relative = Path.GetRelativePath(legacy, sourceFile);
+                var destinationFile = Path.Combine(destination, relative);
+                if (File.Exists(destinationFile))
+                    continue;
 
-            var destinationDirectory = Path.GetDirectoryName(destinationFile);
-            if (!string.IsNullOrWhiteSpace(destinationDirectory))
-                Directory.CreateDirectory(destinationDirectory);
+                var destinationDirectory = Path.GetDirectoryName(destinationFile);
+                if (!string.IsNullOrWhiteSpace(destinationDirectory))
+                    Directory.CreateDirectory(destinationDirectory);
 
-            File.Copy(sourceFile, destinationFile, overwrite: false);
+                try
+                {
+                    File.Copy(sourceFile, destinationFile, overwrite: false);
+                }
+                catch (IOException)
+                {
+                    // A build/log/database sidecar may still be in use. Migration is
+                    // intentionally best-effort and will retry on the next access.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Do not block application startup because one legacy artifact
+                    // cannot be copied. The stable destination remains authoritative.
+                }
+            }
+        }
+        catch (IOException)
+        {
+            // The legacy tree may change while it is being enumerated.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // A protected legacy subdirectory must not prevent normal startup.
         }
     }
 
