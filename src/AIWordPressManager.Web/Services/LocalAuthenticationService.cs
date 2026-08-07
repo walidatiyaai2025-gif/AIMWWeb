@@ -15,26 +15,42 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        const string normalized = "ADMIN";
-        var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == normalized, cancellationToken);
+        if (await dbContext.AuthUsers.AnyAsync(cancellationToken)) return;
+
         var now = DateTime.UtcNow;
+        var user = new AuthUser("Admin", "temporary", now, "Administrator");
+        user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
+        dbContext.AuthUsers.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 
-        if (user is null)
-        {
-            user = new AuthUser("Admin", "temporary", now, "Administrator");
-            user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
-            dbContext.AuthUsers.Add(user);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        else if (!string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase))
-        {
-            user.SetRole("Administrator", now);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
+    public async Task<RegistrationResult> CreateInitialAdministratorAsync(
+        string userName,
+        string password,
+        string confirmPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (await dbContext.AuthUsers.AnyAsync(cancellationToken))
+            return RegistrationResult.Failed("An application account already exists. Initial administrator setup is no longer available.");
 
-        var unownedSites = await dbContext.Sites.IgnoreQueryFilters().Where(x => x.OwnerUserId == null).ToListAsync(cancellationToken);
-        foreach (var site in unownedSites) site.AssignOwner(user.Id, now);
-        if (unownedSites.Count > 0) await dbContext.SaveChangesAsync(cancellationToken);
+        var validation = ValidateRegistration(userName, password, confirmPassword);
+        if (validation is not null) return RegistrationResult.Failed(validation);
+
+        var cleanUserName = userName.Trim();
+        var now = DateTime.UtcNow;
+        var user = new AuthUser(cleanUserName, "temporary", now, "Administrator");
+        user.SetPasswordHash(_hasher.HashPassword(user, password), now);
+        dbContext.AuthUsers.Add(user);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return RegistrationResult.Succeeded(user.Id);
+        }
+        catch (DbUpdateException)
+        {
+            return RegistrationResult.Failed("The initial administrator account could not be created.");
+        }
     }
 
     public async Task<RegistrationResult> RegisterAsync(
@@ -43,32 +59,17 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         string confirmPassword,
         CancellationToken cancellationToken = default)
     {
-        var cleanUserName = (userName ?? string.Empty).Trim();
-        var safePassword = password ?? string.Empty;
-        var safeConfirmation = confirmPassword ?? string.Empty;
+        var validation = ValidateRegistration(userName, password, confirmPassword);
+        if (validation is not null) return RegistrationResult.Failed(validation);
 
-        if (cleanUserName.Length is < 3 or > 64)
-            return RegistrationResult.Failed("Username must be between 3 and 64 characters.");
-
-        if (!Regex.IsMatch(cleanUserName, "^[A-Za-z0-9._-]+$"))
-            return RegistrationResult.Failed("Username can contain letters, numbers, dots, underscores, and hyphens only.");
-
-        if (safePassword.Length < 8)
-            return RegistrationResult.Failed("Password must contain at least 8 characters.");
-
-        if (!safePassword.Any(char.IsUpper) || !safePassword.Any(char.IsLower) || !safePassword.Any(char.IsDigit))
-            return RegistrationResult.Failed("Password must contain uppercase, lowercase, and numeric characters.");
-
-        if (!string.Equals(safePassword, safeConfirmation, StringComparison.Ordinal))
-            return RegistrationResult.Failed("Password confirmation does not match.");
-
+        var cleanUserName = userName.Trim();
         var normalized = cleanUserName.ToUpperInvariant();
         if (await dbContext.AuthUsers.AnyAsync(x => x.NormalizedUserName == normalized, cancellationToken))
             return RegistrationResult.Failed("This username is already registered.");
 
         var now = DateTime.UtcNow;
         var user = new AuthUser(cleanUserName, "temporary", now, "User");
-        user.SetPasswordHash(_hasher.HashPassword(user, safePassword), now);
+        user.SetPasswordHash(_hasher.HashPassword(user, password), now);
         dbContext.AuthUsers.Add(user);
 
         try
@@ -169,6 +170,30 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         if (IsSafeLocalPath(requestedPath) && !IsAuthenticationPath(requestedPath!)) return requestedPath!;
         if (IsSafeLocalPath(lastPage) && !IsAuthenticationPath(lastPage!)) return lastPage!;
         return "/";
+    }
+
+    private static string? ValidateRegistration(string userName, string password, string confirmPassword)
+    {
+        var cleanUserName = (userName ?? string.Empty).Trim();
+        var safePassword = password ?? string.Empty;
+        var safeConfirmation = confirmPassword ?? string.Empty;
+
+        if (cleanUserName.Length is < 3 or > 64)
+            return "Username must be between 3 and 64 characters.";
+
+        if (!Regex.IsMatch(cleanUserName, "^[A-Za-z0-9._-]+$"))
+            return "Username can contain letters, numbers, dots, underscores, and hyphens only.";
+
+        if (safePassword.Length < 8)
+            return "Password must contain at least 8 characters.";
+
+        if (!safePassword.Any(char.IsUpper) || !safePassword.Any(char.IsLower) || !safePassword.Any(char.IsDigit))
+            return "Password must contain uppercase, lowercase, and numeric characters.";
+
+        if (!string.Equals(safePassword, safeConfirmation, StringComparison.Ordinal))
+            return "Password confirmation does not match.";
+
+        return null;
     }
 
     private void AddAudit(HttpContext context, string userName, bool succeeded, string reason, DateTime utcNow)
