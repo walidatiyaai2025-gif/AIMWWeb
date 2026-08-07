@@ -11,6 +11,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<SiteMailProfile> SiteMailProfiles => Set<SiteMailProfile>();
     public DbSet<AccountEmailRecipient> AccountEmailRecipients => Set<AccountEmailRecipient>();
     public DbSet<AccountMailProfile> AccountMailProfiles => Set<AccountMailProfile>();
+    public DbSet<EmailSchedule> EmailSchedules => Set<EmailSchedule>();
     public DbSet<EmailOutboxMessage> EmailOutboxMessages => Set<EmailOutboxMessage>();
     public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts => Set<EmailDeliveryAttempt>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
@@ -101,6 +102,22 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.FromName).HasMaxLength(160).IsRequired();
             entity.Property(x => x.ReplyToAddress).HasMaxLength(320).IsRequired();
             entity.HasOne<AuthUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailSchedule>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.OwnerUserId, x.SiteId });
+            entity.HasIndex(x => new { x.IsEnabled, x.NextRunUtc });
+            entity.Property(x => x.Scope).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.ReportType).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.TemplateKey).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.TimezoneId).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Frequency).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.LastStatus).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.LastError).HasMaxLength(1000);
+            entity.HasOne<AuthUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Site>().WithMany().HasForeignKey(x => x.SiteId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<EmailOutboxMessage>(entity =>
