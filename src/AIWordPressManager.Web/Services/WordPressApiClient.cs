@@ -236,11 +236,13 @@ public sealed class WordPressApiClient(
 
     private static Uri BuildRequestUri(string siteUrl, string relativePath)
     {
-        if (Uri.TryCreate(relativePath, UriKind.Absolute, out var absolute))
+        if (Uri.TryCreate(relativePath, UriKind.Absolute, out var absolute) &&
+            absolute.Scheme is "http" or "https")
             return absolute;
 
-        var normalized = relativePath.StartsWith('/') ? relativePath : $"/{relativePath}";
-        return new Uri($"{siteUrl}{normalized}", UriKind.Absolute);
+        var baseUri = new Uri(siteUrl.EndsWith('/') ? siteUrl : siteUrl + "/", UriKind.Absolute);
+        var normalized = relativePath.TrimStart('/');
+        return new Uri(baseUri, normalized);
     }
 
     private static IReadOnlyDictionary<string, string> ReadHeaders(HttpResponseMessage response)
