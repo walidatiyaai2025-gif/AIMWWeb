@@ -46,7 +46,7 @@
                 <button class="btn" @onclick="ClearPasswordAsync" disabled="@_busy">@(L.IsArabic ? "مسح كلمة المرور المحفوظة" : "Clear saved password")</button>
             }
         </div>
-        <p class="help mt-2">@(L.IsArabic ? "اختبار الاتصال والإرسال التجريبي سيتم في EML-005؛ الحفظ هنا لا يعني أن خادم SMTP تم اختباره." : "SMTP diagnostics and test-send belong to EML-005; saving here does not claim connectivity has been verified.")</p>
+        <SmtpDiagnosticsPanel GetProfileAsync="GetAccountTestProfileAsync" SuggestedRecipient="@SuggestedTestRecipient" />
     </section>
 
     <section class="panel settings-section">
@@ -103,6 +103,7 @@
     private Guid? _editingId;
     private string _editEmail = string.Empty, _editDisplayName = string.Empty;
     private bool _editEnabled = true;
+    private string SuggestedTestRecipient => _recipients.FirstOrDefault(x => x.IsEnabled)?.EmailAddress ?? _savedProfile.FromAddress;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
@@ -119,6 +120,8 @@
         catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
         finally { _loading = false; }
     }
+
+    private Task<SiteMailDeliveryProfile> GetAccountTestProfileAsync() => Service.GetTestProfileAsync();
 
     private async Task SaveProfileAsync()
     {
