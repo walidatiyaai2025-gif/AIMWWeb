@@ -13,6 +13,9 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 {
     private readonly PasswordHasher<AuthUser> _hasher = new();
 
+    public Task<bool> HasAccountsAsync(CancellationToken cancellationToken = default) =>
+        dbContext.AuthUsers.AsNoTracking().AnyAsync(cancellationToken);
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         var user = await dbContext.AuthUsers
