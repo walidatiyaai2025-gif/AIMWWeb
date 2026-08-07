@@ -1,0 +1,48 @@
+{
+  "program": "Email communications and subscription billing",
+  "branch": "main",
+  "updatedAtUtc": "2026-08-07T16:06:00Z",
+  "phases": [
+    {
+      "id": 10,
+      "nameAr": "البريد الإلكتروني والتقارير المجدولة",
+      "nameEn": "Email communications and scheduled reporting",
+      "status": "planned"
+    },
+    {
+      "id": 11,
+      "nameAr": "الاشتراكات والاستحقاقات والفوترة",
+      "nameEn": "Subscriptions, entitlements, and billing",
+      "status": "planned"
+    }
+  ],
+  "features": [
+    { "id": "EML-001", "phase": 10, "area": "Recipients", "nameAr": "إضافة من 1 إلى 3 إيميلات تنبيه لكل موقع", "nameEn": "One to three notification recipients per site", "status": "planned", "priority": "critical", "dependencies": ["IDN-004", "IDN-005"], "notes": "Owner-scoped, validated, deduplicated, enable/disable support." },
+    { "id": "EML-002", "phase": 10, "area": "Mail Profiles", "nameAr": "إعدادات الإرسال الخاصة بكل موقع", "nameEn": "Per-site outbound email profile", "status": "planned", "priority": "critical", "dependencies": ["EML-004"], "notes": "SMTP sender/from/reply-to/TLS settings with encrypted secret." },
+    { "id": "EML-003", "phase": 10, "area": "Dashboard Email", "nameAr": "إعدادات إيميل الداشبورد والحساب", "nameEn": "Dashboard/account email profile and recipients", "status": "planned", "priority": "critical", "dependencies": ["EML-004"], "notes": "Independent account recipients and sender profile; site profile can inherit it." },
+    { "id": "EML-004", "phase": 10, "area": "Security", "nameAr": "تشفير بيانات اعتماد البريد", "nameEn": "Encrypted email credentials and rotation", "status": "planned", "priority": "critical", "dependencies": [], "notes": "Reuse the existing secret-protection abstraction; never return stored passwords to UI." },
+    { "id": "EML-005", "phase": 10, "area": "Diagnostics", "nameAr": "اختبار إعدادات البريد وإرسال رسالة تجريبية", "nameEn": "Email validation and test send", "status": "planned", "priority": "high", "dependencies": ["EML-002", "EML-003"], "notes": "Actionable but sanitized DNS/auth/TLS diagnostics." },
+    { "id": "EML-006", "phase": 10, "area": "Templates", "nameAr": "قوالب البريد بالعربية والإنجليزية", "nameEn": "Bilingual email templates", "status": "planned", "priority": "high", "dependencies": [], "notes": "HTML escaping and reusable template keys for site, dashboard, security, and billing." },
+    { "id": "EML-007", "phase": 10, "area": "Scheduling", "nameAr": "جدولة تقارير البريد لكل موقع", "nameEn": "Per-site email report schedules", "status": "planned", "priority": "critical", "dependencies": ["EML-001", "EML-005", "EML-009", "OPS-005"], "notes": "Timezone-safe hourly/daily/weekly/monthly schedules with owner context." },
+    { "id": "EML-008", "phase": 10, "area": "Scheduling", "nameAr": "جدولة ملخص الداشبورد", "nameEn": "Dashboard digest schedules", "status": "planned", "priority": "high", "dependencies": ["EML-003", "EML-009", "OPS-005"], "notes": "Account-level digest independent of individual site schedules." },
+    { "id": "EML-009", "phase": 10, "area": "Delivery", "nameAr": "Outbox ومحاولات الإرسال وإعادة المحاولة", "nameEn": "Email outbox, retries, idempotency, and correlation", "status": "planned", "priority": "critical", "dependencies": ["OPS-005"], "notes": "Persist before sending, atomic claim, retry/backoff, restart recovery, no duplicate sends." },
+    { "id": "EML-010", "phase": 10, "area": "History", "nameAr": "سجل إرسال البريد والتشخيص", "nameEn": "Email delivery history and diagnostics", "status": "planned", "priority": "high", "dependencies": ["EML-009"], "notes": "Site and account views with attempts, status and sanitized failure reason." },
+    { "id": "EML-011", "phase": 10, "area": "Alerts", "nameAr": "تنبيهات بريد تلقائية للأخطاء والأحداث", "nameEn": "Event-driven operational email alerts", "status": "planned", "priority": "high", "dependencies": ["EML-006", "EML-009"], "notes": "Sync/job/security/billing events routed through the outbox." },
+    { "id": "EML-012", "phase": 10, "area": "Reliability", "nameAr": "حدود الإرسال ومنع التكرار والاحتفاظ", "nameEn": "Email rate limits, duplicate suppression, and retention", "status": "planned", "priority": "medium", "dependencies": ["EML-009", "REL-006"], "notes": "Configurable per-account limits and cleanup policy." },
+
+    { "id": "BIL-001", "phase": 11, "area": "Plans", "nameAr": "كتالوج خطط الاشتراك", "nameEn": "Subscription plan catalog", "status": "planned", "priority": "critical", "dependencies": [], "notes": "Localized plan name, interval, price, currency, trial/grace settings, gateway mapping." },
+    { "id": "BIL-002", "phase": 11, "area": "Entitlements", "nameAr": "محرك الاستحقاقات وحدود الاستخدام", "nameEn": "Entitlement and usage-limit engine", "status": "planned", "priority": "critical", "dependencies": ["BIL-001"], "notes": "Plan-name checks are forbidden; use entitlement keys and server-side enforcement." },
+    { "id": "BIL-003", "phase": 11, "area": "Subscriptions", "nameAr": "حالة اشتراك الحساب", "nameEn": "Account subscription state machine", "status": "planned", "priority": "critical", "dependencies": ["BIL-001"], "notes": "Trialing/Active/PastDue/Grace/Suspended/Cancelled/Expired with audited transitions." },
+    { "id": "BIL-004", "phase": 11, "area": "Policy", "nameAr": "التجربة وفترة السماح والتعليق والانتهاء", "nameEn": "Trial, grace-period, suspension, and expiry policies", "status": "planned", "priority": "high", "dependencies": ["BIL-003"], "notes": "Never delete user/site data because payment state is temporarily unavailable." },
+    { "id": "BIL-005", "phase": 11, "area": "Billing UI", "nameAr": "صفحة الاشتراك والفوترة للحساب", "nameEn": "Account subscription and billing UI", "status": "planned", "priority": "high", "dependencies": ["BIL-002", "BIL-003", "BIL-010"], "notes": "Current plan, renewal, status, limits, usage, upgrade/downgrade/cancel and history." },
+    { "id": "BIL-006", "phase": 11, "area": "Payments", "nameAr": "طبقة تجريد بوابات الدفع", "nameEn": "Payment gateway abstraction", "status": "planned", "priority": "critical", "dependencies": ["BIL-003"], "notes": "Business logic must not depend directly on PayPal." },
+    { "id": "BIL-007", "phase": 11, "area": "PayPal", "nameAr": "إعداد PayPal وتشفير بيانات الاعتماد", "nameEn": "PayPal configuration and encrypted credentials", "status": "planned", "priority": "critical", "dependencies": ["BIL-006"], "notes": "Sandbox/live configuration, encrypted client credentials, validation diagnostics." },
+    { "id": "BIL-008", "phase": 11, "area": "PayPal", "nameAr": "إنشاء Checkout لاشتراك PayPal", "nameEn": "PayPal subscription checkout", "status": "planned", "priority": "critical", "dependencies": ["BIL-001", "BIL-007"], "notes": "Checkout is server-created; browser return is navigation only and never proof of payment." },
+    { "id": "BIL-009", "phase": 11, "area": "PayPal Webhooks", "nameAr": "استقبال والتحقق من Webhooks PayPal", "nameEn": "Verified and idempotent PayPal webhooks", "status": "planned", "priority": "critical", "dependencies": ["BIL-007"], "notes": "Verify authenticity, store unique gateway event IDs, process replay safely." },
+    { "id": "BIL-010", "phase": 11, "area": "PayPal Sync", "nameAr": "مزامنة دورة حياة الاشتراك مع PayPal", "nameEn": "PayPal subscription lifecycle synchronization", "status": "planned", "priority": "critical", "dependencies": ["BIL-003", "BIL-009"], "notes": "Activation, renewal, failure, suspension, cancellation and reconciliation." },
+    { "id": "BIL-011", "phase": 11, "area": "Subscription Changes", "nameAr": "ترقية وخفض وإلغاء وإعادة تفعيل الخطة", "nameEn": "Upgrade, downgrade, cancel, and reactivate flows", "status": "planned", "priority": "high", "dependencies": ["BIL-010"], "notes": "Policy-driven effective dates and audited transitions." },
+    { "id": "BIL-012", "phase": 11, "area": "Enforcement", "nameAr": "تطبيق حدود الخطة داخل كل الخدمات", "nameEn": "Server-side feature and usage limit enforcement", "status": "planned", "priority": "critical", "dependencies": ["BIL-002", "BIL-003"], "notes": "Sites, email, schedules, automation, AI and premium modules must enforce limits server-side." },
+    { "id": "BIL-013", "phase": 11, "area": "History", "nameAr": "سجل الفوترة والتدقيق وتنبيهات العميل", "nameEn": "Billing history, audit, and customer notifications", "status": "planned", "priority": "high", "dependencies": ["BIL-010", "EML-011"], "notes": "Auditable domain/gateway events and customer-facing summaries." },
+    { "id": "BIL-014", "phase": 11, "area": "Administration", "nameAr": "أدوات إدارة ودعم الاشتراكات", "nameEn": "Administrative billing controls and support diagnostics", "status": "planned", "priority": "high", "dependencies": ["ADM-001", "BIL-010"], "notes": "Search, reconciliation, audited overrides/grace support; never manually mark payments successful." }
+  ]
+}
