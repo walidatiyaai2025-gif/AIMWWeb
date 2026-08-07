@@ -89,6 +89,28 @@ public sealed class DatabaseInitializationService(
             );
             CREATE UNIQUE INDEX IF NOT EXISTS IX_SiteEmailRecipients_SiteId_NormalizedEmailAddress ON SiteEmailRecipients (SiteId, NormalizedEmailAddress);
             CREATE INDEX IF NOT EXISTS IX_SiteEmailRecipients_OwnerUserId_SiteId ON SiteEmailRecipients (OwnerUserId, SiteId);
+
+            CREATE TABLE IF NOT EXISTS SiteMailProfiles (
+                Id TEXT NOT NULL CONSTRAINT PK_SiteMailProfiles PRIMARY KEY,
+                SiteId TEXT NOT NULL,
+                OwnerUserId TEXT NOT NULL,
+                UseAccountProfile INTEGER NOT NULL,
+                Host TEXT NOT NULL,
+                Port INTEGER NOT NULL,
+                UserName TEXT NOT NULL,
+                ProtectedPassword TEXT NULL,
+                FromAddress TEXT NOT NULL,
+                FromName TEXT NOT NULL,
+                ReplyToAddress TEXT NOT NULL,
+                EnableSsl INTEGER NOT NULL,
+                IsEnabled INTEGER NOT NULL,
+                CreatedAtUtc TEXT NOT NULL,
+                UpdatedAtUtc TEXT NOT NULL,
+                ConcurrencyToken BLOB NOT NULL,
+                CONSTRAINT FK_SiteMailProfiles_Sites_SiteId FOREIGN KEY (SiteId) REFERENCES Sites (Id) ON DELETE CASCADE
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_SiteMailProfiles_SiteId ON SiteMailProfiles (SiteId);
+            CREATE INDEX IF NOT EXISTS IX_SiteMailProfiles_OwnerUserId_SiteId ON SiteMailProfiles (OwnerUserId, SiteId);
             """,
             cancellationToken);
 
