@@ -110,9 +110,20 @@ app.UseAntiforgery();
 
 if (builder.Configuration.GetValue<bool>("Database:SetupComplete"))
 {
-    using var scope = app.Services.CreateScope();
-    await scope.ServiceProvider.GetRequiredService<IDatabaseInitializationService>().InitializeAsync();
-    await scope.ServiceProvider.GetRequiredService<LocalAuthenticationService>().SeedAsync();
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IDatabaseInitializationService>().InitializeAsync();
+        await scope.ServiceProvider.GetRequiredService<LocalAuthenticationService>().SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Configured database initialization failed during startup. Returning application to first-run setup mode.");
+        DatabaseSetupRecovery.MarkIncomplete(
+            builder.Configuration,
+            builder.Environment.EnvironmentName,
+            app.Logger);
+    }
 }
 
 app.MapGet("/setup", (DatabaseSetupService setup) =>
