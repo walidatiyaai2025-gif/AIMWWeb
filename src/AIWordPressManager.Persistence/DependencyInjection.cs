@@ -38,7 +38,7 @@ public static class DependencyInjection
             var configuration = provider.GetRequiredService<IConfiguration>();
             var paths = provider.GetRequiredService<IApplicationPathService>();
             var providerName = (configuration["Database:Provider"] ?? "SQLite").Trim();
-            var configuredConnectionString = configuration["Database:ConnectionString"];
+            var configuredConnectionString = ResolveConnectionString(provider, configuration);
 
             if (providerName.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
             {
@@ -102,6 +102,25 @@ public static class DependencyInjection
         services.AddScoped<IThemeIntelligenceStore, ThemeIntelligenceStore>();
         services.AddScoped<IWordPressDeletionImpactStore, WordPressDeletionImpactStore>();
         return services;
+    }
+
+    private static string? ResolveConnectionString(IServiceProvider provider, IConfiguration configuration)
+    {
+        var protectedValue = configuration["Database:ProtectedConnectionString"];
+        if (string.IsNullOrWhiteSpace(protectedValue))
+            return configuration["Database:ConnectionString"];
+
+        try
+        {
+            var protection = provider.GetRequiredService<ISecretProtectionService>();
+            return protection.UnprotectAsync(protectedValue).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                "The stored database credentials could not be decrypted. Re-open the database setup page and enter the connection details again.",
+                ex);
+        }
     }
 
     private static void EnsureConnectionString(string? connectionString, string provider)
