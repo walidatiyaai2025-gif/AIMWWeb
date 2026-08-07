@@ -1,0 +1,194 @@
+@page "/email/schedules"
+@rendermode InteractiveServer
+@inject EmailScheduleService ScheduleService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "جدولة البريد" : "Email Schedules")</PageTitle>
+
+<div class="email-schedules-page">
+    <AppToolbar Eyebrow="EMAIL AUTOMATION" Title="@(L.IsArabic ? "جدولة البريد الإلكتروني" : "Email schedules")" Subtitle="@(L.IsArabic ? "كل موعد ينتج رسالة في الـ Outbox أولاً ثم يتم إرسالها بأمان." : "Every occurrence is queued through the durable outbox before delivery.")">
+        <Actions><AppButton Href="/email/history" Text="@(L.IsArabic ? "سجل الإرسال" : "Delivery history")" /></Actions>
+    </AppToolbar>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_error ? "error" : "success")">@_message</div>
+    }
+
+    <AppCard Title="@(L.IsArabic ? "إضافة جدول" : "Add schedule")" Subtitle="@(L.IsArabic ? "اختر الداشبورد أو موقعًا وحدد التوقيت والمنطقة الزمنية." : "Choose dashboard or a site, then configure timezone and recurrence.")">
+        <div class="schedule-form">
+            <label><span>@(L.IsArabic ? "النطاق" : "Scope")</span>
+                <select @bind="_scope" disabled="@_busy">
+                    <option value="Account">@(L.IsArabic ? "الداشبورد / الحساب" : "Dashboard / account")</option>
+                    <option value="Site">@(L.IsArabic ? "موقع WordPress" : "WordPress site")</option>
+                </select>
+            </label>
+
+            @if (_scope == "Site")
+            {
+                <label><span>@(L.IsArabic ? "الموقع" : "Site")</span>
+                    <select @bind="_siteIdText" disabled="@_busy">
+                        <option value="">@(L.IsArabic ? "اختر موقعًا" : "Select a site")</option>
+                        @foreach (var site in _sites)
+                        {
+                            <option value="@site.Id">@site.Name</option>
+                        }
+                    </select>
+                </label>
+            }
+
+            <label><span>@(L.IsArabic ? "التكرار" : "Frequency")</span>
+                <select @bind="_frequency" disabled="@_busy">
+                    <option value="Hourly">@(L.IsArabic ? "كل ساعة" : "Hourly")</option>
+                    <option value="Daily">@(L.IsArabic ? "يومي" : "Daily")</option>
+                    <option value="Weekly">@(L.IsArabic ? "أسبوعي" : "Weekly")</option>
+                    <option value="Monthly">@(L.IsArabic ? "شهري" : "Monthly")</option>
+                </select>
+            </label>
+
+            <label><span>@(L.IsArabic ? "الوقت المحلي" : "Local time")</span><input type="time" @bind="_timeText" disabled="@_busy" /></label>
+
+            @if (_frequency == "Weekly")
+            {
+                <label><span>@(L.IsArabic ? "يوم الأسبوع" : "Weekday")</span>
+                    <select @bind="_weekdayText" disabled="@_busy">
+                        <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+                    </select>
+                </label>
+            }
+            @if (_frequency == "Monthly")
+            {
+                <label><span>@(L.IsArabic ? "يوم الشهر" : "Day of month")</span><input type="number" min="1" max="31" @bind="_monthDayText" disabled="@_busy" /></label>
+            }
+
+            <label><span>@(L.IsArabic ? "المنطقة الزمنية" : "Timezone")</span>
+                <select @bind="_timezoneId" disabled="@_busy">
+                    @foreach (var zone in _timezones)
+                    {
+                        <option value="@zone.Id">@zone.DisplayName</option>
+                    }
+                </select>
+            </label>
+
+            <label><span>@(L.IsArabic ? "لغة الرسالة" : "Email language")</span>
+                <select @bind="_culture" disabled="@_busy"><option value="en">English</option><option value="ar">العربية</option></select>
+            </label>
+
+            <label><span>@(L.IsArabic ? "عدد إعادة المحاولة" : "Delivery retries")</span><input type="number" min="0" max="10" @bind="_retryCount" disabled="@_busy" /></label>
+            <label><span>@(L.IsArabic ? "تأخير المحاولة بالدقائق" : "Retry delay (minutes)")</span><input type="number" min="1" max="1440" @bind="_retryDelay" disabled="@_busy" /></label>
+            <label class="check"><input type="checkbox" @bind="_enabled" disabled="@_busy" /> <span>@(L.IsArabic ? "تفعيل الجدول فورًا" : "Enable immediately")</span></label>
+        </div>
+        <div class="actions"><AppButton Variant="primary" Busy="@_busy" Disabled="@_busy" OnClick="CreateClicked" Text="@(L.IsArabic ? "إنشاء الجدول" : "Create schedule")" /></div>
+    </AppCard>
+
+    <AppCard Title="@(L.IsArabic ? "الجداول الحالية" : "Current schedules")" Subtitle="@(L.IsArabic ? "يعرض الموعد القادم وحالة آخر تشغيل." : "Shows the next occurrence and the last scheduler result.")">
+        @if (_loading)
+        {
+            <AppLoading Title="@(L.IsArabic ? "جارٍ التحميل" : "Loading schedules")" />
+        }
+        else if (_schedules.Count == 0)
+        {
+            <AppEmptyState Icon="◷" Title="@(L.IsArabic ? "لا توجد جداول" : "No schedules yet")" Description="@(L.IsArabic ? "أنشئ أول جدول من النموذج أعلاه." : "Create the first schedule using the form above.")" />
+        }
+        else
+        {
+            <div class="table-wrap"><table>
+                <thead><tr><th>@(L.IsArabic ? "النطاق" : "Scope")</th><th>@(L.IsArabic ? "التكرار" : "Frequency")</th><th>@(L.IsArabic ? "المنطقة" : "Timezone")</th><th>@(L.IsArabic ? "التالي UTC" : "Next UTC")</th><th>@(L.IsArabic ? "آخر حالة" : "Last status")</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var item in _schedules)
+                {
+                    <tr>
+                        <td>@ScopeName(item)</td>
+                        <td>@item.Frequency · @item.TimeOfDay.ToString(@"hh\:mm") · @item.Culture.ToUpperInvariant()</td>
+                        <td>@item.TimezoneId</td>
+                        <td>@item.NextRunUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><strong>@(item.IsEnabled ? item.LastStatus : (L.IsArabic ? "معطل" : "Disabled"))</strong>@if (!string.IsNullOrWhiteSpace(item.LastError)) { <div class="muted">@item.LastError</div> }</td>
+                        <td><button class="danger-link" @onclick="() => DeleteAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "حذف" : "Delete")</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+        }
+    </AppCard>
+</div>
+
+<style>
+.email-schedules-page{display:grid;gap:18px}.schedule-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}.schedule-form label{display:grid;gap:6px}.schedule-form select,.schedule-form input{padding:10px;border:1px solid var(--border-color,#d1d5db);border-radius:8px;background:var(--surface,#fff);color:inherit}.check{align-content:end;grid-template-columns:auto 1fr!important;align-items:center}.actions{margin-top:14px;display:flex;gap:10px}.alert{padding:12px 14px;border-radius:8px}.alert.error{background:#fee2e2;color:#991b1b}.alert.success{background:#dcfce7;color:#166534}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:start;vertical-align:top}.muted{opacity:.7;font-size:12px;margin-top:4px}.danger-link{border:0;background:transparent;color:#b91c1c;cursor:pointer;font-weight:600}
+</style>
+
+@code {
+    [SupplyParameterFromQuery(Name = "siteId")] public Guid? SiteId { get; set; }
+    private bool _loading = true, _busy, _error;
+    private string? _message;
+    private List<EmailScheduleView> _schedules = [];
+    private List<EmailScheduleSiteOption> _sites = [];
+    private List<TimeZoneInfo> _timezones = [];
+    private string _scope = "Account", _siteIdText = "", _frequency = "Daily", _timeText = "08:00", _weekdayText = "1", _monthDayText = "1", _culture = "en";
+    private string _timezoneId = TimeZoneInfo.Local.Id;
+    private int _retryCount = 3, _retryDelay = 5;
+    private bool _enabled = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _timezones = TimeZoneInfo.GetSystemTimeZones().OrderBy(x => x.BaseUtcOffset).ThenBy(x => x.DisplayName).ToList();
+        if (SiteId.HasValue) { _scope = "Site"; _siteIdText = SiteId.Value.ToString(); }
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _loading = true;
+            _sites = (await ScheduleService.GetOwnedSitesAsync()).ToList();
+            _schedules = (await ScheduleService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _loading = false; }
+    }
+
+    private async Task CreateClicked(MouseEventArgs _)
+    {
+        try
+        {
+            _busy = true;
+            if (!TimeSpan.TryParse(_timeText, out var time)) throw new InvalidOperationException("Enter a valid local time.");
+            int? weekday = _frequency == "Weekly" && int.TryParse(_weekdayText, out var wd) ? wd : null;
+            int? monthDay = _frequency == "Monthly" && int.TryParse(_monthDayText, out var md) ? md : null;
+            var account = _scope == "Account";
+            var input = new EmailScheduleInput(
+                account ? "DashboardDigest" : "SiteOperationalReport",
+                account ? AIWordPressManager.Application.Abstractions.Email.EmailTemplateKeys.DashboardDigest : AIWordPressManager.Application.Abstractions.Email.EmailTemplateKeys.SiteOperationalReport,
+                _timezoneId, _frequency, time, weekday, monthDay, _retryCount, _retryDelay, _enabled, _culture);
+            if (account) await ScheduleService.CreateAccountScheduleAsync(input);
+            else
+            {
+                if (!Guid.TryParse(_siteIdText, out var siteId)) throw new InvalidOperationException("Select a WordPress site.");
+                await ScheduleService.CreateSiteScheduleAsync(siteId, input);
+            }
+            Success(L.IsArabic ? "تم إنشاء الجدول." : "Schedule created.");
+            await LoadAsync();
+        }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        try { _busy = true; await ScheduleService.DeleteAsync(id); Success(L.IsArabic ? "تم حذف الجدول." : "Schedule deleted."); await LoadAsync(); }
+        catch (Exception ex) { Fail(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private string ScopeName(EmailScheduleView item)
+    {
+        if (item.SiteId is Guid siteId)
+        {
+            var site = _sites.FirstOrDefault(x => x.Id == siteId);
+            return site?.Name ?? (L.IsArabic ? "موقع" : "Site");
+        }
+        return L.IsArabic ? "الداشبورد" : "Dashboard";
+    }
+    private void Success(string value) { _error = false; _message = value; }
+    private void Fail(string value) { _error = true; _message = L.TranslateMessage(value); }
+}
