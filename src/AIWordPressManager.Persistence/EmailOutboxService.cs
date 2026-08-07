@@ -225,6 +225,11 @@ public sealed class EmailOutboxService(AppDbContext dbContext) : IEmailOutbox
     {
         if (messageId == Guid.Empty) throw new ArgumentException("Message ID is required.", nameof(messageId));
         ArgumentException.ThrowIfNullOrWhiteSpace(claimToken);
+
+        var tracked = dbContext.ChangeTracker.Entries<EmailOutboxMessage>()
+            .FirstOrDefault(x => x.Entity.Id == messageId);
+        if (tracked is not null) tracked.State = EntityState.Detached;
+
         return await dbContext.EmailOutboxMessages.FirstOrDefaultAsync(
                    x => x.Id == messageId && x.Status == EmailOutboxMessage.SendingStatus && x.ClaimToken == claimToken,
                    cancellationToken)
