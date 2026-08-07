@@ -1,0 +1,210 @@
+@page "/admin/application-users"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrator")]
+@implements IDisposable
+@inject IServiceProvider Services
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "إدارة مستخدمي التطبيق" : "Application Users")</PageTitle>
+
+@if (_loading)
+{
+    <AppLoading Title="@(L.IsArabic ? "تحميل المستخدمين" : "Loading users")"
+                Message="@(L.IsArabic ? "يتم تحميل حسابات التطبيق وحالة الأمان." : "Loading application accounts and security state.")" />
+}
+else
+{
+    <div class="application-users-page" dir="@(L.IsArabic ? "rtl" : "ltr")">
+        <AppToolbar Eyebrow="@(L.IsArabic ? "الأمان والإدارة" : "SECURITY & ADMINISTRATION")"
+                    Title="@(L.IsArabic ? "مستخدمو التطبيق" : "Application users")"
+                    Subtitle="@(L.IsArabic ? "إنشاء الحسابات وإدارتها وفك القفل وإعادة تعيين كلمات المرور ومراجعة محاولات الدخول." : "Create accounts, manage access, unlock users, reset passwords, and review sign-in history.")">
+            <Actions>
+                <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
+                <AppButton Variant="primary" Icon="＋" Text="@(L.IsArabic ? "مستخدم جديد" : "New user")" Disabled="@_working" OnClick="StartCreateClicked" />
+            </Actions>
+        </AppToolbar>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="admin-users-alert @(_isError ? "error" : "success")">@_message</div>
+        }
+
+        <section class="app-stat-grid">
+            <AppStatCard Icon="◎" Label="@(L.IsArabic ? "إجمالي المستخدمين" : "Total users")" Value="@_users.Count.ToString()" />
+            <AppStatCard Icon="✓" Label="@(L.IsArabic ? "نشط" : "Active")" Value="@_users.Count(x => x.IsActive).ToString()" Tone="success" />
+            <AppStatCard Icon="⌁" Label="@(L.IsArabic ? "مقفل الآن" : "Locked now")" Value="@_users.Count(x => x.LockedUntilUtc > DateTime.UtcNow).ToString()" Tone="warning" />
+            <AppStatCard Icon="◆" Label="@(L.IsArabic ? "مديرون" : "Administrators")" Value="@_users.Count(x => x.Role == "Administrator" && x.IsActive).ToString()" Tone="info" />
+        </section>
+
+        <AppCard>
+            <div class="admin-users-filter">
+                <input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث باسم المستخدم..." : "Search username...")" />
+                <AppButton Variant="primary" Text="@(L.IsArabic ? "بحث" : "Search")" Disabled="@_working" OnClick="SearchClickedAsync" />
+                @if (!string.IsNullOrWhiteSpace(_search))
+                {
+                    <AppButton Text="@(L.IsArabic ? "مسح" : "Clear")" Disabled="@_working" OnClick="ClearSearchClickedAsync" />
+                }
+            </div>
+        </AppCard>
+
+        <div class="admin-users-layout">
+            <section>
+                <AppCard>
+                    <div class="admin-users-table-wrap">
+                        <table class="admin-users-table">
+                            <thead><tr>
+                                <th>@(L.IsArabic ? "المستخدم" : "User")</th><th>@(L.IsArabic ? "الدور" : "Role")</th>
+                                <th>@(L.IsArabic ? "الحالة" : "Status")</th><th>@(L.IsArabic ? "محاولات فاشلة" : "Failed attempts")</th>
+                                <th>@(L.IsArabic ? "آخر دخول" : "Last login")</th><th>@(L.IsArabic ? "إجراءات" : "Actions")</th>
+                            </tr></thead>
+                            <tbody>
+                            @if (_users.Count == 0)
+                            {
+                                <tr><td colspan="6" class="empty-cell">@(L.IsArabic ? "لا توجد حسابات مطابقة." : "No matching accounts.")</td></tr>
+                            }
+                            @foreach (var user in _users)
+                            {
+                                <tr class="@(_selectedId == user.Id ? "selected" : null)">
+                                    <td><strong>@user.UserName</strong></td><td>@RoleText(user.Role)</td>
+                                    <td>
+                                        <AppBadge Tone="@(user.IsActive ? "success" : "danger")" Text="@(user.IsActive ? (L.IsArabic ? "نشط" : "Active") : (L.IsArabic ? "معطل" : "Disabled"))" />
+                                        @if (user.LockedUntilUtc > DateTime.UtcNow) { <AppBadge Tone="warning" Text="@(L.IsArabic ? "مقفل" : "Locked")" /> }
+                                    </td>
+                                    <td>@user.FailedAccessCount</td><td>@FormatDate(user.LastLoginAtUtc)</td>
+                                    <td><div class="row-actions">
+                                        <AppButton Size="small" Text="@(L.IsArabic ? "تعديل" : "Edit")" Disabled="@_working" OnClick="_ => SelectUserAsync(user)" />
+                                        @if (user.LockedUntilUtc > DateTime.UtcNow || user.FailedAccessCount > 0)
+                                        { <AppButton Size="small" Text="@(L.IsArabic ? "فك القفل" : "Unlock")" Disabled="@_working" OnClick="_ => UnlockAsync(user)" /> }
+                                        <AppButton Size="small" Variant="@(user.IsActive ? "danger" : "primary")"
+                                                   Text="@(user.IsActive ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))"
+                                                   Disabled="@_working" OnClick="_ => SetActiveAsync(user, !user.IsActive)" />
+                                    </div></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </AppCard>
+            </section>
+
+            <aside>
+                <AppSection Title="@(_selectedId.HasValue ? (L.IsArabic ? "تعديل الحساب" : "Edit account") : (L.IsArabic ? "إنشاء حساب" : "Create account"))"
+                            Subtitle="@(L.IsArabic ? "الأدوار الدقيقة ستتم ضمن IDN-009؛ المتاح هنا مدير أو مستخدم." : "Granular permissions are tracked by IDN-009; this screen manages Administrator/User roles.")">
+                    <ChildContent><div class="admin-user-form">
+                        <label>@(L.IsArabic ? "اسم المستخدم" : "Username")<input @bind="_userName" /></label>
+                        <label>@(L.IsArabic ? "الدور" : "Role")<select @bind="_role"><option value="User">@(L.IsArabic ? "مستخدم" : "User")</option><option value="Administrator">@(L.IsArabic ? "مدير" : "Administrator")</option></select></label>
+                        @if (!_selectedId.HasValue)
+                        {
+                            <label>@(L.IsArabic ? "كلمة المرور" : "Password")<input type="password" @bind="_password" /></label>
+                            <label>@(L.IsArabic ? "تأكيد كلمة المرور" : "Confirm password")<input type="password" @bind="_confirmPassword" /></label>
+                        }
+                        <div class="form-actions">
+                            <AppButton Variant="primary" Text="@(_selectedId.HasValue ? (L.IsArabic ? "حفظ" : "Save") : (L.IsArabic ? "إنشاء" : "Create"))" Busy="@_working" Disabled="@_working" OnClick="SaveClickedAsync" />
+                            <AppButton Text="@(L.IsArabic ? "إلغاء" : "Cancel")" Disabled="@_working" OnClick="CancelClicked" />
+                        </div>
+                    </div></ChildContent>
+                </AppSection>
+
+                @if (_selectedId.HasValue)
+                {
+                    <AppSection Title="@(L.IsArabic ? "إعادة تعيين كلمة المرور" : "Reset password")"><ChildContent>
+                        <div class="admin-user-form">
+                            <label>@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")<input type="password" @bind="_resetPassword" /></label>
+                            <label>@(L.IsArabic ? "التأكيد" : "Confirmation")<input type="password" @bind="_resetConfirmPassword" /></label>
+                            <AppButton Variant="primary" Text="@(L.IsArabic ? "إعادة تعيين" : "Reset password")" Disabled="@_working" OnClick="ResetPasswordClickedAsync" />
+                        </div>
+                    </ChildContent></AppSection>
+                    <AppSection Title="@(L.IsArabic ? "آخر محاولات الدخول" : "Recent sign-in audit")"><ChildContent>
+                        @if (_audits.Count == 0) { <p class="muted">@(L.IsArabic ? "لا توجد محاولات مسجلة لهذا المستخدم." : "No recorded sign-in attempts for this user.")</p> }
+                        else { <div class="audit-list">@foreach (var audit in _audits.Take(10)) { <div class="audit-item"><strong>@(audit.Succeeded ? (L.IsArabic ? "نجاح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))</strong><span>@audit.Reason</span><small>@FormatDate(audit.AttemptedAtUtc) · @audit.IpAddress</small></div> }</div> }
+                    </ChildContent></AppSection>
+                }
+            </aside>
+        </div>
+    </div>
+}
+
+@code {
+    private ApplicationUserAdministrationService _service = default!;
+    private IReadOnlyList<ApplicationUserSummary> _users = [];
+    private IReadOnlyList<LoginAuditDto> _audits = [];
+    private Guid? _selectedId;
+    private string _search = string.Empty, _userName = string.Empty, _role = "User", _password = string.Empty, _confirmPassword = string.Empty, _resetPassword = string.Empty, _resetConfirmPassword = string.Empty;
+    private string? _message;
+    private bool _loading = true, _working, _isError;
+
+    protected override void OnInitialized()
+    {
+        L.Changed += LanguageChanged;
+        _service = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<ApplicationUserAdministrationService>(Services);
+    }
+
+    protected override async Task OnInitializedAsync() { await LoadAsync(); _loading = false; }
+
+    private async Task LoadAsync()
+    {
+        try { _working = true; _users = await _service.ListAsync(_search); _isError = false; }
+        catch (Exception ex) { _isError = true; _message = ex.Message; }
+        finally { _working = false; }
+    }
+
+    private Task RefreshClickedAsync(MouseEventArgs _) => LoadAsync();
+    private Task SearchClickedAsync(MouseEventArgs _) => LoadAsync();
+    private async Task ClearSearchClickedAsync(MouseEventArgs _) { _search = string.Empty; await LoadAsync(); }
+    private Task StartCreateClicked(MouseEventArgs _) { ClearEditor(); return Task.CompletedTask; }
+    private Task CancelClicked(MouseEventArgs _) { ClearEditor(); return Task.CompletedTask; }
+
+    private async Task SelectUserAsync(ApplicationUserSummary user)
+    {
+        _selectedId = user.Id; _userName = user.UserName; _role = user.Role;
+        _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty;
+        _audits = await _service.GetLoginAuditAsync(user.Id); _message = null;
+    }
+
+    private async Task SaveClickedAsync(MouseEventArgs _)
+    {
+        var creating = !_selectedId.HasValue;
+        await ExecuteAsync(async () => _selectedId.HasValue
+            ? await _service.UpdateAsync(_selectedId.Value, _userName, _role)
+            : await _service.CreateAsync(_userName, _password, _confirmPassword, _role),
+            L.IsArabic ? "تم حفظ حساب المستخدم." : "Application user saved.", creating);
+    }
+
+    private Task SetActiveAsync(ApplicationUserSummary user, bool active) => ExecuteAsync(() => _service.SetActiveAsync(user.Id, active), active ? (L.IsArabic ? "تم تفعيل الحساب." : "Account enabled.") : (L.IsArabic ? "تم تعطيل الحساب." : "Account disabled."));
+    private Task UnlockAsync(ApplicationUserSummary user) => ExecuteAsync(() => _service.UnlockAsync(user.Id), L.IsArabic ? "تم فك قفل الحساب." : "Account unlocked.");
+
+    private async Task ResetPasswordClickedAsync(MouseEventArgs _)
+    {
+        if (!_selectedId.HasValue) return;
+        await ExecuteAsync(() => _service.ResetPasswordAsync(_selectedId.Value, _resetPassword, _resetConfirmPassword), L.IsArabic ? "تم تغيير كلمة المرور وفك القفل." : "Password reset and lockout cleared.");
+        _resetPassword = _resetConfirmPassword = string.Empty;
+    }
+
+    private async Task ExecuteAsync(Func<Task<UserAdministrationResult>> action, string successMessage, bool clearEditorOnSuccess = false)
+    {
+        try
+        {
+            _working = true;
+            var result = await action(); _isError = !result.IsSuccess; _message = result.IsSuccess ? successMessage : result.Message;
+            if (result.IsSuccess)
+            {
+                await LoadAsync();
+                if (clearEditorOnSuccess) ClearEditor(keepMessage: true);
+                else if (_selectedId.HasValue) _audits = await _service.GetLoginAuditAsync(_selectedId.Value);
+            }
+        }
+        catch (Exception ex) { _isError = true; _message = ex.Message; }
+        finally { _working = false; }
+    }
+
+    private void ClearEditor(bool keepMessage = false)
+    {
+        _selectedId = null; _userName = _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty; _role = "User"; _audits = [];
+        if (!keepMessage) { _message = null; _isError = false; }
+    }
+
+    private string RoleText(string role) => role == "Administrator" ? (L.IsArabic ? "مدير" : "Administrator") : (L.IsArabic ? "مستخدم" : "User");
+    private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
