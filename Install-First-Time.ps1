@@ -84,14 +84,26 @@ function Invoke-Native {
         [switch]$CaptureOutput
     )
 
-    $output = & $FilePath @Arguments 2>&1
-    $exitCode = $LASTEXITCODE
+    # Windows PowerShell can surface native stderr as ErrorRecord objects.
+    # Git writes informational messages such as "Already on 'main'" to stderr,
+    # so native process success must be determined by its exit code only.
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    try {
+        $output = @(& $FilePath @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
 
     if ($exitCode -ne 0) {
         $details = ($output | Out-String).Trim()
         if ([string]::IsNullOrWhiteSpace($details)) {
             throw "$FailureMessage Exit code: $exitCode"
         }
+
         throw "$FailureMessage`n$details`nExit code: $exitCode"
     }
 
@@ -99,7 +111,30 @@ function Invoke-Native {
         return $output
     }
 
-    $output | ForEach-Object { Write-Host $_ }
+    $output | ForEach-Object {
+        $text = $_.ToString()
+        if (-not [string]::IsNullOrWhiteSpace($text)) {
+            Write-Host $text
+        }
+    }
+}
+
+function Test-NativeSuccess {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [Parameter(Mandatory)][string[]]$Arguments
+    )
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    try {
+        & $FilePath @Arguments *> $null
+        return ($LASTEXITCODE -eq 0)
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
 }
 
 function Resolve-FullPath([string]$Path) {
@@ -135,8 +170,18 @@ function Test-PathInsideDirectory {
 }
 
 function Enable-GitSafeDirectoryIfRequired([string]$RepositoryPath) {
-    $output = & git.exe -C $RepositoryPath status --porcelain 2>&1
-    if ($LASTEXITCODE -eq 0) { return }
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    try {
+        $output = @(& git.exe -C $RepositoryPath status --porcelain 2>&1)
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($exitCode -eq 0) { return }
 
     $text = ($output | Out-String)
     if ($text -notmatch "dubious ownership") {
@@ -149,7 +194,16 @@ function Enable-GitSafeDirectoryIfRequired([string]$RepositoryPath) {
     }
 
     $safePath = $RepositoryPath.Replace("\", "/")
-    $existingSafeDirectories = @(& git.exe config --global --get-all safe.directory 2>$null)
+    $existingSafeDirectories = @()
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $existingSafeDirectories = @(& git.exe config --global --get-all safe.directory 2>$null)
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
 
     if ($existingSafeDirectories -notcontains $safePath) {
         Invoke-Native "git.exe" @("config", "--global", "--add", "safe.directory", $safePath) "Could not add safe.directory."
@@ -157,19 +211,14 @@ function Enable-GitSafeDirectoryIfRequired([string]$RepositoryPath) {
 }
 
 function Assert-ValidBranch([string]$BranchName) {
-    & git.exe check-ref-format --branch $BranchName *> $null
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Test-NativeSuccess "git.exe" @("check-ref-format", "--branch", $BranchName))) {
         throw "The Git branch name is invalid: $BranchName"
     }
 }
 
 function Get-TrackedFiles([string]$Pattern) {
-    $items = @(& git.exe ls-files -- $Pattern 2>$null)
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not read tracked '$Pattern' files from Git."
-    }
-
-    return @($items | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $items = @(Invoke-Native "git.exe" @("ls-files", "--", $Pattern) "Could not read tracked '$Pattern' files from Git." -CaptureOutput)
+    return @($items | ForEach-Object { $_.ToString() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 }
 
 function Find-SolutionFile([string]$RootPath) {
@@ -276,8 +325,8 @@ try {
         throw ".NET SDK is not installed or dotnet.exe is not available in PATH."
     }
 
-    $sdks = @(& dotnet.exe --list-sdks)
-    if (-not ($sdks | Where-Object { $_ -match '^\s*8\.' })) {
+    $sdks = @(Invoke-Native "dotnet.exe" @("--list-sdks") "Could not read installed .NET SDKs." -CaptureOutput)
+    if (-not ($sdks | Where-Object { $_.ToString() -match '^\s*8\.' })) {
         throw ".NET 8 SDK was not found. A runtime-only installation is not enough for building."
     }
 
@@ -315,8 +364,8 @@ try {
         }
 
         Write-Step "Checking branch '$Branch'..."
-        $remoteBranch = & git.exe ls-remote --heads $RepositoryUrl $Branch 2>&1
-        if ($LASTEXITCODE -ne 0 -or -not $remoteBranch) {
+        $remoteBranch = @(Invoke-Native "git.exe" @("ls-remote", "--heads", $RepositoryUrl, $Branch) "Could not query the remote branch." -CaptureOutput)
+        if ($remoteBranch.Count -eq 0) {
             throw "The branch '$Branch' could not be found in the remote repository."
         }
 
@@ -347,17 +396,24 @@ try {
     $refSpec = "+refs/heads/${Branch}:refs/remotes/origin/${Branch}"
     Invoke-Native "git.exe" @("fetch", "origin", $refSpec, "--prune", "--tags") "Git fetch failed."
 
-    & git.exe show-ref --verify --quiet "refs/remotes/origin/$Branch"
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Test-NativeSuccess "git.exe" @("show-ref", "--verify", "--quiet", "refs/remotes/origin/$Branch"))) {
         throw "Remote branch origin/$Branch was not found after fetch."
     }
 
-    & git.exe show-ref --verify --quiet "refs/heads/$Branch"
-    if ($LASTEXITCODE -eq 0) {
-        Invoke-Native "git.exe" @("switch", $Branch) "Could not switch to branch '$Branch'."
+    $currentBranch = ((Invoke-Native "git.exe" @("rev-parse", "--abbrev-ref", "HEAD") "Could not read the current branch." -CaptureOutput) | Out-String).Trim()
+
+    if ($currentBranch -ne $Branch) {
+        if (Test-NativeSuccess "git.exe" @("show-ref", "--verify", "--quiet", "refs/heads/$Branch")) {
+            Write-Step "Switching from '$currentBranch' to '$Branch'..."
+            Invoke-Native "git.exe" @("switch", "--quiet", $Branch) "Could not switch to branch '$Branch'."
+        }
+        else {
+            Write-Step "Creating local branch '$Branch' from origin/$Branch..."
+            Invoke-Native "git.exe" @("switch", "--quiet", "--create", $Branch, "--track", "origin/$Branch") "Could not create local branch '$Branch'."
+        }
     }
     else {
-        Invoke-Native "git.exe" @("switch", "--create", $Branch, "--track", "origin/$Branch") "Could not create local branch '$Branch'."
+        Write-Success "Already using branch '$Branch'."
     }
 
     Write-Step "Applying the latest origin/$Branch commit..."
