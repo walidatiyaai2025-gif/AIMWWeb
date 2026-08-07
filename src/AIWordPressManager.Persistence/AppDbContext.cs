@@ -110,6 +110,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasIndex(x => new { x.Status, x.NextAttemptAtUtc });
             entity.HasIndex(x => x.CorrelationId);
             entity.HasIndex(x => new { x.OwnerUserId, x.CreatedAtUtc });
+            entity.Property(x => x.Scope).HasMaxLength(16).IsRequired();
             entity.Property(x => x.TemplateKey).HasMaxLength(160).IsRequired();
             entity.Property(x => x.Subject).HasMaxLength(500).IsRequired();
             entity.Property(x => x.HtmlBody).IsRequired();
