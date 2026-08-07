@@ -1,0 +1,189 @@
+@page "/account/email-settings"
+@rendermode InteractiveServer
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject CurrentUserContext CurrentUser
+@inject AIWordPressManager.Application.Abstractions.ISecretProtectionService SecretProtection
+@inject AppLanguageService L
+@inject AppNotificationService Notifications
+
+<PageTitle>@(L.IsArabic ? "إعدادات بريد الحساب" : "Account Email Settings")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">ACCOUNT EMAIL</span>
+            <h1>@(L.IsArabic ? "بريد الداشبورد والحساب" : "Dashboard & account email")</h1>
+            <p>@(L.IsArabic ? "اضبط بريد الإرسال العام للحساب وحتى ثلاثة مستلمين لملخصات وتنبيهات الداشبورد. كلمات المرور تحفظ مشفرة ولا يتم عرضها بعد الحفظ." : "Configure the account-wide outbound mail profile and up to three dashboard recipients. Passwords are stored encrypted and are never displayed after saving.")</p>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <section class="panel"><p class="text-danger">@_error</p></section>
+    }
+
+    <section class="panel settings-section">
+        <header><div><h2>@(L.IsArabic ? "إعداد الإرسال العام" : "Account outbound mail profile")</h2><p>@(L.IsArabic ? "المواقع التي تختار Use dashboard/account mail profile ستستخدم هذا الإعداد." : "Sites configured to use the dashboard/account mail profile inherit this configuration.")</p></div></header>
+        <div class="grid-2 mt-3">
+            <div><label>SMTP Host</label><input class="form-control" @bind="_profile.Host" maxlength="255" disabled="@_busy" /></div>
+            <div><label>SMTP Port</label><input class="form-control" type="number" min="1" max="65535" @bind="_profile.Port" disabled="@_busy" /></div>
+            <div><label>@(L.IsArabic ? "اسم المستخدم" : "Username")</label><input class="form-control" @bind="_profile.UserName" maxlength="320" disabled="@_busy" /></div>
+            <div>
+                <label>@(L.IsArabic ? "كلمة المرور" : "Password")</label>
+                <input class="form-control" type="password" @bind="_profile.Password" maxlength="2048" disabled="@_busy" autocomplete="new-password" />
+                <small>@(_savedProfile.HasSavedPassword ? (L.IsArabic ? "يوجد سر محفوظ ومشفر. اترك الحقل فارغًا للاحتفاظ به." : "An encrypted password is saved. Leave this blank to keep it.") : (L.IsArabic ? "لا يوجد سر محفوظ." : "No password is currently stored."))</small>
+            </div>
+            <div><label>@(L.IsArabic ? "بريد المرسل" : "From address")</label><input class="form-control" type="email" @bind="_profile.FromAddress" maxlength="320" disabled="@_busy" /></div>
+            <div><label>@(L.IsArabic ? "اسم المرسل" : "From name")</label><input class="form-control" @bind="_profile.FromName" maxlength="160" disabled="@_busy" /></div>
+            <div><label>@(L.IsArabic ? "الرد إلى" : "Reply-to address")</label><input class="form-control" type="email" @bind="_profile.ReplyToAddress" maxlength="320" disabled="@_busy" /></div>
+        </div>
+        <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.EnableSsl" disabled="@_busy" /> TLS / SSL</label>
+        <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.IsEnabled" disabled="@_busy" /> @(L.IsArabic ? "تفعيل الإرسال العام للحساب" : "Enable account outbound email")</label>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn primary" @onclick="SaveProfileAsync" disabled="@_busy">@(L.IsArabic ? "حفظ إعداد البريد" : "Save mail profile")</button>
+            @if (_savedProfile.HasSavedPassword)
+            {
+                <button class="btn" @onclick="ClearPasswordAsync" disabled="@_busy">@(L.IsArabic ? "مسح كلمة المرور المحفوظة" : "Clear saved password")</button>
+            }
+        </div>
+        <p class="help mt-2">@(L.IsArabic ? "اختبار الاتصال والإرسال التجريبي سيتم في EML-005؛ الحفظ هنا لا يعني أن خادم SMTP تم اختباره." : "SMTP diagnostics and test-send belong to EML-005; saving here does not claim connectivity has been verified.")</p>
+    </section>
+
+    <section class="panel settings-section">
+        <header><div><h2>@(L.IsArabic ? "مستلمو الداشبورد" : "Dashboard recipients")</h2><p>@(L.IsArabic ? "يمكن إضافة حتى ثلاثة عناوين للحساب." : "Add up to three account-level recipients.")</p></div><strong>@_recipients.Count / 3</strong></header>
+        <div class="grid-2 mt-3">
+            <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+            <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+        </div>
+        <button class="btn primary mt-2" @onclick="AddRecipientAsync" disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))">@(L.IsArabic ? "إضافة البريد" : "Add email")</button>
+    </section>
+
+    <section class="panel settings-section">
+        @if (_loading)
+        {
+            <p>@(L.IsArabic ? "جاري التحميل..." : "Loading...")</p>
+        }
+        else if (_recipients.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد عناوين داشبورد حتى الآن." : "No dashboard recipients are configured yet.")</p>
+        }
+        else
+        {
+            <div class="database-info-grid">
+                @foreach (var item in _recipients)
+                {
+                    <article class="panel" style="padding:1rem">
+                        @if (_editingId == item.Id)
+                        {
+                            <div class="grid-2"><input class="form-control" type="email" @bind="_editEmail" maxlength="320" /><input class="form-control" @bind="_editDisplayName" maxlength="120" /></div>
+                            <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_editEnabled" /> @(L.IsArabic ? "مفعل" : "Enabled")</label>
+                            <div class="d-flex gap-2 mt-2"><button class="btn primary" @onclick="SaveEditAsync" disabled="@_busy">@(L.IsArabic ? "حفظ" : "Save")</button><button class="btn" @onclick="CancelEdit" disabled="@_busy">@(L.IsArabic ? "إلغاء" : "Cancel")</button></div>
+                        }
+                        else
+                        {
+                            <strong>@item.EmailAddress</strong><p>@(string.IsNullOrWhiteSpace(item.DisplayName) ? "—" : item.DisplayName)</p>
+                            <span class="settings-badge @(item.IsEnabled ? "success" : "warning")">@(item.IsEnabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</span>
+                            <div class="d-flex gap-2 mt-2"><button class="btn" @onclick="() => BeginEdit(item)" disabled="@_busy">@(L.IsArabic ? "تعديل" : "Edit")</button><button class="btn" @onclick="() => DeleteRecipientAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "حذف" : "Delete")</button></div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private AccountEmailSettingsService Service => new(Db, CurrentUser, SecretProtection);
+    private IReadOnlyList<AccountEmailRecipientView> _recipients = [];
+    private AccountMailProfileView _savedProfile = AccountMailProfileView.Default();
+    private ProfileForm _profile = new();
+    private bool _loading = true, _busy;
+    private string? _error;
+    private string _newEmail = string.Empty, _newDisplayName = string.Empty;
+    private Guid? _editingId;
+    private string _editEmail = string.Empty, _editDisplayName = string.Empty;
+    private bool _editEnabled = true;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true; _error = null;
+        try
+        {
+            var state = await Service.GetAsync();
+            _recipients = state.Recipients;
+            _savedProfile = state.Profile;
+            _profile = ProfileForm.From(_savedProfile);
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
+        finally { _loading = false; }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (_busy) return;
+        _busy = true; _error = null;
+        try
+        {
+            _savedProfile = await Service.SaveProfileAsync(new AccountMailProfileInput(_profile.Host, _profile.Port, _profile.UserName, _profile.Password, _profile.FromAddress, _profile.FromName, _profile.ReplyToAddress, _profile.EnableSsl, _profile.IsEnabled));
+            _profile = ProfileForm.From(_savedProfile);
+            Notifications.Success(L.IsArabic ? "تم حفظ إعداد بريد الحساب بصورة آمنة." : "Account mail profile saved securely.");
+        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private async Task ClearPasswordAsync()
+    {
+        if (_busy) return;
+        _busy = true; _error = null;
+        try { await Service.ClearPasswordAsync(); await LoadAsync(); Notifications.Success(L.IsArabic ? "تم مسح كلمة المرور المشفرة." : "Saved SMTP password cleared."); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private async Task AddRecipientAsync()
+    {
+        if (_busy) return;
+        _busy = true; _error = null;
+        try { await Service.AddRecipientAsync(_newEmail, _newDisplayName); _newEmail = string.Empty; _newDisplayName = string.Empty; await LoadAsync(); Notifications.Success(L.IsArabic ? "تمت إضافة بريد الداشبورد." : "Dashboard recipient added."); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private void BeginEdit(AccountEmailRecipientView item) { _editingId = item.Id; _editEmail = item.EmailAddress; _editDisplayName = item.DisplayName ?? string.Empty; _editEnabled = item.IsEnabled; }
+    private void CancelEdit() => _editingId = null;
+
+    private async Task SaveEditAsync()
+    {
+        if (!_editingId.HasValue || _busy) return;
+        _busy = true; _error = null;
+        try { await Service.UpdateRecipientAsync(_editingId.Value, _editEmail, _editDisplayName, _editEnabled); _editingId = null; await LoadAsync(); Notifications.Success(L.IsArabic ? "تم تحديث بريد الداشبورد." : "Dashboard recipient updated."); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteRecipientAsync(Guid id)
+    {
+        if (_busy) return;
+        _busy = true; _error = null;
+        try { await Service.DeleteRecipientAsync(id); if (_editingId == id) _editingId = null; await LoadAsync(); Notifications.Success(L.IsArabic ? "تم حذف بريد الداشبورد." : "Dashboard recipient deleted."); }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error); }
+        finally { _busy = false; }
+    }
+
+    private sealed class ProfileForm
+    {
+        public string Host { get; set; } = string.Empty;
+        public int Port { get; set; } = 587;
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string FromAddress { get; set; } = string.Empty;
+        public string FromName { get; set; } = string.Empty;
+        public string ReplyToAddress { get; set; } = string.Empty;
+        public bool EnableSsl { get; set; } = true;
+        public bool IsEnabled { get; set; }
+        public static ProfileForm From(AccountMailProfileView value) => new() { Host = value.Host, Port = value.Port, UserName = value.UserName, FromAddress = value.FromAddress, FromName = value.FromName, ReplyToAddress = value.ReplyToAddress, EnableSsl = value.EnableSsl, IsEnabled = value.IsEnabled };
+    }
+}
