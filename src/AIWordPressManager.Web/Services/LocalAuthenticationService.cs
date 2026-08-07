@@ -15,13 +15,26 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        if (await dbContext.AuthUsers.AnyAsync(cancellationToken)) return;
-
+        const string normalized = "ADMIN";
+        var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == normalized, cancellationToken);
         var now = DateTime.UtcNow;
-        var user = new AuthUser("Admin", "temporary", now, "Administrator");
-        user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
-        dbContext.AuthUsers.Add(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (user is null)
+        {
+            user = new AuthUser("Admin", "temporary", now, "Administrator");
+            user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
+            dbContext.AuthUsers.Add(user);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        else if (!string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase))
+        {
+            user.SetRole("Administrator", now);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var unownedSites = await dbContext.Sites.IgnoreQueryFilters().Where(x => x.OwnerUserId == null).ToListAsync(cancellationToken);
+        foreach (var site in unownedSites) site.AssignOwner(user.Id, now);
+        if (unownedSites.Count > 0) await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<RegistrationResult> CreateInitialAdministratorAsync(
