@@ -85,10 +85,104 @@ public sealed class DatabaseSetupService(
         return Path.Combine(root, "AIWordPressManager.Development.db");
     }
 
+    public static string? ValidateExistingConfigurationFile(string configPath)
+    {
+        if (!File.Exists(configPath))
+            return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(configPath));
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new JsonException("Database setup configuration root must be a JSON object.");
+
+            if (!document.RootElement.TryGetProperty("Database", out var databaseSection) ||
+                databaseSection.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var setupComplete = databaseSection.TryGetProperty("SetupComplete", out var completeElement) &&
+                                completeElement.ValueKind is JsonValueKind.True or JsonValueKind.False &&
+                                completeElement.GetBoolean();
+            var provider = databaseSection.TryGetProperty("Provider", out var providerElement)
+                ? providerElement.GetString() ?? "SQLite"
+                : "SQLite";
+
+            if (!setupComplete || !provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            if (!databaseSection.TryGetProperty("ConnectionString", out var connectionElement))
+                return null;
+
+            var connectionString = connectionElement.GetString();
+            if (string.IsNullOrWhiteSpace(connectionString))
+                return null;
+
+            try
+            {
+                var builder = new SqliteConnectionStringBuilder(connectionString);
+                var dataSource = builder.DataSource;
+                if (string.IsNullOrWhiteSpace(dataSource) || File.Exists(dataSource))
+                    return null;
+
+                WriteConfigurationFile(
+                    configPath,
+                    "SQLite",
+                    connectionString,
+                    protectedConnectionString: null,
+                    complete: false);
+
+                var message = $"Configured SQLite database file was not found: {dataSource}. Setup was marked incomplete instead of creating a new database silently.";
+                Console.Error.WriteLine($"[WARNING] {message}");
+                return message;
+            }
+            catch (ArgumentException)
+            {
+                WriteConfigurationFile(
+                    configPath,
+                    "SQLite",
+                    connectionString,
+                    protectedConnectionString: null,
+                    complete: false);
+
+                const string message = "Configured SQLite connection string is invalid. Setup was marked incomplete.";
+                Console.Error.WriteLine($"[WARNING] {message}");
+                return message;
+            }
+        }
+        catch (JsonException)
+        {
+            var directory = Path.GetDirectoryName(configPath)
+                ?? throw new InvalidOperationException("Database setup configuration directory could not be resolved.");
+            Directory.CreateDirectory(directory);
+
+            var backupPath = Path.Combine(
+                directory,
+                $"setup.database.invalid-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json");
+            File.Move(configPath, backupPath, overwrite: false);
+
+            WriteConfigurationFile(
+                configPath,
+                "SQLite",
+                connectionString: null,
+                protectedConnectionString: null,
+                complete: false);
+
+            var message = $"Invalid database setup JSON was preserved at '{backupPath}'. The application will return to first-run setup.";
+            Console.Error.WriteLine($"[WARNING] {message}");
+            return message;
+        }
+    }
+
     public static void BootstrapLegacySqliteIfNeeded(string environmentName)
     {
         var configPath = GetConfigurationPath(environmentName);
-        if (File.Exists(configPath)) return;
+        if (File.Exists(configPath))
+        {
+            ValidateExistingConfigurationFile(configPath);
+            return;
+        }
 
         var isDevelopment = string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase);
         if (isDevelopment)
@@ -97,7 +191,11 @@ public sealed class DatabaseSetupService(
             if (File.Exists(legacyConfigPath))
             {
                 MigrateLegacyDevelopmentConfiguration(legacyConfigPath, configPath);
-                if (File.Exists(configPath)) return;
+                if (File.Exists(configPath))
+                {
+                    ValidateExistingConfigurationFile(configPath);
+                    return;
+                }
             }
 
             var legacyDatabasePath = GetLegacyDatabasePath(environmentName);
@@ -209,7 +307,18 @@ public sealed class DatabaseSetupService(
         }
         catch (JsonException)
         {
-            File.Copy(legacyConfigPath, configPath, overwrite: false);
+            var directory = Path.GetDirectoryName(configPath)!;
+            Directory.CreateDirectory(directory);
+            var backupPath = Path.Combine(
+                directory,
+                $"setup.database.legacy-invalid-{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json");
+            File.Copy(legacyConfigPath, backupPath, overwrite: false);
+            WriteConfigurationFile(
+                configPath,
+                "SQLite",
+                connectionString: null,
+                protectedConnectionString: null,
+                complete: false);
         }
         catch (IOException)
         {
