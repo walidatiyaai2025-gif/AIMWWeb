@@ -51,8 +51,10 @@ public sealed class EmailSchedule : Entity
     public bool IsEnabled { get; private set; }
     public int RetryCount { get; private set; } = 3;
     public int RetryDelayMinutes { get; private set; } = 5;
+    public int ConsecutiveFailures { get; private set; }
     public DateTime NextRunUtc { get; private set; }
     public DateTime? LastRunUtc { get; private set; }
+    public DateTime? ActiveOccurrenceUtc { get; private set; }
     public string LastStatus { get; private set; } = "NeverRun";
     public string? LastError { get; private set; }
     public string? ClaimToken { get; private set; }
@@ -87,25 +89,57 @@ public sealed class EmailSchedule : Entity
         RetryDelayMinutes = retryDelayMinutes;
         IsEnabled = enabled;
         NextRunUtc = DateTime.SpecifyKind(nextRunUtc, DateTimeKind.Utc);
+        ConsecutiveFailures = 0;
+        ActiveOccurrenceUtc = null;
         ClaimToken = null;
         ClaimedAtUtc = null;
         MarkUpdated(utcNow);
     }
 
-    public void RecordRun(string status, string? error, DateTime nextRunUtc, DateTime utcNow)
+    public void RecordQueued(DateTime occurrenceUtc, DateTime nextRunUtc, DateTime utcNow)
     {
-        LastRunUtc = utcNow;
-        LastStatus = NormalizeRequired(status, 32, nameof(status));
-        LastError = NormalizeError(error);
+        LastRunUtc = DateTime.SpecifyKind(occurrenceUtc, DateTimeKind.Utc);
+        LastStatus = "Queued";
+        LastError = null;
+        ConsecutiveFailures = 0;
+        ActiveOccurrenceUtc = null;
         NextRunUtc = DateTime.SpecifyKind(nextRunUtc, DateTimeKind.Utc);
         ClaimToken = null;
         ClaimedAtUtc = null;
         MarkUpdated(utcNow);
     }
 
+    public bool RecordFailure(DateTime occurrenceUtc, string? error, DateTime retryAtUtc, DateTime nextRegularRunUtc, DateTime utcNow)
+    {
+        LastRunUtc = DateTime.SpecifyKind(occurrenceUtc, DateTimeKind.Utc);
+        LastStatus = "Failed";
+        LastError = NormalizeError(error);
+        ActiveOccurrenceUtc = DateTime.SpecifyKind(occurrenceUtc, DateTimeKind.Utc);
+        ConsecutiveFailures++;
+        var retrying = ConsecutiveFailures <= RetryCount;
+        if (retrying)
+        {
+            NextRunUtc = DateTime.SpecifyKind(retryAtUtc, DateTimeKind.Utc);
+        }
+        else
+        {
+            NextRunUtc = DateTime.SpecifyKind(nextRegularRunUtc, DateTimeKind.Utc);
+            ConsecutiveFailures = 0;
+            ActiveOccurrenceUtc = null;
+        }
+        ClaimToken = null;
+        ClaimedAtUtc = null;
+        MarkUpdated(utcNow);
+        return retrying;
+    }
+
+    public DateTime GetOccurrenceForAttempt() => ActiveOccurrenceUtc ?? NextRunUtc;
+
     public void Disable(DateTime utcNow)
     {
         IsEnabled = false;
+        ActiveOccurrenceUtc = null;
+        ConsecutiveFailures = 0;
         ClaimToken = null;
         ClaimedAtUtc = null;
         MarkUpdated(utcNow);
