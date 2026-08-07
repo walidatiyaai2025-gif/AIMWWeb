@@ -99,6 +99,18 @@ public sealed class AccountEmailSettingsService(
     {
         var profile = await dbContext.AccountMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.OwnerUserId == OwnerId, cancellationToken);
         if (profile is null || !profile.IsEnabled) return null;
+        return await BuildDeliveryProfileAsync(profile, cancellationToken);
+    }
+
+    public async Task<SiteMailDeliveryProfile> GetTestProfileAsync(CancellationToken cancellationToken = default)
+    {
+        var profile = await dbContext.AccountMailProfiles.AsNoTracking().FirstOrDefaultAsync(x => x.OwnerUserId == OwnerId, cancellationToken)
+            ?? throw new InvalidOperationException("Save the account SMTP profile before running diagnostics.");
+        return await BuildDeliveryProfileAsync(profile, cancellationToken);
+    }
+
+    private async Task<SiteMailDeliveryProfile> BuildDeliveryProfileAsync(AccountMailProfile profile, CancellationToken cancellationToken)
+    {
         string? password = null;
         if (!string.IsNullOrWhiteSpace(profile.ProtectedPassword))
             password = await secretProtectionService.UnprotectAsync(profile.ProtectedPassword, cancellationToken);
