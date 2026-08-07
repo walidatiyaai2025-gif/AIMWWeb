@@ -15,21 +15,27 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        const string normalized = "ADMIN";
-        var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == normalized, cancellationToken);
+        var user = await dbContext.AuthUsers
+            .FirstOrDefaultAsync(x => x.Role == "Administrator", cancellationToken);
         var now = DateTime.UtcNow;
 
         if (user is null)
         {
-            user = new AuthUser("Admin", "temporary", now, "Administrator");
-            user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
-            dbContext.AuthUsers.Add(user);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        else if (!string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase))
-        {
-            user.SetRole("Administrator", now);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            const string normalized = "ADMIN";
+            user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == normalized, cancellationToken);
+
+            if (user is null)
+            {
+                user = new AuthUser("Admin", "temporary", now, "Administrator");
+                user.SetPasswordHash(_hasher.HashPassword(user, "Admin@123"), now);
+                dbContext.AuthUsers.Add(user);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+            else if (!string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase))
+            {
+                user.SetRole("Administrator", now);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
         }
 
         var unownedSites = await dbContext.Sites.IgnoreQueryFilters().Where(x => x.OwnerUserId == null).ToListAsync(cancellationToken);
