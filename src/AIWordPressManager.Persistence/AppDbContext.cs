@@ -109,6 +109,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasKey(x => x.Id);
             entity.HasIndex(x => new { x.OwnerUserId, x.SiteId });
             entity.HasIndex(x => new { x.IsEnabled, x.NextRunUtc });
+            entity.HasIndex(x => x.ClaimedAtUtc);
             entity.Property(x => x.Scope).HasMaxLength(16).IsRequired();
             entity.Property(x => x.ReportType).HasMaxLength(120).IsRequired();
             entity.Property(x => x.TemplateKey).HasMaxLength(160).IsRequired();
@@ -116,6 +117,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Frequency).HasMaxLength(32).IsRequired();
             entity.Property(x => x.LastStatus).HasMaxLength(32).IsRequired();
             entity.Property(x => x.LastError).HasMaxLength(1000);
+            entity.Property(x => x.ClaimToken).HasMaxLength(100);
             entity.HasOne<AuthUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<Site>().WithMany().HasForeignKey(x => x.SiteId).OnDelete(DeleteBehavior.Cascade);
         });
