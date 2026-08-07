@@ -6,7 +6,6 @@ public sealed class EmailSchedule : Entity
 {
     public const string SiteScope = "Site";
     public const string AccountScope = "Account";
-
     public const string HourlyFrequency = "Hourly";
     public const string DailyFrequency = "Daily";
     public const string WeeklyFrequency = "Weekly";
@@ -17,11 +16,8 @@ public sealed class EmailSchedule : Entity
     public EmailSchedule(Guid ownerUserId, Guid? siteId, string scope, string reportType, string templateKey, string timezoneId, DateTime utcNow)
     {
         if (ownerUserId == Guid.Empty) throw new ArgumentException("Owner user ID is required.", nameof(ownerUserId));
-        if (string.Equals(scope, SiteScope, StringComparison.OrdinalIgnoreCase) && (!siteId.HasValue || siteId == Guid.Empty))
-            throw new ArgumentException("Site schedules require a site ID.", nameof(siteId));
-        if (string.Equals(scope, AccountScope, StringComparison.OrdinalIgnoreCase) && siteId.HasValue)
-            throw new ArgumentException("Account schedules cannot reference a site.", nameof(siteId));
-
+        if (string.Equals(scope, SiteScope, StringComparison.OrdinalIgnoreCase) && (!siteId.HasValue || siteId == Guid.Empty)) throw new ArgumentException("Site schedules require a site ID.", nameof(siteId));
+        if (string.Equals(scope, AccountScope, StringComparison.OrdinalIgnoreCase) && siteId.HasValue) throw new ArgumentException("Account schedules cannot reference a site.", nameof(siteId));
         OwnerUserId = ownerUserId;
         SiteId = siteId;
         Scope = NormalizeScope(scope);
@@ -43,6 +39,7 @@ public sealed class EmailSchedule : Entity
     public string Scope { get; private set; } = SiteScope;
     public string ReportType { get; private set; } = string.Empty;
     public string TemplateKey { get; private set; } = string.Empty;
+    public string Culture { get; private set; } = "en";
     public string TimezoneId { get; private set; } = "UTC";
     public string Frequency { get; private set; } = DailyFrequency;
     public TimeSpan TimeOfDay { get; private set; } = new(8, 0, 0);
@@ -60,17 +57,13 @@ public sealed class EmailSchedule : Entity
     public string? ClaimToken { get; private set; }
     public DateTime? ClaimedAtUtc { get; private set; }
 
-    public void Configure(
-        string timezoneId,
-        string frequency,
-        TimeSpan timeOfDay,
-        int? weekday,
-        int? monthDay,
-        int retryCount,
-        int retryDelayMinutes,
-        bool enabled,
-        DateTime nextRunUtc,
-        DateTime utcNow)
+    public void SetCulture(string? culture, DateTime utcNow)
+    {
+        Culture = culture?.Trim().StartsWith("ar", StringComparison.OrdinalIgnoreCase) == true ? "ar" : "en";
+        MarkUpdated(utcNow);
+    }
+
+    public void Configure(string timezoneId, string frequency, TimeSpan timeOfDay, int? weekday, int? monthDay, int retryCount, int retryDelayMinutes, bool enabled, DateTime nextRunUtc, DateTime utcNow)
     {
         var normalizedFrequency = NormalizeFrequency(frequency);
         var normalizedTimezone = NormalizeRequired(timezoneId, 120, nameof(timezoneId));
@@ -79,7 +72,6 @@ public sealed class EmailSchedule : Entity
         if (normalizedFrequency == MonthlyFrequency && (monthDay is < 1 or > 31 || monthDay is null)) throw new ArgumentOutOfRangeException(nameof(monthDay));
         if (retryCount is < 0 or > 10) throw new ArgumentOutOfRangeException(nameof(retryCount));
         if (retryDelayMinutes is < 1 or > 1440) throw new ArgumentOutOfRangeException(nameof(retryDelayMinutes));
-
         TimezoneId = normalizedTimezone;
         Frequency = normalizedFrequency;
         TimeOfDay = timeOfDay;
@@ -117,10 +109,7 @@ public sealed class EmailSchedule : Entity
         ActiveOccurrenceUtc = DateTime.SpecifyKind(occurrenceUtc, DateTimeKind.Utc);
         ConsecutiveFailures++;
         var retrying = ConsecutiveFailures <= RetryCount;
-        if (retrying)
-        {
-            NextRunUtc = DateTime.SpecifyKind(retryAtUtc, DateTimeKind.Utc);
-        }
+        if (retrying) NextRunUtc = DateTime.SpecifyKind(retryAtUtc, DateTimeKind.Utc);
         else
         {
             NextRunUtc = DateTime.SpecifyKind(nextRegularRunUtc, DateTimeKind.Utc);
