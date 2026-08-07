@@ -149,6 +149,7 @@ public sealed class DatabaseInitializationService(
                 Id TEXT NOT NULL CONSTRAINT PK_EmailOutboxMessages PRIMARY KEY,
                 OwnerUserId TEXT NOT NULL,
                 SiteId TEXT NULL,
+                Scope TEXT NOT NULL,
                 ScheduleId TEXT NULL,
                 TemplateKey TEXT NOT NULL,
                 Subject TEXT NOT NULL,
@@ -196,6 +197,7 @@ public sealed class DatabaseInitializationService(
             cancellationToken);
 
         await EnsureSqliteSiteOwnerColumnAsync(cancellationToken);
+        await EnsureSqliteEmailOutboxScopeAsync(cancellationToken);
     }
 
     private async Task EnsureSqliteSiteOwnerColumnAsync(CancellationToken cancellationToken)
@@ -239,6 +241,48 @@ public sealed class DatabaseInitializationService(
 
         await dbContext.Database.ExecuteSqlRawAsync(
             "CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId ON Sites (OwnerUserId);",
+            cancellationToken);
+    }
+
+    private async Task EnsureSqliteEmailOutboxScopeAsync(CancellationToken cancellationToken)
+    {
+        var connection = (SqliteConnection)dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        var tableExists = false;
+        await using (var tableCommand = connection.CreateCommand())
+        {
+            tableCommand.CommandText = "SELECT 1 FROM sqlite_master WHERE type='table' AND name='EmailOutboxMessages' LIMIT 1;";
+            tableExists = await tableCommand.ExecuteScalarAsync(cancellationToken) is not null;
+        }
+        if (!tableExists) return;
+
+        var hasScope = false;
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA table_info('EmailOutboxMessages');";
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (string.Equals(reader.GetString(1), "Scope", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasScope = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasScope)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE EmailOutboxMessages ADD COLUMN Scope TEXT NOT NULL DEFAULT 'Account';",
+                cancellationToken);
+            logger.LogInformation("Added Scope to EmailOutboxMessages.");
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "UPDATE EmailOutboxMessages SET Scope = CASE WHEN SiteId IS NULL THEN 'Account' ELSE 'Site' END WHERE Scope IS NULL OR Scope = '' OR Scope = 'Account';",
             cancellationToken);
     }
 
