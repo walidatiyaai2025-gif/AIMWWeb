@@ -1,3 +1,4 @@
+using AIWordPressManager.Application.Abstractions.Email;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -10,65 +11,45 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
     {
         var ownerId = currentUser.UserId;
         await EnsureOwnedSiteAsync(siteId, ownerId, cancellationToken);
-
-        return await dbContext.EmailSchedules.AsNoTracking()
-            .Where(x => x.OwnerUserId == ownerId && x.SiteId == siteId && x.Scope == EmailSchedule.SiteScope)
-            .OrderBy(x => x.NextRunUtc)
-            .Select(x => new EmailScheduleView(
-                x.Id, x.SiteId, x.Scope, x.ReportType, x.TemplateKey, x.TimezoneId, x.Frequency,
-                x.TimeOfDay, x.Weekday, x.MonthDay, x.IsEnabled, x.RetryCount, x.RetryDelayMinutes,
-                x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError))
-            .ToListAsync(cancellationToken);
+        return await Query(ownerId).Where(x => x.SiteId == siteId && x.Scope == EmailSchedule.SiteScope).ToListAsync(cancellationToken);
     }
 
-    public async Task<EmailScheduleView> CreateSiteScheduleAsync(
-        Guid siteId,
-        EmailScheduleInput input,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<EmailScheduleView>> GetForAccountAsync(CancellationToken cancellationToken = default)
+    {
+        var ownerId = currentUser.UserId;
+        return await Query(ownerId).Where(x => x.Scope == EmailSchedule.AccountScope && x.SiteId == null).ToListAsync(cancellationToken);
+    }
+
+    public async Task<EmailScheduleView> CreateSiteScheduleAsync(Guid siteId, EmailScheduleInput input, CancellationToken cancellationToken = default)
     {
         var ownerId = currentUser.UserId;
         await EnsureOwnedSiteAsync(siteId, ownerId, cancellationToken);
-        ValidateInput(input);
+        ValidateInput(input, EmailSchedule.SiteScope);
+        return await CreateAsync(ownerId, siteId, EmailSchedule.SiteScope, input, cancellationToken);
+    }
 
-        var now = DateTime.UtcNow;
-        var nextRun = CalculateNext(input, now);
-
-        var schedule = new EmailSchedule(
-            ownerId,
-            siteId,
-            EmailSchedule.SiteScope,
-            input.ReportType,
-            input.TemplateKey,
-            input.TimezoneId,
-            now);
-
-        ApplyTiming(schedule, input, nextRun, now);
-
-        dbContext.EmailSchedules.Add(schedule);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return ToView(schedule);
+    public async Task<EmailScheduleView> CreateAccountScheduleAsync(EmailScheduleInput input, CancellationToken cancellationToken = default)
+    {
+        var ownerId = currentUser.UserId;
+        ValidateInput(input, EmailSchedule.AccountScope);
+        return await CreateAsync(ownerId, null, EmailSchedule.AccountScope, input, cancellationToken);
     }
 
     public async Task<EmailScheduleView> UpdateAsync(Guid scheduleId, EmailScheduleInput input, CancellationToken cancellationToken = default)
     {
         var ownerId = currentUser.UserId;
-        ValidateInput(input);
-
-        var schedule = await dbContext.EmailSchedules
-            .FirstOrDefaultAsync(x => x.Id == scheduleId && x.OwnerUserId == ownerId, cancellationToken)
+        var schedule = await dbContext.EmailSchedules.FirstOrDefaultAsync(x => x.Id == scheduleId && x.OwnerUserId == ownerId, cancellationToken)
             ?? throw new KeyNotFoundException("Email schedule was not found.");
+        ValidateInput(input, schedule.Scope);
 
         if (!string.Equals(schedule.ReportType, input.ReportType.Trim(), StringComparison.Ordinal) ||
             !string.Equals(schedule.TemplateKey, input.TemplateKey.Trim(), StringComparison.Ordinal))
             throw new InvalidOperationException("Report type and template key cannot be changed after a schedule is created. Create a new schedule instead.");
 
-        if (schedule.SiteId.HasValue)
-            await EnsureOwnedSiteAsync(schedule.SiteId.Value, ownerId, cancellationToken);
-
+        if (schedule.SiteId.HasValue) await EnsureOwnedSiteAsync(schedule.SiteId.Value, ownerId, cancellationToken);
         var now = DateTime.UtcNow;
         var nextRun = CalculateNext(input, now);
         ApplyTiming(schedule, input, nextRun, now);
-
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToView(schedule);
     }
@@ -76,69 +57,61 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
     public async Task DeleteAsync(Guid scheduleId, CancellationToken cancellationToken = default)
     {
         var ownerId = currentUser.UserId;
-        var schedule = await dbContext.EmailSchedules
-            .FirstOrDefaultAsync(x => x.Id == scheduleId && x.OwnerUserId == ownerId, cancellationToken)
+        var schedule = await dbContext.EmailSchedules.FirstOrDefaultAsync(x => x.Id == scheduleId && x.OwnerUserId == ownerId, cancellationToken)
             ?? throw new KeyNotFoundException("Email schedule was not found.");
-
         dbContext.EmailSchedules.Remove(schedule);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task<EmailScheduleView> CreateAsync(Guid ownerId, Guid? siteId, string scope, EmailScheduleInput input, CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var nextRun = CalculateNext(input, now);
+        var schedule = new EmailSchedule(ownerId, siteId, scope, input.ReportType, input.TemplateKey, input.TimezoneId, now);
+        ApplyTiming(schedule, input, nextRun, now);
+        dbContext.EmailSchedules.Add(schedule);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToView(schedule);
+    }
+
+    private IQueryable<EmailScheduleView> Query(Guid ownerId) => dbContext.EmailSchedules.AsNoTracking()
+        .Where(x => x.OwnerUserId == ownerId)
+        .OrderBy(x => x.NextRunUtc)
+        .Select(x => new EmailScheduleView(
+            x.Id, x.SiteId, x.Scope, x.ReportType, x.TemplateKey, x.TimezoneId, x.Frequency,
+            x.TimeOfDay, x.Weekday, x.MonthDay, x.IsEnabled, x.RetryCount, x.RetryDelayMinutes,
+            x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError));
+
     private async Task EnsureOwnedSiteAsync(Guid siteId, Guid ownerId, CancellationToken cancellationToken)
     {
-        var owned = await dbContext.Sites.AsNoTracking()
-            .AnyAsync(x => x.Id == siteId && x.OwnerUserId == ownerId, cancellationToken);
+        var owned = await dbContext.Sites.AsNoTracking().AnyAsync(x => x.Id == siteId && x.OwnerUserId == ownerId, cancellationToken);
         if (!owned) throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
     }
 
-    private static void ValidateInput(EmailScheduleInput input)
+    private static void ValidateInput(EmailScheduleInput input, string scope)
     {
         ArgumentNullException.ThrowIfNull(input);
         _ = EmailScheduleCalculator.ResolveTimeZone(input.TimezoneId);
         if (string.IsNullOrWhiteSpace(input.ReportType)) throw new ArgumentException("Report type is required.");
         if (string.IsNullOrWhiteSpace(input.TemplateKey)) throw new ArgumentException("Template key is required.");
+
+        if (scope == EmailSchedule.AccountScope && !string.Equals(input.TemplateKey, EmailTemplateKeys.DashboardDigest, StringComparison.Ordinal))
+            throw new InvalidOperationException("Account schedules currently support the dashboard digest template.");
+        if (scope == EmailSchedule.SiteScope && !string.Equals(input.TemplateKey, EmailTemplateKeys.SiteOperationalReport, StringComparison.Ordinal))
+            throw new InvalidOperationException("Site schedules currently support the operational report template.");
     }
 
-    private static DateTime CalculateNext(EmailScheduleInput input, DateTime utcNow) =>
-        EmailScheduleCalculator.CalculateNextRunUtc(
-            input.TimezoneId,
-            input.Frequency,
-            input.TimeOfDay,
-            input.Weekday,
-            input.MonthDay,
-            utcNow);
+    private static DateTime CalculateNext(EmailScheduleInput input, DateTime utcNow) => EmailScheduleCalculator.CalculateNextRunUtc(
+        input.TimezoneId, input.Frequency, input.TimeOfDay, input.Weekday, input.MonthDay, utcNow);
 
-    private static void ApplyTiming(EmailSchedule schedule, EmailScheduleInput input, DateTime nextRun, DateTime utcNow) =>
-        schedule.Configure(
-            input.TimezoneId,
-            input.Frequency,
-            input.TimeOfDay,
-            input.Weekday,
-            input.MonthDay,
-            input.RetryCount,
-            input.RetryDelayMinutes,
-            input.IsEnabled,
-            nextRun,
-            utcNow);
+    private static void ApplyTiming(EmailSchedule schedule, EmailScheduleInput input, DateTime nextRun, DateTime utcNow) => schedule.Configure(
+        input.TimezoneId, input.Frequency, input.TimeOfDay, input.Weekday, input.MonthDay,
+        input.RetryCount, input.RetryDelayMinutes, input.IsEnabled, nextRun, utcNow);
 
     private static EmailScheduleView ToView(EmailSchedule x) => new(
-        x.Id,
-        x.SiteId,
-        x.Scope,
-        x.ReportType,
-        x.TemplateKey,
-        x.TimezoneId,
-        x.Frequency,
-        x.TimeOfDay,
-        x.Weekday,
-        x.MonthDay,
-        x.IsEnabled,
-        x.RetryCount,
-        x.RetryDelayMinutes,
-        x.NextRunUtc,
-        x.LastRunUtc,
-        x.LastStatus,
-        x.LastError);
+        x.Id, x.SiteId, x.Scope, x.ReportType, x.TemplateKey, x.TimezoneId, x.Frequency,
+        x.TimeOfDay, x.Weekday, x.MonthDay, x.IsEnabled, x.RetryCount, x.RetryDelayMinutes,
+        x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError);
 }
 
 public sealed record EmailScheduleInput(
