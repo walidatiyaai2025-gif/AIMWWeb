@@ -24,6 +24,7 @@ using AIWordPressManager.Application.Deletion;
 using AIWordPressManager.Persistence.Deletion;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AIWordPressManager.Persistence;
@@ -34,14 +35,44 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>((provider, options) =>
         {
+            var configuration = provider.GetRequiredService<IConfiguration>();
             var paths = provider.GetRequiredService<IApplicationPathService>();
-            var connectionString = new SqliteConnectionStringBuilder
+            var providerName = (configuration["Database:Provider"] ?? "SQLite").Trim();
+            var configuredConnectionString = configuration["Database:ConnectionString"];
+
+            if (providerName.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
             {
-                DataSource = paths.GetDatabasePath(),
-                ForeignKeys = true,
-                Pooling = true
-            }.ToString();
-            options.UseSqlite(connectionString);
+                EnsureConnectionString(configuredConnectionString, providerName);
+                options.UseSqlServer(configuredConnectionString);
+                return;
+            }
+
+            if (providerName.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase) ||
+                providerName.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
+            {
+                EnsureConnectionString(configuredConnectionString, providerName);
+                options.UseNpgsql(configuredConnectionString);
+                return;
+            }
+
+            if (providerName.Equals("MySQL", StringComparison.OrdinalIgnoreCase) ||
+                providerName.Equals("MariaDB", StringComparison.OrdinalIgnoreCase))
+            {
+                EnsureConnectionString(configuredConnectionString, providerName);
+                options.UseMySql(configuredConnectionString, ServerVersion.AutoDetect(configuredConnectionString));
+                return;
+            }
+
+            var sqliteConnectionString = string.IsNullOrWhiteSpace(configuredConnectionString)
+                ? new SqliteConnectionStringBuilder
+                {
+                    DataSource = paths.GetDatabasePath(),
+                    ForeignKeys = true,
+                    Pooling = true
+                }.ToString()
+                : configuredConnectionString;
+
+            options.UseSqlite(sqliteConnectionString);
         });
 
         services.AddScoped<IDatabaseInitializationService, DatabaseInitializationService>();
@@ -65,5 +96,11 @@ public static class DependencyInjection
         services.AddScoped<IThemeIntelligenceStore, ThemeIntelligenceStore>();
         services.AddScoped<IWordPressDeletionImpactStore, WordPressDeletionImpactStore>();
         return services;
+    }
+
+    private static void EnsureConnectionString(string? connectionString, string provider)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException($"Database connection string is required for provider '{provider}'. Run the first-run setup wizard.");
     }
 }
