@@ -2,6 +2,7 @@
 @page "/module/configuration"
 @rendermode InteractiveServer
 @inject AppLanguageService L
+@inject AppNotificationService Notifications
 @inject IConfiguration Configuration
 @inject IWebHostEnvironment Environment
 @inject IJSRuntime JS
@@ -16,12 +17,20 @@
             <p>@(L.IsArabic ? "فحص إعدادات التشغيل والتخزين والأمان قبل الاعتماد أو النشر." : "Validate runtime, storage, and security settings before approval or deployment.")</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn" @onclick="CopyReportAsync">@(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
+            <button class="btn" @onclick="CopyReportAsync" disabled="@(_report is null)">@(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
             <button class="btn primary" @onclick="RunValidation">↻ @(L.IsArabic ? "إعادة الفحص" : "Run validation")</button>
         </div>
     </section>
 
-    @if (_report is null)
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <AppCard>
+            <AppEmptyState Icon="!"
+                           Title="@(L.IsArabic ? "تعذر فحص الإعدادات" : "Configuration validation failed")"
+                           Description="@_error" />
+        </AppCard>
+    }
+    else if (_report is null)
     {
         <section class="panel empty-state"><p>@(L.IsArabic ? "جاري تجهيز الفحص..." : "Preparing validation...")</p></section>
     }
@@ -65,13 +74,26 @@
 
 @code {
     private ConfigurationValidationReport? _report;
+    private string? _error;
     private int ValidCount => _report?.Items.Count(x => x.Status == ValidationStatus.Valid) ?? 0;
 
     protected override void OnInitialized() => RunValidation();
 
     private void RunValidation()
     {
-        _report = new ConfigurationValidationService(Configuration, Environment).Validate();
+        try
+        {
+            _error = null;
+            _report = new ConfigurationValidationService(Configuration, Environment).Validate();
+        }
+        catch (Exception ex)
+        {
+            _report = null;
+            _error = L.TranslateMessage(ex.Message);
+            Notifications.Error(
+                _error,
+                L.IsArabic ? "فشل فحص الإعدادات" : "Configuration validation failed");
+        }
     }
 
     private string StatusClass(ValidationStatus status) => status switch
@@ -93,6 +115,7 @@
     private async Task CopyReportAsync()
     {
         if (_report is null) return;
+
         var lines = new List<string>
         {
             "AI WordPress Manager - Configuration Validation",
@@ -102,6 +125,19 @@
             string.Empty
         };
         lines.AddRange(_report.Items.Select(x => $"[{x.Status}] {x.Title}: {x.Value}{System.Environment.NewLine}{x.Message}"));
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(System.Environment.NewLine, lines));
+
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(System.Environment.NewLine, lines));
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (Exception ex)
+        {
+            Notifications.Error(
+                L.TranslateMessage(ex.Message),
+                L.IsArabic ? "تعذر نسخ التقرير" : "Could not copy report");
+        }
     }
 }
