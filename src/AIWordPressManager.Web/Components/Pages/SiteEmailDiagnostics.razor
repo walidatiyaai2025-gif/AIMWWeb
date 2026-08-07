@@ -1,0 +1,55 @@
+@page "/sites/{SiteId:guid}/email-diagnostics"
+@rendermode InteractiveServer
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject CurrentUserContext CurrentUser
+@inject AIWordPressManager.Application.Abstractions.ISecretProtectionService SecretProtection
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "تشخيص بريد الموقع" : "Site Email Diagnostics")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">SMTP DIAGNOSTICS</span>
+            <h1>@(L.IsArabic ? "تشخيص بريد الموقع" : "Site SMTP diagnostics")</h1>
+            <p>@(L.IsArabic ? "اختبر الإعداد المحفوظ لهذا الموقع أو إعداد الحساب الموروث بدون عرض أي كلمة مرور." : "Test this site's saved SMTP profile or its inherited account profile without exposing any password.")</p>
+        </div>
+        <div><AppButton Href="@($"/sites/{SiteId}/email-settings")" Text="@(L.IsArabic ? "العودة لإعداد البريد" : "Back to email settings")" /></div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <section class="panel"><p class="text-danger">@_error</p></section>
+    }
+    else
+    {
+        <section class="panel settings-section">
+            <SmtpDiagnosticsPanel GetProfileAsync="GetSiteTestProfileAsync" SuggestedRecipient="@_suggestedRecipient" />
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid SiteId { get; set; }
+
+    private SiteEmailRecipientService RecipientService => new(Db, CurrentUser);
+    private SiteMailProfileService MailService => new(Db, CurrentUser, SecretProtection);
+    private string? _suggestedRecipient;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _error = null;
+        try
+        {
+            var recipients = await RecipientService.GetAsync(SiteId);
+            _suggestedRecipient = recipients.FirstOrDefault(x => x.IsEnabled)?.EmailAddress;
+        }
+        catch (Exception ex)
+        {
+            _error = L.TranslateMessage(ex.Message);
+        }
+    }
+
+    private Task<SiteMailDeliveryProfile> GetSiteTestProfileAsync() => MailService.GetTestProfileAsync(SiteId);
+}
