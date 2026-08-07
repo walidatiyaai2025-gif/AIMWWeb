@@ -1,6 +1,7 @@
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Application.Abstractions.AI;
+using AIWordPressManager.Application.Abstractions.Email;
 using AIWordPressManager.Infrastructure;
 using AIWordPressManager.Persistence;
 using AIWordPressManager.Web.Components;
@@ -62,6 +63,7 @@ builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppNotificationService>();
 builder.Services.AddScoped<ContentPlannerService>();
+builder.Services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 builder.Services.AddScoped(_ => { var language = new AppLanguageService(); language.SetCulture("en"); return language; });
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
@@ -73,6 +75,7 @@ builder.Services.AddSingleton<BulkContentOperationQueue>();
 builder.Services.AddSingleton<SiteOperationHistoryService>();
 builder.Services.AddHostedService<AutomationSchedulerService>();
 builder.Services.AddHostedService<BulkContentOperationWorker>();
+builder.Services.AddHostedService<EmailOutboxWorker>();
 
 var app = builder.Build();
 
