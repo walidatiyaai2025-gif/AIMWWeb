@@ -4,6 +4,9 @@ namespace AIWordPressManager.Domain.Entities;
 
 public sealed class AuthUser : Entity
 {
+    private const int MaximumFailedAccessAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+
     private AuthUser() { }
 
     public AuthUser(string userName, string passwordHash, DateTime utcNow, string role = "User")
@@ -46,6 +49,8 @@ public sealed class AuthUser : Entity
         MarkUpdated(utcNow);
     }
 
+    public bool IsLockedOut(DateTime utcNow) => LockedUntilUtc is { } lockedUntil && lockedUntil > utcNow;
+
     public void RecordSuccessfulLogin(DateTime utcNow)
     {
         FailedAccessCount = 0;
@@ -56,9 +61,15 @@ public sealed class AuthUser : Entity
 
     public void RecordFailedLogin(DateTime utcNow)
     {
+        if (LockedUntilUtc is { } lockedUntil && lockedUntil <= utcNow)
+        {
+            FailedAccessCount = 0;
+            LockedUntilUtc = null;
+        }
+
         FailedAccessCount++;
-        if (FailedAccessCount >= 5)
-            LockedUntilUtc = utcNow.AddMinutes(15);
+        if (FailedAccessCount >= MaximumFailedAccessAttempts)
+            LockedUntilUtc = utcNow.Add(LockoutDuration);
         MarkUpdated(utcNow);
     }
 
