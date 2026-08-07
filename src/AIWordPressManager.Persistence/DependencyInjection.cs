@@ -55,11 +55,17 @@ public static class DependencyInjection
                 return;
             }
 
-            if (providerName.Equals("MySQL", StringComparison.OrdinalIgnoreCase) ||
-                providerName.Equals("MariaDB", StringComparison.OrdinalIgnoreCase))
+            if (providerName.Equals("MySQL", StringComparison.OrdinalIgnoreCase))
             {
                 EnsureConnectionString(configuredConnectionString, providerName);
-                options.UseMySql(configuredConnectionString, ServerVersion.AutoDetect(configuredConnectionString));
+                options.UseMySql(configuredConnectionString, new MySqlServerVersion(new Version(8, 0, 0)));
+                return;
+            }
+
+            if (providerName.Equals("MariaDB", StringComparison.OrdinalIgnoreCase))
+            {
+                EnsureConnectionString(configuredConnectionString, providerName);
+                options.UseMySql(configuredConnectionString, new MariaDbServerVersion(new Version(10, 6, 0)));
                 return;
             }
 
