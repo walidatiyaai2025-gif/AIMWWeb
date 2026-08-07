@@ -57,6 +57,7 @@ public sealed class EmailSchedule : Entity
     public string? LastError { get; private set; }
 
     public void Configure(
+        string timezoneId,
         string frequency,
         TimeSpan timeOfDay,
         int? weekday,
@@ -68,12 +69,14 @@ public sealed class EmailSchedule : Entity
         DateTime utcNow)
     {
         var normalizedFrequency = NormalizeFrequency(frequency);
+        var normalizedTimezone = NormalizeRequired(timezoneId, 120, nameof(timezoneId));
         if (timeOfDay < TimeSpan.Zero || timeOfDay >= TimeSpan.FromDays(1)) throw new ArgumentOutOfRangeException(nameof(timeOfDay));
         if (normalizedFrequency == WeeklyFrequency && (weekday is < 0 or > 6)) throw new ArgumentOutOfRangeException(nameof(weekday));
         if (normalizedFrequency == MonthlyFrequency && (monthDay is < 1 or > 31)) throw new ArgumentOutOfRangeException(nameof(monthDay));
         if (retryCount is < 0 or > 10) throw new ArgumentOutOfRangeException(nameof(retryCount));
         if (retryDelayMinutes is < 1 or > 1440) throw new ArgumentOutOfRangeException(nameof(retryDelayMinutes));
 
+        TimezoneId = normalizedTimezone;
         Frequency = normalizedFrequency;
         TimeOfDay = timeOfDay;
         Weekday = normalizedFrequency == WeeklyFrequency ? weekday : null;
