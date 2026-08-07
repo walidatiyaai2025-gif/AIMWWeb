@@ -10,6 +10,8 @@ public sealed class EmailOutboxMessage : Entity
     public const string RetryWaitingStatus = "RetryWaiting";
     public const string FailedStatus = "Failed";
     public const string CancelledStatus = "Cancelled";
+    public const string AccountScope = "Account";
+    public const string SiteScope = "Site";
 
     private EmailOutboxMessage() { }
 
@@ -37,6 +39,7 @@ public sealed class EmailOutboxMessage : Entity
 
         OwnerUserId = ownerUserId;
         SiteId = siteId;
+        Scope = siteId.HasValue ? SiteScope : AccountScope;
         ScheduleId = scheduleId;
         TemplateKey = templateKey.Trim();
         Subject = subject.Trim();
@@ -53,6 +56,7 @@ public sealed class EmailOutboxMessage : Entity
 
     public Guid OwnerUserId { get; private set; }
     public Guid? SiteId { get; private set; }
+    public string Scope { get; private set; } = AccountScope;
     public Guid? ScheduleId { get; private set; }
     public string TemplateKey { get; private set; } = string.Empty;
     public string Subject { get; private set; } = string.Empty;
