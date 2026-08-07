@@ -12,7 +12,11 @@
     <AppToolbar
         Eyebrow="@(L.IsArabic ? "إعدادات الحساب" : "ACCOUNT SETTINGS")"
         Title="@(L.IsArabic ? "حسابي" : "My Account")"
-        Subtitle="@(L.IsArabic ? "راجع بيانات حسابك وحدّث كلمة المرور بأمان." : "Review your account details and update your password securely.")" />
+        Subtitle="@(L.IsArabic ? "راجع بيانات حسابك وحدّث كلمة المرور بأمان." : "Review your account details and update your password securely.")">
+        <Actions>
+            <AppButton Href="/account/email-settings" Icon="✉" Text="@(L.IsArabic ? "إعدادات بريد الداشبورد" : "Dashboard email settings")" />
+        </Actions>
+    </AppToolbar>
 
     @if (_loading)
     {
