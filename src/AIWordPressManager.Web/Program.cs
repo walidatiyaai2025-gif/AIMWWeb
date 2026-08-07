@@ -136,7 +136,10 @@ app.MapPost("/setup", async (HttpContext context, DatabaseSetupService setup, Ca
         form["userName"].ToString(),
         form["password"].ToString(),
         form["integratedSecurity"] == "true",
-        form["trustServerCertificate"] == "true");
+        form["trustServerCertificate"] == "true",
+        form["adminUserName"].ToString(),
+        form["adminPassword"].ToString(),
+        form["adminConfirmPassword"].ToString());
 
     try
     {
@@ -238,5 +241,5 @@ app.MapPost("/api/sites/{siteId:guid}/content/status", async (Guid siteId, BulkS
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode().RequireAuthorization();
 app.Run();
 
-public sealed record AIGenerateApiRequest(string Content, string? PromptKey, string? Culture, string? SystemPrompt, string? Model, double? Temperature, int? MaxOutputTokens, Guid? SiteId, string? UserId, string? PromptKeyOverride = null);
+public sealed record AIGenerateApiRequest(string Content, string? PromptKey, string? Culture, string? SystemPrompt, string? Model, double? Temperature, int? MaxOutputTokens, Guid? SiteId, string? UserId);
 public sealed record PlannerAIRequest(string? Culture, string? UserId);
