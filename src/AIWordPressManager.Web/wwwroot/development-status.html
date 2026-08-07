@@ -1,133 +1,37 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AI WordPress Manager — حالة التطوير</title>
-  <style>
-    :root{color-scheme:dark;--bg:#0b1220;--panel:#111b2e;--panel2:#17233a;--text:#f4f7fb;--muted:#9fb0c7;--border:#263651;--accent:#d4af37;--good:#3fb984;--work:#5aa7ff;--plan:#8797ad;--blocked:#e16464}
-    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    a{color:inherit}.shell{width:min(1500px,96vw);margin:auto;padding:26px 0 48px}.top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:22px}
-    .brand small{color:var(--accent);font-weight:700;letter-spacing:.08em}.brand h1{margin:7px 0 6px;font-size:clamp(25px,4vw,42px)}.brand p{margin:0;color:var(--muted);max-width:850px;line-height:1.7}
-    .top-actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:10px;text-decoration:none;cursor:pointer;font-weight:600}.btn.primary{background:var(--accent);color:#151515;border-color:var(--accent)}
-    .notice{border:1px solid #705d1e;background:#2a2514;color:#f4df91;padding:12px 15px;border-radius:12px;margin-bottom:18px;line-height:1.6}
-    .metrics{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin-bottom:18px}.metric{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}.metric span{color:var(--muted);display:block;margin-bottom:8px}.metric strong{font-size:30px}.metric small{display:block;color:var(--muted);margin-top:6px}
-    .progress-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:17px;margin-bottom:18px}.progress-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:10px}.track{height:14px;background:#26334a;border-radius:999px;overflow:hidden}.track span{display:block;height:100%;background:var(--good);width:0;transition:width .35s}.legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:12px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:5px}
-    .controls{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:10px;background:var(--panel);border:1px solid var(--border);padding:14px;border-radius:14px;margin-bottom:18px}input,select{width:100%;background:#0c1525;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px;font:inherit}
-    .phase-grid{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:10px;margin-bottom:20px}.phase-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;text-align:right;color:inherit}.phase-card.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}.phase-card b{display:block;color:var(--accent);margin-bottom:5px}.phase-card span{display:block;font-weight:700}.phase-card small{display:block;color:var(--muted);margin-top:7px}.mini-track{height:7px;background:#28354a;border-radius:999px;overflow:hidden;margin-top:10px}.mini-track i{display:block;height:100%;background:var(--good)}
-    .table-wrap{overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:right;padding:12px;border-bottom:1px solid var(--border);vertical-align:top}th{position:sticky;top:0;background:#17233a;color:#d7e1ee}tbody tr:hover{background:#142039}.id{font-family:Consolas,monospace;color:#b8c6d9}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.completed{background:#163d30;color:#7ee4b3}.in_progress{background:#173653;color:#83c3ff}.planned{background:#2b3442;color:#c0c9d6}.blocked{background:#4a2428;color:#ff9c9c}.priority-critical{color:#ff9b9b}.priority-high{color:#ffd67c}.priority-medium{color:#8dc7ff}.priority-low{color:#b6c2d2}.muted{color:var(--muted)}
-    .empty{padding:40px;text-align:center;color:var(--muted)}.footer{color:var(--muted);text-align:center;margin-top:18px;line-height:1.8}.error{background:#431f24;border:1px solid #8c3943;padding:16px;border-radius:12px}
-    @media(max-width:1100px){.metrics{grid-template-columns:repeat(3,1fr)}.phase-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.metrics{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:1fr}.phase-grid{grid-template-columns:1fr 1fr}.shell{width:94vw}.metric strong{font-size:25px}}@media(max-width:450px){.metrics,.phase-grid{grid-template-columns:1fr}}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI WordPress Manager — حالة التطوير</title>
+<style>
+:root{color-scheme:dark;--bg:#09111f;--panel:#111c30;--panel2:#17253d;--text:#f4f7fb;--muted:#9fb0c7;--border:#293b59;--accent:#d4af37;--good:#42bd88;--work:#5da9ff;--plan:#8c9bb0;--blocked:#e46b70}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}button,input,select{font:inherit}.shell{width:min(1500px,96vw);margin:auto;padding:24px 0 48px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}.brand small{color:var(--accent);font-weight:800}.brand h1{margin:7px 0;font-size:clamp(25px,4vw,42px)}.brand p,.muted{color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:10px;text-decoration:none;cursor:pointer;font-weight:700}.btn:hover,.btn:focus{border-color:var(--accent)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#161616}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 16px;border-bottom:1px solid var(--border);padding-bottom:10px}.tab{border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:11px 17px;border-radius:10px;cursor:pointer;font-weight:800}.tab.active{background:var(--accent);color:#151515;border-color:var(--accent)}.panel{display:none}.panel.active{display:block}.notice,.card,.progress,.controls,.table-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px}.notice{padding:13px 15px;margin-bottom:16px;color:#f3dda0}.metrics{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px}.metric{padding:16px;cursor:pointer}.metric:hover{border-color:var(--accent)}.metric span{color:var(--muted);display:block}.metric strong{font-size:30px;display:block;margin-top:7px}.progress{padding:17px;margin-top:14px}.progress-head{display:flex;justify-content:space-between}.track{height:14px;background:#263550;border-radius:999px;overflow:hidden;margin-top:11px}.track span,.mini i{display:block;height:100%;background:var(--good)}.phase-grid{display:grid;grid-template-columns:repeat(4,minmax(210px,1fr));gap:12px}.phase-card{padding:16px;text-align:right;color:inherit;cursor:pointer}.phase-card:hover,.phase-card.active{border-color:var(--accent)}.phase-card b{color:var(--accent)}.phase-card span,.phase-card small{display:block;margin-top:6px}.phase-card small{color:var(--muted)}.mini{height:7px;background:#283954;border-radius:999px;overflow:hidden;margin-top:11px}.controls{display:grid;grid-template-columns:2fr repeat(3,1fr) auto;gap:9px;padding:13px;margin-bottom:14px}input,select{width:100%;background:#0a1528;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1120px}th,td{text-align:right;padding:12px;border-bottom:1px solid var(--border);vertical-align:top}th{position:sticky;top:0;background:var(--panel2)}tbody tr:hover{background:#14213a}.id{font-family:Consolas,monospace;color:#c1cede}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.completed{background:#163d30;color:#83e8ba}.in_progress{background:#173854;color:#8bc8ff}.planned{background:#2c3645;color:#c6d0dd}.blocked{background:#4c252a;color:#ffa4a7}.task-actions{display:flex;gap:6px}.mini-btn{background:#0b172a;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:6px 8px;cursor:pointer}.verify-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.verify-card{padding:17px}.verify-card h3{margin-top:0}.verify-card code{display:block;background:#091323;padding:10px;border-radius:8px;direction:ltr;text-align:left;overflow:auto}.empty{padding:38px;text-align:center;color:var(--muted)}.footer{text-align:center;color:var(--muted);margin-top:18px}.toast{position:fixed;left:20px;bottom:20px;background:#193c31;border:1px solid #3b9a75;padding:11px 15px;border-radius:10px;display:none;z-index:20}.error{background:#431f24;border:1px solid #8c3943;padding:16px;border-radius:12px}
+@media(max-width:1050px){.metrics{grid-template-columns:repeat(3,1fr)}.phase-grid{grid-template-columns:repeat(2,1fr)}.verify-grid{grid-template-columns:1fr}.controls{grid-template-columns:1fr 1fr}}@media(max-width:620px){.metrics,.phase-grid,.controls{grid-template-columns:1fr}.shell{width:94vw}}
+</style>
 </head>
-<body>
-<main class="shell">
-  <header class="top">
-    <div class="brand">
-      <small>AI WORDPRESS MANAGER • DEVELOPMENT CONTROL</small>
-      <h1>خطة البرنامج وحالة التطوير</h1>
-      <p>لوحة موحدة للمراحل والوظائف المنتهية وقيد التنفيذ والمخططة. البيانات تُقرأ مباشرة من سجل JSON المعتمد داخل المستودع.</p>
-    </div>
-    <div class="top-actions">
-      <a class="btn" href="/">العودة للتطبيق</a>
-      <a class="btn" href="/development-status.json" target="_blank">فتح سجل JSON</a>
-      <button class="btn primary" id="reload" type="button">تحديث البيانات</button>
-    </div>
-  </header>
-
-  <div class="notice">الحالة <b>Completed</b> تعني أن الوظيفة منفذة وفق السجل، لكن أي وظيفة مذكور في ملاحظاتها أن التحقق لم يكتمل تظل بحاجة إلى Build أو Runtime verification قبل اعتمادها للإنتاج.</div>
-
-  <section class="metrics" aria-label="ملخص حالة التطوير">
-    <article class="metric"><span>إجمالي الوظائف</span><strong id="total">—</strong><small>كل المراحل</small></article>
-    <article class="metric"><span>منتهية</span><strong id="completed">—</strong><small id="completedPct">—</small></article>
-    <article class="metric"><span>قيد التنفيذ</span><strong id="working">—</strong><small>عمل جزئي أو نشط</small></article>
-    <article class="metric"><span>متبقية</span><strong id="remaining">—</strong><small>Planned + Blocked</small></article>
-    <article class="metric"><span>الإصدار الأساسي</span><strong id="version" style="font-size:22px">—</strong><small id="branch">—</small></article>
-  </section>
-
-  <section class="progress-panel">
-    <div class="progress-head"><strong>نسبة الإنجاز الإجمالية</strong><b id="progressText">—</b></div>
-    <div class="track"><span id="progressBar"></span></div>
-    <div class="legend">
-      <span><i class="dot" style="background:var(--good)"></i>منتهي</span>
-      <span><i class="dot" style="background:var(--work)"></i>قيد التنفيذ</span>
-      <span><i class="dot" style="background:var(--plan)"></i>مخطط</span>
-      <span><i class="dot" style="background:var(--blocked)"></i>متوقف</span>
-    </div>
-  </section>
-
-  <section class="controls" aria-label="مرشحات الوظائف">
-    <input id="search" type="search" placeholder="ابحث بالاسم أو المعرف أو المجال أو الملاحظات...">
-    <select id="phase"><option value="all">كل المراحل</option></select>
-    <select id="status"><option value="all">كل الحالات</option><option value="completed">منتهي</option><option value="in_progress">قيد التنفيذ</option><option value="planned">مخطط</option><option value="blocked">متوقف</option></select>
-    <select id="priority"><option value="all">كل الأولويات</option><option value="critical">حرجة</option><option value="high">عالية</option><option value="medium">متوسطة</option><option value="low">منخفضة</option></select>
-  </section>
-
-  <section id="phases" class="phase-grid" aria-label="مراحل التنفيذ"></section>
-
-  <section class="table-wrap">
-    <table>
-      <thead><tr><th>المعرف</th><th>المرحلة</th><th>المجال</th><th>الوظيفة</th><th>الحالة</th><th>الأولوية</th><th>الإصدار</th><th>الوضع الحالي / الملاحظات</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <div id="empty" class="empty" hidden>لا توجد وظائف مطابقة للفلاتر الحالية.</div>
-  </section>
-
-  <footer class="footer">
-    <div id="updated">آخر تحديث: —</div>
-    <div>المصدر المعتمد: <code>wwwroot/development-status.json</code> • الخطة: <code>docs/PROGRAM_MASTER_PLAN.md</code></div>
-  </footer>
-</main>
+<body><main class="shell">
+<header class="top"><div class="brand"><small>AI WORDPRESS MANAGER • DEVELOPMENT CONTROL</small><h1>خطة البرنامج وحالة التطوير</h1><p>لوحة تفاعلية للمراحل والوظائف والتحقق. مصدر البيانات الوحيد هو ملف JSON داخل المستودع.</p></div><div class="actions"><a class="btn" href="/">العودة للتطبيق</a><a class="btn" href="/development-status.json" target="_blank" rel="noopener">فتح JSON</a><button class="btn" id="exportCsv">تصدير CSV</button><button class="btn primary" id="reload">تحديث البيانات</button></div></header>
+<nav class="tabs" aria-label="أقسام لوحة التطوير"><button class="tab active" data-tab="overview">الملخص</button><button class="tab" data-tab="phases">المراحل</button><button class="tab" data-tab="tasks">الوظائف</button><button class="tab" data-tab="verification">التحقق</button></nav>
+<section id="overview" class="panel active"><div class="notice">اضغط على أي بطاقة حالة لفتح تبويب الوظائف مفلترًا تلقائيًا.</div><div class="metrics"><article class="card metric" data-status="all"><span>إجمالي الوظائف</span><strong id="total">—</strong></article><article class="card metric" data-status="completed"><span>منتهية</span><strong id="completed">—</strong><small id="completedPct"></small></article><article class="card metric" data-status="in_progress"><span>قيد التنفيذ</span><strong id="working">—</strong></article><article class="card metric" data-status="planned"><span>مخططة</span><strong id="planned">—</strong></article><article class="card metric" data-status="blocked"><span>متوقفة</span><strong id="blocked">—</strong></article></div><div class="progress"><div class="progress-head"><strong>نسبة الإنجاز الإجمالية</strong><b id="progressText">—</b></div><div class="track"><span id="progressBar"></span></div><p class="muted"><span id="version"></span> • <span id="branch"></span></p></div></section>
+<section id="phases" class="panel"><div id="phaseGrid" class="phase-grid"></div></section>
+<section id="tasks" class="panel"><div class="controls"><input id="search" type="search" placeholder="بحث بالمعرف أو الاسم أو المجال أو الملاحظات"><select id="phase"><option value="all">كل المراحل</option></select><select id="status"><option value="all">كل الحالات</option><option value="completed">منتهي</option><option value="in_progress">قيد التنفيذ</option><option value="planned">مخطط</option><option value="blocked">متوقف</option></select><select id="priority"><option value="all">كل الأولويات</option><option value="critical">حرجة</option><option value="high">عالية</option><option value="medium">متوسطة</option><option value="low">منخفضة</option></select><button class="btn" id="resetFilters">مسح الفلاتر</button></div><div class="table-wrap"><table><thead><tr><th>المعرف</th><th>المرحلة</th><th>المجال</th><th>الوظيفة</th><th>الحالة</th><th>الأولوية</th><th>الإصدار</th><th>الملاحظات</th><th>إجراء</th></tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty" hidden>لا توجد نتائج مطابقة.</div></div></section>
+<section id="verification" class="panel"><div class="verify-grid"><article class="card verify-card"><h3>Build نظيف</h3><p class="muted">استعادة وبناء الحل بالكامل.</p><code>dotnet restore .\AIWordPressManager.Web.sln
+dotnet build .\AIWordPressManager.Web.sln -c Debug</code></article><article class="card verify-card"><h3>تشغيل الاختبارات</h3><p class="muted">تشغيل مجموعة xUnit بعد البناء.</p><code>dotnet test .\AIWordPressManager.Web.sln -c Debug --no-build</code></article><article class="card verify-card"><h3>Smoke Test</h3><p class="muted">تشغيل التطبيق وفتح الشاشات الأساسية.</p><code>dotnet run --project .\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj</code></article></div><div class="card" style="padding:17px;margin-top:14px"><h3>وظائف الجودة</h3><div id="verificationTasks"></div></div></section>
+<footer class="footer"><div id="updated">آخر تحديث: —</div><div>المصدر: <code>wwwroot/development-status.json</code> • الخطة: <code>docs/PROGRAM_MASTER_PLAN.md</code></div></footer></main><div id="toast" class="toast"></div>
 <script>
-(() => {
-  const labels={completed:'منتهي',in_progress:'قيد التنفيذ',planned:'مخطط',blocked:'متوقف'};
-  const priorityLabels={critical:'حرجة',high:'عالية',medium:'متوسطة',low:'منخفضة'};
-  let data=null;
-  const $=id=>document.getElementById(id);
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  async function load(){
-    try{
-      const response=await fetch('/development-status.json',{cache:'no-store'});
-      if(!response.ok) throw new Error('HTTP '+response.status);
-      data=await response.json();
-      fillPhaseSelect(); renderAll();
-    }catch(error){
-      document.querySelector('.shell').innerHTML='<div class="error"><h2>تعذر تحميل حالة التطوير</h2><p>'+esc(error.message)+'</p><p>تأكد أن ملف <code>/development-status.json</code> موجود وأن التطبيق يعمل من نفس العنوان.</p></div>';
-    }
-  }
-  function fillPhaseSelect(){
-    const select=$('phase');
-    select.innerHTML='<option value="all">كل المراحل</option>'+data.phases.map(p=>`<option value="${p.id}">المرحلة ${p.id}: ${esc(p.nameAr)}</option>`).join('');
-  }
-  function counts(items){return items.reduce((a,f)=>(a[f.status]=(a[f.status]||0)+1,a),{completed:0,in_progress:0,planned:0,blocked:0});}
-  function renderMetrics(){
-    const c=counts(data.features), total=data.features.length, pct=total?Math.round(c.completed*100/total):0;
-    $('total').textContent=total;$('completed').textContent=c.completed;$('working').textContent=c.in_progress;$('remaining').textContent=c.planned+c.blocked;
-    $('completedPct').textContent=pct+'% من الإجمالي';$('progressText').textContent=pct+'%';$('progressBar').style.width=pct+'%';$('version').textContent='v'+data.baselineVersion;$('branch').textContent='Branch: '+data.branch;
-    $('updated').textContent='آخر تحديث: '+new Date(data.updatedAtUtc).toLocaleString('ar-EG');
-  }
-  function renderPhases(){
-    const active=$('phase').value;
-    $('phases').innerHTML=data.phases.map(p=>{
-      const items=data.features.filter(f=>f.phase===p.id), c=counts(items), pct=items.length?Math.round(c.completed*100/items.length):0;
-      return `<button type="button" class="phase-card ${String(p.id)===active?'active':''}" data-phase="${p.id}"><b>المرحلة ${p.id}</b><span>${esc(p.nameAr)}</span><small>${c.completed} من ${items.length} منتهية • ${c.in_progress} قيد التنفيذ</small><div class="mini-track"><i style="width:${pct}%"></i></div></button>`;
-    }).join('');
-    document.querySelectorAll('.phase-card').forEach(b=>b.addEventListener('click',()=>{$('phase').value=b.dataset.phase;renderAll();}));
-  }
-  function filtered(){
-    const q=$('search').value.trim().toLowerCase(), phase=$('phase').value, status=$('status').value, priority=$('priority').value;
-    return data.features.filter(f=>(phase==='all'||String(f.phase)===phase)&&(status==='all'||f.status===status)&&(priority==='all'||f.priority===priority)&&(!q||[f.id,f.area,f.nameAr,f.nameEn,f.notes,f.version].join(' ').toLowerCase().includes(q)));
-  }
-  function renderRows(){
-    const list=filtered(), phaseMap=new Map(data.phases.map(p=>[p.id,p]));
-    $('rows').innerHTML=list.map(f=>`<tr><td class="id">${esc(f.id)}</td><td>${f.phase} — ${esc(phaseMap.get(f.phase)?.nameAr||'')}</td><td>${esc(f.area)}</td><td><b>${esc(f.nameAr)}</b><div class="muted">${esc(f.nameEn)}</div></td><td><span class="badge ${esc(f.status)}">${labels[f.status]||esc(f.status)}</span></td><td class="priority-${esc(f.priority)}">${priorityLabels[f.priority]||esc(f.priority)}</td><td>${esc(f.version||'—')}</td><td class="muted">${esc(f.notes||'')}</td></tr>`).join('');
-    $('empty').hidden=list.length>0;
-  }
-  function renderAll(){renderMetrics();renderPhases();renderRows();}
-  ['search','phase','status','priority'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',renderAll));
-  $('reload').addEventListener('click',load);
-  load();
-})();
-</script>
-</body>
-</html>
+(()=>{const labels={completed:'منتهي',in_progress:'قيد التنفيذ',planned:'مخطط',blocked:'متوقف'},priorityLabels={critical:'حرجة',high:'عالية',medium:'متوسطة',low:'منخفضة'};let data=null;const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(text){const e=$('toast');e.textContent=text;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',1800)}
+function activateTab(name){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===name));history.replaceState(null,'','#'+name)}
+async function load(){try{const r=await fetch('/development-status.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);data=await r.json();fillPhaseSelect();renderAll();toast('تم تحديث البيانات')}catch(e){document.querySelector('.shell').innerHTML='<div class="error"><h2>تعذر تحميل حالة التطوير</h2><p>'+esc(e.message)+'</p></div>'}}
+function counts(items){return items.reduce((a,f)=>(a[f.status]=(a[f.status]||0)+1,a),{completed:0,in_progress:0,planned:0,blocked:0})}
+function fillPhaseSelect(){const s=$('phase'),old=s.value;s.innerHTML='<option value="all">كل المراحل</option>'+data.phases.map(p=>`<option value="${p.id}">المرحلة ${p.id}: ${esc(p.nameAr)}</option>`).join('');if([...s.options].some(x=>x.value===old))s.value=old}
+function renderMetrics(){const c=counts(data.features),t=data.features.length,p=t?Math.round(c.completed*100/t):0;$('total').textContent=t;$('completed').textContent=c.completed;$('working').textContent=c.in_progress;$('planned').textContent=c.planned;$('blocked').textContent=c.blocked;$('completedPct').textContent=p+'% من الإجمالي';$('progressText').textContent=p+'%';$('progressBar').style.width=p+'%';$('version').textContent='v'+data.baselineVersion;$('branch').textContent='Branch: '+data.branch;$('updated').textContent='آخر تحديث: '+new Date(data.updatedAtUtc).toLocaleString('ar-EG')}
+function renderPhases(){const active=$('phase').value;$('phaseGrid').innerHTML=data.phases.map(p=>{const items=data.features.filter(f=>f.phase===p.id),c=counts(items),pct=items.length?Math.round(c.completed*100/items.length):0;return `<button class="card phase-card ${String(p.id)===active?'active':''}" data-phase="${p.id}"><b>المرحلة ${p.id}</b><span>${esc(p.nameAr)}</span><small>${c.completed}/${items.length} منتهية • ${c.in_progress} قيد التنفيذ</small><div class="mini"><i style="width:${pct}%"></i></div></button>`}).join('');document.querySelectorAll('.phase-card').forEach(b=>b.onclick=()=>{$('phase').value=b.dataset.phase;activateTab('tasks');renderAll()})}
+function filtered(){const q=$('search').value.trim().toLowerCase(),phase=$('phase').value,status=$('status').value,priority=$('priority').value;return data.features.filter(f=>(phase==='all'||String(f.phase)===phase)&&(status==='all'||f.status===status)&&(priority==='all'||f.priority===priority)&&(!q||[f.id,f.area,f.nameAr,f.nameEn,f.notes,f.version].join(' ').toLowerCase().includes(q)))}
+function renderRows(){const list=filtered(),pm=new Map(data.phases.map(p=>[p.id,p]));$('rows').innerHTML=list.map(f=>`<tr><td class="id">${esc(f.id)}</td><td>${f.phase} — ${esc(pm.get(f.phase)?.nameAr||'')}</td><td>${esc(f.area)}</td><td><b>${esc(f.nameAr)}</b><div class="muted">${esc(f.nameEn)}</div></td><td><span class="badge ${esc(f.status)}">${labels[f.status]||esc(f.status)}</span></td><td>${priorityLabels[f.priority]||esc(f.priority)}</td><td>${esc(f.version||'—')}</td><td>${esc(f.notes||'')}</td><td><div class="task-actions"><button class="mini-btn copy-id" data-id="${esc(f.id)}">نسخ المعرف</button></div></td></tr>`).join('');$('empty').hidden=list.length>0;document.querySelectorAll('.copy-id').forEach(b=>b.onclick=async()=>{await navigator.clipboard.writeText(b.dataset.id);toast('تم نسخ '+b.dataset.id)})}
+function renderVerification(){const items=data.features.filter(f=>f.phase===9);$('verificationTasks').innerHTML=items.map(f=>`<p><span class="badge ${esc(f.status)}">${labels[f.status]}</span> <b class="id">${esc(f.id)}</b> — ${esc(f.nameAr)}</p>`).join('')}
+function renderAll(){renderMetrics();renderPhases();renderRows();renderVerification()}
+function reset(){['search'].forEach(x=>$(x).value='');['phase','status','priority'].forEach(x=>$(x).value='all');renderAll()}
+function exportCsv(){const pm=new Map(data.phases.map(p=>[p.id,p.nameAr])),rows=[['ID','Phase','Area','Arabic name','English name','Status','Priority','Version','Notes'],...filtered().map(f=>[f.id,pm.get(f.phase),f.area,f.nameAr,f.nameEn,f.status,f.priority,f.version||'',f.notes||''])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='AIWordPressManager-development-status.csv';a.click();URL.revokeObjectURL(a.href);toast('تم تصدير CSV')}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateTab(b.dataset.tab));document.querySelectorAll('.metric').forEach(c=>c.onclick=()=>{$('status').value=c.dataset.status;activateTab('tasks');renderRows()});['search','phase','status','priority'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',renderAll));$('resetFilters').onclick=reset;$('reload').onclick=load;$('exportCsv').onclick=exportCsv;activateTab(location.hash.slice(1)||'overview');load()})();
+</script></body></html>
