@@ -84,14 +84,7 @@ public sealed class DatabaseSetupService(
         var provider = NormalizeProvider(request.Provider);
         var connectionString = BuildConnectionString(provider, request);
 
-        if (string.IsNullOrWhiteSpace(request.AdminUserName))
-            throw new InvalidOperationException("Administrator username is required.");
-        if (string.IsNullOrWhiteSpace(request.AdminPassword))
-            throw new InvalidOperationException("Administrator password is required.");
-        if (string.IsNullOrWhiteSpace(request.AdminConfirmPassword))
-            throw new InvalidOperationException("Administrator password confirmation is required.");
-
-        logger.LogInformation("Applying first-run database setup for provider {Provider}.", provider);
+        logger.LogInformation("Applying database setup for provider {Provider}.", provider);
 
         WriteConfigurationFile(ConfigurationPath, provider, connectionString, false);
         ReloadConfiguration();
@@ -103,20 +96,38 @@ public sealed class DatabaseSetupService(
                 .GetRequiredService<IDatabaseInitializationService>()
                 .InitializeAsync(cancellationToken);
 
-            var accountResult = await scope.ServiceProvider
-                .GetRequiredService<LocalAuthenticationService>()
-                .CreateInitialAdministratorAsync(
+            var authentication = scope.ServiceProvider.GetRequiredService<LocalAuthenticationService>();
+            var hasExistingAccounts = await authentication.HasAccountsAsync(cancellationToken);
+
+            if (!hasExistingAccounts)
+            {
+                if (string.IsNullOrWhiteSpace(request.AdminUserName))
+                    throw new InvalidOperationException("Administrator username is required for a new database.");
+                if (string.IsNullOrWhiteSpace(request.AdminPassword))
+                    throw new InvalidOperationException("Administrator password is required for a new database.");
+                if (string.IsNullOrWhiteSpace(request.AdminConfirmPassword))
+                    throw new InvalidOperationException("Administrator password confirmation is required for a new database.");
+
+                var accountResult = await authentication.CreateInitialAdministratorAsync(
                     request.AdminUserName,
                     request.AdminPassword,
                     request.AdminConfirmPassword,
                     cancellationToken);
 
-            if (!accountResult.IsSuccess)
-                throw new InvalidOperationException(accountResult.Message);
+                if (!accountResult.IsSuccess)
+                    throw new InvalidOperationException(accountResult.Message);
+            }
+
+            // Preserve existing accounts on recovery and assign any legacy unowned sites
+            // to the existing/custom administrator without creating a duplicate admin.
+            await authentication.SeedAsync(cancellationToken);
 
             WriteConfigurationFile(ConfigurationPath, provider, connectionString, true);
             ReloadConfiguration();
-            logger.LogInformation("First-run database setup completed for provider {Provider}.", provider);
+            logger.LogInformation(
+                "Database setup completed for provider {Provider}. Existing accounts detected: {ExistingAccounts}.",
+                provider,
+                hasExistingAccounts);
         }
         catch
         {
@@ -155,7 +166,7 @@ public sealed class DatabaseSetupService(
 <body>
 <div class="shell">
   <div class="brand"><div class="logo">AI</div><div><h1>AI WordPress Manager</h1><p>First-run setup</p></div></div>
-  <div class="steps"><div class="step active"><strong>1. Database</strong><br>Choose storage and connection</div><div class="step active"><strong>2. Administrator</strong><br>Create the first admin account</div><div class="step"><strong>3. Sign in</strong><br>Continue to the application</div></div>
+  <div class="steps"><div class="step active"><strong>1. Database</strong><br>Choose storage and connection</div><div class="step active"><strong>2. Administrator</strong><br>Create the first admin when needed</div><div class="step"><strong>3. Sign in</strong><br>Continue to the application</div></div>
   <div class="card">
     {{errorHtml}}
     <form method="post" action="/setup">
@@ -181,10 +192,10 @@ public sealed class DatabaseSetupService(
           <div class="full"><label class="row"><input type="checkbox" name="trustServerCertificate" value="true"> Trust server certificate</label><div class="help">Use only when the database uses an internal or self-signed TLS certificate.</div></div>
         </div>
 
-        <div class="section-title"><h2>Administrator account</h2><p>This becomes the first application administrator. No default password will be created.</p></div>
-        <div class="full"><label>Administrator username</label><input name="adminUserName" value="{{H(adminUser)}}" required minlength="3" maxlength="64" autocomplete="username"></div>
-        <div><label>Administrator password</label><input name="adminPassword" type="password" required minlength="8" autocomplete="new-password"><div class="help">At least 8 characters with uppercase, lowercase and a number.</div></div>
-        <div><label>Confirm administrator password</label><input name="adminConfirmPassword" type="password" required minlength="8" autocomplete="new-password"></div>
+        <div class="section-title"><h2>Administrator account</h2><p>Required for a new/empty database. If the selected database already contains application accounts, the existing accounts are preserved and these fields are ignored.</p></div>
+        <div class="full"><label>Administrator username</label><input name="adminUserName" value="{{H(adminUser)}}" minlength="3" maxlength="64" autocomplete="username"></div>
+        <div><label>Administrator password</label><input name="adminPassword" type="password" minlength="8" autocomplete="new-password"><div class="help">For a new database: at least 8 characters with uppercase, lowercase and a number.</div></div>
+        <div><label>Confirm administrator password</label><input name="adminConfirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
       </div>
       <div class="actions"><div class="note">Setup is stored locally on this machine and is not committed to Git.</div><button class="primary" type="submit">Test, initialize and continue →</button></div>
     </form>
