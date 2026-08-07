@@ -13,11 +13,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo ====================================================
-echo  AI WordPress Manager - Install / Update Utility
-echo ====================================================
-echo.
-
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Install-First-Time.ps1" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 
