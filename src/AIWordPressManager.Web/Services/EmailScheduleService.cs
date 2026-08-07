@@ -14,7 +14,10 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         return await dbContext.EmailSchedules.AsNoTracking()
             .Where(x => x.OwnerUserId == ownerId && x.SiteId == siteId && x.Scope == EmailSchedule.SiteScope)
             .OrderBy(x => x.NextRunUtc)
-            .Select(x => ToView(x))
+            .Select(x => new EmailScheduleView(
+                x.Id, x.SiteId, x.Scope, x.ReportType, x.TemplateKey, x.TimezoneId, x.Frequency,
+                x.TimeOfDay, x.Weekday, x.MonthDay, x.IsEnabled, x.RetryCount, x.RetryDelayMinutes,
+                x.NextRunUtc, x.LastRunUtc, x.LastStatus, x.LastError))
             .ToListAsync(cancellationToken);
     }
 
@@ -28,13 +31,7 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         ValidateInput(input);
 
         var now = DateTime.UtcNow;
-        var nextRun = EmailScheduleCalculator.CalculateNextRunUtc(
-            input.TimezoneId,
-            input.Frequency,
-            input.TimeOfDay,
-            input.Weekday,
-            input.MonthDay,
-            now);
+        var nextRun = CalculateNext(input, now);
 
         var schedule = new EmailSchedule(
             ownerId,
@@ -45,16 +42,7 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
             input.TimezoneId,
             now);
 
-        schedule.Configure(
-            input.Frequency,
-            input.TimeOfDay,
-            input.Weekday,
-            input.MonthDay,
-            input.RetryCount,
-            input.RetryDelayMinutes,
-            input.IsEnabled,
-            nextRun,
-            now);
+        ApplyTiming(schedule, input, nextRun, now);
 
         dbContext.EmailSchedules.Add(schedule);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -70,28 +58,16 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
             .FirstOrDefaultAsync(x => x.Id == scheduleId && x.OwnerUserId == ownerId, cancellationToken)
             ?? throw new KeyNotFoundException("Email schedule was not found.");
 
+        if (!string.Equals(schedule.ReportType, input.ReportType.Trim(), StringComparison.Ordinal) ||
+            !string.Equals(schedule.TemplateKey, input.TemplateKey.Trim(), StringComparison.Ordinal))
+            throw new InvalidOperationException("Report type and template key cannot be changed after a schedule is created. Create a new schedule instead.");
+
         if (schedule.SiteId.HasValue)
             await EnsureOwnedSiteAsync(schedule.SiteId.Value, ownerId, cancellationToken);
 
         var now = DateTime.UtcNow;
-        var nextRun = EmailScheduleCalculator.CalculateNextRunUtc(
-            input.TimezoneId,
-            input.Frequency,
-            input.TimeOfDay,
-            input.Weekday,
-            input.MonthDay,
-            now);
-
-        schedule.Configure(
-            input.Frequency,
-            input.TimeOfDay,
-            input.Weekday,
-            input.MonthDay,
-            input.RetryCount,
-            input.RetryDelayMinutes,
-            input.IsEnabled,
-            nextRun,
-            now);
+        var nextRun = CalculateNext(input, now);
+        ApplyTiming(schedule, input, nextRun, now);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToView(schedule);
@@ -122,6 +98,28 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         if (string.IsNullOrWhiteSpace(input.ReportType)) throw new ArgumentException("Report type is required.");
         if (string.IsNullOrWhiteSpace(input.TemplateKey)) throw new ArgumentException("Template key is required.");
     }
+
+    private static DateTime CalculateNext(EmailScheduleInput input, DateTime utcNow) =>
+        EmailScheduleCalculator.CalculateNextRunUtc(
+            input.TimezoneId,
+            input.Frequency,
+            input.TimeOfDay,
+            input.Weekday,
+            input.MonthDay,
+            utcNow);
+
+    private static void ApplyTiming(EmailSchedule schedule, EmailScheduleInput input, DateTime nextRun, DateTime utcNow) =>
+        schedule.Configure(
+            input.TimezoneId,
+            input.Frequency,
+            input.TimeOfDay,
+            input.Weekday,
+            input.MonthDay,
+            input.RetryCount,
+            input.RetryDelayMinutes,
+            input.IsEnabled,
+            nextRun,
+            utcNow);
 
     private static EmailScheduleView ToView(EmailSchedule x) => new(
         x.Id,
