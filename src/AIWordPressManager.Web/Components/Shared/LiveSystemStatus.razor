@@ -1,0 +1,28 @@
+@inject AppLanguageService L
+
+<AppCard Title="@(L.IsArabic ? "حالة النظام" : "System Status")" Class="live-system-status">
+    <div class="status-grid">
+        <AppBadge Tone="success" Icon="●">
+            @(L.IsArabic ? "النظام يعمل" : "System Online")
+        </AppBadge>
+
+        <div class="status-item">
+            <span>@(L.IsArabic ? "آخر مزامنة" : "Last Sync")</span>
+            <strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm")</strong>
+        </div>
+
+        <div class="status-item">
+            <span>@(L.IsArabic ? "الأتمتة" : "Automation")</span>
+            <strong>@(L.IsArabic ? "جاهزة" : "Ready")</strong>
+        </div>
+
+        <div class="status-item">
+            <span>@(L.IsArabic ? "المهام المعلقة" : "Pending Jobs")</span>
+            <strong>0</strong>
+        </div>
+    </div>
+</AppCard>
+
+<style>
+.status-grid{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.status-item{display:flex;flex-direction:column;gap:4px;font-size:13px}.status-item span{opacity:.7}.status-item strong{font-size:14px}
+</style>
