@@ -3,7 +3,7 @@
 @inject DashboardLiveService DashboardService
 
 <AppCard Title="@(L.IsArabic ? "حالة النظام" : "System Status")" Class="live-system-status">
-    @if (_dashboard is null)
+    @if (_dashboard is null && string.IsNullOrEmpty(_errorMessage))
     {
         <div class="status-grid">
             <AppBadge Tone="warning" Icon="◌">
@@ -14,29 +14,29 @@
     else
     {
         <div class="status-grid">
-            <AppBadge Tone="success" Icon="●">
-                @(L.IsArabic ? "النظام يعمل" : "System Online")
+            <AppBadge Tone="@(_hasError ? "danger" : "success")" Icon="●">
+                @(_hasError ? (L.IsArabic ? "خطأ في الاتصال" : "Connection Error") : (L.IsArabic ? "النظام يعمل" : "System Online"))
             </AppBadge>
 
-            <div class="status-item">
-                <span>@(L.IsArabic ? "آخر مزامنة" : "Last Sync")</span>
-                <strong>@(_dashboard.LastSynchronizationAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</strong>
-            </div>
-
-            <div class="status-item">
-                <span>@(L.IsArabic ? "صحة النظام" : "Health")</span>
-                <strong>@_dashboard.HealthScore%</strong>
-            </div>
-
-            <div class="status-item">
-                <span>@(L.IsArabic ? "المهام النشطة" : "Active Jobs")</span>
-                <strong>@_dashboard.ActiveJobs</strong>
-            </div>
-
-            <div class="status-item">
-                <span>@(L.IsArabic ? "المهام الفاشلة" : "Failed Jobs")</span>
-                <strong>@_dashboard.FailedJobs</strong>
-            </div>
+            @if (_dashboard is not null)
+            {
+                <div class="status-item">
+                    <span>@(L.IsArabic ? "آخر مزامنة" : "Last Sync")</span>
+                    <strong>@(_dashboard.LastSynchronizationAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</strong>
+                </div>
+                <div class="status-item">
+                    <span>@(L.IsArabic ? "صحة النظام" : "Health")</span>
+                    <strong>@_dashboard.HealthScore%</strong>
+                </div>
+                <div class="status-item">
+                    <span>@(L.IsArabic ? "المهام النشطة" : "Active Jobs")</span>
+                    <strong>@_dashboard.ActiveJobs</strong>
+                </div>
+                <div class="status-item">
+                    <span>@(L.IsArabic ? "المهام الفاشلة" : "Failed Jobs")</span>
+                    <strong>@_dashboard.FailedJobs</strong>
+                </div>
+            }
         </div>
     }
 </AppCard>
@@ -44,7 +44,10 @@
 @code {
     private DashboardLiveView? _dashboard;
     private PeriodicTimer? _refreshTimer;
-    private CancellationTokenSource _refreshCts = new();
+    private readonly CancellationTokenSource _refreshCts = new();
+    private string? _errorMessage;
+    private bool _hasError;
+    private bool _refreshing;
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,8 +57,25 @@
 
     private async Task RefreshAsync()
     {
-        _dashboard = await DashboardService.GetAsync();
-        await InvokeAsync(StateHasChanged);
+        if (_refreshing) return;
+
+        try
+        {
+            _refreshing = true;
+            _hasError = false;
+            _errorMessage = null;
+            _dashboard = await DashboardService.GetAsync();
+        }
+        catch (Exception ex)
+        {
+            _hasError = true;
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _refreshing = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task RunRefreshLoopAsync()
