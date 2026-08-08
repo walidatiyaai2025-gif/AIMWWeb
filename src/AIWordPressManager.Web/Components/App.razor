@@ -1,5 +1,8 @@
+@using AIWordPressManager.Web.Localization
+@inject UiDirectionService DirectionService
+
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="@DirectionService.Language" dir="@DirectionService.Direction">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -52,7 +55,7 @@
     <script src="js/app-theme.js"></script>
     <HeadOutlet />
 </head>
-<body dir="ltr">
+<body dir="@DirectionService.Direction">
     <Routes @rendermode="InteractiveServer" />
     <script src="js/app-language.js"></script>
     <script src="js/command-palette.js"></script>
