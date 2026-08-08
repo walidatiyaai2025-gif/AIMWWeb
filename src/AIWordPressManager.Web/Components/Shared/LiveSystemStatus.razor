@@ -1,27 +1,53 @@
 @inject AppLanguageService L
+@inject DashboardLiveService DashboardService
 
 <AppCard Title="@(L.IsArabic ? "حالة النظام" : "System Status")" Class="live-system-status">
-    <div class="status-grid">
-        <AppBadge Tone="success" Icon="●">
-            @(L.IsArabic ? "النظام يعمل" : "System Online")
-        </AppBadge>
-
-        <div class="status-item">
-            <span>@(L.IsArabic ? "آخر مزامنة" : "Last Sync")</span>
-            <strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm")</strong>
+    @if (_dashboard is null)
+    {
+        <div class="status-grid">
+            <AppBadge Tone="warning" Icon="◌">
+                @(L.IsArabic ? "جاري التحميل" : "Loading")
+            </AppBadge>
         </div>
+    }
+    else
+    {
+        <div class="status-grid">
+            <AppBadge Tone="success" Icon="●">
+                @(L.IsArabic ? "النظام يعمل" : "System Online")
+            </AppBadge>
 
-        <div class="status-item">
-            <span>@(L.IsArabic ? "الأتمتة" : "Automation")</span>
-            <strong>@(L.IsArabic ? "جاهزة" : "Ready")</strong>
-        </div>
+            <div class="status-item">
+                <span>@(L.IsArabic ? "آخر مزامنة" : "Last Sync")</span>
+                <strong>@(_dashboard.LastSynchronizationAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</strong>
+            </div>
 
-        <div class="status-item">
-            <span>@(L.IsArabic ? "المهام المعلقة" : "Pending Jobs")</span>
-            <strong>0</strong>
+            <div class="status-item">
+                <span>@(L.IsArabic ? "صحة النظام" : "Health")</span>
+                <strong>@_dashboard.HealthScore%</strong>
+            </div>
+
+            <div class="status-item">
+                <span>@(L.IsArabic ? "المهام النشطة" : "Active Jobs")</span>
+                <strong>@_dashboard.ActiveJobs</strong>
+            </div>
+
+            <div class="status-item">
+                <span>@(L.IsArabic ? "المهام الفاشلة" : "Failed Jobs")</span>
+                <strong>@_dashboard.FailedJobs</strong>
+            </div>
         </div>
-    </div>
+    }
 </AppCard>
+
+@code {
+    private DashboardLiveView? _dashboard;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dashboard = await DashboardService.GetAsync();
+    }
+}
 
 <style>
 .status-grid{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.status-item{display:flex;flex-direction:column;gap:4px;font-size:13px}.status-item span{opacity:.7}.status-item strong{font-size:14px}
