@@ -22,6 +22,13 @@ public sealed class DomainApplicationTests
         site.UpdatedAtUtc.Should().Be(now);
     }
 
+    [Fact]
+    public void SiteConnectionStatus_NotTested_Remains_Compatible_With_Unknown()
+    {
+        ((int)SiteConnectionStatus.NotTested).Should().Be((int)SiteConnectionStatus.Unknown);
+        SiteConnectionStatus.NotTested.Should().Be(SiteConnectionStatus.Unknown);
+    }
+
     [Theory]
     [InlineData("ftp://example.com")]
     [InlineData("file:///c:/wordpress")]
