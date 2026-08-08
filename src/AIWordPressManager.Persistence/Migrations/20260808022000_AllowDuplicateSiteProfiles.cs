@@ -11,26 +11,17 @@ public partial class AllowDuplicateSiteProfiles : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropIndex(
-            name: "IX_Sites_SiteUrl",
-            table: "Sites");
+        // Older databases may contain either the original global unique index
+        // or the intermediate owner+URL unique index. Remove both defensively.
+        migrationBuilder.Sql("DROP INDEX IF EXISTS IX_Sites_SiteUrl;");
+        migrationBuilder.Sql("DROP INDEX IF EXISTS IX_Sites_OwnerUserId_SiteUrl;");
 
-        migrationBuilder.CreateIndex(
-            name: "IX_Sites_OwnerUserId_SiteUrl",
-            table: "Sites",
-            columns: new[] { "OwnerUserId", "SiteUrl" });
+        migrationBuilder.Sql("CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId_SiteUrl ON Sites (OwnerUserId, SiteUrl);");
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropIndex(
-            name: "IX_Sites_OwnerUserId_SiteUrl",
-            table: "Sites");
-
-        migrationBuilder.CreateIndex(
-            name: "IX_Sites_SiteUrl",
-            table: "Sites",
-            column: "SiteUrl",
-            unique: true);
+        migrationBuilder.Sql("DROP INDEX IF EXISTS IX_Sites_OwnerUserId_SiteUrl;");
+        migrationBuilder.Sql("CREATE UNIQUE INDEX IF NOT EXISTS IX_Sites_SiteUrl ON Sites (SiteUrl);");
     }
 }
