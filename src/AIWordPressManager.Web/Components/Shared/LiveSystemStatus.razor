@@ -1,3 +1,4 @@
+@implements IAsyncDisposable
 @inject AppLanguageService L
 @inject DashboardLiveService DashboardService
 
@@ -42,10 +43,37 @@
 
 @code {
     private DashboardLiveView? _dashboard;
+    private PeriodicTimer? _refreshTimer;
+    private CancellationTokenSource _refreshCts = new();
 
     protected override async Task OnInitializedAsync()
     {
+        await RefreshAsync();
+        _ = RunRefreshLoopAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
         _dashboard = await DashboardService.GetAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RunRefreshLoopAsync()
+    {
+        _refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+        while (await _refreshTimer.WaitForNextTickAsync(_refreshCts.Token))
+        {
+            await RefreshAsync();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _refreshCts.Cancel();
+        _refreshTimer?.Dispose();
+        _refreshCts.Dispose();
+        await Task.CompletedTask;
     }
 }
 
