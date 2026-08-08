@@ -40,41 +40,6 @@ public sealed class SiteWebService(
     {
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
-        var normalizedKey = GetNormalizedUrlKey(normalizedUri);
-
-        // The database currently has a global UNIQUE index on Sites.SiteUrl.
-        // Therefore the duplicate check must also see soft-deleted rows and rows
-        // belonging to another owner. Otherwise the query filter can hide a row
-        // that SQLite still considers unique and SaveChanges will fail with
-        // SQLite error 19.
-        var existingSite = await dbContext.Sites
-            .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.SiteUrl.TrimEnd('/').ToLower() == normalizedKey, cancellationToken);
-
-        if (existingSite is not null)
-        {
-            if (existingSite.OwnerUserId != OwnerId)
-                throw new InvalidOperationException("This website URL is already registered.");
-
-            if (!existingSite.IsDeleted)
-                throw new InvalidOperationException("This site has already been added to your account.");
-
-            existingSite.Restore(DateTime.UtcNow);
-            existingSite.SetName(name.Trim(), DateTime.UtcNow);
-            existingSite.SetSiteUrl(normalizedUri, DateTime.UtcNow);
-
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
-            {
-                throw new InvalidOperationException("This website URL is already registered.", ex);
-            }
-
-            return existingSite.Id;
-        }
-
         var site = new Site(name.Trim(), normalizedUri, DateTime.UtcNow, OwnerId);
         dbContext.Sites.Add(site);
 
@@ -84,7 +49,7 @@ public sealed class SiteWebService(
         }
         catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
         {
-            throw new InvalidOperationException("This website URL is already registered.", ex);
+            throw new InvalidOperationException("The site profile could not be created because of a database uniqueness constraint. Apply the latest database migration and try again.", ex);
         }
 
         return site.Id;
@@ -94,7 +59,6 @@ public sealed class SiteWebService(
     {
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
-        await EnsureUniqueUrlAsync(normalizedUri, siteId, cancellationToken);
         var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var now = DateTime.UtcNow;
         site.SetName(name.Trim(), now);
@@ -106,7 +70,7 @@ public sealed class SiteWebService(
         }
         catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
         {
-            throw new InvalidOperationException("This website URL is already registered.", ex);
+            throw new InvalidOperationException("The site profile could not be updated because of a database uniqueness constraint. Apply the latest database migration and try again.", ex);
         }
     }
 
@@ -197,31 +161,6 @@ public sealed class SiteWebService(
         return await query.FirstOrDefaultAsync(x => x.Id == siteId && x.OwnerUserId == OwnerId, cancellationToken)
             ?? throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
     }
-
-    private async Task EnsureUniqueUrlAsync(Uri uri, Guid? exceptSiteId, CancellationToken cancellationToken)
-    {
-        var normalizedKey = GetNormalizedUrlKey(uri);
-        var sites = await dbContext.Sites
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Select(x => new { x.Id, x.OwnerUserId, x.IsDeleted, x.SiteUrl })
-            .ToListAsync(cancellationToken);
-
-        var conflict = sites.FirstOrDefault(x => x.Id != exceptSiteId && GetNormalizedUrlKey(x.SiteUrl) == normalizedKey);
-        if (conflict is null)
-            return;
-
-        if (conflict.OwnerUserId != OwnerId)
-            throw new InvalidOperationException("This website URL is already registered.");
-
-        throw new InvalidOperationException("This site has already been added to your account.");
-    }
-
-    private static string GetNormalizedUrlKey(Uri uri) =>
-        uri.GetLeftPart(UriPartial.Authority).TrimEnd('/').ToLowerInvariant();
-
-    private static string GetNormalizedUrlKey(string value) =>
-        value.TrimEnd('/').ToLowerInvariant();
 
     private static void ValidateName(string? name)
     {

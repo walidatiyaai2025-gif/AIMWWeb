@@ -33,11 +33,11 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
         });
         modelBuilder.Entity("AIWordPressManager.Domain.Entities.Site", b =>
         {
-            b.Property<Guid>("Id"); b.Property<string>("Name").IsRequired().HasMaxLength(200); b.Property<string>("SiteUrl").IsRequired().HasMaxLength(2048);
+            b.Property<Guid>("Id"); b.Property<string>("Name").IsRequired().HasMaxLength(200); b.Property<string>("SiteUrl").IsRequired().HasMaxLength(2048); b.Property<Guid?>("OwnerUserId");
             b.Property<string>("HomeUrl").HasMaxLength(2048); b.Property<string>("WordPressVersion").HasMaxLength(50); b.Property<string>("LanguageCode").HasMaxLength(20);
             b.Property<string>("ConnectionStatus").IsRequired().HasMaxLength(40); b.Property<DateTime?>("LastConnectionTestAtUtc"); b.Property<bool>("IsDeleted").HasDefaultValue(false); b.Property<DateTime?>("DeletedAtUtc");
             b.Property<DateTime>("CreatedAtUtc"); b.Property<DateTime>("UpdatedAtUtc"); b.Property<byte[]>("ConcurrencyToken").IsConcurrencyToken().IsRequired();
-            b.HasKey("Id"); b.HasIndex("SiteUrl").IsUnique(); b.ToTable("Sites");
+            b.HasKey("Id"); b.HasIndex("OwnerUserId", "SiteUrl"); b.HasIndex("OwnerUserId"); b.ToTable("Sites");
         });
         modelBuilder.Entity("AIWordPressManager.Domain.Entities.SiteCredential", b =>
         {

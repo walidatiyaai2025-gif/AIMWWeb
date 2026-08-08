@@ -18,7 +18,7 @@ public sealed class SiteConfiguration : IEntityTypeConfiguration<Site>
         builder.Property(x => x.LanguageCode).HasMaxLength(20);
         builder.Property(x => x.ConnectionStatus).HasConversion<string>().HasMaxLength(40).IsRequired();
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-        builder.HasIndex(x => new { x.OwnerUserId, x.SiteUrl }).IsUnique();
+        builder.HasIndex(x => new { x.OwnerUserId, x.SiteUrl });
         builder.HasIndex(x => x.OwnerUserId);
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
