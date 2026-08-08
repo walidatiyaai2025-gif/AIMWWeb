@@ -46,7 +46,7 @@
                 </select>
             </label>
 
-            <label><span>@(L.IsArabic ? "الوقت المحلي" : "Local time")</span><input type="time" @bind="_timeText" disabled="@_busy" /></label>
+            <label><span>@(L.IsArabic ? "الوقت المحلي" : "Local time")</span><input type="time" value="@_timeText" @onchange="TimeChanged" disabled="@_busy" /></label>
 
             @if (_frequency == "Weekly")
             {
@@ -145,6 +145,11 @@
         }
         catch (Exception ex) { Fail(ex.Message); }
         finally { _loading = false; }
+    }
+
+    private void TimeChanged(ChangeEventArgs e)
+    {
+        _timeText = e.Value?.ToString() ?? string.Empty;
     }
 
     private async Task CreateClicked(MouseEventArgs _)
