@@ -35,7 +35,7 @@
         <AppCard
             Class="site-create-panel"
             Eyebrow="@(_editingId.HasValue ? (L.IsArabic ? "تعديل الاتصال" : "EDIT CONNECTION") : (L.IsArabic ? "اتصال جديد" : "NEW CONNECTION"))"
-            Title="@(_editingId.HasValue ? (L.IsArabic ? "تعديل بيانات الموقع" : "Edit site profile") : L["AddNewSite"])"
+            Title="@(_editingId.HasValue ? (L.IsArabic ? "تعديل بيانات الموقع" : "Edit site profile") : L["AddNewSite"] )"
             Subtitle="@(L.IsArabic ? "راجع الاسم والرابط قبل الحفظ." : "Review the name and URL before saving.")">
             <Header>
                 <button type="button" class="icon-button" @onclick="CloseForm" aria-label="Close">×</button>
@@ -266,7 +266,9 @@
     private void Warn(string message) { _message = message; _isError = true; }
     private void Fail(string message, string? details = null) { _message = message; _isError = true; Notifications.Error(message, L["Sites"], details); }
 
-    private void Changed(object? sender, EventArgs e) => InvokeAsync(StateHasChanged);
+    // AppLanguageService.Changed is Action?, not EventHandler.
+    // Keep the handler parameterless so += / -= match the exact delegate type.
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() { L.Changed -= Changed; _searchDebounce?.Dispose(); }
 
     private static string Initials(string value) => string.Join(string.Empty, value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
