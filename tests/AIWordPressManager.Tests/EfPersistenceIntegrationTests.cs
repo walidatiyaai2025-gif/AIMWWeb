@@ -70,42 +70,103 @@ public sealed class EfPersistenceIntegrationTests
     }
 
     [Fact]
-    public async Task ReRegistering_A_SoftDeleted_Site_Does_Not_Hit_SiteUrl_Unique_Constraint()
+    public async Task Registering_The_Same_Url_Creates_Independent_Site_Profiles()
     {
         await using var fixture = await SqliteFixture.CreateAsync();
         var now = DateTime.UtcNow;
-        var original = new Site("Old Site", new Uri("https://deleted.example"), now);
-        fixture.Context.Sites.Add(original);
-        fixture.Context.SiteCredentials.Add(new SiteCredential(original.Id, "old-user", "old-password", now));
-        await fixture.Context.SaveChangesAsync();
-
-        original.SoftDelete(now.AddMinutes(1));
-        await fixture.Context.SaveChangesAsync();
-        fixture.Context.ChangeTracker.Clear();
-
         var service = new SiteManagementService(
             fixture.Context,
             new PassThroughSecretProtectionService(),
-            new FixedClock(now.AddMinutes(2)));
+            new FixedClock(now));
 
-        var result = await service.CreateAsync(
-            new CreateSiteRequest(
-                "Restored Site",
-                "https://deleted.example/",
-                "new-user",
-                "new-password",
-                null,
-                null,
-                null));
+        var first = await service.CreateAsync(new CreateSiteRequest(
+            "Primary Profile",
+            "https://same.example/",
+            "primary-user",
+            "primary-password",
+            null,
+            null,
+            null));
+        var second = await service.CreateAsync(new CreateSiteRequest(
+            "Secondary Profile",
+            "https://same.example",
+            "secondary-user",
+            "secondary-password",
+            null,
+            null,
+            null));
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(original.Id);
+        first.IsSuccess.Should().BeTrue();
+        second.IsSuccess.Should().BeTrue();
+        first.Value.Should().NotBe(second.Value);
 
-        var restored = await fixture.Context.Sites.IgnoreQueryFilters().SingleAsync(x => x.Id == original.Id);
-        restored.IsDeleted.Should().BeFalse();
-        restored.Name.Should().Be("Restored Site");
+        var profiles = await fixture.Context.Sites
+            .IgnoreQueryFilters()
+            .Where(x => x.SiteUrl == "https://same.example")
+            .OrderBy(x => x.Name)
+            .ToListAsync();
 
-        var credential = await fixture.Context.SiteCredentials.SingleAsync(x => x.SiteId == original.Id);
+        profiles.Should().HaveCount(2);
+        profiles.Select(x => x.Id).Should().Contain(new[] { first.Value, second.Value });
+        profiles.Select(x => x.Name).Should().Contain(new[] { "Primary Profile", "Secondary Profile" });
+
+        var credentials = await fixture.Context.SiteCredentials
+            .Where(x => profiles.Select(p => p.Id).Contains(x.SiteId))
+            .OrderBy(x => x.UserName)
+            .ToListAsync();
+
+        credentials.Should().HaveCount(2);
+        credentials.Select(x => x.UserName).Should().Contain(new[] { "primary-user", "secondary-user" });
+        credentials.Select(x => x.ProtectedApplicationPassword).Should().Contain(new[] { "primary-password", "secondary-password" });
+    }
+
+    [Fact]
+    public async Task Registering_A_Url_After_Soft_Delete_Creates_A_New_Profile()
+    {
+        await using var fixture = await SqliteFixture.CreateAsync();
+        var now = DateTime.UtcNow;
+        var service = new SiteManagementService(
+            fixture.Context,
+            new PassThroughSecretProtectionService(),
+            new FixedClock(now));
+
+        var original = await service.CreateAsync(new CreateSiteRequest(
+            "Old Site",
+            "https://deleted.example",
+            "old-user",
+            "old-password",
+            null,
+            null,
+            null));
+        original.IsSuccess.Should().BeTrue();
+
+        var delete = await service.DeleteAsync(original.Value);
+        delete.IsSuccess.Should().BeTrue();
+        fixture.Context.ChangeTracker.Clear();
+
+        var replacement = await service.CreateAsync(new CreateSiteRequest(
+            "Replacement Site",
+            "https://deleted.example/",
+            "new-user",
+            "new-password",
+            null,
+            null,
+            null));
+
+        replacement.IsSuccess.Should().BeTrue();
+        replacement.Value.Should().NotBe(original.Value);
+
+        var profiles = await fixture.Context.Sites
+            .IgnoreQueryFilters()
+            .Where(x => x.SiteUrl == "https://deleted.example")
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+
+        profiles.Should().HaveCount(2);
+        profiles.Single(x => x.Id == original.Value).IsDeleted.Should().BeTrue();
+        profiles.Single(x => x.Id == replacement.Value).IsDeleted.Should().BeFalse();
+
+        var credential = await fixture.Context.SiteCredentials.SingleAsync(x => x.SiteId == replacement.Value);
         credential.UserName.Should().Be("new-user");
         credential.ProtectedApplicationPassword.Should().Be("new-password");
     }
