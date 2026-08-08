@@ -61,9 +61,7 @@ public sealed class SiteManagementService(
         string password;
         try
         {
-            password = await secretProtectionService.UnprotectAsync(
-                record.Credential.ProtectedApplicationPassword,
-                cancellationToken);
+            password = await secretProtectionService.UnprotectAsync(record.Credential.ProtectedApplicationPassword, cancellationToken);
         }
         catch (CryptographicException)
         {
@@ -74,12 +72,7 @@ public sealed class SiteManagementService(
             return null;
         }
 
-        return new SiteConnectionDataDto(
-            record.Id,
-            record.Name,
-            record.SiteUrl,
-            record.Credential.UserName,
-            password);
+        return new SiteConnectionDataDto(record.Id, record.Name, record.SiteUrl, record.Credential.UserName, password);
     }
 
     public async Task<Result<Guid>> CreateAsync(CreateSiteRequest request, CancellationToken cancellationToken = default)
@@ -90,63 +83,19 @@ public sealed class SiteManagementService(
         var normalizedUrl = siteUri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
         var now = clock.UtcNow;
 
-        // Include soft-deleted rows in the lookup. SQLite still enforces the
-        // unique SiteUrl index for soft-deleted records, so the old query could
-        // miss the row and fail later at SaveChanges with SQLite error 19.
-        var existingSite = await dbContext.Sites
-            .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(x => x.SiteUrl == normalizedUrl, cancellationToken);
-
-        if (existingSite is not null)
-        {
-            var credential = await dbContext.SiteCredentials
-                .IgnoreQueryFilters()
-                .SingleOrDefaultAsync(x => x.SiteId == existingSite.Id, cancellationToken);
-
-            if (!existingSite.IsDeleted && credential is not null)
-                return Result.Failure<Guid>(new Error("Sites.Duplicate", "This WordPress site is already registered."));
-
-            existingSite.Restore(now);
-            existingSite.SetName(request.Name, now);
-            existingSite.UpdateDiscovery(request.HomeUrl, request.WordPressVersion, request.LanguageCode, now);
-            existingSite.RecordConnectionStatus(SiteConnectionStatus.Connected, now);
-
-            var protectedPassword = await secretProtectionService.ProtectAsync(
-                request.ApplicationPassword,
-                cancellationToken);
-
-            if (credential is null)
-            {
-                dbContext.SiteCredentials.Add(
-                    new SiteCredential(existingSite.Id, request.UserName, protectedPassword, now));
-            }
-            else
-            {
-                credential.SetUserName(request.UserName, now);
-                credential.SetProtectedApplicationPassword(protectedPassword, now);
-            }
-
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
-            {
-                return Result.Failure<Guid>(new Error("Sites.Duplicate", "This WordPress site is already registered."));
-            }
-
-            return Result.Success(existingSite.Id);
-        }
-
-        var site = new Site(request.Name, siteUri, now);
+        // A URL is a connection target, not a unique profile. Every CreateAsync
+        // call intentionally creates a new Site row, including when a matching
+        // active or soft-deleted URL already exists. Credentials and settings
+        // therefore remain isolated by Site.Id.
+        var site = new Site(request.Name, new Uri(normalizedUrl), now);
         site.UpdateDiscovery(request.HomeUrl, request.WordPressVersion, request.LanguageCode, now);
         site.RecordConnectionStatus(SiteConnectionStatus.Connected, now);
 
-        var protectedNewPassword = await secretProtectionService.ProtectAsync(request.ApplicationPassword, cancellationToken);
-        var newCredential = new SiteCredential(site.Id, request.UserName, protectedNewPassword, now);
+        var protectedPassword = await secretProtectionService.ProtectAsync(request.ApplicationPassword, cancellationToken);
+        var credential = new SiteCredential(site.Id, request.UserName, protectedPassword, now);
 
         dbContext.Sites.Add(site);
-        dbContext.SiteCredentials.Add(newCredential);
+        dbContext.SiteCredentials.Add(credential);
 
         try
         {
@@ -154,10 +103,7 @@ public sealed class SiteManagementService(
         }
         catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
         {
-            // A concurrent create can pass the pre-check and race us to the
-            // unique index. Convert that database exception into the same
-            // domain result returned by the normal duplicate path.
-            return Result.Failure<Guid>(new Error("Sites.Duplicate", "This WordPress site is already registered."));
+            return Result.Failure<Guid>(new Error("Sites.CreateFailed", "The site profile could not be created because the database still has a uniqueness constraint on the site URL. Apply the latest database migration and retry."));
         }
 
         return Result.Success(site.Id);
@@ -194,11 +140,6 @@ public sealed class SiteManagementService(
         return Result.Success();
     }
 
-    private static bool IsSqliteUniqueConstraintViolation(DbUpdateException exception)
-    {
-        return exception.InnerException is SqliteException
-        {
-            SqliteErrorCode: 19
-        };
-    }
+    private static bool IsSqliteUniqueConstraintViolation(DbUpdateException exception) =>
+        exception.InnerException is SqliteException { SqliteErrorCode: 19 };
 }
