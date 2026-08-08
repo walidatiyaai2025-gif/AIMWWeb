@@ -1,5 +1,8 @@
+using AIWordPressManager.Application.Abstractions;
+using AIWordPressManager.Application.Sites;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
+using AIWordPressManager.Persistence.Sites;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +67,61 @@ public sealed class EfPersistenceIntegrationTests
 
         foreignKey.Properties.Should().ContainSingle(x => x.Name == nameof(SiteCredential.SiteId));
         foreignKey.IsRequired.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ReRegistering_A_SoftDeleted_Site_Does_Not_Hit_SiteUrl_Unique_Constraint()
+    {
+        await using var fixture = await SqliteFixture.CreateAsync();
+        var now = DateTime.UtcNow;
+        var original = new Site("Old Site", new Uri("https://deleted.example"), now);
+        fixture.Context.Sites.Add(original);
+        fixture.Context.SiteCredentials.Add(new SiteCredential(original.Id, "old-user", "old-password", now));
+        await fixture.Context.SaveChangesAsync();
+
+        original.SoftDelete(now.AddMinutes(1));
+        await fixture.Context.SaveChangesAsync();
+        fixture.Context.ChangeTracker.Clear();
+
+        var service = new SiteManagementService(
+            fixture.Context,
+            new PassThroughSecretProtectionService(),
+            new FixedClock(now.AddMinutes(2)));
+
+        var result = await service.CreateAsync(
+            new CreateSiteRequest(
+                "Restored Site",
+                "https://deleted.example/",
+                "new-user",
+                "new-password",
+                null,
+                null,
+                null));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(original.Id);
+
+        var restored = await fixture.Context.Sites.IgnoreQueryFilters().SingleAsync(x => x.Id == original.Id);
+        restored.IsDeleted.Should().BeFalse();
+        restored.Name.Should().Be("Restored Site");
+
+        var credential = await fixture.Context.SiteCredentials.SingleAsync(x => x.SiteId == original.Id);
+        credential.UserName.Should().Be("new-user");
+        credential.ProtectedApplicationPassword.Should().Be("new-password");
+    }
+
+    private sealed class PassThroughSecretProtectionService : ISecretProtectionService
+    {
+        public Task<string> ProtectAsync(string plainText, CancellationToken cancellationToken = default)
+            => Task.FromResult(plainText);
+
+        public Task<string> UnprotectAsync(string protectedValue, CancellationToken cancellationToken = default)
+            => Task.FromResult(protectedValue);
+    }
+
+    private sealed class FixedClock(DateTime utcNow) : IClock
+    {
+        public DateTime UtcNow { get; } = utcNow;
     }
 
     private sealed class SqliteFixture : IAsyncDisposable
