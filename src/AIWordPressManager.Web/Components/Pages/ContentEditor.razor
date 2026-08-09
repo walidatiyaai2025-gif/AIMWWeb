@@ -4,6 +4,8 @@
 @inject IWordPressPostEditorService EditorService
 @inject WordPressSyncWebService SyncService
 @inject SiteWebService SiteService
+@inject ApprovalWorkflowService ApprovalService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@L["EditContent"]</PageTitle>
@@ -21,7 +23,12 @@ else
     <div class="content-editor-page">
         <header class="editor-command-bar panel">
             <div class="editor-breadcrumbs"><a href="/sites">@L["Sites"]</a><span>/</span><a href="@($"/sites/{SiteId}")">@_site.Name</a><span>/</span><a href="@ExplorerUrl">@L["Content"]</a><span>/</span><strong>@(_model.ContentType == "post" ? L["Post"] : L["Page"]) #@_model.Id</strong></div>
-            <div class="editor-command-actions"><a class="btn" href="@ExplorerUrl">← @L["BackToExplorer"]</a>@if (!string.IsNullOrWhiteSpace(_model.Link)) { <a class="btn" href="@_model.Link" target="_blank">@L["ViewOnWordPress"] ↗</a> }<button type="button" class="btn primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button></div>
+            <div class="editor-command-actions">
+                <a class="btn" href="@ExplorerUrl">← @L["BackToExplorer"]</a>
+                @if (!string.IsNullOrWhiteSpace(_model.Link)) { <a class="btn" href="@_model.Link" target="_blank">@L["ViewOnWordPress"] ↗</a> }
+                <button type="button" class="btn" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال للموافقة" : "Send for approval"))</button>
+                <button type="button" class="btn primary" disabled="@(_saving || _submittingApproval)" @onclick="SaveAsync">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+            </div>
         </header>
 
         @if (!string.IsNullOrWhiteSpace(_message))
@@ -43,14 +50,8 @@ else
 
                     <section class="panel editor-content-card">
                         <div class="editor-card-head"><div><h2>@L["ContentHtml"]</h2><p>@(L.IsArabic ? "حرر محتوى WordPress بصيغة HTML مع معاينة مباشرة للنص." : "Edit WordPress HTML with a live text preview.")</p></div><div class="editor-view-toggle"><button type="button" class="@ViewClass("edit")" @onclick="ShowEdit">@(L.IsArabic ? "تحرير" : "Edit")</button><button type="button" class="@ViewClass("preview")" @onclick="ShowPreview">@(L.IsArabic ? "معاينة" : "Preview")</button></div></div>
-                        @if (_viewMode == "edit")
-                        {
-                            <InputTextArea class="content-editor-pro" @bind-Value="_model.Content" dir="ltr" />
-                        }
-                        else
-                        {
-                            <article class="content-preview">@((MarkupString)_model.Content)</article>
-                        }
+                        @if (_viewMode == "edit") { <InputTextArea class="content-editor-pro" @bind-Value="_model.Content" dir="ltr" /> }
+                        else { <article class="content-preview">@((MarkupString)_model.Content)</article> }
                     </section>
 
                     <section class="panel editor-excerpt-card">
@@ -75,7 +76,9 @@ else
                             <label><span>@L["PingStatus"]</span><InputSelect @bind-Value="_model.PingStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
                             @if (_model.ContentType == "post") { <label class="check-row"><InputCheckbox @bind-Value="_model.Sticky" /> <span>@L["StickyPost"]</span></label> }
                         </div>
-                        <button class="btn primary full" type="submit" disabled="@_saving">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                        <button class="btn primary full" type="submit" disabled="@(_saving || _submittingApproval)">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                        <button class="btn full" type="button" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(L.IsArabic ? "حفظ كمقترح للموافقة" : "Submit change for approval")</button>
+                        <small>@(L.IsArabic ? "التنفيذ بعد الموافقة يتحقق من نسخة WordPress مرة أخرى ولن يكتب فوق تعديل أحدث." : "Approved execution rechecks the WordPress version and will not overwrite a newer remote edit.")</small>
                     </section>
 
                     <section class="panel inspector-card">
@@ -115,7 +118,8 @@ else
 
     private AIWordPressManager.Domain.Entities.Site? _site;
     private EditorModel? _model;
-    private bool _loading = true, _saving, _isError;
+    private WordPressContentUpdateRequest? _baselineRequest;
+    private bool _loading = true, _saving, _submittingApproval, _isError;
     private string _viewMode = "edit";
     private string? _message;
     private IReadOnlyList<MediaExplorerItem> _media = Array.Empty<MediaExplorerItem>();
@@ -137,6 +141,7 @@ else
         if (result.IsSuccess)
         {
             _model = EditorModel.From(result.Value);
+            _baselineRequest = _model.ToRequest(result.Value.ModifiedGmt);
             var explorer = await SyncService.GetExplorerAsync(SiteId);
             _media = explorer.Media;
         }
@@ -154,14 +159,47 @@ else
         try
         {
             _saving = true; _isError = false; _message = null;
-            var result = await EditorService.UpdateAsync(SiteId, _model.ToRequest());
+            var expected = _baselineRequest?.ExpectedModifiedGmt;
+            var result = await EditorService.UpdateAsync(SiteId, _model.ToRequest(expected));
             if (result.IsFailure) { _isError = true; _message = L.TranslateMessage(result.Error.Message); return; }
             _message = L.TranslateMessage(result.Value.Message);
             _model.Link = result.Value.Link;
+            _baselineRequest = _model.ToRequest(result.Value.ModifiedGmt);
             await SyncService.SynchronizeAsync(SiteId);
         }
         catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
         finally { _saving = false; }
+    }
+
+    private Task SubmitForApprovalAsync()
+    {
+        if (_model is null || _site is null || _baselineRequest is null) return Task.CompletedTask;
+        try
+        {
+            _submittingApproval = true; _isError = false; _message = null;
+            var ownerUserId = CurrentUser.RequireUserId();
+            var after = _model.ToRequest(_baselineRequest.ExpectedModifiedGmt);
+            var approval = ApprovalService.Submit(
+                ownerUserId,
+                new ApprovalSubmission(
+                    SiteId,
+                    _site.Name,
+                    ApprovedChangePolicy.WordPressContentUpdateOperation,
+                    $"Update {_model.ContentType} #{_model.Id} — {PlainText(_model.Title)}",
+                    _baselineRequest,
+                    after,
+                    null,
+                    ApprovalRiskLevel.Medium,
+                    null,
+                    null),
+                CurrentUser.UserName);
+            _message = L.IsArabic
+                ? $"تم إرسال التعديل للموافقة. رقم الطلب: {approval.Id.ToString()[..8]}"
+                : $"Change submitted for approval. Request: {approval.Id.ToString()[..8]}";
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _submittingApproval = false; }
+        return Task.CompletedTask;
     }
 
     private IEnumerable<MediaExplorerItem> FilteredMedia => _media.Where(x => x.MediaType == "image" && (string.IsNullOrWhiteSpace(_mediaSearch) || x.Title.Contains(_mediaSearch, StringComparison.OrdinalIgnoreCase) || x.MimeType.Contains(_mediaSearch, StringComparison.OrdinalIgnoreCase)));
@@ -205,11 +243,15 @@ else
             Template = value.Template, CommentStatus = value.CommentStatus, PingStatus = value.PingStatus, Format = value.Format, Sticky = value.Sticky
         };
 
-        public WordPressContentUpdateRequest ToRequest() => new(ContentType, Id, Title, Slug, Status, Content, Excerpt,
+        public WordPressContentUpdateRequest ToRequest(DateTimeOffset? expectedModifiedGmt = null) => new(
+            ContentType, Id, Title, Slug, Status, Content, Excerpt,
             DateLocal.HasValue ? new DateTimeOffset(DateTime.SpecifyKind(DateLocal.Value, DateTimeKind.Local)).ToUniversalTime() : null,
-            FeaturedMediaId, ParseIds(CategoryIdsText), ParseIds(TagIdsText), Template, CommentStatus, PingStatus, Format, Sticky);
+            FeaturedMediaId, ParseIds(CategoryIdsText), ParseIds(TagIdsText), Template, CommentStatus, PingStatus, Format, Sticky,
+            expectedModifiedGmt, false);
 
-        private static IReadOnlyList<int> ParseIds(string? value) => (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(x => int.TryParse(x, out var id) ? id : 0).Where(x => x > 0).Distinct().ToArray();
+        private static IReadOnlyList<int> ParseIds(string? value) => (value ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => int.TryParse(x, out var id) ? id : 0)
+            .Where(x => x > 0).Distinct().ToArray();
     }
 }
