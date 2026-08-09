@@ -265,7 +265,15 @@ app.MapGet("/api/ai/usage", (int? take, Guid? siteId, string? userId, IAIUsageLo
 app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrator orchestrator, IAIPromptRegistry registry, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(input.Content)) return Results.BadRequest(new { error = "Content is required." });
-    var instruction = string.IsNullOrWhiteSpace(input.PromptKey) ? input.SystemPrompt : registry.Get(input.PromptKey, input.Culture ?? "en");
+
+    var instruction = input.SystemPrompt;
+    if (!string.IsNullOrWhiteSpace(input.PromptKey))
+    {
+        if (!registry.TryGet(input.PromptKey, input.Culture ?? "en", out var resolvedPrompt))
+            return Results.BadRequest(new { error = "Prompt template was not found or is disabled." });
+        instruction = resolvedPrompt;
+    }
+
     var result = await orchestrator.ExecuteAsync(new AIRequest(input.Content, instruction, input.Model, input.Temperature ?? 0.2, input.MaxOutputTokens ?? 1500, input.SiteId, input.UserId, input.PromptKey), cancellationToken);
     return result.IsSuccess ? Results.Ok(result) : Results.BadRequest(result);
 });
