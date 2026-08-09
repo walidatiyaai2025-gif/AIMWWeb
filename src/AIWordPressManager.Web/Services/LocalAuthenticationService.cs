@@ -168,7 +168,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
         var redirectPath = hasOwnedSites
             ? ResolveRedirectPath(returnUrl, user.LastPage)
-            : FirstRunLandingPath;
+            : ResolveRedirectPath(returnUrl, FirstRunLandingPath);
 
         return LoginResult.Succeeded(redirectPath);
     }

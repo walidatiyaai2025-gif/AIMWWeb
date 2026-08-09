@@ -110,6 +110,19 @@ app.Use(async (context, next) =>
 });
 
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    if (PublicEntryRouting.ShouldRedirectToLanding(
+            context.Request.Path.Value,
+            context.Request.Method,
+            context.User.Identity?.IsAuthenticated == true))
+    {
+        context.Response.Redirect(PublicEntryRouting.LandingPath);
+        return;
+    }
+
+    await next();
+});
 app.UseAuthorization();
 app.UseAntiforgery();
 
@@ -133,7 +146,7 @@ if (builder.Configuration.GetValue<bool>("Database:SetupComplete"))
 
 app.MapGet("/setup", (DatabaseSetupService setup) =>
 {
-    if (setup.IsComplete) return Results.Redirect("/login");
+    if (setup.IsComplete) return Results.Redirect(PublicEntryRouting.LandingPath);
     return Results.Content(setup.RenderPage(), "text/html; charset=utf-8");
 }).AllowAnonymous();
 
@@ -160,7 +173,7 @@ app.MapPost("/setup", async (HttpContext context, DatabaseSetupService setup, Ca
     try
     {
         await setup.ApplyAsync(request, cancellationToken);
-        return Results.Redirect("/login");
+        return Results.Redirect(PublicEntryRouting.LandingPath);
     }
     catch (Exception ex)
     {
@@ -169,31 +182,61 @@ app.MapPost("/setup", async (HttpContext context, DatabaseSetupService setup, Ca
     }
 }).AllowAnonymous().DisableAntiforgery();
 
-app.MapGet("/login", (HttpContext context) =>
+app.MapGet("/login", (HttpContext context, string? returnUrl, string? error) =>
 {
-    if (context.User.Identity?.IsAuthenticated == true) return Results.Redirect("/");
-    const string html = """
+    var safeReturnUrl = string.IsNullOrWhiteSpace(returnUrl)
+        ? string.Empty
+        : LocalAuthenticationService.ResolveRedirectPath(returnUrl, "/");
+
+    if (context.User.Identity?.IsAuthenticated == true)
+        return Results.Redirect(string.IsNullOrWhiteSpace(safeReturnUrl) ? "/" : safeReturnUrl);
+
+    const string htmlTemplate = """
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI WordPress Manager - Login</title><style>
-body{margin:0;font-family:Segoe UI,Arial;background:#111827;color:#f9fafb;display:grid;place-items:center;min-height:100vh}.card{width:min(390px,90vw);background:#1f2937;padding:32px;border-radius:16px;box-shadow:0 20px 60px #0008}.brand{font-size:24px;font-weight:700;margin-bottom:6px}.sub{color:#9ca3af;margin-bottom:24px}label{display:block;margin:14px 0 6px}input{width:100%;box-sizing:border-box;padding:12px;border-radius:8px;border:1px solid #4b5563;background:#111827;color:#fff}button{width:100%;margin-top:20px;padding:12px;border:0;border-radius:8px;background:#d4af37;color:#111827;font-weight:700;cursor:pointer}.remember{display:flex;gap:8px;align-items:center}.remember input{width:auto}</style></head>
-<body><form class="card" method="post" action="/login"><div class="brand">AI WordPress Manager</div><div class="sub">Sign in to continue</div><label>Username</label><input name="userName" autocomplete="username" required autofocus><label>Password</label><input type="password" name="password" autocomplete="current-password" required><label class="remember"><input type="checkbox" name="rememberMe" value="true"> Remember me</label><button type="submit">Sign in</button></form></body></html>
+body{margin:0;font-family:Segoe UI,Arial;background:radial-gradient(circle at 50% -10%,#0f513f55,transparent 34%),#0b0f17;color:#f9fafb;display:grid;place-items:center;min-height:100vh}.card{width:min(410px,90vw);background:#111827ee;padding:32px;border:1px solid #243244;border-radius:20px;box-shadow:0 24px 70px #0009}.brand{font-size:24px;font-weight:750;margin-bottom:6px}.sub{color:#9ca3af;margin-bottom:22px}.error{padding:11px 12px;margin-bottom:16px;border:1px solid #ef444455;border-radius:10px;background:#7f1d1d33;color:#fecaca;font-size:13px}label{display:block;margin:14px 0 6px}input{width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #374151;background:#0b0f17;color:#fff;outline:none}input:focus{border-color:#10b981;box-shadow:0 0 0 3px #10b98122}button{width:100%;margin-top:20px;padding:12px;border:0;border-radius:9px;background:#10b981;color:#062a1f;font-weight:800;cursor:pointer}.remember{display:flex;gap:8px;align-items:center}.remember input{width:auto}.back{display:block;margin-top:18px;text-align:center;color:#9ca3af;text-decoration:none;font-size:13px}.back:hover{color:#d1fae5}</style></head>
+<body><form class="card" method="post" action="/login"><div class="brand">AI WordPress Manager</div><div class="sub">Sign in to continue to your workspace</div>__ERROR_BLOCK__<input type="hidden" name="returnUrl" value="__RETURN_URL__"><label>Username</label><input name="userName" autocomplete="username" required autofocus><label>Password</label><input type="password" name="password" autocomplete="current-password" required><label class="remember"><input type="checkbox" name="rememberMe" value="true"> Remember me</label><button type="submit">Sign in</button><a class="back" href="/welcome">← Back to product overview</a></form></body></html>
 """;
+
+    var encodedReturnUrl = System.Net.WebUtility.HtmlEncode(safeReturnUrl);
+    var errorBlock = string.IsNullOrWhiteSpace(error)
+        ? string.Empty
+        : $"<div class=\"error\">{System.Net.WebUtility.HtmlEncode(error)}</div>";
+    var html = htmlTemplate
+        .Replace("__RETURN_URL__", encodedReturnUrl, StringComparison.Ordinal)
+        .Replace("__ERROR_BLOCK__", errorBlock, StringComparison.Ordinal);
+
     return Results.Content(html, "text/html");
 }).AllowAnonymous();
 
 app.MapPost("/login", async (HttpContext context, LocalAuthenticationService authentication, CancellationToken cancellationToken) =>
 {
     var form = await context.Request.ReadFormAsync(cancellationToken);
-    var result = await authentication.SignInAsync(context, form["userName"].ToString(), form["password"].ToString(), form["rememberMe"] == "true", cancellationToken);
+    var returnUrl = form["returnUrl"].ToString();
+    var result = await authentication.SignInAsync(
+        context,
+        form["userName"].ToString(),
+        form["password"].ToString(),
+        form["rememberMe"] == "true",
+        returnUrl,
+        cancellationToken);
+
     if (result.IsSuccess) return Results.Redirect(result.RedirectPath);
+
     var message = Uri.EscapeDataString(result.Message);
-    return Results.Redirect($"/login?error={message}");
+    var safeReturnUrl = string.IsNullOrWhiteSpace(returnUrl)
+        ? string.Empty
+        : LocalAuthenticationService.ResolveRedirectPath(returnUrl, "/");
+    var returnQuery = string.IsNullOrWhiteSpace(safeReturnUrl)
+        ? string.Empty
+        : $"&returnUrl={Uri.EscapeDataString(safeReturnUrl)}";
+    return Results.Redirect($"/login?error={message}{returnQuery}");
 }).AllowAnonymous().DisableAntiforgery();
 
 app.MapPost("/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Redirect("/login");
+    return Results.Redirect(PublicEntryRouting.LandingPath);
 }).DisableAntiforgery();
 
 app.Use(async (context, next) =>
