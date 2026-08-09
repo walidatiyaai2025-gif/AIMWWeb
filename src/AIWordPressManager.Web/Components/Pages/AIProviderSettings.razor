@@ -1,0 +1,265 @@
+@page "/settings/ai-providers"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrator")]
+@using AIWordPressManager.Application.Settings
+@inject IApplicationSettingsService SettingsService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "إعدادات مزودي الذكاء الاصطناعي" : "AI Provider Settings")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">AI PROVIDERS</span>
+            <h1>@(L.IsArabic ? "إعدادات مزودي الذكاء الاصطناعي" : "AI Provider Settings")</h1>
+            <p>@(L.IsArabic
+                ? "إدارة المزودات والنماذج والأولوية ومفاتيح API المشفرة. المفاتيح المحفوظة لا يتم عرضها مرة أخرى."
+                : "Manage providers, models, priority, and encrypted API keys. Saved keys are never displayed again.")</p>
+        </div>
+        <div class="settings-status">
+            <span>🔐</span>
+            <div>
+                <strong>@(L.IsArabic ? "تخزين مشفر" : "Encrypted storage")</strong>
+                <small>@(L.IsArabic ? "للمسؤولين فقط" : "Administrators only")</small>
+            </div>
+        </div>
+    </section>
+
+    <div class="settings-layout">
+        <nav class="panel settings-nav" aria-label="AI provider settings navigation">
+            <a href="/settings"><span>←</span><div><strong>@L["Settings"]</strong><small>@(L.IsArabic ? "العودة للإعدادات" : "Back to settings")</small></div></a>
+            <a href="#runtime"><span>AI</span><div><strong>@(L.IsArabic ? "سلوك التشغيل" : "Runtime behavior")</strong><small>@(L.IsArabic ? "التفعيل والبدائل" : "Enablement and fallback")</small></div></a>
+            <a href="#providers"><span>🔑</span><div><strong>@(L.IsArabic ? "المزودات والمفاتيح" : "Providers and keys")</strong><small>@(L.IsArabic ? "النماذج والأولوية" : "Models and priority")</small></div></a>
+        </nav>
+
+        <main class="settings-content">
+            @if (_loading)
+            {
+                <section class="panel settings-section"><p>@(L.IsArabic ? "جارٍ تحميل إعدادات الذكاء الاصطناعي..." : "Loading AI provider settings...")</p></section>
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <div class="alert @(_isError ? "error" : "success")">@_message</div>
+                }
+
+                <section id="runtime" class="panel settings-section">
+                    <header>
+                        <div><span class="workspace-kicker">RUNTIME</span><h2>@(L.IsArabic ? "سلوك تشغيل الذكاء الاصطناعي" : "AI runtime behavior")</h2><p>@(L.IsArabic ? "تحكم في تشغيل الذكاء الاصطناعي واستخدام المزود التالي عند فشل المزود الأعلى أولوية." : "Control AI execution and whether the runtime can use the next provider when the highest-priority provider fails.")</p></div>
+                    </header>
+                    <div class="settings-option-row">
+                        <div><strong>@(L.IsArabic ? "تشغيل ميزات الذكاء الاصطناعي" : "Enable AI features")</strong><small>@(L.IsArabic ? "إيقافه يمنع جميع طلبات AI من التطبيق." : "Turning this off prevents all application AI requests.")</small></div>
+                        <input type="checkbox" @bind="_enabled" />
+                    </div>
+                    <div class="settings-option-row">
+                        <div><strong>@(L.IsArabic ? "الانتقال التلقائي بين المزودات" : "Automatic provider fallback")</strong><small>@(L.IsArabic ? "عند التعطيل سيستخدم التطبيق أعلى مزود مفعل في الأولوية فقط." : "When disabled, only the highest-priority enabled provider is attempted.")</small></div>
+                        <input type="checkbox" @bind="_automaticFallback" />
+                    </div>
+                </section>
+
+                <section id="providers" class="panel settings-section">
+                    <header>
+                        <div><span class="workspace-kicker">PROVIDERS</span><h2>@(L.IsArabic ? "المزودات والمفاتيح" : "Providers and API keys")</h2><p>@(L.IsArabic ? "اترك حقل المفتاح فارغًا للاحتفاظ بالمفتاح الحالي. استخدم خيار الحذف لإزالته صراحةً." : "Leave a key field empty to preserve the current key. Use the remove option to explicitly delete it.")</p></div>
+                    </header>
+
+                    @foreach (var provider in _providers)
+                    {
+                        <article class="settings-subsection" @key="provider.Name">
+                            <div class="settings-option-row">
+                                <div>
+                                    <strong>@provider.Name</strong>
+                                    <small>@ProviderDescription(provider.Name)</small>
+                                </div>
+                                <span class="settings-badge @(provider.HasStoredKey ? "success" : string.Empty)">@KeyStatus(provider)</span>
+                            </div>
+
+                            <div class="database-info-grid">
+                                <label>
+                                    <small>@(L.IsArabic ? "مفعل" : "Enabled")</small>
+                                    <input type="checkbox" @bind="provider.Enabled" />
+                                </label>
+                                <label>
+                                    <small>@(L.IsArabic ? "الأولوية" : "Priority")</small>
+                                    <input type="number" min="1" max="20" @bind="provider.Priority" />
+                                </label>
+                                <label>
+                                    <small>@(L.IsArabic ? "النموذج" : "Model")</small>
+                                    <input @bind="provider.Model" autocomplete="off" />
+                                </label>
+                            </div>
+
+                            @if (provider.Name != "Ollama")
+                            {
+                                <div class="database-info-grid">
+                                    <label>
+                                        <small>@(provider.Name == "Puter" ? (L.IsArabic ? "Token جديد - اختياري" : "New token - optional") : (L.IsArabic ? "مفتاح API جديد" : "New API key"))</small>
+                                        <input type="password" @bind="provider.NewApiKey" autocomplete="new-password" placeholder="@(provider.HasStoredKey ? "••••••••••••" : string.Empty)" />
+                                    </label>
+                                    <label>
+                                        <small>@(L.IsArabic ? "إزالة المفتاح المحفوظ عند الحفظ" : "Remove saved key on save")</small>
+                                        <input type="checkbox" @bind="provider.RemoveStoredKey" disabled="@(!provider.HasStoredKey)" />
+                                    </label>
+                                </div>
+                            }
+
+                            @if (!RuntimeAdapterAvailable(provider.Name))
+                            {
+                                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "يمكن حفظ إعدادات هذا المزود الآن، لكن محول التشغيل الخاص به ليس مفعلاً في إصدار الخادم الحالي." : "This provider configuration can be stored now, but its runtime adapter is not enabled in the current server build.")</p></div>
+                            }
+                            else if (provider.Name == "Puter")
+                            {
+                                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "Token اختياري. عنوان Puter endpoint يظل إعداد خادم ويجب أن يكون HTTPS." : "The token is optional. The Puter endpoint remains a server setting and must use HTTPS.")</p></div>
+                            }
+                        </article>
+                    }
+
+                    <div class="settings-option-row">
+                        <div><strong>@(L.IsArabic ? "حفظ إعدادات المزودات" : "Save provider settings")</strong><small>@(L.IsArabic ? "المفاتيح الجديدة تُشفّر قبل حفظها ولا تعود إلى الواجهة كنص واضح." : "New keys are encrypted before persistence and are never returned to the UI as plaintext.")</small></div>
+                        <button class="btn primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ إعدادات AI" : "Save AI settings"))</button>
+                    </div>
+                </section>
+            }
+        </main>
+    </div>
+</div>
+
+@code {
+    private readonly List<ProviderEditModel> _providers = new();
+    private bool _loading = true;
+    private bool _saving;
+    private bool _enabled = true;
+    private bool _automaticFallback = true;
+    private bool _isError;
+    private string _message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _message = string.Empty;
+        try
+        {
+            var settings = await SettingsService.GetAiSettingsAsync();
+            _enabled = settings.Enabled;
+            _automaticFallback = settings.AutomaticFallback;
+            _providers.Clear();
+            _providers.AddRange(settings.Providers.Select(x => new ProviderEditModel
+            {
+                Name = x.Provider,
+                Enabled = x.Enabled,
+                Priority = x.Priority,
+                Model = x.Model,
+                HasStoredKey = x.HasApiKey && x.Provider != "Ollama"
+            }));
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.IsArabic ? $"تعذر تحميل الإعدادات: {ex.Message}" : $"Could not load settings: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _message = string.Empty;
+        _isError = false;
+        try
+        {
+            foreach (var provider in _providers)
+            {
+                provider.Priority = Math.Clamp(provider.Priority, 1, 20);
+                provider.Model = provider.Model?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(provider.Model))
+                    throw new InvalidOperationException(L.IsArabic ? $"النموذج مطلوب للمزود {provider.Name}." : $"A model is required for {provider.Name}.");
+                if (provider.RemoveStoredKey)
+                    await SettingsService.ClearAiProviderApiKeyAsync(provider.Name);
+            }
+
+            var keys = _providers
+                .Where(x => !x.RemoveStoredKey && !string.IsNullOrWhiteSpace(x.NewApiKey))
+                .ToDictionary(x => x.Name, x => (string?)x.NewApiKey.Trim(), StringComparer.OrdinalIgnoreCase);
+            var settings = new AiSettings(
+                _enabled,
+                _automaticFallback,
+                _providers.Select(x => new AiProviderSettings(
+                    x.Name,
+                    x.Enabled,
+                    x.Priority,
+                    x.Model,
+                    string.Empty,
+                    x.HasStoredKey || !string.IsNullOrWhiteSpace(x.NewApiKey))).ToArray());
+
+            await SettingsService.SaveAiSettingsAsync(settings, keys);
+            _message = L.IsArabic ? "تم حفظ إعدادات مزودي الذكاء الاصطناعي بأمان." : "AI provider settings were saved securely.";
+            await ReloadAfterSaveAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.IsArabic ? $"تعذر حفظ الإعدادات: {ex.Message}" : $"Could not save settings: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ReloadAfterSaveAsync()
+    {
+        var success = _message;
+        var settings = await SettingsService.GetAiSettingsAsync();
+        _enabled = settings.Enabled;
+        _automaticFallback = settings.AutomaticFallback;
+        _providers.Clear();
+        _providers.AddRange(settings.Providers.Select(x => new ProviderEditModel
+        {
+            Name = x.Provider,
+            Enabled = x.Enabled,
+            Priority = x.Priority,
+            Model = x.Model,
+            HasStoredKey = x.HasApiKey && x.Provider != "Ollama"
+        }));
+        _message = success;
+    }
+
+    private string KeyStatus(ProviderEditModel provider)
+    {
+        if (provider.Name == "Ollama") return L.IsArabic ? "محلي - بدون مفتاح" : "Local - no key";
+        if (provider.HasStoredKey) return L.IsArabic ? "مفتاح مشفر محفوظ" : "Encrypted key saved";
+        return provider.Name == "Puter" ? (L.IsArabic ? "Token اختياري" : "Optional token") : (L.IsArabic ? "لا يوجد مفتاح محفوظ" : "No saved key");
+    }
+
+    private string ProviderDescription(string provider) => provider switch
+    {
+        "OpenAI" => L.IsArabic ? "مزود OpenAI عبر Responses API." : "OpenAI via the Responses API.",
+        "Gemini" => L.IsArabic ? "Google Gemini عبر Generative Language API." : "Google Gemini via the Generative Language API.",
+        "Puter" => L.IsArabic ? "جسر Puter المعرّف على الخادم." : "Server-defined Puter bridge.",
+        "Ollama" => L.IsArabic ? "مزود محلي ولا يحتاج مفتاح API." : "Local provider; no API key is required.",
+        "Groq" => L.IsArabic ? "إعداد جاهز لمحول Groq القادم." : "Configuration ready for the upcoming Groq adapter.",
+        "OpenRouter" => L.IsArabic ? "إعداد جاهز لمحول OpenRouter القادم." : "Configuration ready for the upcoming OpenRouter adapter.",
+        _ => provider
+    };
+
+    private static bool RuntimeAdapterAvailable(string provider) => provider is "OpenAI" or "Gemini" or "Puter";
+
+    private sealed class ProviderEditModel
+    {
+        public string Name { get; init; } = string.Empty;
+        public bool Enabled { get; set; }
+        public int Priority { get; set; }
+        public string Model { get; set; } = string.Empty;
+        public bool HasStoredKey { get; set; }
+        public string NewApiKey { get; set; } = string.Empty;
+        public bool RemoveStoredKey { get; set; }
+    }
+}
