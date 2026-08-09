@@ -1,123 +1,260 @@
 @page "/welcome"
+@layout LandingLayout
 @rendermode InteractiveServer
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
+@inject DashboardLiveService DashboardService
+@inject IJSRuntime JS
 
-<PageTitle>@(L.IsArabic ? "مرحبًا بك في AI WordPress Manager" : "Welcome to AI WordPress Manager")</PageTitle>
+<PageTitle>@(L.IsArabic ? "AI WordPress Manager | مركز القيادة الذكي" : "AI WordPress Manager | Intelligent Command Center")</PageTitle>
 
-<div class="welcome-page" dir="@L.Direction">
-    <section class="welcome-hero">
-        <div class="welcome-hero-copy">
-            <div class="welcome-status-row">
-                <span class="welcome-status"><i></i>@(L.IsArabic ? "النظام جاهز للعمل" : "SYSTEM READY")</span>
-                <a class="welcome-version" href="/about-build">v@(Build.Version) · @Build.Branch</a>
-            </div>
+<div class="seo-landing" dir="@L.Direction">
+    <div class="landing-glow landing-glow-one"></div>
+    <div class="landing-glow landing-glow-two"></div>
 
-            <p class="welcome-kicker">@(L.IsArabic ? "مساحة تحكم واحدة لكل مواقع WordPress" : "ONE CONTROL PLANE FOR YOUR WORDPRESS ESTATE")</p>
-            <h1>@(L.IsArabic ? "أدر المحتوى وSEO والذكاء الاصطناعي والأتمتة من مكان واحد." : "Run content, SEO, AI and automation from one intelligent workspace.")</h1>
-            <p class="welcome-lead">
-                @(L.IsArabic
-                    ? "AI WordPress Manager يجمع إدارة المواقع والمحتوى، التدقيق، الاقتراحات الذكية، الموافقات، التنفيذ الآمن، الجدولة، التقارير وصحة النظام داخل تجربة تشغيل موحدة."
-                    : "AI WordPress Manager brings site management, content operations, audits, AI recommendations, approvals, safe execution, scheduling, reporting and system health into one operational experience.")
-            </p>
+    <header class="landing-header">
+        <a class="landing-brand" href="/welcome" aria-label="AI WordPress Manager">
+            <span class="brand-badge">AI</span>
+            <span class="brand-copy"><strong>AI WordPress</strong><small>Manager</small></span>
+        </a>
 
-            <div class="welcome-actions">
-                <AppButton Href="/sites/connect" Variant="primary" Icon="＋" Text="@(L.IsArabic ? "ربط أول موقع" : "Connect your first site")" />
-                <AppButton Href="/" Icon="▦" Text="@(L.IsArabic ? "فتح لوحة التحكم" : "Open dashboard")" />
-                <a class="welcome-text-link" href="/about-build">@(L.IsArabic ? "معلومات الإصدار" : "Build information") <span>↗</span></a>
-            </div>
+        <nav class="landing-nav" aria-label="@(L.IsArabic ? "التنقل الرئيسي" : "Primary navigation")">
+            <a href="/">@(L.IsArabic ? "التحكم" : "Dashboard")</a>
+            <a href="/module/reports">@(L.IsArabic ? "تقارير" : "Reports")</a>
+            <a href="/settings">@(L.IsArabic ? "إعدادات" : "Settings")</a>
+            <a href="/module/execution">@(L.IsArabic ? "وظائف" : "Jobs")</a>
+            <a class="active" href="/welcome">@(L.IsArabic ? "الرئيسية" : "Home")</a>
+        </nav>
 
-            <div class="welcome-trust-strip">
-                <span><b>✓</b>@(L.IsArabic ? "إدارة متعددة المواقع" : "Multi-site control")</span>
-                <span><b>✓</b>@(L.IsArabic ? "تنفيذ بموافقات" : "Approval-aware execution")</span>
-                <span><b>✓</b>@(L.IsArabic ? "سجلات وتشخيص" : "Auditable diagnostics")</span>
-            </div>
+        <div class="landing-product">
+            <strong>AI WordPress Manager</strong>
+            <button type="button" class="landing-language" onclick="window.appLanguage.toggleAndReload(); return false;">@(L.IsArabic ? "EN" : "AR")</button>
         </div>
+    </header>
 
-        <aside class="welcome-system-map" aria-label="System workflow">
-            <div class="system-map-head">
-                <div>
-                    <small>@(L.IsArabic ? "تدفق العمل" : "OPERATING FLOW")</small>
-                    <strong>@(L.IsArabic ? "من الاتصال إلى التنفيذ" : "From connection to execution")</strong>
+    <main>
+        <section class="hero-section" id="home">
+            <div class="hero-copy">
+                <div class="hero-badges">
+                    <span class="live-badge"><i></i>@(L.IsArabic ? "النظام جاهز" : "SYSTEM READY")</span>
+                    <a href="/about-build" class="version-badge">v@(Build.Version)</a>
                 </div>
-                <span class="system-live-dot"></span>
-            </div>
-            <div class="system-flow">
-                <a href="/sites"><span class="flow-icon">◉</span><div><b>@(L.IsArabic ? "المواقع" : "Sites")</b><small>@(L.IsArabic ? "اتصال وهوية وصحة" : "Connect · identify · health")</small></div><em>01</em></a>
-                <a href="/content"><span class="flow-icon">▤</span><div><b>@(L.IsArabic ? "المحتوى" : "Content")</b><small>@(L.IsArabic ? "مزامنة وإدارة" : "Sync · manage · organize")</small></div><em>02</em></a>
-                <a href="/module/seo-audit"><span class="flow-icon">◈</span><div><b>SEO</b><small>@(L.IsArabic ? "تدقيق وترتيب الأولويات" : "Audit · prioritize · improve")</small></div><em>03</em></a>
-                <a href="/module/ai-providers"><span class="flow-icon">✦</span><div><b>@(L.IsArabic ? "الذكاء الاصطناعي" : "AI Workspace")</b><small>@(L.IsArabic ? "اقتراحات مدعومة بالأدلة" : "Evidence-backed suggestions")</small></div><em>04</em></a>
-                <a href="/module/execution"><span class="flow-icon">▶</span><div><b>@(L.IsArabic ? "التنفيذ" : "Execution")</b><small>@(L.IsArabic ? "موافقة وتتبع واستعادة" : "Approve · track · recover")</small></div><em>05</em></a>
-            </div>
-            <div class="system-map-footer">
-                <span>@(L.IsArabic ? "نسخة التشغيل" : "Running build")</span>
-                <strong>v@(Build.Version)</strong>
-            </div>
-        </aside>
-    </section>
 
-    <section class="welcome-section">
-        <header class="welcome-section-head">
+                <h1>@(L.IsArabic ? "إدارة ووردبريس بأعلى مستويات الذكاء الاصطناعي: منصتك المتكاملة للتحكم!" : "Operate WordPress with a higher level of AI intelligence from one command platform.")</h1>
+                <p class="hero-subtitle">@(L.IsArabic ? "وفّر الوقت والجهد وحسّن أداء مواقعك من خلال منصة واحدة ذكية لإدارة المحتوى وSEO والأتمتة والتنفيذ." : "Save time, reduce operational effort and improve site performance through one intelligent platform for content, SEO, automation and execution.")</p>
+
+                <div class="hero-actions">
+                    <a class="landing-btn primary" href="/sites/connect">@(L.IsArabic ? "اربط أول موقع الآن" : "Connect your first site") <span>↗</span></a>
+                    <a class="landing-btn secondary" href="/">@(L.IsArabic ? "استكشف لوحة التحكم" : "Explore dashboard")</a>
+                </div>
+
+                <div class="hero-proof">
+                    <span><b>✓</b>@(L.IsArabic ? "إدارة متعددة المواقع" : "Multi-site management")</span>
+                    <span><b>✓</b>@(L.IsArabic ? "تحسين SEO بالذكاء الاصطناعي" : "AI-assisted SEO")</span>
+                    <span><b>✓</b>@(L.IsArabic ? "تنفيذ قابل للتتبع" : "Auditable execution")</span>
+                </div>
+            </div>
+
+            <div class="hero-visual" aria-hidden="true">
+                <div class="visual-orbit orbit-one"></div>
+                <div class="visual-orbit orbit-two"></div>
+                <div class="visual-card">
+                    <svg viewBox="0 0 120 120" role="img">
+                        <path d="M33 28h35c11 0 19 8 19 19v23" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                        <path d="M33 28c-9 0-16 7-16 16v34c0 9 7 16 16 16h32" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                        <path d="M52 48v27M38.5 61.5h27" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                        <circle cx="87" cy="84" r="20" fill="currentColor" />
+                        <path d="M87 74v20M77 84h20" stroke="#ecfdf5" stroke-width="5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="visual-caption">
+                    <small>@(L.IsArabic ? "مركز تحكم ذكي" : "INTELLIGENT CONTROL")</small>
+                    <strong>@(L.IsArabic ? "إضافة · تحليل · تحسين · نشر" : "Connect · Analyze · Optimize · Publish")</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="command-section" id="command-center">
+            <div class="section-heading centered">
+                <span>@(L.IsArabic ? "LIVE COMMAND CENTER" : "LIVE COMMAND CENTER")</span>
+                <h2>@(L.IsArabic ? "مركز القيادة الموحد" : "Unified Command Center")</h2>
+                <p>@(L.IsArabic ? "قراءة مباشرة لحالة مواقعك والمحتوى والوظائف والمزامنة." : "A live operational view of sites, content, jobs and synchronization.")</p>
+            </div>
+
+            <div class="metrics-grid">
+                @foreach (var metric in MetricCards)
+                {
+                    <a class="metric-card @metric.Tone" href="@metric.Href">
+                        <div class="metric-icon">@metric.Icon</div>
+                        <small>@metric.Label</small>
+                        <strong>@metric.Value</strong>
+                        <span>@metric.Detail</span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        <section class="capabilities-section" id="capabilities">
+            <div class="section-heading split-heading">
+                <div>
+                    <span>@(L.IsArabic ? "SMART OPERATIONS" : "SMART OPERATIONS")</span>
+                    <h2>@(L.IsArabic ? "إدارة يومية أسرع، أوضح، وأكثر أمانًا" : "Faster, clearer and safer day-to-day operations")</h2>
+                </div>
+                <p>@(L.IsArabic ? "من ربط الموقع وحتى تنفيذ التحسينات، كل خطوة مصممة لتكون واضحة وقابلة للمراجعة." : "From site connection to controlled changes, every step stays visible and reviewable.")</p>
+            </div>
+
+            <div class="capability-layout">
+                <div class="capability-list">
+                    <h3>@(L.IsArabic ? "إضافة مواقع بنقرة واحدة" : "One-click site onboarding")</h3>
+                    @foreach (var item in CapabilityItems)
+                    {
+                        <a href="@item.Href" class="capability-row">
+                            <span class="capability-row-icon">@item.Icon</span>
+                            <div><strong>@(L.IsArabic ? item.ArTitle : item.EnTitle)</strong><small>@(L.IsArabic ? item.ArDescription : item.EnDescription)</small></div>
+                            <em>↗</em>
+                        </a>
+                    }
+                </div>
+
+                <div class="highlight-grid">
+                    @foreach (var feature in HighlightFeatures)
+                    {
+                        <a class="highlight-card @feature.Tone" href="@feature.Href">
+                            <div class="highlight-icon">@feature.Icon</div>
+                            <h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3>
+                            <p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p>
+                            <span>@(L.IsArabic ? "فتح الوحدة" : "Open module") ↗</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section class="workflow-section" id="workflow">
+            <div class="section-heading centered compact">
+                <span>AI WORKFLOW</span>
+                <h2>@(L.IsArabic ? "من المسودة إلى النشر في مسار واضح" : "From draft to publish in one controlled flow")</h2>
+            </div>
+
+            <div class="workflow-track">
+                @for (var index = 0; index < WorkflowSteps.Length; index++)
+                {
+                    var step = WorkflowSteps[index];
+                    <article class="workflow-card @step.Tone">
+                        <div class="workflow-illustration">@step.Icon</div>
+                        <small>@(L.IsArabic ? $"الخطوة {index + 1}" : $"STEP {index + 1}")</small>
+                        <h3>@(L.IsArabic ? step.ArTitle : step.EnTitle)</h3>
+                        <p>@(L.IsArabic ? step.ArDescription : step.EnDescription)</p>
+                    </article>
+                    @if (index < WorkflowSteps.Length - 1)
+                    {
+                        <div class="workflow-arrow" aria-hidden="true">→</div>
+                    }
+                }
+            </div>
+        </section>
+
+        <section class="final-cta">
             <div>
-                <p>@(L.IsArabic ? "قدرات المنصة" : "PLATFORM CAPABILITIES")</p>
-                <h2>@(L.IsArabic ? "كل ما تحتاجه لتشغيل WordPress باحترافية" : "Everything needed to operate WordPress professionally")</h2>
+                <span class="live-badge"><i></i>@(L.IsArabic ? "جاهز للبدء" : "READY TO START")</span>
+                <h2>@(L.IsArabic ? "اربط أول موقع WordPress وابدأ تشغيل منظومتك الذكية." : "Connect your first WordPress site and start your intelligent operating loop.")</h2>
+                <p>@(L.IsArabic ? "يمكنك العودة إلى مركز القيادة في أي وقت لمتابعة المواقع والمحتوى والوظائف والمزامنة." : "Return to the command center at any time to follow sites, content, jobs and synchronization.")</p>
             </div>
-            <span>@(L.IsArabic ? "مصممة للعمل اليومي وليس للعرض فقط" : "Built for daily operations, not just dashboards")</span>
-        </header>
+            <div class="final-actions">
+                <a class="landing-btn primary" href="/sites/connect">@(L.IsArabic ? "إضافة موقع" : "Add site") <span>＋</span></a>
+                <a class="landing-btn secondary" href="/system-health">@(L.IsArabic ? "صحة النظام" : "System health")</a>
+            </div>
+        </section>
+    </main>
 
-        <div class="welcome-feature-grid">
-            @foreach (var feature in Features)
-            {
-                <a class="welcome-feature-card" href="@feature.Href">
-                    <div class="feature-top"><span>@feature.Icon</span><em>↗</em></div>
-                    <h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3>
-                    <p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p>
-                </a>
-            }
-        </div>
-    </section>
-
-    <section class="welcome-journey">
-        <div class="journey-copy">
-            <p class="welcome-kicker">@(L.IsArabic ? "ابدأ بشكل صحيح" : "START WITH A CONTROLLED WORKFLOW")</p>
-            <h2>@(L.IsArabic ? "ثلاث خطوات من موقع جديد إلى تشغيل قابل للمتابعة." : "Three steps from a new site to an auditable operating loop.")</h2>
-            <p>@(L.IsArabic ? "المنصة تفصل بين التحليل والاقتراح والتنفيذ حتى تظل التغييرات واضحة وقابلة للمراجعة." : "The platform separates analysis, recommendation and execution so changes remain visible, reviewable and controlled.")</p>
-            <AppButton Href="/sites/connect" Variant="primary" Icon="→" Text="@(L.IsArabic ? "ابدأ ربط موقع" : "Start site connection")" />
-        </div>
-        <div class="journey-steps">
-            <article><span>01</span><div><h3>@(L.IsArabic ? "اربط الموقع" : "Connect")</h3><p>@(L.IsArabic ? "أضف عنوان WordPress وبيانات الاتصال، ثم اختبر الصلاحيات وصحة REST API." : "Add the WordPress endpoint and credentials, then validate permissions and REST API health.")</p></div></article>
-            <article><span>02</span><div><h3>@(L.IsArabic ? "زامن وحلّل" : "Sync & analyze")</h3><p>@(L.IsArabic ? "اقرأ المحتوى محليًا، راجع SEO والمشكلات، ورتّب ما يحتاج اهتمامك أولًا." : "Build a local snapshot, review SEO and operational findings, and prioritize what matters first.")</p></div></article>
-            <article><span>03</span><div><h3>@(L.IsArabic ? "وافق ونفّذ" : "Approve & execute")</h3><p>@(L.IsArabic ? "حوّل الاقتراحات إلى تغييرات مضبوطة مع سجل تنفيذ وتشخيص واضح عند الفشل." : "Turn recommendations into controlled changes with execution history and actionable failure diagnostics.")</p></div></article>
-        </div>
-    </section>
-
-    <section class="welcome-final-cta">
-        <div>
-            <span class="welcome-status"><i></i>@(L.IsArabic ? "جاهز للخطوة التالية" : "READY FOR THE NEXT STEP")</span>
-            <h2>@(L.IsArabic ? "أضف أول موقع وابدأ بناء مساحة التشغيل الخاصة بك." : "Add your first site and build your operating workspace.")</h2>
-            <p>@(L.IsArabic ? "يمكنك الرجوع لهذه الصفحة في أي وقت من رابط Welcome داخل القائمة الرئيسية." : "You can return to this overview any time from Welcome in the main navigation.")</p>
-        </div>
-        <div class="welcome-final-actions">
-            <AppButton Href="/sites/connect" Variant="primary" Icon="＋" Text="@(L.IsArabic ? "ربط موقع WordPress" : "Connect WordPress site")" />
-            <AppButton Href="/system-health" Icon="♥" Text="@(L.IsArabic ? "فحص صحة النظام" : "Check system health")" />
-        </div>
-    </section>
+    <footer class="landing-footer">
+        <div><span class="brand-badge small">AI</span><strong>AI WordPress Manager</strong></div>
+        <span>v@(Build.Version) · @Build.Branch</span>
+        <a href="/about-build">@(L.IsArabic ? "معلومات الإصدار" : "Build information")</a>
+    </footer>
 </div>
 
 @code {
     private BuildInformation Build => BuildInfo.Current;
+    private DashboardLiveView? _dashboard;
+    private bool _dashboardLoadFailed;
 
-    private static readonly Feature[] Features =
+    private DashboardLiveView Dashboard => _dashboard ?? new DashboardLiveView(
+        new DashboardSummary(0, 0, 0, null), 0, 0, 0, 0, 0, 0, 100, null, Array.Empty<DashboardJobView>(), DateTime.UtcNow);
+
+    private IEnumerable<MetricCard> MetricCards
+    {
+        get
+        {
+            var data = Dashboard;
+            var cachedContent = data.Posts + data.Pages;
+            var loadSuffix = _dashboardLoadFailed
+                ? (L.IsArabic ? " · البيانات الحية غير متاحة مؤقتًا" : " · live data temporarily unavailable")
+                : string.Empty;
+
+            return new[]
+            {
+                new MetricCard("◎", "Total Sites", data.Sites.TotalSites.ToString(),
+                    L.IsArabic ? $"{data.Sites.ConnectedSites} متصل · {data.Sites.ProblemSites} يحتاج متابعة{loadSuffix}" : $"{data.Sites.ConnectedSites} connected · {data.Sites.ProblemSites} need attention{loadSuffix}", "green", "/sites"),
+                new MetricCard("▤", "Cached Content", cachedContent.ToString(),
+                    L.IsArabic ? $"{data.Posts} مقالات · {data.Pages} صفحات" : $"{data.Posts} posts · {data.Pages} pages", "emerald", "/content"),
+                new MetricCard("▶", "Active Jobs", data.ActiveJobs.ToString(),
+                    L.IsArabic ? $"{data.FailedJobs} فشل · {data.CompletedJobs} مكتمل" : $"{data.FailedJobs} failed · {data.CompletedJobs} completed", "amber", "/module/execution"),
+                new MetricCard("◷", "Last Sync", FormatLastSync(data.LastSynchronizationAtUtc),
+                    L.IsArabic ? $"{data.Media} عنصر وسائط" : $"{data.Media} media items", "blue", "/module/sync")
+            };
+        }
+    }
+
+    private static readonly CapabilityItem[] CapabilityItems =
     [
-        new("◉", "Site Management", "إدارة المواقع", "Independent site profiles, connection diagnostics and health visibility across your WordPress estate.", "ملفات مستقلة للمواقع، تشخيص الاتصال، ومتابعة صحة جميع مواقع WordPress.", "/sites"),
-        new("▤", "Content Workspace", "مساحة المحتوى", "Manage posts, pages, media, taxonomy, comments and users with searchable operational views.", "إدارة المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين من مساحات تشغيل قابلة للبحث.", "/content"),
-        new("◈", "SEO Intelligence", "ذكاء SEO", "Run technical and content audits, prioritize issues and track recommendations before applying changes.", "تشغيل تدقيق تقني ومحتوى، ترتيب المشكلات حسب الأولوية، ومراجعة التوصيات قبل التنفيذ.", "/module/seo-audit"),
-        new("✦", "AI Workspace", "مساحة الذكاء الاصطناعي", "Provider abstraction, prompt templates and evidence-aware suggestions designed for controlled operations.", "مزودون متعددون، قوالب أوامر واقتراحات ذكية مرتبطة بسياق واضح للتشغيل المنضبط.", "/module/ai-providers"),
-        new("✓", "Approvals & Safe Execution", "الموافقات والتنفيذ الآمن", "Review changes before execution, keep history and make failures actionable instead of opaque.", "راجع التغييرات قبل التنفيذ، احتفظ بالسجل، وحوّل الأخطاء إلى تشخيص قابل للتنفيذ.", "/module/approvals"),
-        new("◷", "Automation & Scheduling", "الأتمتة والجدولة", "Queue work, schedule recurring operations, retry safely and track progress from one operations center.", "ضع الأعمال في طابور، جدول العمليات المتكررة، أعد المحاولة بأمان، وتابع التقدم من مركز واحد.", "/operations"),
-        new("▥", "Reports & Operations", "التقارير والتشغيل", "Follow trends, export operational data and keep backup, restore and support diagnostics close at hand.", "تابع الاتجاهات، صدّر بيانات التشغيل، واحتفظ بأدوات النسخ والاستعادة والتشخيص في متناول اليد.", "/module/reports"),
-        new("♥", "Health & Reliability", "الصحة والموثوقية", "Monitor application, database and site reliability with diagnostics built for support and incident response.", "راقب التطبيق وقاعدة البيانات وموثوقية المواقع بتشخيصات مصممة للدعم والاستجابة للأعطال.", "/system-health")
+        new("＋", "Connect sites", "إضافة مواقع بثقة", "Guided WordPress onboarding with connection validation.", "إضافة موقع مع اختبار الاتصال والصلاحيات خطوة بخطوة.", "/sites/connect"),
+        new("▣", "Automate work", "أتمتة المهام", "Queue, schedule and track recurring operational jobs.", "جدولة الأعمال المتكررة ومتابعة تقدمها من مركز واحد.", "/operations"),
+        new("↻", "Smart backup", "نسخ احتياطي ذكي", "Keep backup, restore and support diagnostics close to operations.", "نسخ واستعادة وتشخيص تشغيلي في مكان واحد.", "/module/backups")
     ];
 
-    private sealed record Feature(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string Href);
+    private static readonly HighlightFeature[] HighlightFeatures =
+    [
+        new("⌕", "Smart SEO Optimization", "تحسين SEO ذكي", "Audit technical and content signals, prioritize findings and move recommendations into controlled execution.", "حلّل الإشارات التقنية والمحتوى، رتّب الأولويات، ثم حوّل التوصيات إلى تنفيذ منضبط.", "cyan", "/module/seo-audit"),
+        new("✎", "AI Content Creation", "إنشاء محتوى بالذكاء الاصطناعي", "Use provider-aware prompts and assisted workflows to create and refine content without losing operational control.", "استخدم قوالب ومزودي الذكاء الاصطناعي لإنشاء المحتوى وتحسينه مع الحفاظ على التحكم التشغيلي.", "green", "/module/ai-providers")
+    ];
+
+    private static readonly WorkflowStep[] WorkflowSteps =
+    [
+        new("▤✎", "UI: Draft", "مسودة المحتوى", "Draft or import content, then keep the source state visible before any automated change.", "أنشئ أو استورد المحتوى واحتفظ بالحالة الأصلية واضحة قبل أي تعديل آلي.", "slate"),
+        new("✓", "Optimization", "التحسين", "AI and SEO recommendations are reviewed, prioritized and prepared for safe execution.", "تُراجع توصيات الذكاء الاصطناعي وSEO وتُرتب قبل تجهيزها للتنفيذ الآمن.", "green"),
+        new("⇥", "Publish", "النشر", "Approved changes move through execution with history, progress and failure diagnostics.", "تنتقل التغييرات المعتمدة إلى التنفيذ مع سجل وتقدم وتشخيص واضح عند الفشل.", "blue")
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _dashboard = await DashboardService.GetAsync();
+        }
+        catch
+        {
+            _dashboardLoadFailed = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        var culture = await JS.InvokeAsync<string?>("appLanguage.get");
+        L.SetCulture(culture == "ar" ? "ar" : "en");
+        await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+        StateHasChanged();
+    }
+
+    private string FormatLastSync(DateTime? value)
+    {
+        if (!value.HasValue) return L.IsArabic ? "لم تتم بعد" : "Not yet";
+        return value.Value.ToLocalTime().ToString("dd MMM · HH:mm");
+    }
+
+    private sealed record MetricCard(string Icon, string Label, string Value, string Detail, string Tone, string Href);
+    private sealed record CapabilityItem(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string Href);
+    private sealed record HighlightFeature(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string Tone, string Href);
+    private sealed record WorkflowStep(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string Tone);
 }
