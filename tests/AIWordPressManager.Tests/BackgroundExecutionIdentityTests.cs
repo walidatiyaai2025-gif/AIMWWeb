@@ -18,7 +18,8 @@ public sealed class BackgroundExecutionIdentityTests
             currentUser.IsAuthenticated.Should().BeTrue();
             currentUser.UserId.Should().Be(ownerId);
             currentUser.IsInRole("Administrator").Should().BeFalse();
-            currentUser.Invoking(x => x.RequireAdministrator()).Should().Throw<UnauthorizedAccessException>();
+            Action requireAdministrator = () => currentUser.RequireAdministrator();
+            requireAdministrator.Should().Throw<UnauthorizedAccessException>();
         }
 
         currentUser.TryGetUserId(out _).Should().BeFalse();
