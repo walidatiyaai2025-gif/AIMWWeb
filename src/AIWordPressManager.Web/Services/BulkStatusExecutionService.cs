@@ -20,6 +20,8 @@ public sealed class BulkStatusExecutionService(
     {
         var site = await sites.GetSiteAsync(siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
+        var ownerUserId = site.OwnerUserId
+            ?? throw new UnauthorizedAccessException("The selected site has no application owner.");
 
         var status = (request.Status ?? string.Empty).Trim().ToLowerInvariant();
         if (!AllowedStatuses.Contains(status))
@@ -43,7 +45,7 @@ public sealed class BulkStatusExecutionService(
             _ => "Bulk content status"
         };
 
-        var jobId = tracker.Start(title, $"Bulk Status: {status}", site.Name, targets.Count);
+        var jobId = tracker.Start(ownerUserId, siteId, title, $"Bulk Status: {status}", site.Name, targets.Count);
         var succeeded = 0;
         var failures = new List<string>();
 

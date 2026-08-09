@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject SiteOperationHistoryService History
 @inject SiteWebService SiteService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 @inject IJSRuntime JS
 
@@ -17,7 +18,7 @@ else if (_item is null)
 {
     <section class="panel" style="padding:28px">
         <h1>@(L.IsArabic ? "العملية غير موجودة" : "Operation not found")</h1>
-        <p>@(L.IsArabic ? "لم يعد سجل العملية متاحًا." : "The operation record is no longer available.")</p>
+        <p>@(L.IsArabic ? "لم يعد سجل العملية متاحًا أو لا ينتمي إلى حسابك." : "The operation record is unavailable or does not belong to your account.")</p>
         <a class="btn primary" href="/site-operations">@(L.IsArabic ? "العودة" : "Back")</a>
     </section>
 }
@@ -31,6 +32,10 @@ else
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button type="button" class="btn" @onclick="CopyReportAsync">@(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
                 <a class="btn" href="/site-operations">@(L.IsArabic ? "كل العمليات" : "All operations")</a>
+                @if (_item.ExecutionJobId.HasValue)
+                {
+                    <a class="btn" href="@($"/module/execution?siteId={_item.SiteId}")">@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</a>
+                }
                 <a class="btn primary" href="@($"/sites/{_item.SiteId}/connection")">@(L.IsArabic ? "مركز الاتصال" : "Connection center")</a>
             </div>
         </section>
@@ -52,6 +57,7 @@ else
             <h2>@(L.IsArabic ? "بيانات التتبع" : "Trace information")</h2>
             <p><strong>Operation ID:</strong> <code>@_item.Id</code></p>
             <p><strong>Site ID:</strong> <code>@_item.SiteId</code></p>
+            <p><strong>Execution Job ID:</strong> <code>@(_item.ExecutionJobId?.ToString() ?? "—")</code></p>
             <p><strong>Completed:</strong> @FormatDate(_item.CompletedAtUtc)</p>
             <p><strong>Duration ms:</strong> @Math.Max(0, _item.Duration.TotalMilliseconds).ToString("0")</p>
         </section>
@@ -78,12 +84,13 @@ else
         _copyMessage = null;
         try
         {
-            _item = History.GetById(OperationId);
-            if (_item is not null)
-            {
-                var sites = await SiteService.GetSitesAsync();
-                _siteName = sites.FirstOrDefault(x => x.Id == _item.SiteId)?.Name ?? _item.SiteId.ToString("N")[..8];
-            }
+            var ownerUserId = CurrentUser.RequireUserId();
+            var sites = await SiteService.GetSitesAsync();
+            var ownedSiteIds = sites.Select(x => x.Id).ToArray();
+            _item = History.GetById(ownerUserId, ownedSiteIds, OperationId);
+            _siteName = _item is null
+                ? string.Empty
+                : sites.FirstOrDefault(x => x.Id == _item.SiteId)?.Name ?? _item.SiteId.ToString("N")[..8];
         }
         finally { _loading = false; }
     }
@@ -97,6 +104,7 @@ else
             "Operation ID: " + _item.Id,
             "Site: " + _siteName,
             "Site ID: " + _item.SiteId,
+            "Execution Job ID: " + (_item.ExecutionJobId?.ToString() ?? "N/A"),
             "Operation: " + _item.Operation,
             "Result: " + (_item.Succeeded ? "Success" : "Failed"),
             "Started UTC: " + _item.StartedAtUtc.ToString("O"),

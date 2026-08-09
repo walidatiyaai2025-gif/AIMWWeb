@@ -24,15 +24,11 @@ public sealed class ExecutionOperationTracker
         }.ToString();
     }
 
-    public Guid Start(string title, string type, string siteName, int totalItems)
-    {
-        var job = _executionCenter.Enqueue(title, type, siteName, Math.Max(1, totalItems));
-        Update(job.Id,
-            "UPDATE ExecutionCenterJobs SET Status='Running', StartedAtUtc=$now WHERE Id=$id;",
-            "Info", "Operation started.",
-            (command, now) => command.Parameters.AddWithValue("$now", now));
-        return job.Id;
-    }
+    public Guid Start(string title, string type, string siteName, int totalItems) =>
+        StartCore(_executionCenter.Enqueue(title, type, siteName, Math.Max(1, totalItems)));
+
+    public Guid Start(Guid ownerUserId, Guid siteId, string title, string type, string siteName, int totalItems) =>
+        StartCore(_executionCenter.Enqueue(ownerUserId, siteId, title, type, siteName, Math.Max(1, totalItems)));
 
     public void Report(Guid jobId, int processedItems, int totalItems, string message)
     {
@@ -74,6 +70,15 @@ public sealed class ExecutionOperationTracker
                 command.Parameters.AddWithValue("$now", now);
                 command.Parameters.AddWithValue("$error", error);
             });
+    }
+
+    private Guid StartCore(ExecutionJob job)
+    {
+        Update(job.Id,
+            "UPDATE ExecutionCenterJobs SET Status='Running', StartedAtUtc=$now WHERE Id=$id;",
+            "Info", "Operation started.",
+            (command, now) => command.Parameters.AddWithValue("$now", now));
+        return job.Id;
     }
 
     private void Update(Guid jobId, string sql, string level, string activityMessage, Action<SqliteCommand, string> addParameters)

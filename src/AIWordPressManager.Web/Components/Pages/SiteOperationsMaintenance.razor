@@ -3,6 +3,8 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject SiteOperationHistoryService History
+@inject SiteWebService SiteService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "صيانة سجل العمليات" : "Operation History Maintenance")</PageTitle>
@@ -13,10 +15,10 @@
             <div>
                 <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "إدارة التخزين" : "STORAGE MANAGEMENT")</small>
                 <h1 style="margin:8px 0">@(L.IsArabic ? "صيانة سجل عمليات المواقع" : "Site Operation History Maintenance")</h1>
-                <p style="margin:0;opacity:.75">@(L.IsArabic ? "عاين أثر التنظيف قبل حذف أي سجل، مع حماية أحدث العمليات تلقائيًا." : "Preview cleanup impact before deleting records, while automatically protecting the newest operations.")</p>
+                <p style="margin:0;opacity:.75">@(L.IsArabic ? "عاين ونظّف فقط سجلات المواقع التابعة لحسابك، مع حماية أحدث العمليات تلقائيًا." : "Preview and clean only records for sites owned by your account, while automatically protecting the newest operations.")</p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button type="button" class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                <button type="button" class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
                 <a class="btn" href="/site-operations">@(L.IsArabic ? "سجل العمليات" : "Operation history")</a>
                 <a class="btn primary" href="/operations">@(L.IsArabic ? "مركز العمليات" : "Operations hub")</a>
             </div>
@@ -30,7 +32,7 @@
 
     <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
         @Stat(L.IsArabic ? "إجمالي السجلات" : "Total records", _storage.RecordCount.ToString())
-        @Stat(L.IsArabic ? "حجم الملف" : "File size", FormatBytes(_storage.FileSizeBytes))
+        @Stat(L.IsArabic ? "الحجم التقريبي" : "Approx. scoped size", FormatBytes(_storage.FileSizeBytes))
         @Stat(L.IsArabic ? "عدد المواقع" : "Sites represented", _storage.SiteCount.ToString())
         @Stat(L.IsArabic ? "أقدم عملية" : "Oldest operation", FormatDate(_storage.OldestOperationAtUtc))
         @Stat(L.IsArabic ? "أحدث عملية" : "Newest operation", FormatDate(_storage.NewestOperationAtUtc))
@@ -71,7 +73,7 @@
 
     <section class="panel" style="padding:22px">
         <h2 style="margin-top:0">@(L.IsArabic ? "تأكيد التنظيف" : "Confirm cleanup")</h2>
-        <p style="opacity:.75">@(L.IsArabic ? "لن يتم حذف أي عملية إلا بعد كتابة كلمة CLEANUP. لا يمكن التراجع عن العملية." : "No operation will be deleted until you type CLEANUP. This action cannot be undone.")</p>
+        <p style="opacity:.75">@(L.IsArabic ? "لن يتم حذف أي سجل خارج مواقع حسابك. اكتب CLEANUP للتأكيد؛ لا يمكن التراجع عن العملية." : "No record outside sites owned by your account will be removed. Type CLEANUP to confirm; this action cannot be undone.")</p>
         <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
             <label style="min-width:260px;flex:1">
                 <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "اكتب CLEANUP للتأكيد" : "Type CLEANUP to confirm")</span>
@@ -90,24 +92,27 @@
     private int _keepLatest = 100;
     private string _confirmation = string.Empty;
     private string? _message;
+    private Guid _ownerUserId;
+    private Guid[] _ownedSiteIds = [];
     private SiteOperationHistoryStorageInfo _storage = new(string.Empty, 0, 0, null, null, 0);
     private SiteOperationCleanupPreview _preview = new(0, 0, 0, DateTime.UtcNow, 100, null, null);
 
-    protected override void OnInitialized()
-    {
-        L.Changed += OnLanguageChanged;
-        Reload();
-    }
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
 
-    private void Reload()
+    private async Task ReloadAsync()
     {
-        _storage = History.GetStorageInfo();
+        _ownerUserId = CurrentUser.RequireUserId();
+        var sites = await SiteService.GetSitesAsync();
+        _ownedSiteIds = sites.Select(x => x.Id).ToArray();
+        _storage = History.GetStorageInfo(_ownerUserId, _ownedSiteIds);
         RefreshPreview();
     }
 
     private void RefreshPreview()
     {
-        _preview = History.PreviewCleanup(_olderThanDays, _keepLatest);
+        if (_ownerUserId == Guid.Empty) return;
+        _preview = History.PreviewCleanup(_ownerUserId, _ownedSiteIds, _olderThanDays, _keepLatest);
         _message = null;
     }
 
@@ -115,14 +120,14 @@
 
     private void RunCleanup()
     {
-        if (!CanCleanup) return;
-        var result = History.Cleanup(_olderThanDays, _keepLatest);
+        if (!CanCleanup || _ownerUserId == Guid.Empty) return;
+        var result = History.Cleanup(_ownerUserId, _ownedSiteIds, _olderThanDays, _keepLatest);
         _confirmation = string.Empty;
         _message = L.IsArabic
-            ? $"تم حذف {result.RemovedCount} سجل، والمتبقي {result.RemainingCount} سجل."
-            : $"Removed {result.RemovedCount} records; {result.RemainingCount} records remain.";
-        _storage = History.GetStorageInfo();
-        _preview = History.PreviewCleanup(_olderThanDays, _keepLatest);
+            ? $"تم حذف {result.RemovedCount} سجل من نطاق حسابك، والمتبقي {result.RemainingCount} سجل."
+            : $"Removed {result.RemovedCount} records from your account scope; {result.RemainingCount} records remain.";
+        _storage = History.GetStorageInfo(_ownerUserId, _ownedSiteIds);
+        _preview = History.PreviewCleanup(_ownerUserId, _ownedSiteIds, _olderThanDays, _keepLatest);
     }
 
     private RenderFragment Stat(string label, string value) => builder =>

@@ -3,13 +3,17 @@ namespace AIWordPressManager.Web.Services;
 public sealed class SeoAuditExecutionService(
     SeoAnalysisWebService seoAnalysis,
     ExecutionOperationTracker executionTracker,
-    AppNotificationService notifications)
+    AppNotificationService notifications,
+    CurrentUserContext currentUser)
 {
     public async Task<SeoAuditExecutionResult> RunAsync(
         Guid siteId,
         CancellationToken cancellationToken = default)
     {
+        var ownerUserId = currentUser.RequireUserId();
         var jobId = executionTracker.Start(
+            ownerUserId,
+            siteId,
             "Run SEO audit",
             "SEO Audit",
             siteId.ToString(),
@@ -64,7 +68,8 @@ public sealed class SeoAuditExecutionService(
                 analysis.Summary,
                 issueCounts,
                 message,
-                DateTime.UtcNow);
+                DateTime.UtcNow,
+                jobId);
         }
         catch (Exception ex)
         {
@@ -84,4 +89,5 @@ public sealed record SeoAuditExecutionResult(
     SeoSummary Summary,
     IReadOnlyDictionary<string, int> IssueCounts,
     string Message,
-    DateTime CompletedAtUtc);
+    DateTime CompletedAtUtc,
+    Guid? ExecutionJobId = null);

@@ -12,6 +12,8 @@ public sealed class BulkTrashExecutionService(
     {
         var site = await sites.GetSiteAsync(siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
+        var ownerUserId = site.OwnerUserId
+            ?? throw new UnauthorizedAccessException("The selected site has no application owner.");
 
         var targets = request.Targets
             .Where(x => x.WordPressId > 0 && x.ContentType is "post" or "page")
@@ -21,7 +23,7 @@ public sealed class BulkTrashExecutionService(
         if (targets.Count == 0)
             throw new InvalidOperationException("لم يتم تحديد مقالات أو صفحات صالحة.");
 
-        var jobId = tracker.Start("Move selected content to trash", "Bulk Trash", site.Name, targets.Count);
+        var jobId = tracker.Start(ownerUserId, siteId, "Move selected content to trash", "Bulk Trash", site.Name, targets.Count);
         var succeeded = 0;
         var failures = new List<string>();
 

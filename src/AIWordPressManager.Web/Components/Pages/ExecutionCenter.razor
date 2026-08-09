@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject ExecutionCenterService ExecutionService
 @inject SiteWebService SiteService
+@inject CurrentUserContext CurrentUser
 @inject AppNotificationService Notifications
 @inject AppLanguageService L
 
@@ -105,6 +106,7 @@
     private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _ownedSites = [];
     private IReadOnlyList<AIWordPressManager.Web.Services.ExecutionJob> _jobs = [];
     private IReadOnlyList<AIWordPressManager.Web.Services.ExecutionActivity> _activities = [];
+    private Guid _ownerUserId;
     private Guid _selectedSiteId;
     private string _query = string.Empty;
     private string _status = "all";
@@ -114,10 +116,9 @@
     [Parameter, SupplyParameterFromQuery(Name = "siteId")]
     public Guid? WorkspaceSiteId { get; set; }
 
-    private HashSet<string> OwnedSiteNames => _ownedSites.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-    private string? SelectedSiteName => _selectedSiteId == Guid.Empty ? null : _ownedSites.FirstOrDefault(x => x.Id == _selectedSiteId)?.Name;
-    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> OwnedJobs => _jobs.Where(x => OwnedSiteNames.Contains(x.SiteName));
-    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => string.IsNullOrWhiteSpace(SelectedSiteName) ? OwnedJobs : OwnedJobs.Where(x => x.SiteName.Equals(SelectedSiteName, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => _selectedSiteId == Guid.Empty
+        ? _jobs
+        : _jobs.Where(x => x.SiteId == _selectedSiteId);
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionActivity> VisibleActivities
     {
@@ -139,6 +140,7 @@
     {
         try
         {
+            _ownerUserId = CurrentUser.RequireUserId();
             _ownedSites = await SiteService.GetSitesAsync();
             if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value))
                 _selectedSiteId = WorkspaceSiteId.Value;
@@ -179,19 +181,25 @@
         catch (ObjectDisposedException) { }
     }
 
-    private void Refresh() { _jobs = ExecutionService.GetJobs(); _activities = ExecutionService.GetActivities(100); }
+    private void Refresh()
+    {
+        if (_ownerUserId == Guid.Empty) return;
+        _jobs = ExecutionService.GetJobs(_ownerUserId);
+        _activities = ExecutionService.GetActivities(_ownerUserId, 100);
+    }
+
     private void RefreshWithNotice() { Refresh(); Notifications.Success(L.IsArabic ? "تم تحديث مركز التنفيذ." : "Execution Center refreshed."); }
     private int Count(string status) => SiteJobs.Count(x => x.Status == status);
-    private void Pause(Guid id) => RunOwnedAction(id, () => ExecutionService.Pause(id), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
-    private void Resume(Guid id) => RunOwnedAction(id, () => ExecutionService.Resume(id), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
-    private void Retry(Guid id) => RunOwnedAction(id, () => ExecutionService.Retry(id), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
-    private void Cancel(Guid id) => RunOwnedAction(id, () => ExecutionService.Cancel(id), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
+    private void Pause(Guid id) => RunOwnedAction(id, () => ExecutionService.Pause(id, _ownerUserId), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
+    private void Resume(Guid id) => RunOwnedAction(id, () => ExecutionService.Resume(id, _ownerUserId), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
+    private void Retry(Guid id) => RunOwnedAction(id, () => ExecutionService.Retry(id, _ownerUserId), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
+    private void Cancel(Guid id) => RunOwnedAction(id, () => ExecutionService.Cancel(id, _ownerUserId), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
 
     private void RunOwnedAction(Guid id, Action action, string successMessage)
     {
         try
         {
-            _ = OwnedJobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job is not associated with a site owned by the signed-in user.");
+            _ = _jobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user.");
             action(); Refresh(); Notifications.Success(successMessage);
         }
         catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
