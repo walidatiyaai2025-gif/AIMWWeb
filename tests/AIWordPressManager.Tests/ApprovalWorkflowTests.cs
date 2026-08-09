@@ -165,7 +165,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
             path,
             siteId => siteId == _siteA ? _ownerA : null);
 
-        service.GetItems(_ownerA).Should().ContainSingle(x => x.Id == legacyId && x.OwnerUserId is null);
+        service.GetItems(_ownerA).Should().ContainSingle(x => x.Id == legacyId && x.OwnerUserId == null);
         service.GetItems(_ownerB).Should().BeEmpty();
         service.GetById(_ownerB, legacyId).Should().BeNull();
 
