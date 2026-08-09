@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using AIWordPressManager.Persistence;
 using Microsoft.Data.Sqlite;
@@ -29,22 +30,26 @@ public sealed class ApprovalWorkflowService
     private readonly ExecutionCenterService _executionCenter;
     private readonly NotificationInboxService? _notifications;
     private readonly IServiceScopeFactory? _scopeFactory;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
+    private readonly Func<Guid, Guid?>? _siteOwnerResolver;
 
-    // Preserved for isolated tests and explicit database-path callers.
+    // Isolated-test and explicit database-path constructor. Runtime DI uses the constructor below.
     public ApprovalWorkflowService(
         ExecutionCenterService executionCenter,
-        string? databasePath = null)
-        : this(executionCenter, null, null, databasePath)
+        string? databasePath = null,
+        Func<Guid, Guid?>? siteOwnerResolver = null)
+        : this(executionCenter, null, null, null, siteOwnerResolver, databasePath)
     {
     }
 
-    // Runtime DI constructor. Approval ownership is resolved from the authoritative Site row,
-    // never from caller-supplied RequestedBy/Reviewer display strings.
+    // Runtime DI constructor. HTTP identity is used only to identify the caller; site ownership
+    // continues to come from the authoritative application database.
     public ApprovalWorkflowService(
         ExecutionCenterService executionCenter,
         NotificationInboxService notifications,
-        IServiceScopeFactory scopeFactory)
-        : this(executionCenter, notifications, scopeFactory, null)
+        IServiceScopeFactory scopeFactory,
+        IHttpContextAccessor httpContextAccessor)
+        : this(executionCenter, notifications, scopeFactory, httpContextAccessor, null, null)
     {
     }
 
@@ -52,11 +57,16 @@ public sealed class ApprovalWorkflowService
         ExecutionCenterService executionCenter,
         NotificationInboxService? notifications,
         IServiceScopeFactory? scopeFactory,
+        IHttpContextAccessor? httpContextAccessor,
+        Func<Guid, Guid?>? siteOwnerResolver,
         string? databasePath)
     {
         _executionCenter = executionCenter;
         _notifications = notifications;
         _scopeFactory = scopeFactory;
+        _httpContextAccessor = httpContextAccessor;
+        _siteOwnerResolver = siteOwnerResolver;
+
         databasePath = ResolveDatabasePath(databasePath);
         var directory = Path.GetDirectoryName(databasePath);
         if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
@@ -71,34 +81,53 @@ public sealed class ApprovalWorkflowService
         InitializeDatabase();
     }
 
-    public IReadOnlyList<ApprovalItem> GetItems(ApprovalStatus? status = null, int take = 200)
+    // Compatibility for existing HTTP endpoints. The owner is never accepted from the request.
+    public IReadOnlyList<ApprovalItem> GetItems(ApprovalStatus? status = null, int take = 200) =>
+        GetItems(RequireRuntimeOwnerUserId(), status, take);
+
+    public IReadOnlyList<ApprovalItem> GetItems(Guid ownerUserId, ApprovalStatus? status = null, int take = 200)
     {
+        RequireOwner(ownerUserId);
+        var limit = Math.Clamp(take, 1, 1000);
+        List<ApprovalItem> owned;
+        List<ApprovalItem> legacy;
+
         lock (_sync)
         {
             using var connection = OpenConnection();
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                SELECT Id, SiteId, SiteName, OperationType, Title, RiskLevel, Status,
-                       BeforeJson, AfterJson, RequestedBy, RequestedAtUtc,
-                       ReviewedBy, ReviewedAtUtc, ReviewerNotes, ExecutionJobId,
-                       CorrelationId, IdempotencyKey
-                FROM ApprovalItems
-                WHERE ($status IS NULL OR Status = $status)
-                ORDER BY RequestedAtUtc DESC
-                LIMIT $take;
-                """;
-            command.Parameters.AddWithValue("$status", status?.ToString() ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("$take", Math.Clamp(take, 1, 1000));
+            owned = QueryItems(
+                connection,
+                "OwnerUserId=$ownerUserId AND ($status IS NULL OR Status=$status)",
+                limit,
+                command =>
+                {
+                    command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+                    command.Parameters.AddWithValue("$status", status?.ToString() ?? (object)DBNull.Value);
+                });
 
-            using var reader = command.ExecuteReader();
-            var result = new List<ApprovalItem>();
-            while (reader.Read()) result.Add(ReadItem(reader));
-            return result;
+            // Legacy approval rows had no owner. Preserve them, but never guess ownership. They are
+            // visible only while their SiteId currently resolves to this owner.
+            legacy = QueryItems(
+                connection,
+                "OwnerUserId IS NULL AND ($status IS NULL OR Status=$status)",
+                1000,
+                command => command.Parameters.AddWithValue("$status", status?.ToString() ?? (object)DBNull.Value));
         }
+
+        return owned
+            .Concat(legacy.Where(x => IsLegacyVisibleTo(ownerUserId, x)))
+            .OrderByDescending(x => x.RequestedAtUtc)
+            .Take(limit)
+            .ToArray();
     }
 
-    public IReadOnlyList<ApprovalAuditEntry> GetAudit(Guid approvalId, int take = 200)
+    public IReadOnlyList<ApprovalAuditEntry> GetAudit(Guid approvalId, int take = 200) =>
+        GetAudit(RequireRuntimeOwnerUserId(), approvalId, take);
+
+    public IReadOnlyList<ApprovalAuditEntry> GetAudit(Guid ownerUserId, Guid approvalId, int take = 200)
     {
+        if (GetById(ownerUserId, approvalId) is null) return [];
+
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -129,19 +158,39 @@ public sealed class ApprovalWorkflowService
         }
     }
 
+    // Compatibility for producers and the existing HTTP endpoint. Request-provided RequestedBy
+    // is not authoritative when an authenticated/background identity exists.
     public ApprovalItem Submit(ApprovalSubmission request)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        var runtimeOwner = TryResolveRuntimeOwnerUserId(out var callerOwner) ? callerOwner : (Guid?)null;
+        var ownerUserId = ResolveSubmissionOwner(request.SiteId, runtimeOwner);
+        var actor = ResolveRuntimeActor(ownerUserId);
+        return Submit(ownerUserId, request, actor);
+    }
+
+    public ApprovalItem Submit(Guid ownerUserId, ApprovalSubmission request, string? actor = null)
+    {
+        RequireOwner(ownerUserId);
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.OperationType))
             throw new InvalidOperationException("Operation type is required.");
         if (string.IsNullOrWhiteSpace(request.Title))
             throw new InvalidOperationException("Approval title is required.");
 
+        if (request.SiteId.HasValue && _scopeFactory is not null || request.SiteId.HasValue && _siteOwnerResolver is not null)
+        {
+            if (ResolveCurrentSiteOwner(request.SiteId) != ownerUserId)
+                throw new InvalidOperationException("Selected site is unavailable.");
+        }
+
         var beforeJson = NormalizeJson(request.Before);
         var afterJson = NormalizeJson(request.After);
-        var idempotencyKey = string.IsNullOrWhiteSpace(request.IdempotencyKey)
+        var logicalIdempotencyKey = string.IsNullOrWhiteSpace(request.IdempotencyKey)
             ? BuildIdempotencyKey(request.SiteId, request.OperationType, afterJson)
             : request.IdempotencyKey.Trim();
+        var idempotencyKey = ScopeIdempotencyKey(ownerUserId, logicalIdempotencyKey);
+        var requestedBy = NormalizeActor(actor ?? request.RequestedBy ?? ownerUserId.ToString());
 
         ApprovalItem item;
         lock (_sync)
@@ -151,17 +200,19 @@ public sealed class ApprovalWorkflowService
 
             using var existing = connection.CreateCommand();
             existing.Transaction = transaction;
-            existing.CommandText = "SELECT Id FROM ApprovalItems WHERE IdempotencyKey=$key AND Status IN ('Pending','Approved','Executed') LIMIT 1;";
+            existing.CommandText = "SELECT Id FROM ApprovalItems WHERE OwnerUserId=$ownerUserId AND IdempotencyKey=$key AND Status IN ('Pending','Approved','Executed') LIMIT 1;";
+            existing.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
             existing.Parameters.AddWithValue("$key", idempotencyKey);
             var existingId = existing.ExecuteScalar() as string;
             if (!string.IsNullOrWhiteSpace(existingId))
             {
                 transaction.Rollback();
-                return GetById(Guid.Parse(existingId))!;
+                return GetByIdInternal(Guid.Parse(existingId))!;
             }
 
             item = new ApprovalItem(
                 Guid.NewGuid(),
+                ownerUserId,
                 request.SiteId,
                 request.SiteName?.Trim() ?? string.Empty,
                 request.OperationType.Trim(),
@@ -170,7 +221,7 @@ public sealed class ApprovalWorkflowService
                 ApprovalStatus.Pending,
                 beforeJson,
                 afterJson,
-                string.IsNullOrWhiteSpace(request.RequestedBy) ? "System" : request.RequestedBy.Trim(),
+                requestedBy,
                 DateTime.UtcNow,
                 null,
                 null,
@@ -184,38 +235,37 @@ public sealed class ApprovalWorkflowService
             transaction.Commit();
         }
 
-        NotifySiteOwner(
-            item,
-            "Approval required",
-            item.Title,
-            NotificationSeverity.Warning,
-            executionJobId: null);
+        NotifyOwner(item, ownerUserId, "Approval required", item.Title, NotificationSeverity.Warning, null);
         return item;
     }
 
     public ApprovalItem Approve(Guid id, string reviewer, string? notes, bool executeImmediately)
     {
-        var item = Review(id, ApprovalStatus.Approved, reviewer, notes, "Approved");
+        var ownerUserId = RequireRuntimeOwnerUserId();
+        return Approve(ownerUserId, id, ResolveRuntimeActor(ownerUserId), notes, executeImmediately);
+    }
+
+    public ApprovalItem Approve(Guid ownerUserId, Guid id, string reviewer, string? notes, bool executeImmediately)
+    {
+        RequireOwner(ownerUserId);
+        var pending = GetRequiredOwnedItem(ownerUserId, id);
+        EnsureSiteStillOwned(ownerUserId, pending);
+        if (executeImmediately && !pending.SiteId.HasValue)
+            throw new InvalidOperationException("Site-scoped execution is required for immediate approval execution.");
+
+        var item = Review(ownerUserId, id, ApprovalStatus.Approved, reviewer, notes, "Approved");
         if (!executeImmediately) return item;
 
-        var ownerUserId = ResolveCurrentSiteOwner(item.SiteId);
-        var job = ownerUserId.HasValue && item.SiteId.HasValue
-            ? _executionCenter.Enqueue(
-                ownerUserId.Value,
-                item.SiteId.Value,
-                item.Title,
-                item.OperationType,
-                item.SiteName,
-                1,
-                item.IdempotencyKey,
-                item.CorrelationId)
-            : _executionCenter.Enqueue(
-                item.Title,
-                item.OperationType,
-                item.SiteName,
-                1,
-                item.IdempotencyKey,
-                item.CorrelationId);
+        var siteId = item.SiteId!.Value;
+        var job = _executionCenter.Enqueue(
+            ownerUserId,
+            siteId,
+            item.Title,
+            item.OperationType,
+            item.SiteName,
+            1,
+            item.IdempotencyKey,
+            item.CorrelationId);
 
         lock (_sync)
         {
@@ -223,70 +273,89 @@ public sealed class ApprovalWorkflowService
             using var transaction = connection.BeginTransaction();
             using var update = connection.CreateCommand();
             update.Transaction = transaction;
-            update.CommandText = "UPDATE ApprovalItems SET Status='Executed', ExecutionJobId=$jobId WHERE Id=$id AND Status='Approved';";
+            update.CommandText = """
+                UPDATE ApprovalItems
+                SET Status='Executed', ExecutionJobId=$jobId
+                WHERE Id=$id AND Status='Approved'
+                  AND (OwnerUserId=$ownerUserId OR OwnerUserId IS NULL);
+                """;
             update.Parameters.AddWithValue("$jobId", job.Id.ToString());
             update.Parameters.AddWithValue("$id", id.ToString());
-            update.ExecuteNonQuery();
+            update.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+            if (update.ExecuteNonQuery() != 1)
+                throw new InvalidOperationException("Approval item could not be queued for execution.");
             InsertAudit(connection, transaction, id, "QueuedForExecution", reviewer, $"Execution job: {job.Id}");
             transaction.Commit();
         }
 
-        var executed = GetById(id)!;
-        NotifySiteOwner(
-            executed,
-            "Approval queued for execution",
-            executed.Title,
-            NotificationSeverity.Information,
-            job.Id,
-            ownerUserId);
+        var executed = GetById(ownerUserId, id)!;
+        NotifyOwner(executed, ownerUserId, "Approval queued for execution", executed.Title, NotificationSeverity.Information, job.Id);
         return executed;
     }
 
-    public ApprovalItem Reject(Guid id, string reviewer, string? notes) =>
-        Review(id, ApprovalStatus.Rejected, reviewer, notes, "Rejected");
+    public ApprovalItem Reject(Guid id, string reviewer, string? notes)
+    {
+        var ownerUserId = RequireRuntimeOwnerUserId();
+        return Reject(ownerUserId, id, ResolveRuntimeActor(ownerUserId), notes);
+    }
+
+    public ApprovalItem Reject(Guid ownerUserId, Guid id, string reviewer, string? notes) =>
+        Review(ownerUserId, id, ApprovalStatus.Rejected, reviewer, notes, "Rejected");
 
     public ApprovalItem UpdateProposal(Guid id, object? updatedAfter, string actor, string? notes)
     {
+        var ownerUserId = RequireRuntimeOwnerUserId();
+        return UpdateProposal(ownerUserId, id, updatedAfter, ResolveRuntimeActor(ownerUserId), notes);
+    }
+
+    public ApprovalItem UpdateProposal(Guid ownerUserId, Guid id, object? updatedAfter, string actor, string? notes)
+    {
+        RequireOwner(ownerUserId);
+        var item = GetRequiredOwnedItem(ownerUserId, id);
+        EnsureSiteStillOwned(ownerUserId, item);
         var afterJson = NormalizeJson(updatedAfter);
+
         lock (_sync)
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
-            command.CommandText = "UPDATE ApprovalItems SET AfterJson=$afterJson WHERE Id=$id AND Status='Pending';";
+            command.CommandText = """
+                UPDATE ApprovalItems
+                SET AfterJson=$afterJson
+                WHERE Id=$id AND Status='Pending'
+                  AND (OwnerUserId=$ownerUserId OR OwnerUserId IS NULL);
+                """;
             command.Parameters.AddWithValue("$afterJson", afterJson);
             command.Parameters.AddWithValue("$id", id.ToString());
-            if (command.ExecuteNonQuery() == 0)
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+            if (command.ExecuteNonQuery() != 1)
                 throw new InvalidOperationException("Only pending approval items can be edited.");
             InsertAudit(connection, transaction, id, "Edited", NormalizeActor(actor), notes);
             transaction.Commit();
         }
-        return GetById(id)!;
+        return GetById(ownerUserId, id)!;
     }
 
-    public ApprovalItem? GetById(Guid id)
+    public ApprovalItem? GetById(Guid id) => GetById(RequireRuntimeOwnerUserId(), id);
+
+    public ApprovalItem? GetById(Guid ownerUserId, Guid id)
     {
-        lock (_sync)
-        {
-            using var connection = OpenConnection();
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                SELECT Id, SiteId, SiteName, OperationType, Title, RiskLevel, Status,
-                       BeforeJson, AfterJson, RequestedBy, RequestedAtUtc,
-                       ReviewedBy, ReviewedAtUtc, ReviewerNotes, ExecutionJobId,
-                       CorrelationId, IdempotencyKey
-                FROM ApprovalItems WHERE Id=$id LIMIT 1;
-                """;
-            command.Parameters.AddWithValue("$id", id.ToString());
-            using var reader = command.ExecuteReader();
-            return reader.Read() ? ReadItem(reader) : null;
-        }
+        RequireOwner(ownerUserId);
+        var item = GetByIdInternal(id);
+        if (item is null) return null;
+        if (item.OwnerUserId == ownerUserId) return item;
+        return item.OwnerUserId is null && IsLegacyVisibleTo(ownerUserId, item) ? item : null;
     }
 
-    private ApprovalItem Review(Guid id, ApprovalStatus status, string reviewer, string? notes, string action)
+    private ApprovalItem Review(Guid ownerUserId, Guid id, ApprovalStatus status, string reviewer, string? notes, string action)
     {
+        RequireOwner(ownerUserId);
+        var item = GetRequiredOwnedItem(ownerUserId, id);
+        if (status == ApprovalStatus.Approved) EnsureSiteStillOwned(ownerUserId, item);
         var actor = NormalizeActor(reviewer);
+
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -296,33 +365,103 @@ public sealed class ApprovalWorkflowService
             command.CommandText = """
                 UPDATE ApprovalItems
                 SET Status=$status, ReviewedBy=$reviewer, ReviewedAtUtc=$reviewedAt, ReviewerNotes=$notes
-                WHERE Id=$id AND Status='Pending';
+                WHERE Id=$id AND Status='Pending'
+                  AND (OwnerUserId=$ownerUserId OR OwnerUserId IS NULL);
                 """;
             command.Parameters.AddWithValue("$status", status.ToString());
             command.Parameters.AddWithValue("$reviewer", actor);
             command.Parameters.AddWithValue("$reviewedAt", FormatDate(DateTime.UtcNow));
             command.Parameters.AddWithValue("$notes", string.IsNullOrWhiteSpace(notes) ? DBNull.Value : notes.Trim());
             command.Parameters.AddWithValue("$id", id.ToString());
-            if (command.ExecuteNonQuery() == 0)
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+            if (command.ExecuteNonQuery() != 1)
                 throw new InvalidOperationException("Approval item is not pending or does not exist.");
             InsertAudit(connection, transaction, id, action, actor, notes);
             transaction.Commit();
         }
 
-        var item = GetById(id)!;
+        var reviewed = GetById(ownerUserId, id)!;
         var severity = status == ApprovalStatus.Rejected ? NotificationSeverity.Error : NotificationSeverity.Success;
-        NotifySiteOwner(
-            item,
+        NotifyOwner(
+            reviewed,
+            ownerUserId,
             status == ApprovalStatus.Rejected ? "Approval rejected" : "Approval approved",
-            string.IsNullOrWhiteSpace(notes) ? item.Title : $"{item.Title} — {notes.Trim()}",
+            string.IsNullOrWhiteSpace(notes) ? reviewed.Title : $"{reviewed.Title} — {notes.Trim()}",
             severity,
-            item.ExecutionJobId);
-        return item;
+            reviewed.ExecutionJobId);
+        return reviewed;
+    }
+
+    private ApprovalItem GetRequiredOwnedItem(Guid ownerUserId, Guid id) =>
+        GetById(ownerUserId, id) ?? throw new InvalidOperationException("Approval item is not pending or does not exist.");
+
+    private ApprovalItem? GetByIdInternal(Guid id)
+    {
+        lock (_sync)
+        {
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = $"{SelectColumns} FROM ApprovalItems WHERE Id=$id LIMIT 1;";
+            command.Parameters.AddWithValue("$id", id.ToString());
+            using var reader = command.ExecuteReader();
+            return reader.Read() ? ReadItem(reader) : null;
+        }
+    }
+
+    private static List<ApprovalItem> QueryItems(
+        SqliteConnection connection,
+        string where,
+        int take,
+        Action<SqliteCommand> addParameters)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = $"{SelectColumns} FROM ApprovalItems WHERE {where} ORDER BY RequestedAtUtc DESC LIMIT $take;";
+        command.Parameters.AddWithValue("$take", Math.Clamp(take, 1, 1000));
+        addParameters(command);
+        using var reader = command.ExecuteReader();
+        var result = new List<ApprovalItem>();
+        while (reader.Read()) result.Add(ReadItem(reader));
+        return result;
+    }
+
+    private bool IsLegacyVisibleTo(Guid ownerUserId, ApprovalItem item) =>
+        item.OwnerUserId is null &&
+        item.SiteId.HasValue &&
+        ResolveCurrentSiteOwner(item.SiteId) == ownerUserId;
+
+    private void EnsureSiteStillOwned(Guid ownerUserId, ApprovalItem item)
+    {
+        if (!item.SiteId.HasValue) return;
+        if ((_scopeFactory is not null || _siteOwnerResolver is not null) && ResolveCurrentSiteOwner(item.SiteId) != ownerUserId)
+            throw new InvalidOperationException("Approval item is not pending or does not exist.");
+    }
+
+    private Guid ResolveSubmissionOwner(Guid? siteId, Guid? runtimeOwner)
+    {
+        if (siteId.HasValue)
+        {
+            var siteOwner = ResolveCurrentSiteOwner(siteId);
+            if (!siteOwner.HasValue || siteOwner.Value == Guid.Empty)
+            {
+                if (_scopeFactory is null && _siteOwnerResolver is null && runtimeOwner.HasValue)
+                    return runtimeOwner.Value;
+                throw new InvalidOperationException("Selected site is unavailable.");
+            }
+
+            if (runtimeOwner.HasValue && runtimeOwner.Value != siteOwner.Value)
+                throw new InvalidOperationException("Selected site is unavailable.");
+            return siteOwner.Value;
+        }
+
+        return runtimeOwner ?? throw new InvalidOperationException("An authenticated owner is required for this approval.");
     }
 
     private Guid? ResolveCurrentSiteOwner(Guid? siteId)
     {
-        if (!siteId.HasValue || siteId.Value == Guid.Empty || _scopeFactory is null) return null;
+        if (!siteId.HasValue || siteId.Value == Guid.Empty) return null;
+        if (_siteOwnerResolver is not null) return _siteOwnerResolver(siteId.Value);
+        if (_scopeFactory is null) return null;
+
         try
         {
             using var scope = _scopeFactory.CreateScope();
@@ -339,22 +478,20 @@ public sealed class ApprovalWorkflowService
         }
     }
 
-    private void NotifySiteOwner(
+    private void NotifyOwner(
         ApprovalItem item,
+        Guid ownerUserId,
         string title,
         string message,
         NotificationSeverity severity,
-        Guid? executionJobId,
-        Guid? resolvedOwnerUserId = null)
+        Guid? executionJobId)
     {
-        if (_notifications is null) return;
-        var ownerUserId = resolvedOwnerUserId ?? ResolveCurrentSiteOwner(item.SiteId);
-        if (!ownerUserId.HasValue || ownerUserId.Value == Guid.Empty) return;
+        if (_notifications is null || ownerUserId == Guid.Empty) return;
 
         try
         {
             _notifications.Create(
-                ownerUserId.Value,
+                ownerUserId,
                 title,
                 message,
                 severity,
@@ -368,6 +505,31 @@ public sealed class ApprovalWorkflowService
             // Approval state is authoritative. Notification persistence is best-effort and must
             // never roll back a completed review or execution decision.
         }
+    }
+
+    private bool TryResolveRuntimeOwnerUserId(out Guid ownerUserId)
+    {
+        var value = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(value, out ownerUserId)) return true;
+        return BackgroundExecutionIdentity.TryGetOwnerUserId(out ownerUserId);
+    }
+
+    private Guid RequireRuntimeOwnerUserId()
+    {
+        if (TryResolveRuntimeOwnerUserId(out var ownerUserId)) return ownerUserId;
+        throw new UnauthorizedAccessException("Authenticated user identity is unavailable.");
+    }
+
+    private string ResolveRuntimeActor(Guid ownerUserId)
+    {
+        var name = _httpContextAccessor?.HttpContext?.User.Identity?.Name;
+        if (!string.IsNullOrWhiteSpace(name)) return name.Trim();
+        return BackgroundExecutionIdentity.TryGetOwnerUserId(out _) ? "Background worker" : ownerUserId.ToString();
+    }
+
+    private static void RequireOwner(Guid ownerUserId)
+    {
+        if (ownerUserId == Guid.Empty) throw new UnauthorizedAccessException("A valid owner identity is required.");
     }
 
     private static ApprovalRiskLevel ResolveRisk(string operationType, ApprovalRiskLevel? requested)
@@ -388,48 +550,81 @@ public sealed class ApprovalWorkflowService
         lock (_sync)
         {
             using var connection = OpenConnection();
-            using var command = connection.CreateCommand();
-            command.CommandText = """
-                PRAGMA journal_mode=WAL;
-                PRAGMA foreign_keys=ON;
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = """
+                    PRAGMA journal_mode=WAL;
+                    PRAGMA foreign_keys=ON;
 
-                CREATE TABLE IF NOT EXISTS ApprovalItems (
-                    Id TEXT PRIMARY KEY,
-                    SiteId TEXT NULL,
-                    SiteName TEXT NOT NULL,
-                    OperationType TEXT NOT NULL,
-                    Title TEXT NOT NULL,
-                    RiskLevel TEXT NOT NULL,
-                    Status TEXT NOT NULL,
-                    BeforeJson TEXT NOT NULL,
-                    AfterJson TEXT NOT NULL,
-                    RequestedBy TEXT NOT NULL,
-                    RequestedAtUtc TEXT NOT NULL,
-                    ReviewedBy TEXT NULL,
-                    ReviewedAtUtc TEXT NULL,
-                    ReviewerNotes TEXT NULL,
-                    ExecutionJobId TEXT NULL,
-                    CorrelationId TEXT NOT NULL,
-                    IdempotencyKey TEXT NOT NULL UNIQUE
-                );
+                    CREATE TABLE IF NOT EXISTS ApprovalItems (
+                        Id TEXT PRIMARY KEY,
+                        OwnerUserId TEXT NULL,
+                        SiteId TEXT NULL,
+                        SiteName TEXT NOT NULL,
+                        OperationType TEXT NOT NULL,
+                        Title TEXT NOT NULL,
+                        RiskLevel TEXT NOT NULL,
+                        Status TEXT NOT NULL,
+                        BeforeJson TEXT NOT NULL,
+                        AfterJson TEXT NOT NULL,
+                        RequestedBy TEXT NOT NULL,
+                        RequestedAtUtc TEXT NOT NULL,
+                        ReviewedBy TEXT NULL,
+                        ReviewedAtUtc TEXT NULL,
+                        ReviewerNotes TEXT NULL,
+                        ExecutionJobId TEXT NULL,
+                        CorrelationId TEXT NOT NULL,
+                        IdempotencyKey TEXT NOT NULL UNIQUE
+                    );
 
-                CREATE TABLE IF NOT EXISTS ApprovalAudit (
-                    Id TEXT PRIMARY KEY,
-                    ApprovalId TEXT NOT NULL,
-                    Action TEXT NOT NULL,
-                    Actor TEXT NOT NULL,
-                    Notes TEXT NULL,
-                    CreatedAtUtc TEXT NOT NULL,
-                    FOREIGN KEY (ApprovalId) REFERENCES ApprovalItems(Id) ON DELETE CASCADE
-                );
+                    CREATE TABLE IF NOT EXISTS ApprovalAudit (
+                        Id TEXT PRIMARY KEY,
+                        ApprovalId TEXT NOT NULL,
+                        Action TEXT NOT NULL,
+                        Actor TEXT NOT NULL,
+                        Notes TEXT NULL,
+                        CreatedAtUtc TEXT NOT NULL,
+                        FOREIGN KEY (ApprovalId) REFERENCES ApprovalItems(Id) ON DELETE CASCADE
+                    );
+                    """;
+                command.ExecuteNonQuery();
+            }
 
+            var columns = GetColumns(connection, "ApprovalItems");
+            EnsureColumn(connection, columns, "OwnerUserId", "TEXT NULL");
+
+            using var indexes = connection.CreateCommand();
+            indexes.CommandText = """
                 CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Status_RequestedAtUtc
                     ON ApprovalItems(Status, RequestedAtUtc);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_Status_RequestedAtUtc
+                    ON ApprovalItems(OwnerUserId, Status, RequestedAtUtc DESC);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_Site_RequestedAtUtc
+                    ON ApprovalItems(OwnerUserId, SiteId, RequestedAtUtc DESC);
                 CREATE INDEX IF NOT EXISTS IX_ApprovalAudit_ApprovalId_CreatedAtUtc
                     ON ApprovalAudit(ApprovalId, CreatedAtUtc);
                 """;
-            command.ExecuteNonQuery();
+            indexes.ExecuteNonQuery();
         }
+    }
+
+    private static HashSet<string> GetColumns(SqliteConnection connection, string table)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info({table});";
+        using var reader = command.ExecuteReader();
+        var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (reader.Read()) columns.Add(reader.GetString(1));
+        return columns;
+    }
+
+    private static void EnsureColumn(SqliteConnection connection, ISet<string> columns, string name, string declaration)
+    {
+        if (columns.Contains(name)) return;
+        using var command = connection.CreateCommand();
+        command.CommandText = $"ALTER TABLE ApprovalItems ADD COLUMN {name} {declaration};";
+        command.ExecuteNonQuery();
+        columns.Add(name);
     }
 
     private static void InsertItem(SqliteConnection connection, SqliteTransaction transaction, ApprovalItem item)
@@ -438,14 +633,15 @@ public sealed class ApprovalWorkflowService
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO ApprovalItems
-            (Id, SiteId, SiteName, OperationType, Title, RiskLevel, Status, BeforeJson, AfterJson,
+            (Id, OwnerUserId, SiteId, SiteName, OperationType, Title, RiskLevel, Status, BeforeJson, AfterJson,
              RequestedBy, RequestedAtUtc, ReviewedBy, ReviewedAtUtc, ReviewerNotes, ExecutionJobId,
              CorrelationId, IdempotencyKey)
             VALUES
-            ($id, $siteId, $siteName, $operationType, $title, $riskLevel, $status, $beforeJson, $afterJson,
+            ($id, $ownerUserId, $siteId, $siteName, $operationType, $title, $riskLevel, $status, $beforeJson, $afterJson,
              $requestedBy, $requestedAtUtc, NULL, NULL, NULL, NULL, $correlationId, $idempotencyKey);
             """;
         command.Parameters.AddWithValue("$id", item.Id.ToString());
+        command.Parameters.AddWithValue("$ownerUserId", item.OwnerUserId?.ToString() ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("$siteId", item.SiteId?.ToString() ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("$siteName", item.SiteName);
         command.Parameters.AddWithValue("$operationType", item.OperationType);
@@ -478,21 +674,29 @@ public sealed class ApprovalWorkflowService
     private static ApprovalItem ReadItem(SqliteDataReader reader) => new(
         Guid.Parse(reader.GetString(0)),
         reader.IsDBNull(1) ? null : Guid.Parse(reader.GetString(1)),
-        reader.GetString(2),
+        reader.IsDBNull(2) ? null : Guid.Parse(reader.GetString(2)),
         reader.GetString(3),
         reader.GetString(4),
-        Enum.Parse<ApprovalRiskLevel>(reader.GetString(5), true),
-        Enum.Parse<ApprovalStatus>(reader.GetString(6), true),
-        reader.GetString(7),
+        reader.GetString(5),
+        Enum.Parse<ApprovalRiskLevel>(reader.GetString(6), true),
+        Enum.Parse<ApprovalStatus>(reader.GetString(7), true),
         reader.GetString(8),
         reader.GetString(9),
-        ParseDate(reader.GetString(10)),
-        reader.IsDBNull(11) ? null : reader.GetString(11),
-        reader.IsDBNull(12) ? null : ParseDate(reader.GetString(12)),
-        reader.IsDBNull(13) ? null : reader.GetString(13),
-        reader.IsDBNull(14) ? null : Guid.Parse(reader.GetString(14)),
-        reader.GetString(15),
-        reader.GetString(16));
+        reader.GetString(10),
+        ParseDate(reader.GetString(11)),
+        reader.IsDBNull(12) ? null : reader.GetString(12),
+        reader.IsDBNull(13) ? null : ParseDate(reader.GetString(13)),
+        reader.IsDBNull(14) ? null : reader.GetString(14),
+        reader.IsDBNull(15) ? null : Guid.Parse(reader.GetString(15)),
+        reader.GetString(16),
+        reader.GetString(17));
+
+    private const string SelectColumns = """
+        SELECT Id, OwnerUserId, SiteId, SiteName, OperationType, Title, RiskLevel, Status,
+               BeforeJson, AfterJson, RequestedBy, RequestedAtUtc,
+               ReviewedBy, ReviewedAtUtc, ReviewerNotes, ExecutionJobId,
+               CorrelationId, IdempotencyKey
+        """;
 
     private SqliteConnection OpenConnection()
     {
@@ -531,6 +735,13 @@ public sealed class ApprovalWorkflowService
         return Convert.ToHexString(hash);
     }
 
+    private static string ScopeIdempotencyKey(Guid ownerUserId, string logicalKey)
+    {
+        var input = $"{ownerUserId:N}|{logicalKey}";
+        var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(hash);
+    }
+
     private static string NormalizeActor(string? actor) => string.IsNullOrWhiteSpace(actor) ? "System" : actor.Trim();
     private static string FormatDate(DateTime value) => value.ToUniversalTime().ToString("O");
     private static DateTime ParseDate(string value) => DateTime.Parse(value, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
@@ -553,6 +764,7 @@ public sealed record ApprovalEditRequest(object? After, string Actor, string? No
 
 public sealed record ApprovalItem(
     Guid Id,
+    Guid? OwnerUserId,
     Guid? SiteId,
     string SiteName,
     string OperationType,
