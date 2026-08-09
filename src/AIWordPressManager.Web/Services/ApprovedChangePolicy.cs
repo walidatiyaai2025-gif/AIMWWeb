@@ -80,6 +80,28 @@ public static class ApprovedChangePolicy
             && remote.Sticky == desired.Sticky;
     }
 
+    public static WordPressContentUpdateRequest FromRemote(
+        WordPressEditableContent remote,
+        DateTimeOffset? expectedModifiedGmt = null) => new(
+        remote.ContentType,
+        remote.Id,
+        remote.Title,
+        remote.Slug,
+        remote.Status,
+        remote.Content,
+        remote.Excerpt,
+        remote.DateGmt,
+        remote.FeaturedMediaId,
+        remote.CategoryIds,
+        remote.TagIds,
+        remote.Template,
+        remote.CommentStatus,
+        remote.PingStatus,
+        remote.Format,
+        remote.Sticky,
+        expectedModifiedGmt ?? remote.ModifiedGmt,
+        false);
+
     public static WordPressContentUpdateRequest WithExpectedVersion(
         WordPressContentUpdateRequest request,
         DateTimeOffset? expectedModifiedGmt) =>
