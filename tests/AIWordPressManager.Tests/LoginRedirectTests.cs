@@ -22,4 +22,10 @@ public sealed class LoginRedirectTests
         LocalAuthenticationService.ResolveRedirectPath(requestedPath, lastPage)
             .Should().Be(expected);
     }
+
+    [Fact]
+    public void FirstRunLandingPath_Points_To_Welcome_Experience()
+    {
+        LocalAuthenticationService.FirstRunLandingPath.Should().Be("/welcome");
+    }
 }
