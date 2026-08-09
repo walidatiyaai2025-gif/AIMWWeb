@@ -64,6 +64,7 @@ builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppNotificationService>();
 builder.Services.AddScoped<ContentPlannerService>();
+builder.Services.AddScoped<AIPromptTemplateService>();
 builder.Services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 builder.Services.AddScoped(_ => { var language = new AppLanguageService(); language.SetCulture("en"); return language; });
 builder.Services.AddSingleton<BuildInformationService>();
@@ -260,12 +261,46 @@ app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service
 app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationToken cancellationToken) => Results.Ok(await service.GetAsync(cancellationToken)));
 app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new { jobs = service.GetJobs(), history = service.GetHistory(100) }));
 
-app.MapGet("/api/ai/prompts", (string? culture, IAIPromptRegistry registry) => Results.Ok(registry.GetAll(string.IsNullOrWhiteSpace(culture) ? "en" : culture)));
+app.MapGet("/api/ai/prompts", async (string? culture, AIPromptTemplateService service, CancellationToken cancellationToken) =>
+    Results.Ok(await service.GetAllAsync(string.IsNullOrWhiteSpace(culture) ? "en" : culture, false, cancellationToken)));
+app.MapGet("/api/ai/prompts/{key}/history", async (string key, AIPromptTemplateService service, CancellationToken cancellationToken) =>
+    Results.Ok(await service.GetHistoryAsync(key, cancellationToken)))
+    .RequireAuthorization(policy => policy.RequireRole("Administrator"));
+app.MapPut("/api/ai/prompts/{key}", async (string key, AIPromptTemplateApiRequest input, HttpContext context, AIPromptTemplateService service, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var actor = context.User.Identity?.Name ?? "administrator";
+        return Results.Ok(await service.SaveAsync(key, input.EnglishText, input.ArabicText, input.IsEnabled, actor, cancellationToken));
+    }
+    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+}).RequireAuthorization(policy => policy.RequireRole("Administrator"));
+app.MapPost("/api/ai/prompts/{key}/restore/{version:int}", async (string key, int version, HttpContext context, AIPromptTemplateService service, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var actor = context.User.Identity?.Name ?? "administrator";
+        return Results.Ok(await service.RestoreAsync(key, version, actor, cancellationToken));
+    }
+    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+}).RequireAuthorization(policy => policy.RequireRole("Administrator"));
 app.MapGet("/api/ai/usage", (int? take, Guid? siteId, string? userId, IAIUsageLog usageLog) => Results.Ok(usageLog.GetRecent(take ?? 100, siteId, userId)));
-app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrator orchestrator, IAIPromptRegistry registry, CancellationToken cancellationToken) =>
+app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrator orchestrator, AIPromptTemplateService prompts, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(input.Content)) return Results.BadRequest(new { error = "Content is required." });
-    var instruction = string.IsNullOrWhiteSpace(input.PromptKey) ? input.SystemPrompt : registry.Get(input.PromptKey, input.Culture ?? "en");
+    var instruction = input.SystemPrompt;
+    if (!string.IsNullOrWhiteSpace(input.PromptKey))
+    {
+        var prompt = await prompts.FindAsync(input.PromptKey, input.Culture ?? "en", false, cancellationToken);
+        if (prompt is null) return Results.BadRequest(new { error = "Prompt template was not found or is disabled." });
+        instruction = prompt.Text;
+    }
     var result = await orchestrator.ExecuteAsync(new AIRequest(input.Content, instruction, input.Model, input.Temperature ?? 0.2, input.MaxOutputTokens ?? 1500, input.SiteId, input.UserId, input.PromptKey), cancellationToken);
     return result.IsSuccess ? Results.Ok(result) : Results.BadRequest(result);
 });
@@ -306,4 +341,5 @@ app.MapRazorComponents<App>().AddInteractiveServerRenderMode().RequireAuthorizat
 app.Run();
 
 public sealed record AIGenerateApiRequest(string Content, string? PromptKey, string? Culture, string? SystemPrompt, string? Model, double? Temperature, int? MaxOutputTokens, Guid? SiteId, string? UserId);
+public sealed record AIPromptTemplateApiRequest(string EnglishText, string ArabicText, bool IsEnabled);
 public sealed record PlannerAIRequest(string? Culture, string? UserId);
