@@ -123,7 +123,7 @@ public sealed class SiteBulkOperationOwnershipTests
             var identity = new ClaimsIdentity(
                 [new Claim(ClaimTypes.NameIdentifier, ownerId.ToString()), new Claim(ClaimTypes.Name, "bulk-test")],
                 "bulk-test");
-            var accessor = new HttpContextAccessor
+            var accessor = new FixedHttpContextAccessor
             {
                 HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
             };
@@ -144,6 +144,11 @@ public sealed class SiteBulkOperationOwnershipTests
             await Db.DisposeAsync();
             await _connection.DisposeAsync();
         }
+    }
+
+    private sealed class FixedHttpContextAccessor : IHttpContextAccessor
+    {
+        public HttpContext? HttpContext { get; set; }
     }
 
     private sealed class UnusedConnectionTester : IWordPressConnectionTester
