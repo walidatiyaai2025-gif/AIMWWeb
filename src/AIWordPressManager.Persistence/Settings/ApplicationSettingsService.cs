@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Settings;
 using AIWordPressManager.Domain.Entities;
@@ -98,6 +99,43 @@ public sealed class ApplicationSettingsService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<string?> GetAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default)
+    {
+        var safeName = RequireProviderName(provider);
+        var keys = safeName == "OpenAI"
+            ? new[] { $"AI.{safeName}.ProtectedApiKey", "AI.ProtectedApiKey" }
+            : new[] { $"AI.{safeName}.ProtectedApiKey" };
+        var values = await dbContext.ApplicationSettings.AsNoTracking()
+            .Where(x => keys.Contains(x.Key))
+            .ToDictionaryAsync(x => x.Key, x => x.Value, cancellationToken);
+
+        var protectedValue = values.TryGetValue(keys[0], out var current) ? current : string.Empty;
+        if (string.IsNullOrWhiteSpace(protectedValue) && keys.Length > 1 && values.TryGetValue(keys[1], out var legacy))
+            protectedValue = legacy;
+        if (string.IsNullOrWhiteSpace(protectedValue)) return null;
+
+        try
+        {
+            return await secretProtectionService.UnprotectAsync(protectedValue, cancellationToken);
+        }
+        catch (CryptographicException ex)
+        {
+            throw new InvalidOperationException(
+                $"The stored {safeName} credential could not be decrypted. Re-enter the key in AI provider settings.", ex);
+        }
+    }
+
+    public async Task ClearAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default)
+    {
+        var safeName = RequireProviderName(provider);
+        var keys = safeName == "OpenAI"
+            ? new[] { $"AI.{safeName}.ProtectedApiKey", "AI.ProtectedApiKey" }
+            : new[] { $"AI.{safeName}.ProtectedApiKey" };
+        var rows = await dbContext.ApplicationSettings.Where(x => keys.Contains(x.Key)).ToListAsync(cancellationToken);
+        if (rows.Count == 0) return;
+        dbContext.ApplicationSettings.RemoveRange(rows);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 
     public async Task<PerformanceSettings> GetPerformanceSettingsAsync(CancellationToken cancellationToken = default)
     {
@@ -211,6 +249,10 @@ public sealed class ApplicationSettingsService(
         if (row is null) dbContext.ApplicationSettings.Add(new ApplicationSetting(key, value, DateTime.UtcNow));
         else row.SetValue(key, value, DateTime.UtcNow);
     }
+
+    private static string RequireProviderName(string provider) =>
+        ProviderNames.FirstOrDefault(x => x.Equals(provider?.Trim(), StringComparison.OrdinalIgnoreCase))
+        ?? throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown AI provider.");
 
     private static int ParseInt(IReadOnlyDictionary<string, string> values, string key, int fallback) =>
         values.TryGetValue(key, out var value) && int.TryParse(value, out var parsed) ? parsed : fallback;

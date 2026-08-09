@@ -23,7 +23,6 @@ public sealed record JobReliabilitySettings(
     int FailurePauseMinutes,
     bool AutoResumeAfterPause);
 
-
 public sealed record AiAutomationSettings(
     bool EnableAiErrorDiagnosis,
     string ErrorDecisionMode,
@@ -49,6 +48,8 @@ public interface IApplicationSettingsService
         AiSettings settings,
         IReadOnlyDictionary<string, string?> plainApiKeys,
         CancellationToken cancellationToken = default);
+    Task<string?> GetAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default);
+    Task ClearAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default);
 
     Task<PerformanceSettings> GetPerformanceSettingsAsync(CancellationToken cancellationToken = default);
     Task SavePerformanceSettingsAsync(PerformanceSettings settings, CancellationToken cancellationToken = default);
