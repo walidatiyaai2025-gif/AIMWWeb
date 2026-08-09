@@ -41,7 +41,7 @@
                 <label><span>@(L.IsArabic ? "اسم الموقع داخل النظام" : "Site name in the manager")</span><InputText @bind-Value="_name" disabled="@_working" placeholder="My WordPress Site" /></label>
                 <label><span>@(L.IsArabic ? "رابط الموقع" : "Site URL")</span><InputText @bind-Value="_url" disabled="@_working" placeholder="https://example.com" /></label>
             </div>
-            <div class="site-form-hint">ⓘ @(L.IsArabic ? "استخدم الرابط الرئيسي للموقع. سيقوم النظام بتطبيعه ومنع التكرار." : "Use the main site URL. The manager normalizes it and blocks duplicates.")</div>
+            <div class="site-form-hint">ⓘ @(L.IsArabic ? "استخدم الرابط الرئيسي للموقع. يمكن استخدام نفس رابط WordPress في أكثر من ملف موقع مستقل، ولكل ملف بيانات اعتماد وإعدادات خاصة به." : "Use the main site URL. The same WordPress URL can be reused by independent site profiles, each with its own credentials and settings.")</div>
         }
         else if (_step == 2)
         {
@@ -163,7 +163,10 @@
             _working = true;
             _syncStarted = false;
             ClearMessage();
-            _siteId ??= await SiteService.AddSiteAsync(_name, _url);
+            _siteId = await SiteOnboardingProfileFlow.PersistAsync(
+                _siteId,
+                () => SiteService.AddSiteAsync(_name, _url),
+                siteId => SiteService.UpdateSiteAsync(siteId, _name, _url));
             _testResult = await SiteService.SaveCredentialAndTestAsync(_siteId.Value, _userName, _applicationPassword);
             _applicationPassword = string.Empty;
 
