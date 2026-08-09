@@ -46,7 +46,7 @@
                         <label><span>@L["SiteName"]</span><InputText @bind-Value="_model.Name" disabled="@_saving" /></label>
                         <label><span>@L["SiteUrl"]</span><InputText @bind-Value="_model.Url" placeholder="https://example.com" disabled="@_saving" /></label>
                     </div>
-                    <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم حفظ الرابط بعد تطبيعه ومنع التكرار تلقائيًا." : "The URL is normalized and duplicate sites are blocked automatically.")</div>
+                    <div class="site-form-hint">🔒 @(L.IsArabic ? "يتم تطبيع الرابط ويمكن استخدامه في أكثر من ملف اتصال مستقل؛ لكل ملف هوية وإعدادات وبيانات اعتماد خاصة به." : "The URL is normalized and can be reused across independent site profiles; each profile keeps its own identity, settings, and credentials.")</div>
                     <div class="actions">
                         <AppButton Type="submit" Variant="primary" Text="@(_saving ? L["Saving"] : L["Save"])" Busy="@_saving" Disabled="@_saving" />
                         <AppButton Text="@L["Cancel"]" Disabled="@_saving" OnClick="CloseFormClicked" />
@@ -104,6 +104,8 @@
                             <div><small>@L["LastTest"]</small><strong>@FormatDate(site.LastConnectionTestAtUtc)</strong></div>
                             <div><small>@(L.IsArabic ? "لغة الموقع" : "Site language")</small><strong>@(string.IsNullOrWhiteSpace(site.LanguageCode) ? "—" : site.LanguageCode)</strong></div>
                             <div><small>REST API</small><strong>@StatusText(site.ConnectionStatus)</strong></div>
+                            <div><small>@(L.IsArabic ? "معرّف الملف" : "Profile ID")</small><strong>@ProfileId(site.Id)</strong></div>
+                            <div><small>@(L.IsArabic ? "نطاق بيانات الاعتماد" : "Credential scope")</small><strong>@(L.IsArabic ? "خاص بهذا الملف" : "Per profile")</strong></div>
                         </div>
                     </div>
                     <div class="site-quick-links"><a href="@($"/sites/{site.Id}")"><span>⌂</span>@(L.IsArabic ? "لوحة الموقع" : "Dashboard")</a><a href="@($"/sites/{site.Id}/explorer")"><span>▤</span>@(L.IsArabic ? "المحتوى" : "Content")</a><a href="@site.SiteUrl" target="_blank" rel="noopener"><span>↗</span>@(L.IsArabic ? "فتح الموقع" : "Visit site")</a></div>
@@ -217,18 +219,9 @@
             _showForm = false; _editingId = null; _model = new(); _isError = false;
             await ReloadAsync(false);
         }
-        catch (InvalidOperationException ex) when (IsDuplicateSiteMessage(ex.Message))
-        {
-            Warn(L.IsArabic ? "هذا الرابط مسجل بالفعل في النظام." : "This website URL is already registered.");
-        }
         catch (Exception ex) { Fail(L.TranslateMessage(ex.Message), ex.ToString()); }
         finally { _saving = false; }
     }
-
-    private static bool IsDuplicateSiteMessage(string message) =>
-        message.Contains("already registered", StringComparison.OrdinalIgnoreCase)
-        || message.Contains("already been added", StringComparison.OrdinalIgnoreCase)
-        || message.Contains("duplicate", StringComparison.OrdinalIgnoreCase);
 
     private async Task RetestAsync(Guid id)
     {
@@ -272,6 +265,7 @@
     public void Dispose() { L.Changed -= Changed; _searchDebounce?.Dispose(); }
 
     private static string Initials(string value) => string.Join(string.Empty, value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    private static string ProfileId(Guid id) => id.ToString("N")[..8].ToUpperInvariant();
     private static string FormatDate(DateTime? value) => value?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "—";
     private static int HealthPercent(AIWordPressManager.Domain.Enums.SiteConnectionStatus status) => status switch { AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected => 100, AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions => 65, AIWordPressManager.Domain.Enums.SiteConnectionStatus.AuthenticationFailed => 35, AIWordPressManager.Domain.Enums.SiteConnectionStatus.Unreachable => 20, _ => 0 };
     private static string HealthTone(int health) => health >= 80 ? "success" : health >= 50 ? "warning" : "danger";
