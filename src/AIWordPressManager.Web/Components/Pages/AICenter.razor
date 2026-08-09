@@ -9,6 +9,7 @@
 @inject IAIUsageLog UsageLog
 @inject SiteWebService SiteService
 @inject ApprovalWorkflowService ApprovalService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
@@ -161,7 +162,7 @@
     private readonly List<SessionResult> _history = new();
     private List<Site> _sites = new();
     private string _content = string.Empty, _promptKey = string.Empty, _model = string.Empty, _output = string.Empty, _error = string.Empty, _promptSearch = string.Empty;
-    private string _selectedSiteId = string.Empty, _approvalTitle = string.Empty, _operationType = "AI.ContentUpdate";
+    private string _selectedSiteId = string.Empty, _approvalTitle = string.Empty, _operationType = "AI.ContentUpdate", _approvalActor = string.Empty;
     private ApprovalRiskLevel _riskLevel = ApprovalRiskLevel.High;
     private ApprovalStatus? _lastApprovalStatus;
     private double _temperature = .2;
@@ -169,12 +170,19 @@
     private bool _working, _submittingApproval;
     private TimeSpan? _lastElapsed;
     private Guid? _lastApprovalId;
+    private Guid _ownerUserId;
     private int ContentLength => _content?.Length ?? 0;
     private IEnumerable<PromptOption> FilteredPrompts => _prompts.Where(x => string.IsNullOrWhiteSpace(_promptSearch) || x.Key.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase) || x.Title.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase));
     private string ApprovalStateText => _lastApprovalStatus?.ToString() ?? (L.IsArabic ? "لم يُرسل" : "Not submitted");
     private string ApprovalBadgeClass => _lastApprovalStatus switch { ApprovalStatus.Approved or ApprovalStatus.Executed => "success", ApprovalStatus.Rejected or ApprovalStatus.Cancelled => "error", _ => "warning" };
 
-    protected override void OnInitialized() => L.Changed += Changed;
+    protected override void OnInitialized()
+    {
+        L.Changed += Changed;
+        _ownerUserId = CurrentUser.UserId;
+        _approvalActor = string.IsNullOrWhiteSpace(CurrentUser.UserName) ? _ownerUserId.ToString() : CurrentUser.UserName;
+    }
+
     protected override async Task OnInitializedAsync() => await LoadMetadataAsync();
 
     private async Task LoadMetadataAsync()
@@ -236,7 +244,20 @@
             _submittingApproval = true;
             var siteId = SelectedSiteGuid();
             var site = siteId.HasValue ? _sites.FirstOrDefault(x => x.Id == siteId.Value) : null;
-            var item = ApprovalService.Submit(new ApprovalSubmission(siteId, site?.Name, string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(), string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(), new { Content = _content, PromptKey = _promptKey, Model = _model }, new { Content = _output, PromptKey = _promptKey, Model = _model }, "AI Center", _riskLevel, Guid.NewGuid().ToString("N"), null));
+            var item = ApprovalService.Submit(
+                _ownerUserId,
+                new ApprovalSubmission(
+                    siteId,
+                    site?.Name,
+                    string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(),
+                    string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(),
+                    new { Content = _content, PromptKey = _promptKey, Model = _model },
+                    new { Content = _output, PromptKey = _promptKey, Model = _model },
+                    _approvalActor,
+                    _riskLevel,
+                    Guid.NewGuid().ToString("N"),
+                    null),
+                _approvalActor);
             _lastApprovalId = item.Id;
             _lastApprovalStatus = item.Status;
             Notifications.Success(L.IsArabic ? "تم إرسال الاقراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
@@ -249,7 +270,7 @@
     private void RefreshApprovalStatus()
     {
         if (!_lastApprovalId.HasValue) return;
-        _lastApprovalStatus = ApprovalService.GetById(_lastApprovalId.Value)?.Status;
+        _lastApprovalStatus = ApprovalService.GetById(_ownerUserId, _lastApprovalId.Value)?.Status;
     }
 
     private void RestoreHistory(SessionResult item)

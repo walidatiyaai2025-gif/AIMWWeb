@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ApprovalWorkflowService ApprovalService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 
@@ -12,7 +13,7 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "سير العمل الآمن" : "CONTROLLED WORKFLOW")</span>
             <h1>@(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</h1>
-            <p>@(L.IsArabic ? "راجع التغييرات المقترحة قبل اعتمادها أو إرسالها إلى مركز التنفيذ." : "Review proposed changes before approving, rejecting, or sending them to the execution center.")</p>
+            <p>@(L.IsArabic ? "راجع التغييرات المقترحة التي تخص مواقع حسابك قبل اعتمادها أو إرسالها إلى مركز التنفيذ." : "Review proposed changes for your sites before approving, rejecting, or sending them to the execution center.")</p>
         </div>
         <div class="approval-hero-actions">
             <button class="btn" @onclick="LoadAsync" disabled="@_working">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
@@ -47,8 +48,8 @@
             </select>
         </div>
         <div class="approval-reviewer">
-            <label>@(L.IsArabic ? "اسم المراجع" : "Reviewer")</label>
-            <input @bind="_reviewer" placeholder="Admin" />
+            <label>@(L.IsArabic ? "المراجع الحالي" : "Current reviewer")</label>
+            <strong>@_reviewer</strong>
         </div>
     </section>
 
@@ -61,7 +62,7 @@
         <section class="panel empty-state approval-empty">
             <div class="approval-empty-icon">✓</div>
             <h2>@(L.IsArabic ? "لا توجد عناصر مطابقة" : "No matching approval items")</h2>
-            <p>@(L.IsArabic ? "ستظهر هنا اقتراحات SEO والذكاء الاصطناعي والعمليات الحساسة عند إرسالها للمراجعة." : "SEO, AI, and sensitive-operation proposals appear here when submitted for review.")</p>
+            <p>@(L.IsArabic ? "ستظهر هنا فقط الاقتراحات والعمليات الحساسة التابعة لمواقع حسابك." : "Only proposals and sensitive operations owned by your account appear here.")</p>
         </section>
     }
     else
@@ -135,7 +136,8 @@
 @code {
     private IReadOnlyList<ApprovalItem> _allItems = Array.Empty<ApprovalItem>();
     private IReadOnlyList<ApprovalAuditEntry> _audit = Array.Empty<ApprovalAuditEntry>();
-    private string _search = string.Empty, _statusFilter = "all", _riskFilter = "all", _reviewer = "Admin", _notes = string.Empty;
+    private string _search = string.Empty, _statusFilter = "all", _riskFilter = "all", _reviewer = string.Empty, _notes = string.Empty;
+    private Guid _ownerUserId;
     private Guid? _expandedId;
     private bool _loading = true, _working, _executeImmediately = true;
     private bool _disposed;
@@ -145,14 +147,20 @@
         (_riskFilter == "all" || item.RiskLevel.ToString() == _riskFilter) &&
         (string.IsNullOrWhiteSpace(_search) || item.Title.Contains(_search, StringComparison.OrdinalIgnoreCase) || item.SiteName.Contains(_search, StringComparison.OrdinalIgnoreCase) || item.OperationType.Contains(_search, StringComparison.OrdinalIgnoreCase)));
 
-    protected override void OnInitialized() => L.Changed += Changed;
+    protected override void OnInitialized()
+    {
+        L.Changed += Changed;
+        _ownerUserId = CurrentUser.UserId;
+        _reviewer = string.IsNullOrWhiteSpace(CurrentUser.UserName) ? _ownerUserId.ToString() : CurrentUser.UserName;
+    }
+
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private Task LoadAsync()
     {
         if (_disposed) return Task.CompletedTask;
         _loading = true;
-        _allItems = ApprovalService.GetItems(null, 500);
+        _allItems = ApprovalService.GetItems(_ownerUserId, null, 500);
         _loading = false;
         return Task.CompletedTask;
     }
@@ -163,7 +171,7 @@
         if (_expandedId == item.Id) { _expandedId = null; _audit = Array.Empty<ApprovalAuditEntry>(); return; }
         _expandedId = item.Id;
         _notes = item.ReviewerNotes ?? string.Empty;
-        _audit = ApprovalService.GetAudit(item.Id, 100);
+        _audit = ApprovalService.GetAudit(_ownerUserId, item.Id, 100);
     }
 
     private async Task ApproveAsync(ApprovalItem item)
@@ -172,11 +180,11 @@
         try
         {
             _working = true;
-            var result = ApprovalService.Approve(item.Id, _reviewer, _notes, _executeImmediately);
+            var result = ApprovalService.Approve(_ownerUserId, item.Id, _reviewer, _notes, _executeImmediately);
             if (_disposed) return;
             Notifications.Success(L.IsArabic ? "تم اعتماد العنصر." : "Approval completed.", result.Status.ToString());
             await LoadAsync();
-            if (!_disposed) _audit = ApprovalService.GetAudit(item.Id, 100);
+            if (!_disposed) _audit = ApprovalService.GetAudit(_ownerUserId, item.Id, 100);
         }
         catch (Exception ex)
         {
@@ -194,11 +202,11 @@
         try
         {
             _working = true;
-            ApprovalService.Reject(item.Id, _reviewer, _notes);
+            ApprovalService.Reject(_ownerUserId, item.Id, _reviewer, _notes);
             if (_disposed) return;
             Notifications.Warning(L.IsArabic ? "تم رفض العنصر." : "Approval rejected.");
             await LoadAsync();
-            if (!_disposed) _audit = ApprovalService.GetAudit(item.Id, 100);
+            if (!_disposed) _audit = ApprovalService.GetAudit(_ownerUserId, item.Id, 100);
         }
         catch (Exception ex)
         {
