@@ -18,7 +18,7 @@ public sealed class NotificationInboxServiceTests
             var siteId = Guid.NewGuid();
             var jobId = Guid.NewGuid();
 
-            var service = new NotificationInboxService(path);
+            var service = NotificationInboxService.ForDatabase(path);
             var created = service.Create(
                 ownerA,
                 "Completed",
@@ -39,7 +39,7 @@ public sealed class NotificationInboxServiceTests
             first[0].Source.Should().Be("TestWorker");
             first.Should().NotContain(x => x.Title == "Legacy system notification");
 
-            var restarted = new NotificationInboxService(path);
+            var restarted = NotificationInboxService.ForDatabase(path);
             restarted.Get(ownerA).Should().ContainSingle(x => x.Id == created.Id);
             restarted.Get(ownerB).Should().ContainSingle(x => x.Title == "Other tenant");
         }
@@ -57,7 +57,7 @@ public sealed class NotificationInboxServiceTests
         {
             var ownerA = Guid.NewGuid();
             var ownerB = Guid.NewGuid();
-            var service = new NotificationInboxService(path);
+            var service = NotificationInboxService.ForDatabase(path);
             var item = service.Create(ownerA, "Private", "Owner A only.", NotificationSeverity.Information);
 
             service.MarkRead(ownerB, item.Id).Should().BeFalse();
@@ -88,7 +88,7 @@ public sealed class NotificationInboxServiceTests
         {
             var ownerA = Guid.NewGuid();
             var ownerB = Guid.NewGuid();
-            var service = new NotificationInboxService(path);
+            var service = NotificationInboxService.ForDatabase(path);
 
             var a1 = service.Create(ownerA, "A1", "First A notification.", NotificationSeverity.Information);
             var a2 = service.Create(ownerA, "A2", "Second A notification.", NotificationSeverity.Warning);
