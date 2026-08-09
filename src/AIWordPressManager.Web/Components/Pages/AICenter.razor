@@ -5,7 +5,7 @@
 @using AIWordPressManager.Application.Abstractions.AI
 @using AIWordPressManager.Domain.Entities
 @inject IAIOrchestrator Orchestrator
-@inject IAIPromptRegistry PromptRegistry
+@inject AIPromptTemplateService PromptTemplates
 @inject IAIUsageLog UsageLog
 @inject SiteWebService SiteService
 @inject ApprovalWorkflowService ApprovalService
@@ -190,18 +190,9 @@
         _prompts.Clear();
         try
         {
-            var raw = JsonSerializer.Serialize(PromptRegistry.GetAll(L.Culture));
-            using var doc = JsonDocument.Parse(raw);
-            if (doc.RootElement.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in doc.RootElement.EnumerateArray())
-                {
-                    var key = ReadString(item, "Key", "key", "PromptKey", "promptKey");
-                    var title = ReadString(item, "Title", "title", "Name", "name", "Description", "description");
-                    if (!string.IsNullOrWhiteSpace(key)) _prompts.Add(new(key, string.IsNullOrWhiteSpace(title) ? key : title));
-                }
-            }
-            _usageCount = CountArray(JsonSerializer.Serialize(UsageLog.GetRecent(100, null, null)));
+            var templates = await PromptTemplates.GetAllAsync(L.Culture);
+            _prompts.AddRange(templates.Select(x => new PromptOption(x.Key, x.DisplayName)));
+            _usageCount = UsageLog.GetRecent(100, null, null).Count;
             _sites = await SiteService.GetSitesAsync();
             RefreshApprovalStatus();
         }
@@ -215,7 +206,13 @@
         _working = true; _error = string.Empty; _output = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null; var started = DateTime.UtcNow;
         try
         {
-            var instruction = string.IsNullOrWhiteSpace(_promptKey) ? null : PromptRegistry.Get(_promptKey, L.Culture);
+            string? instruction = null;
+            if (!string.IsNullOrWhiteSpace(_promptKey))
+            {
+                var prompt = await PromptTemplates.FindAsync(_promptKey, L.Culture);
+                if (prompt is null) throw new InvalidOperationException(L.IsArabic ? "قالب الأمر غير موجود أو تم تعطيله." : "Prompt template was not found or is disabled.");
+                instruction = prompt.Text;
+            }
             var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
             _lastElapsed = DateTime.UtcNow - started;
             if (!result.IsSuccess)
@@ -260,7 +257,7 @@
                 _approvalActor);
             _lastApprovalId = item.Id;
             _lastApprovalStatus = item.Status;
-            Notifications.Success(L.IsArabic ? "تم إرسال الاقراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
+            Notifications.Success(L.IsArabic ? "تم إرسال الاقتراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
         }
         catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل إرسال الموافقة" : "Approval submission failed", ex.ToString()); }
         finally { _submittingApproval = false; }
@@ -288,8 +285,6 @@
     public void Dispose() => L.Changed -= Changed;
 
     private static string Preview(string value) => value.Length <= 180 ? value : value[..180] + "…";
-    private static int CountArray(string json) { try { using var d = JsonDocument.Parse(json); return d.RootElement.ValueKind == JsonValueKind.Array ? d.RootElement.GetArrayLength() : 0; } catch { return 0; } }
-    private static string ReadString(JsonElement item, params string[] names) { foreach (var n in names) if (item.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String) return v.GetString() ?? string.Empty; return string.Empty; }
 
     private sealed record PromptOption(string Key, string Title);
     private sealed record SessionResult(Guid Id, string Title, string PromptKey, string Input, string Output, DateTime CreatedAt, TimeSpan Elapsed, string SiteId);
