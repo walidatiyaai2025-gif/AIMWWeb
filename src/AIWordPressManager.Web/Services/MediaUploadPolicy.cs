@@ -56,7 +56,12 @@ public static class MediaUploadPolicy
     public static string SanitizeFileName(string? fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName)) return string.Empty;
-        var name = Path.GetFileName(fileName.Trim());
+
+        // Treat both slash styles as client-side path separators regardless of the server OS.
+        // Browsers normally expose only the base name, but the server must not trust that behavior.
+        var normalized = fileName.Trim().Replace('\\', '/');
+        var separator = normalized.LastIndexOf('/');
+        var name = separator >= 0 ? normalized[(separator + 1)..] : normalized;
         var sanitized = new string(name.Where(ch => !char.IsControl(ch)).ToArray()).Trim();
         return sanitized.Length <= 180 ? sanitized : sanitized[^180..];
     }
