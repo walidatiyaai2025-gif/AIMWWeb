@@ -3,6 +3,10 @@
 @implements IDisposable
 @inject GlobalPostsExplorerService Explorer
 @inject SiteWebService SiteService
+@inject BulkContentOperationQueue BulkQueue
+@inject BulkTrashExecutionService TrashService
+@inject ExecutionOperationTracker OperationTracker
+@inject AppNotificationService Notifications
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "مستكشف الصفحات" : "Pages Explorer")</PageTitle>
@@ -19,15 +23,21 @@ else
                 <div>
                     <small style="font-weight:800;letter-spacing:.1em">@(L.IsArabic ? "إدارة الصفحات المحلية" : "OFFLINE PAGE MANAGEMENT")</small>
                     <h1 style="margin:8px 0">@(L.IsArabic ? "مستكشف صفحات WordPress" : "WordPress Pages Explorer")</h1>
-                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "اعرض وابحث في الصفحات الثابتة المتزامنة من جميع المواقع حتى عند انقطاع الاتصال." : "Browse synchronized static pages across every site, even while WordPress is unavailable.")</p>
+                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "اعرض وابحث ونفذ إجراءات جماعية آمنة على الصفحات المتزامنة من جميع مواقعك." : "Browse, search, and safely run bulk actions on synchronized pages across all of your sites.")</p>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <button class="btn" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
                     <a class="btn" href="/module/posts">@(L.IsArabic ? "المقالات" : "Posts")</a>
+                    <a class="btn" href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</a>
                     <a class="btn primary" href="/module/sync">@(L.IsArabic ? "فتح المزامنة" : "Open synchronization")</a>
                 </div>
             </div>
         </section>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="alert @(_isError ? "error" : "success")" style="margin-bottom:18px"><strong>@_message</strong></div>
+        }
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
             @Stat(L.IsArabic ? "إجمالي الصفحات" : "Total pages", _result.Summary.Total.ToString())
@@ -47,19 +57,37 @@ else
             <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" @onclick="ResetAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button><button class="btn primary" @onclick="ApplyAsync">@(L.IsArabic ? "تطبيق الفلاتر" : "Apply filters")</button></div>
         </section>
 
+        <AppBulkActionBar SelectedCount="@_selected.Count"
+                          Busy="@_bulkBusy"
+                          SelectedText="@(L.IsArabic ? "صفحة محددة" : "pages selected")"
+                          Description="@(L.IsArabic ? "الإجراءات تطبق على العناصر المحددة في الصفحة الحالية فقط، وبحد أقصى 100 عنصر، ويتم فصل المهام حسب الموقع." : "Actions apply to the current-page selection only, up to 100 items, and jobs are separated by site.")"
+                          ClearText="@(L.IsArabic ? "إلغاء التحديد" : "Clear selection")"
+                          ClearRequested="ClearSelectionAsync">
+            <Actions>
+                <AppButton Size="small" Icon="✓" Variant="primary" Text="@(L.IsArabic ? "نشر" : "Publish")" Disabled="@_bulkBusy" OnClick="PublishSelectedAsync" />
+                <AppButton Size="small" Icon="→" Text="@(L.IsArabic ? "للمراجعة" : "Pending")" Disabled="@_bulkBusy" OnClick="PendingSelectedAsync" />
+                <AppButton Size="small" Icon="◫" Text="@(L.IsArabic ? "مسودة" : "Draft")" Disabled="@_bulkBusy" OnClick="DraftSelectedAsync" />
+                <AppButton Size="small" Icon="◆" Text="@(L.IsArabic ? "خاص" : "Private")" Disabled="@_bulkBusy" OnClick="PrivateSelectedAsync" />
+                <AppButton Size="small" Icon="⌫" Variant="danger" Text="@(L.IsArabic ? "سلة المهملات" : "Move to trash")" Disabled="@_bulkBusy" OnClick="RequestTrashAsync" />
+            </Actions>
+        </AppBulkActionBar>
+
         <section class="panel" style="overflow:auto">
-            <table style="width:100%;border-collapse:collapse;min-width:980px">
-                <thead><tr><th style="padding:14px;text-align:start">@(L.IsArabic ? "العنوان" : "Title")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "الموقع" : "Site")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "الحالة" : "Status")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر تعديل" : "Modified")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر مزامنة" : "Last sync")</th><th style="padding:14px"></th></tr></thead>
+            <table style="width:100%;border-collapse:collapse;min-width:1040px">
+                <thead><tr><th style="padding:14px;width:42px"><input type="checkbox" checked="@AllVisibleSelected" disabled="@(_bulkBusy || _result.Items.Count == 0)" @onchange="ToggleAllVisible" aria-label="@(L.IsArabic ? "تحديد الصفحات الظاهرة" : "Select visible pages")" /></th><th style="padding:14px;text-align:start">@(L.IsArabic ? "العنوان" : "Title")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "الموقع" : "Site")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "الحالة" : "Status")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر تعديل" : "Modified")</th><th style="padding:14px;text-align:start">@(L.IsArabic ? "آخر مزامنة" : "Last sync")</th><th style="padding:14px"></th></tr></thead>
                 <tbody>
                     @if (_result.Items.Count == 0)
                     {
-                        <tr><td colspan="6" style="padding:32px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد صفحات مطابقة في البيانات المحلية." : "No matching pages were found in the local cache.")</td></tr>
+                        <tr><td colspan="7" style="padding:32px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد صفحات مطابقة في البيانات المحلية." : "No matching pages were found in the local cache.")</td></tr>
                     }
                     else
                     {
                         @foreach (var item in _result.Items)
                         {
-                            <tr style="border-top:1px solid rgba(128,128,128,.2)">
+                            var key = Key(item);
+                            var selected = _selected.Contains(key);
+                            <tr style="border-top:1px solid rgba(128,128,128,.2);@(selected ? "background:rgba(59,130,246,.07)" : string.Empty)">
+                                <td style="padding:14px"><input type="checkbox" checked="@selected" disabled="@_bulkBusy" @onchange="args => ToggleSelection(key, args)" aria-label="@(L.IsArabic ? "تحديد الصفحة" : "Select page")" /></td>
                                 <td style="padding:14px;max-width:420px"><strong style="display:block">@PlainText(item.Title)</strong><small style="display:block;opacity:.62;margin-top:4px">/@item.Slug</small>@if (!string.IsNullOrWhiteSpace(item.RenderedExcerpt)){<small style="display:block;opacity:.72;margin-top:6px">@TrimExcerpt(item.RenderedExcerpt)</small>}</td>
                                 <td style="padding:14px"><a href="@($"/sites/{item.SiteId}")">@item.SiteName</a></td>
                                 <td style="padding:14px"><span class="badge @StatusClass(item.Status)">@TranslateStatus(item.Status)</span></td>
@@ -71,29 +99,185 @@ else
                     }
                 </tbody>
             </table>
-            <footer style="display:flex;justify-content:space-between;align-items:center;padding:16px;gap:12px;border-top:1px solid rgba(128,128,128,.2)"><span>@(L.IsArabic ? $"صفحة {_result.Page} من {_result.TotalPages} · {_result.Total} نتيجة" : $"Page {_result.Page} of {_result.TotalPages} · {_result.Total} results")</span><div style="display:flex;gap:8px"><button class="btn compact" disabled="@(_result.Page <= 1)" @onclick="PreviousAsync">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_result.Page >= _result.TotalPages)" @onclick="NextAsync">@(L.IsArabic ? "التالي" : "Next")</button></div></footer>
+            <footer style="display:flex;justify-content:space-between;align-items:center;padding:16px;gap:12px;border-top:1px solid rgba(128,128,128,.2)"><span>@(L.IsArabic ? $"صفحة {_result.Page} من {_result.TotalPages} · {_result.Total} نتيجة" : $"Page {_result.Page} of {_result.TotalPages} · {_result.Total} results")</span><div style="display:flex;gap:8px"><button class="btn compact" disabled="@(_result.Page <= 1 || _bulkBusy)" @onclick="PreviousAsync">@(L.IsArabic ? "السابق" : "Previous")</button><button class="btn compact" disabled="@(_result.Page >= _result.TotalPages || _bulkBusy)" @onclick="NextAsync">@(L.IsArabic ? "التالي" : "Next")</button></div></footer>
         </section>
     </div>
+
+    <AppConfirmDialog @bind-Open="_trashConfirmOpen"
+                      Title="@(L.IsArabic ? "نقل الصفحات إلى سلة المهملات؟" : "Move pages to trash?")"
+                      Message="@(L.IsArabic ? $"سيتم تغيير {_selected.Count} صفحة محددة على مواقع WordPress الحية." : $"This will change {_selected.Count} selected page(s) on the live WordPress sites.")"
+                      Details="@(L.IsArabic ? "سيتم التحقق من ملكية كل موقع أولًا، ثم تنفيذ العملية لكل موقع بشكل مستقل." : "Every site is ownership-checked first, then each site is processed independently.")"
+                      ConfirmText="@(L.IsArabic ? "نقل لسلة المهملات" : "Move to trash")"
+                      CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                      Busy="@_bulkBusy"
+                      OnConfirm="ConfirmTrashAsync" />
 }
 
 @code {
     private bool _loading = true;
+    private bool _bulkBusy;
+    private bool _trashConfirmOpen;
+    private bool _isError;
     private string _query = string.Empty;
     private string _siteFilter = string.Empty;
     private string _statusFilter = "all";
+    private string? _message;
     private int _page = 1;
     private int _pageSize = 25;
+    private readonly HashSet<string> _selected = new(StringComparer.Ordinal);
     private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
     private GlobalPagesExplorerResult _result = new([], 0, 1, 25, 1, new(0, 0, 0, 0, 0, 0, null));
+
+    private bool AllVisibleSelected => _result.Items.Count > 0 && _result.Items.All(item => _selected.Contains(Key(item)));
 
     protected override void OnInitialized() => L.Changed += OnLanguageChanged;
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
-    private async Task LoadAsync(){_loading=true;try{_sites=await SiteService.GetSitesAsync();Guid? siteId=Guid.TryParse(_siteFilter,out var parsed)?parsed:null;_result=await Explorer.SearchPagesAsync(siteId,_statusFilter,_query,_page,_pageSize);_page=_result.Page;}finally{_loading=false;}}
-    private async Task ApplyAsync(){_page=1;await LoadAsync();}
-    private async Task ResetAsync(){_query=string.Empty;_siteFilter=string.Empty;_statusFilter="all";_pageSize=25;_page=1;await LoadAsync();}
-    private async Task PreviousAsync(){if(_page<=1)return;_page--;await LoadAsync();}
-    private async Task NextAsync(){if(_page>=_result.TotalPages)return;_page++;await LoadAsync();}
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+            Guid? siteId = Guid.TryParse(_siteFilter, out var parsed) ? parsed : null;
+            _result = await Explorer.SearchPagesAsync(siteId, _statusFilter, _query, _page, _pageSize);
+            _page = _result.Page;
+            _selected.Clear();
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task ApplyAsync() { _page = 1; await LoadAsync(); }
+    private async Task ResetAsync() { _query = string.Empty; _siteFilter = string.Empty; _statusFilter = "all"; _pageSize = 25; _page = 1; await LoadAsync(); }
+    private async Task PreviousAsync() { if (_page <= 1) return; _page--; await LoadAsync(); }
+    private async Task NextAsync() { if (_page >= _result.TotalPages) return; _page++; await LoadAsync(); }
+
+    private void ToggleSelection(string key, ChangeEventArgs args)
+    {
+        if (args.Value is true) _selected.Add(key); else _selected.Remove(key);
+    }
+
+    private void ToggleAllVisible(ChangeEventArgs args)
+    {
+        var select = args.Value is true;
+        foreach (var item in _result.Items)
+        {
+            var key = Key(item);
+            if (select) _selected.Add(key); else _selected.Remove(key);
+        }
+    }
+
+    private Task ClearSelectionAsync() { _selected.Clear(); return Task.CompletedTask; }
+    private Task PublishSelectedAsync() => QueueStatusAsync("publish");
+    private Task PendingSelectedAsync() => QueueStatusAsync("pending");
+    private Task DraftSelectedAsync() => QueueStatusAsync("draft");
+    private Task PrivateSelectedAsync() => QueueStatusAsync("private");
+    private Task RequestTrashAsync() { if (_selected.Count > 0) _trashConfirmOpen = true; return Task.CompletedTask; }
+
+    private async Task QueueStatusAsync(string requestedStatus)
+    {
+        if (_selected.Count == 0) return;
+        try
+        {
+            _bulkBusy = true;
+            _isError = false;
+            _message = null;
+            var status = GlobalContentBulkPolicy.NormalizeStatus(requestedStatus);
+            var groups = GlobalContentBulkPolicy.GroupBySite(SelectedTargets());
+            var resolvedSites = await ResolveSitesAsync(groups);
+            var jobIds = new List<Guid>();
+
+            foreach (var group in groups)
+            {
+                var site = resolvedSites[group.SiteId];
+                var title = BulkTitle(status);
+                var jobId = OperationTracker.Start(title, $"Global Bulk Status: {status}", site.Name, group.Targets.Count);
+                var targets = group.Targets.Select(x => new BulkContentTarget(x.ContentType, x.WordPressId, x.Title)).ToArray();
+                await BulkQueue.QueueAsync(new BulkContentOperationRequest(jobId, group.SiteId, site.Name, status, targets));
+                jobIds.Add(jobId);
+            }
+
+            _message = L.IsArabic
+                ? $"تمت إضافة {_selected.Count} صفحة إلى {jobIds.Count} مهمة في مركز التنفيذ."
+                : $"Queued {_selected.Count} page(s) as {jobIds.Count} site job(s) in Execution Center.";
+            Notifications.Success(_message, BulkTitle(status));
+            _selected.Clear();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+            Notifications.Error(_message, L.IsArabic ? "تعذر إضافة العملية" : "Bulk operation failed");
+        }
+        finally { _bulkBusy = false; }
+    }
+
+    private async Task ConfirmTrashAsync()
+    {
+        if (_selected.Count == 0) { _trashConfirmOpen = false; return; }
+        try
+        {
+            _bulkBusy = true;
+            _isError = false;
+            _message = null;
+            var groups = GlobalContentBulkPolicy.GroupBySite(SelectedTargets());
+            await ResolveSitesAsync(groups);
+            var succeeded = 0;
+            var failed = 0;
+
+            foreach (var group in groups)
+            {
+                var targets = group.Targets.Select(x => new BulkTrashTarget(x.ContentType, x.WordPressId)).ToArray();
+                var result = await TrashService.RunAsync(group.SiteId, new BulkTrashRequest(targets));
+                succeeded += result.Succeeded;
+                failed += result.Failed;
+            }
+
+            _trashConfirmOpen = false;
+            _message = L.IsArabic
+                ? $"تم نقل {succeeded} صفحة إلى سلة المهملات" + (failed > 0 ? $" وفشل {failed}." : ".")
+                : $"Moved {succeeded} page(s) to trash" + (failed > 0 ? $"; {failed} failed." : ".");
+            _isError = succeeded == 0;
+            if (_isError) Notifications.Error(_message, L.IsArabic ? "فشلت العملية" : "Operation failed");
+            else Notifications.Success(_message, L.IsArabic ? "اكتملت العملية" : "Operation complete");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+            Notifications.Error(_message, L.IsArabic ? "فشلت العملية" : "Operation failed");
+        }
+        finally { _bulkBusy = false; }
+    }
+
+    private IReadOnlyList<GlobalBulkContentTarget> SelectedTargets() => _result.Items
+        .Where(item => _selected.Contains(Key(item)))
+        .Select(item => new GlobalBulkContentTarget(item.SiteId, "page", item.WordPressId, PlainText(item.Title)))
+        .ToArray();
+
+    private async Task<Dictionary<Guid, AIWordPressManager.Domain.Entities.Site>> ResolveSitesAsync(IReadOnlyList<GlobalBulkSiteGroup> groups)
+    {
+        var result = new Dictionary<Guid, AIWordPressManager.Domain.Entities.Site>();
+        foreach (var group in groups)
+        {
+            var site = await SiteService.GetSiteAsync(group.SiteId)
+                ?? throw new InvalidOperationException(L.IsArabic ? "أحد المواقع المحددة لم يعد متاحًا لهذا المستخدم." : "One of the selected sites is no longer available to this user.");
+            result[group.SiteId] = site;
+        }
+        return result;
+    }
+
+    private string BulkTitle(string status) => status switch
+    {
+        "publish" => L.IsArabic ? "نشر الصفحات المحددة" : "Publish selected pages",
+        "pending" => L.IsArabic ? "إرسال الصفحات للمراجعة" : "Send pages for review",
+        "draft" => L.IsArabic ? "تحويل الصفحات لمسودة" : "Move pages to draft",
+        "private" => L.IsArabic ? "جعل الصفحات خاصة" : "Make pages private",
+        _ => L.IsArabic ? "عملية جماعية" : "Bulk content operation"
+    };
+
+    private static string Key(GlobalPageExplorerItem item) => $"{item.SiteId:N}:page:{item.WordPressId}";
 
     private RenderFragment Stat(string label,string value)=>builder=>{builder.OpenElement(0,"article");builder.AddAttribute(1,"class","panel");builder.AddAttribute(2,"style","padding:18px");builder.OpenElement(3,"small");builder.AddContent(4,label);builder.CloseElement();builder.OpenElement(5,"strong");builder.AddAttribute(6,"style","display:block;font-size:1.65rem;margin-top:8px");builder.AddContent(7,value);builder.CloseElement();builder.CloseElement();};
     private string TranslateStatus(string status)=>status switch{"publish"=>L.IsArabic?"منشور":"Published","draft"=>L.IsArabic?"مسودة":"Draft","pending"=>L.IsArabic?"قيد المراجعة":"Pending","private"=>L.IsArabic?"خاص":"Private",_=>status};
