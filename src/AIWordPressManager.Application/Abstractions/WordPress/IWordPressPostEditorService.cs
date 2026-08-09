@@ -47,7 +47,9 @@ public sealed record WordPressContentUpdateRequest(
     string CommentStatus,
     string PingStatus,
     string Format,
-    bool Sticky);
+    bool Sticky,
+    DateTimeOffset? ExpectedModifiedGmt = null,
+    bool ForceOverwrite = false);
 
 public sealed record WordPressContentUpdateResult(
     bool Succeeded,
