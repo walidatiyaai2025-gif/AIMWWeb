@@ -18,7 +18,6 @@ public sealed class DashboardLiveService(
             .ToListAsync(cancellationToken);
 
         var ownedSiteIds = ownedSites.Select(x => x.Id).ToArray();
-        var ownedSiteNames = ownedSites.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var siteSummaryTask = siteService.GetSummaryAsync(cancellationToken);
         var postsTask = dbContext.WordPressContentRecords.AsNoTracking()
@@ -35,9 +34,7 @@ public sealed class DashboardLiveService(
             .Select(x => (DateTime?)x.LastSynchronizedAtUtc)
             .MaxAsync(cancellationToken);
 
-        var jobs = executionCenter.GetJobs()
-            .Where(x => string.IsNullOrWhiteSpace(x.SiteName) || ownedSiteNames.Contains(x.SiteName))
-            .ToArray();
+        var jobs = executionCenter.GetJobs(ownerUserId).ToArray();
 
         var running = jobs.Count(x => x.Status is "Running" or "Waiting" or "Paused");
         var failed = jobs.Count(x => x.Status == "Failed");
