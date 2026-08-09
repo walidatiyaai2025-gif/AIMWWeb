@@ -328,7 +328,7 @@ public sealed class VersionedAIPromptRegistry : IAIPromptRegistry, IAIPromptTemp
 
     private sealed class PromptRegistryDocument
     {
-        public int SchemaVersion { get; set; } = SchemaVersion;
+        public int SchemaVersion { get; set; } = VersionedAIPromptRegistry.SchemaVersion;
         public List<PromptEntry> Templates { get; set; } = new();
     }
 
