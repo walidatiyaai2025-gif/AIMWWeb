@@ -1,0 +1,285 @@
+@page "/settings/ai-prompts"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrator")]
+@using AIWordPressManager.Application.Abstractions.AI
+@inject IAIPromptTemplateStore PromptStore
+@inject CurrentUserContext CurrentUser
+@inject AppLanguageService L
+@inject IJSRuntime JS
+
+<PageTitle>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI Prompt Templates")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">PROMPT REGISTRY</span>
+            <h1>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI Prompt Templates")</h1>
+            <p>@(L.IsArabic
+                ? "إدارة القوالب العربية والإنجليزية مع سجل إصدارات غير قابل لإعادة الكتابة واستعادة آمنة لأي إصدار سابق."
+                : "Manage Arabic and English prompts with append-only revision history and safe restoration of any previous revision.")</p>
+        </div>
+        <div class="settings-status">
+            <span>↺</span>
+            <div>
+                <strong>@(L.IsArabic ? "إصدارات محفوظة" : "Versioned registry")</strong>
+                <small>@(L.IsArabic ? "للمسؤولين فقط" : "Administrators only")</small>
+            </div>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="alert @(_isError ? "error" : "success")">@_message</div>
+    }
+
+    <div class="settings-layout">
+        <nav class="panel settings-nav" aria-label="Prompt template list">
+            <a href="/settings"><span>←</span><div><strong>@L["Settings"]</strong><small>@(L.IsArabic ? "العودة للإعدادات" : "Back to settings")</small></div></a>
+            <button type="button" class="btn primary full" @onclick="NewTemplate">＋ @(L.IsArabic ? "قالب جديد" : "New template")</button>
+            <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث بالقالب..." : "Search templates...")" />
+            @foreach (var template in FilteredTemplates)
+            {
+                <button type="button" class="settings-choice @(_selectedKey == template.Key ? "active" : string.Empty)" @onclick="() => Select(template.Key)">
+                    <strong>@DisplayTitle(template)</strong>
+                    <small>@template.Key · r@template.Revision · @(template.Enabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</small>
+                </button>
+            }
+        </nav>
+
+        <main class="settings-content">
+            <section class="panel settings-section">
+                <header>
+                    <div>
+                        <span class="workspace-kicker">EDITOR</span>
+                        <h2>@(_isNew ? (L.IsArabic ? "قالب جديد" : "New template") : DisplayTitle(_selected))</h2>
+                        <p>@(L.IsArabic ? "مفتاح القالب ثابت بعد إنشائه حتى لا تنكسر الاستدعاءات الموجودة في النظام." : "The template key is immutable after creation so existing runtime references remain stable.")</p>
+                    </div>
+                    @if (!_isNew && _selected is not null)
+                    {
+                        <span class="settings-badge @(_selected.Enabled ? "success" : string.Empty)">r@_selected.Revision</span>
+                    }
+                </header>
+
+                <div class="database-info-grid">
+                    <label>
+                        <small>@(L.IsArabic ? "مفتاح القالب" : "Template key")</small>
+                        <input @bind="_editKey" disabled="@(!_isNew)" autocomplete="off" placeholder="content.rewrite" />
+                    </label>
+                    <label>
+                        <small>@(L.IsArabic ? "الحالة" : "Status")</small>
+                        <select @bind="_editEnabled">
+                            <option value="true">@(L.IsArabic ? "مفعل" : "Enabled")</option>
+                            <option value="false">@(L.IsArabic ? "متوقف" : "Disabled")</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="database-info-grid">
+                    <label>
+                        <small>@(L.IsArabic ? "العنوان بالإنجليزية" : "English title")</small>
+                        <input @bind="_titleEn" maxlength="120" autocomplete="off" />
+                    </label>
+                    <label>
+                        <small>@(L.IsArabic ? "العنوان بالعربية" : "Arabic title")</small>
+                        <input @bind="_titleAr" maxlength="120" dir="rtl" autocomplete="off" />
+                    </label>
+                </div>
+
+                <label class="ai-content-input">
+                    <span>@(L.IsArabic ? "الأمر بالإنجليزية" : "English prompt")</span>
+                    <textarea @bind="_promptEn" rows="8" maxlength="20000" dir="ltr"></textarea>
+                </label>
+                <label class="ai-content-input">
+                    <span>@(L.IsArabic ? "الأمر بالعربية" : "Arabic prompt")</span>
+                    <textarea @bind="_promptAr" rows="8" maxlength="20000" dir="rtl"></textarea>
+                </label>
+
+                <div class="settings-option-row">
+                    <div>
+                        <strong>@(L.IsArabic ? "حفظ إصدار جديد" : "Save new revision")</strong>
+                        <small>@(L.IsArabic ? "إذا لم تتغير البيانات فلن يتم إنشاء إصدار مكرر." : "If the content did not change, a duplicate revision is not created.")</small>
+                    </div>
+                    <button class="btn primary" disabled="@_saving" @onclick="Save">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))</button>
+                </div>
+            </section>
+
+            @if (!_isNew && _selected is not null)
+            {
+                <section class="panel settings-section">
+                    <header>
+                        <div>
+                            <span class="workspace-kicker">VERSION HISTORY</span>
+                            <h2>@(L.IsArabic ? "سجل الإصدارات" : "Revision history")</h2>
+                            <p>@(L.IsArabic ? "الاستعادة لا تمسح التاريخ؛ تنشئ إصدارًا جديدًا من محتوى الإصدار المختار." : "Restoring never rewrites history; it creates a new revision from the selected historical content.")</p>
+                        </div>
+                        <span class="settings-badge">@_history.Count</span>
+                    </header>
+
+                    @if (_history.Count == 0)
+                    {
+                        <div class="empty-state"><p>@(L.IsArabic ? "لا يوجد سجل لهذا القالب." : "No history is available for this template.")</p></div>
+                    }
+                    else
+                    {
+                        <div class="ai-history-list">
+                            @foreach (var version in _history)
+                            {
+                                <article>
+                                    <div>
+                                        <strong>r@version.Revision · @version.ChangeType</strong>
+                                        <small>@version.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") · @version.CreatedBy</small>
+                                    </div>
+                                    <p>@Preview(L.IsArabic ? version.PromptAr : version.PromptEn)</p>
+                                    <div class="ai-history-actions">
+                                        <button class="btn compact" disabled="@(version.Revision == _selected.Revision)" @onclick="() => Restore(version.Revision)">↺ @(L.IsArabic ? "استعادة" : "Restore")</button>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        </main>
+    </div>
+</div>
+
+@code {
+    private readonly List<AIPromptTemplateDefinition> _templates = new();
+    private readonly List<AIPromptTemplateVersion> _history = new();
+    private string _search = string.Empty;
+    private string _selectedKey = string.Empty;
+    private string _editKey = string.Empty;
+    private string _titleEn = string.Empty;
+    private string _titleAr = string.Empty;
+    private string _promptEn = string.Empty;
+    private string _promptAr = string.Empty;
+    private bool _editEnabled = true;
+    private bool _isNew;
+    private bool _saving;
+    private bool _isError;
+    private string _message = string.Empty;
+
+    private AIPromptTemplateDefinition? _selected => _templates.FirstOrDefault(x => x.Key == _selectedKey);
+    private IEnumerable<AIPromptTemplateDefinition> FilteredTemplates => _templates.Where(x =>
+        string.IsNullOrWhiteSpace(_search) ||
+        x.Key.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+        x.TitleEn.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+        x.TitleAr.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override void OnInitialized()
+    {
+        CurrentUser.RequireAdministrator();
+        Reload();
+    }
+
+    private void Reload(string? selectKey = null)
+    {
+        _templates.Clear();
+        _templates.AddRange(PromptStore.GetDefinitions());
+        var target = !string.IsNullOrWhiteSpace(selectKey) ? selectKey : _selectedKey;
+        if (string.IsNullOrWhiteSpace(target) || !_templates.Any(x => x.Key == target)) target = _templates.FirstOrDefault()?.Key ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(target)) Select(target);
+        else NewTemplate();
+    }
+
+    private void Select(string key)
+    {
+        var template = _templates.FirstOrDefault(x => x.Key == key);
+        if (template is null) return;
+        _selectedKey = template.Key;
+        _isNew = false;
+        _editKey = template.Key;
+        _titleEn = template.TitleEn;
+        _titleAr = template.TitleAr;
+        _promptEn = template.PromptEn;
+        _promptAr = template.PromptAr;
+        _editEnabled = template.Enabled;
+        _history.Clear();
+        _history.AddRange(PromptStore.GetHistory(template.Key));
+        _message = string.Empty;
+    }
+
+    private void NewTemplate()
+    {
+        _selectedKey = string.Empty;
+        _isNew = true;
+        _editKey = string.Empty;
+        _titleEn = string.Empty;
+        _titleAr = string.Empty;
+        _promptEn = string.Empty;
+        _promptAr = string.Empty;
+        _editEnabled = true;
+        _history.Clear();
+        _message = string.Empty;
+    }
+
+    private void Save()
+    {
+        _saving = true;
+        _message = string.Empty;
+        _isError = false;
+        try
+        {
+            var actor = AdministratorActor();
+            var saved = PromptStore.Save(new AIPromptTemplateInput(_editKey, _titleEn, _titleAr, _promptEn, _promptAr, _editEnabled), actor);
+            _message = L.IsArabic ? $"تم حفظ {saved.Key} كإصدار r{saved.Revision}." : $"Saved {saved.Key} as revision r{saved.Revision}.";
+            ReloadPreservingMessage(saved.Key);
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.IsArabic ? $"تعذر حفظ القالب: {ex.Message}" : $"Could not save template: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task Restore(int revision)
+    {
+        if (_selected is null) return;
+        var confirmed = await JS.InvokeAsync<bool>("confirm", L.IsArabic
+            ? $"استعادة الإصدار r{revision} من {_selected.Key} كإصدار جديد؟"
+            : $"Restore revision r{revision} of {_selected.Key} as a new revision?");
+        if (!confirmed) return;
+
+        try
+        {
+            var restored = PromptStore.Restore(_selected.Key, revision, AdministratorActor());
+            _message = L.IsArabic ? $"تمت الاستعادة في الإصدار r{restored.Revision}." : $"Restored as revision r{restored.Revision}.";
+            _isError = false;
+            ReloadPreservingMessage(restored.Key);
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.IsArabic ? $"تعذرت الاستعادة: {ex.Message}" : $"Could not restore revision: {ex.Message}";
+        }
+    }
+
+    private void ReloadPreservingMessage(string key)
+    {
+        var message = _message;
+        var isError = _isError;
+        Reload(key);
+        _message = message;
+        _isError = isError;
+    }
+
+    private string AdministratorActor()
+    {
+        var userId = CurrentUser.RequireAdministrator();
+        return string.IsNullOrWhiteSpace(CurrentUser.UserName) ? userId.ToString() : CurrentUser.UserName;
+    }
+
+    private string DisplayTitle(AIPromptTemplateDefinition? template) => template is null
+        ? (L.IsArabic ? "قالب" : "Template")
+        : L.IsArabic ? template.TitleAr : template.TitleEn;
+
+    private string Preview(string value)
+    {
+        var normalized = (value ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+        return normalized.Length <= 220 ? normalized : normalized[..220] + "…";
+    }
+}

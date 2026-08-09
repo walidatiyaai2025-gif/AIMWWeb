@@ -18,7 +18,9 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IJobCancellationRegistry, JobCancellationRegistry>();
 
-        services.AddSingleton<IAIPromptRegistry, AIPromptRegistry>();
+        services.AddSingleton<VersionedAIPromptRegistry>();
+        services.AddSingleton<IAIPromptRegistry>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
+        services.AddSingleton<IAIPromptTemplateStore>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
         services.AddSingleton<IAIUsageLog, AIUsageLog>();
         services.AddSingleton<IAIContentProtector, AIContentProtector>();
         services.AddScoped<AIProviderRuntimeSettingsResolver>();

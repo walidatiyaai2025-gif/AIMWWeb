@@ -26,10 +26,52 @@ public sealed record AIResponse(
     decimal EstimatedCost,
     string? Error = null);
 
+public sealed record AIPromptTemplateDefinition(
+    string Key,
+    string TitleEn,
+    string TitleAr,
+    string PromptEn,
+    string PromptAr,
+    bool Enabled,
+    int Revision,
+    DateTime UpdatedAtUtc,
+    string UpdatedBy,
+    bool IsBuiltIn);
+
+public sealed record AIPromptTemplateVersion(
+    string Key,
+    int Revision,
+    string TitleEn,
+    string TitleAr,
+    string PromptEn,
+    string PromptAr,
+    bool Enabled,
+    DateTime CreatedAtUtc,
+    string CreatedBy,
+    string ChangeType);
+
+public sealed record AIPromptTemplateInput(
+    string Key,
+    string TitleEn,
+    string TitleAr,
+    string PromptEn,
+    string PromptAr,
+    bool Enabled);
+
 public interface IAIPromptRegistry
 {
     string Get(string key, string culture = "en");
     IReadOnlyDictionary<string, string> GetAll(string culture = "en");
+}
+
+public interface IAIPromptTemplateStore
+{
+    IReadOnlyList<AIPromptTemplateDefinition> GetDefinitions();
+    AIPromptTemplateDefinition? GetDefinition(string key);
+    IReadOnlyList<AIPromptTemplateVersion> GetHistory(string key);
+    AIPromptTemplateDefinition Save(AIPromptTemplateInput input, string actor);
+    AIPromptTemplateDefinition SetEnabled(string key, bool enabled, string actor);
+    AIPromptTemplateDefinition Restore(string key, int revision, string actor);
 }
 
 public interface IAIOrchestrator
