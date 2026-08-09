@@ -4,7 +4,6 @@ using Microsoft.Data.Sqlite;
 namespace AIWordPressManager.Web.Services;
 
 public enum PlannerItemStatus { Idea, Brief, Draft, Review, Scheduled, Published, Cancelled }
-public enum NotificationSeverity { Information, Success, Warning, Error }
 
 public sealed class ContentPlannerService
 {
@@ -14,17 +13,20 @@ public sealed class ContentPlannerService
     private readonly IAIPromptRegistry _prompts;
     private readonly ExecutionCenterService _execution;
     private readonly NotificationInboxService _notifications;
+    private readonly CurrentUserContext _currentUser;
 
     public ContentPlannerService(
         IAIOrchestrator ai,
         IAIPromptRegistry prompts,
         ExecutionCenterService execution,
-        NotificationInboxService notifications)
+        NotificationInboxService notifications,
+        CurrentUserContext currentUser)
     {
         _ai = ai;
         _prompts = prompts;
         _execution = execution;
         _notifications = notifications;
+        _currentUser = currentUser;
 
         var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Data");
         Directory.CreateDirectory(directory);
@@ -67,13 +69,21 @@ public sealed class ContentPlannerService
     public PlannerItem Create(CreatePlannerItem request)
     {
         if (string.IsNullOrWhiteSpace(request.Title)) throw new InvalidOperationException("Title is required.");
+        var ownerUserId = _currentUser.UserId;
         var now = DateTime.UtcNow;
         var item = new PlannerItem(Guid.NewGuid(), request.SiteId, request.SiteName?.Trim() ?? string.Empty,
             request.Title.Trim(), PlannerItemStatus.Idea, request.Idea?.Trim(), null, null,
             request.ScheduledAtUtc?.ToUniversalTime(), null, now, now,
-            string.IsNullOrWhiteSpace(request.CreatedBy) ? "System" : request.CreatedBy.Trim());
+            string.IsNullOrWhiteSpace(request.CreatedBy) ? _currentUser.UserName : request.CreatedBy.Trim());
         Save(item);
-        _notifications.Create(item.CreatedBy, "Content planner", $"Idea created: {item.Title}", NotificationSeverity.Success, item.Id);
+        _notifications.Create(
+            ownerUserId,
+            "Content planner",
+            $"Idea created: {item.Title}",
+            NotificationSeverity.Success,
+            relatedId: item.Id,
+            siteId: item.SiteId,
+            source: "ContentPlanner");
         return item;
     }
 
@@ -120,8 +130,21 @@ public sealed class ContentPlannerService
     {
         var item = Get(id) ?? throw new InvalidOperationException("Planner item not found.");
         if (string.IsNullOrWhiteSpace(item.DraftContent)) throw new InvalidOperationException("A draft is required before queueing.");
-        _execution.Enqueue($"Publish planned content: {item.Title}", "Planner Publish", item.SiteName, 1);
-        _notifications.Create(item.CreatedBy, "Execution queued", item.Title, NotificationSeverity.Information, item.Id);
+
+        var ownerUserId = _currentUser.UserId;
+        var executionJob = item.SiteId.HasValue
+            ? _execution.Enqueue(ownerUserId, item.SiteId.Value, $"Publish planned content: {item.Title}", "Planner Publish", item.SiteName, 1)
+            : _execution.Enqueue($"Publish planned content: {item.Title}", "Planner Publish", item.SiteName, 1);
+
+        _notifications.Create(
+            ownerUserId,
+            "Execution queued",
+            item.Title,
+            NotificationSeverity.Information,
+            relatedId: item.Id,
+            siteId: item.SiteId,
+            executionJobId: executionJob.Id,
+            source: "ContentPlanner");
         return Update(id, new UpdatePlannerItem(null, PlannerItemStatus.Review, null, null, null, null, null));
     }
 
@@ -188,35 +211,6 @@ public sealed class ContentPlannerService
         ParseDate(reader.GetString(10)), ParseDate(reader.GetString(11)), reader.GetString(12));
 }
 
-public sealed class NotificationInboxService
-{
-    private readonly object _sync = new();
-    private readonly string _connectionString;
-    public NotificationInboxService()
-    {
-        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Data");
-        Directory.CreateDirectory(directory);
-        _connectionString = new SqliteConnectionStringBuilder { DataSource = Path.Combine(directory, "notifications.db"), Mode = SqliteOpenMode.ReadWriteCreate, Cache = SqliteCacheMode.Shared }.ToString();
-        using var connection = Open(); using var command = connection.CreateCommand();
-        command.CommandText = "CREATE TABLE IF NOT EXISTS Notifications(Id TEXT PRIMARY KEY, UserId TEXT NOT NULL, Title TEXT NOT NULL, Message TEXT NOT NULL, Severity TEXT NOT NULL, RelatedId TEXT NULL, IsRead INTEGER NOT NULL DEFAULT 0, CreatedAtUtc TEXT NOT NULL); CREATE INDEX IF NOT EXISTS IX_Notifications_User_Read ON Notifications(UserId, IsRead, CreatedAtUtc);";
-        command.ExecuteNonQuery();
-    }
-    public NotificationItem Create(string? userId, string title, string message, NotificationSeverity severity, Guid? relatedId = null)
-    {
-        var item = new NotificationItem(Guid.NewGuid(), string.IsNullOrWhiteSpace(userId) ? "System" : userId.Trim(), title.Trim(), message.Trim(), severity, relatedId, false, DateTime.UtcNow);
-        lock (_sync) { using var c = Open(); using var q = c.CreateCommand(); q.CommandText = "INSERT INTO Notifications VALUES($id,$user,$title,$message,$severity,$related,0,$created)"; q.Parameters.AddWithValue("$id", item.Id.ToString()); q.Parameters.AddWithValue("$user", item.UserId); q.Parameters.AddWithValue("$title", item.Title); q.Parameters.AddWithValue("$message", item.Message); q.Parameters.AddWithValue("$severity", item.Severity.ToString()); q.Parameters.AddWithValue("$related", Db(item.RelatedId?.ToString())); q.Parameters.AddWithValue("$created", item.CreatedAtUtc.ToString("O")); q.ExecuteNonQuery(); }
-        return item;
-    }
-    public IReadOnlyList<NotificationItem> Get(string? userId, bool unreadOnly = false, int take = 100)
-    {
-        lock (_sync) { using var c = Open(); using var q = c.CreateCommand(); q.CommandText = "SELECT Id,UserId,Title,Message,Severity,RelatedId,IsRead,CreatedAtUtc FROM Notifications WHERE UserId=$user AND ($unread=0 OR IsRead=0) ORDER BY CreatedAtUtc DESC LIMIT $take"; q.Parameters.AddWithValue("$user", string.IsNullOrWhiteSpace(userId) ? "System" : userId.Trim()); q.Parameters.AddWithValue("$unread", unreadOnly ? 1 : 0); q.Parameters.AddWithValue("$take", Math.Clamp(take,1,500)); using var r=q.ExecuteReader(); var list=new List<NotificationItem>(); while(r.Read()) list.Add(new NotificationItem(Guid.Parse(r.GetString(0)),r.GetString(1),r.GetString(2),r.GetString(3),Enum.Parse<NotificationSeverity>(r.GetString(4),true),r.IsDBNull(5)?null:Guid.Parse(r.GetString(5)),r.GetInt32(6)==1,DateTime.Parse(r.GetString(7)).ToUniversalTime())); return list; }
-    }
-    public void MarkRead(Guid id) { lock(_sync){ using var c=Open(); using var q=c.CreateCommand(); q.CommandText="UPDATE Notifications SET IsRead=1 WHERE Id=$id"; q.Parameters.AddWithValue("$id",id.ToString()); q.ExecuteNonQuery(); } }
-    private SqliteConnection Open(){var c=new SqliteConnection(_connectionString);c.Open();return c;}
-    private static object Db(object? value) => value ?? DBNull.Value;
-}
-
 public sealed record PlannerItem(Guid Id, Guid? SiteId, string SiteName, string Title, PlannerItemStatus Status, string? Idea, string? Brief, string? DraftContent, DateTime? ScheduledAtUtc, int? WordPressPostId, DateTime CreatedAtUtc, DateTime UpdatedAtUtc, string CreatedBy);
 public sealed record CreatePlannerItem(Guid? SiteId, string? SiteName, string Title, string? Idea, DateTime? ScheduledAtUtc, string? CreatedBy);
 public sealed record UpdatePlannerItem(string? Title, PlannerItemStatus? Status, string? Idea, string? Brief, string? DraftContent, DateTime? ScheduledAtUtc, int? WordPressPostId);
-public sealed record NotificationItem(Guid Id, string UserId, string Title, string Message, NotificationSeverity Severity, Guid? RelatedId, bool IsRead, DateTime CreatedAtUtc);
