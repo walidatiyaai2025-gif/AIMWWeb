@@ -18,7 +18,10 @@ public sealed class WordPressSyncWebService(
 {
     private const int PageSize = 100;
 
-    public async Task<WordPressSyncViewResult> SynchronizeAsync(Guid siteId, CancellationToken cancellationToken = default)
+    public async Task<WordPressSyncViewResult> SynchronizeAsync(
+        Guid siteId,
+        CancellationToken cancellationToken = default,
+        bool forceFullRefresh = false)
     {
         await siteService.EnsureOwnershipAsync(siteId, cancellationToken);
         var site = await dbContext.Sites.AsNoTracking().FirstAsync(x => x.Id == siteId, cancellationToken);
@@ -34,7 +37,11 @@ public sealed class WordPressSyncWebService(
             executionTracker.Report(jobId, 1, 7, "Preparing the unified WordPress API client.");
 
             var lastSync = await GetLastSuccessfulSyncAsync(siteId, cancellationToken);
-            if (lastSync.HasValue)
+            if (forceFullRefresh)
+            {
+                executionTracker.Report(jobId, 2, 7, "Forced full refresh requested. Skipping the delta probe so remote updates and deletions are reconciled.");
+            }
+            else if (lastSync.HasValue)
             {
                 executionTracker.Report(jobId, 2, 7, $"Checking remote changes since {lastSync.Value:O}.");
                 var delta = await ProbeChangesAsync(siteId, lastSync.Value, cancellationToken);
@@ -84,7 +91,9 @@ public sealed class WordPressSyncWebService(
 
             executionTracker.Report(jobId, 6, 7, "Saving synchronized data to the local database.");
             var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
-            var message = $"Synchronization completed: {posts.Total} posts, {pages.Total} pages, {categories.Total} categories, {tags.Total} tags, and {media.Total} media items.";
+            var message = forceFullRefresh
+                ? $"Forced synchronization completed: {posts.Total} posts, {pages.Total} pages, {categories.Total} categories, {tags.Total} tags, and {media.Total} media items. Remote deletions were reconciled against the local cache."
+                : $"Synchronization completed: {posts.Total} posts, {pages.Total} pages, {categories.Total} categories, {tags.Total} tags, and {media.Total} media items.";
             var synchronizedAt = DateTime.UtcNow;
             syncRun.Complete(message, downloaded, false, synchronizedAt);
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -110,6 +119,46 @@ public sealed class WordPressSyncWebService(
             notifications.Error("WordPress synchronization failed.", "Synchronization failed", ex.ToString());
             throw;
         }
+    }
+
+    public async Task<SyncConflictReview> ReviewConflictsAsync(
+        Guid siteId,
+        CancellationToken cancellationToken = default)
+    {
+        await siteService.EnsureOwnershipAsync(siteId, cancellationToken);
+
+        var localRecords = await dbContext.WordPressContentRecords
+            .AsNoTracking()
+            .Where(x => x.SiteId == siteId && x.IsAvailable && (x.ContentType == "post" || x.ContentType == "page"))
+            .OrderBy(x => x.ContentType)
+            .ThenBy(x => x.WordPressId)
+            .ToListAsync(cancellationToken);
+
+        var lastSync = localRecords.Count == 0
+            ? (DateTime?)null
+            : localRecords.Max(x => x.LastSynchronizedAtUtc);
+
+        var postsTask = LoadContentAsync(siteId, "/wp-json/wp/v2/posts", cancellationToken);
+        var pagesTask = LoadContentAsync(siteId, "/wp-json/wp/v2/pages", cancellationToken);
+        await Task.WhenAll(postsTask, pagesTask);
+
+        var remotePosts = await postsTask;
+        var remotePages = await pagesTask;
+        var local = localRecords.Select(x => new SyncComparableContent(
+            x.ContentType,
+            x.WordPressId,
+            x.Title,
+            x.Slug,
+            x.Status,
+            x.Link,
+            x.RenderedContent,
+            x.RenderedExcerpt,
+            ToDateTimeOffset(x.ModifiedAtUtc))).ToArray();
+        var remote = remotePosts.Items.Select(x => ToComparable("post", x))
+            .Concat(remotePages.Items.Select(x => ToComparable("page", x)))
+            .ToArray();
+
+        return SyncConflictPolicy.BuildReview(local, remote, lastSync);
     }
 
     public async Task<IReadOnlyList<SiteSyncRunView>> GetHistoryAsync(Guid siteId, int take = 20, CancellationToken cancellationToken = default)
@@ -265,6 +314,26 @@ public sealed class WordPressSyncWebService(
             if (count < PageSize || items.Count >= total && total > 0) break;
         }
         return new(items, Math.Max(total, items.Count));
+    }
+
+    private static SyncComparableContent ToComparable(string contentType, WordPressContentItem item) => new(
+        contentType,
+        item.Id,
+        item.Title,
+        item.Slug,
+        item.Status,
+        item.Link,
+        item.RenderedContent,
+        item.RenderedExcerpt,
+        item.ModifiedAt);
+
+    private static DateTimeOffset? ToDateTimeOffset(DateTime? value)
+    {
+        if (!value.HasValue) return null;
+        var utc = value.Value.Kind == DateTimeKind.Utc
+            ? value.Value
+            : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc);
+        return new DateTimeOffset(utc);
     }
 
     private static void EnsureSuccess(WordPressApiResponse<JsonDocument> response, string endpoint)
