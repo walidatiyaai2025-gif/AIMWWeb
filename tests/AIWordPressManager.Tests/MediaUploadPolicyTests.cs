@@ -54,12 +54,12 @@ public sealed class MediaUploadPolicyTests
         result.ContentType.Should().Be("application/pdf");
     }
 
-    [Fact]
-    public void SanitizeFileName_RemovesPathAndControlCharacters()
+    [Theory]
+    [InlineData("../folder/evil\u0000name.jpg", "evilname.jpg")]
+    [InlineData("C:\\fakepath\\photo.jpg", "photo.jpg")]
+    public void SanitizeFileName_RemovesClientPathAndControlCharacters(string input, string expected)
     {
-        var result = MediaUploadPolicy.SanitizeFileName("../folder/evil\u0000name.jpg");
-
-        result.Should().Be("evilname.jpg");
+        MediaUploadPolicy.SanitizeFileName(input).Should().Be(expected);
     }
 
     [Fact]
