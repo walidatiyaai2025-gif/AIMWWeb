@@ -19,7 +19,7 @@ else
                 <div>
                     <small style="font-weight:800;letter-spacing:.1em">@(L.IsArabic ? "مكتبة الوسائط المحلية" : "OFFLINE MEDIA LIBRARY")</small>
                     <h1 style="margin:8px 0">@(L.IsArabic ? "مستكشف وسائط WordPress" : "WordPress Media Explorer")</h1>
-                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "اعرض الوسائط المتزامنة من جميع المواقع وابحث فيها حتى عند تعذر الاتصال بـWordPress." : "Browse and search synchronized media across every site, even while WordPress is unavailable.")</p>
+                    <p style="margin:0;opacity:.74">@(L.IsArabic ? "اعرض الوسائط المتزامنة من جميع المواقع، ثم افتح إدارة الموقع لتحسين البيانات الوصفية أو الحذف الآمن." : "Browse synchronized media across every site, then open the site manager for metadata optimization or safe deletion.")</p>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <button class="btn" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
@@ -73,8 +73,9 @@ else
                             <small style="opacity:.62">@item.MimeType</small>
                             <small style="opacity:.72">@item.SiteName · @FormatDate(item.ModifiedAtUtc)</small>
                             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">
-                                <a class="btn compact primary" href="@item.SourceUrl" target="_blank" rel="noopener">@(L.IsArabic ? "فتح الملف" : "Open file") ↗</a>
-                                <a class="btn compact" href="@($"/sites/{item.SiteId}/explorer")">@(L.IsArabic ? "الموقع" : "Site")</a>
+                                <a class="btn compact primary" href="@($"/sites/{item.SiteId}/media")">@(L.IsArabic ? "إدارة وتحسين" : "Manage & optimize")</a>
+                                <a class="btn compact" href="@item.SourceUrl" target="_blank" rel="noopener">@(L.IsArabic ? "فتح الملف" : "Open file") ↗</a>
+                                <a class="btn compact" href="@($"/sites/{item.SiteId}/explorer")">@(L.IsArabic ? "المستكشف" : "Explorer")</a>
                             </div>
                         </div>
                     </article>
