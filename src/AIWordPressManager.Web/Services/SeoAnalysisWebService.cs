@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class SeoAnalysisWebService(AppDbContext dbContext)
+public sealed class SeoAnalysisWebService(AppDbContext dbContext, CurrentUserContext currentUser)
 {
     public async Task<SeoAnalysisView?> AnalyzeAsync(Guid siteId, string? query = null, string type = "all", CancellationToken cancellationToken = default)
     {
-        var site = await dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == siteId, cancellationToken);
+        var ownerUserId = currentUser.RequireUserId();
+        var site = await dbContext.Sites
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == siteId && x.OwnerUserId == ownerUserId, cancellationToken);
         if (site is null) return null;
 
         var contentQuery = dbContext.WordPressContentRecords.AsNoTracking()

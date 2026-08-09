@@ -1,6 +1,7 @@
 @page "/sites/{Id:guid}/seo"
 @rendermode InteractiveServer
 @implements IDisposable
+@using AIWordPressManager.Application.SeoAudit
 @inject SeoAnalysisWebService SeoService
 @inject SeoAuditExecutionService AuditService
 @inject AppNotificationService Notifications
@@ -55,6 +56,33 @@ else
             <article class="panel seo-summary-card good"><small>@L["GoodContent"]</small><strong>@_view.Summary.Good</strong><span>@L["Score80Plus"]</span></article>
             <article class="panel seo-summary-card warning"><small>@L["NeedsImprovement"]</small><strong>@_view.Summary.NeedsImprovement</strong><span>@L["Score50To79"]</span></article>
             <article class="panel seo-summary-card poor"><small>@L["SeoIssues"]</small><strong>@_view.Summary.TotalIssues</strong><span>@_view.Summary.Poor @L["PoorItems"]</span></article>
+        </section>
+
+        <section class="panel seo-priority-panel">
+            <header>
+                <div>
+                    <span class="workspace-kicker">@(L.IsArabic ? "الاتجاه" : "AUDIT TREND")</span>
+                    <h2>@(L.IsArabic ? "سجل التدقيق" : "Audit history")</h2>
+                </div>
+                <span>@(L.IsArabic ? "آخر 12 عملية تدقيق محفوظة" : "Last 12 saved audits")</span>
+            </header>
+            @if (_history.Count == 0)
+            {
+                <div class="seo-clean-state">@(L.IsArabic ? "لا يوجد سجل محفوظ بعد. شغّل تدقيقًا كاملًا لإنشاء أول نقطة." : "No saved audit history yet. Run a full audit to create the first point.")</div>
+            }
+            else
+            {
+                <div class="seo-priority-grid">
+                    @foreach (var point in _history)
+                    {
+                        <article class="seo-priority-item @HistorySeverity(point)">
+                            <span>@point.CapturedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                            <strong>@point.Score<small>/100</small></strong>
+                            <small>@(L.IsArabic ? $"{point.AuditedItems} عنصر · عالية {point.HighIssues} · متوسطة {point.MediumIssues} · منخفضة {point.LowIssues}" : $"{point.AuditedItems} items · High {point.HighIssues} · Medium {point.MediumIssues} · Low {point.LowIssues}")</small>
+                        </article>
+                    }
+                </div>
+            }
         </section>
 
         <section class="panel seo-priority-panel">
@@ -194,6 +222,7 @@ else
     [Parameter] public Guid Id { get; set; }
     private SeoAnalysisView? _view;
     private SeoAnalysisItem? _expanded;
+    private IReadOnlyList<SeoAuditHistoryPoint> _history = Array.Empty<SeoAuditHistoryPoint>();
     private bool _loading = true, _runningAudit;
     private string _query = string.Empty, _type = "all", _quality = "all", _issue = "all";
     private int _page = 1, _pageSize = 10;
@@ -216,7 +245,14 @@ else
         finally { _loading = false; }
     }
 
-    private async Task LoadAsync() { _view = await SeoService.AnalyzeAsync(Id, _query, _type); _page = 1; _expanded = null; }
+    private async Task LoadAsync()
+    {
+        _view = await SeoService.AnalyzeAsync(Id, _query, _type);
+        _history = _view is null ? Array.Empty<SeoAuditHistoryPoint>() : await AuditService.LoadHistoryAsync(Id, 12);
+        _page = 1;
+        _expanded = null;
+    }
+
     private async Task ApplyFiltersAsync() { await LoadAsync(); Notifications.Info(L.IsArabic ? "تم تحديث نتائج التحليل." : "SEO results refreshed.", "SEO"); }
     private async Task ResetFiltersAsync() { _query = ""; _type = _quality = _issue = "all"; _pageSize = 10; await LoadAsync(); }
     private void FilterByIssue(string issueCode) { _issue = issueCode; _page = 1; }
@@ -227,12 +263,13 @@ else
     private async Task RunFullAuditAsync()
     {
         if (_runningAudit) return;
-        try { _runningAudit = true; await AuditService.RunAsync(Id); await LoadAsync(); Notifications.Success(L.IsArabic ? "اكتمل تدقيق SEO وتم تحديث النتائج." : "SEO audit completed and results were refreshed.", "SEO"); }
+        try { _runningAudit = true; await AuditService.RunAsync(Id); await LoadAsync(); Notifications.Success(L.IsArabic ? "اكتمل تدقيق SEO وتم تحديث النتائج والسجل." : "SEO audit completed; results and history were refreshed.", "SEO"); }
         catch (Exception ex) { Notifications.Error(L.IsArabic ? "فشل تدقيق SEO." : "SEO audit failed.", "SEO", ex.ToString()); }
         finally { _runningAudit = false; }
     }
 
     private static string ScoreClass(int score) => score >= 80 ? "good" : score >= 50 ? "warning" : "poor";
+    private static string HistorySeverity(SeoAuditHistoryPoint point) => point.HighIssues > 0 || point.Score < 50 ? "high" : point.MediumIssues > 0 || point.Score < 80 ? "medium" : "low";
     private string ScoreDescription(int score) => score >= 80 ? (L.IsArabic ? "المحتوى في حالة جيدة." : "Content is in good condition.") : score >= 50 ? (L.IsArabic ? "توجد فرص تحسين واضحة." : "There are clear improvement opportunities.") : (L.IsArabic ? "يحتاج المحتوى إلى معالجة ذات أولوية." : "Content requires priority remediation.");
     private string IssueText(SeoIssue issue) => $"{IssueLabel(issue.Code)}{(issue.Count > 1 ? $" ({issue.Count})" : string.Empty)}";
     private string IssueLabel(string issueCode) => L[issueCode];

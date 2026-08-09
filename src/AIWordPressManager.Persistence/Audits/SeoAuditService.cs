@@ -9,8 +9,14 @@ namespace AIWordPressManager.Persistence.Audits;
 
 public sealed partial class SeoAuditService(AppDbContext dbContext) : ISeoAuditService
 {
-    public async Task<Result<SeoAuditSummary>> LoadLatestAsync(Guid siteId, CancellationToken cancellationToken = default)
+    public async Task<Result<SeoAuditSummary>> LoadLatestAsync(
+        Guid siteId,
+        Guid ownerUserId,
+        CancellationToken cancellationToken = default)
     {
+        if (!await IsOwnedSiteAsync(siteId, ownerUserId, cancellationToken))
+            return SiteNotFound<SeoAuditSummary>();
+
         var content = await dbContext.WordPressContentRecords
             .Where(x => x.SiteId == siteId && x.IsAvailable)
             .AsNoTracking()
@@ -21,6 +27,12 @@ public sealed partial class SeoAuditService(AppDbContext dbContext) : ISeoAuditS
             .AsNoTracking()
             .OrderByDescending(x => x.DetectedAtUtc)
             .ToListAsync(cancellationToken);
+
+        var latestSnapshot = await dbContext.SeoAuditSnapshots
+            .Where(x => x.SiteId == siteId)
+            .AsNoTracking()
+            .OrderByDescending(x => x.CapturedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
 
         var issues = stored.Select(x =>
         {
@@ -35,29 +47,46 @@ public sealed partial class SeoAuditService(AppDbContext dbContext) : ISeoAuditS
                 item?.Link ?? string.Empty);
         }).ToList();
 
-        var high = issues.Count(x => x.Severity == "High");
-        var medium = issues.Count(x => x.Severity == "Medium");
-        var low = issues.Count(x => x.Severity == "Low");
-        var score = content.Count == 0 ? 0 : Math.Clamp(100 - high * 7 - medium * 3 - low, 0, 100);
-        var completedAt = stored.Count == 0 ? DateTimeOffset.MinValue : new DateTimeOffset(stored.Max(x => x.DetectedAtUtc), TimeSpan.Zero);
-        return Result.Success(new SeoAuditSummary(score, content.Count, high, medium, low, issues, completedAt));
+        if (latestSnapshot is null)
+        {
+            return Result.Success(new SeoAuditSummary(
+                0,
+                content.Count,
+                issues.Count(x => x.Severity == "High"),
+                issues.Count(x => x.Severity == "Medium"),
+                issues.Count(x => x.Severity == "Low"),
+                issues,
+                DateTimeOffset.MinValue));
+        }
+
+        return Result.Success(new SeoAuditSummary(
+            latestSnapshot.Score,
+            latestSnapshot.AuditedItems,
+            latestSnapshot.HighIssues,
+            latestSnapshot.MediumIssues,
+            latestSnapshot.LowIssues,
+            issues,
+            new DateTimeOffset(latestSnapshot.CapturedAtUtc, TimeSpan.Zero)));
     }
 
-    public async Task<Result<SeoAuditSummary>> RunAsync(Guid siteId, CancellationToken cancellationToken = default)
+    public async Task<Result<SeoAuditSummary>> RunAsync(
+        Guid siteId,
+        Guid ownerUserId,
+        CancellationToken cancellationToken = default)
     {
+        if (!await IsOwnedSiteAsync(siteId, ownerUserId, cancellationToken))
+            return SiteNotFound<SeoAuditSummary>();
+
         var content = await dbContext.WordPressContentRecords
             .Where(x => x.SiteId == siteId && x.IsAvailable)
             .OrderByDescending(x => x.ModifiedAtUtc)
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         if (content.Count == 0)
             return Result.Failure<SeoAuditSummary>(Error.NotFound("Synchronize WordPress content before running the SEO audit."));
 
-        var oldIssues = await dbContext.SeoAuditIssues.Where(x => x.SiteId == siteId).ToListAsync(cancellationToken);
-        dbContext.SeoAuditIssues.RemoveRange(oldIssues);
-
-        var issues = new List<SeoAuditIssueDto>();
-        var now = DateTime.UtcNow;
+        var issues = new List<SeoAuditCaptureIssue>();
         foreach (var item in content)
         {
             var html = item.RenderedContent ?? string.Empty;
@@ -84,8 +113,14 @@ public sealed partial class SeoAuditService(AppDbContext dbContext) : ISeoAuditS
             void AddIf(bool condition, string code, string severity, string description)
             {
                 if (!condition) return;
-                dbContext.SeoAuditIssues.Add(new SeoAuditIssue(siteId, item.Id, code, severity, item.Title, description, now));
-                issues.Add(new SeoAuditIssueDto(severity, code, item.ContentType, item.WordPressId, item.Title, description, item.Link));
+                issues.Add(new SeoAuditCaptureIssue(
+                    severity,
+                    code,
+                    item.ContentType,
+                    item.WordPressId,
+                    item.Title,
+                    description,
+                    item.Link));
             }
         }
 
@@ -93,13 +128,118 @@ public sealed partial class SeoAuditService(AppDbContext dbContext) : ISeoAuditS
         var medium = issues.Count(x => x.Severity == "Medium");
         var low = issues.Count(x => x.Severity == "Low");
         var score = Math.Clamp(100 - high * 7 - medium * 3 - low, 0, 100);
-        dbContext.SeoAuditSnapshots.Add(new SeoAuditSnapshot(siteId, score, content.Count, high, medium, low, now));
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return Result.Success(new SeoAuditSummary(score, content.Count, high, medium, low, issues, new DateTimeOffset(now, TimeSpan.Zero)));
+
+        return await SaveAsync(
+            siteId,
+            ownerUserId,
+            new SeoAuditCapture(score, content.Count, issues, DateTimeOffset.UtcNow),
+            cancellationToken);
     }
 
-    public async Task<Result<IReadOnlyList<SeoAuditHistoryPoint>>> LoadHistoryAsync(Guid siteId, int take = 50, CancellationToken cancellationToken = default)
+    public async Task<Result<SeoAuditSummary>> SaveAsync(
+        Guid siteId,
+        Guid ownerUserId,
+        SeoAuditCapture capture,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(capture);
+
+        if (capture.Score is < 0 or > 100)
+            return Result.Failure<SeoAuditSummary>(Error.Validation("SEO audit score must be between 0 and 100."));
+        if (capture.AuditedItems < 0)
+            return Result.Failure<SeoAuditSummary>(Error.Validation("SEO audited item count cannot be negative."));
+        if (capture.CapturedAt == default)
+            return Result.Failure<SeoAuditSummary>(Error.Validation("SEO audit capture time is required."));
+        if (!await IsOwnedSiteAsync(siteId, ownerUserId, cancellationToken))
+            return SiteNotFound<SeoAuditSummary>();
+
+        var content = await dbContext.WordPressContentRecords
+            .Where(x => x.SiteId == siteId && x.IsAvailable)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        var contentByIdentity = content
+            .GroupBy(x => (Type: x.ContentType.ToLowerInvariant(), x.WordPressId))
+            .ToDictionary(x => x.Key, x => x.OrderByDescending(item => item.ModifiedAtUtc).First());
+
+        var mapped = new List<(SeoAuditCaptureIssue Issue, WordPressContentRecord Content)>();
+        foreach (var issue in capture.Issues)
+        {
+            if (string.IsNullOrWhiteSpace(issue.Code) || string.IsNullOrWhiteSpace(issue.Severity))
+                return Result.Failure<SeoAuditSummary>(Error.Validation("Every SEO audit issue requires a code and severity."));
+            if (issue.Severity is not ("High" or "Medium" or "Low"))
+                return Result.Failure<SeoAuditSummary>(Error.Validation($"Unsupported SEO issue severity '{issue.Severity}'."));
+
+            var key = (issue.ContentType.Trim().ToLowerInvariant(), issue.WordPressId);
+            if (!contentByIdentity.TryGetValue(key, out var item))
+            {
+                return Result.Failure<SeoAuditSummary>(Error.Conflict(
+                    "Synchronized WordPress content changed while the SEO audit was being saved. Refresh and run the audit again."));
+            }
+
+            mapped.Add((issue, item));
+        }
+
+        var oldIssues = await dbContext.SeoAuditIssues
+            .Where(x => x.SiteId == siteId)
+            .ToListAsync(cancellationToken);
+        dbContext.SeoAuditIssues.RemoveRange(oldIssues);
+
+        var capturedAtUtc = capture.CapturedAt.UtcDateTime;
+        foreach (var entry in mapped)
+        {
+            dbContext.SeoAuditIssues.Add(new SeoAuditIssue(
+                siteId,
+                entry.Content.Id,
+                entry.Issue.Code.Trim(),
+                entry.Issue.Severity,
+                entry.Issue.ContentTitle,
+                entry.Issue.Description,
+                capturedAtUtc));
+        }
+
+        var high = capture.Issues.Count(x => x.Severity == "High");
+        var medium = capture.Issues.Count(x => x.Severity == "Medium");
+        var low = capture.Issues.Count(x => x.Severity == "Low");
+        dbContext.SeoAuditSnapshots.Add(new SeoAuditSnapshot(
+            siteId,
+            capture.Score,
+            capture.AuditedItems,
+            high,
+            medium,
+            low,
+            capturedAtUtc));
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var dto = mapped.Select(x => new SeoAuditIssueDto(
+            x.Issue.Severity,
+            x.Issue.Code,
+            x.Content.ContentType,
+            x.Content.WordPressId,
+            x.Issue.ContentTitle,
+            x.Issue.Description,
+            x.Content.Link)).ToList();
+
+        return Result.Success(new SeoAuditSummary(
+            capture.Score,
+            capture.AuditedItems,
+            high,
+            medium,
+            low,
+            dto,
+            new DateTimeOffset(capturedAtUtc, TimeSpan.Zero)));
+    }
+
+    public async Task<Result<IReadOnlyList<SeoAuditHistoryPoint>>> LoadHistoryAsync(
+        Guid siteId,
+        Guid ownerUserId,
+        int take = 50,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await IsOwnedSiteAsync(siteId, ownerUserId, cancellationToken))
+            return SiteNotFound<IReadOnlyList<SeoAuditHistoryPoint>>();
+
         var points = await dbContext.SeoAuditSnapshots
             .Where(x => x.SiteId == siteId)
             .AsNoTracking()
@@ -107,10 +247,27 @@ public sealed partial class SeoAuditService(AppDbContext dbContext) : ISeoAuditS
             .Take(Math.Clamp(take, 1, 365))
             .Select(x => new SeoAuditHistoryPoint(
                 new DateTimeOffset(x.CapturedAtUtc, TimeSpan.Zero),
-                x.Score, x.AuditedItems, x.HighIssues, x.MediumIssues, x.LowIssues))
+                x.Score,
+                x.AuditedItems,
+                x.HighIssues,
+                x.MediumIssues,
+                x.LowIssues))
             .ToListAsync(cancellationToken);
         return Result.Success<IReadOnlyList<SeoAuditHistoryPoint>>(points);
     }
+
+    private Task<bool> IsOwnedSiteAsync(Guid siteId, Guid ownerUserId, CancellationToken cancellationToken)
+    {
+        if (siteId == Guid.Empty || ownerUserId == Guid.Empty)
+            return Task.FromResult(false);
+
+        return dbContext.Sites
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == siteId && x.OwnerUserId == ownerUserId, cancellationToken);
+    }
+
+    private static Result<T> SiteNotFound<T>()
+        => Result.Failure<T>(Error.NotFound("Site not found."));
 
     private static string Normalize(string? html) => WebUtility.HtmlDecode(HtmlTagRegex().Replace(html ?? string.Empty, " ")).Trim();
     [GeneratedRegex("<[^>]+>", RegexOptions.Compiled)] private static partial Regex HtmlTagRegex();

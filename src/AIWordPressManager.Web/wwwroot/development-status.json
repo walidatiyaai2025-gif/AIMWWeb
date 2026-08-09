@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-09T17:27:00Z",
+  "updatedAtUtc": "2026-08-09T19:20:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -79,7 +79,7 @@
     { "id": "OPS-007", "phase": 5, "area": "Notifications", "nameAr": "مركز الإشعارات", "nameEn": "Notification center", "status": "completed", "priority": "medium", "version": "155.123.0", "notes": "Persistent notifications now carry authoritative OwnerUserId/SiteId/ExecutionJobId identity with in-place SQLite migration, owner-scoped read/dismiss/retention, spoof-resistant HTTP compatibility, unified header/inbox UI, and durable planner/bulk/media/approval outcomes for the relevant owner; Build #1235 and .NET Build Verification #919 passed before final roadmap reconciliation." },
     { "id": "OPS-008", "phase": 5, "area": "Recovery", "nameAr": "استعادة المهام بعد إعادة تشغيل التطبيق", "nameEn": "Recover jobs after application restart", "status": "completed", "priority": "high", "version": "existing", "notes": "Interrupted execution and automation records are recovered to a schedulable state." },
 
-    { "id": "AI-001", "phase": 6, "area": "SEO", "nameAr": "تشغيل تدقيق SEO", "nameEn": "SEO audit execution", "status": "in_progress", "priority": "high", "version": "existing", "notes": "Service and endpoint exist; complete UI, persistence, and acceptance verification remain." },
+    { "id": "AI-001", "phase": 6, "area": "SEO", "nameAr": "تشغيل تدقيق SEO", "nameEn": "SEO audit execution", "status": "completed", "priority": "high", "version": "155.126.0", "notes": "Owner-scoped SEO audit execution now persists the exact visible SeoRuleEngine score/issues into the existing SQLite audit schema, exposes the last 12 audit snapshots in the bilingual SEO workspace, validates synchronized content targets before save, and prevents cross-tenant analysis, persistence, and history access." },
     { "id": "AI-002", "phase": 6, "area": "AI", "nameAr": "مزودو الذكاء الاصطناعي", "nameEn": "AI provider configuration", "status": "planned", "priority": "high", "version": null, "notes": "OpenAI, Gemini, Puter, and other providers require secure configuration UI." },
     { "id": "AI-003", "phase": 6, "area": "AI", "nameAr": "قوالب الأوامر", "nameEn": "Prompt template registry", "status": "in_progress", "priority": "medium", "version": "existing", "notes": "Registry/API foundation exists; management UI and versioning remain." },
     { "id": "AI-004", "phase": 6, "area": "AI", "nameAr": "اقتراحات AI قبل وبعد", "nameEn": "AI suggestions with before and after values", "status": "planned", "priority": "high", "version": null, "notes": "Must include explanation, confidence, and affected fields." },
