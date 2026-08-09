@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @using System.Text.Json
+@using AIWordPressManager.Application.AI
 @using AIWordPressManager.Application.Abstractions.AI
 @using AIWordPressManager.Domain.Entities
 @inject IAIOrchestrator Orchestrator
@@ -21,7 +22,7 @@
         <div>
             <span class="workspace-kicker">AI WORKSPACE</span>
             <h1>@(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</h1>
-            <p>@(L.IsArabic ? "ولّد المحتوى، احتفظ بتاريخ الجلسة، قارنه بالمصدر، ثم أرسله إلى قائمة الموافقات قبل التنفيذ على WordPress." : "Generate content, retain session history, compare it with the source, then submit it to the approval queue before WordPress execution.")</p>
+            <p>@(L.IsArabic ? "ولّد اقتراحات منظمة مع مقارنة قبل وبعد، سبب التغيير، درجة الثقة والحقول المتأثرة، ثم أرسلها إلى الموافقات." : "Generate structured suggestions with before/after evidence, rationale, confidence, affected fields, and approval governance.")</p>
         </div>
         <div class="ai-center-hero-actions">
             <a class="btn" href="/approvals">✓ @(L.IsArabic ? "قائمة الموافقات" : "Approval queue")</a>
@@ -56,7 +57,7 @@
         </aside>
 
         <main class="panel ai-composer">
-            <header><div><span class="workspace-kicker">COMPOSER</span><h2>@(L.IsArabic ? "إنشاء طلب" : "Create request")</h2></div><span class="badge @(_working ? "warning" : "success")">@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "جاهز" : "Ready"))</span></header>
+            <header><div><span class="workspace-kicker">COMPOSER</span><h2>@(L.IsArabic ? "إنشاء اقتراح" : "Create suggestion")</h2></div><span class="badge @(_working ? "warning" : "success")">@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "جاهز" : "Ready"))</span></header>
             <div class="ai-options-grid">
                 <label><span>@(L.IsArabic ? "مفتاح القالب" : "Prompt key")</span><input @bind="_promptKey" placeholder="content.rewrite" /></label>
                 <label><span>@(L.IsArabic ? "النموذج الاختياري" : "Optional model")</span><input @bind="_model" placeholder="Default provider model" /></label>
@@ -72,16 +73,16 @@
                     </select>
                 </label>
             </div>
-            <label class="ai-content-input"><span>@(L.IsArabic ? "المحتوى الأصلي أو التعليمات" : "Original content or instructions")</span><textarea @bind="_content" rows="14" placeholder="@(L.IsArabic ? "ألصق المحتوى أو اكتب المهمة المطلوبة..." : "Paste content or describe the task...")"></textarea></label>
+            <label class="ai-content-input"><span>@(L.IsArabic ? "القيمة الأصلية / المحتوى الحالي" : "Original value / current content")</span><textarea @bind="_content" rows="14" placeholder="@(L.IsArabic ? "ألصق القيمة الحالية التي تريد تحسينها..." : "Paste the current value you want the AI to improve...")"></textarea></label>
             <div class="ai-composer-footer">
                 <span>@ContentLength @(L.IsArabic ? "حرف" : "characters")</span>
-                <button class="btn primary" disabled="@(_working || string.IsNullOrWhiteSpace(_content))" @onclick="GenerateAsync">✦ @(_working ? (L.IsArabic ? "جارٍ التوليد..." : "Generating...") : (L.IsArabic ? "توليد" : "Generate"))</button>
+                <button class="btn primary" disabled="@(_working || string.IsNullOrWhiteSpace(_content))" @onclick="GenerateAsync">✦ @(_working ? (L.IsArabic ? "جارٍ إنشاء الاقتراح..." : "Generating suggestion...") : (L.IsArabic ? "إنشاء اقتراح" : "Generate suggestion"))</button>
             </div>
         </main>
 
         <aside class="panel ai-output-panel">
             <header>
-                <div><span class="workspace-kicker">OUTPUT</span><h2>@(L.IsArabic ? "النتيجة" : "Result")</h2></div>
+                <div><span class="workspace-kicker">SUGGESTION</span><h2>@(L.IsArabic ? "القيمة المقترحة" : "Proposed value")</h2></div>
                 @if (!string.IsNullOrWhiteSpace(_output))
                 {
                     <button class="btn compact" @onclick="CopyOutputAsync">@(L.IsArabic ? "نسخ" : "Copy")</button>
@@ -89,20 +90,44 @@
             </header>
             @if (_working)
             {
-                <div class="ai-output-loading"><span></span><span></span><span></span><p>@(L.IsArabic ? "يتولى المزود معالجة الطلب..." : "The provider is processing your request...")</p></div>
+                <div class="ai-output-loading"><span></span><span></span><span></span><p>@(L.IsArabic ? "يتولى المزود إنشاء اقتراح منظم وقابل للمراجعة..." : "The provider is building a structured, reviewable suggestion...")</p></div>
             }
             else if (!string.IsNullOrWhiteSpace(_error))
             {
-                <div class="alert error"><strong>@(L.IsArabic ? "فشل طلب الذكاء الاصطناعي" : "AI request failed")</strong><p>@_error</p></div>
+                <div class="alert error"><strong>@(L.IsArabic ? "فشل إنشاء الاقتراح" : "Suggestion generation failed")</strong><p>@_error</p></div>
             }
-            else if (string.IsNullOrWhiteSpace(_output))
+            else if (_suggestion is null)
             {
-                <div class="empty-state ai-output-empty"><span>✦</span><h3>@(L.IsArabic ? "النتيجة ستظهر هنا" : "Your result will appear here")</h3><p>@(L.IsArabic ? "اختر قالبًا، أدخل المحتوى، ثم اضغط توليد." : "Choose a prompt, enter content, and generate.")</p></div>
+                <div class="empty-state ai-output-empty"><span>✦</span><h3>@(L.IsArabic ? "الاقتراح سيظهر هنا" : "Your suggestion will appear here")</h3><p>@(L.IsArabic ? "اختر قالبًا، أدخل القيمة الأصلية، ثم أنشئ الاقتراح." : "Choose a prompt, enter the original value, and generate a suggestion.")</p></div>
             }
             else
             {
-                <article class="ai-generated-output">@_output</article>
-                <div class="ai-result-meta"><span>@_output.Length @(L.IsArabic ? "حرف" : "characters")</span><span>@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</span></div>
+                <article class="ai-generated-output">@_suggestion.After</article>
+                <div class="ai-result-meta"><span>@_suggestion.After.Length @(L.IsArabic ? "حرف" : "characters")</span><span>@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</span></div>
+
+                <section class="ai-suggestion-evidence">
+                    <div class="ai-suggestion-summary">
+                        <div>
+                            <span class="workspace-kicker">RATIONALE</span>
+                            <h3>@(L.IsArabic ? "سبب الاقتراح" : "Why this change")</h3>
+                            <p>@_suggestion.Explanation</p>
+                        </div>
+                        <div class="ai-confidence-card">
+                            <small>@(L.IsArabic ? "درجة الثقة" : "Confidence")</small>
+                            <strong>@_suggestion.Confidence.ToString("P0")</strong>
+                            <span>@ConfidenceText(_suggestion.Confidence)</span>
+                        </div>
+                    </div>
+                    <div class="ai-affected-fields">
+                        <small>@(L.IsArabic ? "الحقول المتأثرة" : "Affected fields")</small>
+                        <div>
+                            @foreach (var field in _suggestion.AffectedFields)
+                            {
+                                <span class="badge">@field</span>
+                            }
+                        </div>
+                    </div>
+                </section>
 
                 <section class="ai-approval-box">
                     <div class="ai-approval-heading">
@@ -122,8 +147,8 @@
                         <label class="wide"><span>@(L.IsArabic ? "عنوان طلب الموافقة" : "Approval title")</span><input @bind="_approvalTitle" /></label>
                     </div>
                     <div class="ai-compare-grid">
-                        <div><small>@(L.IsArabic ? "قبل" : "Before")</small><pre>@_content</pre></div>
-                        <div><small>@(L.IsArabic ? "بعد" : "After")</small><pre>@_output</pre></div>
+                        <div><small>@(L.IsArabic ? "قبل" : "Before")</small><pre>@_suggestion.Before</pre></div>
+                        <div><small>@(L.IsArabic ? "بعد" : "After")</small><pre>@_suggestion.After</pre></div>
                     </div>
                     <button class="btn primary full" disabled="@_submittingApproval" @onclick="SubmitForApprovalAsync">✓ @(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال إلى قائمة الموافقات" : "Submit to approval queue"))</button>
                     @if (_lastApprovalId.HasValue)
@@ -136,10 +161,10 @@
     </section>
 
     <section class="panel ai-session-history">
-        <header><div><span class="workspace-kicker">SESSION HISTORY</span><h2>@(L.IsArabic ? "نتائج الجلسة" : "Session results")</h2></div><button class="btn compact" disabled="@(_history.Count == 0)" @onclick="ClearHistory">@(L.IsArabic ? "مسح السجل" : "Clear history")</button></header>
+        <header><div><span class="workspace-kicker">SESSION HISTORY</span><h2>@(L.IsArabic ? "اقتراحات الجلسة" : "Session suggestions")</h2></div><button class="btn compact" disabled="@(_history.Count == 0)" @onclick="ClearHistory">@(L.IsArabic ? "مسح السجل" : "Clear history")</button></header>
         @if (_history.Count == 0)
         {
-            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد نتائج في هذه الجلسة بعد." : "No results have been generated in this session yet.")</p></div>
+            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد اقتراحات في هذه الجلسة بعد." : "No suggestions have been generated in this session yet.")</p></div>
         }
         else
         {
@@ -147,8 +172,8 @@
                 @foreach (var item in _history)
                 {
                     <article>
-                        <div><strong>@item.Title</strong><small>@item.PromptKey · @item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") · @item.Elapsed.TotalSeconds.ToString("0.0")s</small></div>
-                        <p>@Preview(item.Output)</p>
+                        <div><strong>@item.Title</strong><small>@item.PromptKey · @item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") · @item.Elapsed.TotalSeconds.ToString("0.0")s · @item.Suggestion.Confidence.ToString("P0")</small></div>
+                        <p>@Preview(item.Suggestion.After)</p>
                         <div class="ai-history-actions"><button class="btn compact" @onclick="() => RestoreHistory(item)">@(L.IsArabic ? "استعادة" : "Restore")</button><button class="btn compact" @onclick="() => CopyHistoryAsync(item)">@(L.IsArabic ? "نسخ" : "Copy")</button></div>
                     </article>
                 }
@@ -165,6 +190,7 @@
     private string _selectedSiteId = string.Empty, _approvalTitle = string.Empty, _operationType = "AI.ContentUpdate", _approvalActor = string.Empty;
     private ApprovalRiskLevel _riskLevel = ApprovalRiskLevel.High;
     private ApprovalStatus? _lastApprovalStatus;
+    private AISuggestion? _suggestion;
     private double _temperature = .2;
     private int _maxTokens = 1500, _usageCount;
     private bool _working, _submittingApproval;
@@ -204,18 +230,19 @@
 
     private async Task GenerateAsync()
     {
-        _working = true; _error = string.Empty; _output = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null; var started = DateTime.UtcNow;
+        _working = true; _error = string.Empty; _output = string.Empty; _suggestion = null; _lastApprovalId = null; _lastApprovalStatus = null; var started = DateTime.UtcNow;
         try
         {
-            string? instruction = null;
+            string? baseInstruction = null;
             if (!string.IsNullOrWhiteSpace(_promptKey))
             {
                 if (!PromptRegistry.TryGet(_promptKey, L.Culture, out var resolvedPrompt))
                     throw new InvalidOperationException(L.IsArabic ? "قالب الأمر غير موجود أو تم تعطيله." : "Prompt template was not found or is disabled.");
-                instruction = resolvedPrompt;
+                baseInstruction = resolvedPrompt;
             }
 
-            var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
+            var instruction = AISuggestionContract.BuildSystemPrompt(baseInstruction, L.Culture);
+            var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? "ai.suggestion" : $"ai.suggestion:{_promptKey}"));
             _lastElapsed = DateTime.UtcNow - started;
             if (!result.IsSuccess)
             {
@@ -223,12 +250,16 @@
                 Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed");
                 return;
             }
-            _output = result.Content ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(_output)) _output = JsonSerializer.Serialize(result);
+
+            if (!AISuggestionContract.TryParse(_content, result.Content ?? string.Empty, out var suggestion, out var parseError) || suggestion is null)
+                throw new InvalidOperationException((L.IsArabic ? "أعاد مزود الذكاء الاصطناعي اقتراحًا غير صالح للمراجعة: " : "AI provider returned an unreviewable suggestion: ") + parseError);
+
+            _suggestion = suggestion;
+            _output = suggestion.After;
             if (string.IsNullOrWhiteSpace(_approvalTitle)) _approvalTitle = string.IsNullOrWhiteSpace(_promptKey) ? (L.IsArabic ? "اقتراح محتوى بالذكاء الاصطناعي" : "AI content proposal") : _promptKey;
-            _history.Insert(0, new SessionResult(Guid.NewGuid(), _approvalTitle, string.IsNullOrWhiteSpace(_promptKey) ? "custom" : _promptKey, _content, _output, DateTime.UtcNow, _lastElapsed ?? TimeSpan.Zero, _selectedSiteId));
+            _history.Insert(0, new SessionResult(Guid.NewGuid(), _approvalTitle, string.IsNullOrWhiteSpace(_promptKey) ? "custom" : _promptKey, suggestion, DateTime.UtcNow, _lastElapsed ?? TimeSpan.Zero, _selectedSiteId));
             if (_history.Count > 10) _history.RemoveAt(_history.Count - 1);
-            Notifications.Success(L.IsArabic ? "اكتمل توليد المحتوى." : "AI content generated.");
+            Notifications.Success(L.IsArabic ? "اكتمل إنشاء الاقتراح المنظم." : "Structured AI suggestion generated.");
             await LoadMetadataAsync();
         }
         catch (Exception ex) { _error = L.TranslateMessage(ex.Message); Notifications.Error(_error, L.IsArabic ? "فشل الذكاء الاصطناعي" : "AI generation failed", ex.ToString()); }
@@ -237,7 +268,7 @@
 
     private Task SubmitForApprovalAsync()
     {
-        if (string.IsNullOrWhiteSpace(_output)) return Task.CompletedTask;
+        if (_suggestion is null) return Task.CompletedTask;
         try
         {
             _submittingApproval = true;
@@ -250,8 +281,8 @@
                     site?.Name,
                     string.IsNullOrWhiteSpace(_operationType) ? "AI.ContentUpdate" : _operationType.Trim(),
                     string.IsNullOrWhiteSpace(_approvalTitle) ? "AI content proposal" : _approvalTitle.Trim(),
-                    new { Content = _content, PromptKey = _promptKey, Model = _model },
-                    new { Content = _output, PromptKey = _promptKey, Model = _model },
+                    new { Content = _suggestion.Before, PromptKey = _promptKey, Model = _model, AffectedFields = _suggestion.AffectedFields },
+                    new { Content = _suggestion.After, _suggestion.Explanation, _suggestion.Confidence, AffectedFields = _suggestion.AffectedFields, PromptKey = _promptKey, Model = _model },
                     _approvalActor,
                     _riskLevel,
                     Guid.NewGuid().ToString("N"),
@@ -259,7 +290,7 @@
                 _approvalActor);
             _lastApprovalId = item.Id;
             _lastApprovalStatus = item.Status;
-            Notifications.Success(L.IsArabic ? "تم إرسال الاقراح إلى قائمة الموافقات." : "Proposal submitted to the approval queue.");
+            Notifications.Success(L.IsArabic ? "تم إرسال الاقتراح المنظم إلى قائمة الموافقات." : "Structured proposal submitted to the approval queue.");
         }
         catch (Exception ex) { Notifications.Error(L.TranslateMessage(ex.Message), L.IsArabic ? "فشل إرسال الموافقة" : "Approval submission failed", ex.ToString()); }
         finally { _submittingApproval = false; }
@@ -274,15 +305,18 @@
 
     private void RestoreHistory(SessionResult item)
     {
-        _content = item.Input; _output = item.Output; _promptKey = item.PromptKey == "custom" ? string.Empty : item.PromptKey; _approvalTitle = item.Title; _selectedSiteId = item.SiteId; _lastElapsed = item.Elapsed; _error = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null;
+        _suggestion = item.Suggestion; _content = item.Suggestion.Before; _output = item.Suggestion.After; _promptKey = item.PromptKey == "custom" ? string.Empty : item.PromptKey; _approvalTitle = item.Title; _selectedSiteId = item.SiteId; _lastElapsed = item.Elapsed; _error = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null;
     }
 
-    private async Task CopyHistoryAsync(SessionResult item) { await JS.InvokeVoidAsync("navigator.clipboard.writeText", item.Output); Notifications.Success(L.IsArabic ? "تم نسخ النتيجة." : "Result copied."); }
-    private async Task CopyOutputAsync() { await JS.InvokeVoidAsync("navigator.clipboard.writeText", _output); Notifications.Success(L.IsArabic ? "تم نسخ النتيجة." : "Result copied."); }
+    private async Task CopyHistoryAsync(SessionResult item) { await JS.InvokeVoidAsync("navigator.clipboard.writeText", item.Suggestion.After); Notifications.Success(L.IsArabic ? "تم نسخ الاقتراح." : "Suggestion copied."); }
+    private async Task CopyOutputAsync() { await JS.InvokeVoidAsync("navigator.clipboard.writeText", _output); Notifications.Success(L.IsArabic ? "تم نسخ الاقتراح." : "Suggestion copied."); }
     private void ClearHistory() => _history.Clear();
-    private void Clear() { _content = _output = _error = _promptKey = string.Empty; _lastElapsed = null; _lastApprovalId = null; _lastApprovalStatus = null; }
+    private void Clear() { _content = _output = _error = _promptKey = string.Empty; _suggestion = null; _lastElapsed = null; _lastApprovalId = null; _lastApprovalStatus = null; }
     private Guid? SelectedSiteGuid() => Guid.TryParse(_selectedSiteId, out var id) ? id : null;
     private string RiskText(ApprovalRiskLevel risk) => L.IsArabic ? risk switch { ApprovalRiskLevel.Low => "منخفض", ApprovalRiskLevel.Medium => "متوسط", ApprovalRiskLevel.High => "مرتفع", ApprovalRiskLevel.Critical => "حرج", _ => risk.ToString() } : risk.ToString();
+    private string ConfidenceText(double confidence) => L.IsArabic
+        ? confidence >= .85 ? "مرتفعة" : confidence >= .65 ? "متوسطة" : "منخفضة"
+        : confidence >= .85 ? "High" : confidence >= .65 ? "Medium" : "Low";
     private void Changed() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= Changed;
 
@@ -295,5 +329,5 @@
     }
 
     private sealed record PromptOption(string Key, string Title);
-    private sealed record SessionResult(Guid Id, string Title, string PromptKey, string Input, string Output, DateTime CreatedAt, TimeSpan Elapsed, string SiteId);
+    private sealed record SessionResult(Guid Id, string Title, string PromptKey, AISuggestion Suggestion, DateTime CreatedAt, TimeSpan Elapsed, string SiteId);
 }
