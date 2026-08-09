@@ -17,20 +17,25 @@
 else
 {
     <div class="synchronization-workspace">
-        <AppToolbar Eyebrow="@(L.IsArabic ? "المزامنة والعمل دون اتصال" : "SYNC & OFFLINE")"
+        <AppToolbar Eyebrow="@(L.IsArabic ? "المزامنة وحل التعارضات" : "SYNC & CONFLICTS")"
                     Title="@(L.IsArabic ? "مركز مزامنة WordPress" : "WordPress Synchronization Workspace")"
-                    Subtitle="@(L.IsArabic ? "نزّل أحدث المقالات والصفحات والوسائط والتصنيفات إلى قاعدة SQLite المحلية، وراجع سجل كل محاولة مزامنة." : "Download the latest posts, pages, media, and taxonomies into the local SQLite cache and review every synchronization attempt.")">
+                    Subtitle="@(L.IsArabic ? "راجع الفرق بين الكاش المحلي وWordPress قبل استبدال النسخة المحلية، ثم نفّذ المزامنة بأمان." : "Review differences between the local cache and live WordPress before replacing the local mirror, then synchronize safely.")">
             <Actions>
                 @if (_selectedSiteId != Guid.Empty)
                 {
                     <AppButton Href="@($"/sites/{_selectedSiteId}/explorer")"
                                Text="@(L.IsArabic ? "فتح المحتوى المحلي" : "Open local content")" />
+                    <AppButton Icon="◈"
+                               Text="@(L.IsArabic ? "مراجعة التغييرات" : "Review remote changes")"
+                               Busy="@_reviewingConflicts"
+                               Disabled="@(_working || _reviewingConflicts)"
+                               OnClick="ReviewConflictsAsync" />
                 }
                 <AppButton Icon="↻"
                            Variant="primary"
                            Text="@(L.IsArabic ? "بدء المزامنة" : "Start synchronization")"
                            Busy="@_working"
-                           Disabled="@(_working || _selectedSiteId == Guid.Empty)"
+                           Disabled="@(_working || _reviewingConflicts || _selectedSiteId == Guid.Empty)"
                            OnClick="RunSynchronizationAsync" />
             </Actions>
         </AppToolbar>
@@ -52,7 +57,7 @@ else
                     </label>
                     <AppButton Icon="↻"
                                Text="@(L.IsArabic ? "تحديث الحالة" : "Refresh status")"
-                               Disabled="@(_working || _selectedSiteId == Guid.Empty)"
+                               Disabled="@(_working || _reviewingConflicts || _selectedSiteId == Guid.Empty)"
                                OnClick="RefreshStatusAsync" />
                 </div>
             </ChildContent>
@@ -96,17 +101,102 @@ else
                 <AppStatCard Icon="▣" Label="@(L.IsArabic ? "الوسائط" : "Media")" Value="@_snapshot.Totals.Media.ToString()" />
                 <AppStatCard Icon="#" Label="@(L.IsArabic ? "التصنيفات" : "Categories")" Value="@_snapshot.Totals.Categories.ToString()" />
                 <AppStatCard Icon="⌁" Label="@(L.IsArabic ? "الوسوم" : "Tags")" Value="@_snapshot.Totals.Tags.ToString()" />
-                <AppStatCard Icon="◷"
-                             Label="@(L.IsArabic ? "آخر مزامنة" : "Last synchronization")"
-                             Value="@FormatDate(_snapshot.LastSynchronizedAtUtc)"
-                             Tone="info" />
+                <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر مزامنة" : "Last synchronization")" Value="@FormatDate(_snapshot.LastSynchronizedAtUtc)" Tone="info" />
             </section>
+
+            @if (_reviewingConflicts)
+            {
+                <AppLoading Title="@(L.IsArabic ? "جارٍ مقارنة النسختين" : "Comparing local and remote versions")"
+                            Message="@(L.IsArabic ? "يتم تحميل المقالات والصفحات الحية بدون تغيير الكاش المحلي." : "Loading live posts and pages without changing the local cache.")" />
+            }
+            else if (_conflictReview is not null)
+            {
+                <AppSection Eyebrow="@(L.IsArabic ? "مراجعة قبل المزامنة" : "PRE-SYNC REVIEW")"
+                            Title="@(L.IsArabic ? "تعارضات الكاش مع WordPress" : "Local cache vs WordPress")"
+                            Subtitle="@(L.IsArabic ? "الكاش المحلي نسخة للقراءة وليس مسودة نشر. التأجيل يحافظ على الكاش فقط، ولا يرسل محتوى قديمًا إلى WordPress." : "The local cache is a read mirror, not an unpublished draft. Deferring preserves the cache only; it never posts stale content back to WordPress.")">
+                    <Actions>
+                        @if (_conflictReview.HasBaseline && (_conflictReview.HasConflicts || _conflictReview.RemoteAdditions > 0))
+                        {
+                            <AppButton Variant="primary" Icon="✓"
+                                       Text="@(L.IsArabic ? "اعتماد WordPress ومزامنة كاملة" : "Accept WordPress & force full sync")"
+                                       Disabled="@_working"
+                                       OnClick="RequestAcceptRemoteAsync" />
+                        }
+                        <AppButton Icon="↻" Text="@(L.IsArabic ? "إعادة المقارنة" : "Review again")" Disabled="@_working" OnClick="ReviewConflictsAsync" />
+                    </Actions>
+                    <ChildContent>
+                        @if (!_conflictReview.HasBaseline)
+                        {
+                            <AppEmptyState Icon="◎"
+                                           Title="@(L.IsArabic ? "لا توجد نسخة محلية سابقة" : "No local baseline yet")"
+                                           Description="@(L.IsArabic ? "هذه أول مزامنة للمحتوى. لا يوجد تعارض يحتاج دمجًا؛ ابدأ المزامنة لإنشاء الكاش." : "This is the first content synchronization. There is no local version to merge; start synchronization to create the cache.")" />
+                        }
+                        else
+                        {
+                            <div class="app-stat-grid" style="margin-bottom:16px">
+                                <AppStatCard Icon="↗" Label="@(L.IsArabic ? "تحديثات بعيدة" : "Remote updates")" Value="@_conflictReview.RemoteUpdates.ToString()" Tone="warning" />
+                                <AppStatCard Icon="⌫" Label="@(L.IsArabic ? "محذوفة بعيدًا" : "Remote deletions")" Value="@_conflictReview.RemoteDeletions.ToString()" Tone="warning" />
+                                <AppStatCard Icon="+" Label="@(L.IsArabic ? "عناصر جديدة" : "Remote additions")" Value="@_conflictReview.RemoteAdditions.ToString()" Tone="info" />
+                                <AppStatCard Icon="◷" Label="@(L.IsArabic ? "نسخة الكاش" : "Cache baseline")" Value="@FormatDate(_conflictReview.LocalSynchronizedAtUtc)" Tone="info" />
+                            </div>
+
+                            @if (!_conflictReview.HasConflicts)
+                            {
+                                <AppEmptyState Icon="✓"
+                                               Title="@(L.IsArabic ? "لا توجد تعارضات محتوى" : "No content conflicts detected")"
+                                               Description="@(_conflictReview.RemoteAdditions > 0 ? (L.IsArabic ? "توجد عناصر جديدة فقط، ويمكن جلبها بالمزامنة." : "Only new remote items were found; synchronization can safely import them.") : (L.IsArabic ? "نسخة المقالات والصفحات المحلية مطابقة للنسخة الحية." : "The local posts/pages mirror matches live WordPress."))" />
+                            }
+                            else
+                            {
+                                <div style="display:grid;gap:12px">
+                                    @foreach (var conflict in _conflictReview.Conflicts)
+                                    {
+                                        var deferred = _deferredConflicts.Contains(ConflictKey(conflict));
+                                        <article class="panel" style="padding:16px;border-color:@(deferred ? "var(--warning,#f59e0b)" : "var(--border-color,#2b3647)")">
+                                            <header style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">
+                                                <div>
+                                                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                                                        <AppBadge Tone="@(conflict.Kind == SyncConflictKind.RemoteDeleted ? "danger" : "warning")" Text="@ConflictKindText(conflict.Kind)" />
+                                                        @if (deferred) { <AppBadge Tone="info" Text="@(L.IsArabic ? "مؤجل" : "Deferred")" /> }
+                                                        <small>@conflict.ContentType #@conflict.WordPressId</small>
+                                                    </div>
+                                                    <h3 style="margin:8px 0 0">@PlainText(conflict.Remote?.Title ?? conflict.Local.Title)</h3>
+                                                </div>
+                                                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                                    @if (conflict.Kind == SyncConflictKind.RemoteUpdated)
+                                                    {
+                                                        <AppButton Href="@EditorUrl(conflict)" Variant="primary" Size="small" Text="@(L.IsArabic ? "فتح المحرر للدمج" : "Open editor to merge")" />
+                                                    }
+                                                    <button type="button" class="btn compact" @onclick="() => ToggleDeferred(conflict)">@(deferred ? (L.IsArabic ? "إلغاء التأجيل" : "Undo defer") : (L.IsArabic ? "تأجيل" : "Defer"))</button>
+                                                </div>
+                                            </header>
+                                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+                                                @VersionPane(L.IsArabic ? "النسخة المحلية" : "LOCAL CACHE", conflict.Local, false)
+                                                @if (conflict.Remote is not null)
+                                                {
+                                                    @VersionPane(L.IsArabic ? "نسخة WordPress" : "LIVE WORDPRESS", conflict.Remote, true)
+                                                }
+                                                else
+                                                {
+                                                    <div style="padding:14px;border:1px dashed var(--border-color,#2b3647);border-radius:12px">
+                                                        <strong>@(L.IsArabic ? "نسخة WordPress" : "LIVE WORDPRESS")</strong>
+                                                        <p style="margin:10px 0 0;opacity:.72">@(L.IsArabic ? "العنصر لم يعد موجودًا على WordPress. اعتماد النسخة البعيدة سيعلّم النسخة المحلية كغير متاحة." : "This item no longer exists in WordPress. Accepting the remote state will mark the local mirror unavailable.")</p>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </article>
+                                    }
+                                </div>
+                            }
+                        }
+                    </ChildContent>
+                </AppSection>
+            }
 
             <AppSection Eyebrow="@(L.IsArabic ? "حالة التخزين المحلي" : "LOCAL CACHE")"
                         Title="@SelectedSiteName"
                         Subtitle="@(L.IsArabic ? "البيانات التالية محفوظة محليًا ويمكن تصفحها عند تعذر الاتصال بـWordPress." : "This data is stored locally and remains available when WordPress is unreachable.")"
-                        Class="panel"
-                        BodyClass="">
+                        Class="panel" BodyClass="">
                 <ChildContent>
                     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                         <AppBadge Tone="@CacheTone" Text="@CacheStatusText" />
@@ -122,14 +212,11 @@ else
             <AppSection Eyebrow="@(L.IsArabic ? "السجل الدائم" : "PERSISTENT HISTORY")"
                         Title="@(L.IsArabic ? "سجل المزامنة الأخير" : "Recent synchronization runs")"
                         Subtitle="@(L.IsArabic ? "كل محاولة مرتبطة بمعرف ملف الموقع نفسه، بما في ذلك المحاولات الناجحة والمتخطاة والفاشلة." : "Every attempt is tied to this exact site profile, including completed, skipped, and failed runs.")"
-                        Class="panel"
-                        BodyClass="">
+                        Class="panel" BodyClass="">
                 <ChildContent>
                     @if (_history.Count == 0)
                     {
-                        <AppEmptyState Icon="◷"
-                                       Title="@(L.IsArabic ? "لا يوجد سجل مزامنة بعد" : "No synchronization history yet")"
-                                       Description="@(L.IsArabic ? "ابدأ أول مزامنة وسيظهر سجلها هنا." : "Start the first synchronization and its result will appear here.")" />
+                        <AppEmptyState Icon="◷" Title="@(L.IsArabic ? "لا يوجد سجل مزامنة بعد" : "No synchronization history yet")" Description="@(L.IsArabic ? "ابدأ أول مزامنة وسيظهر سجلها هنا." : "Start the first synchronization and its result will appear here.")" />
                     }
                     else
                     {
@@ -137,21 +224,9 @@ else
                             @foreach (var run in _history)
                             {
                                 <div style="display:grid;grid-template-columns:minmax(120px,auto) minmax(160px,auto) 1fr;gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--border-color,#2b3647);border-radius:12px">
-                                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                                        <AppBadge Tone="@HistoryTone(run.Status)" Text="@HistoryStatus(run.Status)" />
-                                        <small>@FormatDate(run.StartedAtUtc)</small>
-                                    </div>
-                                    <div>
-                                        <small style="display:block;opacity:.7">@(L.IsArabic ? "السجلات" : "Records")</small>
-                                        <strong>@run.DownloadedRecords</strong>
-                                    </div>
-                                    <div>
-                                        <div>@L.TranslateMessage(run.Message)</div>
-                                        @if (run.CompletedAtUtc.HasValue)
-                                        {
-                                            <small style="display:block;margin-top:4px;opacity:.7">@(L.IsArabic ? "انتهت" : "Finished") @FormatDate(run.CompletedAtUtc)</small>
-                                        }
-                                    </div>
+                                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><AppBadge Tone="@HistoryTone(run.Status)" Text="@HistoryStatus(run.Status)" /><small>@FormatDate(run.StartedAtUtc)</small></div>
+                                    <div><small style="display:block;opacity:.7">@(L.IsArabic ? "السجلات" : "Records")</small><strong>@run.DownloadedRecords</strong></div>
+                                    <div><div>@L.TranslateMessage(run.Message)</div>@if (run.CompletedAtUtc.HasValue){<small style="display:block;margin-top:4px;opacity:.7">@(L.IsArabic ? "انتهت" : "Finished") @FormatDate(run.CompletedAtUtc)</small>}</div>
                                 </div>
                             }
                         </div>
@@ -160,17 +235,30 @@ else
             </AppSection>
         }
     </div>
+
+    <AppConfirmDialog @bind-Open="_acceptRemoteConfirmOpen"
+                      Title="@(L.IsArabic ? "اعتماد نسخة WordPress؟" : "Accept the WordPress version?")"
+                      Message="@(L.IsArabic ? "سيتم استبدال الكاش المحلي بقراءة كاملة جديدة من WordPress، بما في ذلك تطبيق الحذف البعيد على الكاش." : "The local cache will be replaced by a fresh full WordPress snapshot, including remote deletions.")"
+                      Details="@(L.IsArabic ? "لن يتم إرسال أي محتوى محلي قديم إلى WordPress. إذا أردت دمج تغييرات يدويًا، افتح المحرر أولًا ثم أعد المراجعة." : "No stale local content will be posted to WordPress. If you need a manual merge, open the editor first and review again afterward.")"
+                      ConfirmText="@(L.IsArabic ? "اعتماد ومزامنة كاملة" : "Accept & force full sync")"
+                      CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                      Busy="@_working"
+                      OnConfirm="AcceptRemoteAsync" />
 }
 
 @code {
     private IReadOnlyList<Site> _sites = [];
     private IReadOnlyList<SiteSyncRunView> _history = [];
+    private readonly HashSet<string> _deferredConflicts = new(StringComparer.Ordinal);
     private Guid _selectedSiteId;
     private ContentExplorerView? _snapshot;
     private WordPressSyncViewResult? _lastResult;
+    private SyncConflictReview? _conflictReview;
     private bool _loadingSites = true;
     private bool _loadingSnapshot;
     private bool _working;
+    private bool _reviewingConflicts;
+    private bool _acceptRemoteConfirmOpen;
     private bool _isError;
     private bool _initialized;
     private string? _message;
@@ -196,77 +284,119 @@ else
             if (WorkspaceSiteId.HasValue && _sites.Any(x => x.Id == WorkspaceSiteId.Value))
                 _selectedSiteId = WorkspaceSiteId.Value;
             _initialized = true;
-            if (_selectedSiteId != Guid.Empty)
-                await LoadSnapshotAsync();
+            if (_selectedSiteId != Guid.Empty) await LoadSnapshotAsync();
         }
-        finally
-        {
-            _loadingSites = false;
-        }
+        finally { _loadingSites = false; }
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!_initialized)
-            return;
-
-        var nextSiteId = WorkspaceSiteId.HasValue && _sites.Any(x => x.Id == WorkspaceSiteId.Value)
-            ? WorkspaceSiteId.Value
-            : Guid.Empty;
-
-        if (_selectedSiteId == nextSiteId)
-            return;
-
+        if (!_initialized) return;
+        var nextSiteId = WorkspaceSiteId.HasValue && _sites.Any(x => x.Id == WorkspaceSiteId.Value) ? WorkspaceSiteId.Value : Guid.Empty;
+        if (_selectedSiteId == nextSiteId) return;
         _selectedSiteId = nextSiteId;
         ResetResult();
-        if (_selectedSiteId != Guid.Empty)
-            await LoadSnapshotAsync();
+        if (_selectedSiteId != Guid.Empty) await LoadSnapshotAsync();
     }
 
     private async Task SiteChangedAsync()
     {
         ResetResult();
-        if (_selectedSiteId != Guid.Empty)
-            await LoadSnapshotAsync();
+        if (_selectedSiteId != Guid.Empty) await LoadSnapshotAsync();
     }
 
     private async Task RefreshStatusAsync(MouseEventArgs _)
     {
-        if (_selectedSiteId != Guid.Empty)
-            await LoadSnapshotAsync();
+        if (_selectedSiteId != Guid.Empty) await LoadSnapshotAsync();
+    }
+
+    private async Task ReviewConflictsAsync(MouseEventArgs _)
+    {
+        if (_selectedSiteId == Guid.Empty) return;
+        try
+        {
+            _reviewingConflicts = true;
+            _isError = false;
+            _message = null;
+            _conflictReview = await SyncService.ReviewConflictsAsync(_selectedSiteId);
+            _deferredConflicts.RemoveWhere(key => !_conflictReview.Conflicts.Any(x => ConflictKey(x) == key));
+            _message = _conflictReview.HasConflicts
+                ? (L.IsArabic ? $"تم العثور على {_conflictReview.Conflicts.Count} تعارض يحتاج مراجعة قبل استبدال الكاش." : $"Found {_conflictReview.Conflicts.Count} conflict(s) to review before replacing the local cache.")
+                : (L.IsArabic ? "اكتملت المراجعة ولا توجد تعارضات محتوى." : "Review complete. No content conflicts were detected.");
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
+        finally { _reviewingConflicts = false; }
     }
 
     private async Task RunSynchronizationAsync(MouseEventArgs _)
     {
-        if (_selectedSiteId == Guid.Empty)
-            return;
-
+        if (_selectedSiteId == Guid.Empty) return;
         try
         {
             _working = true;
             _message = null;
             _isError = false;
+
+            if (_snapshot?.LastSynchronizedAtUtc.HasValue == true)
+            {
+                _conflictReview = await SyncService.ReviewConflictsAsync(_selectedSiteId);
+                if (_conflictReview.HasConflicts)
+                {
+                    _isError = true;
+                    _message = L.IsArabic
+                        ? "تم إيقاف المزامنة قبل تغيير الكاش لأن WordPress يختلف عن النسخة المحلية. راجع التعارضات ثم اختر الدمج اليدوي أو اعتماد WordPress."
+                        : "Synchronization stopped before changing the cache because live WordPress differs from the local mirror. Review conflicts, then merge manually or accept WordPress.";
+                    return;
+                }
+            }
+
             _lastResult = await SyncService.SynchronizeAsync(_selectedSiteId);
             _message = L.TranslateMessage(_lastResult.Message);
+            _conflictReview = null;
+            _deferredConflicts.Clear();
             await LoadSnapshotAsync();
         }
         catch (Exception ex)
         {
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
-            try
-            {
-                _history = await SyncService.GetHistoryAsync(_selectedSiteId, 15);
-            }
-            catch
-            {
-                // Preserve the synchronization error shown to the user if history refresh also fails.
-            }
+            try { _history = await SyncService.GetHistoryAsync(_selectedSiteId, 15); }
+            catch { }
         }
-        finally
+        finally { _working = false; }
+    }
+
+    private Task RequestAcceptRemoteAsync(MouseEventArgs _)
+    {
+        if (_selectedSiteId != Guid.Empty) _acceptRemoteConfirmOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task AcceptRemoteAsync()
+    {
+        if (_selectedSiteId == Guid.Empty) { _acceptRemoteConfirmOpen = false; return; }
+        try
         {
-            _working = false;
+            _working = true;
+            _isError = false;
+            _message = null;
+            _lastResult = await SyncService.SynchronizeAsync(_selectedSiteId, forceFullRefresh: true);
+            _message = L.TranslateMessage(_lastResult.Message);
+            _acceptRemoteConfirmOpen = false;
+            _conflictReview = null;
+            _deferredConflicts.Clear();
+            await LoadSnapshotAsync();
         }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
+        finally { _working = false; }
     }
 
     private async Task LoadSnapshotAsync()
@@ -284,10 +414,13 @@ else
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
         }
-        finally
-        {
-            _loadingSnapshot = false;
-        }
+        finally { _loadingSnapshot = false; }
+    }
+
+    private void ToggleDeferred(SyncConflictItem conflict)
+    {
+        var key = ConflictKey(conflict);
+        if (!_deferredConflicts.Add(key)) _deferredConflicts.Remove(key);
     }
 
     private void ResetResult()
@@ -295,8 +428,36 @@ else
         _snapshot = null;
         _history = [];
         _lastResult = null;
+        _conflictReview = null;
+        _deferredConflicts.Clear();
         _message = null;
         _isError = false;
+    }
+
+    private string EditorUrl(SyncConflictItem conflict) => $"/sites/{_selectedSiteId}/content/{conflict.ContentType}/{conflict.WordPressId}/edit";
+    private static string ConflictKey(SyncConflictItem conflict) => $"{conflict.ContentType}:{conflict.WordPressId}:{conflict.Kind}";
+    private string ConflictKindText(string kind) => kind == SyncConflictKind.RemoteDeleted
+        ? (L.IsArabic ? "محذوف على WordPress" : "Deleted in WordPress")
+        : (L.IsArabic ? "معدّل على WordPress" : "Updated in WordPress");
+
+    private RenderFragment VersionPane(string label, SyncConflictVersion version, bool remote) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "style", "padding:14px;border:1px solid var(--border-color,#2b3647);border-radius:12px");
+        builder.OpenElement(2, "strong"); builder.AddContent(3, label); builder.CloseElement();
+        builder.OpenElement(4, "div"); builder.AddAttribute(5, "style", "display:grid;gap:6px;margin-top:10px;font-size:.9rem");
+        builder.OpenElement(6, "span"); builder.AddContent(7, $"{(L.IsArabic ? "الحالة" : "Status")}: {version.Status}"); builder.CloseElement();
+        builder.OpenElement(8, "span"); builder.AddContent(9, $"Slug: {version.Slug}"); builder.CloseElement();
+        builder.OpenElement(10, "span"); builder.AddContent(11, $"{(L.IsArabic ? "آخر تعديل" : "Modified")}: {FormatDate(version.ModifiedAtUtc)}"); builder.CloseElement();
+        builder.OpenElement(12, "p"); builder.AddAttribute(13, "style", "margin:4px 0 0;opacity:.74"); builder.AddContent(14, Snippet(version)); builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private static string Snippet(SyncConflictVersion version)
+    {
+        var plain = PlainText(string.IsNullOrWhiteSpace(version.RenderedExcerpt) ? version.RenderedContent : version.RenderedExcerpt);
+        return plain.Length <= 220 ? plain : plain[..217] + "...";
     }
 
     private string HistoryStatus(string status) => status switch
@@ -317,10 +478,9 @@ else
         _ => "neutral"
     };
 
-    private string FormatDate(DateTime? value) => value.HasValue
-        ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm")
-        : "—";
-
+    private string FormatDate(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") : "—";
+    private string FormatDate(DateTimeOffset? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm") : "—";
+    private static string PlainText(string value) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<[^>]+>", string.Empty)).Trim();
     private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= LanguageChanged;
 }

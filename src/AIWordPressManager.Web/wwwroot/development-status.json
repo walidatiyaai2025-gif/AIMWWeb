@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-09T11:35:00Z",
+  "updatedAtUtc": "2026-08-09T11:58:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -68,7 +68,7 @@
     { "id": "CNT-009", "phase": 4, "area": "Editing", "nameAr": "تحرير المقالات والصفحات مباشرة", "nameEn": "Direct post and page editing", "status": "completed", "priority": "high", "version": "155.117.0", "notes": "Direct editor validation and optimistic concurrency protect live WordPress content from silent overwrite; Build #1123 and .NET Build Verification #892 passed." },
     { "id": "CNT-010", "phase": 4, "area": "Bulk", "nameAr": "التعديل الجماعي والحذف وتغيير الحالة", "nameEn": "Bulk edit, trash, and status operations", "status": "completed", "priority": "high", "version": "155.118.0", "notes": "Site and global post/page bulk status/trash workflows now include multi-select UX, per-site grouping, ownership preflight, a 100-item safety limit, destructive confirmation in global explorers, Execution Center jobs, and automated policy verification; Build #1133 and .NET Build Verification #894 passed." },
     { "id": "CNT-011", "phase": 4, "area": "Media", "nameAr": "رفع وحذف وتحسين الوسائط", "nameEn": "Upload, delete, and optimize media", "status": "completed", "priority": "high", "version": "155.119.0", "notes": "Production media workflow now includes server-side upload validation, live metadata/accessibility optimization, reviewable AI alt text, modified_gmt conflict protection, confirmed permanent deletion, tenant-safe media API routes, and local-cache reconciliation without advancing the sync watermark. Binary recompression/resizing/transcoding is intentionally not claimed; Build #1153 and .NET Build Verification #898 passed." },
-    { "id": "CNT-012", "phase": 4, "area": "Sync", "nameAr": "حل تعارضات المزامنة", "nameEn": "Synchronization conflict resolution", "status": "planned", "priority": "high", "version": null, "notes": "Requires version comparison and user resolution workflow." },
+    { "id": "CNT-012", "phase": 4, "area": "Sync", "nameAr": "حل تعارضات المزامنة", "nameEn": "Synchronization conflict resolution", "status": "completed", "priority": "high", "version": "155.120.0", "notes": "Pre-sync local-vs-live review detects remote updates/deletions, reports additions separately, blocks cache replacement until conflicts are reviewed, supports transient defer/manual editor merge, and provides confirmed Accept WordPress via forced full refresh. The SQLite cache remains a read mirror and is never posted back as stale content; Build #1171 and .NET Build Verification #904 passed." },
 
     { "id": "OPS-001", "phase": 5, "area": "Sync", "nameAr": "مساحة المزامنة الفعلية", "nameEn": "Real synchronization workspace", "status": "completed", "priority": "critical", "version": "155.90.0", "notes": "Runs live synchronization and refreshes local cache totals." },
     { "id": "OPS-002", "phase": 5, "area": "Sync", "nameAr": "فحص التغييرات قبل المزامنة الكاملة", "nameEn": "Delta probe before full synchronization", "status": "completed", "priority": "medium", "version": "existing", "notes": "Skips full refresh when no remote changes are detected." },
