@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject NotificationInboxService Inbox
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 @inject AppNotificationService Toasts
 
@@ -12,7 +13,7 @@
         <div>
             <span class="workspace-kicker">NOTIFICATION INBOX</span>
             <h1>@(L.IsArabic ? "صندوق الإشعارات" : "Notification Inbox")</h1>
-            <p>@(L.IsArabic ? "راجع إشعارات التخطيط والتنفيذ والعمليات الفعلية المسجلة داخل النظام." : "Review real planner, execution, and operational notifications recorded by the application.")</p>
+            <p>@(L.IsArabic ? "راجع إشعارات التخطيط والتنفيذ والعمليات الفعلية المسجلة لحسابك." : "Review planner, execution, and operational notifications recorded for your account.")</p>
         </div>
         <div class="notification-inbox-actions">
             <button class="btn" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
@@ -42,7 +43,7 @@
     <section class="panel notification-inbox-list">
         @if (!Filtered.Any())
         {
-            <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد إشعارات مطابقة" : "No matching notifications")</h3><p>@(L.IsArabic ? "ستظهر هنا إشعارات العمليات التي ينشئها النظام." : "Operational notifications created by the system will appear here.")</p></div>
+            <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد إشعارات مطابقة" : "No matching notifications")</h3><p>@(L.IsArabic ? "ستظهر هنا إشعارات العمليات التي تخص حسابك." : "Operational notifications for your account will appear here.")</p></div>
         }
         else
         {
@@ -64,6 +65,7 @@
                         {
                             <button class="btn compact" @onclick="() => MarkRead(item)">✓ @(L.IsArabic ? "مقروء" : "Read")</button>
                         }
+                        <button class="btn compact" @onclick="() => Dismiss(item)">× @(L.IsArabic ? "إخفاء" : "Dismiss")</button>
                     </div>
                 </article>
             }
@@ -83,10 +85,11 @@
     private string LatestText => _items.OrderByDescending(x => x.CreatedAtUtc).Select(x => FormatDate(x.CreatedAtUtc)).FirstOrDefault() ?? "—";
 
     protected override void OnInitialized(){L.Changed += Changed; Reload();}
-    private void Reload(){try{_items=Inbox.Get("System", false, 300).ToList();}catch(Exception ex){Toasts.Error(L.TranslateMessage(ex.Message), L.IsArabic?"فشل تحميل الإشعارات":"Failed to load notifications",ex.ToString());}}
-    private void MarkRead(NotificationItem item){Inbox.MarkRead(item.Id); Reload();}
-    private void MarkAllRead(){foreach(var item in _items.Where(x=>!x.IsRead)) Inbox.MarkRead(item.Id); Reload(); Toasts.Success(L.IsArabic?"تم تعليم كل الإشعارات كمقروءة.":"All notifications marked as read.");}
-    private string? RelatedUrl(NotificationItem item) => item.Title.Contains("planner",StringComparison.OrdinalIgnoreCase) || item.Title.Contains("content",StringComparison.OrdinalIgnoreCase) ? "/content-planner" : item.Title.Contains("execution",StringComparison.OrdinalIgnoreCase) ? "/execution-center" : item.RelatedId.HasValue ? "/content-planner" : null;
+    private void Reload(){try{_items=Inbox.Get(CurrentUser.UserId, false, 300).ToList();}catch(Exception ex){Toasts.Error(L.TranslateMessage(ex.Message), L.IsArabic?"فشل تحميل الإشعارات":"Failed to load notifications",ex.ToString());}}
+    private void MarkRead(NotificationItem item){Inbox.MarkRead(CurrentUser.UserId, item.Id); Reload();}
+    private void MarkAllRead(){Inbox.MarkAllRead(CurrentUser.UserId); Reload(); Toasts.Success(L.IsArabic?"تم تعليم كل الإشعارات كمقروءة.":"All notifications marked as read.");}
+    private void Dismiss(NotificationItem item){Inbox.Dismiss(CurrentUser.UserId, item.Id); Reload();}
+    private string? RelatedUrl(NotificationItem item) => item.ExecutionJobId.HasValue ? "/module/execution" : item.Title.Contains("planner",StringComparison.OrdinalIgnoreCase) || item.Title.Contains("content",StringComparison.OrdinalIgnoreCase) ? "/content-planner" : item.Title.Contains("execution",StringComparison.OrdinalIgnoreCase) ? "/module/execution" : item.RelatedId.HasValue ? "/content-planner" : null;
     private string SeverityClass(NotificationSeverity value)=>value.ToString().ToLowerInvariant();
     private string SeverityIcon(NotificationSeverity value)=>value switch{NotificationSeverity.Success=>"✓",NotificationSeverity.Warning=>"!",NotificationSeverity.Error=>"×",_=>"i"};
     private string SeverityText(NotificationSeverity value)=>L.IsArabic?value switch{NotificationSeverity.Information=>"معلومة",NotificationSeverity.Success=>"نجاح",NotificationSeverity.Warning=>"تحذير",NotificationSeverity.Error=>"خطأ",_=>value.ToString()}:value.ToString();

@@ -9,6 +9,7 @@ public sealed class BulkContentOperationWorker(
     IServiceScopeFactory scopeFactory,
     ExecutionOperationTracker tracker,
     ExecutionCenterService executionCenter,
+    NotificationInboxService notifications,
     ILogger<BulkContentOperationWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,6 +28,7 @@ public sealed class BulkContentOperationWorker(
             {
                 logger.LogError(ex, "Bulk content operation {JobId} failed.", request.JobId);
                 tracker.Fail(request.JobId, ex.Message);
+                NotifyFailureFromExecutionJob(request, ex.Message);
             }
         }
     }
@@ -94,19 +96,21 @@ public sealed class BulkContentOperationWorker(
 
         if (failures.Count == 0)
         {
-            tracker.Complete(request.JobId, total, total, $"Bulk operation completed. {succeeded} item(s) updated.");
+            var message = $"Bulk operation completed. {succeeded} item(s) updated.";
+            tracker.Complete(request.JobId, total, total, message);
+            Notify(ownerUserId.Value, request, "Bulk operation completed", message, NotificationSeverity.Success);
         }
         else if (succeeded > 0)
         {
-            tracker.Complete(
-                request.JobId,
-                total,
-                total,
-                $"Completed with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}");
+            var message = $"Completed with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
+            tracker.Complete(request.JobId, total, total, message);
+            Notify(ownerUserId.Value, request, "Bulk operation completed with warnings", message, NotificationSeverity.Warning);
         }
         else
         {
-            tracker.Fail(request.JobId, $"All items failed. {string.Join(" | ", failures.Take(3))}");
+            var message = $"All items failed. {string.Join(" | ", failures.Take(3))}";
+            tracker.Fail(request.JobId, message);
+            Notify(ownerUserId.Value, request, "Bulk operation failed", message, NotificationSeverity.Error);
         }
     }
 
@@ -218,6 +222,38 @@ public sealed class BulkContentOperationWorker(
                 return true;
 
             await Task.Delay(750, cancellationToken);
+        }
+    }
+
+    private void NotifyFailureFromExecutionJob(BulkContentOperationRequest request, string message)
+    {
+        var job = executionCenter.GetJobs().FirstOrDefault(x => x.Id == request.JobId);
+        if (!job?.OwnerUserId.HasValue ?? true) return;
+        Notify(job!.OwnerUserId!.Value, request, "Bulk operation failed", message, NotificationSeverity.Error, job.SiteId);
+    }
+
+    private void Notify(
+        Guid ownerUserId,
+        BulkContentOperationRequest request,
+        string title,
+        string message,
+        NotificationSeverity severity,
+        Guid? siteId = null)
+    {
+        try
+        {
+            notifications.Create(
+                ownerUserId,
+                title,
+                message,
+                severity,
+                siteId: siteId ?? request.SiteId,
+                executionJobId: request.JobId,
+                source: "BulkContentWorker");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to persist notification for bulk job {JobId}.", request.JobId);
         }
     }
 

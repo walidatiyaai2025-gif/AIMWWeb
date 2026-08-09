@@ -17,6 +17,7 @@ public sealed class WordPressMediaWebService(
     ExecutionCenterService execution,
     ExecutionOperationTracker executionTracker,
     NotificationInboxService notifications,
+    CurrentUserContext currentUser,
     AppDbContext dbContext,
     ILogger<WordPressMediaWebService> logger)
 {
@@ -33,7 +34,8 @@ public sealed class WordPressMediaWebService(
         var validation = MediaUploadPolicy.Validate(file.Name, file.Size, file.ContentType);
         if (!validation.IsValid) return MediaActionResult.Fail(validation.Message);
 
-        var jobId = executionTracker.Start("Upload WordPress media", "Media Upload", siteId.ToString(), 3);
+        var ownerUserId = currentUser.UserId;
+        var jobId = executionTracker.Start(ownerUserId, siteId, "Upload WordPress media", "Media Upload", siteId.ToString(), 3);
         try
         {
             logger.LogInformation("Uploading media {FileName} ({FileSize} bytes) to site {SiteId}", validation.SafeFileName, file.Size, siteId);
@@ -53,6 +55,7 @@ public sealed class WordPressMediaWebService(
             if (!response.IsSuccess || response.Value is null)
             {
                 executionTracker.Fail(jobId, response.ErrorMessage);
+                Notify(ownerUserId, "Media upload failed", response.ErrorMessage, NotificationSeverity.Error, siteId, jobId);
                 logger.LogWarning("Media upload failed for {FileName} on site {SiteId}: {Error}", validation.SafeFileName, siteId, response.ErrorMessage);
                 return MediaActionResult.Fail(response.ErrorMessage);
             }
@@ -63,7 +66,7 @@ public sealed class WordPressMediaWebService(
             var sourceUrl = GetString(root, "source_url");
             var result = MediaActionResult.Ok(mediaId, sourceUrl, "Media uploaded to WordPress successfully.");
 
-            notifications.Create("System", "Media uploaded", validation.SafeFileName, NotificationSeverity.Success, siteId);
+            Notify(ownerUserId, "Media uploaded", validation.SafeFileName, NotificationSeverity.Success, siteId, jobId);
             executionTracker.Complete(jobId, 3, 3, $"Uploaded media #{mediaId}: {validation.SafeFileName}");
             logger.LogInformation("Media upload completed for {FileName} as WordPress media {MediaId}", validation.SafeFileName, mediaId);
             return result;
@@ -77,6 +80,7 @@ public sealed class WordPressMediaWebService(
         catch (Exception ex)
         {
             executionTracker.Fail(jobId, ex.Message);
+            Notify(ownerUserId, "Media upload failed", ex.Message, NotificationSeverity.Error, siteId, jobId);
             logger.LogError(ex, "Unexpected media upload failure for {FileName} on site {SiteId}", validation.SafeFileName, siteId);
             return MediaActionResult.Fail(ex.Message);
         }
@@ -128,7 +132,8 @@ public sealed class WordPressMediaWebService(
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
         if (string.IsNullOrWhiteSpace(request.Title)) return MediaActionResult.Fail("Media title is required.");
 
-        var jobId = executionTracker.Start("Update WordPress media metadata", "Media Metadata", siteId.ToString(), 3);
+        var ownerUserId = currentUser.UserId;
+        var jobId = executionTracker.Start(ownerUserId, siteId, "Update WordPress media metadata", "Media Metadata", siteId.ToString(), 3);
         try
         {
             logger.LogInformation("Updating media metadata for {MediaId} on site {SiteId}", mediaId, siteId);
@@ -140,12 +145,14 @@ public sealed class WordPressMediaWebService(
                 if (!latest.IsSuccess || latest.Details is null)
                 {
                     executionTracker.Fail(jobId, latest.Message);
+                    Notify(ownerUserId, "Media update failed", latest.Message, NotificationSeverity.Error, siteId, jobId);
                     return MediaActionResult.Fail(latest.Message);
                 }
 
                 if (HasRemoteChanged(request.ExpectedModifiedGmt, latest.Details.ModifiedGmt))
                 {
                     executionTracker.Fail(jobId, MetadataConflictMessage);
+                    Notify(ownerUserId, "Media update blocked", MetadataConflictMessage, NotificationSeverity.Warning, siteId, jobId);
                     return MediaActionResult.Fail(MetadataConflictMessage);
                 }
             }
@@ -164,11 +171,12 @@ public sealed class WordPressMediaWebService(
             if (!response.IsSuccess || response.Value is null)
             {
                 executionTracker.Fail(jobId, response.ErrorMessage);
+                Notify(ownerUserId, "Media update failed", response.ErrorMessage, NotificationSeverity.Error, siteId, jobId);
                 return MediaActionResult.Fail(response.ErrorMessage);
             }
 
             using var json = response.Value;
-            notifications.Create("System", "Media updated", $"Media #{mediaId}", NotificationSeverity.Success, siteId);
+            Notify(ownerUserId, "Media updated", $"Media #{mediaId}", NotificationSeverity.Success, siteId, jobId);
             executionTracker.Complete(jobId, 3, 3, $"Updated metadata for media #{mediaId}.");
             return MediaActionResult.Ok(mediaId, GetString(json.RootElement, "source_url"), "Media metadata updated successfully.");
         }
@@ -180,6 +188,7 @@ public sealed class WordPressMediaWebService(
         catch (Exception ex)
         {
             executionTracker.Fail(jobId, ex.Message);
+            Notify(ownerUserId, "Media update failed", ex.Message, NotificationSeverity.Error, siteId, jobId);
             logger.LogError(ex, "Failed to update media metadata for {MediaId} on site {SiteId}", mediaId, siteId);
             return MediaActionResult.Fail(ex.Message);
         }
@@ -225,7 +234,8 @@ public sealed class WordPressMediaWebService(
     {
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
 
-        var jobId = executionTracker.Start("Delete WordPress media", "Media Delete", siteId.ToString(), 2);
+        var ownerUserId = currentUser.UserId;
+        var jobId = executionTracker.Start(ownerUserId, siteId, "Delete WordPress media", "Media Delete", siteId.ToString(), 2);
         try
         {
             logger.LogInformation("Deleting media {MediaId} from site {SiteId}", mediaId, siteId);
@@ -236,11 +246,12 @@ public sealed class WordPressMediaWebService(
             if (!response.IsSuccess)
             {
                 executionTracker.Fail(jobId, response.ErrorMessage);
+                Notify(ownerUserId, "Media deletion failed", response.ErrorMessage, NotificationSeverity.Error, siteId, jobId);
                 return MediaActionResult.Fail(response.ErrorMessage);
             }
 
             var cacheMessage = await ReconcileDeletedMediaCacheAsync(siteId, mediaId, cancellationToken);
-            notifications.Create("System", "Media deleted", $"Media #{mediaId}", NotificationSeverity.Warning, siteId);
+            Notify(ownerUserId, "Media deleted", $"Media #{mediaId}", NotificationSeverity.Warning, siteId, jobId);
             executionTracker.Complete(jobId, 2, 2, $"Deleted media #{mediaId} from WordPress.");
             return MediaActionResult.Ok(mediaId, string.Empty, cacheMessage);
         }
@@ -252,6 +263,7 @@ public sealed class WordPressMediaWebService(
         catch (Exception ex)
         {
             executionTracker.Fail(jobId, ex.Message);
+            Notify(ownerUserId, "Media deletion failed", ex.Message, NotificationSeverity.Error, siteId, jobId);
             logger.LogError(ex, "Failed to delete media {MediaId} from site {SiteId}", mediaId, siteId);
             return MediaActionResult.Fail(ex.Message);
         }
@@ -271,7 +283,7 @@ public sealed class WordPressMediaWebService(
     {
         var count = mediaIds.Count(id => id > 0);
         if (count == 0) throw new InvalidOperationException("Select at least one media item.");
-        return execution.Enqueue("Bulk media metadata update", "Bulk Media Metadata", siteName, count);
+        return execution.Enqueue(currentUser.UserId, siteId, "Bulk media metadata update", "Bulk Media Metadata", siteName, count);
     }
 
     public static bool HasRemoteChanged(DateTimeOffset? expectedModifiedGmt, DateTimeOffset? remoteModifiedGmt)
@@ -301,6 +313,31 @@ public sealed class WordPressMediaWebService(
             // cache warning explicit rather than inviting a dangerous retry of a permanent delete.
             logger.LogWarning(ex, "Media {MediaId} was deleted remotely but local cache reconciliation failed for site {SiteId}", mediaId, siteId);
             return "Media was deleted from WordPress, but the local cache could not be reconciled. Refresh synchronization before relying on the cached media list.";
+        }
+    }
+
+    private void Notify(
+        Guid ownerUserId,
+        string title,
+        string message,
+        NotificationSeverity severity,
+        Guid siteId,
+        Guid executionJobId)
+    {
+        try
+        {
+            notifications.Create(
+                ownerUserId,
+                title,
+                string.IsNullOrWhiteSpace(message) ? title : message,
+                severity,
+                siteId: siteId,
+                executionJobId: executionJobId,
+                source: "WordPressMedia");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to persist notification for media execution job {ExecutionJobId}.", executionJobId);
         }
     }
 

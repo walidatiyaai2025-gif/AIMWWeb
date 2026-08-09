@@ -1,5 +1,7 @@
 using System.Text.Json;
+using AIWordPressManager.Persistence;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -25,12 +27,36 @@ public sealed class ApprovalWorkflowService
     private readonly object _sync = new();
     private readonly string _connectionString;
     private readonly ExecutionCenterService _executionCenter;
+    private readonly NotificationInboxService? _notifications;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
+    // Preserved for isolated tests and explicit database-path callers.
     public ApprovalWorkflowService(
         ExecutionCenterService executionCenter,
         string? databasePath = null)
+        : this(executionCenter, null, null, databasePath)
+    {
+    }
+
+    // Runtime DI constructor. Approval ownership is resolved from the authoritative Site row,
+    // never from caller-supplied RequestedBy/Reviewer display strings.
+    public ApprovalWorkflowService(
+        ExecutionCenterService executionCenter,
+        NotificationInboxService notifications,
+        IServiceScopeFactory scopeFactory)
+        : this(executionCenter, notifications, scopeFactory, null)
+    {
+    }
+
+    private ApprovalWorkflowService(
+        ExecutionCenterService executionCenter,
+        NotificationInboxService? notifications,
+        IServiceScopeFactory? scopeFactory,
+        string? databasePath)
     {
         _executionCenter = executionCenter;
+        _notifications = notifications;
+        _scopeFactory = scopeFactory;
         databasePath = ResolveDatabasePath(databasePath);
         var directory = Path.GetDirectoryName(databasePath);
         if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
@@ -117,6 +143,7 @@ public sealed class ApprovalWorkflowService
             ? BuildIdempotencyKey(request.SiteId, request.OperationType, afterJson)
             : request.IdempotencyKey.Trim();
 
+        ApprovalItem item;
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -133,7 +160,7 @@ public sealed class ApprovalWorkflowService
                 return GetById(Guid.Parse(existingId))!;
             }
 
-            var item = new ApprovalItem(
+            item = new ApprovalItem(
                 Guid.NewGuid(),
                 request.SiteId,
                 request.SiteName?.Trim() ?? string.Empty,
@@ -155,8 +182,15 @@ public sealed class ApprovalWorkflowService
             InsertItem(connection, transaction, item);
             InsertAudit(connection, transaction, item.Id, "Submitted", item.RequestedBy, "Submitted for approval.");
             transaction.Commit();
-            return item;
         }
+
+        NotifySiteOwner(
+            item,
+            "Approval required",
+            item.Title,
+            NotificationSeverity.Warning,
+            executionJobId: null);
+        return item;
     }
 
     public ApprovalItem Approve(Guid id, string reviewer, string? notes, bool executeImmediately)
@@ -164,13 +198,24 @@ public sealed class ApprovalWorkflowService
         var item = Review(id, ApprovalStatus.Approved, reviewer, notes, "Approved");
         if (!executeImmediately) return item;
 
-        var job = _executionCenter.Enqueue(
-            item.Title,
-            item.OperationType,
-            item.SiteName,
-            1,
-            item.IdempotencyKey,
-            item.CorrelationId);
+        var ownerUserId = ResolveCurrentSiteOwner(item.SiteId);
+        var job = ownerUserId.HasValue && item.SiteId.HasValue
+            ? _executionCenter.Enqueue(
+                ownerUserId.Value,
+                item.SiteId.Value,
+                item.Title,
+                item.OperationType,
+                item.SiteName,
+                1,
+                item.IdempotencyKey,
+                item.CorrelationId)
+            : _executionCenter.Enqueue(
+                item.Title,
+                item.OperationType,
+                item.SiteName,
+                1,
+                item.IdempotencyKey,
+                item.CorrelationId);
 
         lock (_sync)
         {
@@ -186,7 +231,15 @@ public sealed class ApprovalWorkflowService
             transaction.Commit();
         }
 
-        return GetById(id)!;
+        var executed = GetById(id)!;
+        NotifySiteOwner(
+            executed,
+            "Approval queued for execution",
+            executed.Title,
+            NotificationSeverity.Information,
+            job.Id,
+            ownerUserId);
+        return executed;
     }
 
     public ApprovalItem Reject(Guid id, string reviewer, string? notes) =>
@@ -255,7 +308,66 @@ public sealed class ApprovalWorkflowService
             InsertAudit(connection, transaction, id, action, actor, notes);
             transaction.Commit();
         }
-        return GetById(id)!;
+
+        var item = GetById(id)!;
+        var severity = status == ApprovalStatus.Rejected ? NotificationSeverity.Error : NotificationSeverity.Success;
+        NotifySiteOwner(
+            item,
+            status == ApprovalStatus.Rejected ? "Approval rejected" : "Approval approved",
+            string.IsNullOrWhiteSpace(notes) ? item.Title : $"{item.Title} — {notes.Trim()}",
+            severity,
+            item.ExecutionJobId);
+        return item;
+    }
+
+    private Guid? ResolveCurrentSiteOwner(Guid? siteId)
+    {
+        if (!siteId.HasValue || siteId.Value == Guid.Empty || _scopeFactory is null) return null;
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            return dbContext.Sites
+                .AsNoTracking()
+                .Where(x => x.Id == siteId.Value)
+                .Select(x => x.OwnerUserId)
+                .SingleOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void NotifySiteOwner(
+        ApprovalItem item,
+        string title,
+        string message,
+        NotificationSeverity severity,
+        Guid? executionJobId,
+        Guid? resolvedOwnerUserId = null)
+    {
+        if (_notifications is null) return;
+        var ownerUserId = resolvedOwnerUserId ?? ResolveCurrentSiteOwner(item.SiteId);
+        if (!ownerUserId.HasValue || ownerUserId.Value == Guid.Empty) return;
+
+        try
+        {
+            _notifications.Create(
+                ownerUserId.Value,
+                title,
+                message,
+                severity,
+                relatedId: item.Id,
+                siteId: item.SiteId,
+                executionJobId: executionJobId,
+                source: "ApprovalWorkflow");
+        }
+        catch
+        {
+            // Approval state is authoritative. Notification persistence is best-effort and must
+            // never roll back a completed review or execution decision.
+        }
     }
 
     private static ApprovalRiskLevel ResolveRisk(string operationType, ApprovalRiskLevel? requested)
