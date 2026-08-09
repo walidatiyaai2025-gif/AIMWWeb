@@ -4,6 +4,7 @@ using AIWordPressManager.Application.Common.Results;
 using AIWordPressManager.Application.Sites;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Domain.Enums;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Persistence.Sites;
@@ -60,14 +61,10 @@ public sealed class SiteManagementService(
         string password;
         try
         {
-            password = await secretProtectionService.UnprotectAsync(
-                record.Credential.ProtectedApplicationPassword,
-                cancellationToken);
+            password = await secretProtectionService.UnprotectAsync(record.Credential.ProtectedApplicationPassword, cancellationToken);
         }
         catch (CryptographicException)
         {
-            // DPAPI values are bound to the Windows user/profile that created them.
-            // Returning null keeps the UI alive and lets the user re-save the credential.
             return null;
         }
         catch (FormatException)
@@ -75,12 +72,7 @@ public sealed class SiteManagementService(
             return null;
         }
 
-        return new SiteConnectionDataDto(
-            record.Id,
-            record.Name,
-            record.SiteUrl,
-            record.Credential.UserName,
-            password);
+        return new SiteConnectionDataDto(record.Id, record.Name, record.SiteUrl, record.Credential.UserName, password);
     }
 
     public async Task<Result<Guid>> CreateAsync(CreateSiteRequest request, CancellationToken cancellationToken = default)
@@ -90,29 +82,12 @@ public sealed class SiteManagementService(
 
         var normalizedUrl = siteUri.GetLeftPart(UriPartial.Authority).TrimEnd('/');
         var now = clock.UtcNow;
-        var existingSite = await dbContext.Sites
-            .SingleOrDefaultAsync(x => x.SiteUrl == normalizedUrl, cancellationToken);
 
-        if (existingSite is not null)
-        {
-            var hasCredential = await dbContext.SiteCredentials
-                .IgnoreQueryFilters()
-                .AnyAsync(x => x.SiteId == existingSite.Id, cancellationToken);
-
-            if (hasCredential)
-                return Result.Failure<Guid>(new Error("Sites.Duplicate", "This WordPress site is already registered."));
-
-            existingSite.SetName(request.Name, now);
-            existingSite.UpdateDiscovery(request.HomeUrl, request.WordPressVersion, request.LanguageCode, now);
-            existingSite.RecordConnectionStatus(SiteConnectionStatus.Connected, now);
-
-            var protectedExistingPassword = await secretProtectionService.ProtectAsync(request.ApplicationPassword, cancellationToken);
-            dbContext.SiteCredentials.Add(new SiteCredential(existingSite.Id, request.UserName, protectedExistingPassword, now));
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return Result.Success(existingSite.Id);
-        }
-
-        var site = new Site(request.Name, siteUri, now);
+        // A URL is a connection target, not a unique profile. Every CreateAsync
+        // call intentionally creates a new Site row, including when a matching
+        // active or soft-deleted URL already exists. Credentials and settings
+        // therefore remain isolated by Site.Id.
+        var site = new Site(request.Name, new Uri(normalizedUrl), now);
         site.UpdateDiscovery(request.HomeUrl, request.WordPressVersion, request.LanguageCode, now);
         site.RecordConnectionStatus(SiteConnectionStatus.Connected, now);
 
@@ -121,7 +96,16 @@ public sealed class SiteManagementService(
 
         dbContext.Sites.Add(site);
         dbContext.SiteCredentials.Add(credential);
-        await dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
+        {
+            return Result.Failure<Guid>(new Error("Sites.CreateFailed", "The site profile could not be created because the database still has a uniqueness constraint on the site URL. Apply the latest database migration and retry."));
+        }
+
         return Result.Success(site.Id);
     }
 
@@ -155,4 +139,7 @@ public sealed class SiteManagementService(
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
+
+    private static bool IsSqliteUniqueConstraintViolation(DbUpdateException exception) =>
+        exception.InnerException is SqliteException { SqliteErrorCode: 19 };
 }

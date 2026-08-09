@@ -3,6 +3,7 @@ using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Domain.Enums;
 using AIWordPressManager.Persistence;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
@@ -39,10 +40,18 @@ public sealed class SiteWebService(
     {
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
-        await EnsureUniqueUrlAsync(normalizedUri, null, cancellationToken);
         var site = new Site(name.Trim(), normalizedUri, DateTime.UtcNow, OwnerId);
         dbContext.Sites.Add(site);
-        await dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
+        {
+            throw new InvalidOperationException("The site profile could not be created because of a database uniqueness constraint. Apply the latest database migration and try again.", ex);
+        }
+
         return site.Id;
     }
 
@@ -50,12 +59,19 @@ public sealed class SiteWebService(
     {
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
-        await EnsureUniqueUrlAsync(normalizedUri, siteId, cancellationToken);
         var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var now = DateTime.UtcNow;
         site.SetName(name.Trim(), now);
         site.SetSiteUrl(normalizedUri, now);
-        await dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsSqliteUniqueConstraintViolation(ex))
+        {
+            throw new InvalidOperationException("The site profile could not be updated because of a database uniqueness constraint. Apply the latest database migration and try again.", ex);
+        }
     }
 
     public async Task SetDisabledAsync(Guid siteId, bool disabled, CancellationToken cancellationToken = default)
@@ -146,14 +162,6 @@ public sealed class SiteWebService(
             ?? throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
     }
 
-    private async Task EnsureUniqueUrlAsync(Uri uri, Guid? exceptSiteId, CancellationToken cancellationToken)
-    {
-        var normalizedKey = uri.GetLeftPart(UriPartial.Authority).TrimEnd('/').ToLowerInvariant();
-        var sites = await dbContext.Sites.AsNoTracking().Where(x => x.OwnerUserId == OwnerId).Select(x => new { x.Id, x.SiteUrl }).ToListAsync(cancellationToken);
-        if (sites.Any(x => x.Id != exceptSiteId && x.SiteUrl.TrimEnd('/').ToLowerInvariant() == normalizedKey))
-            throw new InvalidOperationException("This site has already been added to your account.");
-    }
-
     private static void ValidateName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Site name is required.");
@@ -184,6 +192,9 @@ public sealed class SiteWebService(
     }
 
     private static bool ContainsAny(string value, params string[] terms) => terms.Any(term => value.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsSqliteUniqueConstraintViolation(DbUpdateException exception) =>
+        exception.InnerException is SqliteException { SqliteErrorCode: 19 };
 }
 
 public sealed record DashboardSummary(int TotalSites, int ConnectedSites, int ProblemSites, DateTime? LastConnectionTestAtUtc);
