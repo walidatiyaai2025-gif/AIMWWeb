@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Settings;
 using AIWordPressManager.Domain.Entities;
@@ -13,6 +14,10 @@ public sealed class ApplicationSettingsService(
     ISecretProtectionService secretProtectionService) : IApplicationSettingsService
 {
     private static readonly string[] ProviderNames = ["Puter", "Ollama", "Gemini", "Groq", "OpenRouter", "OpenAI"];
+    private const string AiPromptRegistryKey = "AI.PromptRegistry.V1";
+    private const int MaxPromptTextLength = 8000;
+    private const int MaxPromptHistory = 50;
+    private static readonly JsonSerializerOptions PromptJsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<SynchronizationSettings> GetSynchronizationSettingsAsync(CancellationToken cancellationToken = default)
     {
@@ -137,6 +142,107 @@ public sealed class ApplicationSettingsService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AiPromptTemplateSettings>> GetAiPromptTemplatesAsync(CancellationToken cancellationToken = default)
+    {
+        var registry = await LoadAiPromptRegistryAsync(cancellationToken);
+        var result = new List<AiPromptTemplateSettings>(registry.Templates.Count);
+        foreach (var template in registry.Templates.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var latest = template.Versions.OrderByDescending(x => x.Version).FirstOrDefault();
+            if (latest is null) continue;
+            result.Add(ToCurrent(template.Key, latest));
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<AiPromptTemplateVersionSettings>> GetAiPromptTemplateHistoryAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedKey = NormalizePromptKey(key);
+        var registry = await LoadAiPromptRegistryAsync(cancellationToken);
+        var template = registry.Templates.FirstOrDefault(x => x.Key.Equals(normalizedKey, StringComparison.OrdinalIgnoreCase));
+        if (template is null) return [];
+        return template.Versions
+            .OrderByDescending(x => x.Version)
+            .Select(x => new AiPromptTemplateVersionSettings(
+                normalizedKey,
+                x.Version,
+                x.EnglishText,
+                x.ArabicText,
+                x.IsEnabled,
+                x.CreatedAtUtc,
+                x.UpdatedBy))
+            .ToArray();
+    }
+
+    public async Task<AiPromptTemplateSettings> SaveAiPromptTemplateAsync(
+        string key,
+        string englishText,
+        string arabicText,
+        bool isEnabled,
+        string updatedBy,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedKey = NormalizePromptKey(key);
+        var safeEnglish = NormalizePromptText(englishText, nameof(englishText));
+        var safeArabic = NormalizePromptText(arabicText, nameof(arabicText));
+        var safeActor = NormalizePromptActor(updatedBy);
+        var registry = await LoadAiPromptRegistryAsync(cancellationToken);
+        var template = registry.Templates.FirstOrDefault(x => x.Key.Equals(normalizedKey, StringComparison.OrdinalIgnoreCase));
+        if (template is null)
+        {
+            template = new StoredPromptTemplate { Key = normalizedKey };
+            registry.Templates.Add(template);
+        }
+
+        var nextVersion = template.Versions.Count == 0 ? 1 : template.Versions.Max(x => x.Version) + 1;
+        var version = new StoredPromptTemplateVersion
+        {
+            Version = nextVersion,
+            EnglishText = safeEnglish,
+            ArabicText = safeArabic,
+            IsEnabled = isEnabled,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedBy = safeActor
+        };
+        template.Versions.Add(version);
+        TrimPromptHistory(template);
+        await SaveAiPromptRegistryAsync(registry, cancellationToken);
+        return ToCurrent(normalizedKey, version);
+    }
+
+    public async Task<AiPromptTemplateSettings> RestoreAiPromptTemplateVersionAsync(
+        string key,
+        int version,
+        string updatedBy,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedKey = NormalizePromptKey(key);
+        if (version < 1) throw new ArgumentOutOfRangeException(nameof(version), "Prompt version must be greater than zero.");
+        var safeActor = NormalizePromptActor(updatedBy);
+        var registry = await LoadAiPromptRegistryAsync(cancellationToken);
+        var template = registry.Templates.FirstOrDefault(x => x.Key.Equals(normalizedKey, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException($"Prompt template '{normalizedKey}' has no saved versions.");
+        var source = template.Versions.FirstOrDefault(x => x.Version == version)
+            ?? throw new InvalidOperationException($"Prompt template '{normalizedKey}' version {version} was not found.");
+
+        var nextVersion = template.Versions.Max(x => x.Version) + 1;
+        var restored = new StoredPromptTemplateVersion
+        {
+            Version = nextVersion,
+            EnglishText = source.EnglishText,
+            ArabicText = source.ArabicText,
+            IsEnabled = source.IsEnabled,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedBy = safeActor
+        };
+        template.Versions.Add(restored);
+        TrimPromptHistory(template);
+        await SaveAiPromptRegistryAsync(registry, cancellationToken);
+        return ToCurrent(normalizedKey, restored);
+    }
+
     public async Task<PerformanceSettings> GetPerformanceSettingsAsync(CancellationToken cancellationToken = default)
     {
         var keys = new[] { "Performance.MemoryCoolingEnabled", "Performance.CoolingThresholdPercent", "Performance.ResumeThresholdPercent", "Performance.CheckIntervalSeconds", "Performance.KillChildProcessesOnExit" };
@@ -243,11 +349,75 @@ public sealed class ApplicationSettingsService(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task<StoredPromptRegistry> LoadAiPromptRegistryAsync(CancellationToken cancellationToken)
+    {
+        var json = await dbContext.ApplicationSettings.AsNoTracking()
+            .Where(x => x.Key == AiPromptRegistryKey)
+            .Select(x => x.Value)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json)) return new StoredPromptRegistry();
+
+        try
+        {
+            return JsonSerializer.Deserialize<StoredPromptRegistry>(json, PromptJsonOptions) ?? new StoredPromptRegistry();
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException("The saved AI prompt registry is invalid and could not be loaded.", ex);
+        }
+    }
+
+    private async Task SaveAiPromptRegistryAsync(StoredPromptRegistry registry, CancellationToken cancellationToken)
+    {
+        var json = JsonSerializer.Serialize(registry, PromptJsonOptions);
+        await UpsertAsync(AiPromptRegistryKey, json, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task UpsertAsync(string key, string value, CancellationToken cancellationToken)
     {
         var row = await dbContext.ApplicationSettings.SingleOrDefaultAsync(x => x.Key == key, cancellationToken);
         if (row is null) dbContext.ApplicationSettings.Add(new ApplicationSetting(key, value, DateTime.UtcNow));
         else row.SetValue(key, value, DateTime.UtcNow);
+    }
+
+    private static AiPromptTemplateSettings ToCurrent(string key, StoredPromptTemplateVersion version) =>
+        new(key, version.EnglishText, version.ArabicText, version.IsEnabled, version.Version, version.CreatedAtUtc, version.UpdatedBy);
+
+    private static void TrimPromptHistory(StoredPromptTemplate template)
+    {
+        if (template.Versions.Count <= MaxPromptHistory) return;
+        template.Versions = template.Versions
+            .OrderByDescending(x => x.Version)
+            .Take(MaxPromptHistory)
+            .OrderBy(x => x.Version)
+            .ToList();
+    }
+
+    private static string NormalizePromptKey(string key)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        var normalized = key.Trim().ToLowerInvariant();
+        if (normalized.Length > 80)
+            throw new ArgumentOutOfRangeException(nameof(key), "Prompt key cannot exceed 80 characters.");
+        if (normalized.Any(ch => !(char.IsAsciiLetterOrDigit(ch) || ch is '-' or '_' or '.')))
+            throw new ArgumentException("Prompt key may contain only letters, digits, '.', '_' and '-'.", nameof(key));
+        return normalized;
+    }
+
+    private static string NormalizePromptText(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        var normalized = value.Trim();
+        if (normalized.Length > MaxPromptTextLength)
+            throw new ArgumentOutOfRangeException(parameterName, $"Prompt text cannot exceed {MaxPromptTextLength} characters.");
+        return normalized;
+    }
+
+    private static string NormalizePromptActor(string updatedBy)
+    {
+        var actor = string.IsNullOrWhiteSpace(updatedBy) ? "system" : updatedBy.Trim();
+        return actor.Length <= 128 ? actor : actor[..128];
     }
 
     private static string RequireProviderName(string provider) =>
@@ -258,4 +428,25 @@ public sealed class ApplicationSettingsService(
         values.TryGetValue(key, out var value) && int.TryParse(value, out var parsed) ? parsed : fallback;
     private static bool ParseBool(IReadOnlyDictionary<string, string> values, string key, bool fallback) =>
         values.TryGetValue(key, out var value) && bool.TryParse(value, out var parsed) ? parsed : fallback;
+
+    private sealed class StoredPromptRegistry
+    {
+        public List<StoredPromptTemplate> Templates { get; set; } = [];
+    }
+
+    private sealed class StoredPromptTemplate
+    {
+        public string Key { get; set; } = string.Empty;
+        public List<StoredPromptTemplateVersion> Versions { get; set; } = [];
+    }
+
+    private sealed class StoredPromptTemplateVersion
+    {
+        public int Version { get; set; }
+        public string EnglishText { get; set; } = string.Empty;
+        public string ArabicText { get; set; } = string.Empty;
+        public bool IsEnabled { get; set; } = true;
+        public DateTime CreatedAtUtc { get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
+    }
 }
