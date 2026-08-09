@@ -1,7 +1,7 @@
 # TEAM PROGRESS 178 — HOTFIX SiteSyncRuns SQLite schema
 
 ## Status
-Implemented — CI validation pending
+Verified — ready to merge
 
 ## Problem
 Existing SQLite databases could reach WordPress synchronization without a `SiteSyncRuns` table and fail with:
@@ -17,4 +17,6 @@ Migration `20260809094500_AddSiteSyncRuns` had a `Migration` attribute but was m
 - Bumped the web application version to `155.124.1`.
 
 ## Validation
-Pending GitHub Actions Build and .NET Build Verification.
+- Build #1270: SUCCESS.
+- .NET Build Verification #938: SUCCESS.
+- Regression coverage confirms `20260809094500_AddSiteSyncRuns` is discoverable by EF Core and that `SiteSyncRuns` exists after `DatabaseInitializationService.InitializeAsync()`.
