@@ -8,6 +8,8 @@ public sealed class WordPressPostEditorWebService(
     IWordPressApiClient apiClient,
     AppNotificationService notifications) : IWordPressPostEditorService
 {
+    public const string ConflictMessage = "This content changed in WordPress after you opened the editor. Review the latest remote version before saving, or explicitly overwrite it.";
+
     public async Task<Result<WordPressEditableContent>> GetAsync(
         Guid siteId,
         string contentType,
@@ -66,6 +68,26 @@ public sealed class WordPressPostEditorWebService(
                 const string validationMessage = "Content title is required.";
                 notifications.Warning(validationMessage, "Validation");
                 return Result.Failure<WordPressContentUpdateResult>(Error.Validation(validationMessage));
+            }
+
+            if (!IsSupportedStatus(request.Status))
+            {
+                const string validationMessage = "Select a supported WordPress content status before saving.";
+                notifications.Warning(validationMessage, "Validation");
+                return Result.Failure<WordPressContentUpdateResult>(Error.Validation(validationMessage));
+            }
+
+            if (!request.ForceOverwrite && request.ExpectedModifiedGmt.HasValue)
+            {
+                var latest = await GetAsync(siteId, request.ContentType, request.Id, cancellationToken);
+                if (latest.IsFailure)
+                    return Result.Failure<WordPressContentUpdateResult>(latest.Error);
+
+                if (HasRemoteChanged(request.ExpectedModifiedGmt, latest.Value.ModifiedGmt))
+                {
+                    notifications.Warning(ConflictMessage, "Content conflict");
+                    return Result.Failure<WordPressContentUpdateResult>(Error.Conflict(ConflictMessage));
+                }
             }
 
             notifications.Info(
@@ -139,6 +161,17 @@ public sealed class WordPressPostEditorWebService(
             return Result.Failure<WordPressContentUpdateResult>(Error.Failure(ex.Message));
         }
     }
+
+    public static bool HasRemoteChanged(DateTimeOffset? expectedModifiedGmt, DateTimeOffset? remoteModifiedGmt)
+    {
+        if (!expectedModifiedGmt.HasValue || !remoteModifiedGmt.HasValue)
+            return false;
+
+        return expectedModifiedGmt.Value.ToUniversalTime() != remoteModifiedGmt.Value.ToUniversalTime();
+    }
+
+    private static bool IsSupportedStatus(string? status) =>
+        status is "draft" or "pending" or "publish" or "future" or "private";
 
     private static string BuildEndpoint(string type, int id) =>
         $"/wp-json/wp/v2/{(NormalizeType(type) == "page" ? "pages" : "posts")}/{id}";
