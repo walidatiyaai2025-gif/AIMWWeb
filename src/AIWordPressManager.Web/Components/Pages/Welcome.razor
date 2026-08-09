@@ -1,0 +1,123 @@
+@page "/welcome"
+@rendermode InteractiveServer
+@inject AppLanguageService L
+@inject BuildInformationService BuildInfo
+
+<PageTitle>@(L.IsArabic ? "مرحبًا بك في AI WordPress Manager" : "Welcome to AI WordPress Manager")</PageTitle>
+
+<div class="welcome-page" dir="@L.Direction">
+    <section class="welcome-hero">
+        <div class="welcome-hero-copy">
+            <div class="welcome-status-row">
+                <span class="welcome-status"><i></i>@(L.IsArabic ? "النظام جاهز للعمل" : "SYSTEM READY")</span>
+                <a class="welcome-version" href="/about-build">v@(Build.Version) · @Build.Branch</a>
+            </div>
+
+            <p class="welcome-kicker">@(L.IsArabic ? "مساحة تحكم واحدة لكل مواقع WordPress" : "ONE CONTROL PLANE FOR YOUR WORDPRESS ESTATE")</p>
+            <h1>@(L.IsArabic ? "أدر المحتوى وSEO والذكاء الاصطناعي والأتمتة من مكان واحد." : "Run content, SEO, AI and automation from one intelligent workspace.")</h1>
+            <p class="welcome-lead">
+                @(L.IsArabic
+                    ? "AI WordPress Manager يجمع إدارة المواقع والمحتوى، التدقيق، الاقتراحات الذكية، الموافقات، التنفيذ الآمن، الجدولة، التقارير وصحة النظام داخل تجربة تشغيل موحدة."
+                    : "AI WordPress Manager brings site management, content operations, audits, AI recommendations, approvals, safe execution, scheduling, reporting and system health into one operational experience.")
+            </p>
+
+            <div class="welcome-actions">
+                <AppButton Href="/sites/connect" Variant="primary" Icon="＋" Text="@(L.IsArabic ? "ربط أول موقع" : "Connect your first site")" />
+                <AppButton Href="/" Icon="▦" Text="@(L.IsArabic ? "فتح لوحة التحكم" : "Open dashboard")" />
+                <a class="welcome-text-link" href="/about-build">@(L.IsArabic ? "معلومات الإصدار" : "Build information") <span>↗</span></a>
+            </div>
+
+            <div class="welcome-trust-strip">
+                <span><b>✓</b>@(L.IsArabic ? "إدارة متعددة المواقع" : "Multi-site control")</span>
+                <span><b>✓</b>@(L.IsArabic ? "تنفيذ بموافقات" : "Approval-aware execution")</span>
+                <span><b>✓</b>@(L.IsArabic ? "سجلات وتشخيص" : "Auditable diagnostics")</span>
+            </div>
+        </div>
+
+        <aside class="welcome-system-map" aria-label="System workflow">
+            <div class="system-map-head">
+                <div>
+                    <small>@(L.IsArabic ? "تدفق العمل" : "OPERATING FLOW")</small>
+                    <strong>@(L.IsArabic ? "من الاتصال إلى التنفيذ" : "From connection to execution")</strong>
+                </div>
+                <span class="system-live-dot"></span>
+            </div>
+            <div class="system-flow">
+                <a href="/sites"><span class="flow-icon">◉</span><div><b>@(L.IsArabic ? "المواقع" : "Sites")</b><small>@(L.IsArabic ? "اتصال وهوية وصحة" : "Connect · identify · health")</small></div><em>01</em></a>
+                <a href="/content"><span class="flow-icon">▤</span><div><b>@(L.IsArabic ? "المحتوى" : "Content")</b><small>@(L.IsArabic ? "مزامنة وإدارة" : "Sync · manage · organize")</small></div><em>02</em></a>
+                <a href="/module/seo-audit"><span class="flow-icon">◈</span><div><b>SEO</b><small>@(L.IsArabic ? "تدقيق وترتيب الأولويات" : "Audit · prioritize · improve")</small></div><em>03</em></a>
+                <a href="/module/ai-providers"><span class="flow-icon">✦</span><div><b>@(L.IsArabic ? "الذكاء الاصطناعي" : "AI Workspace")</b><small>@(L.IsArabic ? "اقتراحات مدعومة بالأدلة" : "Evidence-backed suggestions")</small></div><em>04</em></a>
+                <a href="/module/execution"><span class="flow-icon">▶</span><div><b>@(L.IsArabic ? "التنفيذ" : "Execution")</b><small>@(L.IsArabic ? "موافقة وتتبع واستعادة" : "Approve · track · recover")</small></div><em>05</em></a>
+            </div>
+            <div class="system-map-footer">
+                <span>@(L.IsArabic ? "نسخة التشغيل" : "Running build")</span>
+                <strong>v@(Build.Version)</strong>
+            </div>
+        </aside>
+    </section>
+
+    <section class="welcome-section">
+        <header class="welcome-section-head">
+            <div>
+                <p>@(L.IsArabic ? "قدرات المنصة" : "PLATFORM CAPABILITIES")</p>
+                <h2>@(L.IsArabic ? "كل ما تحتاجه لتشغيل WordPress باحترافية" : "Everything needed to operate WordPress professionally")</h2>
+            </div>
+            <span>@(L.IsArabic ? "مصممة للعمل اليومي وليس للعرض فقط" : "Built for daily operations, not just dashboards")</span>
+        </header>
+
+        <div class="welcome-feature-grid">
+            @foreach (var feature in Features)
+            {
+                <a class="welcome-feature-card" href="@feature.Href">
+                    <div class="feature-top"><span>@feature.Icon</span><em>↗</em></div>
+                    <h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3>
+                    <p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p>
+                </a>
+            }
+        </div>
+    </section>
+
+    <section class="welcome-journey">
+        <div class="journey-copy">
+            <p class="welcome-kicker">@(L.IsArabic ? "ابدأ بشكل صحيح" : "START WITH A CONTROLLED WORKFLOW")</p>
+            <h2>@(L.IsArabic ? "ثلاث خطوات من موقع جديد إلى تشغيل قابل للمتابعة." : "Three steps from a new site to an auditable operating loop.")</h2>
+            <p>@(L.IsArabic ? "المنصة تفصل بين التحليل والاقتراح والتنفيذ حتى تظل التغييرات واضحة وقابلة للمراجعة." : "The platform separates analysis, recommendation and execution so changes remain visible, reviewable and controlled.")</p>
+            <AppButton Href="/sites/connect" Variant="primary" Icon="→" Text="@(L.IsArabic ? "ابدأ ربط موقع" : "Start site connection")" />
+        </div>
+        <div class="journey-steps">
+            <article><span>01</span><div><h3>@(L.IsArabic ? "اربط الموقع" : "Connect")</h3><p>@(L.IsArabic ? "أضف عنوان WordPress وبيانات الاتصال، ثم اختبر الصلاحيات وصحة REST API." : "Add the WordPress endpoint and credentials, then validate permissions and REST API health.")</p></div></article>
+            <article><span>02</span><div><h3>@(L.IsArabic ? "زامن وحلّل" : "Sync & analyze")</h3><p>@(L.IsArabic ? "اقرأ المحتوى محليًا، راجع SEO والمشكلات، ورتّب ما يحتاج اهتمامك أولًا." : "Build a local snapshot, review SEO and operational findings, and prioritize what matters first.")</p></div></article>
+            <article><span>03</span><div><h3>@(L.IsArabic ? "وافق ونفّذ" : "Approve & execute")</h3><p>@(L.IsArabic ? "حوّل الاقتراحات إلى تغييرات مضبوطة مع سجل تنفيذ وتشخيص واضح عند الفشل." : "Turn recommendations into controlled changes with execution history and actionable failure diagnostics.")</p></div></article>
+        </div>
+    </section>
+
+    <section class="welcome-final-cta">
+        <div>
+            <span class="welcome-status"><i></i>@(L.IsArabic ? "جاهز للخطوة التالية" : "READY FOR THE NEXT STEP")</span>
+            <h2>@(L.IsArabic ? "أضف أول موقع وابدأ بناء مساحة التشغيل الخاصة بك." : "Add your first site and build your operating workspace.")</h2>
+            <p>@(L.IsArabic ? "يمكنك الرجوع لهذه الصفحة في أي وقت من رابط Welcome داخل القائمة الرئيسية." : "You can return to this overview any time from Welcome in the main navigation.")</p>
+        </div>
+        <div class="welcome-final-actions">
+            <AppButton Href="/sites/connect" Variant="primary" Icon="＋" Text="@(L.IsArabic ? "ربط موقع WordPress" : "Connect WordPress site")" />
+            <AppButton Href="/system-health" Icon="♥" Text="@(L.IsArabic ? "فحص صحة النظام" : "Check system health")" />
+        </div>
+    </section>
+</div>
+
+@code {
+    private BuildInformation Build => BuildInfo.Current;
+
+    private static readonly Feature[] Features =
+    [
+        new("◉", "Site Management", "إدارة المواقع", "Independent site profiles, connection diagnostics and health visibility across your WordPress estate.", "ملفات مستقلة للمواقع، تشخيص الاتصال، ومتابعة صحة جميع مواقع WordPress.", "/sites"),
+        new("▤", "Content Workspace", "مساحة المحتوى", "Manage posts, pages, media, taxonomy, comments and users with searchable operational views.", "إدارة المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين من مساحات تشغيل قابلة للبحث.", "/content"),
+        new("◈", "SEO Intelligence", "ذكاء SEO", "Run technical and content audits, prioritize issues and track recommendations before applying changes.", "تشغيل تدقيق تقني ومحتوى، ترتيب المشكلات حسب الأولوية، ومراجعة التوصيات قبل التنفيذ.", "/module/seo-audit"),
+        new("✦", "AI Workspace", "مساحة الذكاء الاصطناعي", "Provider abstraction, prompt templates and evidence-aware suggestions designed for controlled operations.", "مزودون متعددون، قوالب أوامر واقتراحات ذكية مرتبطة بسياق واضح للتشغيل المنضبط.", "/module/ai-providers"),
+        new("✓", "Approvals & Safe Execution", "الموافقات والتنفيذ الآمن", "Review changes before execution, keep history and make failures actionable instead of opaque.", "راجع التغييرات قبل التنفيذ، احتفظ بالسجل، وحوّل الأخطاء إلى تشخيص قابل للتنفيذ.", "/module/approvals"),
+        new("◷", "Automation & Scheduling", "الأتمتة والجدولة", "Queue work, schedule recurring operations, retry safely and track progress from one operations center.", "ضع الأعمال في طابور، جدول العمليات المتكررة، أعد المحاولة بأمان، وتابع التقدم من مركز واحد.", "/operations"),
+        new("▥", "Reports & Operations", "التقارير والتشغيل", "Follow trends, export operational data and keep backup, restore and support diagnostics close at hand.", "تابع الاتجاهات، صدّر بيانات التشغيل، واحتفظ بأدوات النسخ والاستعادة والتشخيص في متناول اليد.", "/module/reports"),
+        new("♥", "Health & Reliability", "الصحة والموثوقية", "Monitor application, database and site reliability with diagnostics built for support and incident response.", "راقب التطبيق وقاعدة البيانات وموثوقية المواقع بتشخيصات مصممة للدعم والاستجابة للأعطال.", "/system-health")
+    ];
+
+    private sealed record Feature(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string Href);
+}

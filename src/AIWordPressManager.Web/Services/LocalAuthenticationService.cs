@@ -11,6 +11,8 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class LocalAuthenticationService(AppDbContext dbContext)
 {
+    public const string FirstRunLandingPath = "/welcome";
+
     private readonly PasswordHasher<AuthUser> _hasher = new();
 
     public Task<bool> HasAccountsAsync(CancellationToken cancellationToken = default) =>
@@ -166,7 +168,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
         var redirectPath = hasOwnedSites
             ? ResolveRedirectPath(returnUrl, user.LastPage)
-            : "/sites/connect";
+            : FirstRunLandingPath;
 
         return LoginResult.Succeeded(redirectPath);
     }
