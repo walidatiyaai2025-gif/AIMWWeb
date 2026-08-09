@@ -85,6 +85,23 @@ public sealed class AIPromptRegistryVersioningTests : IDisposable
     }
 
     [Fact]
+    public void Safe_Runtime_Lookup_Rejects_Disabled_And_Unknown_Keys()
+    {
+        var registry = CreateRegistry();
+        IAIPromptRegistry runtime = registry;
+
+        runtime.TryGet("rewrite", "en", out var enabledPrompt).Should().BeTrue();
+        enabledPrompt.Should().Contain("Rewrite");
+
+        registry.SetEnabled("rewrite", false, "admin");
+
+        runtime.TryGet("rewrite", "en", out var disabledPrompt).Should().BeFalse();
+        disabledPrompt.Should().BeEmpty();
+        runtime.TryGet("does-not-exist", "en", out var missingPrompt).Should().BeFalse();
+        missingPrompt.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Invalid_Custom_Key_Is_Rejected()
     {
         var registry = CreateRegistry();

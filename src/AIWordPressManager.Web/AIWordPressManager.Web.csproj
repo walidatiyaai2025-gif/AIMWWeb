@@ -3,10 +3,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>155.128.0</Version>
-    <AssemblyVersion>155.128.0.0</AssemblyVersion>
-    <FileVersion>155.128.0.0</FileVersion>
-    <InformationalVersion>155.128.0</InformationalVersion>
+    <Version>155.128.1</Version>
+    <AssemblyVersion>155.128.1.0</AssemblyVersion>
+    <FileVersion>155.128.1.0</FileVersion>
+    <InformationalVersion>155.128.1</InformationalVersion>
     <GitBranch Condition="'$(GitBranch)'==''">unknown</GitBranch>
   </PropertyGroup>
   <ItemGroup>

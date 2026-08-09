@@ -62,6 +62,19 @@ public interface IAIPromptRegistry
 {
     string Get(string key, string culture = "en");
     IReadOnlyDictionary<string, string> GetAll(string culture = "en");
+
+    bool TryGet(string key, string culture, out string prompt)
+    {
+        prompt = string.Empty;
+        if (string.IsNullOrWhiteSpace(key)) return false;
+
+        var available = GetAll(culture);
+        if (!available.TryGetValue(key.Trim(), out var resolved) || string.IsNullOrWhiteSpace(resolved))
+            return false;
+
+        prompt = resolved;
+        return true;
+    }
 }
 
 public interface IAIPromptTemplateStore
