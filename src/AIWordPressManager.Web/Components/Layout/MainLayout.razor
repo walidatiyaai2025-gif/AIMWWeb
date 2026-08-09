@@ -6,48 +6,145 @@
 
 <GlobalNotifications />
 
-<div class="app-shell @(_sidebarCollapsed ? "sidebar-collapsed" : string.Empty)" dir="@L.Direction">
-    <aside class="sidebar">
-        <div class="brand"><span class="brand-mark">AI</span><div><strong>@L["AppName"]</strong><small>@L["BlazorServer"]</small></div></div>
-        <nav class="main-nav">
-            <details class="nav-section" open="@(ActiveGroup == "overview")"><summary class="nav-section-toggle"><span>@(L.IsArabic ? "الرئيسية" : "OVERVIEW")</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/welcome"><span>✦</span> @(L.IsArabic ? "مرحبًا" : "Welcome")</NavLink><NavLink href="/" Match="NavLinkMatch.All"><span>⌂</span> @L["Dashboard"]</NavLink><NavLink href="/sites"><span>◉</span> @L["Sites"]</NavLink><NavLink href="/module/overview"><span>▦</span> @(L.IsArabic ? "مركز النظام" : "System Overview")</NavLink></div></details>
-            <details class="nav-section" open="@(ActiveGroup == "content")"><summary class="nav-section-toggle"><span>@(L.IsArabic ? "إدارة المحتوى" : "CONTENT")</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/content"><span>▦</span> @(L.IsArabic ? "مركز المحتوى" : "Content Hub")</NavLink><NavLink href="/module/posts"><span>▤</span> @L["Posts"]</NavLink><NavLink href="/module/pages"><span>▧</span> @L["Pages"]</NavLink><NavLink href="/module/media"><span>▣</span> @L["MediaManager"]</NavLink><NavLink href="/module/taxonomy"><span>#</span> @L["CategoriesTags"]</NavLink><NavLink href="/module/comments"><span>◌</span> @L["Comments"]</NavLink><NavLink href="/module/users"><span>◎</span> @L["UsersManager"]</NavLink></div></details>
-            <details class="nav-section" open="@(ActiveGroup == "seo")"><summary class="nav-section-toggle"><span>SEO</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/module/seo-audit"><span>◈</span> @L["SeoManager"]</NavLink><NavLink href="/module/seo-suggestions"><span>✦</span> @(L.IsArabic ? "اقتراحات التحسين" : "Suggestions")</NavLink><NavLink href="/module/approvals"><span>✓</span> @(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</NavLink></div></details>
-            <details class="nav-section" open="@(ActiveGroup == "ai")"><summary class="nav-section-toggle"><span>@(L.IsArabic ? "الذكاء الاصطناعي" : "AI WORKSPACE")</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/module/ai-providers"><span>✦</span> @(L.IsArabic ? "مزودو الذكاء" : "AI Providers")</NavLink><NavLink href="/module/prompts"><span>⌘</span> @(L.IsArabic ? "قوالب الأوامر" : "Prompt Templates")</NavLink></div></details>
-            <details class="nav-section" open="@(ActiveGroup == "operations")"><summary class="nav-section-toggle"><span>@(L.IsArabic ? "التشغيل والأتمتة" : "OPERATIONS")</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/operations"><span>▦</span> @(L.IsArabic ? "مركز العمليات" : "Operations Hub")</NavLink><NavLink href="/site-operations"><span>≣</span> @(L.IsArabic ? "سجل عمليات المواقع" : "Site Operations")</NavLink><NavLink href="/site-reliability"><span>◒</span> @(L.IsArabic ? "موثوقية المواقع" : "Site Reliability")</NavLink><NavLink href="/module/execution"><span>▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink><NavLink href="/module/sync"><span>↻</span> @L["ContentSync"]</NavLink><NavLink href="/module/schedules"><span>◷</span> @(L.IsArabic ? "الجدولة" : "Schedules")</NavLink><NavLink href="/email/history"><span>✉</span> @(L.IsArabic ? "سجل إرسال البريد" : "Email Delivery History")</NavLink></div></details>
-            <details class="nav-section" open="@(ActiveGroup == "reports")"><summary class="nav-section-toggle"><span>@(L.IsArabic ? "التقارير" : "REPORTS")</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/module/reports"><span>▥</span> @(L.IsArabic ? "التقارير والتصدير" : "Reports & Exports")</NavLink></div></details>
-            <details class="nav-section" open="@(ActiveGroup == "system")"><summary class="nav-section-toggle"><span>@(L.IsArabic ? "النظام" : "SYSTEM")</span><span class="nav-chevron">⌄</span></summary><div class="nav-section-links"><NavLink href="/system-health"><span>♥</span> @(L.IsArabic ? "صحة النظام" : "System Health")</NavLink><NavLink href="/module/logs"><span>≡</span> @(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</NavLink><NavLink href="/module/backups"><span>⬡</span> @(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</NavLink><NavLink href="/settings"><span>⚙</span> @L["Settings"]</NavLink><NavLink href="/about-build"><span>ⓘ</span> @(L.IsArabic ? "معلومات الإصدار" : "Build Information")</NavLink></div></details>
+<a class="skip-link" href="#main-content">@(L.IsArabic ? "انتقل إلى المحتوى الرئيسي" : "Skip to main content")</a>
+
+<div class="app-shell design-system-shell @(_sidebarCollapsed ? "sidebar-collapsed" : string.Empty)" dir="@L.Direction">
+    <aside class="sidebar" aria-label="@(L.IsArabic ? "التنقل الرئيسي" : "Primary navigation")">
+        <a class="brand" href="/" aria-label="@(L.IsArabic ? "العودة إلى لوحة التحكم" : "Go to dashboard")">
+            <span class="brand-mark" aria-hidden="true">AI</span>
+            <div><strong>@L["AppName"]</strong><small>@L["BlazorServer"]</small></div>
+        </a>
+
+        <nav id="primary-navigation" class="main-nav" aria-label="@(L.IsArabic ? "مساحات عمل التطبيق" : "Application workspaces")">
+            <details class="nav-section" open="@(ActiveGroup == "overview")">
+                <summary class="nav-section-toggle"><span>@(L.IsArabic ? "الرئيسية" : "OVERVIEW")</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/welcome"><span aria-hidden="true">✦</span> @(L.IsArabic ? "مرحبًا" : "Welcome")</NavLink>
+                    <NavLink href="/" Match="NavLinkMatch.All"><span aria-hidden="true">⌂</span> @L["Dashboard"]</NavLink>
+                    <NavLink href="/sites"><span aria-hidden="true">◉</span> @L["Sites"]</NavLink>
+                    <NavLink href="/module/overview"><span aria-hidden="true">▦</span> @(L.IsArabic ? "مركز النظام" : "System Overview")</NavLink>
+                </div>
+            </details>
+
+            <details class="nav-section" open="@(ActiveGroup == "content")">
+                <summary class="nav-section-toggle"><span>@(L.IsArabic ? "إدارة المحتوى" : "CONTENT")</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/content"><span aria-hidden="true">▦</span> @(L.IsArabic ? "مركز المحتوى" : "Content Hub")</NavLink>
+                    <NavLink href="/module/posts"><span aria-hidden="true">▤</span> @L["Posts"]</NavLink>
+                    <NavLink href="/module/pages"><span aria-hidden="true">▧</span> @L["Pages"]</NavLink>
+                    <NavLink href="/module/media"><span aria-hidden="true">▣</span> @L["MediaManager"]</NavLink>
+                    <NavLink href="/module/taxonomy"><span aria-hidden="true">#</span> @L["CategoriesTags"]</NavLink>
+                    <NavLink href="/module/comments"><span aria-hidden="true">◌</span> @L["Comments"]</NavLink>
+                    <NavLink href="/module/users"><span aria-hidden="true">◎</span> @L["UsersManager"]</NavLink>
+                </div>
+            </details>
+
+            <details class="nav-section" open="@(ActiveGroup == "seo")">
+                <summary class="nav-section-toggle"><span>SEO</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/module/seo-audit"><span aria-hidden="true">◈</span> @L["SeoManager"]</NavLink>
+                    <NavLink href="/module/seo-suggestions"><span aria-hidden="true">✦</span> @(L.IsArabic ? "اقتراحات التحسين" : "Suggestions")</NavLink>
+                    <NavLink href="/module/approvals"><span aria-hidden="true">✓</span> @(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</NavLink>
+                </div>
+            </details>
+
+            <details class="nav-section" open="@(ActiveGroup == "ai")">
+                <summary class="nav-section-toggle"><span>@(L.IsArabic ? "الذكاء الاصطناعي" : "AI WORKSPACE")</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/ai-center"><span aria-hidden="true">✦</span> @(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</NavLink>
+                    <NavLink href="/content-planner"><span aria-hidden="true">◫</span> @(L.IsArabic ? "مخطط المحتوى" : "Content Planner")</NavLink>
+                    <NavLink href="/module/ai-providers"><span aria-hidden="true">◈</span> @(L.IsArabic ? "مزودو الذكاء" : "AI Providers")</NavLink>
+                    <NavLink href="/module/prompts"><span aria-hidden="true">⌘</span> @(L.IsArabic ? "قوالب الأوامر" : "Prompt Templates")</NavLink>
+                    <NavLink href="/module/ai-usage"><span aria-hidden="true">▥</span> @(L.IsArabic ? "الاستخدام والتكلفة" : "Usage & Cost")</NavLink>
+                </div>
+            </details>
+
+            <details class="nav-section" open="@(ActiveGroup == "operations")">
+                <summary class="nav-section-toggle"><span>@(L.IsArabic ? "التشغيل والأتمتة" : "OPERATIONS")</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/operations"><span aria-hidden="true">▦</span> @(L.IsArabic ? "مركز العمليات" : "Operations Hub")</NavLink>
+                    <NavLink href="/site-operations"><span aria-hidden="true">≣</span> @(L.IsArabic ? "سجل عمليات المواقع" : "Site Operations")</NavLink>
+                    <NavLink href="/site-reliability"><span aria-hidden="true">◒</span> @(L.IsArabic ? "موثوقية المواقع" : "Site Reliability")</NavLink>
+                    <NavLink href="/module/execution"><span aria-hidden="true">▶</span> @(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</NavLink>
+                    <NavLink href="/module/sync"><span aria-hidden="true">↻</span> @L["ContentSync"]</NavLink>
+                    <NavLink href="/module/schedules"><span aria-hidden="true">◷</span> @(L.IsArabic ? "الجدولة" : "Schedules")</NavLink>
+                    <NavLink href="/email/history"><span aria-hidden="true">✉</span> @(L.IsArabic ? "سجل إرسال البريد" : "Email Delivery History")</NavLink>
+                </div>
+            </details>
+
+            <details class="nav-section" open="@(ActiveGroup == "reports")">
+                <summary class="nav-section-toggle"><span>@(L.IsArabic ? "التقارير" : "REPORTS")</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/module/reports"><span aria-hidden="true">▥</span> @(L.IsArabic ? "التقارير والتصدير" : "Reports & Exports")</NavLink>
+                </div>
+            </details>
+
+            <details class="nav-section" open="@(ActiveGroup == "system")">
+                <summary class="nav-section-toggle"><span>@(L.IsArabic ? "النظام" : "SYSTEM")</span><span class="nav-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="nav-section-links">
+                    <NavLink href="/system-health"><span aria-hidden="true">♥</span> @(L.IsArabic ? "صحة النظام" : "System Health")</NavLink>
+                    <NavLink href="/module/logs"><span aria-hidden="true">≡</span> @(L.IsArabic ? "السجلات والأخطاء" : "Logs & Errors")</NavLink>
+                    <NavLink href="/module/backups"><span aria-hidden="true">⬡</span> @(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</NavLink>
+                    <NavLink href="/settings"><span aria-hidden="true">⚙</span> @L["Settings"]</NavLink>
+                    <NavLink href="/about-build"><span aria-hidden="true">ⓘ</span> @(L.IsArabic ? "معلومات الإصدار" : "Build Information")</NavLink>
+                </div>
+            </details>
         </nav>
-        <div class="sidebar-footer"><div><span class="status-dot"></span> @L["LocalSystemRunning"]</div><a href="/about-build" class="app-version"><strong>VERSION @(Build.Version)</strong><small>@Build.Branch · @Build.Commit</small></a></div>
+
+        <div class="sidebar-footer">
+            <div><span class="status-dot" aria-hidden="true"></span> @L["LocalSystemRunning"]</div>
+            <a href="/about-build" class="app-version" aria-label="@(L.IsArabic ? $"الإصدار {Build.Version}" : $"Version {Build.Version}")"><strong>VERSION @(Build.Version)</strong><small>@Build.Branch · @Build.Commit</small></a>
+        </div>
     </aside>
 
     <main class="main-area">
         <header class="topbar">
             <div class="topbar-title">
-                <button type="button" class="sidebar-toggle" @onclick="ToggleSidebarAsync" title="@(L.IsArabic ? "طي القائمة الجانبية" : "Collapse sidebar")">☰</button>
+                <button type="button" class="sidebar-toggle" @onclick="ToggleSidebarAsync" aria-label="@(L.IsArabic ? "إظهار أو إخفاء القائمة الجانبية" : "Toggle sidebar")" aria-expanded="@(!_sidebarCollapsed)" aria-controls="primary-navigation"><span aria-hidden="true">☰</span></button>
                 <div class="topbar-heading-block">
-                    <div class="app-breadcrumb"><span>@SectionTitle</span><b>›</b><strong>@PageTitle</strong></div>
+                    <div class="app-breadcrumb" aria-label="@(L.IsArabic ? "مسار الصفحة" : "Breadcrumb")"><span>@SectionTitle</span><b aria-hidden="true">›</b><strong>@PageTitle</strong></div>
                     <h2>@PageTitle</h2>
                 </div>
             </div>
             <div class="topbar-actions">
-                <button id="command-palette-trigger" type="button" class="command-trigger" @onclick="OpenCommandPalette" title="@(L.IsArabic ? "البحث السريع" : "Quick search")"><span>⌕</span><em>@(L.IsArabic ? "بحث سريع" : "Quick search")</em><kbd>Ctrl K</kbd></button>
-                <a class="topbar-version" href="/about-build">v@(Build.Version) <span>• @Build.Branch</span></a>
-                <button type="button" class="appearance-toggle" @onclick="ToggleAppearanceAsync" title="@(L.IsArabic ? "تبديل الوضع الفاتح والداكن" : "Toggle light and dark mode")">@(_appearanceMode == "light" ? "☀" : "☾")</button>
-                <div class="theme-picker"><button type="button" class="theme-trigger" @onclick="ToggleThemePicker" aria-expanded="@_themePickerOpen" title="@(L.IsArabic ? "تغيير ألوان النظام" : "Change application colors")">◈</button>@if (_themePickerOpen){<div class="theme-popover"><div class="theme-popover-head"><div><strong>@(L.IsArabic ? "ألوان النظام" : "Application colors")</strong><small>@(L.IsArabic ? "اختر لوحة الألوان المناسبة لك" : "Choose your preferred color palette")</small></div><button type="button" class="theme-popover-close" @onclick="CloseThemePicker">×</button></div><div class="theme-grid">@foreach (var theme in Themes){<button type="button" class="theme-swatch @(_selectedTheme == theme.Key ? "active" : string.Empty)" style="--swatch:@theme.Color" @onclick="() => SelectThemeAsync(theme.Key)"><span class="theme-swatch-dot"></span><span>@(L.IsArabic ? theme.ArabicName : theme.EnglishName)</span></button>}</div></div>}</div>
-                <button type="button" class="language-switch" onclick="window.appLanguage.toggleAndReload(); return false;" title="@L["Language"]">🌐 @L["SwitchLanguage"]</button>
+                <button id="command-palette-trigger" type="button" class="command-trigger" @onclick="OpenCommandPalette" aria-label="@(L.IsArabic ? "فتح البحث السريع" : "Open quick search")"><span aria-hidden="true">⌕</span><em>@(L.IsArabic ? "بحث سريع" : "Quick search")</em><kbd>Ctrl K</kbd></button>
+                <a class="topbar-version" href="/about-build" aria-label="@(L.IsArabic ? $"معلومات الإصدار {Build.Version}" : $"Build information {Build.Version}")">v@(Build.Version) <span>• @Build.Branch</span></a>
+                <button type="button" class="appearance-toggle" @onclick="ToggleAppearanceAsync" aria-label="@(L.IsArabic ? "تبديل الوضع الفاتح والداكن" : "Toggle light and dark mode")"><span aria-hidden="true">@(_appearanceMode == "light" ? "☀" : "☾")</span></button>
+                <div class="theme-picker">
+                    <button type="button" class="theme-trigger" @onclick="ToggleThemePicker" aria-expanded="@_themePickerOpen" aria-haspopup="true" aria-label="@(L.IsArabic ? "تغيير ألوان النظام" : "Change application colors")"><span aria-hidden="true">◈</span></button>
+                    @if (_themePickerOpen)
+                    {
+                        <div class="theme-popover" role="group" aria-label="@(L.IsArabic ? "ألوان النظام" : "Application colors")">
+                            <div class="theme-popover-head">
+                                <div><strong>@(L.IsArabic ? "ألوان النظام" : "Application colors")</strong><small>@(L.IsArabic ? "اختر لوحة الألوان المناسبة لك" : "Choose your preferred color palette")</small></div>
+                                <button type="button" class="theme-popover-close" @onclick="CloseThemePicker" aria-label="@(L.IsArabic ? "إغلاق اختيار الألوان" : "Close color picker")">×</button>
+                            </div>
+                            <div class="theme-grid">
+                                @foreach (var theme in Themes)
+                                {
+                                    <button type="button" class="theme-swatch @(_selectedTheme == theme.Key ? "active" : string.Empty)" style="--swatch:@theme.Color" @onclick="() => SelectThemeAsync(theme.Key)" aria-pressed="@(_selectedTheme == theme.Key)"><span class="theme-swatch-dot" aria-hidden="true"></span><span>@(L.IsArabic ? theme.ArabicName : theme.EnglishName)</span></button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button type="button" class="language-switch" onclick="window.appLanguage.toggleAndReload(); return false;" aria-label="@(L.IsArabic ? "Switch to English" : "التبديل إلى العربية")"><span aria-hidden="true">🌐</span><span class="language-label">@L["SwitchLanguage"]</span></button>
                 <CurrentUserChip />
             </div>
         </header>
-        <section class="content">@Body</section>
+        <section class="content" id="main-content" tabindex="-1">@Body</section>
     </main>
 </div>
 
 @if (_commandOpen)
 {
     <div class="command-overlay" @onclick="CloseCommandPalette">
-        <section class="command-dialog" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
-            <header><span>⌕</span><input autofocus @bind="_commandQuery" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث عن صفحة أو أمر..." : "Search pages and commands...")" /><button type="button" @onclick="CloseCommandPalette">Esc</button></header>
+        <section class="command-dialog" role="dialog" aria-modal="true" aria-label="@(L.IsArabic ? "البحث السريع" : "Quick search")" @onclick:stopPropagation="true">
+            <header>
+                <span aria-hidden="true">⌕</span>
+                <input autofocus @bind="_commandQuery" @bind:event="oninput" aria-label="@(L.IsArabic ? "ابحث عن صفحة أو أمر" : "Search pages and commands")" placeholder="@(L.IsArabic ? "ابحث عن صفحة أو أمر..." : "Search pages and commands...")" />
+                <button type="button" @onclick="CloseCommandPalette" aria-label="@(L.IsArabic ? "إغلاق البحث" : "Close search")">Esc</button>
+            </header>
             <div class="command-results">
                 @if (!FilteredCommands.Any())
                 {
@@ -57,7 +154,7 @@
                 {
                     @foreach (var command in FilteredCommands)
                     {
-                        <button type="button" class="command-item" @onclick="() => RunCommand(command)"><span>@command.Icon</span><div><strong>@(L.IsArabic ? command.ArabicName : command.EnglishName)</strong><small>@(L.IsArabic ? command.ArabicGroup : command.EnglishGroup)</small></div><kbd>↵</kbd></button>
+                        <button type="button" class="command-item" @onclick="() => RunCommand(command)"><span aria-hidden="true">@command.Icon</span><div><strong>@(L.IsArabic ? command.ArabicName : command.EnglishName)</strong><small>@(L.IsArabic ? command.ArabicGroup : command.EnglishGroup)</small></div><kbd>↵</kbd></button>
                     }
                 }
             </div>
@@ -79,50 +176,179 @@
     private string _selectedTheme = "gold";
     private string _appearanceMode = "dark";
 
-    private static readonly ThemeOption[] Themes = [new("gold","Gold","ذهبي","#c5a45d"),new("ocean","Ocean","أزرق","#3b82f6"),new("emerald","Emerald","زمردي","#10b981"),new("violet","Violet","بنفسجي","#8b5cf6"),new("rose","Rose","وردي","#f43f5e"),new("amber","Amber","كهرماني","#f59e0b"),new("cyan","Cyan","سماوي","#06b6d4"),new("slate","Slate","رمادي","#94a3b8")];
+    private static readonly ThemeOption[] Themes =
+    [
+        new("gold", "Gold", "ذهبي", "#c5a45d"),
+        new("ocean", "Ocean", "أزرق", "#3b82f6"),
+        new("emerald", "Emerald", "زمردي", "#10b981"),
+        new("violet", "Violet", "بنفسجي", "#8b5cf6"),
+        new("rose", "Rose", "وردي", "#f43f5e"),
+        new("amber", "Amber", "كهرماني", "#f59e0b"),
+        new("cyan", "Cyan", "سماوي", "#06b6d4"),
+        new("slate", "Slate", "رمادي", "#94a3b8")
+    ];
+
     private static readonly CommandOption[] Commands =
     [
-        new("✦","Welcome","مرحبًا","Overview","الرئيسية","/welcome"),
-        new("⌂","Dashboard","لوحة التحكم","Overview","الرئيسية","/"),
-        new("◉","Sites","المواقع","Overview","الرئيسية","/sites"),
-        new("▦","Content Hub","مركز إدارة المحتوى","Content","المحتوى","/content"),
-        new("▤","Posts","المقالات","Content","المحتوى","/module/posts"),
-        new("▧","Pages","الصفحات","Content","المحتوى","/module/pages"),
-        new("▣","Media","الوسائط","Content","المحتوى","/module/media"),
-        new("#","Categories & Tags","التصنيفات والوسوم","Content","المحتوى","/module/taxonomy"),
-        new("◌","Comments","التعليقات","Content","المحتوى","/module/comments"),
-        new("◎","Users","المستخدمون","Content","المحتوى","/module/users"),
-        new("◈","SEO Audit","تدقيق SEO","SEO","تحسين الظهور","/module/seo-audit"),
-        new("✦","AI Providers","مزودو الذكاء الاصطناعي","AI","الذكاء الاصطناعي","/module/ai-providers"),
-        new("▦","Operations Hub","مركز العمليات","Operations","التشغيل","/operations"),
-        new("≣","Site Operations","عمليات المواقع","Operations","التشغيل","/site-operations"),
-        new("◒","Site Reliability","موثوقية المواقع","Operations","التشغيل","/site-reliability"),
-        new("▶","Execution Center","مركز التنفيذ","Operations","التشغيل","/module/execution"),
-        new("↻","Synchronization","المزامنة","Operations","التشغيل","/module/sync"),
-        new("✉","Email Delivery History","سجل إرسال البريد","Operations","التشغيل","/email/history"),
-        new("▥","Reports","التقارير","Reports","التقارير","/module/reports"),
-        new("♥","System Health","صحة النظام","System","النظام","/system-health"),
-        new("⚙","Settings","الإعدادات","System","النظام","/settings"),
-        new("ⓘ","Build Information","معلومات الإصدار","System","النظام","/about-build")
+        new("✦", "Welcome", "مرحبًا", "Overview", "الرئيسية", "/welcome"),
+        new("⌂", "Dashboard", "لوحة التحكم", "Overview", "الرئيسية", "/"),
+        new("◉", "Sites", "المواقع", "Overview", "الرئيسية", "/sites"),
+        new("▦", "Content Hub", "مركز إدارة المحتوى", "Content", "المحتوى", "/content"),
+        new("▤", "Posts", "المقالات", "Content", "المحتوى", "/module/posts"),
+        new("▧", "Pages", "الصفحات", "Content", "المحتوى", "/module/pages"),
+        new("▣", "Media", "الوسائط", "Content", "المحتوى", "/module/media"),
+        new("#", "Categories & Tags", "التصنيفات والوسوم", "Content", "المحتوى", "/module/taxonomy"),
+        new("◌", "Comments", "التعليقات", "Content", "المحتوى", "/module/comments"),
+        new("◎", "Users", "المستخدمون", "Content", "المحتوى", "/module/users"),
+        new("◈", "SEO Audit", "تدقيق SEO", "SEO", "تحسين الظهور", "/module/seo-audit"),
+        new("✦", "SEO Suggestions", "اقتراحات التحسين", "SEO", "تحسين الظهور", "/module/seo-suggestions"),
+        new("✓", "Approval Queue", "قائمة الموافقات", "SEO", "تحسين الظهور", "/module/approvals"),
+        new("✦", "AI Center", "مركز الذكاء الاصطناعي", "AI", "الذكاء الاصطناعي", "/ai-center"),
+        new("◫", "Content Planner", "مخطط المحتوى", "AI", "الذكاء الاصطناعي", "/content-planner"),
+        new("◈", "AI Providers", "مزودو الذكاء الاصطناعي", "AI", "الذكاء الاصطناعي", "/module/ai-providers"),
+        new("⌘", "Prompt Templates", "قوالب الأوامر", "AI", "الذكاء الاصطناعي", "/module/prompts"),
+        new("▥", "AI Usage & Cost", "استخدام وتكلفة الذكاء الاصطناعي", "AI", "الذكاء الاصطناعي", "/module/ai-usage"),
+        new("▦", "Operations Hub", "مركز العمليات", "Operations", "التشغيل", "/operations"),
+        new("≣", "Site Operations", "عمليات المواقع", "Operations", "التشغيل", "/site-operations"),
+        new("◒", "Site Reliability", "موثوقية المواقع", "Operations", "التشغيل", "/site-reliability"),
+        new("▶", "Execution Center", "مركز التنفيذ", "Operations", "التشغيل", "/module/execution"),
+        new("↻", "Synchronization", "المزامنة", "Operations", "التشغيل", "/module/sync"),
+        new("◷", "Schedules", "الجدولة", "Operations", "التشغيل", "/module/schedules"),
+        new("✉", "Email Delivery History", "سجل إرسال البريد", "Operations", "التشغيل", "/email/history"),
+        new("▥", "Reports", "التقارير", "Reports", "التقارير", "/module/reports"),
+        new("♥", "System Health", "صحة النظام", "System", "النظام", "/system-health"),
+        new("≡", "Logs & Errors", "السجلات والأخطاء", "System", "النظام", "/module/logs"),
+        new("⬡", "Backup & Restore", "النسخ الاحتياطي", "System", "النظام", "/module/backups"),
+        new("⚙", "Settings", "الإعدادات", "System", "النظام", "/settings"),
+        new("ⓘ", "Build Information", "معلومات الإصدار", "System", "النظام", "/about-build")
     ];
 
     private IEnumerable<CommandOption> FilteredCommands => string.IsNullOrWhiteSpace(_commandQuery)
         ? Commands
-        : Commands.Where(x => x.EnglishName.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) || x.ArabicName.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) || x.EnglishGroup.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) || x.ArabicGroup.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase));
+        : Commands.Where(x =>
+            x.EnglishName.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) ||
+            x.ArabicName.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) ||
+            x.EnglishGroup.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase) ||
+            x.ArabicGroup.Contains(_commandQuery, StringComparison.OrdinalIgnoreCase));
 
-    protected override async Task OnAfterRenderAsync(bool firstRender){if(!firstRender)return;var culture=await JS.InvokeAsync<string?>("appLanguage.get");L.SetCulture(culture=="ar"?"ar":"en");await JS.InvokeVoidAsync("appLanguage.apply",L.Culture,L.Direction);_selectedTheme=await JS.InvokeAsync<string>("appTheme.get");_appearanceMode=await JS.InvokeAsync<string>("appTheme.getMode");_sidebarCollapsed=await JS.InvokeAsync<bool>("appTheme.getSidebarCollapsed");StateHasChanged();}
-    private void ToggleThemePicker()=>_themePickerOpen=!_themePickerOpen;
-    private void CloseThemePicker()=>_themePickerOpen=false;
-    private async Task SelectThemeAsync(string theme){_selectedTheme=await JS.InvokeAsync<string>("appTheme.set",theme);_themePickerOpen=false;}
-    private async Task ToggleAppearanceAsync()=>_appearanceMode=await JS.InvokeAsync<string>("appTheme.toggleMode");
-    private async Task ToggleSidebarAsync(){_sidebarCollapsed=!_sidebarCollapsed;await JS.InvokeVoidAsync("appTheme.setSidebarCollapsed",_sidebarCollapsed);}
-    private void OpenCommandPalette(){_commandQuery=string.Empty;_commandOpen=true;_themePickerOpen=false;}
-    private void CloseCommandPalette()=>_commandOpen=false;
-    private void RunCommand(CommandOption command){_commandOpen=false;Navigation.NavigateTo(command.Path);}
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        var culture = await JS.InvokeAsync<string?>("appLanguage.get");
+        L.SetCulture(culture == "ar" ? "ar" : "en");
+        await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+        _selectedTheme = await JS.InvokeAsync<string>("appTheme.get");
+        _appearanceMode = await JS.InvokeAsync<string>("appTheme.getMode");
+        _sidebarCollapsed = await JS.InvokeAsync<bool>("appTheme.getSidebarCollapsed");
+        StateHasChanged();
+    }
 
-    private static string GroupForPath(string path){if(path is "/" or "/welcome" or "/sites"||path.StartsWith("/sites/",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/overview",StringComparison.OrdinalIgnoreCase))return "overview";if(path.Equals("/content",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/content",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/posts",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/pages",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/media",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/taxonomy",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/comments",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/users",StringComparison.OrdinalIgnoreCase))return "content";if(path.StartsWith("/module/seo",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/approvals",StringComparison.OrdinalIgnoreCase))return "seo";if(path.StartsWith("/module/ai",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/prompts",StringComparison.OrdinalIgnoreCase))return "ai";if(path.StartsWith("/operations",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/site-operations",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/site-reliability",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/execution",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/sync",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/module/schedules",StringComparison.OrdinalIgnoreCase)||path.StartsWith("/email/",StringComparison.OrdinalIgnoreCase))return "operations";if(path.StartsWith("/module/reports",StringComparison.OrdinalIgnoreCase))return "reports";return "system";}
-    private static string SectionForPath(string path,bool ar)=>GroupForPath(path) switch{"overview"=>ar?"الرئيسية":"Overview","content"=>ar?"إدارة المحتوى":"Content","seo"=>"SEO","ai"=>ar?"الذكاء الاصطناعي":"AI Workspace","operations"=>ar?"التشغيل والأتمتة":"Operations","reports"=>ar?"التقارير":"Reports",_=>ar?"النظام":"System"};
-    private static string PageForPath(string path,bool ar){if(path=="/welcome")return ar?"مرحبًا بك":"Welcome";if(path=="/")return ar?"لوحة التحكم":"Dashboard";if(path=="/sites")return ar?"المواقع":"Sites";if(path.StartsWith("/module/content",StringComparison.OrdinalIgnoreCase))return ar?"مركز إدارة المحتوى":"Content Hub";var command=Commands.OrderByDescending(x=>x.Path.Length).FirstOrDefault(x=>path.StartsWith(x.Path,StringComparison.OrdinalIgnoreCase));return command is null?(ar?"مساحة العمل":"Workspace"):(ar?command.ArabicName:command.EnglishName);}
-    private sealed record ThemeOption(string Key,string EnglishName,string ArabicName,string Color);
-    private sealed record CommandOption(string Icon,string EnglishName,string ArabicName,string EnglishGroup,string ArabicGroup,string Path);
+    private void ToggleThemePicker() => _themePickerOpen = !_themePickerOpen;
+    private void CloseThemePicker() => _themePickerOpen = false;
+
+    private async Task SelectThemeAsync(string theme)
+    {
+        _selectedTheme = await JS.InvokeAsync<string>("appTheme.set", theme);
+        _themePickerOpen = false;
+    }
+
+    private async Task ToggleAppearanceAsync() =>
+        _appearanceMode = await JS.InvokeAsync<string>("appTheme.toggleMode");
+
+    private async Task ToggleSidebarAsync()
+    {
+        _sidebarCollapsed = !_sidebarCollapsed;
+        await JS.InvokeVoidAsync("appTheme.setSidebarCollapsed", _sidebarCollapsed);
+    }
+
+    private void OpenCommandPalette()
+    {
+        _commandQuery = string.Empty;
+        _commandOpen = true;
+        _themePickerOpen = false;
+    }
+
+    private void CloseCommandPalette() => _commandOpen = false;
+
+    private void RunCommand(CommandOption command)
+    {
+        _commandOpen = false;
+        Navigation.NavigateTo(command.Path);
+    }
+
+    private static string GroupForPath(string path)
+    {
+        if (path is "/" or "/welcome" or "/sites" ||
+            path.StartsWith("/sites/", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/overview", StringComparison.OrdinalIgnoreCase))
+            return "overview";
+
+        if (path.Equals("/content", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/content", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/posts", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/pages", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/media", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/taxonomy", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/comments", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/users", StringComparison.OrdinalIgnoreCase))
+            return "content";
+
+        if (path.StartsWith("/module/seo", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/approvals", StringComparison.OrdinalIgnoreCase))
+            return "seo";
+
+        if (path.Equals("/ai-center", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/content-planner", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/ai", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/prompts", StringComparison.OrdinalIgnoreCase))
+            return "ai";
+
+        if (path.StartsWith("/operations", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/site-operations", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/site-reliability", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/execution", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/sync", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/module/schedules", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/email/", StringComparison.OrdinalIgnoreCase))
+            return "operations";
+
+        if (path.StartsWith("/module/reports", StringComparison.OrdinalIgnoreCase))
+            return "reports";
+
+        return "system";
+    }
+
+    private static string SectionForPath(string path, bool ar) => GroupForPath(path) switch
+    {
+        "overview" => ar ? "الرئيسية" : "Overview",
+        "content" => ar ? "إدارة المحتوى" : "Content",
+        "seo" => "SEO",
+        "ai" => ar ? "الذكاء الاصطناعي" : "AI Workspace",
+        "operations" => ar ? "التشغيل والأتمتة" : "Operations",
+        "reports" => ar ? "التقارير" : "Reports",
+        _ => ar ? "النظام" : "System"
+    };
+
+    private static string PageForPath(string path, bool ar)
+    {
+        if (path == "/welcome") return ar ? "مرحبًا بك" : "Welcome";
+        if (path == "/") return ar ? "لوحة التحكم" : "Dashboard";
+        if (path == "/sites") return ar ? "المواقع" : "Sites";
+        if (path.StartsWith("/module/content", StringComparison.OrdinalIgnoreCase))
+            return ar ? "مركز إدارة المحتوى" : "Content Hub";
+
+        var command = Commands
+            .Where(x => x.Path == "/"
+                ? path.Equals("/", StringComparison.OrdinalIgnoreCase)
+                : path.StartsWith(x.Path, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(x => x.Path.Length)
+            .FirstOrDefault();
+
+        return command is null
+            ? (ar ? "مساحة العمل" : "Workspace")
+            : (ar ? command.ArabicName : command.EnglishName);
+    }
+
+    private sealed record ThemeOption(string Key, string EnglishName, string ArabicName, string Color);
+    private sealed record CommandOption(string Icon, string EnglishName, string ArabicName, string EnglishGroup, string ArabicGroup, string Path);
 }
