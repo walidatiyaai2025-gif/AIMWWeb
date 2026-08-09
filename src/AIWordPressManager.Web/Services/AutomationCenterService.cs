@@ -1,5 +1,7 @@
 using AIWordPressManager.Application.Abstractions;
+using AIWordPressManager.Persistence;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -339,6 +341,17 @@ public sealed class AutomationSchedulerService(
     private async Task<AutomationExecutionResult> ExecuteJobAsync(AutomationJob job, CancellationToken cancellationToken)
     {
         using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var ownerUserId = await dbContext.Sites
+            .AsNoTracking()
+            .Where(x => x.Id == job.SiteId)
+            .Select(x => x.OwnerUserId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!ownerUserId.HasValue || ownerUserId.Value == Guid.Empty)
+            throw new UnauthorizedAccessException("Background execution could not resolve an owner for the automation site.");
+
+        using var executionIdentity = BackgroundExecutionIdentity.Push(ownerUserId.Value);
 
         if (string.Equals(job.Type, "Synchronization", StringComparison.OrdinalIgnoreCase))
         {
