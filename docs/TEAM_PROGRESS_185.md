@@ -1,11 +1,12 @@
 # TEAM PROGRESS 185 — AI-007 Persistent AI usage and cost observability
 
 ## Status
-IMPLEMENTED on `agent/ai-007-usage-observability`; implementation-head CI is required before release reconciliation.
+IMPLEMENTED for target release `155.130.0`; final release-head CI is required before merge.
 
 ## Tracking
 - Issue #44 — AI-007: tenant-safe persistent AI usage and cost dashboard.
-- Target release: `155.130.0` after green implementation and release-head CI.
+- PR #45 — AI-007: tenant-safe persistent AI usage observability.
+- Release: `155.130.0`.
 
 ## Delivered
 - Replaced the process-local AI usage queue in production DI with a persistent application-data usage log.
@@ -26,5 +27,12 @@ IMPLEMENTED on `agent/ai-007-usage-observability`; implementation-head CI is req
 - Existing `IAIUsageLog` / `AIUsageEntry` contracts remain compatible.
 - Provider adapters remain authoritative for `EstimatedCost`; this task does not invent model pricing when an adapter reports zero.
 
-## Validation
-Pending GitHub Actions Build and .NET Build Verification on the implementation head.
+## Validation history
+The first implementation head was correctly blocked by CI because temporary-file cleanup attempted to return from a `finally` block:
+- .NET Build Verification #992 — FAILED with `CS0157`; tests were skipped after compile failure.
+
+Corrected implementation head `993b1e415b5b6ce4a1fd4d3d4c275d354faef06d`:
+- Build #1385 — SUCCESS (Restore + Build + Test).
+- .NET Build Verification #993 — SUCCESS (Restore + Build + automated tests + test-result upload).
+
+The final release head containing version, release notes, team progress, and canonical status must repeat both gates successfully before merge.
