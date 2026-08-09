@@ -1,4 +1,6 @@
 using AIWordPressManager.Application.Abstractions.WordPress;
+using AIWordPressManager.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -32,6 +34,17 @@ public sealed class BulkContentOperationWorker(
     private async Task ProcessAsync(BulkContentOperationRequest request, CancellationToken cancellationToken)
     {
         using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var ownerUserId = await dbContext.Sites
+            .AsNoTracking()
+            .Where(x => x.Id == request.SiteId)
+            .Select(x => x.OwnerUserId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!ownerUserId.HasValue || ownerUserId.Value == Guid.Empty)
+            throw new UnauthorizedAccessException("Background execution could not resolve an owner for the selected site.");
+
+        using var executionIdentity = BackgroundExecutionIdentity.Push(ownerUserId.Value);
         var editor = scope.ServiceProvider.GetRequiredService<IWordPressPostEditorService>();
         var syncService = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
         var succeeded = 0;

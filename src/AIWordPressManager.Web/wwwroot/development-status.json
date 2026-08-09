@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-09T11:58:00Z",
+  "updatedAtUtc": "2026-08-09T12:27:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -74,7 +74,7 @@
     { "id": "OPS-002", "phase": 5, "area": "Sync", "nameAr": "فحص التغييرات قبل المزامنة الكاملة", "nameEn": "Delta probe before full synchronization", "status": "completed", "priority": "medium", "version": "existing", "notes": "Skips full refresh when no remote changes are detected." },
     { "id": "OPS-003", "phase": 5, "area": "Execution", "nameAr": "مركز التنفيذ", "nameEn": "Execution Center", "status": "completed", "priority": "critical", "version": "155.91.0", "notes": "Site-scoped queue, progress, activity, pause, resume, retry, and cancel." },
     { "id": "OPS-004", "phase": 5, "area": "Scheduling", "nameAr": "واجهة الجداول والأتمتة", "nameEn": "Automation schedules workspace", "status": "completed", "priority": "high", "version": "155.92.0", "notes": "Create, edit, enable, disable, queue now, and delete schedules for owned sites." },
-    { "id": "OPS-005", "phase": 5, "area": "Scheduling", "nameAr": "هوية المالك داخل الـBackground Worker", "nameEn": "Owner identity in background worker", "status": "in_progress", "priority": "critical", "version": "155.92.0", "notes": "UI ownership is enforced; hosted worker still needs explicit owner context for multi-user execution." },
+    { "id": "OPS-005", "phase": 5, "area": "Scheduling", "nameAr": "هوية المالك داخل الـBackground Worker", "nameEn": "Owner identity in background worker", "status": "completed", "priority": "critical", "version": "155.121.0", "notes": "Automation and bulk WordPress background workers now resolve the authoritative current Site.OwnerUserId before execution and flow it through CurrentUserContext without granting roles. Missing or ownerless sites fail closed; existing automation jobs need no owner-data migration because ownership is resolved at execution time." },
     { "id": "OPS-006", "phase": 5, "area": "Scheduling", "nameAr": "ربط سجل التشغيل بمالك وموقع ومعرف Job", "nameEn": "Owner, site, and job identity in operation history", "status": "planned", "priority": "critical", "version": null, "notes": "Required for complete multi-tenant operational isolation." },
     { "id": "OPS-007", "phase": 5, "area": "Notifications", "nameAr": "مركز الإشعارات", "nameEn": "Notification center", "status": "in_progress", "priority": "medium", "version": "existing", "notes": "UI and service exist; tenant ownership and delivery policy audit remain." },
     { "id": "OPS-008", "phase": 5, "area": "Recovery", "nameAr": "استعادة المهام بعد إعادة تشغيل التطبيق", "nameEn": "Recover jobs after application restart", "status": "completed", "priority": "high", "version": "existing", "notes": "Interrupted execution and automation records are recovered to a schedulable state." },
