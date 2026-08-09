@@ -26,6 +26,7 @@ else
                     Subtitle="@($"{_site.Name} — {L["MediaManagerIntro"]}")">
             <Actions>
                 <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_busy" Disabled="@_busy" OnClick="RefreshClickedAsync" />
+                <AppButton Href="/module/media" Text="@(L.IsArabic ? "كل الوسائط" : "Global media")" />
                 <AppButton Href="@($"/sites/{SiteId}/explorer")" Text="@L["BackToExplorer"]" />
             </Actions>
         </AppToolbar>
@@ -44,23 +45,102 @@ else
 
         <AppSection Eyebrow="@(L.IsArabic ? "رفع ملف" : "UPLOAD")"
                     Title="@L["UploadMedia"]"
-                    Subtitle="@L["UploadMediaHelp"]">
+                    Subtitle="@(L.IsArabic ? "ارفع صورًا ومستندات مسموحًا بها حتى 25 MB. يتم التحقق من الامتداد ونوع المحتوى قبل الإرسال." : "Upload approved images and documents up to 25 MB. Extension and content type are validated before WordPress receives the file.")">
             <ChildContent>
                 <div class="form-grid">
-                    <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
+                    <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
                     <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
                     <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
                     <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
                 </div>
                 @if (_selectedFile is not null)
                 {
-                    <div class="selected-file"><strong>@_selectedFile.Name</strong><small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small></div>
+                    var validation = MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType);
+                    <div class="selected-file">
+                        <strong>@_selectedFile.Name</strong>
+                        <small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small>
+                        @if (!validation.IsValid)
+                        {
+                            <small style="display:block;color:var(--danger,#dc2626);margin-top:6px">@L.TranslateMessage(validation.Message)</small>
+                        }
+                    </div>
                 }
                 <div class="actions">
-                    <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || _selectedFile is null)" OnClick="UploadClickedAsync" />
+                    <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || !SelectedFileIsValid)" OnClick="UploadClickedAsync" />
                 </div>
             </ChildContent>
         </AppSection>
+
+        @if (_editing is not null)
+        {
+            <AppSection Eyebrow="@(L.IsArabic ? "تحسين الوسائط" : "MEDIA OPTIMIZATION")"
+                        Title="@(L.IsArabic ? $"تحسين #{_editing.MediaId}" : $"Optimize media #{_editing.MediaId}")"
+                        Subtitle="@(L.IsArabic ? "حسّن العنوان وAlt Text والوصف والرابط المختصر بدون إعادة ضغط الملف الأصلي." : "Improve title, alt text, description, caption, and slug without recompressing the original binary.")">
+                <ChildContent>
+                    <div style="display:grid;grid-template-columns:minmax(180px,280px) minmax(0,1fr);gap:20px;align-items:start">
+                        <div>
+                            <div class="media-preview" style="min-height:180px">
+                                @if (IsEditingImage)
+                                {
+                                    <img src="@_editing.SourceUrl" alt="@_editAltText" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span>@L["File"]</span>
+                                }
+                            </div>
+                            <div style="display:grid;gap:7px;margin-top:12px;font-size:.86rem;opacity:.78">
+                                <span>@_editing.MimeType</span>
+                                @if (_editing.Width.HasValue && _editing.Height.HasValue)
+                                {
+                                    <span>@_editing.Width × @_editing.Height px</span>
+                                }
+                                @if (_editing.FileSize.HasValue)
+                                {
+                                    <span>@FormatSize(_editing.FileSize.Value)</span>
+                                }
+                                <span>@(L.IsArabic ? "جودة البيانات الوصفية" : "Metadata quality"): <strong>@OptimizationScore/100</strong></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="form-grid">
+                                <label><span>@L["Title"]</span><InputText @bind-Value="_editTitle" /></label>
+                                <label><span>@(L.IsArabic ? "الرابط المختصر" : "Slug")</span><InputText @bind-Value="_editSlug" dir="ltr" /></label>
+                                <label style="grid-column:1/-1"><span>@L["AltText"]</span><InputText @bind-Value="_editAltText" /></label>
+                                <label style="grid-column:1/-1"><span>@L["Caption"]</span><InputTextArea @bind-Value="_editCaption" /></label>
+                                <label style="grid-column:1/-1"><span>@(L.IsArabic ? "الوصف" : "Description")</span><InputTextArea @bind-Value="_editDescription" /></label>
+                            </div>
+
+                            @if (IsEditingImage)
+                            {
+                                <div class="panel" style="padding:14px;margin-top:14px">
+                                    <strong>@(L.IsArabic ? "اقتراح Alt Text بالذكاء الاصطناعي" : "AI alt-text suggestion")</strong>
+                                    <p style="margin:6px 0 10px;opacity:.72;font-size:.88rem">@(L.IsArabic ? "اكتب سياق الصورة أو الغرض منها، ثم راجع الاقتراح قبل الحفظ." : "Describe the image context or purpose, then review the suggestion before saving.")</p>
+                                    <InputTextArea @bind-Value="_aiContext" placeholder="@(L.IsArabic ? "مثال: صورة رئيسية لمقال عن تحسين سرعة WordPress" : "Example: Hero image for an article about WordPress performance")" />
+                                    <div class="actions" style="margin-top:10px">
+                                        <AppButton Icon="✦" Text="@(L.IsArabic ? "اقتراح Alt Text" : "Suggest alt text")" Busy="@_aiBusy" Disabled="@(_busy || _aiBusy || string.IsNullOrWhiteSpace(_aiContext))" OnClick="SuggestAltClickedAsync" />
+                                    </div>
+                                </div>
+                            }
+
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px">
+                                @OptimizationCheck(!string.IsNullOrWhiteSpace(_editTitle), L.IsArabic ? "عنوان واضح" : "Clear title")
+                                @OptimizationCheck(!string.IsNullOrWhiteSpace(_editSlug), L.IsArabic ? "رابط مختصر" : "Slug")
+                                @OptimizationCheck(!IsEditingImage || !string.IsNullOrWhiteSpace(_editAltText), L.IsArabic ? "Alt Text للصورة" : "Image alt text")
+                                @OptimizationCheck(!string.IsNullOrWhiteSpace(_editDescription), L.IsArabic ? "وصف" : "Description")
+                            </div>
+
+                            <div class="actions" style="margin-top:16px">
+                                <AppButton Variant="primary" Icon="✓" Text="@(L.IsArabic ? "حفظ التحسينات" : "Save optimization")" Busy="@_busy" Disabled="@(_busy || string.IsNullOrWhiteSpace(_editTitle))" OnClick="SaveOptimizationClickedAsync" />
+                                <AppButton Text="@L["Cancel"]" Disabled="@_busy" OnClick="CancelOptimizationClickedAsync" />
+                                <AppButton Href="@_editing.SourceUrl" Text="@L["OpenFile"]" Size="small" />
+                            </div>
+                        </div>
+                    </div>
+                </ChildContent>
+            </AppSection>
+        }
 
         <AppDataGrid TItem="MediaExplorerItem"
                      Items="@MediaItems"
@@ -116,13 +196,23 @@ else
                 <td>@FormatDate(item.ModifiedAtUtc)</td>
                 <td>
                     <div class="table-actions">
+                        <AppButton Variant="primary" Icon="✦" Text="@(L.IsArabic ? "تحسين" : "Optimize")" Size="small" Disabled="@_busy" OnClick="args => OpenOptimizationAsync(item)" />
                         <AppButton Href="@item.SourceUrl" Text="@L["OpenFile"]" Size="small" />
-                        <AppButton Variant="danger" Icon="⌫" Text="@L["Delete"]" Size="small" Disabled="@_busy" OnClick="args => DeleteAsync(item.WordPressId, item.Title)" />
+                        <AppButton Variant="danger" Icon="⌫" Text="@L["Delete"]" Size="small" Disabled="@_busy" OnClick="args => RequestDeleteAsync(item.WordPressId, item.Title)" />
                     </div>
                 </td>
             </RowTemplate>
         </AppDataGrid>
     </div>
+
+    <AppConfirmDialog @bind-Open="_deleteConfirmOpen"
+                      Title="@(L.IsArabic ? "حذف الوسيط نهائيًا؟" : "Permanently delete media?")"
+                      Message="@(L.IsArabic ? $"سيتم حذف «{DisplayTitle(_pendingDeleteTitle)}» من WordPress نهائيًا." : $"“{DisplayTitle(_pendingDeleteTitle)}” will be permanently deleted from WordPress.")"
+                      Details="@(L.IsArabic ? "هذه العملية تستخدم force=true ولا يمكن استعادتها من سلة مهملات WordPress. قد تتأثر الصفحات التي تستخدم هذا الملف." : "This operation uses force=true and cannot be restored from the WordPress trash. Pages that reference this file may be affected.")"
+                      ConfirmText="@(L.IsArabic ? "حذف نهائي" : "Delete permanently")"
+                      CancelText="@L["Cancel"]"
+                      Busy="@_busy"
+                      OnConfirm="ConfirmDeleteAsync" />
 }
 
 @code {
@@ -132,7 +222,13 @@ else
     private IBrowserFile? _selectedFile;
     private string _uploadTitle = string.Empty, _altText = string.Empty, _caption = string.Empty;
     private string? _message;
-    private bool _loading = true, _busy, _isError;
+    private bool _loading = true, _busy, _aiBusy, _isError;
+
+    private MediaEditableDetails? _editing;
+    private string _editTitle = string.Empty, _editSlug = string.Empty, _editAltText = string.Empty, _editCaption = string.Empty, _editDescription = string.Empty, _aiContext = string.Empty;
+    private bool _deleteConfirmOpen;
+    private int _pendingDeleteId;
+    private string _pendingDeleteTitle = string.Empty;
 
     private IReadOnlyList<MediaExplorerItem> MediaItems => (_data?.Media ?? Array.Empty<MediaExplorerItem>()).ToList();
     private int ImageCount => MediaItems.Count(x => x.MediaType == "image");
@@ -142,6 +238,14 @@ else
         ? new[] { "المعرف", "العنوان", "نوع الوسائط", "نوع MIME", "الرابط", "آخر تعديل" }
         : new[] { "Id", "Title", "Media type", "MIME type", "URL", "Modified" };
     private string CsvFileName => $"media-{SiteId:N}-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+    private bool SelectedFileIsValid => _selectedFile is not null && MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType).IsValid;
+    private bool IsEditingImage => _editing is not null && (_editing.MediaType.Equals("image", StringComparison.OrdinalIgnoreCase) || _editing.MimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
+    private int OptimizationScore => _editing is null ? 0
+        : (!string.IsNullOrWhiteSpace(_editTitle) ? 25 : 0)
+        + (!string.IsNullOrWhiteSpace(_editSlug) ? 15 : 0)
+        + (!IsEditingImage || !string.IsNullOrWhiteSpace(_editAltText) ? 35 : 0)
+        + (!string.IsNullOrWhiteSpace(_editCaption) ? 10 : 0)
+        + (!string.IsNullOrWhiteSpace(_editDescription) ? 15 : 0);
 
     protected override void OnInitialized() => L.Changed += Changed;
 
@@ -157,11 +261,16 @@ else
     {
         _selectedFile = args.File;
         if (string.IsNullOrWhiteSpace(_uploadTitle)) _uploadTitle = Path.GetFileNameWithoutExtension(args.File.Name);
-        _message = null;
+        var validation = MediaUploadPolicy.Validate(args.File.Name, args.File.Size, args.File.ContentType);
+        _isError = !validation.IsValid;
+        _message = validation.IsValid ? null : L.TranslateMessage(validation.Message);
     }
 
     private Task UploadClickedAsync(MouseEventArgs _) => UploadAsync();
     private Task RefreshClickedAsync(MouseEventArgs _) => RefreshAsync();
+    private Task SaveOptimizationClickedAsync(MouseEventArgs _) => SaveOptimizationAsync();
+    private Task SuggestAltClickedAsync(MouseEventArgs _) => SuggestAltAsync();
+    private Task CancelOptimizationClickedAsync(MouseEventArgs _) { ClearOptimization(); return Task.CompletedTask; }
 
     private async Task UploadAsync()
     {
@@ -174,8 +283,7 @@ else
             _message = L.TranslateMessage(result.Message);
             if (result.IsSuccess)
             {
-                await SyncService.SynchronizeAsync(SiteId);
-                _data = await SyncService.GetExplorerAsync(SiteId);
+                await RefreshLocalAsync();
                 _selectedFile = null; _uploadTitle = string.Empty; _altText = string.Empty; _caption = string.Empty;
             }
         }
@@ -183,18 +291,94 @@ else
         finally { _busy = false; }
     }
 
-    private async Task DeleteAsync(int mediaId, string title)
+    private async Task OpenOptimizationAsync(MediaExplorerItem item)
     {
         try
         {
             _busy = true; _isError = false; _message = null;
-            var result = await MediaService.DeleteAsync(SiteId, mediaId);
+            var result = await MediaService.GetDetailsAsync(SiteId, item.WordPressId);
+            if (!result.IsSuccess || result.Details is null)
+            {
+                _isError = true; _message = L.TranslateMessage(result.Message); return;
+            }
+
+            _editing = result.Details;
+            _editTitle = result.Details.Title;
+            _editSlug = result.Details.Slug;
+            _editAltText = result.Details.AltText;
+            _editCaption = PlainText(result.Details.Caption);
+            _editDescription = PlainText(result.Details.Description);
+            _aiContext = string.Join(". ", new[] { _editTitle, _editCaption, _editDescription }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task SaveOptimizationAsync()
+    {
+        if (_editing is null) return;
+        try
+        {
+            _busy = true; _isError = false; _message = null;
+            var request = new MediaMetadataUpdate(
+                _editTitle, _editAltText, _editCaption, _editDescription, _editSlug,
+                _editing.ModifiedGmt);
+            var result = await MediaService.UpdateMetadataAsync(SiteId, _editing.MediaId, request);
             _isError = !result.IsSuccess;
             _message = L.TranslateMessage(result.Message);
             if (result.IsSuccess)
             {
-                await SyncService.SynchronizeAsync(SiteId);
-                _data = await SyncService.GetExplorerAsync(SiteId);
+                await RefreshLocalAsync();
+                ClearOptimization();
+            }
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _busy = false; }
+    }
+
+    private async Task SuggestAltAsync()
+    {
+        if (_editing is null || !IsEditingImage || string.IsNullOrWhiteSpace(_aiContext)) return;
+        try
+        {
+            _aiBusy = true; _isError = false; _message = null;
+            _editAltText = await MediaService.SuggestAltTextAsync(
+                SiteId,
+                _editing.MediaId,
+                _aiContext,
+                L.IsArabic ? "ar" : "en",
+                null);
+            _message = L.IsArabic ? "تم إنشاء اقتراح Alt Text. راجعه ثم احفظ التحسينات." : "Alt-text suggestion generated. Review it, then save the optimization.";
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _aiBusy = false; }
+    }
+
+    private Task RequestDeleteAsync(int mediaId, string title)
+    {
+        _pendingDeleteId = mediaId;
+        _pendingDeleteTitle = title;
+        _deleteConfirmOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_pendingDeleteId <= 0) { _deleteConfirmOpen = false; return; }
+        try
+        {
+            _busy = true; _isError = false; _message = null;
+            var deletedId = _pendingDeleteId;
+            var result = await MediaService.DeleteAsync(SiteId, deletedId);
+            _isError = !result.IsSuccess;
+            _message = L.TranslateMessage(result.Message);
+            if (result.IsSuccess)
+            {
+                if (_editing?.MediaId == deletedId) ClearOptimization();
+                await RefreshLocalAsync();
+                _deleteConfirmOpen = false;
+                _pendingDeleteId = 0;
+                _pendingDeleteTitle = string.Empty;
             }
         }
         catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
@@ -215,9 +399,30 @@ else
         finally { _busy = false; }
     }
 
+    private async Task RefreshLocalAsync()
+    {
+        await SyncService.SynchronizeAsync(SiteId);
+        _data = await SyncService.GetExplorerAsync(SiteId);
+    }
+
+    private void ClearOptimization()
+    {
+        _editing = null;
+        _editTitle = _editSlug = _editAltText = _editCaption = _editDescription = _aiContext = string.Empty;
+    }
+
+    private RenderFragment OptimizationCheck(bool ok, string text) => builder =>
+    {
+        builder.OpenElement(0, "span");
+        builder.AddAttribute(1, "class", ok ? "badge success" : "badge warning");
+        builder.AddContent(2, $"{(ok ? "✓" : "!")} {text}");
+        builder.CloseElement();
+    };
+
     private string DisplayTitle(string value) => string.IsNullOrWhiteSpace(value) ? L["UntitledMedia"] : value;
     private string FormatDate(DateTimeOffset? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "dd/MM/yyyy HH:mm" : "MMM d, yyyy HH:mm") : L["Unknown"];
     private static string FormatSize(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
+    private static string PlainText(string value) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<[^>]+>", string.Empty)).Trim();
     private void Changed() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= Changed;
 }
