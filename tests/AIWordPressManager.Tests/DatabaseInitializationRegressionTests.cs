@@ -30,6 +30,16 @@ public sealed class DatabaseInitializationRegressionTests
         var initialize = async () => await service.InitializeAsync();
         await initialize.Should().NotThrowAsync();
 
+        var migrations = context.Database.GetMigrations();
+        migrations.Should().Contain("20260809094500_AddSiteSyncRuns");
+
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='SiteSyncRuns';";
+            var tableCount = Convert.ToInt32(await command.ExecuteScalarAsync());
+            tableCount.Should().Be(1, "the sync-history migration must create SiteSyncRuns before synchronization can persist a run");
+        }
+
         var siteColumns = new List<string>();
         await using (var command = connection.CreateCommand())
         {
