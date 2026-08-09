@@ -34,8 +34,17 @@ Remove tenant ambiguity from Execution Center and site-operation history by pers
 ## Known boundary
 Approval-workflow ownership remains tracked under the existing AI approval tasks. Legacy/unidentified approval-created execution entries are intentionally not exposed through owner-scoped Execution Center views until that workflow receives authoritative tenant identity.
 
+## Validation
+- Full solution/Razor build passed.
+- Full automated test suite passed.
+- Execution Center migration/isolation tests passed.
+- Site-operation history identity/cleanup tests passed.
+- GitHub Actions `Build #1215` passed.
+- GitHub Actions `.NET Build Verification #912` passed.
+- Final-head CI is required again after canonical roadmap reconciliation before merge.
+
 ## Version
 `155.122.0`
 
 ## Status
-Implemented — CI validation pending.
+Verified — final-head CI pending after roadmap reconciliation.
