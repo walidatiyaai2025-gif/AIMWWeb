@@ -25,14 +25,15 @@ Prevent synchronization from silently replacing a useful local mirror when live 
 - **Accept WordPress**: perform a forced full refresh and make the local cache match live WordPress.
 - **Remote additions**: not conflicts because there is no local version to protect; normal synchronization can import them.
 
-## Validation gate
-- Full solution/Razor build.
-- Full automated test suite.
-- `SyncConflictPolicyTests` green.
-- GitHub Actions `Build` and `.NET Build Verification` green before merge.
+## Validation
+- Full solution/Razor build: PASS.
+- Full automated test suite: PASS.
+- `SyncConflictPolicyTests`: PASS.
+- GitHub Actions `Build` #1171: SUCCESS.
+- GitHub Actions `.NET Build Verification` #904: SUCCESS.
 
 ## Version
 `155.120.0`
 
 ## Status
-Implemented — CI validation pending.
+VERIFIED — canonical registry reconciliation and final-head CI pending.
