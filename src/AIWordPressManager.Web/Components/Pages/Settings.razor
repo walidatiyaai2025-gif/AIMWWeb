@@ -33,6 +33,7 @@
             <a href="#accessibility"><span>Aa</span><div><strong>@(L.IsArabic ? "سهولة الاستخدام" : "Accessibility")</strong><small>@(L.IsArabic ? "الخط والكثافة والحركة" : "Font, density, and motion")</small></div></a>
             <AuthorizeView Roles="Administrator">
                 <a href="/settings/ai-providers"><span>AI</span><div><strong>@(L.IsArabic ? "مزودو الذكاء الاصطناعي" : "AI providers")</strong><small>@(L.IsArabic ? "المفاتيح والنماذج والأولوية" : "Keys, models, and priority")</small></div></a>
+                <a href="/settings/ai-prompts"><span>V</span><div><strong>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI prompt templates")</strong><small>@(L.IsArabic ? "النصوص والإصدارات والاستعادة" : "Prompts, versions, and restore")</small></div></a>
             </AuthorizeView>
             <a href="#database"><span>DB</span><div><strong>@L["Database"]</strong><small>@(L.IsArabic ? "التخزين المحلي" : "Local storage")</small></div></a>
         </nav>
