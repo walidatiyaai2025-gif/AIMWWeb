@@ -1,0 +1,356 @@
+/* UX-001 — shared application-shell design layer.
+   Extends the existing --ui-* and theme tokens; it does not replace them. */
+:root {
+    --shell-sidebar-width: 284px;
+    --shell-sidebar-collapsed-width: 88px;
+    --shell-topbar-height: 76px;
+    --shell-content-max: 1560px;
+    --shell-gutter: clamp(1rem, 2vw, 2rem);
+    --shell-touch-target: 44px;
+    --shell-radius: var(--ui-radius-lg, 1.25rem);
+    --shell-radius-sm: var(--ui-radius-md, .9rem);
+    --shell-border: color-mix(in srgb, var(--border) 88%, transparent);
+    --shell-surface: color-mix(in srgb, var(--surface) 94%, transparent);
+    --shell-surface-raised: color-mix(in srgb, var(--surface2) 88%, var(--surface));
+    --shell-canvas-glow: color-mix(in srgb, var(--accent) 6%, transparent);
+    --shell-shadow: 0 20px 60px rgba(0, 0, 0, .16);
+}
+
+.skip-link {
+    position: fixed;
+    inset-block-start: .75rem;
+    inset-inline-start: .75rem;
+    z-index: 9999;
+    padding: .65rem .9rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--ui-radius-sm, .55rem);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--focus-ring);
+    transform: translateY(-160%);
+    transition: transform .16s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+
+.design-system-shell.app-shell {
+    grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr);
+    min-height: 100dvh;
+    background:
+        radial-gradient(circle at 78% -12%, var(--shell-canvas-glow), transparent 32rem),
+        var(--bg);
+}
+.design-system-shell.app-shell.sidebar-collapsed {
+    grid-template-columns: var(--shell-sidebar-collapsed-width) minmax(0, 1fr);
+}
+
+.design-system-shell .sidebar {
+    width: 100%;
+    min-width: 0;
+    padding: 1.15rem .9rem;
+    border-inline-end: 1px solid var(--shell-border);
+    border-inline-start: 0;
+    background: var(--shell-surface);
+    box-shadow: 12px 0 42px rgba(0, 0, 0, .08);
+}
+[dir="rtl"] .design-system-shell .sidebar {
+    border-inline-start: 1px solid var(--shell-border);
+    border-inline-end: 0;
+    box-shadow: -12px 0 42px rgba(0, 0, 0, .08);
+}
+
+.design-system-shell .brand {
+    min-height: 68px;
+    margin-bottom: .8rem;
+    padding: .65rem .65rem 1rem;
+    border-bottom: 1px solid var(--shell-border);
+    border-radius: var(--shell-radius-sm) var(--shell-radius-sm) 0 0;
+}
+.design-system-shell .brand:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.design-system-shell .brand:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.design-system-shell .brand-mark {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: .9rem;
+    letter-spacing: -.02em;
+}
+.design-system-shell .brand strong { font-size: .93rem; line-height: 1.25; }
+.design-system-shell .brand small { font-size: .73rem; }
+
+.design-system-shell .main-nav {
+    display: grid;
+    align-content: start;
+    gap: .55rem;
+    min-height: 0;
+    padding: .2rem .15rem .75rem;
+}
+.design-system-shell .nav-section {
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: var(--shell-radius-sm);
+    background: transparent;
+}
+.design-system-shell .nav-section[open] {
+    border-color: var(--shell-border);
+    background: color-mix(in srgb, var(--surface2) 46%, transparent);
+}
+.design-system-shell .nav-section-toggle {
+    min-height: var(--shell-touch-target);
+    padding: .62rem .72rem;
+    border-radius: calc(var(--shell-radius-sm) - .15rem);
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 850;
+    letter-spacing: .105em;
+}
+.design-system-shell .nav-section-toggle:hover,
+.design-system-shell .nav-section-toggle:focus-visible,
+.design-system-shell .nav-section[open] > .nav-section-toggle {
+    background: color-mix(in srgb, var(--surface2) 78%, transparent);
+    color: var(--text);
+}
+.design-system-shell .nav-section-toggle:focus-visible,
+.design-system-shell .nav-section-links a:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+.design-system-shell .nav-section-links {
+    gap: .22rem;
+    padding: .25rem .35rem .5rem;
+}
+.design-system-shell .nav-section-links a {
+    position: relative;
+    min-height: var(--shell-touch-target);
+    padding: .62rem .72rem !important;
+    border: 1px solid transparent;
+    border-radius: .72rem;
+    color: color-mix(in srgb, var(--text) 78%, var(--muted));
+    font-size: .88rem;
+    line-height: 1.25;
+}
+.design-system-shell .nav-section-links a > span:first-child {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.45rem;
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: .48rem;
+    color: var(--muted);
+}
+.design-system-shell .nav-section-links a:hover {
+    border-color: color-mix(in srgb, var(--accent) 18%, var(--shell-border));
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface2));
+    color: var(--text);
+}
+.design-system-shell .nav-section-links a.active {
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--shell-border));
+    background: linear-gradient(90deg, var(--accent-soft), color-mix(in srgb, var(--surface2) 92%, transparent));
+    color: var(--text);
+    box-shadow: inset 3px 0 var(--accent), 0 8px 24px rgba(0, 0, 0, .08);
+}
+[dir="rtl"] .design-system-shell .nav-section-links a.active {
+    box-shadow: inset -3px 0 var(--accent), 0 8px 24px rgba(0, 0, 0, .08);
+}
+.design-system-shell .nav-section-links a.active > span:first-child {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.design-system-shell .sidebar-footer {
+    margin-top: auto;
+    padding: .85rem .55rem .15rem;
+    border-top: 1px solid var(--shell-border);
+    font-size: .75rem;
+}
+.design-system-shell .app-version {
+    display: grid;
+    gap: .12rem;
+    max-width: 100%;
+    padding: .4rem .5rem;
+    border-radius: .65rem;
+}
+.design-system-shell .app-version:hover { background: var(--accent-soft); }
+.design-system-shell .app-version small {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.design-system-shell .main-area {
+    min-width: 0;
+    background: transparent;
+}
+.design-system-shell .topbar {
+    min-height: var(--shell-topbar-height);
+    padding: .75rem var(--shell-gutter);
+    border-bottom: 1px solid var(--shell-border);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, .08);
+    backdrop-filter: saturate(135%) blur(18px);
+}
+html[data-mode="light"] .design-system-shell .topbar {
+    background: color-mix(in srgb, #fff 88%, transparent);
+}
+.design-system-shell .topbar-title,
+.design-system-shell .topbar-actions {
+    min-width: 0;
+}
+.design-system-shell .topbar-title {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+}
+.design-system-shell .topbar-heading-block { min-width: 0; }
+.design-system-shell .app-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    min-width: 0;
+    color: var(--muted);
+    font-size: .74rem;
+}
+.design-system-shell .app-breadcrumb strong,
+.design-system-shell .app-breadcrumb span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.design-system-shell .app-breadcrumb b { color: var(--accent-strong); }
+.design-system-shell .topbar h2 {
+    overflow: hidden;
+    margin-top: .12rem;
+    max-width: 38rem;
+    font-size: clamp(1.05rem, 1.55vw, 1.35rem);
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.design-system-shell .topbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+.design-system-shell .sidebar-toggle,
+.design-system-shell .appearance-toggle,
+.design-system-shell .theme-trigger,
+.design-system-shell .language-switch,
+.design-system-shell .command-trigger {
+    min-height: var(--shell-touch-target);
+}
+.design-system-shell .sidebar-toggle,
+.design-system-shell .appearance-toggle,
+.design-system-shell .theme-trigger {
+    min-width: var(--shell-touch-target);
+    width: var(--shell-touch-target);
+    height: var(--shell-touch-target);
+}
+.design-system-shell .command-trigger,
+.design-system-shell .language-switch,
+.design-system-shell .topbar-version {
+    border-radius: .72rem;
+}
+.design-system-shell .topbar-version {
+    min-height: var(--shell-touch-target);
+    padding-inline: .7rem;
+}
+
+.design-system-shell .content {
+    width: min(100%, var(--shell-content-max));
+    max-width: var(--shell-content-max);
+    margin-inline: auto;
+    padding: clamp(1rem, 2.4vw, 2.25rem) var(--shell-gutter) 3rem;
+}
+
+.design-system-shell :is(a, button, summary, input, select, textarea):focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+.design-system-shell :is(button, summary, .btn, .app-button, .nav-section-links a) { touch-action: manipulation; }
+
+.design-system-shell.sidebar-collapsed .brand { padding-inline: .3rem; }
+.design-system-shell.sidebar-collapsed .brand-mark { margin-inline: auto; }
+.design-system-shell.sidebar-collapsed .nav-section { border-color: transparent; background: transparent; }
+.design-system-shell.sidebar-collapsed .nav-section-toggle { min-height: 38px; }
+.design-system-shell.sidebar-collapsed .nav-section-links { padding-inline: .1rem; }
+.design-system-shell.sidebar-collapsed .nav-section-links a { padding-inline: .4rem !important; }
+
+@media (max-width: 1180px) {
+    .design-system-shell .topbar-version { display: none; }
+    .design-system-shell .command-trigger em { display: none; }
+    .design-system-shell .command-trigger { min-width: var(--shell-touch-target); padding-inline: .7rem; }
+    .design-system-shell .command-trigger kbd { display: none; }
+}
+
+@media (max-width: 920px) {
+    .design-system-shell .topbar { align-items: flex-start; gap: .65rem; }
+    .design-system-shell .app-breadcrumb { display: none; }
+    .design-system-shell .language-switch {
+        min-width: var(--shell-touch-target);
+        width: var(--shell-touch-target);
+        overflow: hidden;
+        padding-inline: .58rem;
+        white-space: nowrap;
+    }
+    .design-system-shell .language-switch .language-label { display: none; }
+}
+
+@media (max-width: 700px) {
+    :root { --shell-gutter: .9rem; --shell-topbar-height: 66px; }
+
+    .design-system-shell.app-shell,
+    .design-system-shell.app-shell.sidebar-collapsed { display: block; }
+    .design-system-shell .topbar {
+        position: sticky !important;
+        top: 0;
+        align-items: center;
+        min-height: var(--shell-topbar-height);
+        padding: .58rem var(--shell-gutter);
+    }
+    .design-system-shell .topbar-heading-block { max-width: min(48vw, 18rem); }
+    .design-system-shell .topbar-actions { gap: .35rem; }
+    .design-system-shell .appearance-toggle,
+    .design-system-shell .theme-trigger { display: none; }
+    .design-system-shell .content { padding: 1rem var(--shell-gutter) 2rem; }
+
+    /* Keep the theme-system off-canvas sidebar, but cancel the older horizontal mobile nav. */
+    .design-system-shell .main-nav {
+        display: grid !important;
+        overflow-x: hidden;
+        overflow-y: auto;
+        width: 100%;
+        padding: .2rem .1rem 1rem;
+    }
+    .design-system-shell .nav-section { position: static; min-width: 0; width: 100%; }
+    .design-system-shell .nav-section-toggle {
+        justify-content: space-between;
+        padding: .62rem .72rem;
+        text-align: start;
+    }
+    .design-system-shell .nav-section-toggle > span:first-child { display: inline; }
+    .design-system-shell .nav-section-links {
+        position: static;
+        min-width: 0;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    .design-system-shell .nav-section-links a { justify-content: flex-start; }
+    [dir="rtl"] .design-system-shell .nav-section-links a { justify-content: flex-start; }
+}
+
+@media (max-width: 480px) {
+    .design-system-shell .topbar-heading-block { display: none; }
+    .design-system-shell .command-trigger { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skip-link,
+    .design-system-shell .nav-chevron,
+    .design-system-shell .nav-section-links a,
+    .design-system-shell .topbar,
+    .design-system-shell .sidebar { transition: none !important; }
+}
