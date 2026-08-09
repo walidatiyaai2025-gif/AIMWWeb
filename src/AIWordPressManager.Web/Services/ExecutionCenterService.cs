@@ -32,7 +32,61 @@ public sealed class ExecutionCenterService : IDisposable
             _timer = new Timer(_ => TickSafely(), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
     }
 
-    public IReadOnlyList<ExecutionJob> GetJobs()
+    public IReadOnlyList<ExecutionJob> GetJobs() => GetJobsCore(null);
+
+    public IReadOnlyList<ExecutionJob> GetJobs(Guid ownerUserId)
+    {
+        RequireIdentity(ownerUserId, nameof(ownerUserId));
+        return GetJobsCore(ownerUserId);
+    }
+
+    public IReadOnlyList<ExecutionActivity> GetActivities(int take = 30) => GetActivitiesCore(null, take);
+
+    public IReadOnlyList<ExecutionActivity> GetActivities(Guid ownerUserId, int take = 30)
+    {
+        RequireIdentity(ownerUserId, nameof(ownerUserId));
+        return GetActivitiesCore(ownerUserId, take);
+    }
+
+    public ExecutionJob Enqueue(
+        string title,
+        string type,
+        string siteName,
+        int totalItems,
+        string? idempotencyKey = null,
+        string? correlationId = null) =>
+        EnqueueCore(null, null, title, type, siteName, totalItems);
+
+    public ExecutionJob Enqueue(
+        Guid ownerUserId,
+        Guid siteId,
+        string title,
+        string type,
+        string siteName,
+        int totalItems,
+        string? idempotencyKey = null,
+        string? correlationId = null)
+    {
+        RequireIdentity(ownerUserId, nameof(ownerUserId));
+        RequireIdentity(siteId, nameof(siteId));
+        return EnqueueCore(ownerUserId, siteId, title, type, siteName, totalItems);
+    }
+
+    public void Cancel(Guid id) => ChangeStatus(id, null, new[] { "Waiting", "Running", "Paused" }, "Cancelled", "Warning", "Job cancelled by user.", true);
+    public void Pause(Guid id) => ChangeStatus(id, null, new[] { "Running" }, "Paused", "Warning", "Job paused.", false);
+    public void Resume(Guid id) => ChangeStatus(id, null, new[] { "Paused" }, "Running", "Info", "Job resumed.", false);
+    public void Retry(Guid id) => RetryCore(id, null);
+
+    public void Cancel(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, new[] { "Waiting", "Running", "Paused" }, "Cancelled", "Warning", "Job cancelled by user.", true);
+    public void Pause(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, new[] { "Running" }, "Paused", "Warning", "Job paused.", false);
+    public void Resume(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, new[] { "Paused" }, "Running", "Info", "Job resumed.", false);
+    public void Retry(Guid id, Guid ownerUserId)
+    {
+        RequireIdentity(ownerUserId, nameof(ownerUserId));
+        RetryCore(id, ownerUserId);
+    }
+
+    private IReadOnlyList<ExecutionJob> GetJobsCore(Guid? ownerUserId)
     {
         lock (_sync)
         {
@@ -40,10 +94,12 @@ public sealed class ExecutionCenterService : IDisposable
             using var command = connection.CreateCommand();
             command.CommandText = """
                 SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
-                       CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error
+                       CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId
                 FROM ExecutionCenterJobs
+                WHERE ($ownerUserId IS NULL OR OwnerUserId = $ownerUserId)
                 ORDER BY CreatedAtUtc DESC;
                 """;
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.HasValue ? ownerUserId.Value.ToString() : DBNull.Value);
 
             using var reader = command.ExecuteReader();
             var jobs = new List<ExecutionJob>();
@@ -52,18 +108,21 @@ public sealed class ExecutionCenterService : IDisposable
         }
     }
 
-    public IReadOnlyList<ExecutionActivity> GetActivities(int take = 30)
+    private IReadOnlyList<ExecutionActivity> GetActivitiesCore(Guid? ownerUserId, int take)
     {
         lock (_sync)
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
             command.CommandText = """
-                SELECT Id, JobId, CreatedAtUtc, Level, Message
-                FROM ExecutionCenterActivities
-                ORDER BY CreatedAtUtc DESC
+                SELECT a.Id, a.JobId, a.CreatedAtUtc, a.Level, a.Message
+                FROM ExecutionCenterActivities a
+                INNER JOIN ExecutionCenterJobs j ON j.Id = a.JobId
+                WHERE ($ownerUserId IS NULL OR j.OwnerUserId = $ownerUserId)
+                ORDER BY a.CreatedAtUtc DESC
                 LIMIT $take;
                 """;
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.HasValue ? ownerUserId.Value.ToString() : DBNull.Value);
             command.Parameters.AddWithValue("$take", Math.Clamp(take, 1, 500));
 
             using var reader = command.ExecuteReader();
@@ -81,13 +140,13 @@ public sealed class ExecutionCenterService : IDisposable
         }
     }
 
-    public ExecutionJob Enqueue(
+    private ExecutionJob EnqueueCore(
+        Guid? ownerUserId,
+        Guid? siteId,
         string title,
         string type,
         string siteName,
-        int totalItems,
-        string? idempotencyKey = null,
-        string? correlationId = null)
+        int totalItems)
     {
         var job = new ExecutionJob(
             Guid.NewGuid(),
@@ -101,7 +160,9 @@ public sealed class ExecutionCenterService : IDisposable
             DateTime.UtcNow,
             null,
             null,
-            null);
+            null,
+            ownerUserId,
+            siteId);
 
         lock (_sync)
         {
@@ -115,11 +176,7 @@ public sealed class ExecutionCenterService : IDisposable
         return job;
     }
 
-    public void Cancel(Guid id) => ChangeStatus(id, new[] { "Waiting", "Running", "Paused" }, "Cancelled", "Warning", "Job cancelled by user.", true);
-    public void Pause(Guid id) => ChangeStatus(id, new[] { "Running" }, "Paused", "Warning", "Job paused.", false);
-    public void Resume(Guid id) => ChangeStatus(id, new[] { "Paused" }, "Running", "Info", "Job resumed.", false);
-
-    public void Retry(Guid id)
+    private void RetryCore(Guid id, Guid? ownerUserId)
     {
         lock (_sync)
         {
@@ -131,9 +188,12 @@ public sealed class ExecutionCenterService : IDisposable
                 UPDATE ExecutionCenterJobs
                 SET Status = 'Waiting', Progress = 0, ProcessedItems = 0,
                     StartedAtUtc = NULL, CompletedAtUtc = NULL, Error = NULL
-                WHERE Id = $id AND Status IN ('Failed', 'Cancelled');
+                WHERE Id = $id
+                  AND Status IN ('Failed', 'Cancelled')
+                  AND ($ownerUserId IS NULL OR OwnerUserId = $ownerUserId);
                 """;
             command.Parameters.AddWithValue("$id", id.ToString());
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.HasValue ? ownerUserId.Value.ToString() : DBNull.Value);
             if (command.ExecuteNonQuery() > 0)
                 InsertActivity(connection, transaction, id, "Info", "Job queued for retry.");
             transaction.Commit();
@@ -227,7 +287,9 @@ public sealed class ExecutionCenterService : IDisposable
                     CreatedAtUtc TEXT NOT NULL,
                     StartedAtUtc TEXT NULL,
                     CompletedAtUtc TEXT NULL,
-                    Error TEXT NULL
+                    Error TEXT NULL,
+                    OwnerUserId TEXT NULL,
+                    SiteId TEXT NULL
                 );
 
                 CREATE TABLE IF NOT EXISTS ExecutionCenterActivities (
@@ -238,14 +300,47 @@ public sealed class ExecutionCenterService : IDisposable
                     Message TEXT NOT NULL,
                     FOREIGN KEY (JobId) REFERENCES ExecutionCenterJobs(Id) ON DELETE CASCADE
                 );
+                """;
+            command.ExecuteNonQuery();
 
+            EnsureColumn(connection, "ExecutionCenterJobs", "OwnerUserId", "TEXT NULL");
+            EnsureColumn(connection, "ExecutionCenterJobs", "SiteId", "TEXT NULL");
+
+            using var indexes = connection.CreateCommand();
+            indexes.CommandText = """
                 CREATE INDEX IF NOT EXISTS IX_ExecutionCenterJobs_Status_CreatedAtUtc
                     ON ExecutionCenterJobs(Status, CreatedAtUtc);
+                CREATE INDEX IF NOT EXISTS IX_ExecutionCenterJobs_Owner_CreatedAtUtc
+                    ON ExecutionCenterJobs(OwnerUserId, CreatedAtUtc);
+                CREATE INDEX IF NOT EXISTS IX_ExecutionCenterJobs_Owner_Site_CreatedAtUtc
+                    ON ExecutionCenterJobs(OwnerUserId, SiteId, CreatedAtUtc);
                 CREATE INDEX IF NOT EXISTS IX_ExecutionCenterActivities_JobId_CreatedAtUtc
                     ON ExecutionCenterActivities(JobId, CreatedAtUtc);
                 """;
-            command.ExecuteNonQuery();
+            indexes.ExecuteNonQuery();
         }
+    }
+
+    private static void EnsureColumn(SqliteConnection connection, string table, string column, string definition)
+    {
+        using var info = connection.CreateCommand();
+        info.CommandText = $"PRAGMA table_info({table});";
+        using var reader = info.ExecuteReader();
+        var exists = false;
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+            {
+                exists = true;
+                break;
+            }
+        }
+        reader.Close();
+        if (exists) return;
+
+        using var alter = connection.CreateCommand();
+        alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {definition};";
+        alter.ExecuteNonQuery();
     }
 
     private void RecoverInterruptedJobs()
@@ -283,8 +378,10 @@ public sealed class ExecutionCenterService : IDisposable
         Enqueue("Synchronize WordPress content", "Synchronization", "Corporate Site", 220);
     }
 
-    private void ChangeStatus(Guid id, IReadOnlyCollection<string> allowedStatuses, string newStatus, string level, string message, bool complete)
+    private void ChangeStatus(Guid id, Guid? ownerUserId, IReadOnlyCollection<string> allowedStatuses, string newStatus, string level, string message, bool complete)
     {
+        if (ownerUserId.HasValue) RequireIdentity(ownerUserId.Value, nameof(ownerUserId));
+
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -292,9 +389,10 @@ public sealed class ExecutionCenterService : IDisposable
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
             var parameters = allowedStatuses.Select((_, index) => $"$status{index}").ToArray();
-            command.CommandText = $"UPDATE ExecutionCenterJobs SET Status=$newStatus{(complete ? ", CompletedAtUtc=$completed" : string.Empty)} WHERE Id=$id AND Status IN ({string.Join(',', parameters)});";
+            command.CommandText = $"UPDATE ExecutionCenterJobs SET Status=$newStatus{(complete ? ", CompletedAtUtc=$completed" : string.Empty)} WHERE Id=$id AND Status IN ({string.Join(',', parameters)}) AND ($ownerUserId IS NULL OR OwnerUserId=$ownerUserId);";
             command.Parameters.AddWithValue("$newStatus", newStatus);
             command.Parameters.AddWithValue("$id", id.ToString());
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.HasValue ? ownerUserId.Value.ToString() : DBNull.Value);
             if (complete) command.Parameters.AddWithValue("$completed", FormatDate(DateTime.UtcNow));
             for (var index = 0; index < allowedStatuses.Count; index++)
                 command.Parameters.AddWithValue(parameters[index], allowedStatuses.ElementAt(index));
@@ -309,7 +407,7 @@ public sealed class ExecutionCenterService : IDisposable
         command.Transaction = transaction;
         command.CommandText = """
             SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
-                   CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error
+                   CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId
             FROM ExecutionCenterJobs
             WHERE Status=$status
             ORDER BY CreatedAtUtc
@@ -325,7 +423,12 @@ public sealed class ExecutionCenterService : IDisposable
         reader.GetInt32(5), reader.GetInt32(6), reader.GetInt32(7), ParseDate(reader.GetString(8)),
         reader.IsDBNull(9) ? null : ParseDate(reader.GetString(9)),
         reader.IsDBNull(10) ? null : ParseDate(reader.GetString(10)),
-        reader.IsDBNull(11) ? null : reader.GetString(11));
+        reader.IsDBNull(11) ? null : reader.GetString(11),
+        ReadNullableGuid(reader, 12),
+        ReadNullableGuid(reader, 13));
+
+    private static Guid? ReadNullableGuid(SqliteDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) || !Guid.TryParse(reader.GetString(ordinal), out var value) ? null : value;
 
     private static void InsertJob(SqliteConnection connection, SqliteTransaction transaction, ExecutionJob job)
     {
@@ -333,8 +436,8 @@ public sealed class ExecutionCenterService : IDisposable
         command.Transaction = transaction;
         command.CommandText = """
             INSERT INTO ExecutionCenterJobs
-            (Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems, CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error)
-            VALUES ($id, $title, $type, $siteName, $status, $progress, $total, $processed, $created, $started, $completed, $error);
+            (Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems, CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId)
+            VALUES ($id, $title, $type, $siteName, $status, $progress, $total, $processed, $created, $started, $completed, $error, $ownerUserId, $siteId);
             """;
         command.Parameters.AddWithValue("$id", job.Id.ToString());
         command.Parameters.AddWithValue("$title", job.Title);
@@ -348,6 +451,8 @@ public sealed class ExecutionCenterService : IDisposable
         command.Parameters.AddWithValue("$started", job.StartedAtUtc is null ? DBNull.Value : FormatDate(job.StartedAtUtc.Value));
         command.Parameters.AddWithValue("$completed", job.CompletedAtUtc is null ? DBNull.Value : FormatDate(job.CompletedAtUtc.Value));
         command.Parameters.AddWithValue("$error", job.Error is null ? DBNull.Value : job.Error);
+        command.Parameters.AddWithValue("$ownerUserId", job.OwnerUserId.HasValue ? job.OwnerUserId.Value.ToString() : DBNull.Value);
+        command.Parameters.AddWithValue("$siteId", job.SiteId.HasValue ? job.SiteId.Value.ToString() : DBNull.Value);
         command.ExecuteNonQuery();
     }
 
@@ -381,6 +486,11 @@ public sealed class ExecutionCenterService : IDisposable
         return connection;
     }
 
+    private static void RequireIdentity(Guid value, string parameterName)
+    {
+        if (value == Guid.Empty) throw new ArgumentException("A non-empty identity is required.", parameterName);
+    }
+
     private static string ResolveDatabasePath(string? databasePath)
     {
         if (!string.IsNullOrWhiteSpace(databasePath)) return Path.GetFullPath(databasePath);
@@ -396,5 +506,19 @@ public sealed class ExecutionCenterService : IDisposable
     public void Dispose() => _timer?.Dispose();
 }
 
-public sealed record ExecutionJob(Guid Id, string Title, string Type, string SiteName, string Status, int Progress, int TotalItems, int ProcessedItems, DateTime CreatedAtUtc, DateTime? StartedAtUtc, DateTime? CompletedAtUtc, string? Error);
+public sealed record ExecutionJob(
+    Guid Id,
+    string Title,
+    string Type,
+    string SiteName,
+    string Status,
+    int Progress,
+    int TotalItems,
+    int ProcessedItems,
+    DateTime CreatedAtUtc,
+    DateTime? StartedAtUtc,
+    DateTime? CompletedAtUtc,
+    string? Error,
+    Guid? OwnerUserId = null,
+    Guid? SiteId = null);
 public sealed record ExecutionActivity(Guid Id, Guid JobId, DateTime CreatedAtUtc, string Level, string Message);
