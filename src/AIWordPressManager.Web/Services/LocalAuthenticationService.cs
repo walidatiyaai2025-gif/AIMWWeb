@@ -168,7 +168,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
         var redirectPath = hasOwnedSites
             ? ResolveRedirectPath(returnUrl, user.LastPage)
-            : FirstRunLandingPath;
+            : ResolveRedirectPath(returnUrl, FirstRunLandingPath);
 
         return LoginResult.Succeeded(redirectPath);
     }
@@ -222,7 +222,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
     private void AddAudit(HttpContext context, string userName, bool succeeded, string reason, DateTime utcNow)
     {
-        dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, context.Connection.RemoteIpAddress?.ToString(), context.Request.Headers.UserAgent.ToString(), utcNow));
+        dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, context.Connection.RemoteIpAddress?.ToString(), context.Request.Headers.UserAgent.ToString(), now: utcNow));
     }
 
     private static bool IsSafeLocalPath(string? path)
