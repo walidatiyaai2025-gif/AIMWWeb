@@ -19,7 +19,7 @@ else
     <div class="synchronization-workspace">
         <AppToolbar Eyebrow="@(L.IsArabic ? "المزامنة والعمل دون اتصال" : "SYNC & OFFLINE")"
                     Title="@(L.IsArabic ? "مركز مزامنة WordPress" : "WordPress Synchronization Workspace")"
-                    Subtitle="@(L.IsArabic ? "نزّل أحدث المقالات والصفحات والوسائط والتصنيفات إلى قاعدة SQLite المحلية." : "Download the latest posts, pages, media, and taxonomies into the local SQLite cache.")">
+                    Subtitle="@(L.IsArabic ? "نزّل أحدث المقالات والصفحات والوسائط والتصنيفات إلى قاعدة SQLite المحلية، وراجع سجل كل محاولة مزامنة." : "Download the latest posts, pages, media, and taxonomies into the local SQLite cache and review every synchronization attempt.")">
             <Actions>
                 @if (_selectedSiteId != Guid.Empty)
                 {
@@ -86,7 +86,7 @@ else
         else if (_loadingSnapshot)
         {
             <AppLoading Title="@(L.IsArabic ? "جارٍ قراءة البيانات المحلية" : "Reading local cache")"
-                        Message="@(L.IsArabic ? "يتم حساب حالة المحتوى وآخر مزامنة." : "Calculating content totals and the last synchronization time.")" />
+                        Message="@(L.IsArabic ? "يتم حساب حالة المحتوى وسجل المزامنة." : "Calculating content status and synchronization history.")" />
         }
         else if (_snapshot is not null)
         {
@@ -118,12 +118,53 @@ else
                     <AppButton Href="@($"/sites/{_selectedSiteId}/snapshot")" Text="@(L.IsArabic ? "لقطة البيانات" : "Data snapshot")" />
                 </Actions>
             </AppSection>
+
+            <AppSection Eyebrow="@(L.IsArabic ? "السجل الدائم" : "PERSISTENT HISTORY")"
+                        Title="@(L.IsArabic ? "سجل المزامنة الأخير" : "Recent synchronization runs")"
+                        Subtitle="@(L.IsArabic ? "كل محاولة مرتبطة بمعرف ملف الموقع نفسه، بما في ذلك المحاولات الناجحة والمتخطاة والفاشلة." : "Every attempt is tied to this exact site profile, including completed, skipped, and failed runs.")"
+                        Class="panel"
+                        BodyClass="">
+                <ChildContent>
+                    @if (_history.Count == 0)
+                    {
+                        <AppEmptyState Icon="◷"
+                                       Title="@(L.IsArabic ? "لا يوجد سجل مزامنة بعد" : "No synchronization history yet")"
+                                       Description="@(L.IsArabic ? "ابدأ أول مزامنة وسيظهر سجلها هنا." : "Start the first synchronization and its result will appear here.")" />
+                    }
+                    else
+                    {
+                        <div style="display:grid;gap:10px">
+                            @foreach (var run in _history)
+                            {
+                                <div style="display:grid;grid-template-columns:minmax(120px,auto) minmax(160px,auto) 1fr;gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--border-color,#2b3647);border-radius:12px">
+                                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                                        <AppBadge Tone="@HistoryTone(run.Status)" Text="@HistoryStatus(run.Status)" />
+                                        <small>@FormatDate(run.StartedAtUtc)</small>
+                                    </div>
+                                    <div>
+                                        <small style="display:block;opacity:.7">@(L.IsArabic ? "السجلات" : "Records")</small>
+                                        <strong>@run.DownloadedRecords</strong>
+                                    </div>
+                                    <div>
+                                        <div>@L.TranslateMessage(run.Message)</div>
+                                        @if (run.CompletedAtUtc.HasValue)
+                                        {
+                                            <small style="display:block;margin-top:4px;opacity:.7">@(L.IsArabic ? "انتهت" : "Finished") @FormatDate(run.CompletedAtUtc)</small>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </ChildContent>
+            </AppSection>
         }
     </div>
 }
 
 @code {
     private IReadOnlyList<Site> _sites = [];
+    private IReadOnlyList<SiteSyncRunView> _history = [];
     private Guid _selectedSiteId;
     private ContentExplorerView? _snapshot;
     private WordPressSyncViewResult? _lastResult;
@@ -213,6 +254,14 @@ else
         {
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
+            try
+            {
+                _history = await SyncService.GetHistoryAsync(_selectedSiteId, 15);
+            }
+            catch
+            {
+                // Preserve the synchronization error shown to the user if history refresh also fails.
+            }
         }
         finally
         {
@@ -226,10 +275,12 @@ else
         {
             _loadingSnapshot = true;
             _snapshot = await SyncService.GetExplorerAsync(_selectedSiteId);
+            _history = await SyncService.GetHistoryAsync(_selectedSiteId, 15);
         }
         catch (Exception ex)
         {
             _snapshot = null;
+            _history = [];
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
         }
@@ -242,10 +293,29 @@ else
     private void ResetResult()
     {
         _snapshot = null;
+        _history = [];
         _lastResult = null;
         _message = null;
         _isError = false;
     }
+
+    private string HistoryStatus(string status) => status switch
+    {
+        "Completed" => L.IsArabic ? "مكتملة" : "Completed",
+        "Skipped" => L.IsArabic ? "لا تغييرات" : "Skipped",
+        "Failed" => L.IsArabic ? "فشلت" : "Failed",
+        "Running" => L.IsArabic ? "جارية" : "Running",
+        _ => status
+    };
+
+    private static string HistoryTone(string status) => status switch
+    {
+        "Completed" => "success",
+        "Skipped" => "info",
+        "Failed" => "warning",
+        "Running" => "info",
+        _ => "neutral"
+    };
 
     private string FormatDate(DateTime? value) => value.HasValue
         ? value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm")
