@@ -1,9 +1,11 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace AIWordPressManager.Persistence.Migrations;
 
+[DbContext(typeof(AppDbContext))]
 [Migration("20260809094500_AddSiteSyncRuns")]
 public partial class AddSiteSyncRuns : Migration
 {
