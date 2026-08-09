@@ -51,7 +51,7 @@ else if (_snapshot is null)
 else
 {
     <section class="usage-kpis">
-        <article class="panel usage-kpi"><small>@(L.IsArabic ? "إجمالي الطلبات" : "Total calls")</small><strong>@_snapshot.TotalCalls</strong><span>@(L.IsArabic ? "ضمن آخر سجل محفوظ" : "within retained telemetry")</span></article>
+        <article class="panel usage-kpi"><small>@(L.IsArabic ? "إجمالي الطلبات" : "Total calls")</small><strong>@_snapshot.TotalCalls</strong><span>@(L.IsArabic ? "ضمن آخر 10,000 سجل محفوظ" : "within the latest 10,000 retained records")</span></article>
         <article class="panel usage-kpi"><small>@(L.IsArabic ? "معدل النجاح" : "Success rate")</small><strong>@_snapshot.SuccessRate.ToString("P0")</strong><span>@_snapshot.SuccessfulCalls / @_snapshot.TotalCalls</span></article>
         <article class="panel usage-kpi"><small>@(L.IsArabic ? "رموز الإدخال" : "Input tokens")</small><strong>@FormatNumber(_snapshot.InputTokens)</strong><span>@(L.IsArabic ? "مسجلة أو مقدرة بواسطة المزود" : "provider reported or estimated")</span></article>
         <article class="panel usage-kpi"><small>@(L.IsArabic ? "رموز الإخراج" : "Output tokens")</small><strong>@FormatNumber(_snapshot.OutputTokens)</strong><span>@(L.IsArabic ? "مسجلة أو مقدرة بواسطة المزود" : "provider reported or estimated")</span></article>
@@ -97,7 +97,7 @@ else
     </section>
 
     <section class="panel usage-recent">
-        <header><div><span class="workspace-kicker">RECENT ACTIVITY</span><h2>@(L.IsArabic ? "آخر طلبات الذكاء الاصطناعي" : "Recent AI calls")</h2></div><small>@_snapshot.Recent.Count @(L.IsArabic ? "سجل" : "records")</small></header>
+        <header><div><span class="workspace-kicker">RECENT ACTIVITY</span><h2>@(L.IsArabic ? "آخر طلبات الذكاء الاصطناعي" : "Recent AI calls")</h2></div><small>@_snapshot.Recent.Count @(L.IsArabic ? "سجل محتفظ به" : "retained records")</small></header>
         @if (_snapshot.Recent.Count == 0)
         {
             <div class="empty-state"><p>@(L.IsArabic ? "لا توجد سجلات ضمن الفلتر الحالي." : "No records match the current filter.")</p></div>
@@ -143,7 +143,7 @@ else
         try
         {
             var siteId = Guid.TryParse(_selectedSiteId, out var parsed) ? parsed : (Guid?)null;
-            _snapshot = await UsageService.GetAsync(siteId, 5_000);
+            _snapshot = await UsageService.GetAsync(siteId, 10_000);
         }
         catch (Exception ex)
         {
