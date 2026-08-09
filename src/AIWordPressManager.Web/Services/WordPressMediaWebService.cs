@@ -3,7 +3,9 @@ using System.Text;
 using System.Text.Json;
 using AIWordPressManager.Application.Abstractions.AI;
 using AIWordPressManager.Application.Abstractions.WordPress;
+using AIWordPressManager.Persistence;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -15,6 +17,7 @@ public sealed class WordPressMediaWebService(
     ExecutionCenterService execution,
     ExecutionOperationTracker executionTracker,
     NotificationInboxService notifications,
+    AppDbContext dbContext,
     ILogger<WordPressMediaWebService> logger)
 {
     public const string MetadataConflictMessage = "This media item changed in WordPress after you opened it. Reload the latest metadata before saving.";
@@ -236,9 +239,10 @@ public sealed class WordPressMediaWebService(
                 return MediaActionResult.Fail(response.ErrorMessage);
             }
 
+            var cacheMessage = await ReconcileDeletedMediaCacheAsync(siteId, mediaId, cancellationToken);
             notifications.Create("System", "Media deleted", $"Media #{mediaId}", NotificationSeverity.Warning, siteId);
             executionTracker.Complete(jobId, 2, 2, $"Deleted media #{mediaId} from WordPress.");
-            return MediaActionResult.Ok(mediaId, string.Empty, "Media deleted from WordPress successfully.");
+            return MediaActionResult.Ok(mediaId, string.Empty, cacheMessage);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -274,6 +278,30 @@ public sealed class WordPressMediaWebService(
     {
         if (!expectedModifiedGmt.HasValue || !remoteModifiedGmt.HasValue) return false;
         return expectedModifiedGmt.Value.ToUniversalTime() != remoteModifiedGmt.Value.ToUniversalTime();
+    }
+
+    private async Task<string> ReconcileDeletedMediaCacheAsync(Guid siteId, int mediaId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var record = await dbContext.WordPressMediaRecords
+                .SingleOrDefaultAsync(x => x.SiteId == siteId && x.WordPressId == mediaId, cancellationToken);
+            if (record is null) return "Media deleted from WordPress successfully.";
+
+            // Keep the existing synchronization watermark. Local reconciliation must not move
+            // the delta cursor past unrelated remote changes that have not been synchronized yet.
+            var cursor = record.LastSynchronizedAtUtc == default ? DateTime.UtcNow : record.LastSynchronizedAtUtc;
+            record.MarkUnavailable(cursor);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return "Media deleted from WordPress successfully.";
+        }
+        catch (Exception ex)
+        {
+            // The remote delete already succeeded. Report success accurately and make the local
+            // cache warning explicit rather than inviting a dangerous retry of a permanent delete.
+            logger.LogWarning(ex, "Media {MediaId} was deleted remotely but local cache reconciliation failed for site {SiteId}", mediaId, siteId);
+            return "Media was deleted from WordPress, but the local cache could not be reconciled. Refresh synchronization before relying on the cached media list.";
+        }
     }
 
     private static void AddText(MultipartFormDataContent content, string name, string? value)
