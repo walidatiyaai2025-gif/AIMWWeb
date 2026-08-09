@@ -4,6 +4,8 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject WordPressSyncWebService SyncService
+@inject SiteOperationHistoryService History
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
@@ -51,7 +53,7 @@ else
                 </section>
 
                 <section class="panel settings-section">
-                    <header><div><span class="workspace-kicker">OPERATION HISTORY</span><h2>@(L.IsArabic ? "سجل عمليات الموقع" : "Site operation history")</h2><p>@(L.IsArabic ? "نتائج الاختبارات والمزامنة ومدتها." : "Connection and synchronization results with duration.")</p></div><button class="btn danger" disabled="@(_history.Count == 0 || Busy)" @onclick="ClearHistory">@(L.IsArabic ? "مسح السجل" : "Clear history")</button></header>
+                    <header><div><span class="workspace-kicker">OPERATION HISTORY</span><h2>@(L.IsArabic ? "سجل عمليات الموقع" : "Site operation history")</h2><p>@(L.IsArabic ? "نتائج الاختبارات والمزامنة ومدتها ومعرف التنفيذ المرتبط." : "Connection and synchronization results with duration and linked execution identity.")</p></div><button class="btn danger" disabled="@(_history.Count == 0 || Busy)" @onclick="ClearHistory">@(L.IsArabic ? "مسح السجل" : "Clear history")</button></header>
                     @if (_history.Count == 0)
                     {
                         <div class="empty-state"><p>@(L.IsArabic ? "لا توجد عمليات مسجلة." : "No operations recorded yet.")</p></div>
@@ -60,7 +62,7 @@ else
                     {
                         @foreach (var item in _history)
                         {
-                            <article class="panel" style="padding:1rem;margin-top:.75rem"><div class="d-flex justify-content-between gap-3"><div><strong>@OperationText(item.Operation)</strong><small style="display:block">@FormatDate(item.StartedAtUtc) · @FormatDuration(item.Duration)</small></div><span class="settings-badge @(item.Succeeded ? "success" : "danger")">@(item.Succeeded ? (L.IsArabic ? "نجحت" : "Succeeded") : (L.IsArabic ? "فشلت" : "Failed"))</span></div><p style="margin:.75rem 0 0">@L.TranslateMessage(item.Message)</p>@if (item.AffectedRecords.HasValue) { <small>@(L.IsArabic ? "السجلات المتأثرة" : "Affected records"): @item.AffectedRecords</small> }</article>
+                            <article class="panel" style="padding:1rem;margin-top:.75rem"><div class="d-flex justify-content-between gap-3"><div><strong>@OperationText(item.Operation)</strong><small style="display:block">@FormatDate(item.StartedAtUtc) · @FormatDuration(item.Duration)</small></div><span class="settings-badge @(item.Succeeded ? "success" : "danger")">@(item.Succeeded ? (L.IsArabic ? "نجحت" : "Succeeded") : (L.IsArabic ? "فشلت" : "Failed"))</span></div><p style="margin:.75rem 0 0">@L.TranslateMessage(item.Message)</p>@if (item.AffectedRecords.HasValue) { <small>@(L.IsArabic ? "السجلات المتأثرة" : "Affected records"): @item.AffectedRecords</small> }@if (item.ExecutionJobId.HasValue) { <small style="display:block;margin-top:.35rem">@(L.IsArabic ? "معرف مهمة التنفيذ" : "Execution job"): <code>@item.ExecutionJobId.Value</code></small> }</article>
                         }
                     }
                 </section>
@@ -70,6 +72,7 @@ else
                 <a href="@_site.SiteUrl" target="_blank"><span>↗</span><div><strong>@(L.IsArabic ? "فتح الموقع" : "Visit site")</strong><small>@_site.SiteUrl</small></div></a>
                 <a href="@($"{_site.SiteUrl.TrimEnd('/')}/wp-admin/profile.php")" target="_blank"><span>🔑</span><div><strong>Application Password</strong><small>@(L.IsArabic ? "إدارة كلمة مرور التطبيق" : "Manage application password")</small></div></a>
                 <a href="@($"/sites/{Id}/explorer")"><span>▤</span><div><strong>@(L.IsArabic ? "المحتوى المحلي" : "Local content")</strong><small>@(L.IsArabic ? "عرض البيانات المتزامنة" : "View synchronized data")</small></div></a>
+                <a href="@($"/module/execution?siteId={Id}")"><span>▶</span><div><strong>@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</strong><small>@(L.IsArabic ? "تتبع مهام هذا الموقع" : "Trace jobs for this site")</small></div></a>
             </aside>
         </div>
     </div>
@@ -77,9 +80,9 @@ else
 
 @code {
     [Parameter] public Guid Id { get; set; }
-    private readonly SiteOperationHistoryService _historyService = new();
     private bool _loading = true, _testing, _syncing, _isError;
     private string? _message, _details;
+    private Guid _ownerUserId;
     private AIWordPressManager.Domain.Entities.Site? _site;
     private SiteCredentialSummary? _credential;
     private WordPressSyncViewResult? _lastSync;
@@ -89,10 +92,89 @@ else
 
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnParametersSetAsync() => await ReloadAsync();
-    private async Task ReloadAsync(){try{_loading=true;_site=await SiteService.GetSiteAsync(Id);_credential=await SiteService.GetCredentialSummaryAsync(Id);_history=_historyService.Get(Id).ToList();}catch(Exception ex){Fail(ex.Message,ex.ToString());}finally{_loading=false;}}
-    private async Task RetestAsync(){var started=DateTime.UtcNow;try{_testing=true;var result=await SiteService.RetestAsync(Id);_isError=!result.IsSuccess;_message=L.TranslateMessage(result.Message);_details=result.Diagnostics;_historyService.Record(Id,"connection-test",result.IsSuccess,result.Message,result.Diagnostics,started,DateTime.UtcNow);Notify(result.IsSuccess,_message,result.Diagnostics);}catch(Exception ex){_historyService.Record(Id,"connection-test",false,ex.Message,ex.ToString(),started,DateTime.UtcNow);Fail(ex.Message,ex.ToString());}finally{_testing=false;await ReloadAsync();}}
-    private async Task SynchronizeAsync(){var started=DateTime.UtcNow;try{_syncing=true;_lastSync=await SyncService.SynchronizeAsync(Id);_isError=!_lastSync.IsSuccess;_message=L.TranslateMessage(_lastSync.Message);_details=null;_historyService.Record(Id,"synchronization",_lastSync.IsSuccess,_lastSync.Message,null,started,DateTime.UtcNow,_lastSync.DownloadedRecords);Notify(_lastSync.IsSuccess,_message,null);}catch(Exception ex){_historyService.Record(Id,"synchronization",false,ex.Message,ex.ToString(),started,DateTime.UtcNow);Fail(ex.Message,ex.ToString());}finally{_syncing=false;_history=_historyService.Get(Id).ToList();}}
-    private void ClearHistory(){_historyService.Clear(Id);_history=[];Notifications.Success(L.IsArabic?"تم مسح سجل العمليات.":"Operation history cleared.");}
-    private async Task CopyDiagnosticsAsync(){if(_site is null)return;var lines=new List<string>{"AI WordPress Manager - Site Diagnostics",$"Site: {_site.Name}",$"URL: {_site.SiteUrl}",$"Status: {_site.ConnectionStatus}",$"WordPress: {_site.WordPressVersion}",$"Language: {_site.LanguageCode}",$"Credential user: {_credential?.UserName ?? "none"}",$"Last test: {_site.LastConnectionTestAtUtc:O}",string.Empty,"Recent operations:"};lines.AddRange(_history.Take(20).Select(x=>$"[{x.StartedAtUtc:O}] {x.Operation} {(x.Succeeded?"OK":"FAILED")} - {x.Message}"));await JS.InvokeVoidAsync("navigator.clipboard.writeText",string.Join(Environment.NewLine,lines));Notifications.Success(L.IsArabic?"تم نسخ تقرير التشخيص.":"Diagnostic report copied.");}
-    private void Notify(bool success,string message,string? details){if(success)Notifications.Success(message);else Notifications.Error(message,L.IsArabic?"فشلت العملية":"Operation failed",details);} private void Fail(string message,string? details=null){_isError=true;_message=L.TranslateMessage(message);_details=details;Notifications.Error(_message,L.IsArabic?"تعذر إكمال العملية":"Operation failed",details);} private string FormatDate(DateTime? value)=>value is null?"—":value.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm:ss":"MMM d, yyyy HH:mm:ss"); private static string FormatDuration(TimeSpan value)=>value.TotalSeconds<1?$"{value.TotalMilliseconds:0} ms":$"{value.TotalSeconds:0.0} s"; private string OperationText(string value)=>value=="connection-test"?(L.IsArabic?"اختبار الاتصال":"Connection test"):value=="synchronization"?(L.IsArabic?"مزامنة WordPress":"WordPress synchronization"):value; private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            _loading = true;
+            _ownerUserId = CurrentUser.RequireUserId();
+            _site = await SiteService.GetSiteAsync(Id);
+            if (_site is null)
+            {
+                _credential = null;
+                _history = [];
+                return;
+            }
+
+            _credential = await SiteService.GetCredentialSummaryAsync(Id);
+            _history = History.Get(_ownerUserId, [Id], Id).ToList();
+        }
+        catch (Exception ex) { Fail(ex.Message, ex.ToString()); }
+        finally { _loading = false; }
+    }
+
+    private async Task RetestAsync()
+    {
+        var started = DateTime.UtcNow;
+        try
+        {
+            _testing = true;
+            var result = await SiteService.RetestAsync(Id);
+            _isError = !result.IsSuccess;
+            _message = L.TranslateMessage(result.Message);
+            _details = result.Diagnostics;
+            History.Record(_ownerUserId, Id, "connection-test", result.IsSuccess, result.Message, result.Diagnostics, started, DateTime.UtcNow);
+            Notify(result.IsSuccess, _message, result.Diagnostics);
+        }
+        catch (Exception ex)
+        {
+            History.Record(_ownerUserId, Id, "connection-test", false, ex.Message, ex.ToString(), started, DateTime.UtcNow);
+            Fail(ex.Message, ex.ToString());
+        }
+        finally { _testing = false; await ReloadAsync(); }
+    }
+
+    private async Task SynchronizeAsync()
+    {
+        var started = DateTime.UtcNow;
+        try
+        {
+            _syncing = true;
+            _lastSync = await SyncService.SynchronizeAsync(Id);
+            _isError = !_lastSync.IsSuccess;
+            _message = L.TranslateMessage(_lastSync.Message);
+            _details = null;
+            History.Record(_ownerUserId, Id, "synchronization", _lastSync.IsSuccess, _lastSync.Message, null, started, DateTime.UtcNow, _lastSync.DownloadedRecords, _lastSync.ExecutionJobId);
+            Notify(_lastSync.IsSuccess, _message, null);
+        }
+        catch (Exception ex)
+        {
+            History.Record(_ownerUserId, Id, "synchronization", false, ex.Message, ex.ToString(), started, DateTime.UtcNow);
+            Fail(ex.Message, ex.ToString());
+        }
+        finally
+        {
+            _syncing = false;
+            _history = History.Get(_ownerUserId, [Id], Id).ToList();
+        }
+    }
+
+    private void ClearHistory()
+    {
+        History.Clear(_ownerUserId, Id);
+        _history = [];
+        Notifications.Success(L.IsArabic ? "تم مسح سجل العمليات." : "Operation history cleared.");
+    }
+
+    private async Task CopyDiagnosticsAsync()
+    {
+        if (_site is null) return;
+        var lines = new List<string>{"AI WordPress Manager - Site Diagnostics",$"Site: {_site.Name}",$"URL: {_site.SiteUrl}",$"Status: {_site.ConnectionStatus}",$"WordPress: {_site.WordPressVersion}",$"Language: {_site.LanguageCode}",$"Credential user: {_credential?.UserName ?? "none"}",$"Last test: {_site.LastConnectionTestAtUtc:O}",string.Empty,"Recent operations:"};
+        lines.AddRange(_history.Take(20).Select(x => $"[{x.StartedAtUtc:O}] {x.Operation} {(x.Succeeded ? "OK" : "FAILED")} job={x.ExecutionJobId?.ToString() ?? "none"} - {x.Message}"));
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(Environment.NewLine, lines));
+        Notifications.Success(L.IsArabic ? "تم نسخ تقرير التشخيص." : "Diagnostic report copied.");
+    }
+
+    private void Notify(bool success, string message, string? details){if(success)Notifications.Success(message);else Notifications.Error(message,L.IsArabic?"فشلت العملية":"Operation failed",details);} private void Fail(string message,string? details=null){_isError=true;_message=L.TranslateMessage(message);_details=details;Notifications.Error(_message,L.IsArabic?"تعذر إكمال العملية":"Operation failed",details);} private string FormatDate(DateTime? value)=>value is null?"—":value.Value.ToLocalTime().ToString(L.IsArabic?"yyyy-MM-dd HH:mm:ss":"MMM d, yyyy HH:mm:ss"); private static string FormatDuration(TimeSpan value)=>value.TotalSeconds<1?$"{value.TotalMilliseconds:0} ms":$"{value.TotalSeconds:0.0} s"; private string OperationText(string value)=>value=="connection-test"?(L.IsArabic?"اختبار الاتصال":"Connection test"):value=="synchronization"?(L.IsArabic?"مزامنة WordPress":"WordPress synchronization"):value; private void Changed()=>InvokeAsync(StateHasChanged); public void Dispose()=>L.Changed-=Changed;
 }
