@@ -38,10 +38,10 @@ public sealed class PersistentAIUsageLogTests : IDisposable
     {
         var owner = Guid.NewGuid();
         var paths = new TestPaths(_root);
-        var log = Create(paths);
-        var start = DateTime.UtcNow.AddHours(-1);
+        var log = Create(paths, 5);
+        var start = DateTime.UtcNow.AddMinutes(-1);
 
-        for (var index = 0; index < PersistentAIUsageLog.MaxEntries + 25; index++)
+        for (var index = 0; index < 8; index++)
         {
             log.Record(new AIUsageEntry(
                 start.AddSeconds(index),
@@ -57,11 +57,12 @@ public sealed class PersistentAIUsageLogTests : IDisposable
                 null));
         }
 
-        var reloaded = Create(paths);
-        var entries = reloaded.GetRecent(5_000, null, owner.ToString("D"));
+        var reloaded = Create(paths, 5);
+        var entries = reloaded.GetRecent(100, null, owner.ToString("D"));
 
-        Assert.Equal(5_000, entries.Count);
-        Assert.Equal($"op-{PersistentAIUsageLog.MaxEntries + 24}", entries[0].Operation);
+        Assert.Equal(5, entries.Count);
+        Assert.Equal("op-7", entries[0].Operation);
+        Assert.Equal("op-3", entries[^1].Operation);
         Assert.DoesNotContain(entries, x => x.Operation == "op-0");
     }
 
@@ -101,8 +102,10 @@ public sealed class PersistentAIUsageLogTests : IDisposable
         Assert.Equal(DateTimeKind.Utc, entry.CreatedAtUtc.Kind);
     }
 
-    private static PersistentAIUsageLog Create(IApplicationPathService paths) =>
-        new(paths, NullLogger<PersistentAIUsageLog>.Instance);
+    private static PersistentAIUsageLog Create(IApplicationPathService paths, int? maxEntries = null) =>
+        maxEntries.HasValue
+            ? new PersistentAIUsageLog(paths, NullLogger<PersistentAIUsageLog>.Instance, maxEntries.Value)
+            : new PersistentAIUsageLog(paths, NullLogger<PersistentAIUsageLog>.Instance);
 
     private static AIUsageEntry Entry(Guid owner, Guid? siteId, string provider, bool success, int input, int output, decimal cost) =>
         new(DateTime.UtcNow, provider, "test-model", "test-operation", siteId, owner.ToString("D"), input, output, cost, success, success ? null : "failed");
