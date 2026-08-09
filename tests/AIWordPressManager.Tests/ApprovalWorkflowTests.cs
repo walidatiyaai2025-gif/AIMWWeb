@@ -67,7 +67,8 @@ public sealed class ApprovalWorkflowTests : IDisposable
         var item = _approvals.Submit(_ownerA, CreateSubmission(_siteA, Guid.NewGuid().ToString("N"), "SEO Update"), "owner-a@example.com");
         _approvals.GetById(_ownerB, item.Id).Should().BeNull();
         _approvals.GetAudit(_ownerB, item.Id).Should().BeEmpty();
-        (() => _approvals.Reject(_ownerB, item.Id, "owner-b@example.com", "Cross tenant")).Should().Throw<InvalidOperationException>();
+        Action crossTenant = () => _approvals.Reject(_ownerB, item.Id, "owner-b@example.com", "Cross tenant");
+        crossTenant.Should().Throw<InvalidOperationException>();
 
         var rejected = _approvals.Reject(_ownerA, item.Id, "owner-a@example.com", "Unsafe change");
         rejected.Status.Should().Be(ApprovalStatus.Rejected);
@@ -79,8 +80,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
     public void Approve_WithImmediateExecution_QueuesExternalJob_ButRemainsApprovedUntilRealSuccess()
     {
         var item = _approvals.Submit(_ownerA, CreateExecutableSubmission(_siteA, "execute-key"), "owner-a@example.com");
-
-        var approved = _approvals.Approve(_ownerA, item.Id, "owner-a@example.com", "Approved", executeImmediately: true);
+        var approved = _approvals.Approve(_ownerA, item.Id, "owner-a@example.com", "Approved", true);
 
         approved.Status.Should().Be(ApprovalStatus.Approved);
         approved.ExecutionJobId.Should().NotBeNull();
@@ -99,9 +99,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
     public void Unsupported_proposal_cannot_request_immediate_execution_and_remains_pending()
     {
         var item = _approvals.Submit(_ownerA, CreateSubmission(_siteA, "unsupported", "AI.ContentUpdate"), "owner-a@example.com");
-
-        var action = () => _approvals.Approve(_ownerA, item.Id, "owner-a@example.com", null, executeImmediately: true);
-
+        Action action = () => _approvals.Approve(_ownerA, item.Id, "owner-a@example.com", null, true);
         action.Should().Throw<InvalidOperationException>().WithMessage("*not enabled*");
         _approvals.GetById(_ownerA, item.Id)!.Status.Should().Be(ApprovalStatus.Pending);
         _executionCenter.GetJobs(_ownerA).Should().BeEmpty();
@@ -113,9 +111,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
         var item = _approvals.Submit(_ownerA, CreateExecutableSubmission(_siteA, "failure-key"), "owner-a@example.com");
         var queued = _approvals.Approve(_ownerA, item.Id, "owner-a@example.com", null, true);
         var jobId = queued.ExecutionJobId!.Value;
-
         _approvals.RecordExecutionFailed(_ownerA, item.Id, jobId, "Remote conflict");
-
         _approvals.GetById(_ownerA, item.Id)!.Status.Should().Be(ApprovalStatus.Approved);
         _approvals.GetAudit(_ownerA, item.Id).Should().Contain(x => x.Action == "ExecutionFailed" && x.Notes == "Remote conflict");
     }
@@ -125,10 +121,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
     {
         var item = _approvals.Submit(_ownerA, CreateExecutableSubmission(_siteA, "success-key"), "owner-a@example.com");
         var queued = _approvals.Approve(_ownerA, item.Id, "owner-a@example.com", null, true);
-        var jobId = queued.ExecutionJobId!.Value;
-
-        var executed = _approvals.MarkExecutionSucceeded(_ownerA, item.Id, jobId, "WordPress POST succeeded");
-
+        var executed = _approvals.MarkExecutionSucceeded(_ownerA, item.Id, queued.ExecutionJobId!.Value, "WordPress POST succeeded");
         executed.Status.Should().Be(ApprovalStatus.Executed);
         _approvals.GetAudit(_ownerA, item.Id).Should().Contain(x => x.Action == "Executed" && x.Notes == "WordPress POST succeeded");
     }
@@ -142,7 +135,8 @@ public sealed class ApprovalWorkflowTests : IDisposable
         var service = new ApprovalWorkflowService(_executionCenter, path, id => id == site ? currentOwner : null);
         var item = service.Submit(_ownerA, CreateSubmission(site, "ownership-change", "SEO Update"), "owner-a@example.com");
         currentOwner = _ownerB;
-        (() => service.Approve(_ownerA, item.Id, "owner-a@example.com", null, true)).Should().Throw<InvalidOperationException>();
+        Action action = () => service.Approve(_ownerA, item.Id, "owner-a@example.com", null, true);
+        action.Should().Throw<InvalidOperationException>();
         service.GetById(_ownerA, item.Id)!.Status.Should().Be(ApprovalStatus.Pending);
     }
 
@@ -150,7 +144,8 @@ public sealed class ApprovalWorkflowTests : IDisposable
     public void UpdateProposal_ChangesAfterJson_OnlyForOwnerWhilePending()
     {
         var item = _approvals.Submit(_ownerA, CreateSubmission(_siteA, Guid.NewGuid().ToString("N"), "Content Update"), "owner-a@example.com");
-        (() => _approvals.UpdateProposal(_ownerB, item.Id, new { title = "Injected" }, "owner-b@example.com", "Cross tenant")).Should().Throw<InvalidOperationException>();
+        Action crossTenant = () => _approvals.UpdateProposal(_ownerB, item.Id, new { title = "Injected" }, "owner-b@example.com", "Cross tenant");
+        crossTenant.Should().Throw<InvalidOperationException>();
         var updated = _approvals.UpdateProposal(_ownerA, item.Id, new { title = "Updated title" }, "owner-a@example.com", "Edited before approval");
         updated.AfterJson.Should().Contain("Updated title");
         _approvals.GetAudit(_ownerA, item.Id).Should().Contain(x => x.Action == "Edited");
@@ -172,17 +167,19 @@ public sealed class ApprovalWorkflowTests : IDisposable
     [Fact]
     public void Http_compatibility_uses_authenticated_owner_and_actor_not_request_strings()
     {
-        var path = Path.Combine(_testDirectory, "http-approval.db");
         var httpContext = new DefaultHttpContext
         {
             User = new ClaimsPrincipal(new ClaimsIdentity(
-                [new Claim(ClaimTypes.NameIdentifier, _ownerA.ToString()), new Claim(ClaimTypes.Name, "alice@example.com")],
-                authenticationType: "test"))
+                [new Claim(ClaimTypes.NameIdentifier, _ownerA.ToString()), new Claim(ClaimTypes.Name, "alice@example.com")], "test"))
         };
         var accessor = new HttpContextAccessor { HttpContext = httpContext };
         var notifications = NotificationInboxService.ForDatabase(Path.Combine(_testDirectory, "http-notifications.db"));
         var services = new ServiceCollection().BuildServiceProvider();
-        var service = new ApprovalWorkflowService(_executionCenter, notifications, services.GetRequiredService<IServiceScopeFactory>(), accessor);
+        var service = new ApprovalWorkflowService(
+            _executionCenter,
+            notifications,
+            services.GetRequiredService<IServiceScopeFactory>(),
+            accessor);
         var ownerAItem = service.Submit(_ownerA, CreateSubmission(null, "http-a", "AI Suggestion"), "seed-a@example.com");
         var ownerBItem = service.Submit(_ownerB, CreateSubmission(null, "http-b", "AI Suggestion"), "seed-b@example.com");
         service.GetItems().Should().ContainSingle(x => x.Id == ownerAItem.Id);
@@ -195,15 +192,13 @@ public sealed class ApprovalWorkflowTests : IDisposable
     private static ApprovalSubmission CreateExecutableSubmission(Guid siteId, string key)
     {
         var expected = DateTimeOffset.Parse("2026-08-09T10:00:00Z");
-        var before = CreateUpdateRequest("Before", "<p>Before</p>", expected);
-        var after = CreateUpdateRequest("After", "<p>After</p>", expected);
         return new ApprovalSubmission(
             siteId,
             "Test Site",
             ApprovedChangePolicy.WordPressContentUpdateOperation,
             "Update post #42",
-            before,
-            after,
+            CreateUpdateRequest("Before", "<p>Before</p>", expected),
+            CreateUpdateRequest("After", "<p>After</p>", expected),
             "spoofable-display-value@example.com",
             ApprovalRiskLevel.Medium,
             Guid.NewGuid().ToString("N"),
