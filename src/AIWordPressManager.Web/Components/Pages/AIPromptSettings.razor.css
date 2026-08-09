@@ -1,0 +1,122 @@
+.ai-prompt-settings .settings-nav {
+    align-self: start;
+    max-height: calc(100vh - 140px);
+    overflow: auto;
+}
+
+.prompt-registry-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.prompt-registry-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color, #2a3442);
+    border-radius: 12px;
+    background: transparent;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.prompt-registry-item:hover,
+.prompt-registry-item.active {
+    border-color: var(--accent, #d4af37);
+    background: color-mix(in srgb, var(--accent, #d4af37) 9%, transparent);
+}
+
+.prompt-registry-item > span:first-child {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.prompt-registry-item strong,
+.prompt-registry-item small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prompt-toggle {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prompt-editor-field {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.prompt-editor-field > span {
+    font-weight: 700;
+}
+
+.prompt-editor-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 180px;
+    padding: 14px;
+    border: 1px solid var(--border-color, #2a3442);
+    border-radius: 12px;
+    background: var(--surface-deep, #0b0f17);
+    color: inherit;
+    font: inherit;
+    line-height: 1.6;
+}
+
+.prompt-editor-field textarea:focus {
+    outline: none;
+    border-color: var(--accent, #d4af37);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #d4af37) 14%, transparent);
+}
+
+.prompt-editor-field > small {
+    justify-self: end;
+    opacity: .72;
+}
+
+.prompt-version-list {
+    display: grid;
+    gap: 10px;
+}
+
+.prompt-version-list article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 14px;
+    border: 1px solid var(--border-color, #2a3442);
+    border-radius: 12px;
+}
+
+.prompt-version-list article > div {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+@media (max-width: 760px) {
+    .ai-prompt-settings .settings-nav {
+        max-height: none;
+    }
+
+    .prompt-version-list article {
+        grid-template-columns: 1fr auto;
+    }
+
+    .prompt-version-list article .btn {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
