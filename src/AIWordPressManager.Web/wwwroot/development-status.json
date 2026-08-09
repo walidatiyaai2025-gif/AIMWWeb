@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-09T16:12:00Z",
+  "updatedAtUtc": "2026-08-09T16:45:00Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -83,7 +83,7 @@
     { "id": "AI-002", "phase": 6, "area": "AI", "nameAr": "مزودو الذكاء الاصطناعي", "nameEn": "AI provider configuration", "status": "planned", "priority": "high", "version": null, "notes": "OpenAI, Gemini, Puter, and other providers require secure configuration UI." },
     { "id": "AI-003", "phase": 6, "area": "AI", "nameAr": "قوالب الأوامر", "nameEn": "Prompt template registry", "status": "in_progress", "priority": "medium", "version": "existing", "notes": "Registry/API foundation exists; management UI and versioning remain." },
     { "id": "AI-004", "phase": 6, "area": "AI", "nameAr": "اقتراحات AI قبل وبعد", "nameEn": "AI suggestions with before and after values", "status": "planned", "priority": "high", "version": null, "notes": "Must include explanation, confidence, and affected fields." },
-    { "id": "AI-005", "phase": 6, "area": "Approvals", "nameAr": "قائمة الموافقات", "nameEn": "Approval queue", "status": "in_progress", "priority": "high", "version": "existing", "notes": "Service and API foundation exist; complete tenant-safe UI and execution policy remain." },
+    { "id": "AI-005", "phase": 6, "area": "Approvals", "nameAr": "قائمة الموافقات", "nameEn": "Approval queue", "status": "completed", "priority": "high", "version": "155.124.0", "notes": "Approval workflow now persists OwnerUserId with legacy SQLite self-migration, scopes list/direct-ID/audit/edit/review/actions to the authenticated owner, scopes idempotency keys by owner, derives HTTP reviewer identity from claims, blocks stale execution after site ownership change, and queues immediate execution with explicit owner/site identity; Build #1257 and .NET Build Verification #929 passed before final roadmap reconciliation." },
     { "id": "AI-006", "phase": 6, "area": "Approvals", "nameAr": "تنفيذ التغيير بعد الموافقة", "nameEn": "Execute approved changes", "status": "planned", "priority": "critical", "version": null, "notes": "Requires authorization, idempotency, audit, and rollback." },
     { "id": "AI-007", "phase": 6, "area": "AI", "nameAr": "سجل استخدام وتكلفة الذكاء الاصطناعي", "nameEn": "AI usage and cost log", "status": "in_progress", "priority": "medium", "version": "existing", "notes": "Usage API exists; tenant scoping and dashboard remain." },
     { "id": "AI-008", "phase": 6, "area": "Planner", "nameAr": "مخطط المحتوى", "nameEn": "Content planner", "status": "in_progress", "priority": "medium", "version": "existing", "notes": "Service and APIs exist; full UI, ownership review, and publishing workflow remain." },
