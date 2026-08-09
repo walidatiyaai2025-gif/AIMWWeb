@@ -1,5 +1,8 @@
+using System.Reflection;
+using System.Security.Claims;
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Tests;
@@ -106,6 +109,47 @@ public sealed class NotificationInboxServiceTests
             service.Prune(ownerA, TimeSpan.FromDays(90)).Should().Be(2);
             service.Get(ownerA).Should().BeEmpty();
             service.Get(ownerB).Should().ContainSingle(x => x.Id == b1.Id);
+        }
+        finally
+        {
+            DeleteDatabase(path);
+        }
+    }
+
+    [Fact]
+    public void Legacy_http_compatibility_ignores_supplied_user_id_and_uses_authenticated_claim()
+    {
+        var path = TempDatabasePath();
+        try
+        {
+            var ownerA = Guid.NewGuid();
+            var ownerB = Guid.NewGuid();
+            var context = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [new Claim(ClaimTypes.NameIdentifier, ownerA.ToString())],
+                    authenticationType: "test"))
+            };
+            var accessor = new HttpContextAccessor { HttpContext = context };
+            var constructor = typeof(NotificationInboxService).GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                binder: null,
+                types: [typeof(string), typeof(IHttpContextAccessor)],
+                modifiers: null);
+            constructor.Should().NotBeNull();
+
+            var service = (NotificationInboxService)constructor!.Invoke([path, accessor]);
+            var a = service.Create(ownerA, "Owner A", "Visible to authenticated owner.", NotificationSeverity.Information);
+            var b = service.Create(ownerB, "Owner B", "Must remain private.", NotificationSeverity.Warning);
+
+            var spoofed = service.Get(ownerB.ToString(), unreadOnly: false, take: 100);
+            spoofed.Should().ContainSingle(x => x.Id == a.Id);
+            spoofed.Should().NotContain(x => x.Id == b.Id);
+
+            service.MarkRead(b.Id);
+            service.Get(ownerB, unreadOnly: true).Should().ContainSingle(x => x.Id == b.Id);
+            service.MarkRead(a.Id);
+            service.Get(ownerA, unreadOnly: true).Should().BeEmpty();
         }
         finally
         {
