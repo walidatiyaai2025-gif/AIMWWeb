@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject SiteOperationHistoryService History
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "عمليات المواقع" : "Site Operations")</PageTitle>
@@ -17,7 +18,7 @@ else
     <div class="site-operations-page">
         <section class="panel" style="padding:24px;margin-bottom:18px">
             <h1>@(L.IsArabic ? "عمليات مواقع WordPress" : "WordPress Site Operations")</h1>
-            <p>@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة." : "A unified view of connection tests and synchronization activity.")</p>
+            <p>@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة التابعة لحسابك." : "A unified view of connection tests and synchronization activity owned by your account.")</p>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn" @onclick="ReloadAsync">@(L.IsArabic ? "تحديث" : "Refresh")</button>
                 <a class="btn" href="@CsvDownloadHref" download="@CsvFileName">@(L.IsArabic ? "تصدير CSV" : "Export CSV")</a>
@@ -104,8 +105,9 @@ else
         _loading = true;
         try
         {
+            var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
-            _items = History.GetAll(2000);
+            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), 2000);
         }
         finally { _loading = false; }
     }
@@ -122,6 +124,7 @@ else
         return SiteName(item.SiteId).Contains(search, StringComparison.OrdinalIgnoreCase)
             || item.Operation.Contains(search, StringComparison.OrdinalIgnoreCase)
             || item.Message.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || (item.ExecutionJobId?.ToString().Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
             || (item.Details?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
     }).OrderByDescending(x => x.StartedAtUtc).ToList();
 
@@ -141,13 +144,14 @@ else
     private string BuildCsv()
     {
         var builder = new System.Text.StringBuilder();
-        builder.AppendLine("Time,Site,Operation,Result,DurationMs,Records,Message,Details");
+        builder.AppendLine("Time,Site,SiteId,ExecutionJobId,Operation,Result,DurationMs,Records,Message,Details");
         foreach (var item in FilteredItems)
         {
             var cells = new[]
             {
                 item.StartedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
-                SiteName(item.SiteId), item.Operation, item.Succeeded ? "Success" : "Failed",
+                SiteName(item.SiteId), item.SiteId.ToString(), item.ExecutionJobId?.ToString() ?? string.Empty,
+                item.Operation, item.Succeeded ? "Success" : "Failed",
                 item.Duration.TotalMilliseconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture),
                 item.AffectedRecords?.ToString() ?? string.Empty, item.Message, item.Details ?? string.Empty
             };
