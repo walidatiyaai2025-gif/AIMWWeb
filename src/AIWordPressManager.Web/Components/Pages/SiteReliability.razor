@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject SiteOperationHistoryService History
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "موثوقية المواقع" : "Site Reliability")</PageTitle>
@@ -20,7 +21,7 @@ else
                 <div>
                     <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "مراقبة الاعتمادية" : "RELIABILITY MONITORING")</small>
                     <h1 style="margin:8px 0">@(L.IsArabic ? "موثوقية مواقع WordPress" : "WordPress Site Reliability")</h1>
-                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "مقارنة نجاح الاتصال والمزامنة لكل موقع خلال الفترة المحددة." : "Compare connection and synchronization success across sites for the selected period.")</p>
+                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "مقارنة نجاح الاتصال والمزامنة لمواقع حسابك خلال الفترة المحددة." : "Compare connection and synchronization success across sites owned by your account for the selected period.")</p>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
@@ -88,8 +89,9 @@ else
         _loading = true;
         try
         {
+            var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
-            _items = History.GetAll(5000);
+            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), 5000);
             BuildRows();
         }
         finally { _loading = false; }
