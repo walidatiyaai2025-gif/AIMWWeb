@@ -68,8 +68,13 @@ builder.Services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 builder.Services.AddScoped(_ => { var language = new AppLanguageService(); language.SetCulture("en"); return language; });
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
-builder.Services.AddSingleton<ApprovalWorkflowService>();
 builder.Services.AddSingleton<NotificationInboxService>();
+builder.Services.AddSingleton<ApprovalWorkflowService>(sp =>
+    new ApprovalWorkflowService(
+        sp.GetRequiredService<ExecutionCenterService>(),
+        sp.GetRequiredService<NotificationInboxService>(),
+        sp.GetRequiredService<IServiceScopeFactory>(),
+        sp.GetRequiredService<IHttpContextAccessor>()));
 builder.Services.AddSingleton<ExecutionOperationTracker>();
 builder.Services.AddSingleton<AutomationCenterService>();
 builder.Services.AddSingleton<BulkContentOperationQueue>();
