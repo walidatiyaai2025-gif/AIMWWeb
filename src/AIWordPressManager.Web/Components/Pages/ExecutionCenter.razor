@@ -15,7 +15,7 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "مراقبة العمليات" : "OPERATIONS CONTROL")</span>
             <h1>@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</h1>
-            <p>@(L.IsArabic ? "تابع عمليات مواقعك فقط، مع فلترة حسب الموقع والحالة وإدارة الإيقاف والاستكمال وإعادة المحاولة." : "Monitor operations for your own sites, filter by site and status, and manage pause, resume, retry, and cancellation.")</p>
+            <p>@(L.IsArabic ? "تابع عمليات مواقعك. العمليات الجماعية تدعم الإيقاف والإلغاء، أما التغييرات المعتمدة فتُدار كوحدة ذرية آمنة وتسمح بإعادة المحاولة بعد الفشل." : "Monitor operations for your own sites. Bulk jobs support pause and cancellation; approved external changes run as controlled atomic units and allow retry after failure.")</p>
         </div>
         <div class="execution-hero-actions">
             @if (_selectedSiteId != Guid.Empty)
@@ -43,10 +43,7 @@
             <div class="execution-search"><span>⌕</span><input @bind="_query" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث باسم المهمة..." : "Search job title...")" /></div>
             <select @bind="_selectedSiteId">
                 <option value="@Guid.Empty">@(L.IsArabic ? "كل مواقعي" : "All my sites")</option>
-                @foreach (var site in _ownedSites)
-                {
-                    <option value="@site.Id">@site.Name</option>
-                }
+                @foreach (var site in _ownedSites) { <option value="@site.Id">@site.Name</option> }
             </select>
             <select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="Waiting">Waiting</option><option value="Running">Running</option><option value="Paused">Paused</option><option value="Completed">Completed</option><option value="Failed">Failed</option><option value="Cancelled">Cancelled</option></select>
         </section>
@@ -62,22 +59,28 @@
                 }
                 else if (!FilteredJobs.Any())
                 {
-                    <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام مطابقة" : "No matching jobs")</h3><p>@(L.IsArabic ? "شغّل مزامنة أو عملية SEO أو وسائط للموقع المختار." : "Run synchronization, SEO, or media operations for the selected site.")</p></div>
+                    <div class="empty-state"><h3>@(L.IsArabic ? "لا توجد مهام مطابقة" : "No matching jobs")</h3><p>@(L.IsArabic ? "شغّل مزامنة أو عملية SEO أو وسائط للموقع المختار." : "Run synchronization, SEO, media, or an approved change for the selected site.")</p></div>
                 }
                 else
                 {
                     @foreach (var job in FilteredJobs)
                     {
+                        var external = string.Equals(job.ExecutionMode, ExecutionCenterService.ExternalExecutionMode, StringComparison.Ordinal);
                         <article class="execution-job @StatusClass(job.Status)">
                             <div class="execution-job-head">
-                                <div><span class="job-type">@job.Type</span><h3>@job.Title</h3><p>@job.SiteName · @FormatDate(job.CreatedAtUtc)</p></div>
+                                <div><span class="job-type">@job.Type @if (external) { <text> · @(L.IsArabic ? "تغيير معتمد" : "Approved change")</text> }</span><h3>@job.Title</h3><p>@job.SiteName · @FormatDate(job.CreatedAtUtc)</p></div>
                                 <span class="job-status">@TranslateStatus(job.Status)</span>
                             </div>
                             <div class="job-progress-meta"><span>@job.ProcessedItems / @job.TotalItems</span><strong>@job.Progress%</strong></div>
                             <div class="job-progress"><span style="width:@job.Progress%"></span></div>
                             @if (!string.IsNullOrWhiteSpace(job.Error)) { <div class="job-error">@job.Error</div> }
                             <footer>
-                                @if (job.Status == "Running") { <button class="btn compact" @onclick="() => Pause(job.Id)">@(L.IsArabic ? "إيقاف مؤقت" : "Pause")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
+                                @if (external)
+                                {
+                                    @if (job.Status == "Failed") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة الآمنة" : "Safe retry")</button> }
+                                    else if (job.Status is "Waiting" or "Running") { <span class="job-controlled">@(L.IsArabic ? "تنفيذ معتمد مُدار — لا إيقاف أثناء الكتابة" : "Managed approved execution — not interruptible during mutation")</span> }
+                                }
+                                else if (job.Status == "Running") { <button class="btn compact" @onclick="() => Pause(job.Id)">@(L.IsArabic ? "إيقاف مؤقت" : "Pause")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
                                 else if (job.Status == "Paused") { <button class="btn compact primary" @onclick="() => Resume(job.Id)">@(L.IsArabic ? "استكمال" : "Resume")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
                                 else if (job.Status is "Failed" or "Cancelled") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button> }
                                 <code>@job.Id.ToString()[..8]</code>
@@ -116,25 +119,12 @@
     [Parameter, SupplyParameterFromQuery(Name = "siteId")]
     public Guid? WorkspaceSiteId { get; set; }
 
-    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => _selectedSiteId == Guid.Empty
-        ? _jobs
-        : _jobs.Where(x => x.SiteId == _selectedSiteId);
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => _selectedSiteId == Guid.Empty ? _jobs : _jobs.Where(x => x.SiteId == _selectedSiteId);
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
-    private IEnumerable<AIWordPressManager.Web.Services.ExecutionActivity> VisibleActivities
-    {
-        get
-        {
-            var ids = SiteJobs.Select(x => x.Id).ToHashSet();
-            return _activities.Where(x => ids.Contains(x.JobId)).Take(40);
-        }
-    }
+    private IEnumerable<AIWordPressManager.Web.Services.ExecutionActivity> VisibleActivities { get { var ids = SiteJobs.Select(x => x.Id).ToHashSet(); return _activities.Where(x => ids.Contains(x.JobId)).Take(40); } }
     private string QueueCaption => L.IsArabic ? $"إجمالي {SiteJobs.Count()} مهمة للمواقع المملوكة لحسابك" : $"{SiteJobs.Count()} jobs for sites owned by your account";
 
-    protected override void OnInitialized()
-    {
-        L.Changed += Changed;
-        _ = AutoRefreshAsync();
-    }
+    protected override void OnInitialized() { L.Changed += Changed; _ = AutoRefreshAsync(); }
 
     protected override async Task OnInitializedAsync()
     {
@@ -142,26 +132,14 @@
         {
             _ownerUserId = CurrentUser.RequireUserId();
             _ownedSites = await SiteService.GetSitesAsync();
-            if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value))
-                _selectedSiteId = WorkspaceSiteId.Value;
+            if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value)) _selectedSiteId = WorkspaceSiteId.Value;
             Refresh();
         }
-        catch (Exception ex)
-        {
-            Notifications.Error(L.IsArabic ? "تعذر تحميل مركز التنفيذ." : "Execution Center could not be loaded.", details: ex.Message);
-        }
-        finally
-        {
-            _loadingSites = false;
-        }
+        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تحميل مركز التنفيذ." : "Execution Center could not be loaded.", details: ex.Message); }
+        finally { _loadingSites = false; }
     }
 
-    protected override Task OnParametersSetAsync()
-    {
-        if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value))
-            _selectedSiteId = WorkspaceSiteId.Value;
-        return Task.CompletedTask;
-    }
+    protected override Task OnParametersSetAsync() { if (WorkspaceSiteId.HasValue && _ownedSites.Any(x => x.Id == WorkspaceSiteId.Value)) _selectedSiteId = WorkspaceSiteId.Value; return Task.CompletedTask; }
 
     private async Task AutoRefreshAsync()
     {
@@ -169,12 +147,7 @@
         {
             while (!_disposed && await _timer.WaitForNextTickAsync(_cts.Token))
             {
-                await InvokeAsync(() =>
-                {
-                    if (_disposed) return;
-                    Refresh();
-                    StateHasChanged();
-                });
+                await InvokeAsync(() => { if (_disposed) return; Refresh(); StateHasChanged(); });
             }
         }
         catch (OperationCanceledException) { }
@@ -197,21 +170,14 @@
 
     private void RunOwnedAction(Guid id, Action action, string successMessage)
     {
-        try
-        {
-            _ = _jobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user.");
-            action(); Refresh(); Notifications.Success(successMessage);
-        }
+        try { _ = _jobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user."); action(); Refresh(); Notifications.Success(successMessage); }
         catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
     }
 
     private static string StatusClass(string status) => status.ToLowerInvariant();
     private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة مؤقتًا", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status };
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
-    private void Changed()
-    {
-        if (!_disposed) _ = InvokeAsync(StateHasChanged);
-    }
+    private void Changed() { if (!_disposed) _ = InvokeAsync(StateHasChanged); }
 
     public void Dispose()
     {
