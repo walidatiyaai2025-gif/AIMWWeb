@@ -61,7 +61,7 @@
             }
 
             <footer>
-                <a href="/module/logs" @onclick="Close">@(L.IsArabic ? "عرض السجلات والأخطاء" : "View logs and errors")</a>
+                <a href="/notifications" @onclick="Close">@(L.IsArabic ? "عرض كل الإشعارات" : "View all notifications")</a>
             </footer>
         </div>
     }
@@ -139,12 +139,13 @@
 
     private NotificationView Map(JsonElement element)
     {
-        var severity = Text(element, "severity", "Severity");
-        var category = Text(element, "category", "Category");
+        var severity = SeverityValue(element);
+        var source = Text(element, "source", "Source", "category", "Category");
         var title = Text(element, "title", "Title");
         var message = Text(element, "message", "Message");
         var url = Text(element, "targetUrl", "TargetUrl", "url", "Url");
-        if (string.IsNullOrWhiteSpace(url)) url = TargetFor(category, severity);
+        var executionJobId = GuidValue(element, "executionJobId", "ExecutionJobId");
+        if (string.IsNullOrWhiteSpace(url)) url = TargetFor(source, severity, executionJobId);
         return new NotificationView(
             GuidValue(element, "id", "Id"),
             string.IsNullOrWhiteSpace(title) ? (L.IsArabic ? "تنبيه من النظام" : "System notification") : title,
@@ -155,13 +156,15 @@
             url);
     }
 
-    private static string TargetFor(string category, string severity)
+    private static string TargetFor(string source, string severity, Guid executionJobId)
     {
-        if (category.Contains("Media", StringComparison.OrdinalIgnoreCase)) return "/module/media";
-        if (category.Contains("SEO", StringComparison.OrdinalIgnoreCase)) return "/module/seo-audit";
-        if (category.Contains("Execution", StringComparison.OrdinalIgnoreCase) || category.Contains("Job", StringComparison.OrdinalIgnoreCase)) return "/module/execution";
+        if (executionJobId != Guid.Empty) return "/module/execution";
+        if (source.Contains("Media", StringComparison.OrdinalIgnoreCase)) return "/module/media";
+        if (source.Contains("SEO", StringComparison.OrdinalIgnoreCase)) return "/module/seo-audit";
+        if (source.Contains("Planner", StringComparison.OrdinalIgnoreCase)) return "/content-planner";
+        if (source.Contains("Execution", StringComparison.OrdinalIgnoreCase) || source.Contains("Job", StringComparison.OrdinalIgnoreCase)) return "/module/execution";
         if (severity.Contains("Error", StringComparison.OrdinalIgnoreCase)) return "/module/logs";
-        return string.Empty;
+        return "/notifications";
     }
 
     private string FormatTime(DateTime? value)
@@ -190,6 +193,18 @@
         "error" or "critical" => "×",
         _ => "i"
     };
+
+    private static string SeverityValue(JsonElement element)
+    {
+        foreach (var name in new[] { "severity", "Severity" })
+        {
+            if (!element.TryGetProperty(name, out var node)) continue;
+            if (node.ValueKind == JsonValueKind.String) return node.GetString() ?? NotificationSeverity.Information.ToString();
+            if (node.ValueKind == JsonValueKind.Number && node.TryGetInt32(out var number) && Enum.IsDefined(typeof(NotificationSeverity), number))
+                return ((NotificationSeverity)number).ToString();
+        }
+        return NotificationSeverity.Information.ToString();
+    }
 
     private static string Text(JsonElement element, params string[] names)
     {
