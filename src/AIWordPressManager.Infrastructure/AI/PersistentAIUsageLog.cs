@@ -109,11 +109,13 @@ public sealed class PersistentAIUsageLog : IAIUsageLog
         }
         finally
         {
-            if (!File.Exists(temporaryPath)) return;
-            try { File.Delete(temporaryPath); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            if (File.Exists(temporaryPath))
             {
-                _logger.LogWarning(ex, "Could not remove temporary AI usage file {UsageLogTempPath}.", temporaryPath);
+                try { File.Delete(temporaryPath); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning(ex, "Could not remove temporary AI usage file {UsageLogTempPath}.", temporaryPath);
+                }
             }
         }
     }
