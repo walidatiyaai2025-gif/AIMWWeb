@@ -91,13 +91,13 @@ public sealed class AIPromptTemplateConfigurationTests
     {
         await using var fixture = await SettingsFixture.CreateAsync();
 
-        var invalidKey = async () => await fixture.Service.SaveAiPromptTemplateAsync(
+        Func<Task> invalidKey = async () => await fixture.Service.SaveAiPromptTemplateAsync(
             "bad key!",
             "English",
             "عربي",
             true,
             "admin");
-        var missingArabic = async () => await fixture.Service.SaveAiPromptTemplateAsync(
+        Func<Task> missingArabic = async () => await fixture.Service.SaveAiPromptTemplateAsync(
             "valid-key",
             "English",
             "   ",
