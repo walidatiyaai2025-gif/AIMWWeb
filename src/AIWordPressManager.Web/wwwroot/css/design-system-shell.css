@@ -287,9 +287,14 @@ html[data-mode="light"] .design-system-shell .topbar {
 @media (max-width: 920px) {
     .design-system-shell .topbar { align-items: flex-start; gap: .65rem; }
     .design-system-shell .app-breadcrumb { display: none; }
-    .design-system-shell .language-switch { min-width: var(--shell-touch-target); width: var(--shell-touch-target); overflow: hidden; padding-inline: .58rem; white-space: nowrap; }
-    .design-system-shell .language-switch { font-size: 0; }
-    .design-system-shell .language-switch::first-letter { font-size: 1rem; }
+    .design-system-shell .language-switch {
+        min-width: var(--shell-touch-target);
+        width: var(--shell-touch-target);
+        overflow: hidden;
+        padding-inline: .58rem;
+        white-space: nowrap;
+    }
+    .design-system-shell .language-switch .language-label { display: none; }
 }
 
 @media (max-width: 700px) {
