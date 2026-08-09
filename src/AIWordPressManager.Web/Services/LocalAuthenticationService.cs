@@ -222,7 +222,7 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
 
     private void AddAudit(HttpContext context, string userName, bool succeeded, string reason, DateTime utcNow)
     {
-        dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, context.Connection.RemoteIpAddress?.ToString(), context.Request.Headers.UserAgent.ToString(), now: utcNow));
+        dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, context.Connection.RemoteIpAddress?.ToString(), context.Request.Headers.UserAgent.ToString(), utcNow));
     }
 
     private static bool IsSafeLocalPath(string? path)
