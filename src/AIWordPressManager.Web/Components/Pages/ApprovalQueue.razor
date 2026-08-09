@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject ApprovalWorkflowService ApprovalService
 @inject ExecutionCenterService ExecutionCenter
+@inject IWordPressPostEditorService EditorService
 @inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
@@ -14,7 +15,7 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "سير العمل الآمن" : "CONTROLLED WORKFLOW")</span>
             <h1>@(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</h1>
-            <p>@(L.IsArabic ? "راجع التغييرات المقترحة قبل اعتمادها. التنفيذ التلقائي متاح فقط للعمليات ذات هدف WordPress ونسخة بعيدة موثقة." : "Review proposed changes before approval. Automatic execution is available only for operations with a typed WordPress target and captured remote version.")</p>
+            <p>@(L.IsArabic ? "راجع التغييرات المقترحة قبل اعتمادها. التنفيذ والرجوع كلاهما يمران بفحص الملكية ونسخة WordPress الحالية." : "Review proposed changes before approval. Execution and rollback both recheck ownership and the current WordPress version.")</p>
         </div>
         <div class="approval-hero-actions">
             <button class="btn" @onclick="LoadAsync" disabled="@_working">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
@@ -33,14 +34,8 @@
     <section class="panel approval-toolbar">
         <div class="approval-filters">
             <input class="search-input" placeholder="@(L.IsArabic ? "ابحث بالعنوان أو الموقع أو نوع العملية..." : "Search title, site, or operation...")" @bind="_search" @bind:event="oninput" />
-            <select @bind="_statusFilter">
-                <option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
-                @foreach (var status in Enum.GetValues<ApprovalStatus>()) { <option value="@status.ToString()">@StatusText(status)</option> }
-            </select>
-            <select @bind="_riskFilter">
-                <option value="all">@(L.IsArabic ? "كل المخاطر" : "All risks")</option>
-                @foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()) { <option value="@risk.ToString()">@RiskText(risk)</option> }
-            </select>
+            <select @bind="_statusFilter"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>@foreach (var status in Enum.GetValues<ApprovalStatus>()) { <option value="@status.ToString()">@StatusText(status)</option> }</select>
+            <select @bind="_riskFilter"><option value="all">@(L.IsArabic ? "كل المخاطر" : "All risks")</option>@foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()) { <option value="@risk.ToString()">@RiskText(risk)</option> }</select>
         </div>
         <div class="approval-reviewer"><label>@(L.IsArabic ? "المراجع الحالي" : "Current reviewer")</label><strong>@_reviewer</strong></div>
     </section>
@@ -67,10 +62,7 @@
                     <div class="approval-meta">
                         <span><b>@(L.IsArabic ? "طلب بواسطة" : "Requested by"):</b> @item.RequestedBy</span>
                         <span><b>Correlation:</b> <code>@item.CorrelationId</code></span>
-                        @if (item.ExecutionJobId.HasValue)
-                        {
-                            <span><b>@(L.IsArabic ? "مهمة التنفيذ" : "Execution job"):</b> <code>@item.ExecutionJobId</code> · @ExecutionStatus(item.ExecutionJobId.Value)</span>
-                        }
+                        @if (item.ExecutionJobId.HasValue) { <span><b>@(L.IsArabic ? "مهمة التنفيذ" : "Execution job"):</b> <code>@item.ExecutionJobId</code> · @ExecutionStatus(item.ExecutionJobId.Value)</span> }
                     </div>
 
                     @if (item.Id == _expandedId)
@@ -91,13 +83,21 @@
                                     @if (capability.CanExecute)
                                     {
                                         <label class="check-row"><input type="checkbox" @bind="_executeImmediately" /> <span>@(L.IsArabic ? "إضافة التغيير المعتمد إلى قائمة التنفيذ الحقيقي فور الموافقة" : "Queue the approved change for real execution immediately")</span></label>
-                                        <small>@(L.IsArabic ? "سيظل الطلب معتمدًا حتى ينجح التغيير على WordPress فعليًا؛ لا يوجد نجاح وهمي من عداد التقدم." : "The request stays Approved until the WordPress mutation really succeeds; the progress simulator cannot complete it.")</small>
+                                        <small>@(L.IsArabic ? "سيظل الطلب معتمدًا حتى ينجح التغيير على WordPress فعليًا؛ عداد التقدم لا يستطيع إكماله." : "The request stays Approved until the WordPress mutation really succeeds; the progress simulator cannot complete it.")</small>
                                     }
                                     else
                                     {
                                         <div class="approval-reviewed-note"><strong>@(L.IsArabic ? "تنفيذ تلقائي غير متاح" : "Automatic execution unavailable")</strong><p>@capability.Message</p></div>
                                     }
                                     <div class="approval-actions"><button class="btn primary" disabled="@_working" @onclick="() => ApproveAsync(item)">✓ @(L.IsArabic ? "موافقة" : "Approve")</button><button class="btn danger" disabled="@_working" @onclick="() => RejectAsync(item)">✕ @(L.IsArabic ? "رفض" : "Reject")</button></div>
+                                </div>
+                            }
+                            else if (item.Status == ApprovalStatus.Executed && string.Equals(item.OperationType, ApprovedChangePolicy.WordPressContentUpdateOperation, StringComparison.Ordinal))
+                            {
+                                <div class="approval-decision-box">
+                                    <strong>@(L.IsArabic ? "رجوع محكوم" : "Controlled rollback")</strong>
+                                    <p>@(L.IsArabic ? "إنشاء الرجوع لا يغير WordPress فورًا. سيتم قراءة النسخة الحالية وإنشاء طلب موافقة جديد يعيد حالة Before الأصلية." : "Creating a rollback does not change WordPress immediately. The current remote version is read and a new approval is created to restore the original Before state.")</p>
+                                    <button class="btn" disabled="@_working" @onclick="() => CreateRollbackAsync(item)">↶ @(L.IsArabic ? "إنشاء طلب رجوع" : "Create rollback approval")</button>
                                 </div>
                             }
                             else if (!string.IsNullOrWhiteSpace(item.ReviewerNotes))
@@ -186,6 +186,32 @@
             if (!_disposed) _audit = ApprovalService.GetAudit(_ownerUserId, item.Id, 100);
         }
         catch (Exception ex) { if (!_disposed) Notifications.Error(L.IsArabic ? "تعذر رفض العنصر." : "Rejection failed.", details: ex.Message); }
+        finally { if (!_disposed) _working = false; }
+    }
+
+    private async Task CreateRollbackAsync(ApprovalItem item)
+    {
+        if (_disposed || _working) return;
+        try
+        {
+            _working = true;
+            if (!item.SiteId.HasValue) throw new InvalidOperationException("Rollback requires a site-scoped approval.");
+            if (!ApprovedChangePolicy.TryGetBeforeRequest(item, out var original, out var parseError)) throw new InvalidOperationException(parseError);
+
+            var remoteResult = await EditorService.GetAsync(item.SiteId.Value, original.ContentType, original.Id);
+            if (remoteResult.IsFailure) throw new InvalidOperationException(remoteResult.Error.Message);
+            if (!ApprovedChangePolicy.TryBuildRollbackSubmission(item, remoteResult.Value, out var submission, out var rollbackError)) throw new InvalidOperationException(rollbackError);
+
+            var rollback = ApprovalService.Submit(_ownerUserId, submission, _reviewer);
+            await LoadAsync();
+            if (_disposed) return;
+            _expandedId = rollback.Id;
+            _notes = string.Empty;
+            _executeImmediately = ApprovedChangePolicy.Evaluate(rollback).CanExecute;
+            _audit = ApprovalService.GetAudit(_ownerUserId, rollback.Id, 100);
+            Notifications.Success(L.IsArabic ? "تم إنشاء طلب رجوع جديد للمراجعة." : "A new rollback approval was created for review.", rollback.Id.ToString()[..8]);
+        }
+        catch (Exception ex) { if (!_disposed) Notifications.Error(L.IsArabic ? "تعذر إنشاء طلب الرجوع." : "Rollback approval could not be created.", details: ex.Message); }
         finally { if (!_disposed) _working = false; }
     }
 
