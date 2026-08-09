@@ -61,4 +61,22 @@ public sealed class MediaUploadPolicyTests
 
         result.Should().Be("evilname.jpg");
     }
+
+    [Fact]
+    public void MetadataVersionComparison_TreatsEquivalentOffsetsAsSameInstant()
+    {
+        var expected = DateTimeOffset.Parse("2026-08-09T10:00:00+00:00");
+        var remote = DateTimeOffset.Parse("2026-08-09T13:00:00+03:00");
+
+        WordPressMediaWebService.HasRemoteChanged(expected, remote).Should().BeFalse();
+    }
+
+    [Fact]
+    public void MetadataVersionComparison_DetectsRemoteChange()
+    {
+        var expected = DateTimeOffset.Parse("2026-08-09T10:00:00+00:00");
+        var remote = expected.AddSeconds(1);
+
+        WordPressMediaWebService.HasRemoteChanged(expected, remote).Should().BeTrue();
+    }
 }
