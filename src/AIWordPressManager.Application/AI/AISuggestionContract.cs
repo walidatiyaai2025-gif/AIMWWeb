@@ -23,22 +23,22 @@ public static class AISuggestionContract
             ? "Improve the supplied content while preserving its intent and factual meaning."
             : baseInstruction.Trim();
 
-        return $"""
-{baseText}
+        return $$"""
+{{baseText}}
 
 Return a reviewable change proposal as ONE valid JSON object and no other text.
 The JSON schema is exactly:
-{{
+{
   "after": "the complete proposed replacement content",
   "explanation": "why this change is recommended",
   "confidence": 0.0,
   "affectedFields": ["content"]
-}}
+}
 Rules:
 - `after` must be complete replacement content, not commentary.
-- `explanation` must be concise and written in {language}.
+- `explanation` must be concise and written in {{language}}.
 - `confidence` must be a JSON number from 0.0 through 1.0.
-- `affectedFields` must contain 1 to {MaxAffectedFields} stable field identifiers such as `title`, `content`, `excerpt`, or `seo.metaDescription`.
+- `affectedFields` must contain 1 to {{MaxAffectedFields}} stable field identifiers such as `title`, `content`, `excerpt`, or `seo.metaDescription`.
 - Do not return Markdown fences, prose outside the JSON object, or a `before` field. The application preserves the authoritative original value itself.
 """;
     }
