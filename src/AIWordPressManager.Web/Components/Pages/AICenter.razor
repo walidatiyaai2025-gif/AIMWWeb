@@ -25,6 +25,7 @@
             <p>@(L.IsArabic ? "ولّد اقتراحات منظمة مع مقارنة قبل وبعد، سبب التغيير، درجة الثقة والحقول المتأثرة، ثم أرسلها إلى الموافقات." : "Generate structured suggestions with before/after evidence, rationale, confidence, affected fields, and approval governance.")</p>
         </div>
         <div class="ai-center-hero-actions">
+            <a class="btn" href="/module/ai-usage">◫ @(L.IsArabic ? "الاستخدام والتكلفة" : "Usage & cost")</a>
             <a class="btn" href="/approvals">✓ @(L.IsArabic ? "قائمة الموافقات" : "Approval queue")</a>
             <button class="btn" @onclick="LoadMetadataAsync">↻ @(L.IsArabic ? "تحديث البيانات" : "Refresh data")</button>
             <button class="btn" @onclick="Clear">@(L.IsArabic ? "جلسة جديدة" : "New session")</button>
@@ -33,7 +34,7 @@
 
     <section class="ai-center-stats">
         <article class="panel"><small>@(L.IsArabic ? "القوالب المتاحة" : "Available prompts")</small><strong>@_prompts.Count</strong><span>@(L.IsArabic ? "من سجل القوالب" : "from prompt registry")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "طلبات الاستخدام الأخيرة" : "Recent usage records")</small><strong>@_usageCount</strong><span>@(L.IsArabic ? "آخر 100 سجل" : "latest 100 records")</span></article>
+        <article class="panel"><small>@(L.IsArabic ? "طلبات الاستخدام الأخيرة" : "Recent usage records")</small><strong>@_usageCount</strong><span>@(L.IsArabic ? "آخر 100 سجل خاص بحسابك" : "latest 100 records for your account")</span></article>
         <article class="panel"><small>@(L.IsArabic ? "نتائج الجلسة" : "Session results")</small><strong>@_history.Count</strong><span>@(L.IsArabic ? "متاحة للاستعادة" : "available for reuse")</span></article>
         <article class="panel"><small>@(L.IsArabic ? "حالة الموافقة" : "Approval state")</small><strong>@ApprovalStateText</strong><span>@(_lastApprovalId?.ToString("N")[..8] ?? "—")</span></article>
     </section>
@@ -219,7 +220,7 @@
             foreach (var key in PromptRegistry.GetAll(L.Culture).Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
                 _prompts.Add(new PromptOption(key, PromptTitle(key)));
 
-            _usageCount = UsageLog.GetRecent(100, null, null).Count;
+            _usageCount = UsageLog.GetRecent(100, null, _ownerUserId.ToString("D")).Count;
             _sites = await SiteService.GetSitesAsync();
             RefreshApprovalStatus();
         }
@@ -242,7 +243,7 @@
             }
 
             var instruction = AISuggestionContract.BuildSystemPrompt(baseInstruction, L.Culture);
-            var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? "ai.suggestion" : $"ai.suggestion:{_promptKey}"));
+            var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), _ownerUserId.ToString("D"), string.IsNullOrWhiteSpace(_promptKey) ? "ai.suggestion" : $"ai.suggestion:{_promptKey}"));
             _lastElapsed = DateTime.UtcNow - started;
             if (!result.IsSuccess)
             {

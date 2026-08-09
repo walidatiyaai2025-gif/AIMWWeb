@@ -64,6 +64,7 @@ builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();
 builder.Services.AddScoped<AppNotificationService>();
 builder.Services.AddScoped<ContentPlannerService>();
+builder.Services.AddScoped<AIUsageWebService>();
 builder.Services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 builder.Services.AddScoped(_ => { var language = new AppLanguageService(); language.SetCulture("en"); return language; });
 builder.Services.AddSingleton<BuildInformationService>();
@@ -261,10 +262,26 @@ app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationTo
 app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new { jobs = service.GetJobs(), history = service.GetHistory(100) }));
 
 app.MapGet("/api/ai/prompts", (string? culture, IAIPromptRegistry registry) => Results.Ok(registry.GetAll(string.IsNullOrWhiteSpace(culture) ? "en" : culture)));
-app.MapGet("/api/ai/usage", (int? take, Guid? siteId, string? userId, IAIUsageLog usageLog) => Results.Ok(usageLog.GetRecent(take ?? 100, siteId, userId)));
-app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrator orchestrator, IAIPromptRegistry registry, CancellationToken cancellationToken) =>
+app.MapGet("/api/ai/usage", async (int? take, Guid? siteId, AIUsageWebService service, CancellationToken cancellationToken) =>
+{
+    try { return Results.Ok(await service.GetRecentAsync(take ?? 100, siteId, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapGet("/api/ai/usage/summary", async (Guid? siteId, AIUsageWebService service, CancellationToken cancellationToken) =>
+{
+    try { return Results.Ok(await service.GetAsync(siteId, 5_000, cancellationToken)); }
+    catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
+});
+app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrator orchestrator, IAIPromptRegistry registry, CurrentUserContext currentUser, SiteWebService siteService, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(input.Content)) return Results.BadRequest(new { error = "Content is required." });
+
+    if (input.SiteId.HasValue)
+    {
+        var ownedSites = await siteService.GetSitesAsync(cancellationToken);
+        if (ownedSites.All(x => x.Id != input.SiteId.Value))
+            return Results.BadRequest(new { error = "Selected site is unavailable." });
+    }
 
     var instruction = input.SystemPrompt;
     if (!string.IsNullOrWhiteSpace(input.PromptKey))
@@ -274,7 +291,15 @@ app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrat
         instruction = resolvedPrompt;
     }
 
-    var result = await orchestrator.ExecuteAsync(new AIRequest(input.Content, instruction, input.Model, input.Temperature ?? 0.2, input.MaxOutputTokens ?? 1500, input.SiteId, input.UserId, input.PromptKey), cancellationToken);
+    var result = await orchestrator.ExecuteAsync(new AIRequest(
+        input.Content,
+        instruction,
+        input.Model,
+        input.Temperature ?? 0.2,
+        input.MaxOutputTokens ?? 1500,
+        input.SiteId,
+        currentUser.UserId.ToString("D"),
+        input.PromptKey), cancellationToken);
     return result.IsSuccess ? Results.Ok(result) : Results.BadRequest(result);
 });
 
@@ -299,8 +324,8 @@ app.MapGet("/api/planner", (Guid? siteId, string? status, DateTime? fromUtc, Dat
 });
 app.MapPost("/api/planner", (CreatePlannerItem request, ContentPlannerService service) => { try { return Results.Ok(service.Create(request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
 app.MapPut("/api/planner/{id:guid}", (Guid id, UpdatePlannerItem request, ContentPlannerService service) => { try { return Results.Ok(service.Update(id, request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/planner/{id:guid}/generate-brief", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateBriefAsync(id, request.Culture ?? "en", request.UserId, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/planner/{id:guid}/generate-draft", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateDraftAsync(id, request.Culture ?? "en", request.UserId, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
+app.MapPost("/api/planner/{id:guid}/generate-brief", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CurrentUserContext currentUser, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateBriefAsync(id, request.Culture ?? "en", currentUser.UserId.ToString("D"), cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
+app.MapPost("/api/planner/{id:guid}/generate-draft", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CurrentUserContext currentUser, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateDraftAsync(id, request.Culture ?? "en", currentUser.UserId.ToString("D"), cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
 app.MapPost("/api/planner/{id:guid}/queue", (Guid id, ContentPlannerService service) => { try { return Results.Ok(service.QueueForExecution(id)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
 
 app.MapGet("/api/notifications", (string? userId, bool? unreadOnly, int? take, NotificationInboxService service) => Results.Ok(service.Get(userId, unreadOnly ?? false, take ?? 100)));
