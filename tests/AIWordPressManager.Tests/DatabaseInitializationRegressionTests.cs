@@ -30,7 +30,7 @@ public sealed class DatabaseInitializationRegressionTests
         var initialize = async () => await service.InitializeAsync();
         await initialize.Should().NotThrowAsync();
 
-        var migrations = await context.Database.GetMigrationsAsync();
+        var migrations = context.Database.GetMigrations();
         migrations.Should().Contain("20260809094500_AddSiteSyncRuns");
 
         await using (var command = connection.CreateCommand())
