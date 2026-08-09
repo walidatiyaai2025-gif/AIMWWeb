@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject SiteWebService SiteService
 @inject SiteOperationHistoryService History
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "مركز عمليات المواقع" : "Site Operations Hub")</PageTitle>
@@ -38,7 +39,7 @@ else
 
         <section class="panel" style="padding:20px">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
-                <div><strong>@(L.IsArabic ? "آخر العمليات" : "Recent operations")</strong><div style="opacity:.7;font-size:.9rem">@(L.IsArabic ? "أحدث اختبارات الاتصال والمزامنة عبر كل المواقع." : "Latest connection and synchronization activity across all sites.")</div></div>
+                <div><strong>@(L.IsArabic ? "آخر العمليات" : "Recent operations")</strong><div style="opacity:.7;font-size:.9rem">@(L.IsArabic ? "أحدث اختبارات الاتصال والمزامنة عبر كل المواقع التابعة لحسابك." : "Latest connection and synchronization activity across sites owned by your account.")</div></div>
                 <a class="btn" href="/site-operations">@(L.IsArabic ? "عرض الكل" : "View all")</a>
             </div>
             @if (_recent.Count == 0)
@@ -73,9 +74,11 @@ else
     {
         try
         {
+            var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
-            _recent = History.GetAll(8);
-            _summary = History.GetSummary(DateTime.UtcNow.AddDays(-30));
+            var ownedSiteIds = _sites.Select(x => x.Id).ToArray();
+            _recent = History.GetAll(ownerUserId, ownedSiteIds, 8);
+            _summary = History.GetSummary(ownerUserId, ownedSiteIds, DateTime.UtcNow.AddDays(-30));
         }
         finally
         {
