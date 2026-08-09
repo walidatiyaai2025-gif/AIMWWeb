@@ -8,18 +8,25 @@ namespace AIWordPressManager.Infrastructure.AI;
 
 public sealed class PersistentAIUsageLog : IAIUsageLog
 {
-    internal const int MaxEntries = 10_000;
+    public const int MaxEntries = 10_000;
     private const int SchemaVersion = 1;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     private readonly object _gate = new();
     private readonly string _filePath;
     private readonly ILogger<PersistentAIUsageLog> _logger;
+    private readonly int _maxEntries;
     private UsageDocument _document;
 
     public PersistentAIUsageLog(IApplicationPathService paths, ILogger<PersistentAIUsageLog> logger)
+        : this(paths, logger, MaxEntries)
+    {
+    }
+
+    public PersistentAIUsageLog(IApplicationPathService paths, ILogger<PersistentAIUsageLog> logger, int maxEntries)
     {
         _logger = logger;
+        _maxEntries = Math.Clamp(maxEntries, 1, MaxEntries);
         _filePath = Path.Combine(paths.GetApplicationDataDirectory(), "ai-usage-log.json");
         _document = Load();
         TrimToRetention();
@@ -34,13 +41,20 @@ public sealed class PersistentAIUsageLog : IAIUsageLog
         {
             _document.Entries.Add(normalized);
             TrimToRetention();
-            Persist();
+            try
+            {
+                Persist();
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogError(ex, "AI usage telemetry could not be persisted to {UsageLogPath}. The AI request result is preserved and telemetry remains available in memory for this process.", _filePath);
+            }
         }
     }
 
     public IReadOnlyList<AIUsageEntry> GetRecent(int take = 100, Guid? siteId = null, string? userId = null)
     {
-        var limit = Math.Clamp(take, 1, 5_000);
+        var limit = Math.Clamp(take, 1, MaxEntries);
         var normalizedUserId = NormalizeUserId(userId);
 
         lock (_gate)
@@ -106,8 +120,8 @@ public sealed class PersistentAIUsageLog : IAIUsageLog
 
     private void TrimToRetention()
     {
-        if (_document.Entries.Count <= MaxEntries) return;
-        _document.Entries.RemoveRange(0, _document.Entries.Count - MaxEntries);
+        if (_document.Entries.Count <= _maxEntries) return;
+        _document.Entries.RemoveRange(0, _document.Entries.Count - _maxEntries);
     }
 
     private static AIUsageEntry Normalize(AIUsageEntry entry)
