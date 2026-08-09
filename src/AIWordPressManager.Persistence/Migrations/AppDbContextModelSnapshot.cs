@@ -45,9 +45,22 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Property<DateTime>("CreatedAtUtc"); b.Property<DateTime>("UpdatedAtUtc"); b.Property<byte[]>("ConcurrencyToken").IsConcurrencyToken().IsRequired();
             b.HasKey("Id"); b.HasIndex("SiteId").IsUnique(); b.ToTable("SiteCredentials");
         });
+        modelBuilder.Entity("AIWordPressManager.Domain.Entities.SiteSyncRun", b =>
+        {
+            b.Property<Guid>("Id"); b.Property<Guid>("SiteId"); b.Property<string>("Status").IsRequired().HasMaxLength(32);
+            b.Property<DateTime>("StartedAtUtc"); b.Property<DateTime?>("CompletedAtUtc"); b.Property<bool>("WasSkipped"); b.Property<int>("DownloadedRecords");
+            b.Property<string>("Message").IsRequired().HasMaxLength(2000);
+            b.Property<DateTime>("CreatedAtUtc"); b.Property<DateTime>("UpdatedAtUtc"); b.Property<byte[]>("ConcurrencyToken").IsConcurrencyToken().IsRequired();
+            b.HasKey("Id"); b.HasIndex("SiteId", "StartedAtUtc"); b.ToTable("SiteSyncRuns");
+        });
         modelBuilder.Entity("AIWordPressManager.Domain.Entities.SiteCredential", b =>
         {
             b.HasOne("AIWordPressManager.Domain.Entities.Site", "Site").WithOne().HasForeignKey("AIWordPressManager.Domain.Entities.SiteCredential", "SiteId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+            b.Navigation("Site");
+        });
+        modelBuilder.Entity("AIWordPressManager.Domain.Entities.SiteSyncRun", b =>
+        {
+            b.HasOne("AIWordPressManager.Domain.Entities.Site", "Site").WithMany().HasForeignKey("SiteId").OnDelete(DeleteBehavior.Cascade).IsRequired();
             b.Navigation("Site");
         });
 #pragma warning restore 612, 618

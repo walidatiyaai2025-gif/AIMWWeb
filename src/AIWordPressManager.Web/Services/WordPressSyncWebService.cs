@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Application.Abstractions.WordPress;
+using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +22,15 @@ public sealed class WordPressSyncWebService(
     {
         await siteService.EnsureOwnershipAsync(siteId, cancellationToken);
         var site = await dbContext.Sites.AsNoTracking().FirstAsync(x => x.Id == siteId, cancellationToken);
+        var syncRun = new SiteSyncRun(siteId, DateTime.UtcNow);
+        dbContext.Set<SiteSyncRun>().Add(syncRun);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-        notifications.Info($"Synchronization started for {site.Name}.", "Synchronization");
-        var jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 7);
+        var jobId = Guid.Empty;
         try
         {
+            notifications.Info($"Synchronization started for {site.Name}.", "Synchronization");
+            jobId = executionTracker.Start("Synchronize WordPress content", "Synchronization", site.Name, 7);
             executionTracker.Report(jobId, 1, 7, "Preparing the unified WordPress API client.");
 
             var lastSync = await GetLastSuccessfulSyncAsync(siteId, cancellationToken);
@@ -36,9 +41,12 @@ public sealed class WordPressSyncWebService(
                 if (!delta.HasChanges)
                 {
                     const string unchangedMessage = "No new post, page, or media changes were found since the last synchronization.";
+                    var skippedAt = DateTime.UtcNow;
+                    syncRun.Complete(unchangedMessage, 0, true, skippedAt);
+                    await dbContext.SaveChangesAsync(cancellationToken);
                     executionTracker.Complete(jobId, 7, 7, unchangedMessage);
                     notifications.Info(unchangedMessage, "Synchronization complete");
-                    return new WordPressSyncViewResult(true, unchangedMessage, WordPressSyncSummary.Empty, DateTime.UtcNow, true, 0);
+                    return new WordPressSyncViewResult(true, unchangedMessage, WordPressSyncSummary.Empty, skippedAt, true, 0);
                 }
 
                 executionTracker.Report(jobId, 2, 7, $"Detected {delta.ChangedItems} changed remote items. Starting verified full refresh.");
@@ -77,16 +85,52 @@ public sealed class WordPressSyncWebService(
             executionTracker.Report(jobId, 6, 7, "Saving synchronized data to the local database.");
             var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
             var message = $"Synchronization completed: {posts.Total} posts, {pages.Total} pages, {categories.Total} categories, {tags.Total} tags, and {media.Total} media items.";
+            var synchronizedAt = DateTime.UtcNow;
+            syncRun.Complete(message, downloaded, false, synchronizedAt);
+            await dbContext.SaveChangesAsync(cancellationToken);
             executionTracker.Complete(jobId, 7, 7, message);
             notifications.Success(message, "Synchronization complete");
-            return new WordPressSyncViewResult(true, message, summary, DateTime.UtcNow, false, downloaded);
+            return new WordPressSyncViewResult(true, message, summary, synchronizedAt, false, downloaded);
         }
         catch (Exception ex)
         {
-            executionTracker.Fail(jobId, ex.Message);
+            try
+            {
+                syncRun.Fail(ex.Message, DateTime.UtcNow);
+                await dbContext.SaveChangesAsync(CancellationToken.None);
+            }
+            catch
+            {
+                // The original synchronization failure is the primary error and must not be masked
+                // by a secondary history-persistence problem.
+            }
+
+            if (jobId != Guid.Empty)
+                executionTracker.Fail(jobId, ex.Message);
             notifications.Error("WordPress synchronization failed.", "Synchronization failed", ex.ToString());
             throw;
         }
+    }
+
+    public async Task<IReadOnlyList<SiteSyncRunView>> GetHistoryAsync(Guid siteId, int take = 20, CancellationToken cancellationToken = default)
+    {
+        await siteService.EnsureOwnershipAsync(siteId, cancellationToken);
+        take = Math.Clamp(take, 1, 100);
+
+        return await dbContext.Set<SiteSyncRun>()
+            .AsNoTracking()
+            .Where(x => x.SiteId == siteId)
+            .OrderByDescending(x => x.StartedAtUtc)
+            .Take(take)
+            .Select(x => new SiteSyncRunView(
+                x.Id,
+                x.Status,
+                x.StartedAtUtc,
+                x.CompletedAtUtc,
+                x.WasSkipped,
+                x.DownloadedRecords,
+                x.Message))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<ContentExplorerView> GetExplorerAsync(Guid siteId, string? query = null, string type = "all", CancellationToken cancellationToken = default)
@@ -248,6 +292,7 @@ public sealed record WordPressSyncViewResult(
     DateTime CompletedAtUtc,
     bool WasSkipped = false,
     int DownloadedRecords = 0);
+public sealed record SiteSyncRunView(Guid Id, string Status, DateTime StartedAtUtc, DateTime? CompletedAtUtc, bool WasSkipped, int DownloadedRecords, string Message);
 public sealed record ContentExplorerView(IReadOnlyList<ContentExplorerItem> Content, IReadOnlyList<TaxonomyExplorerItem> Categories, IReadOnlyList<TaxonomyExplorerItem> Tags, IReadOnlyList<MediaExplorerItem> Media, ExplorerTotals Totals, DateTime? LastSynchronizedAtUtc);
 public sealed record ContentExplorerItem(int WordPressId, string ContentType, string Title, string Slug, string Status, string Link, DateTime? ModifiedAtUtc, DateTime LastSynchronizedAtUtc);
 public sealed record TaxonomyExplorerItem(int WordPressId, string Name, string Slug, int Count);
