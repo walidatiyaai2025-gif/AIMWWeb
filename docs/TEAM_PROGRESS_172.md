@@ -10,7 +10,7 @@ Complete the production-facing WordPress media workflow using the existing live 
 - Hardened upload validation before any stream is opened or WordPress request is sent.
 - Added a 25 MB server-side limit and an explicit allowlist for JPG/JPEG, PNG, GIF, WebP, AVIF, PDF, DOC/DOCX, XLS/XLSX, and ZIP.
 - Rejects executable/unsupported extensions and MIME/extension mismatches.
-- Sanitizes the client file name before sending multipart content to WordPress.
+- Sanitizes client file names across Unix/Windows path styles before sending multipart content to WordPress.
 - Added live `context=edit` media-detail loading for title, slug, alt text, caption, description, media type, MIME type, source URL, modified time, dimensions, and file size when available.
 - Added a site-level Optimize workflow for title, slug, alt text, caption, and description.
 - Added an explicit metadata quality indicator/checklist.
@@ -21,7 +21,7 @@ Complete the production-facing WordPress media workflow using the existing live 
 - If remote deletion succeeds but local cache reconciliation fails, reports the remote success accurately and warns about the cache instead of encouraging a dangerous delete retry.
 - Global Media cards now link directly to the site Media Manager for management/optimization.
 - Added owner preflight to media API metadata, AI alt-text, bulk-delete approval, and bulk-metadata queue routes.
-- Added automated validation tests for allowed/blocked uploads, MIME mismatch, size limit, file-name sanitation, and metadata version comparison.
+- Added automated validation tests for allowed/blocked uploads, MIME mismatch, size limit, cross-platform file-name sanitation, and metadata version comparison.
 
 ## Optimization boundary
 This release optimizes WordPress media metadata, SEO/accessibility fields, and AI-assisted alt text. It does **not** recompress, resize, or transcode the binary image/file. Binary image processing requires a dedicated image-processing engine and remains outside this vertical slice.
@@ -34,14 +34,15 @@ This release optimizes WordPress media metadata, SEO/accessibility fields, and A
 - Permanent delete requires explicit UI confirmation.
 - Local delete reconciliation preserves the synchronization cursor.
 
-## Validation gate
-- Full solution/Razor build.
-- Full automated test suite.
-- Media upload/concurrency tests green.
-- GitHub Actions `Build` and `.NET Build Verification` green before merge.
+## Validation
+- Full solution/Razor build: PASS.
+- Full automated test suite: PASS.
+- Media upload/concurrency tests: PASS.
+- GitHub Actions `Build` #1153: SUCCESS.
+- GitHub Actions `.NET Build Verification` #898: SUCCESS.
 
 ## Version
 `155.119.0`
 
 ## Status
-Implemented — CI validation pending.
+VERIFIED — canonical registry reconciliation and final-head CI pending.
