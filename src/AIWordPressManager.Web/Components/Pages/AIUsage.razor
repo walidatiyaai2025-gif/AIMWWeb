@@ -1,0 +1,173 @@
+@page "/module/ai-usage"
+@rendermode InteractiveServer
+@implements IDisposable
+@using AIWordPressManager.Application.Abstractions.AI
+@inject AIUsageWebService UsageService
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "استخدام وتكلفة الذكاء الاصطناعي" : "AI Usage & Cost")</PageTitle>
+
+<section class="panel usage-hero">
+    <div>
+        <span class="workspace-kicker">AI OBSERVABILITY</span>
+        <h1>@(L.IsArabic ? "استخدام وتكلفة الذكاء الاصطناعي" : "AI Usage & Cost")</h1>
+        <p>@(L.IsArabic ? "سجل خاص بحسابك فقط لطلبات الذكاء الاصطناعي والرموز والتكلفة المقدرة وحالات النجاح والفشل." : "Account-scoped observability for AI calls, tokens, estimated cost, and success or failure outcomes.")</p>
+    </div>
+    <div class="usage-actions">
+        <a class="btn" href="/ai-center">✦ @(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</a>
+        <button class="btn" disabled="@_loading" @onclick="LoadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+    </div>
+</section>
+
+<section class="panel usage-toolbar">
+    <label>
+        <span>@(L.IsArabic ? "تصفية حسب الموقع" : "Filter by site")</span>
+        <select value="@_selectedSiteId" @onchange="OnSiteChangedAsync" disabled="@_loading">
+            <option value="">@(L.IsArabic ? "كل مواقعي" : "All my sites")</option>
+            @if (_snapshot is not null)
+            {
+                @foreach (var site in _snapshot.Sites)
+                {
+                    <option value="@site.Id">@site.Name</option>
+                }
+            }
+        </select>
+    </label>
+    <small>@(L.IsArabic ? "لا يتم قبول UserId من العميل؛ الهوية مأخوذة من جلسة الدخول الحالية." : "Client-supplied UserId is not trusted; telemetry identity comes from the authenticated session.")</small>
+</section>
+
+@if (_loading)
+{
+    <section class="panel usage-loading">@(L.IsArabic ? "جارٍ تحميل سجل الاستخدام..." : "Loading AI usage telemetry...")</section>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <section class="alert error"><strong>@(L.IsArabic ? "تعذر تحميل سجل الاستخدام" : "Could not load AI usage")</strong><p>@_error</p></section>
+}
+else if (_snapshot is null)
+{
+    <section class="panel empty-state"><p>@(L.IsArabic ? "لا توجد بيانات استخدام متاحة." : "No usage data is available.")</p></section>
+}
+else
+{
+    <section class="usage-kpis">
+        <article class="panel usage-kpi"><small>@(L.IsArabic ? "إجمالي الطلبات" : "Total calls")</small><strong>@_snapshot.TotalCalls</strong><span>@(L.IsArabic ? "ضمن آخر سجل محفوظ" : "within retained telemetry")</span></article>
+        <article class="panel usage-kpi"><small>@(L.IsArabic ? "معدل النجاح" : "Success rate")</small><strong>@_snapshot.SuccessRate.ToString("P0")</strong><span>@_snapshot.SuccessfulCalls / @_snapshot.TotalCalls</span></article>
+        <article class="panel usage-kpi"><small>@(L.IsArabic ? "رموز الإدخال" : "Input tokens")</small><strong>@FormatNumber(_snapshot.InputTokens)</strong><span>@(L.IsArabic ? "مسجلة أو مقدرة بواسطة المزود" : "provider reported or estimated")</span></article>
+        <article class="panel usage-kpi"><small>@(L.IsArabic ? "رموز الإخراج" : "Output tokens")</small><strong>@FormatNumber(_snapshot.OutputTokens)</strong><span>@(L.IsArabic ? "مسجلة أو مقدرة بواسطة المزود" : "provider reported or estimated")</span></article>
+        <article class="panel usage-kpi"><small>@(L.IsArabic ? "التكلفة المقدرة" : "Estimated cost")</small><strong>@_snapshot.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</strong><span>@(L.IsArabic ? "تعرض القيمة التي يعيدها Adapter الحالي" : "uses the current adapter-reported estimate")</span></article>
+    </section>
+
+    <section class="usage-grid">
+        <article class="panel usage-breakdown">
+            <header><div><span class="workspace-kicker">PROVIDERS</span><h2>@(L.IsArabic ? "حسب المزود" : "By provider")</h2></div></header>
+            @if (_snapshot.Providers.Count == 0)
+            {
+                <div class="empty-state"><p>@(L.IsArabic ? "لا توجد طلبات بعد." : "No calls yet.")</p></div>
+            }
+            else
+            {
+                @foreach (var item in _snapshot.Providers)
+                {
+                    <div class="usage-breakdown-row">
+                        <div><strong>@item.Name</strong><small>@item.SuccessfulCalls/@item.Calls @(L.IsArabic ? "ناجح" : "successful")</small></div>
+                        <div><span>@FormatNumber(item.InputTokens + item.OutputTokens) tokens</span><span>@item.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</span></div>
+                    </div>
+                }
+            }
+        </article>
+
+        <article class="panel usage-breakdown">
+            <header><div><span class="workspace-kicker">OPERATIONS</span><h2>@(L.IsArabic ? "حسب العملية" : "By operation")</h2></div></header>
+            @if (_snapshot.Operations.Count == 0)
+            {
+                <div class="empty-state"><p>@(L.IsArabic ? "لا توجد عمليات بعد." : "No operations yet.")</p></div>
+            }
+            else
+            {
+                @foreach (var item in _snapshot.Operations.Take(12))
+                {
+                    <div class="usage-breakdown-row">
+                        <div><strong>@item.Name</strong><small>@item.Calls @(L.IsArabic ? "طلب" : "calls")</small></div>
+                        <div><span>@FormatNumber(item.InputTokens + item.OutputTokens) tokens</span><span>@item.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</span></div>
+                    </div>
+                }
+            }
+        </article>
+    </section>
+
+    <section class="panel usage-recent">
+        <header><div><span class="workspace-kicker">RECENT ACTIVITY</span><h2>@(L.IsArabic ? "آخر طلبات الذكاء الاصطناعي" : "Recent AI calls")</h2></div><small>@_snapshot.Recent.Count @(L.IsArabic ? "سجل" : "records")</small></header>
+        @if (_snapshot.Recent.Count == 0)
+        {
+            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد سجلات ضمن الفلتر الحالي." : "No records match the current filter.")</p></div>
+        }
+        else
+        {
+            <div class="usage-table-wrap">
+                <table class="usage-table">
+                    <thead><tr><th>@(L.IsArabic ? "الوقت" : "Time")</th><th>@(L.IsArabic ? "المزود" : "Provider")</th><th>@(L.IsArabic ? "العملية" : "Operation")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>Tokens</th><th>@(L.IsArabic ? "التكلفة" : "Cost")</th><th>@(L.IsArabic ? "الحالة" : "State")</th></tr></thead>
+                    <tbody>
+                    @foreach (var entry in _snapshot.Recent.Take(250))
+                    {
+                        <tr>
+                            <td><time>@entry.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</time></td>
+                            <td><strong>@entry.Provider</strong><small>@(entry.Model ?? "—")</small></td>
+                            <td>@(entry.Operation ?? "—")</td>
+                            <td>@SiteName(entry.SiteId)</td>
+                            <td>@FormatNumber((long)entry.InputTokens + entry.OutputTokens)</td>
+                            <td>@entry.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
+                            <td><span class="badge @(entry.IsSuccess ? "success" : "danger")">@(entry.IsSuccess ? (L.IsArabic ? "نجح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))</span>@if (!entry.IsSuccess && !string.IsNullOrWhiteSpace(entry.Error)){<small class="usage-error">@entry.Error</small>}</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    private AIUsageDashboardSnapshot? _snapshot;
+    private string _selectedSiteId = string.Empty;
+    private string _error = string.Empty;
+    private bool _loading;
+
+    protected override void OnInitialized() => L.Changed += Changed;
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = string.Empty;
+        try
+        {
+            var siteId = Guid.TryParse(_selectedSiteId, out var parsed) ? parsed : (Guid?)null;
+            _snapshot = await UsageService.GetAsync(siteId, 5_000);
+        }
+        catch (Exception ex)
+        {
+            _error = L.TranslateMessage(ex.Message);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnSiteChangedAsync(ChangeEventArgs args)
+    {
+        _selectedSiteId = args.Value?.ToString() ?? string.Empty;
+        await LoadAsync();
+    }
+
+    private string SiteName(Guid? siteId)
+    {
+        if (!siteId.HasValue) return L.IsArabic ? "بدون موقع" : "No site";
+        return _snapshot?.Sites.FirstOrDefault(x => x.Id == siteId.Value)?.Name ?? siteId.Value.ToString("N")[..8];
+    }
+
+    private static string FormatNumber(long value) => value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+    private void Changed() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= Changed;
+}
