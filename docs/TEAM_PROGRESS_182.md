@@ -1,7 +1,7 @@
 # TEAM PROGRESS 182 — AI-003 Prompt template registry
 
 ## Status
-Implementation is on draft PR #39 (`agent/ai-003-prompt-registry`). AI-003 remains **IN PROGRESS** until the release-head Build and .NET Build Verification gates are green.
+Implementation and release reconciliation are complete on PR #39 (`agent/ai-003-prompt-registry`) for release `155.128.0`. The implementation head passed both required GitHub Actions gates. The final PR head must also remain green before merge; PR checks are the authoritative final validation evidence.
 
 ## Problem closed by this slice
 The application already exposed a built-in prompt dictionary and basic prompt API, but administrators could not edit prompts, disable them, keep bilingual revisions, or restore an earlier revision. AI Center also serialized the dictionary and then attempted to read it as a JSON array, which could leave the prompt library empty.
@@ -21,6 +21,7 @@ The application already exposed a built-in prompt dictionary and basic prompt AP
 - Updated AI Center to use the managed registry and removed the dictionary-as-array parsing defect.
 - Added administrator-only bilingual `/settings/ai-prompts` workspace with search, edit/create, enable/disable, version history, and restore actions.
 - Added the prompt-registry entry to the administrator Settings navigation.
+- Reconciled the canonical feature registry to `completed` at version `155.128.0` and added release notes.
 
 ## Security and consistency rules
 - Prompt mutation/history endpoints and the management page require the `Administrator` role.
@@ -40,8 +41,9 @@ The application already exposed a built-in prompt dictionary and basic prompt AP
 - prompt key and bilingual text validation.
 
 ## Validation
-Current PR validation gates:
-- Build #1367 — pending
-- .NET Build Verification #975 — pending
+Implementation head:
+- Build #1368 — SUCCESS
+- .NET Build Verification #976 — SUCCESS
 
-AI-003 must not be marked completed and release `155.128.0` must not be finalized until both gates pass on the release head.
+Release-head rule:
+- Do not merge PR #39 unless the latest PR head reports SUCCESS for both Build and .NET Build Verification.
