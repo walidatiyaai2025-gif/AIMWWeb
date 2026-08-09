@@ -14,22 +14,25 @@ Ensure hosted WordPress operations execute under the authoritative owner of the 
 - `BulkContentOperationWorker` resolves the same authoritative owner before resolving and invoking WordPress editor/synchronization services.
 - Missing/deleted/legacy ownerless sites fail closed instead of running with an unknown identity.
 - Owner identity is derived at execution time, so existing automation jobs require no automation-database migration and cannot retain stale owner metadata after site ownership changes.
-- Added deterministic tests covering background fallback, HTTP-user precedence, administrator isolation, nested identity restoration, and invalid owner rejection.
+- Added deterministic tests covering background fallback, async-flow propagation, HTTP-user precedence, administrator isolation, nested identity restoration, and invalid owner rejection.
 
 ## Security model
 - The site record in the main application database is the source of truth for background ownership.
 - HTTP identity always wins when a request identity exists.
 - Background identity carries a user ID only; it cannot confer application roles.
 - Each worker establishes and disposes the identity within one execution flow.
+- Email schedule/outbox workers were audited and already persist and validate owner identity, so no changes were required there.
 
-## Validation gate
-- Full solution build.
-- Full automated test suite.
-- `BackgroundExecutionIdentityTests` green.
-- GitHub Actions `Build` and `.NET Build Verification` green before merge.
+## Validation
+- Full solution build passed.
+- Full automated test suite passed.
+- `BackgroundExecutionIdentityTests` passed.
+- GitHub Actions `Build #1188` passed.
+- GitHub Actions `.NET Build Verification #908` passed.
+- Final-head CI is required again after canonical roadmap reconciliation before merge.
 
 ## Version
 `155.121.0`
 
 ## Status
-Implemented — CI validation pending.
+Verified — final-head CI pending after roadmap reconciliation.
