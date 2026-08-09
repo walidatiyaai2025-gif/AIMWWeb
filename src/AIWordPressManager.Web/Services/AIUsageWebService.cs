@@ -10,7 +10,7 @@ public sealed class AIUsageWebService(
 {
     public async Task<AIUsageDashboardSnapshot> GetAsync(
         Guid? siteId = null,
-        int take = 5_000,
+        int take = 10_000,
         CancellationToken cancellationToken = default)
     {
         var ownerUserId = currentUser.UserId;
