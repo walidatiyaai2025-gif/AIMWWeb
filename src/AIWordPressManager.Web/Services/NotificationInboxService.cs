@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Web.Services;
@@ -18,9 +19,21 @@ public sealed class NotificationInboxService
 
     private readonly object _sync = new();
     private readonly string _connectionString;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public NotificationInboxService(string? databasePath = null)
+    public NotificationInboxService(IHttpContextAccessor httpContextAccessor)
+        : this(databasePath: null, httpContextAccessor)
     {
+    }
+
+    public NotificationInboxService()
+        : this(databasePath: null, httpContextAccessor: null)
+    {
+    }
+
+    private NotificationInboxService(string? databasePath, IHttpContextAccessor? httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
         var path = databasePath;
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -45,6 +58,12 @@ public sealed class NotificationInboxService
         }.ToString();
 
         Initialize();
+    }
+
+    public static NotificationInboxService ForDatabase(string databasePath)
+    {
+        if (string.IsNullOrWhiteSpace(databasePath)) throw new ArgumentException("Database path is required.", nameof(databasePath));
+        return new NotificationInboxService(databasePath, httpContextAccessor: null);
     }
 
     public NotificationItem Create(
@@ -135,6 +154,11 @@ public sealed class NotificationInboxService
         }
     }
 
+    // Compatibility for the existing HTTP endpoint. The caller-provided userId is deliberately ignored;
+    // authorization always comes from the authenticated request claim.
+    public IReadOnlyList<NotificationItem> Get(string? userId, bool unreadOnly = false, int take = 100) =>
+        Get(RequireHttpOwnerUserId(), unreadOnly, take);
+
     public bool MarkRead(Guid ownerUserId, Guid id)
     {
         if (ownerUserId == Guid.Empty || id == Guid.Empty) return false;
@@ -154,6 +178,9 @@ public sealed class NotificationInboxService
             return command.ExecuteNonQuery() == 1;
         }
     }
+
+    // Compatibility for the existing HTTP endpoint; the notification id alone never authorizes a mutation.
+    public void MarkRead(Guid id) => MarkRead(RequireHttpOwnerUserId(), id);
 
     public int MarkAllRead(Guid ownerUserId)
     {
@@ -300,6 +327,13 @@ public sealed class NotificationInboxService
                 """;
             indexes.ExecuteNonQuery();
         }
+    }
+
+    private Guid RequireHttpOwnerUserId()
+    {
+        var value = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(value, out var ownerUserId)) return ownerUserId;
+        throw new UnauthorizedAccessException("Authenticated user identity is unavailable.");
     }
 
     private static HashSet<string> GetColumns(SqliteConnection connection)
