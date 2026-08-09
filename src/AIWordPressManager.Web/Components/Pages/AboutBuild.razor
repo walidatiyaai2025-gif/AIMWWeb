@@ -14,7 +14,7 @@
              Title="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Version & Release Notes")"
              Subtitle="@(L.IsArabic ? "بيانات البناء الفعلية مع تاريخ الإصدارات من مصدر واحد داخل المشروع." : "Live build metadata with version history from a single source in the project.")">
         <Header>
-            <strong class="build-version-badge">v@Build.Version</strong>
+            <strong class="build-version-badge">v@(Build.Version)</strong>
         </Header>
         <ChildContent>
             <div class="d-flex gap-2 flex-wrap">
@@ -36,7 +36,7 @@
         <AppCard Class="build-info-details" Title="@(L.IsArabic ? "ما الجديد في هذه النسخة" : "What is new in this release")">
             <div class="d-flex justify-content-between gap-3 flex-wrap">
                 <div><strong>@CurrentRelease.Title</strong><small style="display:block">@(CurrentRelease.Date?.ToString("yyyy-MM-dd") ?? "—")</small></div>
-                <span class="settings-badge success">v@CurrentRelease.Version</span>
+                <span class="settings-badge success">v@(CurrentRelease.Version)</span>
             </div>
             <ul style="margin:1rem 0 0;display:grid;gap:.55rem">
                 @foreach (var change in CurrentRelease.Changes)
@@ -58,7 +58,7 @@
                 @foreach (var release in Releases)
                 {
                     <details open="@(release.Version == Build.Version)">
-                        <summary style="cursor:pointer;font-weight:700">v@release.Version · @release.Title · @(release.Date?.ToString("yyyy-MM-dd") ?? "—")</summary>
+                        <summary style="cursor:pointer;font-weight:700">v@(release.Version) · @release.Title · @(release.Date?.ToString("yyyy-MM-dd") ?? "—")</summary>
                         <ul style="margin:.8rem 0 0;display:grid;gap:.45rem">
                             @foreach (var change in release.Changes)
                             {
