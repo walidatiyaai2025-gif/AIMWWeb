@@ -2,8 +2,8 @@
 
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
-**Source branch for UX-001:** `agent/ux-001-premium-shell`  
-**Tracking:** GitHub Issues #46–#55
+**Tracking:** GitHub Issues #46–#55  
+**Current release:** `155.131.0` — UX-001
 
 ## Design principles
 
@@ -20,43 +20,43 @@
 
 ## Prioritized backlog
 
-| ID | Priority | Task | Dependency | GitHub |
-|---|---|---|---|---|
-| UX-001 | **CRITICAL** | Premium design system & application shell foundation | — | #46 |
-| UX-002 | **CRITICAL** | Navigation information architecture & discoverability | UX-001 | #47 |
-| UX-003 | **CRITICAL** | Responsive mobile/tablet application shell | UX-001 | #48 |
-| UX-004 | **CRITICAL** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
-| UX-005 | **HIGH** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
-| UX-006 | **HIGH** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
-| UX-007 | **HIGH** | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
-| UX-008 | **HIGH** | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
-| UX-009 | **HIGH** | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
-| UX-010 | **HIGH** | Visual and accessibility regression gates | UX-003/004/009 | #55 |
+| ID | Priority | Status | Task | Dependency | GitHub / Release |
+|---|---|---|---|---|---|
+| UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
+| UX-002 | **CRITICAL** | **Next** | Navigation information architecture & discoverability | UX-001 | #47 |
+| UX-003 | **CRITICAL** | Planned | Responsive mobile/tablet application shell | UX-001 | #48 |
+| UX-004 | **CRITICAL** | Planned | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
+| UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
+| UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
+| UX-007 | **HIGH** | Planned | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
+| UX-008 | **HIGH** | Planned | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
+| UX-009 | **HIGH** | Planned | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
+| UX-010 | **HIGH** | Planned | Visual and accessibility regression gates | UX-003/004/009 | #55 |
 
-## UX-001 — implementation scope
+## UX-001 — delivered foundation
 
 UX-001 establishes the shared shell contract that later design tasks build on.
 
 ### Design system foundation
-- Extend the existing `--ui-*` token layer with shell semantics instead of creating a competing token system.
-- Standardize shell width, content gutters, elevations, radii, focus treatment, touch targets, and motion.
-- Preserve existing runtime accent selection and light/dark mode.
+- Extended the existing `--ui-*` token layer with shell semantics instead of creating a competing token system.
+- Standardized shell width, content gutters, elevations, radii, focus treatment, touch targets, and motion.
+- Preserved existing runtime accent selection and dark/light mode.
 
 ### Application shell
-- Refine sidebar, brand block, grouped navigation, active states, topbar hierarchy, and content canvas.
-- Remove stale hard-coded branch/version decoration from CSS; build identity is rendered only from `BuildInformationService`.
-- Make primary landmarks and interactive controls screen-reader identifiable.
-- Add a keyboard skip link to the application content.
+- Refined sidebar, brand block, grouped navigation, active states, topbar hierarchy, and content canvas.
+- Removed stale hard-coded branch/version decoration from CSS; build identity is rendered only from `BuildInformationService`.
+- Made primary landmarks and interactive controls screen-reader identifiable.
+- Added a keyboard skip link to the application content.
 
 ### Discoverability baseline
-- Surface AI Center, AI Usage & Cost, Content Planner, Prompt Templates, and provider configuration in the AI workspace.
-- Keep important destinations searchable in the command palette.
-- Ensure page grouping/title resolution understands the production AI routes.
+- Surfaced AI Center, AI Usage & Cost, Content Planner, Prompt Templates, and provider configuration in the AI workspace.
+- Expanded command discovery for approvals, schedules, logs/errors, backup/restore, and current AI routes.
+- Corrected page-title route matching so `/` cannot falsely identify unrelated routes as Dashboard.
 
 ### Responsive baseline
-- Keep desktop navigation stable, tablet topbar compact, and mobile navigation off-canvas.
-- Resolve conflicting legacy mobile navigation rules so the off-canvas sidebar remains vertically usable.
-- Keep controls usable with touch and prevent application-level horizontal overflow.
+- Kept desktop navigation stable, tablet topbar compact, and mobile navigation off-canvas.
+- Resolved conflicting legacy mobile navigation rules so the off-canvas sidebar remains vertically usable.
+- Added practical touch targets, responsive content gutters, reduced-motion behavior, and tablet language-control treatment.
 
 ## UX Definition of Done
 
@@ -69,3 +69,7 @@ A UX task is complete only when applicable requirements are met:
 - Existing workflows remain functional; design work must not silently alter business logic.
 - Restore/build/tests pass on the exact implementation head.
 - Release/status documentation is reconciled before merge.
+
+## Next task
+
+**UX-002 — Navigation information architecture & discoverability** is the next Critical design task. It will build on the UX-001 shell foundation rather than introducing a second navigation system.
