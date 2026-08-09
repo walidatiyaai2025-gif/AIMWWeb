@@ -1,7 +1,10 @@
+using AIWordPressManager.Application.SeoAudit;
+
 namespace AIWordPressManager.Web.Services;
 
 public sealed class SeoAuditExecutionService(
     SeoAnalysisWebService seoAnalysis,
+    ISeoAuditService auditPersistence,
     ExecutionOperationTracker executionTracker,
     AppNotificationService notifications,
     CurrentUserContext currentUser)
@@ -17,7 +20,7 @@ public sealed class SeoAuditExecutionService(
             "Run SEO audit",
             "SEO Audit",
             siteId.ToString(),
-            4);
+            5);
 
         notifications.Info(
             "The SEO audit has started. Progress is available in Execution Center.",
@@ -25,7 +28,7 @@ public sealed class SeoAuditExecutionService(
 
         try
         {
-            executionTracker.Report(jobId, 1, 4, "Loading synchronized WordPress content from SQLite.");
+            executionTracker.Report(jobId, 1, 5, "Loading synchronized WordPress content from SQLite.");
 
             var analysis = await seoAnalysis.AnalyzeAsync(
                 siteId,
@@ -37,7 +40,7 @@ public sealed class SeoAuditExecutionService(
             executionTracker.Report(
                 jobId,
                 2,
-                4,
+                5,
                 $"Analyzed {analysis.Summary.Total} posts and pages.");
 
             var issueCounts = analysis.Items
@@ -51,15 +54,46 @@ public sealed class SeoAuditExecutionService(
             executionTracker.Report(
                 jobId,
                 3,
-                4,
-                $"Found {analysis.Summary.TotalIssues} SEO issues. Average score: {analysis.Summary.AverageScore}.");
+                5,
+                $"Found {analysis.Summary.TotalIssues} SEO issue groups. Average score: {analysis.Summary.AverageScore}.");
+
+            var capturedAt = DateTimeOffset.UtcNow;
+            var captureIssues = analysis.Items
+                .SelectMany(item => item.Issues.Select(issue => new SeoAuditCaptureIssue(
+                    issue.Severity,
+                    issue.Code,
+                    item.ContentType,
+                    item.WordPressId,
+                    item.Title,
+                    DescribeIssue(issue),
+                    item.Link)))
+                .ToList();
+
+            var saved = await auditPersistence.SaveAsync(
+                siteId,
+                ownerUserId,
+                new SeoAuditCapture(
+                    analysis.Summary.AverageScore,
+                    analysis.Summary.Total,
+                    captureIssues,
+                    capturedAt),
+                cancellationToken);
+
+            if (saved.IsFailure)
+                throw new InvalidOperationException(saved.Error.Message);
+
+            executionTracker.Report(jobId, 4, 5, "Saved the SEO audit snapshot and current issue set.");
+
+            var history = await auditPersistence.LoadHistoryAsync(siteId, ownerUserId, 12, cancellationToken);
+            if (history.IsFailure)
+                throw new InvalidOperationException(history.Error.Message);
 
             var message =
                 $"SEO audit completed for {analysis.SiteName}: " +
                 $"{analysis.Summary.Total} items, average score {analysis.Summary.AverageScore}, " +
-                $"{analysis.Summary.TotalIssues} issues.";
+                $"{analysis.Summary.TotalIssues} issue groups.";
 
-            executionTracker.Complete(jobId, 4, 4, message);
+            executionTracker.Complete(jobId, 5, 5, message);
             notifications.Success(message, "SEO Audit Completed");
 
             return new SeoAuditExecutionResult(
@@ -67,8 +101,9 @@ public sealed class SeoAuditExecutionService(
                 analysis.SiteName,
                 analysis.Summary,
                 issueCounts,
+                history.Value,
                 message,
-                DateTime.UtcNow,
+                capturedAt.UtcDateTime,
                 jobId);
         }
         catch (Exception ex)
@@ -81,6 +116,21 @@ public sealed class SeoAuditExecutionService(
             throw;
         }
     }
+
+    public async Task<IReadOnlyList<SeoAuditHistoryPoint>> LoadHistoryAsync(
+        Guid siteId,
+        int take = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var ownerUserId = currentUser.RequireUserId();
+        var history = await auditPersistence.LoadHistoryAsync(siteId, ownerUserId, take, cancellationToken);
+        if (history.IsFailure)
+            throw new InvalidOperationException(history.Error.Message);
+        return history.Value;
+    }
+
+    private static string DescribeIssue(SeoIssue issue)
+        => issue.Count > 1 ? $"{issue.Code} detected {issue.Count} times." : $"{issue.Code} detected.";
 }
 
 public sealed record SeoAuditExecutionResult(
@@ -88,6 +138,7 @@ public sealed record SeoAuditExecutionResult(
     string SiteName,
     SeoSummary Summary,
     IReadOnlyDictionary<string, int> IssueCounts,
+    IReadOnlyList<SeoAuditHistoryPoint> History,
     string Message,
     DateTime CompletedAtUtc,
     Guid? ExecutionJobId = null);
