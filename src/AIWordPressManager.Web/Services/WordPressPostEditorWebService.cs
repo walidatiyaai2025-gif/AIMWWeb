@@ -8,7 +8,8 @@ public sealed class WordPressPostEditorWebService(
     IWordPressApiClient apiClient,
     AppNotificationService notifications) : IWordPressPostEditorService
 {
-    public const string ConflictMessage = "This content changed in WordPress after you opened the editor. Review the latest remote version before saving, or explicitly overwrite it.";
+    public const string ConflictMessage = "This content changed in WordPress after you opened the editor. Reload the latest remote version before saving again.";
+    private readonly Dictionary<(Guid SiteId, string ContentType, int WordPressId), DateTimeOffset?> _loadedVersions = [];
 
     public async Task<Result<WordPressEditableContent>> GetAsync(
         Guid siteId,
@@ -16,44 +17,10 @@ public sealed class WordPressPostEditorWebService(
         int wordPressId,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var endpoint = BuildEndpoint(contentType, wordPressId) + "?context=edit";
-            var response = await apiClient.GetAsync(siteId, endpoint, cancellationToken);
-            if (!response.IsSuccess || response.Value is null)
-                return Result.Failure<WordPressEditableContent>(ToError(response.ErrorMessage, response.StatusCode));
-
-            using var json = response.Value;
-            var item = json.RootElement;
-            var editable = new WordPressEditableContent(
-                NormalizeType(contentType),
-                GetInt(item, "id"),
-                GetRaw(item, "title"),
-                GetString(item, "slug"),
-                GetString(item, "status"),
-                GetRaw(item, "content"),
-                GetRaw(item, "excerpt"),
-                GetString(item, "link"),
-                GetDate(item, "date_gmt"),
-                GetDate(item, "modified_gmt"),
-                GetInt(item, "featured_media"),
-                GetIntArray(item, "categories"),
-                GetIntArray(item, "tags"),
-                GetString(item, "template"),
-                GetInt(item, "author"),
-                GetString(item, "comment_status"),
-                GetString(item, "ping_status"),
-                GetString(item, "format"),
-                GetBool(item, "sticky"),
-                !string.IsNullOrEmpty(GetString(item, "password")),
-                item.GetRawText());
-
-            return Result.Success(editable);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<WordPressEditableContent>(Error.Failure(ex.Message));
-        }
+        var result = await FetchAsync(siteId, contentType, wordPressId, cancellationToken);
+        if (result.IsSuccess)
+            _loadedVersions[VersionKey(siteId, contentType, wordPressId)] = result.Value.ModifiedGmt;
+        return result;
     }
 
     public async Task<Result<WordPressContentUpdateResult>> UpdateAsync(
@@ -77,13 +44,18 @@ public sealed class WordPressPostEditorWebService(
                 return Result.Failure<WordPressContentUpdateResult>(Error.Validation(validationMessage));
             }
 
-            if (!request.ForceOverwrite && request.ExpectedModifiedGmt.HasValue)
+            var key = VersionKey(siteId, request.ContentType, request.Id);
+            var expectedModifiedGmt = request.ExpectedModifiedGmt;
+            if (!expectedModifiedGmt.HasValue && _loadedVersions.TryGetValue(key, out var loadedVersion))
+                expectedModifiedGmt = loadedVersion;
+
+            if (!request.ForceOverwrite && expectedModifiedGmt.HasValue)
             {
-                var latest = await GetAsync(siteId, request.ContentType, request.Id, cancellationToken);
+                var latest = await FetchAsync(siteId, request.ContentType, request.Id, cancellationToken);
                 if (latest.IsFailure)
                     return Result.Failure<WordPressContentUpdateResult>(latest.Error);
 
-                if (HasRemoteChanged(request.ExpectedModifiedGmt, latest.Value.ModifiedGmt))
+                if (HasRemoteChanged(expectedModifiedGmt, latest.Value.ModifiedGmt))
                 {
                     notifications.Warning(ConflictMessage, "Content conflict");
                     return Result.Failure<WordPressContentUpdateResult>(Error.Conflict(ConflictMessage));
@@ -140,8 +112,10 @@ public sealed class WordPressPostEditorWebService(
             var id = GetInt(item, "id");
             var status = GetString(item, "status");
             var link = GetString(item, "link");
+            var modifiedGmt = GetDate(item, "modified_gmt");
             const string successMessage = "Content was updated in WordPress successfully.";
 
+            _loadedVersions[key] = modifiedGmt;
             notifications.Success(
                 $"Content #{id} was saved with status '{status}'.",
                 "WordPress updated");
@@ -153,7 +127,7 @@ public sealed class WordPressPostEditorWebService(
                 id,
                 status,
                 link,
-                GetDate(item, "modified_gmt")));
+                modifiedGmt));
         }
         catch (Exception ex)
         {
@@ -169,6 +143,53 @@ public sealed class WordPressPostEditorWebService(
 
         return expectedModifiedGmt.Value.ToUniversalTime() != remoteModifiedGmt.Value.ToUniversalTime();
     }
+
+    private async Task<Result<WordPressEditableContent>> FetchAsync(
+        Guid siteId,
+        string contentType,
+        int wordPressId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var endpoint = BuildEndpoint(contentType, wordPressId) + "?context=edit";
+            var response = await apiClient.GetAsync(siteId, endpoint, cancellationToken);
+            if (!response.IsSuccess || response.Value is null)
+                return Result.Failure<WordPressEditableContent>(ToError(response.ErrorMessage, response.StatusCode));
+
+            using var json = response.Value;
+            var item = json.RootElement;
+            return Result.Success(new WordPressEditableContent(
+                NormalizeType(contentType),
+                GetInt(item, "id"),
+                GetRaw(item, "title"),
+                GetString(item, "slug"),
+                GetString(item, "status"),
+                GetRaw(item, "content"),
+                GetRaw(item, "excerpt"),
+                GetString(item, "link"),
+                GetDate(item, "date_gmt"),
+                GetDate(item, "modified_gmt"),
+                GetInt(item, "featured_media"),
+                GetIntArray(item, "categories"),
+                GetIntArray(item, "tags"),
+                GetString(item, "template"),
+                GetInt(item, "author"),
+                GetString(item, "comment_status"),
+                GetString(item, "ping_status"),
+                GetString(item, "format"),
+                GetBool(item, "sticky"),
+                !string.IsNullOrEmpty(GetString(item, "password")),
+                item.GetRawText()));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<WordPressEditableContent>(Error.Failure(ex.Message));
+        }
+    }
+
+    private static (Guid SiteId, string ContentType, int WordPressId) VersionKey(Guid siteId, string contentType, int wordPressId) =>
+        (siteId, NormalizeType(contentType), wordPressId);
 
     private static bool IsSupportedStatus(string? status) =>
         status is "draft" or "pending" or "publish" or "future" or "private";
