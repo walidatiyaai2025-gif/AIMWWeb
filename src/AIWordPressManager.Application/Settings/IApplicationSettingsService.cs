@@ -15,6 +15,24 @@ public sealed record AiSettings(
     bool AutomaticFallback,
     IReadOnlyList<AiProviderSettings> Providers);
 
+public sealed record AiPromptTemplateSettings(
+    string Key,
+    string EnglishText,
+    string ArabicText,
+    bool IsEnabled,
+    int Version,
+    DateTime UpdatedAtUtc,
+    string UpdatedBy);
+
+public sealed record AiPromptTemplateVersionSettings(
+    string Key,
+    int Version,
+    string EnglishText,
+    string ArabicText,
+    bool IsEnabled,
+    DateTime CreatedAtUtc,
+    string UpdatedBy);
+
 public sealed record PerformanceSettings(bool EnableMemoryCooling, int CoolingThresholdPercent, int ResumeThresholdPercent, int CheckIntervalSeconds, bool KillChildProcessesOnExit);
 
 public sealed record JobReliabilitySettings(
@@ -50,6 +68,21 @@ public interface IApplicationSettingsService
         CancellationToken cancellationToken = default);
     Task<string?> GetAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default);
     Task ClearAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AiPromptTemplateSettings>> GetAiPromptTemplatesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AiPromptTemplateVersionSettings>> GetAiPromptTemplateHistoryAsync(string key, CancellationToken cancellationToken = default);
+    Task<AiPromptTemplateSettings> SaveAiPromptTemplateAsync(
+        string key,
+        string englishText,
+        string arabicText,
+        bool isEnabled,
+        string updatedBy,
+        CancellationToken cancellationToken = default);
+    Task<AiPromptTemplateSettings> RestoreAiPromptTemplateVersionAsync(
+        string key,
+        int version,
+        string updatedBy,
+        CancellationToken cancellationToken = default);
 
     Task<PerformanceSettings> GetPerformanceSettingsAsync(CancellationToken cancellationToken = default);
     Task SavePerformanceSettingsAsync(PerformanceSettings settings, CancellationToken cancellationToken = default);
