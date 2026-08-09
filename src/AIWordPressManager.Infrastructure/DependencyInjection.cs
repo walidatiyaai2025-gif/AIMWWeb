@@ -21,7 +21,7 @@ public static class DependencyInjection
         services.AddSingleton<VersionedAIPromptRegistry>();
         services.AddSingleton<IAIPromptRegistry>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
         services.AddSingleton<IAIPromptTemplateStore>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
-        services.AddSingleton<IAIUsageLog, AIUsageLog>();
+        services.AddSingleton<IAIUsageLog, PersistentAIUsageLog>();
         services.AddSingleton<IAIContentProtector, AIContentProtector>();
         services.AddScoped<AIProviderRuntimeSettingsResolver>();
         services.AddScoped<IAIOrchestrator, SettingsAwareAIOrchestrator>();
