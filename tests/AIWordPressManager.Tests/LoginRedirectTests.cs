@@ -23,6 +23,23 @@ public sealed class LoginRedirectTests
             .Should().Be(expected);
     }
 
+    [Theory]
+    [InlineData("/sites/connect", "/sites/connect")]
+    [InlineData("/module/seo-audit", "/module/seo-audit")]
+    [InlineData(null, "/welcome")]
+    [InlineData("https://evil.example", "/welcome")]
+    [InlineData("//evil.example", "/welcome")]
+    [InlineData("/login", "/welcome")]
+    public void FirstRunRedirect_Uses_Explicit_Safe_Target_Or_Welcome(
+        string? requestedPath,
+        string expected)
+    {
+        LocalAuthenticationService.ResolveRedirectPath(
+                requestedPath,
+                LocalAuthenticationService.FirstRunLandingPath)
+            .Should().Be(expected);
+    }
+
     [Fact]
     public void FirstRunLandingPath_Points_To_Welcome_Experience()
     {
