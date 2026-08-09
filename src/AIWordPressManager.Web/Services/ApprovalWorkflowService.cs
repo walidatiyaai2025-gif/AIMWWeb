@@ -6,22 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public enum ApprovalRiskLevel
-{
-    Low,
-    Medium,
-    High,
-    Critical
-}
-
-public enum ApprovalStatus
-{
-    Pending,
-    Approved,
-    Rejected,
-    Executed,
-    Cancelled
-}
+public enum ApprovalRiskLevel { Low, Medium, High, Critical }
+public enum ApprovalStatus { Pending, Approved, Rejected, Executed, Cancelled }
 
 public sealed class ApprovalWorkflowService
 {
@@ -33,25 +19,18 @@ public sealed class ApprovalWorkflowService
     private readonly IHttpContextAccessor? _httpContextAccessor;
     private readonly Func<Guid, Guid?>? _siteOwnerResolver;
 
-    // Isolated-test and explicit database-path constructor. Runtime DI uses the constructor below.
     public ApprovalWorkflowService(
         ExecutionCenterService executionCenter,
         string? databasePath = null,
         Func<Guid, Guid?>? siteOwnerResolver = null)
-        : this(executionCenter, null, null, null, siteOwnerResolver, databasePath)
-    {
-    }
+        : this(executionCenter, null, null, null, siteOwnerResolver, databasePath) { }
 
-    // Runtime DI constructor. HTTP identity is used only to identify the caller; site ownership
-    // continues to come from the authoritative application database.
     public ApprovalWorkflowService(
         ExecutionCenterService executionCenter,
         NotificationInboxService notifications,
         IServiceScopeFactory scopeFactory,
         IHttpContextAccessor httpContextAccessor)
-        : this(executionCenter, notifications, scopeFactory, httpContextAccessor, null, null)
-    {
-    }
+        : this(executionCenter, notifications, scopeFactory, httpContextAccessor, null, null) { }
 
     private ApprovalWorkflowService(
         ExecutionCenterService executionCenter,
@@ -70,18 +49,15 @@ public sealed class ApprovalWorkflowService
         databasePath = ResolveDatabasePath(databasePath);
         var directory = Path.GetDirectoryName(databasePath);
         if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
-
         _connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
-
         InitializeDatabase();
     }
 
-    // Compatibility for existing HTTP endpoints. The owner is never accepted from the request.
     public IReadOnlyList<ApprovalItem> GetItems(ApprovalStatus? status = null, int take = 200) =>
         GetItems(RequireRuntimeOwnerUserId(), status, take);
 
@@ -91,12 +67,10 @@ public sealed class ApprovalWorkflowService
         var limit = Math.Clamp(take, 1, 1000);
         List<ApprovalItem> owned;
         List<ApprovalItem> legacy;
-
         lock (_sync)
         {
             using var connection = OpenConnection();
-            owned = QueryItems(
-                connection,
+            owned = QueryItems(connection,
                 "OwnerUserId=$ownerUserId AND ($status IS NULL OR Status=$status)",
                 limit,
                 command =>
@@ -104,18 +78,13 @@ public sealed class ApprovalWorkflowService
                     command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
                     command.Parameters.AddWithValue("$status", status?.ToString() ?? (object)DBNull.Value);
                 });
-
-            // Legacy approval rows had no owner. Preserve them, but never guess ownership. They are
-            // visible only while their SiteId currently resolves to this owner.
-            legacy = QueryItems(
-                connection,
+            legacy = QueryItems(connection,
                 "OwnerUserId IS NULL AND ($status IS NULL OR Status=$status)",
                 1000,
                 command => command.Parameters.AddWithValue("$status", status?.ToString() ?? (object)DBNull.Value));
         }
 
-        return owned
-            .Concat(legacy.Where(x => IsLegacyVisibleTo(ownerUserId, x)))
+        return owned.Concat(legacy.Where(x => IsLegacyVisibleTo(ownerUserId, x)))
             .OrderByDescending(x => x.RequestedAtUtc)
             .Take(limit)
             .ToArray();
@@ -127,7 +96,6 @@ public sealed class ApprovalWorkflowService
     public IReadOnlyList<ApprovalAuditEntry> GetAudit(Guid ownerUserId, Guid approvalId, int take = 200)
     {
         if (GetById(ownerUserId, approvalId) is null) return [];
-
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -135,13 +103,12 @@ public sealed class ApprovalWorkflowService
             command.CommandText = """
                 SELECT Id, ApprovalId, Action, Actor, Notes, CreatedAtUtc
                 FROM ApprovalAudit
-                WHERE ApprovalId = $approvalId
+                WHERE ApprovalId=$approvalId
                 ORDER BY CreatedAtUtc DESC
                 LIMIT $take;
                 """;
             command.Parameters.AddWithValue("$approvalId", approvalId.ToString());
             command.Parameters.AddWithValue("$take", Math.Clamp(take, 1, 1000));
-
             using var reader = command.ExecuteReader();
             var result = new List<ApprovalAuditEntry>();
             while (reader.Read())
@@ -158,31 +125,23 @@ public sealed class ApprovalWorkflowService
         }
     }
 
-    // Compatibility for producers and the existing HTTP endpoint. Request-provided RequestedBy
-    // is not authoritative when an authenticated/background identity exists.
     public ApprovalItem Submit(ApprovalSubmission request)
     {
         ArgumentNullException.ThrowIfNull(request);
         var runtimeOwner = TryResolveRuntimeOwnerUserId(out var callerOwner) ? callerOwner : (Guid?)null;
         var ownerUserId = ResolveSubmissionOwner(request.SiteId, runtimeOwner);
-        var actor = ResolveRuntimeActor(ownerUserId);
-        return Submit(ownerUserId, request, actor);
+        return Submit(ownerUserId, request, ResolveRuntimeActor(ownerUserId));
     }
 
     public ApprovalItem Submit(Guid ownerUserId, ApprovalSubmission request, string? actor = null)
     {
         RequireOwner(ownerUserId);
         ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.OperationType))
-            throw new InvalidOperationException("Operation type is required.");
-        if (string.IsNullOrWhiteSpace(request.Title))
-            throw new InvalidOperationException("Approval title is required.");
+        if (string.IsNullOrWhiteSpace(request.OperationType)) throw new InvalidOperationException("Operation type is required.");
+        if (string.IsNullOrWhiteSpace(request.Title)) throw new InvalidOperationException("Approval title is required.");
 
-        if (request.SiteId.HasValue && _scopeFactory is not null || request.SiteId.HasValue && _siteOwnerResolver is not null)
-        {
-            if (ResolveCurrentSiteOwner(request.SiteId) != ownerUserId)
-                throw new InvalidOperationException("Selected site is unavailable.");
-        }
+        if (request.SiteId.HasValue && (_scopeFactory is not null || _siteOwnerResolver is not null) && ResolveCurrentSiteOwner(request.SiteId) != ownerUserId)
+            throw new InvalidOperationException("Selected site is unavailable.");
 
         var beforeJson = NormalizeJson(request.Before);
         var afterJson = NormalizeJson(request.After);
@@ -197,7 +156,6 @@ public sealed class ApprovalWorkflowService
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
-
             using var existing = connection.CreateCommand();
             existing.Transaction = transaction;
             existing.CommandText = "SELECT Id FROM ApprovalItems WHERE OwnerUserId=$ownerUserId AND IdempotencyKey=$key AND Status IN ('Pending','Approved','Executed') LIMIT 1;";
@@ -211,30 +169,16 @@ public sealed class ApprovalWorkflowService
             }
 
             item = new ApprovalItem(
-                Guid.NewGuid(),
-                ownerUserId,
-                request.SiteId,
-                request.SiteName?.Trim() ?? string.Empty,
-                request.OperationType.Trim(),
-                request.Title.Trim(),
-                ResolveRisk(request.OperationType, request.RiskLevel),
-                ApprovalStatus.Pending,
-                beforeJson,
-                afterJson,
-                requestedBy,
-                DateTime.UtcNow,
-                null,
-                null,
-                null,
-                null,
+                Guid.NewGuid(), ownerUserId, request.SiteId, request.SiteName?.Trim() ?? string.Empty,
+                request.OperationType.Trim(), request.Title.Trim(), ResolveRisk(request.OperationType, request.RiskLevel),
+                ApprovalStatus.Pending, beforeJson, afterJson, requestedBy, DateTime.UtcNow,
+                null, null, null, null,
                 string.IsNullOrWhiteSpace(request.CorrelationId) ? Guid.NewGuid().ToString("N") : request.CorrelationId.Trim(),
                 idempotencyKey);
-
             InsertItem(connection, transaction, item);
             InsertAudit(connection, transaction, item.Id, "Submitted", item.RequestedBy, "Submitted for approval.");
             transaction.Commit();
         }
-
         NotifyOwner(item, ownerUserId, "Approval required", item.Title, NotificationSeverity.Warning, null);
         return item;
     }
@@ -250,20 +194,22 @@ public sealed class ApprovalWorkflowService
         RequireOwner(ownerUserId);
         var pending = GetRequiredOwnedItem(ownerUserId, id);
         EnsureSiteStillOwned(ownerUserId, pending);
-        if (executeImmediately && !pending.SiteId.HasValue)
-            throw new InvalidOperationException("Site-scoped execution is required for immediate approval execution.");
+
+        if (executeImmediately)
+        {
+            var capability = ApprovedChangePolicy.Evaluate(pending);
+            if (!capability.CanExecute) throw new InvalidOperationException(capability.Message);
+        }
 
         var item = Review(ownerUserId, id, ApprovalStatus.Approved, reviewer, notes, "Approved");
         if (!executeImmediately) return item;
 
-        var siteId = item.SiteId!.Value;
-        var job = _executionCenter.Enqueue(
+        var job = _executionCenter.EnqueueExternal(
             ownerUserId,
-            siteId,
+            item.SiteId!.Value,
             item.Title,
             item.OperationType,
             item.SiteName,
-            1,
             item.IdempotencyKey,
             item.CorrelationId);
 
@@ -275,22 +221,21 @@ public sealed class ApprovalWorkflowService
             update.Transaction = transaction;
             update.CommandText = """
                 UPDATE ApprovalItems
-                SET Status='Executed', ExecutionJobId=$jobId
+                SET ExecutionJobId=$jobId
                 WHERE Id=$id AND Status='Approved'
                   AND (OwnerUserId=$ownerUserId OR OwnerUserId IS NULL);
                 """;
             update.Parameters.AddWithValue("$jobId", job.Id.ToString());
             update.Parameters.AddWithValue("$id", id.ToString());
             update.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
-            if (update.ExecuteNonQuery() != 1)
-                throw new InvalidOperationException("Approval item could not be queued for execution.");
-            InsertAudit(connection, transaction, id, "QueuedForExecution", reviewer, $"Execution job: {job.Id}");
+            if (update.ExecuteNonQuery() != 1) throw new InvalidOperationException("Approval item could not be queued for execution.");
+            InsertAudit(connection, transaction, id, "QueuedForExecution", NormalizeActor(reviewer), $"Execution job: {job.Id}");
             transaction.Commit();
         }
 
-        var executed = GetById(ownerUserId, id)!;
-        NotifyOwner(executed, ownerUserId, "Approval queued for execution", executed.Title, NotificationSeverity.Information, job.Id);
-        return executed;
+        var queued = GetById(ownerUserId, id)!;
+        NotifyOwner(queued, ownerUserId, "Approval queued for execution", queued.Title, NotificationSeverity.Information, job.Id);
+        return queued;
     }
 
     public ApprovalItem Reject(Guid id, string reviewer, string? notes)
@@ -314,7 +259,6 @@ public sealed class ApprovalWorkflowService
         var item = GetRequiredOwnedItem(ownerUserId, id);
         EnsureSiteStillOwned(ownerUserId, item);
         var afterJson = NormalizeJson(updatedAfter);
-
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -322,16 +266,14 @@ public sealed class ApprovalWorkflowService
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText = """
-                UPDATE ApprovalItems
-                SET AfterJson=$afterJson
+                UPDATE ApprovalItems SET AfterJson=$afterJson
                 WHERE Id=$id AND Status='Pending'
                   AND (OwnerUserId=$ownerUserId OR OwnerUserId IS NULL);
                 """;
             command.Parameters.AddWithValue("$afterJson", afterJson);
             command.Parameters.AddWithValue("$id", id.ToString());
             command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
-            if (command.ExecuteNonQuery() != 1)
-                throw new InvalidOperationException("Only pending approval items can be edited.");
+            if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Only pending approval items can be edited.");
             InsertAudit(connection, transaction, id, "Edited", NormalizeActor(actor), notes);
             transaction.Commit();
         }
@@ -349,13 +291,73 @@ public sealed class ApprovalWorkflowService
         return item.OwnerUserId is null && IsLegacyVisibleTo(ownerUserId, item) ? item : null;
     }
 
+    public ApprovalItem? GetByExecutionJobId(Guid ownerUserId, Guid executionJobId)
+    {
+        RequireOwner(ownerUserId);
+        lock (_sync)
+        {
+            using var connection = OpenConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = $"{SelectColumns} FROM ApprovalItems WHERE OwnerUserId=$ownerUserId AND ExecutionJobId=$jobId LIMIT 1;";
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+            command.Parameters.AddWithValue("$jobId", executionJobId.ToString());
+            using var reader = command.ExecuteReader();
+            return reader.Read() ? ReadItem(reader) : null;
+        }
+    }
+
+    public ApprovalItem MarkExecutionSucceeded(Guid ownerUserId, Guid approvalId, Guid executionJobId, string? notes = null)
+    {
+        RequireOwner(ownerUserId);
+        var item = GetById(ownerUserId, approvalId) ?? throw new InvalidOperationException("Approval item does not exist.");
+        EnsureSiteStillOwned(ownerUserId, item);
+        if (item.Status != ApprovalStatus.Approved || item.ExecutionJobId != executionJobId)
+            throw new InvalidOperationException("Approval item is not queued for this execution job.");
+
+        lock (_sync)
+        {
+            using var connection = OpenConnection();
+            using var transaction = connection.BeginTransaction();
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = """
+                UPDATE ApprovalItems SET Status='Executed'
+                WHERE Id=$id AND OwnerUserId=$ownerUserId AND Status='Approved' AND ExecutionJobId=$jobId;
+                """;
+            command.Parameters.AddWithValue("$id", approvalId.ToString());
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+            command.Parameters.AddWithValue("$jobId", executionJobId.ToString());
+            if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Approval execution state could not be completed.");
+            InsertAudit(connection, transaction, approvalId, "Executed", "Approved change worker", notes ?? $"Execution job {executionJobId} completed successfully.");
+            transaction.Commit();
+        }
+
+        var executed = GetById(ownerUserId, approvalId)!;
+        NotifyOwner(executed, ownerUserId, "Approved change executed", executed.Title, NotificationSeverity.Success, executionJobId);
+        return executed;
+    }
+
+    public void RecordExecutionFailed(Guid ownerUserId, Guid approvalId, Guid executionJobId, string error)
+    {
+        RequireOwner(ownerUserId);
+        var item = GetById(ownerUserId, approvalId);
+        if (item is null || item.Status != ApprovalStatus.Approved || item.ExecutionJobId != executionJobId) return;
+        lock (_sync)
+        {
+            using var connection = OpenConnection();
+            using var transaction = connection.BeginTransaction();
+            InsertAudit(connection, transaction, approvalId, "ExecutionFailed", "Approved change worker", error);
+            transaction.Commit();
+        }
+        NotifyOwner(item, ownerUserId, "Approved change execution failed", error, NotificationSeverity.Error, executionJobId);
+    }
+
     private ApprovalItem Review(Guid ownerUserId, Guid id, ApprovalStatus status, string reviewer, string? notes, string action)
     {
         RequireOwner(ownerUserId);
         var item = GetRequiredOwnedItem(ownerUserId, id);
         if (status == ApprovalStatus.Approved) EnsureSiteStillOwned(ownerUserId, item);
         var actor = NormalizeActor(reviewer);
-
         lock (_sync)
         {
             using var connection = OpenConnection();
@@ -374,21 +376,17 @@ public sealed class ApprovalWorkflowService
             command.Parameters.AddWithValue("$notes", string.IsNullOrWhiteSpace(notes) ? DBNull.Value : notes.Trim());
             command.Parameters.AddWithValue("$id", id.ToString());
             command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
-            if (command.ExecuteNonQuery() != 1)
-                throw new InvalidOperationException("Approval item is not pending or does not exist.");
+            if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Approval item is not pending or does not exist.");
             InsertAudit(connection, transaction, id, action, actor, notes);
             transaction.Commit();
         }
 
         var reviewed = GetById(ownerUserId, id)!;
         var severity = status == ApprovalStatus.Rejected ? NotificationSeverity.Error : NotificationSeverity.Success;
-        NotifyOwner(
-            reviewed,
-            ownerUserId,
+        NotifyOwner(reviewed, ownerUserId,
             status == ApprovalStatus.Rejected ? "Approval rejected" : "Approval approved",
             string.IsNullOrWhiteSpace(notes) ? reviewed.Title : $"{reviewed.Title} — {notes.Trim()}",
-            severity,
-            reviewed.ExecutionJobId);
+            severity, reviewed.ExecutionJobId);
         return reviewed;
     }
 
@@ -408,11 +406,7 @@ public sealed class ApprovalWorkflowService
         }
     }
 
-    private static List<ApprovalItem> QueryItems(
-        SqliteConnection connection,
-        string where,
-        int take,
-        Action<SqliteCommand> addParameters)
+    private static List<ApprovalItem> QueryItems(SqliteConnection connection, string where, int take, Action<SqliteCommand> addParameters)
     {
         using var command = connection.CreateCommand();
         command.CommandText = $"{SelectColumns} FROM ApprovalItems WHERE {where} ORDER BY RequestedAtUtc DESC LIMIT $take;";
@@ -425,9 +419,7 @@ public sealed class ApprovalWorkflowService
     }
 
     private bool IsLegacyVisibleTo(Guid ownerUserId, ApprovalItem item) =>
-        item.OwnerUserId is null &&
-        item.SiteId.HasValue &&
-        ResolveCurrentSiteOwner(item.SiteId) == ownerUserId;
+        item.OwnerUserId is null && item.SiteId.HasValue && ResolveCurrentSiteOwner(item.SiteId) == ownerUserId;
 
     private void EnsureSiteStillOwned(Guid ownerUserId, ApprovalItem item)
     {
@@ -443,16 +435,12 @@ public sealed class ApprovalWorkflowService
             var siteOwner = ResolveCurrentSiteOwner(siteId);
             if (!siteOwner.HasValue || siteOwner.Value == Guid.Empty)
             {
-                if (_scopeFactory is null && _siteOwnerResolver is null && runtimeOwner.HasValue)
-                    return runtimeOwner.Value;
+                if (_scopeFactory is null && _siteOwnerResolver is null && runtimeOwner.HasValue) return runtimeOwner.Value;
                 throw new InvalidOperationException("Selected site is unavailable.");
             }
-
-            if (runtimeOwner.HasValue && runtimeOwner.Value != siteOwner.Value)
-                throw new InvalidOperationException("Selected site is unavailable.");
+            if (runtimeOwner.HasValue && runtimeOwner.Value != siteOwner.Value) throw new InvalidOperationException("Selected site is unavailable.");
             return siteOwner.Value;
         }
-
         return runtimeOwner ?? throw new InvalidOperationException("An authenticated owner is required for this approval.");
     }
 
@@ -461,50 +449,24 @@ public sealed class ApprovalWorkflowService
         if (!siteId.HasValue || siteId.Value == Guid.Empty) return null;
         if (_siteOwnerResolver is not null) return _siteOwnerResolver(siteId.Value);
         if (_scopeFactory is null) return null;
-
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            return dbContext.Sites
-                .AsNoTracking()
-                .Where(x => x.Id == siteId.Value)
-                .Select(x => x.OwnerUserId)
-                .SingleOrDefault();
+            return dbContext.Sites.AsNoTracking().Where(x => x.Id == siteId.Value).Select(x => x.OwnerUserId).SingleOrDefault();
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 
-    private void NotifyOwner(
-        ApprovalItem item,
-        Guid ownerUserId,
-        string title,
-        string message,
-        NotificationSeverity severity,
-        Guid? executionJobId)
+    private void NotifyOwner(ApprovalItem item, Guid ownerUserId, string title, string message, NotificationSeverity severity, Guid? executionJobId)
     {
         if (_notifications is null || ownerUserId == Guid.Empty) return;
-
         try
         {
-            _notifications.Create(
-                ownerUserId,
-                title,
-                message,
-                severity,
-                relatedId: item.Id,
-                siteId: item.SiteId,
-                executionJobId: executionJobId,
-                source: "ApprovalWorkflow");
+            _notifications.Create(ownerUserId, title, message, severity,
+                relatedId: item.Id, siteId: item.SiteId, executionJobId: executionJobId, source: "ApprovalWorkflow");
         }
-        catch
-        {
-            // Approval state is authoritative. Notification persistence is best-effort and must
-            // never roll back a completed review or execution decision.
-        }
+        catch { }
     }
 
     private bool TryResolveRuntimeOwnerUserId(out Guid ownerUserId)
@@ -536,12 +498,9 @@ public sealed class ApprovalWorkflowService
     {
         if (requested.HasValue) return requested.Value;
         var value = operationType.ToLowerInvariant();
-        if (value.Contains("delete") || value.Contains("trash") || value.Contains("publish") || value.Contains("user"))
-            return ApprovalRiskLevel.Critical;
-        if (value.Contains("bulk") || value.Contains("seo") || value.Contains("ai") || value.Contains("media"))
-            return ApprovalRiskLevel.High;
-        if (value.Contains("update") || value.Contains("edit") || value.Contains("sync"))
-            return ApprovalRiskLevel.Medium;
+        if (value.Contains("delete") || value.Contains("trash") || value.Contains("publish") || value.Contains("user")) return ApprovalRiskLevel.Critical;
+        if (value.Contains("bulk") || value.Contains("seo") || value.Contains("ai") || value.Contains("media")) return ApprovalRiskLevel.High;
+        if (value.Contains("update") || value.Contains("edit") || value.Contains("sync")) return ApprovalRiskLevel.Medium;
         return ApprovalRiskLevel.Low;
     }
 
@@ -555,7 +514,6 @@ public sealed class ApprovalWorkflowService
                 command.CommandText = """
                     PRAGMA journal_mode=WAL;
                     PRAGMA foreign_keys=ON;
-
                     CREATE TABLE IF NOT EXISTS ApprovalItems (
                         Id TEXT PRIMARY KEY,
                         OwnerUserId TEXT NULL,
@@ -576,7 +534,6 @@ public sealed class ApprovalWorkflowService
                         CorrelationId TEXT NOT NULL,
                         IdempotencyKey TEXT NOT NULL UNIQUE
                     );
-
                     CREATE TABLE IF NOT EXISTS ApprovalAudit (
                         Id TEXT PRIMARY KEY,
                         ApprovalId TEXT NOT NULL,
@@ -589,20 +546,15 @@ public sealed class ApprovalWorkflowService
                     """;
                 command.ExecuteNonQuery();
             }
-
             var columns = GetColumns(connection, "ApprovalItems");
             EnsureColumn(connection, columns, "OwnerUserId", "TEXT NULL");
-
             using var indexes = connection.CreateCommand();
             indexes.CommandText = """
-                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Status_RequestedAtUtc
-                    ON ApprovalItems(Status, RequestedAtUtc);
-                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_Status_RequestedAtUtc
-                    ON ApprovalItems(OwnerUserId, Status, RequestedAtUtc DESC);
-                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_Site_RequestedAtUtc
-                    ON ApprovalItems(OwnerUserId, SiteId, RequestedAtUtc DESC);
-                CREATE INDEX IF NOT EXISTS IX_ApprovalAudit_ApprovalId_CreatedAtUtc
-                    ON ApprovalAudit(ApprovalId, CreatedAtUtc);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Status_RequestedAtUtc ON ApprovalItems(Status, RequestedAtUtc);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_Status_RequestedAtUtc ON ApprovalItems(OwnerUserId, Status, RequestedAtUtc DESC);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_Site_RequestedAtUtc ON ApprovalItems(OwnerUserId, SiteId, RequestedAtUtc DESC);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalItems_Owner_ExecutionJobId ON ApprovalItems(OwnerUserId, ExecutionJobId);
+                CREATE INDEX IF NOT EXISTS IX_ApprovalAudit_ApprovalId_CreatedAtUtc ON ApprovalAudit(ApprovalId, CreatedAtUtc);
                 """;
             indexes.ExecuteNonQuery();
         }
@@ -675,21 +627,15 @@ public sealed class ApprovalWorkflowService
         Guid.Parse(reader.GetString(0)),
         reader.IsDBNull(1) ? null : Guid.Parse(reader.GetString(1)),
         reader.IsDBNull(2) ? null : Guid.Parse(reader.GetString(2)),
-        reader.GetString(3),
-        reader.GetString(4),
-        reader.GetString(5),
+        reader.GetString(3), reader.GetString(4), reader.GetString(5),
         Enum.Parse<ApprovalRiskLevel>(reader.GetString(6), true),
         Enum.Parse<ApprovalStatus>(reader.GetString(7), true),
-        reader.GetString(8),
-        reader.GetString(9),
-        reader.GetString(10),
-        ParseDate(reader.GetString(11)),
+        reader.GetString(8), reader.GetString(9), reader.GetString(10), ParseDate(reader.GetString(11)),
         reader.IsDBNull(12) ? null : reader.GetString(12),
         reader.IsDBNull(13) ? null : ParseDate(reader.GetString(13)),
         reader.IsDBNull(14) ? null : reader.GetString(14),
         reader.IsDBNull(15) ? null : Guid.Parse(reader.GetString(15)),
-        reader.GetString(16),
-        reader.GetString(17));
+        reader.GetString(16), reader.GetString(17));
 
     private const string SelectColumns = """
         SELECT Id, OwnerUserId, SiteId, SiteName, OperationType, Title, RiskLevel, Status,
@@ -708,11 +654,7 @@ public sealed class ApprovalWorkflowService
     private static string ResolveDatabasePath(string? databasePath)
     {
         if (!string.IsNullOrWhiteSpace(databasePath)) return Path.GetFullPath(databasePath);
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AIWordPressManager",
-            "Data",
-            "approval-workflow.db");
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Data", "approval-workflow.db");
     }
 
     private static string NormalizeJson(object? value)
@@ -782,10 +724,4 @@ public sealed record ApprovalItem(
     string CorrelationId,
     string IdempotencyKey);
 
-public sealed record ApprovalAuditEntry(
-    Guid Id,
-    Guid ApprovalId,
-    string Action,
-    string Actor,
-    string? Notes,
-    DateTime CreatedAtUtc);
+public sealed record ApprovalAuditEntry(Guid Id, Guid ApprovalId, string Action, string Actor, string? Notes, DateTime CreatedAtUtc);
