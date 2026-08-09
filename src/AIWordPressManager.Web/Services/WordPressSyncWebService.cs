@@ -41,12 +41,12 @@ public sealed class WordPressSyncWebService(
                 if (!delta.HasChanges)
                 {
                     const string unchangedMessage = "No new post, page, or media changes were found since the last synchronization.";
-                    var completedAt = DateTime.UtcNow;
-                    syncRun.Complete(unchangedMessage, 0, true, completedAt);
+                    var skippedAt = DateTime.UtcNow;
+                    syncRun.Complete(unchangedMessage, 0, true, skippedAt);
                     await dbContext.SaveChangesAsync(cancellationToken);
                     executionTracker.Complete(jobId, 7, 7, unchangedMessage);
                     notifications.Info(unchangedMessage, "Synchronization complete");
-                    return new WordPressSyncViewResult(true, unchangedMessage, WordPressSyncSummary.Empty, completedAt, true, 0);
+                    return new WordPressSyncViewResult(true, unchangedMessage, WordPressSyncSummary.Empty, skippedAt, true, 0);
                 }
 
                 executionTracker.Report(jobId, 2, 7, $"Detected {delta.ChangedItems} changed remote items. Starting verified full refresh.");
@@ -85,12 +85,12 @@ public sealed class WordPressSyncWebService(
             executionTracker.Report(jobId, 6, 7, "Saving synchronized data to the local database.");
             var summary = await contentStore.SaveSnapshotAsync(siteId, snapshot, cancellationToken);
             var message = $"Synchronization completed: {posts.Total} posts, {pages.Total} pages, {categories.Total} categories, {tags.Total} tags, and {media.Total} media items.";
-            var completedAt = DateTime.UtcNow;
-            syncRun.Complete(message, downloaded, false, completedAt);
+            var synchronizedAt = DateTime.UtcNow;
+            syncRun.Complete(message, downloaded, false, synchronizedAt);
             await dbContext.SaveChangesAsync(cancellationToken);
             executionTracker.Complete(jobId, 7, 7, message);
             notifications.Success(message, "Synchronization complete");
-            return new WordPressSyncViewResult(true, message, summary, completedAt, false, downloaded);
+            return new WordPressSyncViewResult(true, message, summary, synchronizedAt, false, downloaded);
         }
         catch (Exception ex)
         {
