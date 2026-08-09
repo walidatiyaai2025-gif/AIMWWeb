@@ -144,6 +144,61 @@ public sealed class SiteWebService(
         return new ConnectionTestViewResult(result.IsSuccess, result.Message, result.Diagnostics);
     }
 
+    public async Task<SiteBulkRetestResult> RetestSitesAsync(IEnumerable<Guid> siteIds, CancellationToken cancellationToken = default)
+    {
+        var ids = SiteBulkOperationPolicy.NormalizeIds(siteIds);
+        var ownedSites = await RequireOwnedSitesAsync(ids, tracked: false, cancellationToken);
+        var names = ownedSites.ToDictionary(x => x.Id, x => x.Name);
+        var items = new List<SiteBulkRetestItem>(ids.Count);
+
+        foreach (var siteId in ids)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                var result = await RetestAsync(siteId, cancellationToken);
+                items.Add(new SiteBulkRetestItem(siteId, names[siteId], result.IsSuccess, result.Message));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                items.Add(new SiteBulkRetestItem(siteId, names[siteId], false, ex.Message));
+            }
+        }
+
+        return new SiteBulkRetestResult(ids.Count, items.Count(x => x.IsSuccess), items.Count(x => !x.IsSuccess), items);
+    }
+
+    public async Task<int> SetSitesDisabledAsync(IEnumerable<Guid> siteIds, bool disabled, CancellationToken cancellationToken = default)
+    {
+        var ids = SiteBulkOperationPolicy.NormalizeIds(siteIds);
+        var sites = await RequireOwnedSitesAsync(ids, tracked: true, cancellationToken);
+        var now = DateTime.UtcNow;
+        var status = disabled ? SiteConnectionStatus.Disabled : SiteConnectionStatus.Unknown;
+
+        foreach (var site in sites)
+            site.RecordConnectionStatus(status, now);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return sites.Count;
+    }
+
+    public async Task<int> DeleteSitesAsync(IEnumerable<Guid> siteIds, CancellationToken cancellationToken = default)
+    {
+        var ids = SiteBulkOperationPolicy.NormalizeIds(siteIds);
+        var sites = await RequireOwnedSitesAsync(ids, tracked: true, cancellationToken);
+        var now = DateTime.UtcNow;
+
+        foreach (var site in sites)
+            site.SoftDelete(now);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return sites.Count;
+    }
+
     public async Task DeleteSiteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == OwnerId, cancellationToken);
@@ -160,6 +215,20 @@ public sealed class SiteWebService(
         var query = tracked ? dbContext.Sites.AsQueryable() : dbContext.Sites.AsNoTracking();
         return await query.FirstOrDefaultAsync(x => x.Id == siteId && x.OwnerUserId == OwnerId, cancellationToken)
             ?? throw new UnauthorizedAccessException("The requested WordPress site does not belong to the signed-in user.");
+    }
+
+    private async Task<List<Site>> RequireOwnedSitesAsync(IReadOnlyList<Guid> siteIds, bool tracked, CancellationToken cancellationToken)
+    {
+        var ids = siteIds.ToArray();
+        IQueryable<Site> query = dbContext.Sites.Where(x => x.OwnerUserId == OwnerId && ids.Contains(x.Id));
+        if (!tracked)
+            query = query.AsNoTracking();
+
+        var sites = await query.ToListAsync(cancellationToken);
+        if (sites.Count != ids.Length)
+            throw new UnauthorizedAccessException("One or more selected WordPress sites do not belong to the signed-in user.");
+
+        return sites;
     }
 
     private static void ValidateName(string? name)
@@ -200,3 +269,5 @@ public sealed class SiteWebService(
 public sealed record DashboardSummary(int TotalSites, int ConnectedSites, int ProblemSites, DateTime? LastConnectionTestAtUtc);
 public sealed record SiteCredentialSummary(string UserName, bool HasSavedPassword);
 public sealed record ConnectionTestViewResult(bool IsSuccess, string Message, string? Diagnostics);
+public sealed record SiteBulkRetestResult(int Requested, int Succeeded, int Failed, IReadOnlyList<SiteBulkRetestItem> Items);
+public sealed record SiteBulkRetestItem(Guid SiteId, string SiteName, bool IsSuccess, string Message);
