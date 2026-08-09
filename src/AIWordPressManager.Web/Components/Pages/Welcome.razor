@@ -1,9 +1,11 @@
 @page "/welcome"
 @layout LandingLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @rendermode InteractiveServer
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
 @inject DashboardLiveService DashboardService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationState
 @inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "AI WordPress Manager | مركز القيادة الذكي" : "AI WordPress Manager | Intelligent Command Center")</PageTitle>
@@ -19,15 +21,23 @@
         </a>
 
         <nav class="landing-nav" aria-label="@(L.IsArabic ? "التنقل الرئيسي" : "Primary navigation")">
-            <a href="/">@(L.IsArabic ? "التحكم" : "Dashboard")</a>
-            <a href="/module/reports">@(L.IsArabic ? "تقارير" : "Reports")</a>
-            <a href="/settings">@(L.IsArabic ? "إعدادات" : "Settings")</a>
-            <a href="/module/execution">@(L.IsArabic ? "وظائف" : "Jobs")</a>
+            <a href="@ProtectedHref("/")">@(L.IsArabic ? "التحكم" : "Dashboard")</a>
+            <a href="@ProtectedHref("/module/reports")">@(L.IsArabic ? "تقارير" : "Reports")</a>
+            <a href="@ProtectedHref("/settings")">@(L.IsArabic ? "إعدادات" : "Settings")</a>
+            <a href="@ProtectedHref("/module/execution")">@(L.IsArabic ? "وظائف" : "Jobs")</a>
             <a class="active" href="/welcome">@(L.IsArabic ? "الرئيسية" : "Home")</a>
         </nav>
 
         <div class="landing-product">
             <strong>AI WordPress Manager</strong>
+            @if (_isAuthenticated)
+            {
+                <a class="landing-language" href="/">@(L.IsArabic ? "لوحة التحكم" : "Dashboard")</a>
+            }
+            else
+            {
+                <a class="landing-language" href="/login">@(L.IsArabic ? "تسجيل الدخول" : "Sign in")</a>
+            }
             <button type="button" class="landing-language" onclick="window.appLanguage.toggleAndReload(); return false;">@(L.IsArabic ? "EN" : "AR")</button>
         </div>
     </header>
@@ -37,15 +47,15 @@
             <div class="hero-copy">
                 <div class="hero-badges">
                     <span class="live-badge"><i></i>@(L.IsArabic ? "النظام جاهز" : "SYSTEM READY")</span>
-                    <a href="/about-build" class="version-badge">v@(Build.Version)</a>
+                    <a href="@ProtectedHref("/about-build")" class="version-badge">v@(Build.Version)</a>
                 </div>
 
                 <h1>@(L.IsArabic ? "إدارة ووردبريس بأعلى مستويات الذكاء الاصطناعي: منصتك المتكاملة للتحكم!" : "Operate WordPress with a higher level of AI intelligence from one command platform.")</h1>
                 <p class="hero-subtitle">@(L.IsArabic ? "وفّر الوقت والجهد وحسّن أداء مواقعك من خلال منصة واحدة ذكية لإدارة المحتوى وSEO والأتمتة والتنفيذ." : "Save time, reduce operational effort and improve site performance through one intelligent platform for content, SEO, automation and execution.")</p>
 
                 <div class="hero-actions">
-                    <a class="landing-btn primary" href="/sites/connect">@(L.IsArabic ? "اربط أول موقع الآن" : "Connect your first site") <span>↗</span></a>
-                    <a class="landing-btn secondary" href="/">@(L.IsArabic ? "استكشف لوحة التحكم" : "Explore dashboard")</a>
+                    <a class="landing-btn primary" href="@ProtectedHref("/sites/connect")">@(L.IsArabic ? "اربط أول موقع الآن" : "Connect your first site") <span>↗</span></a>
+                    <a class="landing-btn secondary" href="@ProtectedHref("/")">@(L.IsArabic ? "استكشف لوحة التحكم" : "Explore dashboard")</a>
                 </div>
 
                 <div class="hero-proof">
@@ -76,15 +86,17 @@
 
         <section class="command-section" id="command-center">
             <div class="section-heading centered">
-                <span>@(L.IsArabic ? "LIVE COMMAND CENTER" : "LIVE COMMAND CENTER")</span>
+                <span>@(_isAuthenticated ? "LIVE COMMAND CENTER" : "INTELLIGENT COMMAND CENTER")</span>
                 <h2>@(L.IsArabic ? "مركز القيادة الموحد" : "Unified Command Center")</h2>
-                <p>@(L.IsArabic ? "قراءة مباشرة لحالة مواقعك والمحتوى والوظائف والمزامنة." : "A live operational view of sites, content, jobs and synchronization.")</p>
+                <p>@(_isAuthenticated
+                    ? (L.IsArabic ? "قراءة مباشرة لحالة مواقعك والمحتوى والوظائف والمزامنة." : "A live operational view of sites, content, jobs and synchronization.")
+                    : (L.IsArabic ? "سجّل الدخول لعرض بيانات مواقعك الحية، أو استكشف قدرات المنصة من الصفحة العامة." : "Sign in to see your live workspace data, or explore the platform capabilities from this public page."))</p>
             </div>
 
             <div class="metrics-grid">
                 @foreach (var metric in MetricCards)
                 {
-                    <a class="metric-card @metric.Tone" href="@metric.Href">
+                    <a class="metric-card @metric.Tone" href="@ProtectedHref(metric.Href)">
                         <div class="metric-icon">@metric.Icon</div>
                         <small>@metric.Label</small>
                         <strong>@metric.Value</strong>
@@ -97,7 +109,7 @@
         <section class="capabilities-section" id="capabilities">
             <div class="section-heading split-heading">
                 <div>
-                    <span>@(L.IsArabic ? "SMART OPERATIONS" : "SMART OPERATIONS")</span>
+                    <span>SMART OPERATIONS</span>
                     <h2>@(L.IsArabic ? "إدارة يومية أسرع، أوضح، وأكثر أمانًا" : "Faster, clearer and safer day-to-day operations")</h2>
                 </div>
                 <p>@(L.IsArabic ? "من ربط الموقع وحتى تنفيذ التحسينات، كل خطوة مصممة لتكون واضحة وقابلة للمراجعة." : "From site connection to controlled changes, every step stays visible and reviewable.")</p>
@@ -108,7 +120,7 @@
                     <h3>@(L.IsArabic ? "إضافة مواقع بنقرة واحدة" : "One-click site onboarding")</h3>
                     @foreach (var item in CapabilityItems)
                     {
-                        <a href="@item.Href" class="capability-row">
+                        <a href="@ProtectedHref(item.Href)" class="capability-row">
                             <span class="capability-row-icon">@item.Icon</span>
                             <div><strong>@(L.IsArabic ? item.ArTitle : item.EnTitle)</strong><small>@(L.IsArabic ? item.ArDescription : item.EnDescription)</small></div>
                             <em>↗</em>
@@ -119,7 +131,7 @@
                 <div class="highlight-grid">
                     @foreach (var feature in HighlightFeatures)
                     {
-                        <a class="highlight-card @feature.Tone" href="@feature.Href">
+                        <a class="highlight-card @feature.Tone" href="@ProtectedHref(feature.Href)">
                             <div class="highlight-icon">@feature.Icon</div>
                             <h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3>
                             <p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p>
@@ -161,8 +173,8 @@
                 <p>@(L.IsArabic ? "يمكنك العودة إلى مركز القيادة في أي وقت لمتابعة المواقع والمحتوى والوظائف والمزامنة." : "Return to the command center at any time to follow sites, content, jobs and synchronization.")</p>
             </div>
             <div class="final-actions">
-                <a class="landing-btn primary" href="/sites/connect">@(L.IsArabic ? "إضافة موقع" : "Add site") <span>＋</span></a>
-                <a class="landing-btn secondary" href="/system-health">@(L.IsArabic ? "صحة النظام" : "System health")</a>
+                <a class="landing-btn primary" href="@ProtectedHref("/sites/connect")">@(L.IsArabic ? "إضافة موقع" : "Add site") <span>＋</span></a>
+                <a class="landing-btn secondary" href="@ProtectedHref("/system-health")">@(L.IsArabic ? "صحة النظام" : "System health")</a>
             </div>
         </section>
     </main>
@@ -170,7 +182,7 @@
     <footer class="landing-footer">
         <div><span class="brand-badge small">AI</span><strong>AI WordPress Manager</strong></div>
         <span>v@(Build.Version) · @Build.Branch</span>
-        <a href="/about-build">@(L.IsArabic ? "معلومات الإصدار" : "Build information")</a>
+        <a href="@ProtectedHref("/about-build")">@(L.IsArabic ? "معلومات الإصدار" : "Build information")</a>
     </footer>
 </div>
 
@@ -178,6 +190,7 @@
     private BuildInformation Build => BuildInfo.Current;
     private DashboardLiveView? _dashboard;
     private bool _dashboardLoadFailed;
+    private bool _isAuthenticated;
 
     private DashboardLiveView Dashboard => _dashboard ?? new DashboardLiveView(
         new DashboardSummary(0, 0, 0, null), 0, 0, 0, 0, 0, 0, 100, null, Array.Empty<DashboardJobView>(), DateTime.UtcNow);
@@ -186,6 +199,18 @@
     {
         get
         {
+            if (!_isAuthenticated)
+            {
+                var signInHint = L.IsArabic ? "سجّل الدخول لعرض بيانات حسابك الحية" : "Sign in to view your live workspace data";
+                return new[]
+                {
+                    new MetricCard("◎", "Total Sites", "—", signInHint, "green", "/sites"),
+                    new MetricCard("▤", "Cached Content", "—", signInHint, "emerald", "/content"),
+                    new MetricCard("▶", "Active Jobs", "—", signInHint, "amber", "/module/execution"),
+                    new MetricCard("◷", "Last Sync", "—", signInHint, "blue", "/module/sync")
+                };
+            }
+
             var data = Dashboard;
             var cachedContent = data.Posts + data.Pages;
             var loadSuffix = _dashboardLoadFailed
@@ -228,6 +253,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authenticationState = await AuthenticationState.GetAuthenticationStateAsync();
+        _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
+        if (!_isAuthenticated) return;
+
         try
         {
             _dashboard = await DashboardService.GetAsync();
@@ -246,6 +275,10 @@
         await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
         StateHasChanged();
     }
+
+    private string ProtectedHref(string path) => _isAuthenticated
+        ? path
+        : $"/login?returnUrl={Uri.EscapeDataString(path)}";
 
     private string FormatLastSync(DateTime? value)
     {
