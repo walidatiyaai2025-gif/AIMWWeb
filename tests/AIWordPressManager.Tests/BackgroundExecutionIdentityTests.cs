@@ -26,6 +26,21 @@ public sealed class BackgroundExecutionIdentityTests
     }
 
     [Fact]
+    public async Task Background_owner_flows_across_awaits_and_is_cleared_after_lease()
+    {
+        var ownerId = Guid.NewGuid();
+
+        using (BackgroundExecutionIdentity.Push(ownerId))
+        {
+            await Task.Yield();
+            BackgroundExecutionIdentity.TryGetOwnerUserId(out var current).Should().BeTrue();
+            current.Should().Be(ownerId);
+        }
+
+        BackgroundExecutionIdentity.TryGetOwnerUserId(out _).Should().BeFalse();
+    }
+
+    [Fact]
     public void Http_identity_always_wins_over_background_owner()
     {
         var httpUserId = Guid.NewGuid();
