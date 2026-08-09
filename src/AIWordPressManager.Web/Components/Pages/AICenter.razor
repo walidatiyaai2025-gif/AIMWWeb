@@ -190,18 +190,10 @@
         _prompts.Clear();
         try
         {
-            var raw = JsonSerializer.Serialize(PromptRegistry.GetAll(L.Culture));
-            using var doc = JsonDocument.Parse(raw);
-            if (doc.RootElement.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in doc.RootElement.EnumerateArray())
-                {
-                    var key = ReadString(item, "Key", "key", "PromptKey", "promptKey");
-                    var title = ReadString(item, "Title", "title", "Name", "name", "Description", "description");
-                    if (!string.IsNullOrWhiteSpace(key)) _prompts.Add(new(key, string.IsNullOrWhiteSpace(title) ? key : title));
-                }
-            }
-            _usageCount = CountArray(JsonSerializer.Serialize(UsageLog.GetRecent(100, null, null)));
+            foreach (var key in PromptRegistry.GetAll(L.Culture).Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+                _prompts.Add(new PromptOption(key, PromptTitle(key)));
+
+            _usageCount = UsageLog.GetRecent(100, null, null).Count;
             _sites = await SiteService.GetSitesAsync();
             RefreshApprovalStatus();
         }
@@ -215,7 +207,14 @@
         _working = true; _error = string.Empty; _output = string.Empty; _lastApprovalId = null; _lastApprovalStatus = null; var started = DateTime.UtcNow;
         try
         {
-            var instruction = string.IsNullOrWhiteSpace(_promptKey) ? null : PromptRegistry.Get(_promptKey, L.Culture);
+            string? instruction = null;
+            if (!string.IsNullOrWhiteSpace(_promptKey))
+            {
+                if (!PromptRegistry.TryGet(_promptKey, L.Culture, out var resolvedPrompt))
+                    throw new InvalidOperationException(L.IsArabic ? "قالب الأمر غير موجود أو تم تعطيله." : "Prompt template was not found or is disabled.");
+                instruction = resolvedPrompt;
+            }
+
             var result = await Orchestrator.ExecuteAsync(new AIRequest(_content, instruction, string.IsNullOrWhiteSpace(_model) ? null : _model, _temperature, _maxTokens, SelectedSiteGuid(), null, string.IsNullOrWhiteSpace(_promptKey) ? null : _promptKey));
             _lastElapsed = DateTime.UtcNow - started;
             if (!result.IsSuccess)
@@ -288,8 +287,12 @@
     public void Dispose() => L.Changed -= Changed;
 
     private static string Preview(string value) => value.Length <= 180 ? value : value[..180] + "…";
-    private static int CountArray(string json) { try { using var d = JsonDocument.Parse(json); return d.RootElement.ValueKind == JsonValueKind.Array ? d.RootElement.GetArrayLength() : 0; } catch { return 0; } }
-    private static string ReadString(JsonElement item, params string[] names) { foreach (var n in names) if (item.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String) return v.GetString() ?? string.Empty; return string.Empty; }
+    private static string PromptTitle(string key)
+    {
+        var words = key.Replace('.', ' ').Replace('-', ' ').Replace('_', ' ')
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return words.Length == 0 ? key : string.Join(' ', words.Select(x => char.ToUpperInvariant(x[0]) + x[1..]));
+    }
 
     private sealed record PromptOption(string Key, string Title);
     private sealed record SessionResult(Guid Id, string Title, string PromptKey, string Input, string Output, DateTime CreatedAt, TimeSpan Elapsed, string SiteId);
