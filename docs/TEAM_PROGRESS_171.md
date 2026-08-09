@@ -25,14 +25,15 @@ Complete the production UX for bulk post/page operations across the global conte
 - Every selected site is resolved through `SiteWebService` before multi-site mutation begins.
 - Destructive global trash actions require explicit confirmation.
 
-## Validation gate
-- Full solution build, including Razor compilation.
-- Full automated test suite.
-- `GlobalContentBulkPolicyTests` green.
-- GitHub Actions `Build` and `.NET Build Verification` green before merge.
+## Validation
+- Full solution/Razor build: PASS.
+- Full automated test suite: PASS.
+- `GlobalContentBulkPolicyTests`: PASS.
+- GitHub Actions `Build` #1133: SUCCESS.
+- GitHub Actions `.NET Build Verification` #894: SUCCESS.
 
 ## Version
 `155.118.0`
 
 ## Status
-Implemented — CI validation pending.
+VERIFIED — ready to merge.
