@@ -240,7 +240,11 @@ public sealed class DatabaseInitializationService(
         }
 
         await dbContext.Database.ExecuteSqlRawAsync(
-            "CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId ON Sites (OwnerUserId);",
+            """
+            CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId ON Sites (OwnerUserId);
+            CREATE INDEX IF NOT EXISTS IX_Sites_OwnerUserId_SiteUrl ON Sites (OwnerUserId, SiteUrl);
+            DROP INDEX IF EXISTS IX_Sites_SiteUrl;
+            """,
             cancellationToken);
     }
 
