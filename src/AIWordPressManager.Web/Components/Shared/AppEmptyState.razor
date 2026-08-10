@@ -1,13 +1,27 @@
-<AppStatePanel Kind="empty"
-               Title="@Title"
-               Description="@Description"
-               RecoveryText="@RecoveryText"
-               RecoveryLabel="@RecoveryLabel"
-               Icon="@Icon"
-               Blocking="@Blocking"
-               Class="app-empty-state @Class">
-    <Actions>@Actions</Actions>
-</AppStatePanel>
+@if (Actions is null)
+{
+    <AppStatePanel Kind="empty"
+                   Title="@Title"
+                   Description="@Description"
+                   RecoveryText="@RecoveryText"
+                   RecoveryLabel="@RecoveryLabel"
+                   Icon="@Icon"
+                   Blocking="@Blocking"
+                   Class="app-empty-state @Class" />
+}
+else
+{
+    <AppStatePanel Kind="empty"
+                   Title="@Title"
+                   Description="@Description"
+                   RecoveryText="@RecoveryText"
+                   RecoveryLabel="@RecoveryLabel"
+                   Icon="@Icon"
+                   Blocking="@Blocking"
+                   Class="app-empty-state @Class">
+        <Actions>@Actions</Actions>
+    </AppStatePanel>
+}
 
 @code {
     [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
