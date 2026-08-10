@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.131.0` — UX-001
+**Current release:** `155.132.0` — UX-002
 
 ## Design principles
 
@@ -23,8 +23,8 @@
 | ID | Priority | Status | Task | Dependency | GitHub / Release |
 |---|---|---|---|---|---|
 | UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
-| UX-002 | **CRITICAL** | **Next** | Navigation information architecture & discoverability | UX-001 | #47 |
-| UX-003 | **CRITICAL** | Planned | Responsive mobile/tablet application shell | UX-001 | #48 |
+| UX-002 | **CRITICAL** | **Completed** | Navigation information architecture & discoverability | UX-001 | #47 / `155.132.0` |
+| UX-003 | **CRITICAL** | **Next** | Responsive mobile/tablet application shell | UX-001 | #48 |
 | UX-004 | **CRITICAL** | Planned | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
 | UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
 | UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
@@ -35,7 +35,7 @@
 
 ## UX-001 — delivered foundation
 
-UX-001 establishes the shared shell contract that later design tasks build on.
+UX-001 established the shared shell contract that later design tasks build on.
 
 ### Design system foundation
 - Extended the existing `--ui-*` token layer with shell semantics instead of creating a competing token system.
@@ -58,6 +58,31 @@ UX-001 establishes the shared shell contract that later design tasks build on.
 - Resolved conflicting legacy mobile navigation rules so the off-canvas sidebar remains vertically usable.
 - Added practical touch targets, responsive content gutters, reduced-motion behavior, and tablet language-control treatment.
 
+## UX-002 — delivered navigation architecture
+
+UX-002 removes navigation drift by treating destinations as product information architecture rather than duplicated UI strings.
+
+### Navigation catalog
+- Established one server-side catalog for primary navigation, command search, current-location titles, localized descriptions, search aliases, and role visibility.
+- Administrator-only destinations are discoverable only to authenticated administrators.
+- Automation Center, Notification Inbox, account destinations, and administrative settings are represented without hidden production URLs.
+
+### Search and recent access
+- Command search matches page names, capability descriptions, keywords, and routes.
+- Results are grouped by workspace with localized context and route hints.
+- Recent/Favorites receives the authorized catalog through JS interop instead of maintaining a stale client-only route list.
+- `Ctrl+Shift+P` remains available; desktop/tablet uses topbar access while the floating launcher remains for mobile.
+
+### Workflow shortcuts
+- Quick Actions now focus on the highest-value site, content, AI, planner, automation, execution, synchronization, SEO, notification, and reporting workflows.
+- Tenant ownership and authorization remain independent authoritative boundaries; navigation changes do not change data access.
+
+### Regression coverage
+- Unique routes and group keys are enforced by tests.
+- Localized catalog metadata is verified.
+- Important production destinations, most-specific route matching, admin visibility, root-route safety, and capability-keyword search are covered.
+- Implementation and self-review heads passed both Build and .NET Build Verification before release reconciliation.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -72,4 +97,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-002 — Navigation information architecture & discoverability** is the next Critical design task. It will build on the UX-001 shell foundation rather than introducing a second navigation system.
+**UX-003 — Responsive mobile/tablet application shell** is the next Critical design task and will build directly on the unified UX-001 shell and UX-002 navigation catalog.

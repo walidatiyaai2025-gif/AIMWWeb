@@ -1,59 +1,58 @@
 window.aiwmRecentPages = (() => {
     const recentKey = "aiwm-recent-pages";
     const favoriteKey = "aiwm-favorite-pages";
-    const maxRecent = 8;
-    const labels = {
-        "/": ["Dashboard", "لوحة التحكم", "⌂"],
-        "/sites": ["Sites", "المواقع", "◉"],
-        "/module/posts": ["Posts", "المقالات", "▤"],
-        "/module/pages": ["Pages", "الصفحات", "▧"],
-        "/module/media": ["Media", "الوسائط", "▣"],
-        "/module/taxonomy": ["Categories & Tags", "التصنيفات والوسوم", "#"],
-        "/module/comments": ["Comments", "التعليقات", "◌"],
-        "/module/users": ["Users", "المستخدمون", "◎"],
-        "/module/seo-audit": ["SEO Audit", "تدقيق SEO", "◈"],
-        "/module/ai-providers": ["AI Providers", "مزودو الذكاء", "✦"],
-        "/module/execution": ["Execution Center", "مركز التنفيذ", "▶"],
-        "/module/sync": ["Synchronization", "المزامنة", "↻"],
-        "/module/reports": ["Reports", "التقارير", "▥"],
-        "/system-health": ["System Health", "صحة النظام", "♥"],
-        "/settings": ["Settings", "الإعدادات", "⚙"],
-        "/about-build": ["Build Information", "معلومات الإصدار", "ⓘ"]
-    };
+    const maxRecent = 10;
+    const maxFavorites = 10;
+    let labels = Object.create(null);
 
     function read(key) {
-        try { return JSON.parse(localStorage.getItem(key) || "[]"); }
-        catch { return []; }
+        try {
+            const value = JSON.parse(localStorage.getItem(key) || "[]");
+            return Array.isArray(value) ? value : [];
+        } catch {
+            return [];
+        }
     }
 
     function write(key, value) {
         try { localStorage.setItem(key, JSON.stringify(value)); } catch { }
     }
 
-    function normalizedPath() {
-        const path = location.pathname || "/";
-        if (path.startsWith("/sites/") && !labels[path]) return "/sites";
-        return labels[path] ? path : null;
-    }
-
     function isArabic() {
         return document.documentElement.lang === "ar" || document.documentElement.dir === "rtl";
+    }
+
+    function titleFor(path) {
+        const meta = labels[path];
+        return meta ? (isArabic() ? meta.arabic : meta.english) : path;
+    }
+
+    function normalizedPath() {
+        const path = location.pathname || "/";
+        if (labels[path]) return path;
+
+        const parent = Object.keys(labels)
+            .filter(candidate => candidate !== "/" && path.startsWith(`${candidate}/`))
+            .sort((a, b) => b.length - a.length)[0];
+
+        return parent || null;
     }
 
     function track() {
         const path = normalizedPath();
         if (!path) return;
-        const recent = read(recentKey).filter(x => x !== path);
+        const recent = read(recentKey).filter(item => item !== path && labels[item]);
         recent.unshift(path);
         write(recentKey, recent.slice(0, maxRecent));
     }
 
     function toggleFavorite(path) {
-        const favorites = read(favoriteKey);
+        if (!labels[path]) return;
+        const favorites = read(favoriteKey).filter(item => labels[item]);
         const index = favorites.indexOf(path);
         if (index >= 0) favorites.splice(index, 1);
         else favorites.unshift(path);
-        write(favoriteKey, favorites.slice(0, 10));
+        write(favoriteKey, favorites.slice(0, maxFavorites));
         renderList();
     }
 
@@ -61,19 +60,52 @@ window.aiwmRecentPages = (() => {
         const meta = labels[path];
         if (!meta) return "";
         const favorite = favorites.includes(path);
-        const title = isArabic() ? meta[1] : meta[0];
-        return `<div class="recent-page-item"><a href="${path}"><span>${meta[2]}</span><strong>${title}</strong></a><button type="button" data-favorite="${path}" aria-label="Favorite">${favorite ? "★" : "☆"}</button></div>`;
+        const title = titleFor(path);
+        const favoriteLabel = favorite
+            ? (isArabic() ? `إزالة ${title} من المفضلة` : `Remove ${title} from favorites`)
+            : (isArabic() ? `إضافة ${title} إلى المفضلة` : `Add ${title} to favorites`);
+
+        return `<div class="recent-page-item">
+            <a href="${path}" title="${title}"><span aria-hidden="true">${meta.icon}</span><strong>${title}</strong></a>
+            <button type="button" data-favorite="${path}" aria-label="${favoriteLabel}" aria-pressed="${favorite}">${favorite ? "★" : "☆"}</button>
+        </div>`;
     }
 
     function renderList() {
         const panel = document.querySelector(".recent-pages-panel");
+        const trigger = document.querySelector(".recent-pages-trigger");
         if (!panel) return;
-        const favorites = read(favoriteKey).filter(x => labels[x]);
-        const recent = read(recentKey).filter(x => labels[x] && !favorites.includes(x));
+
+        const favorites = read(favoriteKey).filter(path => labels[path]);
+        const recent = read(recentKey).filter(path => labels[path] && !favorites.includes(path));
         const titleFavorites = isArabic() ? "المفضلة" : "Favorites";
         const titleRecent = isArabic() ? "الصفحات الأخيرة" : "Recent pages";
-        const empty = isArabic() ? "لا توجد صفحات محفوظة بعد." : "No saved pages yet.";
-        panel.innerHTML = `<header><div><strong>${isArabic() ? "الوصول السريع" : "Quick access"}</strong><small>${isArabic() ? "المفضلة وآخر الصفحات" : "Favorites and recent pages"}</small></div><button type="button" data-close>×</button></header><section><h4>${titleFavorites}</h4>${favorites.length ? favorites.map(x => item(x, favorites)).join("") : `<p>${empty}</p>`}<h4>${titleRecent}</h4>${recent.length ? recent.map(x => item(x, favorites)).join("") : `<p>${empty}</p>`}</section>`;
+        const emptyFavorites = isArabic() ? "لم تضف صفحات للمفضلة بعد." : "No favorite pages yet.";
+        const emptyRecent = isArabic() ? "لم تزر صفحات مسجلة بعد." : "No recent pages yet.";
+        const panelTitle = isArabic() ? "الوصول السريع" : "Quick access";
+        const panelSubtitle = isArabic() ? "المفضلة وآخر مساحات العمل" : "Favorites and recent workspaces";
+        const closeLabel = isArabic() ? "إغلاق الوصول السريع" : "Close quick access";
+        const triggerLabel = isArabic() ? "فتح المفضلة والصفحات الأخيرة" : "Open favorites and recent pages";
+
+        if (trigger) {
+            trigger.title = `${triggerLabel} — Ctrl+Shift+P`;
+            trigger.setAttribute("aria-label", triggerLabel);
+        }
+
+        panel.setAttribute("role", "dialog");
+        panel.setAttribute("aria-modal", "true");
+        panel.setAttribute("aria-label", panelTitle);
+        panel.innerHTML = `<header>
+            <div><strong>${panelTitle}</strong><small>${panelSubtitle}</small></div>
+            <button type="button" data-close aria-label="${closeLabel}">×</button>
+        </header>
+        <section>
+            <h4>${titleFavorites}</h4>
+            ${favorites.length ? favorites.map(path => item(path, favorites)).join("") : `<p>${emptyFavorites}</p>`}
+            <h4>${titleRecent}</h4>
+            ${recent.length ? recent.map(path => item(path, favorites)).join("") : `<p>${emptyRecent}</p>`}
+        </section>`;
+
         panel.querySelector("[data-close]")?.addEventListener("click", close);
         panel.querySelectorAll("[data-favorite]").forEach(button => button.addEventListener("click", event => {
             event.preventDefault();
@@ -83,19 +115,42 @@ window.aiwmRecentPages = (() => {
     }
 
     function open() {
-        document.querySelector(".recent-pages-shell")?.classList.add("open");
+        const shell = document.querySelector(".recent-pages-shell");
+        shell?.classList.add("open");
+        shell?.querySelector(".recent-pages-trigger")?.setAttribute("aria-expanded", "true");
         renderList();
+        setTimeout(() => shell?.querySelector("[data-close]")?.focus(), 0);
     }
 
     function close() {
-        document.querySelector(".recent-pages-shell")?.classList.remove("open");
+        const shell = document.querySelector(".recent-pages-shell");
+        shell?.classList.remove("open");
+        shell?.querySelector(".recent-pages-trigger")?.setAttribute("aria-expanded", "false");
+    }
+
+    function setCatalog(items) {
+        const next = Object.create(null);
+        (Array.isArray(items) ? items : []).forEach(item => {
+            if (!item || typeof item.path !== "string" || !item.path.startsWith("/")) return;
+            next[item.path] = {
+                english: String(item.english || item.path),
+                arabic: String(item.arabic || item.english || item.path),
+                icon: String(item.icon || "•")
+            };
+        });
+        labels = next;
+
+        write(favoriteKey, read(favoriteKey).filter(path => labels[path]).slice(0, maxFavorites));
+        write(recentKey, read(recentKey).filter(path => labels[path]).slice(0, maxRecent));
+        track();
+        renderList();
     }
 
     function mount() {
         if (document.querySelector(".recent-pages-shell")) return;
         const shell = document.createElement("div");
         shell.className = "recent-pages-shell";
-        shell.innerHTML = `<button type="button" class="recent-pages-trigger" title="Recent pages">★</button><div class="recent-pages-backdrop"></div><aside class="recent-pages-panel"></aside>`;
+        shell.innerHTML = `<button type="button" class="recent-pages-trigger" aria-haspopup="dialog" aria-expanded="false">★</button><div class="recent-pages-backdrop"></div><aside class="recent-pages-panel"></aside>`;
         document.body.appendChild(shell);
         shell.querySelector(".recent-pages-trigger")?.addEventListener("click", open);
         shell.querySelector(".recent-pages-backdrop")?.addEventListener("click", close);
@@ -109,7 +164,6 @@ window.aiwmRecentPages = (() => {
     }
 
     function init() {
-        track();
         mount();
         let current = location.pathname;
         setInterval(() => {
@@ -123,5 +177,5 @@ window.aiwmRecentPages = (() => {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
     else init();
 
-    return { open, close, track };
+    return { open, close, track, setCatalog };
 })();
