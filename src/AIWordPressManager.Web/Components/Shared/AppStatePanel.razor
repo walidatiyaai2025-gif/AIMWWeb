@@ -1,0 +1,117 @@
+<section class="app-state-panel app-state-panel--@NormalizedKind @Class"
+         role="@EffectiveRole"
+         aria-live="@EffectiveLive"
+         aria-atomic="true"
+         aria-busy="@Busy.ToString().ToLowerInvariant()"
+         data-state="@NormalizedKind"
+         data-blocking="@Blocking.ToString().ToLowerInvariant()">
+    <div class="app-state-panel__visual" aria-hidden="true">
+        @if (NormalizedKind == "loading")
+        {
+            <span class="app-state-panel__spinner"></span>
+        }
+        else
+        {
+            <span class="app-state-panel__icon">@EffectiveIcon</span>
+        }
+    </div>
+
+    <div class="app-state-panel__content">
+        <h3>@Title</h3>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <p class="app-state-panel__description">@Description</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(RecoveryText))
+        {
+            <p class="app-state-panel__recovery"><strong>@RecoveryLabel</strong> @RecoveryText</p>
+        }
+        @if (UpdatedAtUtc.HasValue || !string.IsNullOrWhiteSpace(FreshnessText))
+        {
+            <div class="app-state-panel__freshness">
+                @if (UpdatedAtUtc.HasValue)
+                {
+                    <time datetime="@UpdatedAtUtc.Value.ToString("O", System.Globalization.CultureInfo.InvariantCulture)">@UpdatedAtUtc.Value.ToLocalTime().ToString(TimestampFormat)</time>
+                }
+                @if (!string.IsNullOrWhiteSpace(FreshnessText))
+                {
+                    <span>@FreshnessText</span>
+                }
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Details))
+        {
+            <details class="app-state-panel__details">
+                <summary>@DetailsLabel</summary>
+                <pre>@Details</pre>
+            </details>
+        }
+        @if (RetryRequested.HasDelegate || Actions is not null)
+        {
+            <div class="app-state-panel__actions">
+                @if (RetryRequested.HasDelegate)
+                {
+                    <AppButton Icon="↻"
+                               Text="@(Busy ? RetryingText : RetryText)"
+                               AriaLabel="@RetryAriaLabel"
+                               Disabled="@Busy"
+                               Busy="@Busy"
+                               OnClick="RetryAsync" />
+                }
+                @Actions
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Kind { get; set; } = "info";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? RecoveryText { get; set; }
+    [Parameter] public string RecoveryLabel { get; set; } = "Next:";
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Details { get; set; }
+    [Parameter] public string DetailsLabel { get; set; } = "Technical details";
+    [Parameter] public DateTime? UpdatedAtUtc { get; set; }
+    [Parameter] public string? FreshnessText { get; set; }
+    [Parameter] public string TimestampFormat { get; set; } = "yyyy-MM-dd HH:mm";
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Blocking { get; set; } = true;
+    [Parameter] public bool Assertive { get; set; }
+    [Parameter] public string RetryText { get; set; } = "Try again";
+    [Parameter] public string RetryingText { get; set; } = "Trying again...";
+    [Parameter] public string? RetryAriaLabel { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public EventCallback RetryRequested { get; set; }
+
+    private string NormalizedKind => Kind.Trim().ToLowerInvariant() switch
+    {
+        "loading" => "loading",
+        "empty" => "empty",
+        "success" => "success",
+        "warning" => "warning",
+        "error" or "danger" => "error",
+        "offline" => "offline",
+        "cached" or "stale" => "cached",
+        "partial" => "partial",
+        _ => "info"
+    };
+
+    private string EffectiveRole => Assertive || NormalizedKind == "error" ? "alert" : "status";
+    private string EffectiveLive => Assertive || NormalizedKind == "error" ? "assertive" : "polite";
+    private string EffectiveIcon => Icon ?? NormalizedKind switch
+    {
+        "empty" => "○",
+        "success" => "✓",
+        "warning" => "!",
+        "error" => "×",
+        "offline" => "⌁",
+        "cached" => "◷",
+        "partial" => "◐",
+        _ => "i"
+    };
+
+    private Task RetryAsync(MouseEventArgs _) => Busy ? Task.CompletedTask : RetryRequested.InvokeAsync();
+}
