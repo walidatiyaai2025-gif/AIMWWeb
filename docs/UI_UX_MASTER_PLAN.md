@@ -24,7 +24,7 @@
 |---|---|---|---|---|---|
 | UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
 | UX-002 | **CRITICAL** | **Completed** | Navigation information architecture & discoverability | UX-001 | #47 / `155.132.0` |
-| UX-003 | **CRITICAL** | **In Progress** | Responsive mobile/tablet application shell | UX-001 | #48 |
+| UX-003 | **CRITICAL** | **In Progress** | Responsive mobile/tablet application shell | UX-001 | #48 / PR #58 |
 | UX-004 | **CRITICAL** | Planned | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
 | UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
 | UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
@@ -92,6 +92,7 @@ UX-003 turns the UX-001 shell into a production responsive application rather th
 - Responsive drawer state is ephemeral and independent from the persisted desktop collapsed-sidebar preference.
 - Entering tablet/mobile mode starts with navigation closed so content is never unexpectedly covered.
 - Route selection, backdrop click, explicit close control, and Escape close the drawer.
+- Drawer close/backdrop controls are Razor-owned elements inside `MainLayout`; JavaScript does not inject nodes into Blazor-managed shell DOM.
 - Resize and orientation changes reconcile drawer state without corrupting desktop preference.
 
 ### Safe-area and viewport behavior
@@ -109,11 +110,14 @@ UX-003 turns the UX-001 shell into a production responsive application rather th
 - Shell surfaces enforce `min-width: 0` and constrain accidental horizontal page overflow.
 - Drawer navigation remains vertically scrollable while page-body scroll is locked.
 - Practical touch targets remain at least 44px/46px for shell controls and navigation destinations.
-- Existing page-owned table/grid scrolling remains authoritative inside the constrained shell.
+- `AppDataGrid` now exposes an optional `MobileRowTemplate` so dense workspaces can switch from the desktop table to phone-card rows without duplicating filter, paging, sorting, selection, or export state.
+- Existing data-grid consumers remain unchanged unless they opt into the mobile-card template; bounded component scrolling remains the safe fallback.
+- Shared dialogs constrain wide content to the viewport, keep overflow inside the dialog body, allow long text to wrap, and let phone footer actions wrap instead of clipping.
 
 ### Regression coverage
 - Static contract tests verify the shared 1024px breakpoint across CSS/runtime state logic.
-- Tests protect independent desktop/mobile state, real drawer close controls, safe-area viewport support, dynamic viewport sizing, overflow containment, and landscape guards.
+- Tests protect independent desktop/mobile state, Razor-owned drawer controls, safe-area viewport support, dynamic viewport sizing, overflow containment, and landscape guards.
+- Tests also protect the opt-in data-grid mobile-card contract and shared dialog overflow/action behavior.
 
 ## UX Definition of Done
 
