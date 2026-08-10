@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.132.0` — UX-002
+**Current release:** `155.133.0` — UX-003
 
 ## Design principles
 
@@ -24,8 +24,8 @@
 |---|---|---|---|---|---|
 | UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
 | UX-002 | **CRITICAL** | **Completed** | Navigation information architecture & discoverability | UX-001 | #47 / `155.132.0` |
-| UX-003 | **CRITICAL** | **In Progress** | Responsive mobile/tablet application shell | UX-001 | #48 / PR #58 |
-| UX-004 | **CRITICAL** | Planned | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
+| UX-003 | **CRITICAL** | **Completed** | Responsive mobile/tablet application shell | UX-001 | #48 / `155.133.0` |
+| UX-004 | **CRITICAL** | **Next** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
 | UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
 | UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
 | UX-007 | **HIGH** | Planned | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
@@ -83,7 +83,7 @@ UX-002 removes navigation drift by treating destinations as product information 
 - Important production destinations, most-specific route matching, admin visibility, root-route safety, and capability-keyword search are covered.
 - Implementation and self-review heads passed both Build and .NET Build Verification before release reconciliation.
 
-## UX-003 — active responsive shell implementation
+## UX-003 — delivered responsive shell
 
 UX-003 turns the UX-001 shell into a production responsive application rather than a compressed desktop layout.
 
@@ -106,11 +106,11 @@ UX-003 turns the UX-001 shell into a production responsive application rather th
 - The mobile floating Recent/Favorites launcher remains available when the topbar version is hidden.
 - Landscape-short layouts prioritize navigation and content over decorative/footer information.
 
-### Overflow and interaction safety
+### Overflow and dense-workspace safety
 - Shell surfaces enforce `min-width: 0` and constrain accidental horizontal page overflow.
 - Drawer navigation remains vertically scrollable while page-body scroll is locked.
 - Practical touch targets remain at least 44px/46px for shell controls and navigation destinations.
-- `AppDataGrid` now exposes an optional `MobileRowTemplate` so dense workspaces can switch from the desktop table to phone-card rows without duplicating filter, paging, sorting, selection, or export state.
+- `AppDataGrid` exposes an optional `MobileRowTemplate` so dense workspaces can switch from the desktop table to phone-card rows without duplicating filter, paging, sorting, selection, or export state.
 - Existing data-grid consumers remain unchanged unless they opt into the mobile-card template; bounded component scrolling remains the safe fallback.
 - Shared dialogs constrain wide content to the viewport, keep overflow inside the dialog body, allow long text to wrap, and let phone footer actions wrap instead of clipping.
 
@@ -118,6 +118,7 @@ UX-003 turns the UX-001 shell into a production responsive application rather th
 - Static contract tests verify the shared 1024px breakpoint across CSS/runtime state logic.
 - Tests protect independent desktop/mobile state, Razor-owned drawer controls, safe-area viewport support, dynamic viewport sizing, overflow containment, and landscape guards.
 - Tests also protect the opt-in data-grid mobile-card contract and shared dialog overflow/action behavior.
+- Stable implementation head `a015a43485d0bfbfc68d7dcb7285259f15ea7bdb` passed Build #1413 and .NET Build Verification #1021 before release reconciliation.
 
 ## UX Definition of Done
 
@@ -131,6 +132,6 @@ A UX task is complete only when applicable requirements are met:
 - Restore/build/tests pass on the exact implementation head.
 - Release/status documentation is reconciled before merge.
 
-## Next task after UX-003
+## Next task
 
-**UX-004 — WCAG AA accessibility, keyboard & focus UX** remains the next Critical design task after UX-003 is validated and merged.
+**UX-004 — WCAG AA accessibility, keyboard & focus UX** is the next Critical design task and builds on the stable responsive shell delivered by UX-003.
