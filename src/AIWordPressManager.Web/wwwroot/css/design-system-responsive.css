@@ -19,7 +19,6 @@ body {
 body.responsive-navigation-open {
     overflow: hidden;
     overscroll-behavior: none;
-    touch-action: none;
 }
 
 .design-system-shell .main-area,
