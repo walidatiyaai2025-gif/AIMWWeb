@@ -23,7 +23,7 @@
 | ID | Priority | Status | Task | Dependency | GitHub / Release |
 |---|---|---|---|---|---|
 | UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
-| UX-002 | **CRITICAL** | **Next** | Navigation information architecture & discoverability | UX-001 | #47 |
+| UX-002 | **CRITICAL** | **In Progress** | Navigation information architecture & discoverability | UX-001 | #47 |
 | UX-003 | **CRITICAL** | Planned | Responsive mobile/tablet application shell | UX-001 | #48 |
 | UX-004 | **CRITICAL** | Planned | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
 | UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
@@ -58,6 +58,30 @@ UX-001 establishes the shared shell contract that later design tasks build on.
 - Resolved conflicting legacy mobile navigation rules so the off-canvas sidebar remains vertically usable.
 - Added practical touch targets, responsive content gutters, reduced-motion behavior, and tablet language-control treatment.
 
+## UX-002 — active implementation
+
+UX-002 removes navigation drift by treating destinations as product information architecture rather than duplicated UI strings.
+
+### Navigation catalog
+- Establish one server-side catalog for primary navigation, command search, current-location titles, localized descriptions, search aliases, and role visibility.
+- Keep administrator-only destinations discoverable only to authorized administrators.
+- Ensure Automation Center, Notification Inbox, account destinations, and administrative settings are covered without hidden URLs.
+
+### Search and recent access
+- Search by page name, capability description, keywords, or route.
+- Group command results by workspace with localized context.
+- Feed the same authorized navigation catalog into Recent/Favorites through JS interop instead of maintaining a stale client-only route list.
+- Keep `Ctrl+Shift+P` recent/favorite access and surface it directly from the topbar and command palette.
+
+### Workflow shortcuts
+- Align Quick Actions with the most important site, content, AI, automation, execution, SEO, notification, and reporting workflows.
+- Preserve tenant ownership and authorization boundaries; navigation changes do not change data access.
+
+### Regression coverage
+- Enforce unique routes and group keys.
+- Verify localized catalog metadata.
+- Verify important production destinations, most-specific route matching, admin visibility, and capability-keyword search.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -70,6 +94,6 @@ A UX task is complete only when applicable requirements are met:
 - Restore/build/tests pass on the exact implementation head.
 - Release/status documentation is reconciled before merge.
 
-## Next task
+## Next task after UX-002
 
-**UX-002 — Navigation information architecture & discoverability** is the next Critical design task. It will build on the UX-001 shell foundation rather than introducing a second navigation system.
+**UX-003 — Responsive mobile/tablet application shell** remains the next Critical design task after UX-002 is validated and merged.
