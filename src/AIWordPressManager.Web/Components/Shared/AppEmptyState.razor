@@ -7,7 +7,7 @@
                    RecoveryLabel="@RecoveryLabel"
                    Icon="@Icon"
                    Blocking="@Blocking"
-                   Class="app-empty-state @Class" />
+                   Class="@StateClass" />
 }
 else
 {
@@ -18,7 +18,7 @@ else
                    RecoveryLabel="@RecoveryLabel"
                    Icon="@Icon"
                    Blocking="@Blocking"
-                   Class="app-empty-state @Class">
+                   Class="@StateClass">
         <Actions>@Actions</Actions>
     </AppStatePanel>
 }
@@ -32,4 +32,6 @@ else
     [Parameter] public string Class { get; set; } = string.Empty;
     [Parameter] public bool Blocking { get; set; } = true;
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    private string StateClass => string.IsNullOrWhiteSpace(Class) ? "app-empty-state" : $"app-empty-state {Class}";
 }
