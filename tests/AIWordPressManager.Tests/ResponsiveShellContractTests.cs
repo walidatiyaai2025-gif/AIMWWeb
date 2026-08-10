@@ -26,14 +26,16 @@ public sealed class ResponsiveShellContractTests
     }
 
     [Fact]
-    public void Responsive_drawer_has_real_close_controls_and_route_close_behavior()
+    public void Responsive_drawer_controls_are_owned_by_the_blazor_shell()
     {
+        var layout = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Layout/MainLayout.razor");
         var themeRuntime = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/js/app-theme.js");
         var css = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/css/design-system-responsive.css");
 
-        themeRuntime.Should().Contain("responsive-sidebar-close");
-        themeRuntime.Should().Contain("responsive-nav-backdrop");
+        layout.Should().Contain("responsive-sidebar-close");
+        layout.Should().Contain("responsive-nav-backdrop");
         themeRuntime.Should().Contain(".sidebar a[href]");
+        themeRuntime.Should().NotContain("document.createElement");
         css.Should().Contain(".responsive-nav-backdrop");
         css.Should().Contain(".responsive-sidebar-close");
     }
@@ -60,6 +62,30 @@ public sealed class ResponsiveShellContractTests
         css.Should().Contain("overscroll-behavior: contain");
         css.Should().Contain("orientation: landscape");
         css.Should().Contain("max-height: 600px");
+    }
+
+    [Fact]
+    public void Shared_data_grid_supports_an_explicit_mobile_card_alternative()
+    {
+        var grid = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Shared/AppDataGrid.razor");
+        var css = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/css/app-data-grid.css");
+
+        grid.Should().Contain("RenderFragment<TItem>? MobileRowTemplate");
+        grid.Should().Contain("app-data-grid__mobile-list");
+        grid.Should().Contain("has-mobile-alternative");
+        css.Should().Contain(".app-data-grid__viewport.has-mobile-alternative{display:none}");
+        css.Should().Contain("overscroll-behavior-inline:contain");
+    }
+
+    [Fact]
+    public void Shared_dialog_contract_contains_content_and_action_overflow()
+    {
+        var css = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/css/ui-framework-extended.css");
+
+        css.Should().Contain("max-width:100vw");
+        css.Should().Contain("overflow-x:auto");
+        css.Should().Contain("overflow-wrap:anywhere");
+        css.Should().Contain(".app-dialog__footer>.app-button");
     }
 
     private static string ReadRepositoryFile(string relativePath)
