@@ -1,6 +1,14 @@
 @if (!string.IsNullOrWhiteSpace(Href))
 {
-    <a class="app-button @VariantClass @SizeClass @Class" href="@Href" target="@Target" aria-disabled="@Disabled">
+    <a class="app-button @VariantClass @SizeClass @Class"
+       href="@EffectiveHref"
+       target="@Target"
+       tabindex="@DisabledTabIndex"
+       aria-disabled="@Disabled"
+       aria-busy="@Busy"
+       aria-label="@EffectiveAriaLabel"
+       aria-pressed="@AriaPressed"
+       title="@Title">
         @ButtonContent
     </a>
 }
@@ -9,6 +17,10 @@ else
     <button class="app-button @VariantClass @SizeClass @Class"
             type="@Type"
             disabled="@Disabled"
+            aria-busy="@Busy"
+            aria-label="@EffectiveAriaLabel"
+            aria-pressed="@AriaPressed"
+            title="@Title"
             @onclick="OnClick">
         @ButtonContent
     </button>
@@ -23,6 +35,9 @@ else
     [Parameter] public string Variant { get; set; } = "default";
     [Parameter] public string Size { get; set; } = "medium";
     [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public bool? AriaPressed { get; set; }
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
@@ -30,6 +45,9 @@ else
 
     private string VariantClass => $"app-button--{Variant}";
     private string SizeClass => $"app-button--{Size}";
+    private string? EffectiveHref => Disabled ? null : Href;
+    private string? DisabledTabIndex => Disabled ? "-1" : null;
+    private string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? Text : AriaLabel;
 
     private RenderFragment ButtonContent => builder =>
     {

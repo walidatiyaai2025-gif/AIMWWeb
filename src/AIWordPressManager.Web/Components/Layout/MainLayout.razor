@@ -47,7 +47,7 @@
         </nav>
 
         <div class="sidebar-footer">
-            <div><span class="status-dot" aria-hidden="true"></span> @L["LocalSystemRunning"]</div>
+            <div role="status"><span class="status-dot" aria-hidden="true"></span> @L["LocalSystemRunning"]</div>
             <a href="/about-build" class="app-version" aria-label="@(L.IsArabic ? $"الإصدار {Build.Version}" : $"Version {Build.Version}")">
                 <strong>VERSION @(Build.Version)</strong>
                 <small>@Build.Branch · @Build.Commit</small>
@@ -61,7 +61,7 @@
             aria-label="@(L.IsArabic ? "إغلاق قائمة التنقل" : "Close navigation")"
             tabindex="-1"></button>
 
-    <main class="main-area">
+    <div class="main-area">
         <header class="topbar">
             <div class="topbar-title">
                 <button type="button"
@@ -73,10 +73,10 @@
                     <span aria-hidden="true">☰</span>
                 </button>
                 <div class="topbar-heading-block">
-                    <div class="app-breadcrumb" aria-label="@(L.IsArabic ? "مسار الصفحة" : "Breadcrumb")">
-                        <span>@SectionTitle</span><b aria-hidden="true">›</b><strong>@PageTitle</strong>
-                    </div>
-                    <h2>@PageTitle</h2>
+                    <nav class="app-breadcrumb" aria-label="@(L.IsArabic ? "مسار الصفحة" : "Breadcrumb")">
+                        <span>@SectionTitle</span><b aria-hidden="true">›</b><strong aria-current="page">@PageTitle</strong>
+                    </nav>
+                    <h1 id="page-title">@PageTitle</h1>
                     <small class="topbar-context">@PageDescription</small>
                 </div>
             </div>
@@ -85,6 +85,7 @@
                         class="recent-access-trigger"
                         @onclick="OpenRecentPagesAsync"
                         aria-label="@(L.IsArabic ? "فتح المفضلة والصفحات الأخيرة" : "Open favorites and recent pages")"
+                        aria-keyshortcuts="Control+Shift+P"
                         title="@(L.IsArabic ? "المفضلة والصفحات الأخيرة — Ctrl+Shift+P" : "Favorites and recent pages — Ctrl+Shift+P")">
                     <span aria-hidden="true">★</span>
                 </button>
@@ -92,16 +93,34 @@
                         type="button"
                         class="command-trigger"
                         @onclick="OpenCommandPalette"
-                        aria-label="@(L.IsArabic ? "فتح البحث السريع" : "Open quick search")">
+                        aria-label="@(L.IsArabic ? "فتح البحث السريع" : "Open quick search")"
+                        aria-haspopup="dialog"
+                        aria-controls="command-palette-dialog"
+                        aria-expanded="@_commandOpen"
+                        aria-keyshortcuts="Control+K">
                     <span aria-hidden="true">⌕</span><em>@(L.IsArabic ? "بحث سريع" : "Quick search")</em><kbd>Ctrl K</kbd>
                 </button>
                 <a class="topbar-version" href="/about-build" aria-label="@(L.IsArabic ? $"معلومات الإصدار {Build.Version}" : $"Build information {Build.Version}")">v@(Build.Version) <span>• @Build.Branch</span></a>
-                <button type="button" class="appearance-toggle" @onclick="ToggleAppearanceAsync" aria-label="@(L.IsArabic ? "تبديل الوضع الفاتح والداكن" : "Toggle light and dark mode")"><span aria-hidden="true">@(_appearanceMode == "light" ? "☀" : "☾")</span></button>
+                <button type="button"
+                        class="appearance-toggle"
+                        @onclick="ToggleAppearanceAsync"
+                        aria-label="@(L.IsArabic ? "تبديل الوضع الفاتح والداكن" : "Toggle light and dark mode")"
+                        aria-pressed="@(_appearanceMode == "dark")">
+                    <span aria-hidden="true">@(_appearanceMode == "light" ? "☀" : "☾")</span>
+                </button>
                 <div class="theme-picker">
-                    <button type="button" class="theme-trigger" @onclick="ToggleThemePicker" aria-expanded="@_themePickerOpen" aria-haspopup="true" aria-label="@(L.IsArabic ? "تغيير ألوان النظام" : "Change application colors")"><span aria-hidden="true">◈</span></button>
+                    <button type="button"
+                            class="theme-trigger"
+                            @onclick="ToggleThemePicker"
+                            aria-expanded="@_themePickerOpen"
+                            aria-haspopup="true"
+                            aria-controls="theme-picker-popover"
+                            aria-label="@(L.IsArabic ? "تغيير ألوان النظام" : "Change application colors")">
+                        <span aria-hidden="true">◈</span>
+                    </button>
                     @if (_themePickerOpen)
                     {
-                        <div class="theme-popover" role="group" aria-label="@(L.IsArabic ? "ألوان النظام" : "Application colors")">
+                        <div id="theme-picker-popover" class="theme-popover" role="group" aria-label="@(L.IsArabic ? "ألوان النظام" : "Application colors")">
                             <div class="theme-popover-head">
                                 <div><strong>@(L.IsArabic ? "ألوان النظام" : "Application colors")</strong><small>@(L.IsArabic ? "اختر لوحة الألوان المناسبة لك" : "Choose your preferred color palette")</small></div>
                                 <button type="button" class="theme-popover-close" @onclick="CloseThemePicker" aria-label="@(L.IsArabic ? "إغلاق اختيار الألوان" : "Close color picker")">×</button>
@@ -126,27 +145,41 @@
                 <CurrentUserChip />
             </div>
         </header>
-        <section class="content" id="main-content" tabindex="-1">@Body</section>
-    </main>
+        <main class="content" id="main-content" tabindex="-1" aria-labelledby="page-title">@Body</main>
+    </div>
 </div>
 
 @if (_commandOpen)
 {
-    <div class="command-overlay" @onclick="CloseCommandPalette">
-        <section class="command-dialog navigation-command-dialog" role="dialog" aria-modal="true" aria-label="@(L.IsArabic ? "البحث السريع" : "Quick search")" @onclick:stopPropagation="true">
+    <div class="command-overlay" role="presentation" @onclick="CloseCommandPalette">
+        <section id="command-palette-dialog"
+                 class="command-dialog navigation-command-dialog"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="command-palette-title"
+                 aria-describedby="command-palette-help"
+                 tabindex="-1"
+                 @onclick:stopPropagation="true">
             <header>
                 <span aria-hidden="true">⌕</span>
+                <h2 id="command-palette-title" class="sr-only">@(L.IsArabic ? "البحث السريع" : "Quick search")</h2>
                 <input autofocus
+                       data-a11y-autofocus
                        @bind="_commandQuery"
                        @bind:event="oninput"
                        aria-label="@(L.IsArabic ? "ابحث عن صفحة أو وظيفة" : "Search pages and capabilities")"
+                       aria-controls="command-palette-results"
+                       aria-describedby="command-palette-help"
+                       autocomplete="off"
+                       spellcheck="false"
                        placeholder="@(L.IsArabic ? "ابحث بالاسم أو الوظيفة أو المسار..." : "Search by name, capability, or route...")" />
-                <button type="button" @onclick="CloseCommandPalette" aria-label="@(L.IsArabic ? "إغلاق البحث" : "Close search")">Esc</button>
+                <button type="button" data-a11y-close @onclick="CloseCommandPalette" aria-label="@(L.IsArabic ? "إغلاق البحث" : "Close search")">Esc</button>
             </header>
-            <div class="command-results navigation-command-results">
+            <p id="command-palette-help" class="sr-only">@(L.IsArabic ? "استخدم لوحة المفاتيح للتنقل بين النتائج، واضغط Enter للفتح وEscape للإغلاق." : "Use the keyboard to move through results, Enter to open, and Escape to close.")</p>
+            <div id="command-palette-results" class="command-results navigation-command-results" aria-live="polite" aria-atomic="false">
                 @if (!CommandGroupResults.Any())
                 {
-                    <div class="command-empty">
+                    <div class="command-empty" role="status">
                         <strong>@(L.IsArabic ? "لا توجد نتيجة مطابقة" : "No matching destination")</strong>
                         <small>@(L.IsArabic ? "جرّب اسم الصفحة أو المهمة التي تريد تنفيذها." : "Try the page name or the task you want to perform.")</small>
                     </div>

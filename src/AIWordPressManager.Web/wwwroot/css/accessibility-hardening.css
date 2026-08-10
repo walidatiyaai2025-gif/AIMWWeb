@@ -1,0 +1,142 @@
+/* UX-004 — shared WCAG/keyboard/focus hardening layer. */
+.sr-only,
+.a11y-live-region {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* UX-004 promotes the route title to the semantic page h1. Preserve the
+   visual contract that UX-001/003 previously attached to a topbar h2. */
+.design-system-shell .topbar h1 {
+    overflow: hidden;
+    margin-top: .12rem;
+    max-width: 38rem;
+    font-size: clamp(1.05rem, 1.55vw, 1.35rem);
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body :is(a[href], button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--accent-strong, var(--accent)) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 5px color-mix(in srgb, var(--accent) 82%, white) !important;
+}
+
+#main-content:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+body.has-a11y-modal-dialog {
+    overflow: hidden;
+}
+
+[role="dialog"][aria-modal="true"] {
+    scroll-margin-block: 1rem;
+}
+
+[aria-disabled="true"] {
+    cursor: not-allowed;
+}
+
+.app-button[aria-busy="true"],
+.app-search-box[aria-busy="true"],
+.app-data-grid[aria-busy="true"] {
+    cursor: progress;
+}
+
+.app-data-grid tr.is-selected,
+.app-data-grid__mobile-item.is-selected {
+    box-shadow: inset 4px 0 0 var(--accent);
+}
+[dir="rtl"] .app-data-grid tr.is-selected,
+[dir="rtl"] .app-data-grid__mobile-item.is-selected {
+    box-shadow: inset -4px 0 0 var(--accent);
+}
+
+.app-dialog__close,
+.app-search-box__clear,
+.aiwm-accessibility-panel header button,
+.aiwm-accessibility-reset,
+.aiwm-accessibility-option,
+.aiwm-switch {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+@media (max-width: 1024px) {
+    .design-system-shell .topbar h1 {
+        max-width: 100%;
+        margin: 0;
+        font-size: clamp(1rem, 2.4vw, 1.18rem);
+    }
+}
+
+@media (max-width: 700px) {
+    .design-system-shell .topbar h1 {
+        font-size: .98rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+html[data-reduced-motion="true"] {
+    scroll-behavior: auto !important;
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        --shell-border: color-mix(in srgb, currentColor 46%, transparent);
+    }
+
+    body :is(a[href], button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline-width: 4px !important;
+    }
+
+    .app-data-grid tr.is-selected,
+    .app-data-grid__mobile-item.is-selected {
+        outline: 2px solid currentColor;
+        outline-offset: -2px;
+    }
+}
+
+@media (forced-colors: active) {
+    body :is(a[href], button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 3px solid Highlight !important;
+        outline-offset: 3px !important;
+        box-shadow: none !important;
+    }
+
+    .app-data-grid tr.is-selected,
+    .app-data-grid__mobile-item.is-selected,
+    .design-system-shell .nav-section-links a.active {
+        border: 2px solid Highlight !important;
+        box-shadow: none !important;
+    }
+
+    .status-dot,
+    .theme-swatch-dot {
+        forced-color-adjust: none;
+    }
+}

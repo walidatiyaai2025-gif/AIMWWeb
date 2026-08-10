@@ -1,7 +1,7 @@
 @typeparam TItem
 @inject IJSRuntime JS
 
-<div class="app-data-grid @Class">
+<div class="app-data-grid @Class" aria-busy="@Loading">
     <div class="app-data-grid__commandbar">
         <div class="app-data-grid__commandbar-main">
             @if (SearchKeySelector is not null)
@@ -10,6 +10,7 @@
                               ValueChanged="SearchChangedAsync"
                               Placeholder="@SearchPlaceholder"
                               AriaLabel="@SearchAriaLabel"
+                              ClearAriaLabel="@ClearSearchText"
                               Class="app-data-grid__search" />
             }
             @if (Toolbar is not null)
@@ -20,7 +21,12 @@
         <div class="app-data-grid__commandbar-actions">
             @if (SortKeySelector is not null)
             {
-                <AppButton Icon="@(_sortDescending ? "↓" : "↑")" Text="@SortText" Size="small" OnClick="ToggleSortAsync" />
+                <AppButton Icon="@(_sortDescending ? "↓" : "↑")"
+                           Text="@SortText"
+                           Size="small"
+                           AriaLabel="@SortText"
+                           AriaPressed="@_sortDescending"
+                           OnClick="ToggleSortAsync" />
             }
             @if (CsvRowSelector is not null)
             {
@@ -35,24 +41,31 @@
 
     @if (Loading)
     {
-        <AppLoading Title="@LoadingTitle" Message="@LoadingMessage" />
+        <div role="status" aria-live="polite" aria-atomic="true">
+            <AppLoading Title="@LoadingTitle" Message="@LoadingMessage" />
+        </div>
     }
     else if (FilteredItems.Count == 0)
     {
-        <AppEmptyState Icon="@EmptyIcon" Title="@EmptyTitle" Description="@EmptyDescription">
-            <Actions>@EmptyActions</Actions>
-        </AppEmptyState>
+        <div role="status" aria-live="polite" aria-atomic="true">
+            <AppEmptyState Icon="@EmptyIcon" Title="@EmptyTitle" Description="@EmptyDescription">
+                <Actions>@EmptyActions</Actions>
+            </AppEmptyState>
+        </div>
     }
     else
     {
         <div class="app-data-grid__viewport @(MobileRowTemplate is not null ? "has-mobile-alternative" : string.Empty)">
-            <table>
+            <table aria-label="@TableLabel" aria-rowcount="@FilteredItems.Count">
                 <thead>
                     <tr>
                         @if (Selectable)
                         {
-                            <th class="app-data-grid__selection">
-                                <input type="checkbox" checked="@AllPageSelected" @onchange="TogglePageAsync" aria-label="Select visible rows" />
+                            <th class="app-data-grid__selection" scope="col">
+                                <input type="checkbox"
+                                       checked="@AllPageSelected"
+                                       @onchange="TogglePageAsync"
+                                       aria-label="@SelectVisibleRowsText" />
                             </th>
                         }
                         @Header
@@ -65,7 +78,10 @@
                             @if (Selectable)
                             {
                                 <td class="app-data-grid__selection">
-                                    <input type="checkbox" checked="@IsSelected(item)" @onchange="args => ToggleItemAsync(item, args)" aria-label="Select row" />
+                                    <input type="checkbox"
+                                           checked="@IsSelected(item)"
+                                           @onchange="args => ToggleItemAsync(item, args)"
+                                           aria-label="@GetRowAriaLabel(item)" />
                                 </td>
                             }
                             @RowTemplate(item)
@@ -77,14 +93,17 @@
 
         @if (MobileRowTemplate is not null)
         {
-            <div class="app-data-grid__mobile-list" role="list">
+            <div class="app-data-grid__mobile-list" role="list" aria-label="@TableLabel">
                 @foreach (var item in PagedItems)
                 {
                     <article class="app-data-grid__mobile-item @(IsSelected(item) ? "is-selected" : string.Empty)" role="listitem" @key="GetKey(item)">
                         @if (Selectable)
                         {
                             <label class="app-data-grid__mobile-selection">
-                                <input type="checkbox" checked="@IsSelected(item)" @onchange="args => ToggleItemAsync(item, args)" />
+                                <input type="checkbox"
+                                       checked="@IsSelected(item)"
+                                       @onchange="args => ToggleItemAsync(item, args)"
+                                       aria-label="@GetRowAriaLabel(item)" />
                                 <span>@SelectedText</span>
                             </label>
                         }
@@ -95,7 +114,7 @@
         }
 
         <footer class="app-data-grid__footer">
-            <div class="app-data-grid__summary">
+            <div class="app-data-grid__summary" role="status" aria-live="polite" aria-atomic="true">
                 @if (Selectable)
                 {
                     <AppBadge Tone="info" Text="@($"{_selectedKeys.Count} {SelectedText}")" />
@@ -105,18 +124,30 @@
             <div class="app-data-grid__footer-controls">
                 <label class="app-data-grid__page-size">
                     <span>@RowsPerPageText</span>
-                    <select value="@_effectivePageSize" @onchange="PageSizeChangedAsync">
+                    <select value="@_effectivePageSize"
+                            @onchange="PageSizeChangedAsync"
+                            aria-label="@RowsPerPageAriaLabel">
                         @foreach (var option in PageSizeOptions)
                         {
                             <option value="@option">@option</option>
                         }
                     </select>
                 </label>
-                <div class="app-data-grid__pagination">
-                    <AppButton Icon="‹" Size="small" Disabled="@(CurrentPage <= 1)" OnClick="PreviousPageAsync" />
-                    <span>@CurrentPage / @TotalPages</span>
-                    <AppButton Icon="›" Size="small" Disabled="@(CurrentPage >= TotalPages)" OnClick="NextPageAsync" />
-                </div>
+                <nav class="app-data-grid__pagination" aria-label="@PaginationText">
+                    <AppButton Icon="‹"
+                               Size="small"
+                               Disabled="@(CurrentPage <= 1)"
+                               AriaLabel="@PreviousPageText"
+                               Title="@PreviousPageText"
+                               OnClick="PreviousPageAsync" />
+                    <span role="status" aria-live="polite" aria-atomic="true">@PageText @CurrentPage / @TotalPages</span>
+                    <AppButton Icon="›"
+                               Size="small"
+                               Disabled="@(CurrentPage >= TotalPages)"
+                               AriaLabel="@NextPageText"
+                               Title="@NextPageText"
+                               OnClick="NextPageAsync" />
+                </nav>
             </div>
         </footer>
     }
@@ -130,6 +161,7 @@
     [Parameter] public RenderFragment? Toolbar { get; set; }
     [Parameter] public RenderFragment? EmptyActions { get; set; }
     [Parameter] public Func<TItem, string>? KeySelector { get; set; }
+    [Parameter] public Func<TItem, string?>? RowAriaLabelSelector { get; set; }
     [Parameter] public Func<TItem, string?>? SortKeySelector { get; set; }
     [Parameter] public Func<TItem, string?>? SearchKeySelector { get; set; }
     [Parameter] public Func<TItem, IReadOnlyList<string>>? CsvRowSelector { get; set; }
@@ -142,6 +174,7 @@
     [Parameter] public bool Selectable { get; set; }
     [Parameter] public bool Loading { get; set; }
     [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string TableLabel { get; set; } = "Data table";
     [Parameter] public string LoadingTitle { get; set; } = "Loading data";
     [Parameter] public string? LoadingMessage { get; set; }
     [Parameter] public string EmptyIcon { get; set; } = "◎";
@@ -151,10 +184,18 @@
     [Parameter] public string ShowingText { get; set; } = "Showing";
     [Parameter] public string OfText { get; set; } = "of";
     [Parameter] public string RowsPerPageText { get; set; } = "Rows";
+    [Parameter] public string RowsPerPageAriaLabel { get; set; } = "Rows per page";
     [Parameter] public string SortText { get; set; } = "Sort";
     [Parameter] public string ExportText { get; set; } = "Export CSV";
     [Parameter] public string SearchPlaceholder { get; set; } = "Search...";
     [Parameter] public string SearchAriaLabel { get; set; } = "Search data";
+    [Parameter] public string ClearSearchText { get; set; } = "Clear search";
+    [Parameter] public string SelectVisibleRowsText { get; set; } = "Select visible rows";
+    [Parameter] public string SelectRowText { get; set; } = "Select row";
+    [Parameter] public string PaginationText { get; set; } = "Pagination";
+    [Parameter] public string PreviousPageText { get; set; } = "Previous page";
+    [Parameter] public string NextPageText { get; set; } = "Next page";
+    [Parameter] public string PageText { get; set; } = "Page";
 
     private readonly HashSet<string> _selectedKeys = new(StringComparer.Ordinal);
     private int CurrentPage { get; set; } = 1;
@@ -186,6 +227,13 @@
 
     private string GetKey(TItem item) => KeySelector?.Invoke(item) ?? item?.GetHashCode().ToString() ?? string.Empty;
     private bool IsSelected(TItem item) => _selectedKeys.Contains(GetKey(item));
+    private string GetRowAriaLabel(TItem item)
+    {
+        var label = RowAriaLabelSelector?.Invoke(item);
+        if (!string.IsNullOrWhiteSpace(label)) return label;
+        var key = GetKey(item);
+        return string.IsNullOrWhiteSpace(key) ? SelectRowText : $"{SelectRowText}: {key}";
+    }
 
     private async Task SearchChangedAsync(string value)
     {
