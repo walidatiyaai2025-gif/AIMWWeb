@@ -24,7 +24,7 @@
 |---|---|---|---|---|---|
 | UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
 | UX-002 | **CRITICAL** | **Completed** | Navigation information architecture & discoverability | UX-001 | #47 / `155.132.0` |
-| UX-003 | **CRITICAL** | **Next** | Responsive mobile/tablet application shell | UX-001 | #48 |
+| UX-003 | **CRITICAL** | **In Progress** | Responsive mobile/tablet application shell | UX-001 | #48 |
 | UX-004 | **CRITICAL** | Planned | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
 | UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
 | UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
@@ -83,6 +83,38 @@ UX-002 removes navigation drift by treating destinations as product information 
 - Important production destinations, most-specific route matching, admin visibility, root-route safety, and capability-keyword search are covered.
 - Implementation and self-review heads passed both Build and .NET Build Verification before release reconciliation.
 
+## UX-003 — active responsive shell implementation
+
+UX-003 turns the UX-001 shell into a production responsive application rather than a compressed desktop layout.
+
+### Responsive drawer contract
+- Tablet and mobile widths up to 1024px use one off-canvas navigation model.
+- Responsive drawer state is ephemeral and independent from the persisted desktop collapsed-sidebar preference.
+- Entering tablet/mobile mode starts with navigation closed so content is never unexpectedly covered.
+- Route selection, backdrop click, explicit close control, and Escape close the drawer.
+- Resize and orientation changes reconcile drawer state without corrupting desktop preference.
+
+### Safe-area and viewport behavior
+- The application viewport opts into `viewport-fit=cover`.
+- Shared shell spacing uses device safe-area insets for topbar, drawer, popovers, command search, and bottom actions.
+- Dynamic viewport units (`dvh`) keep drawers and overlays aligned when browser chrome changes.
+
+### Tablet and phone condensation
+- The topbar collapses secondary context before primary actions.
+- Search, language, account, appearance, theme, and recent controls progressively condense by available width instead of wrapping unpredictably.
+- The mobile floating Recent/Favorites launcher remains available when the topbar version is hidden.
+- Landscape-short layouts prioritize navigation and content over decorative/footer information.
+
+### Overflow and interaction safety
+- Shell surfaces enforce `min-width: 0` and constrain accidental horizontal page overflow.
+- Drawer navigation remains vertically scrollable while page-body scroll is locked.
+- Practical touch targets remain at least 44px/46px for shell controls and navigation destinations.
+- Existing page-owned table/grid scrolling remains authoritative inside the constrained shell.
+
+### Regression coverage
+- Static contract tests verify the shared 1024px breakpoint across CSS/runtime state logic.
+- Tests protect independent desktop/mobile state, real drawer close controls, safe-area viewport support, dynamic viewport sizing, overflow containment, and landscape guards.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -95,6 +127,6 @@ A UX task is complete only when applicable requirements are met:
 - Restore/build/tests pass on the exact implementation head.
 - Release/status documentation is reconciled before merge.
 
-## Next task
+## Next task after UX-003
 
-**UX-003 — Responsive mobile/tablet application shell** is the next Critical design task and will build directly on the unified UX-001 shell and UX-002 navigation catalog.
+**UX-004 — WCAG AA accessibility, keyboard & focus UX** remains the next Critical design task after UX-003 is validated and merged.
