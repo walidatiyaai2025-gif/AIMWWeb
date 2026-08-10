@@ -12,6 +12,18 @@
     border: 0 !important;
 }
 
+/* UX-004 promotes the route title to the semantic page h1. Preserve the
+   visual contract that UX-001/003 previously attached to a topbar h2. */
+.design-system-shell .topbar h1 {
+    overflow: hidden;
+    margin-top: .12rem;
+    max-width: 38rem;
+    font-size: clamp(1.05rem, 1.55vw, 1.35rem);
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 body :is(a[href], button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 3px solid var(--accent-strong, var(--accent)) !important;
     outline-offset: 3px !important;
@@ -58,6 +70,20 @@ body.has-a11y-modal-dialog {
 .aiwm-switch {
     min-width: 44px;
     min-height: 44px;
+}
+
+@media (max-width: 1024px) {
+    .design-system-shell .topbar h1 {
+        max-width: 100%;
+        margin: 0;
+        font-size: clamp(1rem, 2.4vw, 1.18rem);
+    }
+}
+
+@media (max-width: 700px) {
+    .design-system-shell .topbar h1 {
+        font-size: .98rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
