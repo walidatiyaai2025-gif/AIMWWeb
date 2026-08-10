@@ -40,37 +40,76 @@
         <AppCard Eyebrow="@(L.IsArabic ? "الأمان" : "SECURITY")"
                  Title="@(L.IsArabic ? "تغيير كلمة المرور" : "Change password")"
                  Subtitle="@(L.IsArabic ? "أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة قوية." : "Enter your current password, then choose a strong new password.")">
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <div class="alert @(_isError ? "error" : "success")">@_message</div>
-            }
+            <div data-form-ux aria-busy="@_working">
+                <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                               Title="@(_isError ? (L.IsArabic ? "تعذر تغيير كلمة المرور" : "Password change failed") : (L.IsArabic ? "تم الحفظ" : "Saved"))"
+                               Message="@_message"
+                               RecoveryText="@(_isError ? (L.IsArabic ? "راجع الحقول أدناه وحاول مرة أخرى." : "Review the fields below and try again.") : null)" />
 
-            <div class="site-create-grid">
-                <label>
-                    <span>@(L.IsArabic ? "كلمة المرور الحالية" : "Current password")</span>
-                    <InputText @bind-Value="_currentPassword" type="password" autocomplete="current-password" disabled="@_working" />
-                </label>
-                <label>
-                    <span>@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")</span>
-                    <InputText @bind-Value="_newPassword" type="password" autocomplete="new-password" disabled="@_working" />
-                </label>
-                <label>
-                    <span>@(L.IsArabic ? "تأكيد كلمة المرور الجديدة" : "Confirm new password")</span>
-                    <InputText @bind-Value="_confirmPassword" type="password" autocomplete="new-password" disabled="@_working" />
-                </label>
-            </div>
+                <AppValidationSummary Messages="@_validationMessages"
+                                      Title="@(L.IsArabic ? "راجع بيانات كلمة المرور" : "Review the password fields")"
+                                      Description="@(L.IsArabic ? "صحح الحقول المحددة قبل إعادة المحاولة." : "Correct the highlighted fields before trying again.")" />
 
-            <div class="site-form-hint">
-                ⓘ @(L.IsArabic ? "يجب ألا تقل عن 8 أحرف وأن تحتوي على حرف كبير وحرف صغير ورقم." : "Use at least 8 characters with uppercase, lowercase, and a number.")
-            </div>
+                <div class="form-ux-grid">
+                    <AppFormField InputId="current-password"
+                                  Label="@(L.IsArabic ? "كلمة المرور الحالية" : "Current password")"
+                                  Required="true"
+                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                  HelperText="@(L.IsArabic ? "أدخل كلمة المرور المستخدمة حاليًا لهذا الحساب." : "Enter the password currently used for this account.")"
+                                  Invalid="@HasValidationError(CurrentPasswordRequiredMessage)"
+                                  ErrorText="@(HasValidationError(CurrentPasswordRequiredMessage) ? CurrentPasswordRequiredMessage : null)">
+                        <InputText id="current-password"
+                                   @bind-Value="_currentPassword"
+                                   type="password"
+                                   autocomplete="current-password"
+                                   disabled="@_working"
+                                   aria-invalid="@HasValidationError(CurrentPasswordRequiredMessage)"
+                                   aria-describedby="current-password-help current-password-error" />
+                    </AppFormField>
 
-            <div class="actions" style="margin-top:1.25rem">
-                <AppButton Variant="primary"
-                           Icon="🔒"
-                           Text="@(_working ? (L.IsArabic ? "جارٍ التغيير" : "Changing") : (L.IsArabic ? "تغيير كلمة المرور" : "Change password"))"
-                           Busy="@_working"
-                           Disabled="@_working"
-                           OnClick="ChangePasswordAsync" />
+                    <AppFormField InputId="new-password"
+                                  Label="@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")"
+                                  Required="true"
+                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                  HelperText="@(L.IsArabic ? "8 أحرف على الأقل مع حرف كبير وصغير ورقم." : "At least 8 characters with uppercase, lowercase, and a number.")"
+                                  Invalid="@NewPasswordInvalid"
+                                  ErrorText="@NewPasswordError">
+                        <InputText id="new-password"
+                                   @bind-Value="_newPassword"
+                                   type="password"
+                                   autocomplete="new-password"
+                                   disabled="@_working"
+                                   aria-invalid="@NewPasswordInvalid"
+                                   aria-describedby="new-password-help new-password-error" />
+                    </AppFormField>
+
+                    <AppFormField InputId="confirm-password"
+                                  Label="@(L.IsArabic ? "تأكيد كلمة المرور الجديدة" : "Confirm new password")"
+                                  Required="true"
+                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                  HelperText="@(L.IsArabic ? "أعد كتابة كلمة المرور الجديدة بالضبط." : "Re-enter the new password exactly.")"
+                                  Invalid="@ConfirmPasswordInvalid"
+                                  ErrorText="@(ConfirmPasswordInvalid ? ConfirmationMessage : null)"
+                                  Class="form-ux-full">
+                        <InputText id="confirm-password"
+                                   @bind-Value="_confirmPassword"
+                                   type="password"
+                                   autocomplete="new-password"
+                                   disabled="@_working"
+                                   aria-invalid="@ConfirmPasswordInvalid"
+                                   aria-describedby="confirm-password-help confirm-password-error" />
+                    </AppFormField>
+                </div>
+
+                <AppFormActions SaveText="@(L.IsArabic ? "تغيير كلمة المرور" : "Change password")"
+                                SavingText="@(L.IsArabic ? "جارٍ التغيير" : "Changing")"
+                                SaveAriaLabel="@(L.IsArabic ? "حفظ كلمة المرور الجديدة" : "Save new password")"
+                                SaveIcon="🔒"
+                                Busy="@_working"
+                                Disabled="@(!PasswordFormHasValues)"
+                                ShowCancel="false"
+                                Hint="@(L.IsArabic ? "لن يتم حفظ كلمة المرور إلا بعد اجتياز جميع قواعد الأمان." : "The password is saved only after all security rules pass.")"
+                                OnSave="ChangePasswordAsync" />
             </div>
         </AppCard>
     }
@@ -88,6 +127,17 @@
     private string _currentPassword = string.Empty;
     private string _newPassword = string.Empty;
     private string _confirmPassword = string.Empty;
+    private readonly List<string> _validationMessages = new();
+
+    private string CurrentPasswordRequiredMessage => L.IsArabic ? "كلمة المرور الحالية مطلوبة." : "Current password is required.";
+    private string NewPasswordLengthMessage => L.IsArabic ? "يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف." : "The new password must contain at least 8 characters.";
+    private string NewPasswordComplexityMessage => L.IsArabic ? "يجب أن تحتوي كلمة المرور الجديدة على حرف كبير وحرف صغير ورقم." : "The new password must contain uppercase, lowercase, and numeric characters.";
+    private string NewPasswordDifferentMessage => L.IsArabic ? "يجب أن تختلف كلمة المرور الجديدة عن الحالية." : "The new password must be different from the current password.";
+    private string ConfirmationMessage => L.IsArabic ? "تأكيد كلمة المرور غير مطابق." : "Password confirmation does not match.";
+    private bool PasswordFormHasValues => !string.IsNullOrWhiteSpace(_currentPassword) || !string.IsNullOrWhiteSpace(_newPassword) || !string.IsNullOrWhiteSpace(_confirmPassword);
+    private bool NewPasswordInvalid => HasValidationError(NewPasswordLengthMessage) || HasValidationError(NewPasswordComplexityMessage) || HasValidationError(NewPasswordDifferentMessage);
+    private string? NewPasswordError => _validationMessages.FirstOrDefault(x => x == NewPasswordLengthMessage || x == NewPasswordComplexityMessage || x == NewPasswordDifferentMessage);
+    private bool ConfirmPasswordInvalid => HasValidationError(ConfirmationMessage);
 
     protected override async Task OnInitializedAsync()
     {
@@ -109,16 +159,33 @@
         }
     }
 
+    private bool HasValidationError(string message) => _validationMessages.Contains(message, StringComparer.Ordinal);
+
+    private bool ValidatePasswordForm()
+    {
+        _validationMessages.Clear();
+        if (string.IsNullOrWhiteSpace(_currentPassword)) _validationMessages.Add(CurrentPasswordRequiredMessage);
+        if (_newPassword.Length < 8) _validationMessages.Add(NewPasswordLengthMessage);
+        if (!_newPassword.Any(char.IsUpper) || !_newPassword.Any(char.IsLower) || !_newPassword.Any(char.IsDigit)) _validationMessages.Add(NewPasswordComplexityMessage);
+        if (!string.IsNullOrEmpty(_currentPassword) && string.Equals(_currentPassword, _newPassword, StringComparison.Ordinal)) _validationMessages.Add(NewPasswordDifferentMessage);
+        if (!string.Equals(_newPassword, _confirmPassword, StringComparison.Ordinal)) _validationMessages.Add(ConfirmationMessage);
+        return _validationMessages.Count == 0;
+    }
+
     private async Task ChangePasswordAsync(MouseEventArgs _)
     {
         if (_disposed || _working) return;
+        _message = string.Empty;
+        _isError = false;
+        if (!ValidatePasswordForm())
+        {
+            _isError = true;
+            return;
+        }
 
         try
         {
             _working = true;
-            _message = string.Empty;
-            _isError = false;
-
             var result = await AccountService.ChangePasswordAsync(_currentPassword, _newPassword, _confirmPassword);
             if (_disposed) return;
 
@@ -130,6 +197,7 @@
                 _currentPassword = string.Empty;
                 _newPassword = string.Empty;
                 _confirmPassword = string.Empty;
+                _validationMessages.Clear();
                 Notifications.Success(_message);
             }
             else

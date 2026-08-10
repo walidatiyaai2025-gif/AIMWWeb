@@ -24,10 +24,10 @@ else
             </Actions>
         </AppToolbar>
 
-        @if (!string.IsNullOrWhiteSpace(_message))
-        {
-            <div class="admin-users-alert @(_isError ? "error" : "success")">@_message</div>
-        }
+        <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                       Title="@(_isError ? (L.IsArabic ? "تعذر تنفيذ العملية" : "Action failed") : (L.IsArabic ? "تم التنفيذ" : "Action completed"))"
+                       Message="@_message"
+                       RecoveryText="@(_isError ? (L.IsArabic ? "راجع البيانات أو حالة الحساب ثم أعد المحاولة." : "Review the form or account state and try again.") : null)" />
 
         <section class="app-stat-grid">
             <AppStatCard Icon="◎" Label="@(L.IsArabic ? "إجمالي المستخدمين" : "Total users")" Value="@_users.Count.ToString()" />
@@ -38,7 +38,7 @@ else
 
         <AppCard>
             <div class="admin-users-filter">
-                <input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث باسم المستخدم..." : "Search username...")" />
+                <input @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث باسم المستخدم..." : "Search username...")" aria-label="@(L.IsArabic ? "بحث باسم المستخدم" : "Search by username")" />
                 <AppButton Variant="primary" Text="@(L.IsArabic ? "بحث" : "Search")" Disabled="@_working" OnClick="SearchClickedAsync" />
                 @if (!string.IsNullOrWhiteSpace(_search))
                 {
@@ -77,7 +77,7 @@ else
                                         { <AppButton Size="small" Text="@(L.IsArabic ? "فك القفل" : "Unlock")" Disabled="@_working" OnClick="_ => UnlockAsync(user)" /> }
                                         <AppButton Size="small" Variant="@(user.IsActive ? "danger" : "primary")"
                                                    Text="@(user.IsActive ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))"
-                                                   Disabled="@_working" OnClick="_ => SetActiveAsync(user, !user.IsActive)" />
+                                                   Disabled="@_working" OnClick="_ => RequestSetActiveAsync(user, !user.IsActive)" />
                                     </div></td>
                                 </tr>
                             }
@@ -90,28 +90,78 @@ else
             <aside>
                 <AppSection Title="@(_selectedId.HasValue ? (L.IsArabic ? "تعديل الحساب" : "Edit account") : (L.IsArabic ? "إنشاء حساب" : "Create account"))"
                             Subtitle="@(L.IsArabic ? "الأدوار الدقيقة ستتم ضمن IDN-009؛ المتاح هنا مدير أو مستخدم." : "Granular permissions are tracked by IDN-009; this screen manages Administrator/User roles.")">
-                    <ChildContent><div class="admin-user-form">
-                        <label>@(L.IsArabic ? "اسم المستخدم" : "Username")<input @bind="_userName" /></label>
-                        <label>@(L.IsArabic ? "الدور" : "Role")<select @bind="_role"><option value="User">@(L.IsArabic ? "مستخدم" : "User")</option><option value="Administrator">@(L.IsArabic ? "مدير" : "Administrator")</option></select></label>
-                        @if (!_selectedId.HasValue)
-                        {
-                            <label>@(L.IsArabic ? "كلمة المرور" : "Password")<input type="password" @bind="_password" /></label>
-                            <label>@(L.IsArabic ? "تأكيد كلمة المرور" : "Confirm password")<input type="password" @bind="_confirmPassword" /></label>
-                        }
-                        <div class="form-actions">
-                            <AppButton Variant="primary" Text="@(_selectedId.HasValue ? (L.IsArabic ? "حفظ" : "Save") : (L.IsArabic ? "إنشاء" : "Create"))" Busy="@_working" Disabled="@_working" OnClick="SaveClickedAsync" />
-                            <AppButton Text="@(L.IsArabic ? "إلغاء" : "Cancel")" Disabled="@_working" OnClick="CancelClicked" />
+                    <ChildContent>
+                        <div class="admin-user-form" data-form-ux aria-busy="@_working">
+                            <AppValidationSummary Messages="@_editorValidation"
+                                                  Title="@(L.IsArabic ? "راجع بيانات الحساب" : "Review account details")" />
+                            <AppFormField InputId="admin-user-name"
+                                          Label="@(L.IsArabic ? "اسم المستخدم" : "Username")"
+                                          Required="true"
+                                          RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                          HelperText="@(L.IsArabic ? "استخدم اسمًا واضحًا وفريدًا للحساب." : "Use a clear, unique username for the account.")"
+                                          Invalid="@HasEditorError(UserNameRequiredMessage)"
+                                          ErrorText="@(HasEditorError(UserNameRequiredMessage) ? UserNameRequiredMessage : null)">
+                                <input id="admin-user-name" @bind="_userName" disabled="@_working" aria-invalid="@HasEditorError(UserNameRequiredMessage)" aria-describedby="admin-user-name-help admin-user-name-error" />
+                            </AppFormField>
+                            <AppFormField InputId="admin-user-role"
+                                          Label="@(L.IsArabic ? "الدور" : "Role")"
+                                          HelperText="@(L.IsArabic ? "اختر مديرًا فقط لمن يحتاج صلاحيات الإدارة الكاملة." : "Choose Administrator only for users who need full administrative access.")">
+                                <select id="admin-user-role" @bind="_role" disabled="@_working" aria-describedby="admin-user-role-help"><option value="User">@(L.IsArabic ? "مستخدم" : "User")</option><option value="Administrator">@(L.IsArabic ? "مدير" : "Administrator")</option></select>
+                            </AppFormField>
+                            @if (!_selectedId.HasValue)
+                            {
+                                <AppFormField InputId="admin-user-password"
+                                              Label="@(L.IsArabic ? "كلمة المرور" : "Password")"
+                                              Required="true"
+                                              RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                              HelperText="@(L.IsArabic ? "مطلوبة عند إنشاء حساب جديد." : "Required when creating a new account.")"
+                                              Invalid="@HasEditorError(CreatePasswordRequiredMessage)"
+                                              ErrorText="@(HasEditorError(CreatePasswordRequiredMessage) ? CreatePasswordRequiredMessage : null)">
+                                    <input id="admin-user-password" type="password" @bind="_password" autocomplete="new-password" disabled="@_working" aria-invalid="@HasEditorError(CreatePasswordRequiredMessage)" aria-describedby="admin-user-password-help admin-user-password-error" />
+                                </AppFormField>
+                                <AppFormField InputId="admin-user-confirm-password"
+                                              Label="@(L.IsArabic ? "تأكيد كلمة المرور" : "Confirm password")"
+                                              Required="true"
+                                              RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                              HelperText="@(L.IsArabic ? "أعد كتابة كلمة المرور نفسها." : "Re-enter the same password.")"
+                                              Invalid="@HasEditorError(CreatePasswordMismatchMessage)"
+                                              ErrorText="@(HasEditorError(CreatePasswordMismatchMessage) ? CreatePasswordMismatchMessage : null)">
+                                    <input id="admin-user-confirm-password" type="password" @bind="_confirmPassword" autocomplete="new-password" disabled="@_working" aria-invalid="@HasEditorError(CreatePasswordMismatchMessage)" aria-describedby="admin-user-confirm-password-help admin-user-confirm-password-error" />
+                                </AppFormField>
+                            }
+                            <AppFormActions SaveText="@(_selectedId.HasValue ? (L.IsArabic ? "حفظ" : "Save") : (L.IsArabic ? "إنشاء" : "Create"))"
+                                            SavingText="@(L.IsArabic ? "جارٍ الحفظ" : "Saving")"
+                                            CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                                            Busy="@_working"
+                                            OnSave="SaveClickedAsync"
+                                            OnCancel="CancelClicked" />
                         </div>
-                    </div></ChildContent>
+                    </ChildContent>
                 </AppSection>
 
                 @if (_selectedId.HasValue)
                 {
                     <AppSection Title="@(L.IsArabic ? "إعادة تعيين كلمة المرور" : "Reset password")"><ChildContent>
-                        <div class="admin-user-form">
-                            <label>@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")<input type="password" @bind="_resetPassword" /></label>
-                            <label>@(L.IsArabic ? "التأكيد" : "Confirmation")<input type="password" @bind="_resetConfirmPassword" /></label>
-                            <AppButton Variant="primary" Text="@(L.IsArabic ? "إعادة تعيين" : "Reset password")" Disabled="@_working" OnClick="ResetPasswordClickedAsync" />
+                        <div class="admin-user-form" data-form-ux aria-busy="@_working">
+                            <AppValidationSummary Messages="@_resetValidation"
+                                                  Title="@(L.IsArabic ? "راجع كلمة المرور الجديدة" : "Review the new password")" />
+                            <AppFormField InputId="admin-reset-password"
+                                          Label="@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")"
+                                          Required="true"
+                                          RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                          Invalid="@HasResetError(ResetPasswordRequiredMessage)"
+                                          ErrorText="@(HasResetError(ResetPasswordRequiredMessage) ? ResetPasswordRequiredMessage : null)">
+                                <input id="admin-reset-password" type="password" @bind="_resetPassword" autocomplete="new-password" disabled="@_working" aria-invalid="@HasResetError(ResetPasswordRequiredMessage)" aria-describedby="admin-reset-password-error" />
+                            </AppFormField>
+                            <AppFormField InputId="admin-reset-confirm-password"
+                                          Label="@(L.IsArabic ? "التأكيد" : "Confirmation")"
+                                          Required="true"
+                                          RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                          Invalid="@HasResetError(ResetPasswordMismatchMessage)"
+                                          ErrorText="@(HasResetError(ResetPasswordMismatchMessage) ? ResetPasswordMismatchMessage : null)">
+                                <input id="admin-reset-confirm-password" type="password" @bind="_resetConfirmPassword" autocomplete="new-password" disabled="@_working" aria-invalid="@HasResetError(ResetPasswordMismatchMessage)" aria-describedby="admin-reset-confirm-password-error" />
+                            </AppFormField>
+                            <AppButton Variant="primary" Text="@(L.IsArabic ? "مراجعة وإعادة تعيين" : "Review reset")" Disabled="@_working" OnClick="RequestResetPasswordAsync" />
                         </div>
                     </ChildContent></AppSection>
                     <AppSection Title="@(L.IsArabic ? "آخر محاولات الدخول" : "Recent sign-in audit")"><ChildContent>
@@ -124,14 +174,57 @@ else
     </div>
 }
 
+<AppConfirmDialog Open="@_disableConfirmationOpen"
+                  OpenChanged="DisableConfirmationOpenChangedAsync"
+                  Title="@(L.IsArabic ? "تأكيد تعطيل الحساب" : "Confirm account disable")"
+                  Eyebrow="@(L.IsArabic ? "تغيير وصول" : "ACCESS CHANGE")"
+                  Message="@(L.IsArabic ? $"سيتم منع {PendingDisableUserName} من تسجيل الدخول حتى تتم إعادة تفعيل الحساب." : $"{PendingDisableUserName} will be prevented from signing in until the account is enabled again.")"
+                  ImpactLabel="@(L.IsArabic ? "التأثير" : "Impact")"
+                  ImpactText="@(L.IsArabic ? "الجلسات الجديدة ستُمنع، لكن بيانات الحساب وسجل التدقيق لن تُحذف." : "New sign-ins will be blocked, but the account data and audit history are not deleted.")"
+                  RecoveryLabel="@(L.IsArabic ? "الاستعادة" : "Recovery")"
+                  RecoveryText="@(L.IsArabic ? "يمكن للمسؤول إعادة تفعيل الحساب لاحقًا من نفس الشاشة." : "An administrator can enable the account again from this screen.")"
+                  ConfirmText="@(L.IsArabic ? "تعطيل الحساب" : "Disable account")"
+                  CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                  Busy="@_working"
+                  OnConfirm="ConfirmDisableAsync" />
+
+<AppConfirmDialog Open="@_resetConfirmationOpen"
+                  OpenChanged="ResetConfirmationOpenChangedAsync"
+                  Title="@(L.IsArabic ? "تأكيد إعادة تعيين كلمة المرور" : "Confirm password reset")"
+                  Eyebrow="@(L.IsArabic ? "إجراء أمني" : "SECURITY ACTION")"
+                  Message="@(L.IsArabic ? $"سيتم استبدال كلمة مرور {SelectedUserName}." : $"The password for {SelectedUserName} will be replaced.")"
+                  ImpactLabel="@(L.IsArabic ? "التأثير" : "Impact")"
+                  ImpactText="@(L.IsArabic ? "كلمة المرور القديمة لن تعمل بعد نجاح العملية، وسيتم مسح حالة القفل حسب منطق الخدمة الحالي." : "The old password will stop working after success, and lockout state is cleared by the existing service behavior.")"
+                  RecoveryLabel="@(L.IsArabic ? "الاستعادة" : "Recovery")"
+                  RecoveryText="@(L.IsArabic ? "إذا لزم الأمر يمكن للمسؤول تعيين كلمة مرور جديدة مرة أخرى." : "An administrator can perform another reset later if needed.")"
+                  RequiredConfirmationText="@SelectedUserName"
+                  ConfirmationLabel="@(L.IsArabic ? "اكتب اسم المستخدم للتأكيد" : "Type the username to confirm")"
+                  ConfirmationHelper="@(L.IsArabic ? "اكتب اسم المستخدم كما هو ظاهر قبل تنفيذ إعادة التعيين." : "Type the displayed username before the reset can run.")"
+                  ConfirmationErrorText="@(L.IsArabic ? "اسم المستخدم غير مطابق." : "The username does not match.")"
+                  ConfirmText="@(L.IsArabic ? "إعادة تعيين كلمة المرور" : "Reset password")"
+                  CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                  Busy="@_working"
+                  OnConfirm="ConfirmResetPasswordAsync" />
+
 @code {
     private ApplicationUserAdministrationService _service = default!;
     private IReadOnlyList<ApplicationUserSummary> _users = [];
     private IReadOnlyList<LoginAuditDto> _audits = [];
+    private readonly List<string> _editorValidation = new();
+    private readonly List<string> _resetValidation = new();
     private Guid? _selectedId;
+    private ApplicationUserSummary? _pendingDisableUser;
     private string _search = string.Empty, _userName = string.Empty, _role = "User", _password = string.Empty, _confirmPassword = string.Empty, _resetPassword = string.Empty, _resetConfirmPassword = string.Empty;
     private string? _message;
-    private bool _loading = true, _working, _isError;
+    private bool _loading = true, _working, _isError, _disableConfirmationOpen, _resetConfirmationOpen;
+
+    private string UserNameRequiredMessage => L.IsArabic ? "اسم المستخدم مطلوب." : "Username is required.";
+    private string CreatePasswordRequiredMessage => L.IsArabic ? "كلمة المرور مطلوبة عند إنشاء مستخدم." : "Password is required when creating a user.";
+    private string CreatePasswordMismatchMessage => L.IsArabic ? "تأكيد كلمة المرور غير مطابق." : "Password confirmation does not match.";
+    private string ResetPasswordRequiredMessage => L.IsArabic ? "كلمة المرور الجديدة مطلوبة." : "A new password is required.";
+    private string ResetPasswordMismatchMessage => L.IsArabic ? "تأكيد كلمة المرور الجديدة غير مطابق." : "New password confirmation does not match.";
+    private string PendingDisableUserName => _pendingDisableUser?.UserName ?? (L.IsArabic ? "هذا المستخدم" : "this user");
+    private string SelectedUserName => _selectedId.HasValue ? (_users.FirstOrDefault(x => x.Id == _selectedId.Value)?.UserName ?? _userName) : _userName;
 
     protected override void OnInitialized()
     {
@@ -158,26 +251,103 @@ else
     {
         _selectedId = user.Id; _userName = user.UserName; _role = user.Role;
         _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty;
+        _editorValidation.Clear(); _resetValidation.Clear();
         _audits = await _service.GetLoginAuditAsync(user.Id); _message = null;
+    }
+
+    private bool HasEditorError(string message) => _editorValidation.Contains(message, StringComparer.Ordinal);
+    private bool HasResetError(string message) => _resetValidation.Contains(message, StringComparer.Ordinal);
+
+    private bool ValidateEditor()
+    {
+        _editorValidation.Clear();
+        if (string.IsNullOrWhiteSpace(_userName)) _editorValidation.Add(UserNameRequiredMessage);
+        if (!_selectedId.HasValue)
+        {
+            if (string.IsNullOrWhiteSpace(_password)) _editorValidation.Add(CreatePasswordRequiredMessage);
+            if (!string.Equals(_password, _confirmPassword, StringComparison.Ordinal)) _editorValidation.Add(CreatePasswordMismatchMessage);
+        }
+        return _editorValidation.Count == 0;
+    }
+
+    private bool ValidateReset()
+    {
+        _resetValidation.Clear();
+        if (string.IsNullOrWhiteSpace(_resetPassword)) _resetValidation.Add(ResetPasswordRequiredMessage);
+        if (!string.Equals(_resetPassword, _resetConfirmPassword, StringComparison.Ordinal)) _resetValidation.Add(ResetPasswordMismatchMessage);
+        return _resetValidation.Count == 0;
     }
 
     private async Task SaveClickedAsync(MouseEventArgs _)
     {
+        _message = null; _isError = false;
+        if (!ValidateEditor()) { _isError = true; return; }
         var creating = !_selectedId.HasValue;
         await ExecuteAsync(async () => _selectedId.HasValue
-            ? await _service.UpdateAsync(_selectedId.Value, _userName, _role)
-            : await _service.CreateAsync(_userName, _password, _confirmPassword, _role),
+            ? await _service.UpdateAsync(_selectedId.Value, _userName.Trim(), _role)
+            : await _service.CreateAsync(_userName.Trim(), _password, _confirmPassword, _role),
             L.IsArabic ? "تم حفظ حساب المستخدم." : "Application user saved.", creating);
     }
 
-    private Task SetActiveAsync(ApplicationUserSummary user, bool active) => ExecuteAsync(() => _service.SetActiveAsync(user.Id, active), active ? (L.IsArabic ? "تم تفعيل الحساب." : "Account enabled.") : (L.IsArabic ? "تم تعطيل الحساب." : "Account disabled."));
+    private async Task RequestSetActiveAsync(ApplicationUserSummary user, bool active)
+    {
+        if (_working) return;
+        if (active)
+        {
+            await SetActiveCoreAsync(user, true);
+            return;
+        }
+        _pendingDisableUser = user;
+        _disableConfirmationOpen = true;
+    }
+
+    private Task DisableConfirmationOpenChangedAsync(bool value)
+    {
+        if (!_working) _disableConfirmationOpen = value;
+        if (!value && !_working) _pendingDisableUser = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmDisableAsync()
+    {
+        var user = _pendingDisableUser;
+        if (user is null || _working) return;
+        await SetActiveCoreAsync(user, false);
+        if (!_isError) _disableConfirmationOpen = false;
+        _pendingDisableUser = null;
+    }
+
+    private Task SetActiveCoreAsync(ApplicationUserSummary user, bool active) => ExecuteAsync(
+        () => _service.SetActiveAsync(user.Id, active),
+        active ? (L.IsArabic ? "تم تفعيل الحساب." : "Account enabled.") : (L.IsArabic ? "تم تعطيل الحساب." : "Account disabled."));
+
     private Task UnlockAsync(ApplicationUserSummary user) => ExecuteAsync(() => _service.UnlockAsync(user.Id), L.IsArabic ? "تم فك قفل الحساب." : "Account unlocked.");
 
-    private async Task ResetPasswordClickedAsync(MouseEventArgs _)
+    private Task ResetConfirmationOpenChangedAsync(bool value)
     {
-        if (!_selectedId.HasValue) return;
+        if (!_working) _resetConfirmationOpen = value;
+        return Task.CompletedTask;
+    }
+
+    private Task RequestResetPasswordAsync(MouseEventArgs _)
+    {
+        _message = null; _isError = false;
+        if (!_selectedId.HasValue) return Task.CompletedTask;
+        if (!ValidateReset()) { _isError = true; return Task.CompletedTask; }
+        _resetConfirmationOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmResetPasswordAsync()
+    {
+        if (!_selectedId.HasValue || _working) return;
         await ExecuteAsync(() => _service.ResetPasswordAsync(_selectedId.Value, _resetPassword, _resetConfirmPassword), L.IsArabic ? "تم تغيير كلمة المرور وفك القفل." : "Password reset and lockout cleared.");
-        _resetPassword = _resetConfirmPassword = string.Empty;
+        if (!_isError)
+        {
+            _resetPassword = _resetConfirmPassword = string.Empty;
+            _resetValidation.Clear();
+            _resetConfirmationOpen = false;
+        }
     }
 
     private async Task ExecuteAsync(Func<Task<UserAdministrationResult>> action, string successMessage, bool clearEditorOnSuccess = false)
@@ -199,7 +369,8 @@ else
 
     private void ClearEditor(bool keepMessage = false)
     {
-        _selectedId = null; _userName = _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty; _role = "User"; _audits = [];
+        _selectedId = null; _pendingDisableUser = null; _userName = _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty; _role = "User"; _audits = [];
+        _editorValidation.Clear(); _resetValidation.Clear(); _disableConfirmationOpen = false; _resetConfirmationOpen = false;
         if (!keepMessage) { _message = null; _isError = false; }
     }
 

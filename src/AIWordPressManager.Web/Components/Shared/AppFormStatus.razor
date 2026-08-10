@@ -1,0 +1,37 @@
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="app-form-status app-form-status--@Tone @Class"
+         role="@(Tone == "error" ? "alert" : "status")"
+         aria-live="@(Tone == "error" ? "assertive" : "polite")"
+         aria-atomic="true">
+        <span class="app-form-status__icon" aria-hidden="true">@EffectiveIcon</span>
+        <div>
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <strong>@Title</strong>
+            }
+            <p>@Message</p>
+            @if (!string.IsNullOrWhiteSpace(RecoveryText))
+            {
+                <small>@RecoveryText</small>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string? RecoveryText { get; set; }
+    [Parameter] public string Tone { get; set; } = "info";
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string? Icon { get; set; }
+
+    private string EffectiveIcon => !string.IsNullOrWhiteSpace(Icon) ? Icon : Tone switch
+    {
+        "success" => "✓",
+        "warning" => "!",
+        "error" => "×",
+        _ => "i"
+    };
+}

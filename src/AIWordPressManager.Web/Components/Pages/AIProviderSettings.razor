@@ -26,7 +26,7 @@
     </section>
 
     <div class="settings-layout">
-        <nav class="panel settings-nav" aria-label="AI provider settings navigation">
+        <nav class="panel settings-nav" aria-label="@(L.IsArabic ? "التنقل في إعدادات مزودي الذكاء الاصطناعي" : "AI provider settings navigation")">
             <a href="/settings"><span>←</span><div><strong>@L["Settings"]</strong><small>@(L.IsArabic ? "العودة للإعدادات" : "Back to settings")</small></div></a>
             <a href="#runtime"><span>AI</span><div><strong>@(L.IsArabic ? "سلوك التشغيل" : "Runtime behavior")</strong><small>@(L.IsArabic ? "التفعيل والبدائل" : "Enablement and fallback")</small></div></a>
             <a href="#providers"><span>🔑</span><div><strong>@(L.IsArabic ? "المزودات والمفاتيح" : "Providers and keys")</strong><small>@(L.IsArabic ? "النماذج والأولوية" : "Models and priority")</small></div></a>
@@ -35,113 +35,155 @@
         <main class="settings-content">
             @if (_loading)
             {
-                <section class="panel settings-section"><p>@(L.IsArabic ? "جارٍ تحميل إعدادات الذكاء الاصطناعي..." : "Loading AI provider settings...")</p></section>
+                <section class="panel settings-section"><p role="status">@(L.IsArabic ? "جارٍ تحميل إعدادات الذكاء الاصطناعي..." : "Loading AI provider settings...")</p></section>
             }
             else
             {
-                @if (!string.IsNullOrWhiteSpace(_message))
-                {
-                    <div class="alert @(_isError ? "error" : "success")">@_message</div>
-                }
+                <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                               Title="@(_isError ? (L.IsArabic ? "تعذر حفظ الإعدادات" : "Settings could not be saved") : (L.IsArabic ? "تم الحفظ" : "Saved"))"
+                               Message="@_message"
+                               RecoveryText="@(_isError ? (L.IsArabic ? "راجع الحقول المحددة ثم أعد المحاولة." : "Review the highlighted fields and try again.") : null)" />
+                <AppValidationSummary Messages="@_validationMessages"
+                                      Title="@(L.IsArabic ? "راجع إعدادات المزودات" : "Review provider settings")"
+                                      Description="@(L.IsArabic ? "يجب تحديد نموذج لكل مزود قبل الحفظ." : "Every provider must have a model before settings can be saved.")" />
 
-                <section id="runtime" class="panel settings-section">
-                    <header>
-                        <div><span class="workspace-kicker">RUNTIME</span><h2>@(L.IsArabic ? "سلوك تشغيل الذكاء الاصطناعي" : "AI runtime behavior")</h2><p>@(L.IsArabic ? "تحكم في تشغيل الذكاء الاصطناعي واستخدام المزود التالي عند فشل المزود الأعلى أولوية." : "Control AI execution and whether the runtime can use the next provider when the highest-priority provider fails.")</p></div>
-                    </header>
-                    <div class="settings-option-row">
-                        <div><strong>@(L.IsArabic ? "تشغيل ميزات الذكاء الاصطناعي" : "Enable AI features")</strong><small>@(L.IsArabic ? "إيقافه يمنع جميع طلبات AI من التطبيق." : "Turning this off prevents all application AI requests.")</small></div>
-                        <input type="checkbox" @bind="_enabled" />
-                    </div>
-                    <div class="settings-option-row">
-                        <div><strong>@(L.IsArabic ? "الانتقال التلقائي بين المزودات" : "Automatic provider fallback")</strong><small>@(L.IsArabic ? "عند التعطيل سيستخدم التطبيق أعلى مزود مفعل في الأولوية فقط." : "When disabled, only the highest-priority enabled provider is attempted.")</small></div>
-                        <input type="checkbox" @bind="_automaticFallback" />
-                    </div>
-                </section>
+                <div data-form-ux aria-busy="@_saving">
+                    <section id="runtime" class="panel settings-section">
+                        <header>
+                            <div><span class="workspace-kicker">RUNTIME</span><h2>@(L.IsArabic ? "سلوك تشغيل الذكاء الاصطناعي" : "AI runtime behavior")</h2><p>@(L.IsArabic ? "تحكم في تشغيل الذكاء الاصطناعي واستخدام المزود التالي عند فشل المزود الأعلى أولوية." : "Control AI execution and whether the runtime can use the next provider when the highest-priority provider fails.")</p></div>
+                        </header>
+                        <div class="settings-option-row">
+                            <div><strong>@(L.IsArabic ? "تشغيل ميزات الذكاء الاصطناعي" : "Enable AI features")</strong><small id="ai-enabled-help">@(L.IsArabic ? "إيقافه يمنع جميع طلبات AI من التطبيق." : "Turning this off prevents all application AI requests.")</small></div>
+                            <input id="ai-enabled" type="checkbox" @bind="_enabled" disabled="@_saving" aria-describedby="ai-enabled-help" />
+                        </div>
+                        <div class="settings-option-row">
+                            <div><strong>@(L.IsArabic ? "الانتقال التلقائي بين المزودات" : "Automatic provider fallback")</strong><small id="ai-fallback-help">@(L.IsArabic ? "عند التعطيل سيستخدم التطبيق أعلى مزود مفعل في الأولوية فقط." : "When disabled, only the highest-priority enabled provider is attempted.")</small></div>
+                            <input id="ai-fallback" type="checkbox" @bind="_automaticFallback" disabled="@_saving" aria-describedby="ai-fallback-help" />
+                        </div>
+                    </section>
 
-                <section id="providers" class="panel settings-section">
-                    <header>
-                        <div><span class="workspace-kicker">PROVIDERS</span><h2>@(L.IsArabic ? "المزودات والمفاتيح" : "Providers and API keys")</h2><p>@(L.IsArabic ? "اترك حقل المفتاح فارغًا للاحتفاظ بالمفتاح الحالي. استخدم خيار الحذف لإزالته صراحةً." : "Leave a key field empty to preserve the current key. Use the remove option to explicitly delete it.")</p></div>
-                    </header>
+                    <section id="providers" class="panel settings-section">
+                        <header>
+                            <div><span class="workspace-kicker">PROVIDERS</span><h2>@(L.IsArabic ? "المزودات والمفاتيح" : "Providers and API keys")</h2><p>@(L.IsArabic ? "اترك حقل المفتاح فارغًا للاحتفاظ بالمفتاح الحالي. حذف مفتاح محفوظ يتطلب تأكيدًا منفصلًا قبل الحفظ." : "Leave a key field empty to preserve the current key. Removing a stored key requires a separate confirmation before saving.")</p></div>
+                        </header>
 
-                    @foreach (var provider in _providers)
-                    {
-                        <article class="settings-subsection" @key="provider.Name">
-                            <div class="settings-option-row">
-                                <div>
-                                    <strong>@provider.Name</strong>
-                                    <small>@ProviderDescription(provider.Name)</small>
+                        @foreach (var provider in _providers)
+                        {
+                            var providerId = ProviderId(provider);
+                            var modelError = ProviderModelError(provider);
+                            <article class="settings-subsection" @key="provider.Name">
+                                <div class="settings-option-row">
+                                    <div>
+                                        <strong>@provider.Name</strong>
+                                        <small>@ProviderDescription(provider.Name)</small>
+                                    </div>
+                                    <span class="settings-badge @(provider.HasStoredKey ? "success" : string.Empty)">@KeyStatus(provider)</span>
                                 </div>
-                                <span class="settings-badge @(provider.HasStoredKey ? "success" : string.Empty)">@KeyStatus(provider)</span>
-                            </div>
 
-                            <div class="database-info-grid">
-                                <label>
-                                    <small>@(L.IsArabic ? "مفعل" : "Enabled")</small>
-                                    <input type="checkbox" @bind="provider.Enabled" />
-                                </label>
-                                <label>
-                                    <small>@(L.IsArabic ? "الأولوية" : "Priority")</small>
-                                    <input type="number" min="1" max="20" @bind="provider.Priority" />
-                                </label>
-                                <label>
-                                    <small>@(L.IsArabic ? "النموذج" : "Model")</small>
-                                    <input @bind="provider.Model" autocomplete="off" />
-                                </label>
-                            </div>
-
-                            @if (provider.Name != "Ollama")
-                            {
-                                <div class="database-info-grid">
-                                    <label>
-                                        <small>@(provider.Name == "Puter" ? (L.IsArabic ? "Token جديد - اختياري" : "New token - optional") : (L.IsArabic ? "مفتاح API جديد" : "New API key"))</small>
-                                        <input type="password" @bind="provider.NewApiKey" autocomplete="new-password" placeholder="@(provider.HasStoredKey ? "••••••••••••" : string.Empty)" />
-                                    </label>
-                                    <label>
-                                        <small>@(L.IsArabic ? "إزالة المفتاح المحفوظ عند الحفظ" : "Remove saved key on save")</small>
-                                        <input type="checkbox" @bind="provider.RemoveStoredKey" disabled="@(!provider.HasStoredKey)" />
-                                    </label>
+                                <div class="form-ux-grid">
+                                    <AppFormField InputId="@($"{providerId}-priority")"
+                                                  Label="@(L.IsArabic ? "الأولوية" : "Priority")"
+                                                  HelperText="@(L.IsArabic ? "قيمة من 1 إلى 20؛ الرقم الأقل له أولوية أعلى." : "Use 1–20; lower numbers have higher priority.")">
+                                        <input id="@($"{providerId}-priority")" type="number" min="1" max="20" @bind="provider.Priority" disabled="@_saving" aria-describedby="@($"{providerId}-priority-help")" />
+                                    </AppFormField>
+                                    <AppFormField InputId="@($"{providerId}-model")"
+                                                  Label="@(L.IsArabic ? "النموذج" : "Model")"
+                                                  Required="true"
+                                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                                  HelperText="@(L.IsArabic ? "اسم النموذج الذي سيستخدمه هذا المزود عند التشغيل." : "The model name used when this provider executes a request.")"
+                                                  Invalid="@(!string.IsNullOrWhiteSpace(modelError))"
+                                                  ErrorText="@modelError">
+                                        <input id="@($"{providerId}-model")" @bind="provider.Model" autocomplete="off" disabled="@_saving" aria-invalid="@(!string.IsNullOrWhiteSpace(modelError))" aria-describedby="@($"{providerId}-model-help {providerId}-model-error")" />
+                                    </AppFormField>
                                 </div>
-                            }
 
-                            @if (!RuntimeAdapterAvailable(provider.Name))
-                            {
-                                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "يمكن حفظ إعدادات هذا المزود الآن، لكن محول التشغيل الخاص به ليس مفعلاً في إصدار الخادم الحالي." : "This provider configuration can be stored now, but its runtime adapter is not enabled in the current server build.")</p></div>
-                            }
-                            else if (provider.Name == "Puter")
-                            {
-                                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "Token اختياري. عنوان Puter endpoint يظل إعداد خادم ويجب أن يكون HTTPS." : "The token is optional. The Puter endpoint remains a server setting and must use HTTPS.")</p></div>
-                            }
-                        </article>
-                    }
+                                <div class="settings-option-row">
+                                    <div><strong>@(L.IsArabic ? "تفعيل المزود" : "Enable provider")</strong><small id="@($"{providerId}-enabled-help")">@(L.IsArabic ? "المزود المعطل لا يدخل في ترتيب التنفيذ." : "Disabled providers are excluded from runtime ordering.")</small></div>
+                                    <input id="@($"{providerId}-enabled")" type="checkbox" @bind="provider.Enabled" disabled="@_saving" aria-describedby="@($"{providerId}-enabled-help")" />
+                                </div>
 
-                    <div class="settings-option-row">
-                        <div><strong>@(L.IsArabic ? "حفظ إعدادات المزودات" : "Save provider settings")</strong><small>@(L.IsArabic ? "المفاتيح الجديدة تُشفّر قبل حفظها ولا تعود إلى الواجهة كنص واضح." : "New keys are encrypted before persistence and are never returned to the UI as plaintext.")</small></div>
-                        <button class="btn primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ إعدادات AI" : "Save AI settings"))</button>
-                    </div>
-                </section>
+                                @if (provider.Name != "Ollama")
+                                {
+                                    <div class="form-ux-grid">
+                                        <AppFormField InputId="@($"{providerId}-key")"
+                                                      Label="@(provider.Name == "Puter" ? (L.IsArabic ? "Token جديد - اختياري" : "New token - optional") : (L.IsArabic ? "مفتاح API جديد - اختياري" : "New API key - optional"))"
+                                                      OptionalText="@(L.IsArabic ? "اختياري" : "Optional")"
+                                                      HelperText="@(provider.HasStoredKey ? (L.IsArabic ? "اتركه فارغًا للاحتفاظ بالمفتاح المشفر الحالي." : "Leave blank to keep the current encrypted key.") : (L.IsArabic ? "لن يتم عرض القيمة مرة أخرى بعد الحفظ." : "The value will not be shown again after it is saved."))">
+                                            <input id="@($"{providerId}-key")" type="password" @bind="provider.NewApiKey" autocomplete="new-password" disabled="@_saving" placeholder="@(provider.HasStoredKey ? "••••••••••••" : string.Empty)" aria-describedby="@($"{providerId}-key-help")" />
+                                        </AppFormField>
+                                        <div class="settings-option-row form-ux-full">
+                                            <div><strong>@(L.IsArabic ? "إزالة المفتاح المحفوظ عند الحفظ" : "Remove saved key on save")</strong><small id="@($"{providerId}-remove-help")">@(L.IsArabic ? "إجراء حساس: سيطلب النظام تأكيد REMOVE قبل حذف المفتاح." : "Sensitive action: the system requires typing REMOVE before deleting the key.")</small></div>
+                                            <input id="@($"{providerId}-remove")" type="checkbox" @bind="provider.RemoveStoredKey" disabled="@(_saving || !provider.HasStoredKey)" aria-describedby="@($"{providerId}-remove-help")" />
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (!RuntimeAdapterAvailable(provider.Name))
+                                {
+                                    <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "يمكن حفظ إعدادات هذا المزود الآن، لكن محول التشغيل الخاص به ليس مفعلاً في إصدار الخادم الحالي." : "This provider configuration can be stored now, but its runtime adapter is not enabled in the current server build.")</p></div>
+                                }
+                                else if (provider.Name == "Puter")
+                                {
+                                    <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "Token اختياري. عنوان Puter endpoint يظل إعداد خادم ويجب أن يكون HTTPS." : "The token is optional. The Puter endpoint remains a server setting and must use HTTPS.")</p></div>
+                                }
+                            </article>
+                        }
+
+                        <AppFormActions SaveText="@(L.IsArabic ? "حفظ إعدادات AI" : "Save AI settings")"
+                                        SavingText="@(L.IsArabic ? "جارٍ الحفظ" : "Saving")"
+                                        SaveAriaLabel="@(L.IsArabic ? "حفظ إعدادات مزودي الذكاء الاصطناعي" : "Save AI provider settings")"
+                                        SaveIcon="✓"
+                                        Busy="@_saving"
+                                        ShowCancel="false"
+                                        Hint="@(L.IsArabic ? "المفاتيح الجديدة تُشفّر قبل الحفظ ولا تعود إلى الواجهة كنص واضح." : "New keys are encrypted before persistence and are never returned to the UI as plaintext.")"
+                                        OnSave="RequestSaveAsync" />
+                    </section>
+                </div>
             }
         </main>
     </div>
 </div>
 
+<AppConfirmDialog Open="@_removeConfirmationOpen"
+                  OpenChanged="RemoveConfirmationOpenChangedAsync"
+                  Title="@(L.IsArabic ? "تأكيد حذف مفاتيح API" : "Confirm API key removal")"
+                  Eyebrow="@(L.IsArabic ? "إجراء حساس" : "SENSITIVE ACTION")"
+                  Message="@(L.IsArabic ? "أنت على وشك حذف مفاتيح مشفرة محفوظة من إعدادات المزودات." : "You are about to remove stored encrypted keys from provider settings.")"
+                  Details="@RemovalProviderSummary"
+                  ImpactLabel="@(L.IsArabic ? "التأثير" : "Impact")"
+                  ImpactText="@(L.IsArabic ? "المزود الذي يحتاج مفتاحًا قد يتوقف عن تنفيذ طلبات AI بعد الحفظ." : "A provider that requires a key may stop executing AI requests after this save.")"
+                  RecoveryLabel="@(L.IsArabic ? "الاستعادة" : "Recovery")"
+                  RecoveryText="@(L.IsArabic ? "يمكنك إضافة مفتاح جديد لاحقًا، لكن القيمة المحذوفة نفسها لا يمكن استعادتها من الواجهة." : "You can add a new key later, but the deleted value itself cannot be recovered from the UI.")"
+                  RequiredConfirmationText="REMOVE"
+                  ConfirmationLabel="@(L.IsArabic ? "اكتب REMOVE للتأكيد" : "Type REMOVE to confirm")"
+                  ConfirmationHelper="@(L.IsArabic ? "يجب كتابة REMOVE بالضبط قبل تفعيل زر الحذف والحفظ." : "Type REMOVE exactly before removal and save can proceed.")"
+                  ConfirmationErrorText="@(L.IsArabic ? "نص التأكيد غير مطابق." : "The confirmation text does not match.")"
+                  ConfirmText="@(L.IsArabic ? "حذف المفاتيح والحفظ" : "Remove keys and save")"
+                  CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                  CloseAriaLabel="@(L.IsArabic ? "إغلاق تأكيد حذف المفاتيح" : "Close key removal confirmation")"
+                  Busy="@_saving"
+                  OnConfirm="ConfirmRemovalAndSaveAsync" />
+
 @code {
     private readonly List<ProviderEditModel> _providers = new();
+    private readonly List<string> _validationMessages = new();
     private bool _loading = true;
     private bool _saving;
     private bool _enabled = true;
     private bool _automaticFallback = true;
     private bool _isError;
+    private bool _removeConfirmationOpen;
     private string _message = string.Empty;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadAsync();
-    }
+    private string RemovalProviderSummary => string.Join(", ", _providers.Where(x => x.RemoveStoredKey && x.HasStoredKey).Select(x => x.Name));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
 
     private async Task LoadAsync()
     {
         _loading = true;
         _message = string.Empty;
+        _validationMessages.Clear();
         try
         {
             var settings = await SettingsService.GetAiSettingsAsync();
@@ -168,22 +210,67 @@
         }
     }
 
-    private async Task SaveAsync()
+    private Task RemoveConfirmationOpenChangedAsync(bool value)
     {
+        if (!_saving) _removeConfirmationOpen = value;
+        return Task.CompletedTask;
+    }
+
+    private string ProviderModelRequiredMessage(ProviderEditModel provider) => L.IsArabic ? $"النموذج مطلوب للمزود {provider.Name}." : $"A model is required for {provider.Name}.";
+    private string? ProviderModelError(ProviderEditModel provider)
+    {
+        var message = ProviderModelRequiredMessage(provider);
+        return _validationMessages.Contains(message, StringComparer.Ordinal) ? message : null;
+    }
+
+    private bool ValidateProviders()
+    {
+        _validationMessages.Clear();
+        foreach (var provider in _providers)
+        {
+            provider.Priority = Math.Clamp(provider.Priority, 1, 20);
+            provider.Model = provider.Model?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(provider.Model)) _validationMessages.Add(ProviderModelRequiredMessage(provider));
+        }
+        return _validationMessages.Count == 0;
+    }
+
+    private async Task RequestSaveAsync(MouseEventArgs _)
+    {
+        _message = string.Empty;
+        _isError = false;
+        if (!ValidateProviders())
+        {
+            _isError = true;
+            return;
+        }
+
+        if (_providers.Any(x => x.RemoveStoredKey && x.HasStoredKey))
+        {
+            _removeConfirmationOpen = true;
+            return;
+        }
+
+        await SaveCoreAsync();
+    }
+
+    private async Task ConfirmRemovalAndSaveAsync()
+    {
+        if (_saving) return;
+        await SaveCoreAsync();
+        if (!_isError) _removeConfirmationOpen = false;
+    }
+
+    private async Task SaveCoreAsync()
+    {
+        if (_saving) return;
         _saving = true;
         _message = string.Empty;
         _isError = false;
         try
         {
-            foreach (var provider in _providers)
-            {
-                provider.Priority = Math.Clamp(provider.Priority, 1, 20);
-                provider.Model = provider.Model?.Trim() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(provider.Model))
-                    throw new InvalidOperationException(L.IsArabic ? $"النموذج مطلوب للمزود {provider.Name}." : $"A model is required for {provider.Name}.");
-                if (provider.RemoveStoredKey)
-                    await SettingsService.ClearAiProviderApiKeyAsync(provider.Name);
-            }
+            foreach (var provider in _providers.Where(x => x.RemoveStoredKey && x.HasStoredKey))
+                await SettingsService.ClearAiProviderApiKeyAsync(provider.Name);
 
             var keys = _providers
                 .Where(x => !x.RemoveStoredKey && !string.IsNullOrWhiteSpace(x.NewApiKey))
@@ -229,8 +316,11 @@
             Model = x.Model,
             HasStoredKey = x.HasApiKey && x.Provider != "Ollama"
         }));
+        _validationMessages.Clear();
         _message = success;
     }
+
+    private string ProviderId(ProviderEditModel provider) => $"ai-provider-{provider.Name.ToLowerInvariant()}";
 
     private string KeyStatus(ProviderEditModel provider)
     {

@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.134.0` — UX-004
+**Current release:** `155.135.0` — UX-005
 
 ## Design principles
 
@@ -26,8 +26,8 @@
 | UX-002 | **CRITICAL** | **Completed** | Navigation information architecture & discoverability | UX-001 | #47 / `155.132.0` |
 | UX-003 | **CRITICAL** | **Completed** | Responsive mobile/tablet application shell | UX-001 | #48 / `155.133.0` |
 | UX-004 | **CRITICAL** | **Completed** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 / `155.134.0` |
-| UX-005 | **HIGH** | **Next** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
-| UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
+| UX-005 | **HIGH** | **Completed** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 / `155.135.0` |
+| UX-006 | **HIGH** | **Next** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
 | UX-007 | **HIGH** | Planned | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
 | UX-008 | **HIGH** | Planned | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
 | UX-009 | **HIGH** | Planned | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
@@ -153,6 +153,39 @@ UX-004 converts accessibility from a collection of local affordances into a shar
 - Implementation head `a6e409ff69ec784c3d6d2e331fd565d9d34cd177` passed .NET Build Verification #1030 with 279 passed, 0 failed, 0 skipped; Build #1422 completed Restore, Build and Test successfully before release reconciliation.
 - Browser-driven axe/visual accessibility automation remains scoped to UX-010 and is not falsely claimed as part of UX-004.
 
+## UX-005 — delivered forms, validation and destructive-action UX
+
+UX-005 standardizes the form interaction contract and is tracked as exactly 100 completed implementation tasks in `docs/UX_005_100_TASKS.md`.
+
+### Shared form primitives
+- `AppFormField` standardizes label association, required/optional wording, helper copy, constraints, field-level errors, and deterministic ARIA relationship IDs.
+- `AppValidationSummary` provides a focusable assertive summary for preflight validation failures.
+- `AppFormStatus` separates assertive errors from polite success/information outcomes and can include recovery guidance.
+- `AppFormActions` standardizes save/cancel busy behavior, prevents double activation, and supports contextual and unsaved-state messaging.
+
+### Destructive confirmations
+- `AppConfirmDialog` now supports impact and recovery guidance without breaking existing call sites.
+- High-risk actions can require typed confirmation before the confirm action becomes available.
+- Typed confirmation state resets with dialog lifecycle and remains blocked while work is busy.
+- Confirmation copy, action names, close labels, and recovery guidance are localized-ready.
+
+### Form runtime and visual system
+- `form-ux.js` discovers invalid controls, reflects native invalid state, and focuses newly rendered validation summaries after Blazor rerenders.
+- `forms-ux.css` standardizes themed controls, invalid treatment, 44px practical targets, responsive action layouts, RTL logical properties, reduced motion, and forced-colors behavior.
+- The form layer loads after UX-004 accessibility hardening so focus and accessibility contracts remain authoritative.
+
+### High-risk adoption
+- Account Profile performs service-aligned password preflight validation before the existing account service call and exposes field-specific accessible errors.
+- AI Provider Settings validates all model names before persistence and requires typing `REMOVE` before stored encrypted keys can be deleted.
+- Application User administration validates create/edit and password-reset forms, confirms account disable impact/recovery, and requires the selected username before administrator password reset.
+- Existing application services remain the authoritative security and persistence boundary.
+
+### Regression coverage
+- `FormUxContractTests` protect shared form primitives, destructive confirmations, form runtime, CSS, host loading order, and the three high-risk adoption points.
+- A regression guard asserts exactly 100 completed UX-005 implementation tasks.
+- Stable implementation head `ec5083c75d2ae16c4d819604cb5a660b9d532d18` passed Build #1427 and .NET Build Verification #1035 with 291 passed, 0 failed, 0 skipped before release reconciliation.
+- Test artifact #9070267846 is 71,715 bytes with SHA-256 `a7b9de8e3c7fcec2d061b5a0e97cc77607d956ba9d437d9e29bb4bf92c49820c`.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -167,4 +200,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-005 — Forms, validation, confirmations & destructive-action UX** is the next High-priority design task and builds directly on the shared semantic and focus contracts delivered by UX-004.
+**UX-006 — Data tables, filters, bulk actions & dense workspace UX** is the next High-priority design task and builds on the responsive shell, accessible interaction, and safer form contracts delivered by UX-003 through UX-005.
