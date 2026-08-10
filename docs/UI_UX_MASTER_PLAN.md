@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.133.0` — UX-003
+**Current release:** `155.134.0` — UX-004
 
 ## Design principles
 
@@ -25,8 +25,8 @@
 | UX-001 | **CRITICAL** | **Completed** | Premium design system & application shell foundation | — | #46 / `155.131.0` |
 | UX-002 | **CRITICAL** | **Completed** | Navigation information architecture & discoverability | UX-001 | #47 / `155.132.0` |
 | UX-003 | **CRITICAL** | **Completed** | Responsive mobile/tablet application shell | UX-001 | #48 / `155.133.0` |
-| UX-004 | **CRITICAL** | **Next** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 |
-| UX-005 | **HIGH** | Planned | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
+| UX-004 | **CRITICAL** | **Completed** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 / `155.134.0` |
+| UX-005 | **HIGH** | **Next** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 |
 | UX-006 | **HIGH** | Planned | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
 | UX-007 | **HIGH** | Planned | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
 | UX-008 | **HIGH** | Planned | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
@@ -120,6 +120,39 @@ UX-003 turns the UX-001 shell into a production responsive application rather th
 - Tests also protect the opt-in data-grid mobile-card contract and shared dialog overflow/action behavior.
 - Stable implementation head `a015a43485d0bfbfc68d7dcb7285259f15ea7bdb` passed Build #1413 and .NET Build Verification #1021 before release reconciliation.
 
+## UX-004 — delivered accessibility, keyboard and focus hardening
+
+UX-004 converts accessibility from a collection of local affordances into a shared application contract. The implementation is tracked as exactly 50 completed tasks in `docs/UX_004_50_TASKS.md`.
+
+### Keyboard and modal focus contract
+- A shared runtime discovers visible modal dialogs and moves focus to the preferred or first usable control.
+- Tab and Shift+Tab remain contained inside the active modal; stray focus is redirected back into it.
+- Modal close restores the original opener when it remains available and background scrolling is locked while modal interaction is active.
+- Shared Escape behavior targets explicitly marked close controls without changing domain workflows.
+
+### Landmarks, page context and announcements
+- Route content is the actual `main` landmark and is programmatically associated with the shared page `h1`.
+- Breadcrumbs use a navigation landmark and expose the current page.
+- Client-side page-title changes move focus to `#main-content` and announce the new context through a shared polite live region.
+- Command, recent/favorites and accessibility shortcuts expose keyboard metadata to assistive technology.
+
+### Shared component semantics
+- `AppDialog` provides unique IDs, programmatic title/description relationships, configurable close names and focusable dialog containers.
+- `AppButton` provides accessible-name fallback, busy state, optional pressed state and correct disabled-link behavior.
+- `AppSearchBox` provides configurable clear naming, busy-state announcements and autocomplete control.
+- `AppDataGrid` provides table naming, filtered row count, accessible selection labels, pagination landmarks, labelled page-size controls and polite state updates.
+- All new component parameters are optional/defaulted, preserving source compatibility for existing call sites.
+
+### Display preferences and contrast
+- Accessibility settings now expose dialog/toggle semantics, preserve keyboard focus after preference rerenders and restore focus to the trigger on close.
+- Shared final-layer CSS enforces visible keyboard focus, preserves the semantic page `h1` visual hierarchy, honors OS and user reduced-motion preferences, supports higher contrast/forced colors, provides non-color selected-row indication and keeps common interaction targets at 44px or larger.
+
+### Regression coverage
+- `AccessibilityContractTests` protect modal runtime behavior, shell landmarks, shared dialog/button/search/grid semantics, accessibility settings, host loading order and accessibility CSS contracts.
+- A regression guard asserts exactly 50 completed UX-004 implementation tasks.
+- Implementation head `a6e409ff69ec784c3d6d2e331fd565d9d34cd177` passed .NET Build Verification #1030 with 279 passed, 0 failed, 0 skipped; Build #1422 completed Restore, Build and Test successfully before release reconciliation.
+- Browser-driven axe/visual accessibility automation remains scoped to UX-010 and is not falsely claimed as part of UX-004.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -134,4 +167,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-004 — WCAG AA accessibility, keyboard & focus UX** is the next Critical design task and builds on the stable responsive shell delivered by UX-003.
+**UX-005 — Forms, validation, confirmations & destructive-action UX** is the next High-priority design task and builds directly on the shared semantic and focus contracts delivered by UX-004.
