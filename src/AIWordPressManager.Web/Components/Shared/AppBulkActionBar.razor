@@ -1,31 +1,46 @@
 @if (SelectedCount > 0)
 {
-    <section class="app-bulk-action-bar @Class" role="region" aria-live="polite">
+    <section class="app-bulk-action-bar @(Sticky ? "is-sticky" : string.Empty) @(Dangerous ? "is-dangerous" : string.Empty) @Class"
+             role="region"
+             aria-label="@AriaLabel"
+             aria-live="polite"
+             aria-busy="@Busy"
+             data-selected-count="@SelectedCount">
         <div class="app-bulk-action-bar__summary">
-            <AppBadge Tone="info" Text="@SelectedCount.ToString()" />
+            <AppBadge Tone="@(Dangerous ? "danger" : "info")" Text="@SelectedCount.ToString()" />
             <div>
                 <strong>@SummaryText</strong>
                 @if (!string.IsNullOrWhiteSpace(Description))
                 {
                     <small>@Description</small>
                 }
+                @if (!string.IsNullOrWhiteSpace(ScopeText))
+                {
+                    <span class="app-bulk-action-bar__scope">@ScopeText</span>
+                }
             </div>
         </div>
 
         <div class="app-bulk-action-bar__actions">
             @Actions
+            @if (SecondaryActions is not null)
+            {
+                <span class="app-bulk-action-bar__secondary">@SecondaryActions</span>
+            }
             @if (ClearRequested.HasDelegate)
             {
                 <AppButton Icon="×"
                            Size="small"
                            Disabled="@Busy"
                            Text="@ClearText"
+                           AriaLabel="@ClearAriaLabel"
                            OnClick="ClearAsync" />
             }
         </div>
 
         @if (Busy)
         {
+            <div class="app-bulk-action-bar__busy" role="status" aria-live="polite">@BusyText</div>
             <div class="app-bulk-action-bar__progress" aria-hidden="true"><span></span></div>
         }
     </section>
@@ -34,14 +49,20 @@
 @code {
     [Parameter] public int SelectedCount { get; set; }
     [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Sticky { get; set; } = true;
+    [Parameter] public bool Dangerous { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Bulk actions";
     [Parameter] public string SelectedText { get; set; } = "items selected";
     [Parameter] public string? Description { get; set; }
+    [Parameter] public string? ScopeText { get; set; }
+    [Parameter] public string BusyText { get; set; } = "Applying bulk action";
     [Parameter] public string ClearText { get; set; } = "Clear";
+    [Parameter] public string? ClearAriaLabel { get; set; }
     [Parameter] public string Class { get; set; } = string.Empty;
     [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public RenderFragment? SecondaryActions { get; set; }
     [Parameter] public EventCallback ClearRequested { get; set; }
 
     private string SummaryText => $"{SelectedCount} {SelectedText}";
-
-    private Task ClearAsync(MouseEventArgs _) => ClearRequested.InvokeAsync();
+    private Task ClearAsync(MouseEventArgs _) => Busy ? Task.CompletedTask : ClearRequested.InvokeAsync();
 }
