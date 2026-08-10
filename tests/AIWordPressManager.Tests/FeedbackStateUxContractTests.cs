@@ -130,7 +130,7 @@ public sealed class FeedbackStateUxContractTests
         var manifest = ReadRepositoryFile("docs/UX_007_100_TASKS.md");
         var completed = manifest.Split('\n').Count(line => line.StartsWith("- [x] ", StringComparison.Ordinal));
         completed.Should().Be(100);
-        manifest.Should().Contain("no database schema");
+        manifest.Should().Contain("No database schema");
         manifest.Should().Contain("avoid falsely labeling generic service failures as offline");
     }
 
