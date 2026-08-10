@@ -4,22 +4,63 @@
            Subtitle="@Message"
            Eyebrow="@Eyebrow"
            AriaLabel="@Title"
+           CloseAriaLabel="@CloseAriaLabel"
            Size="small"
            CloseOnBackdrop="@(!Busy)"
            ShowCloseButton="@(!Busy)">
     <ChildContent>
-        @if (!string.IsNullOrWhiteSpace(Details))
-        {
-            <div class="app-confirm-dialog__details">@Details</div>
-        }
+        <div class="app-confirm-dialog app-confirm-dialog--@Tone" data-destructive-confirmation="@Destructive.ToString().ToLowerInvariant()">
+            @if (!string.IsNullOrWhiteSpace(Details))
+            {
+                <div class="app-confirm-dialog__details">@Details</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(ImpactText))
+            {
+                <div class="app-confirm-dialog__impact" role="note">
+                    <strong>@ImpactLabel</strong>
+                    <p>@ImpactText</p>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(RecoveryText))
+            {
+                <div class="app-confirm-dialog__recovery">
+                    <strong>@RecoveryLabel</strong>
+                    <p>@RecoveryText</p>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(RequiredConfirmationText))
+            {
+                <AppFormField InputId="@ConfirmationInputId"
+                              Label="@ConfirmationLabel"
+                              HelperText="@ConfirmationHelper"
+                              Required="true"
+                              RequiredText="@RequiredText"
+                              Invalid="@ConfirmationInvalid"
+                              ErrorText="@ConfirmationErrorText">
+                    <input id="@ConfirmationInputId"
+                           value="@_confirmationInput"
+                           @oninput="ConfirmationInputChanged"
+                           autocomplete="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           disabled="@Busy"
+                           aria-invalid="@ConfirmationInvalid"
+                           aria-describedby="@ConfirmationDescriptionIds" />
+                </AppFormField>
+            }
+        </div>
     </ChildContent>
     <Footer>
-        <AppButton Text="@CancelText" Disabled="@Busy" OnClick="CancelClickedAsync" />
+        <AppButton Text="@CancelText"
+                   Disabled="@Busy"
+                   AriaLabel="@CancelAriaLabel"
+                   OnClick="CancelClickedAsync" />
         <AppButton Text="@ConfirmText"
                    Icon="@ConfirmIcon"
                    Variant="@ConfirmVariant"
                    Busy="@Busy"
-                   Disabled="@Busy"
+                   Disabled="@(!CanConfirm)"
+                   AriaLabel="@ConfirmAriaLabel"
                    OnClick="ConfirmClickedAsync" />
     </Footer>
 </AppDialog>
@@ -31,13 +72,63 @@
     [Parameter, EditorRequired] public string Message { get; set; } = string.Empty;
     [Parameter] public string? Details { get; set; }
     [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? ImpactText { get; set; }
+    [Parameter] public string? RecoveryText { get; set; }
+    [Parameter] public string ImpactLabel { get; set; } = "Impact";
+    [Parameter] public string RecoveryLabel { get; set; } = "Recovery";
     [Parameter] public string ConfirmText { get; set; } = "Confirm";
     [Parameter] public string CancelText { get; set; } = "Cancel";
     [Parameter] public string ConfirmVariant { get; set; } = "danger";
     [Parameter] public string ConfirmIcon { get; set; } = "!";
+    [Parameter] public string Tone { get; set; } = "danger";
+    [Parameter] public string CloseAriaLabel { get; set; } = "Close confirmation";
+    [Parameter] public string? ConfirmAriaLabel { get; set; }
+    [Parameter] public string? CancelAriaLabel { get; set; }
+    [Parameter] public string? RequiredConfirmationText { get; set; }
+    [Parameter] public string ConfirmationLabel { get; set; } = "Type the confirmation text";
+    [Parameter] public string? ConfirmationHelper { get; set; }
+    [Parameter] public string ConfirmationErrorText { get; set; } = "The confirmation text does not match.";
+    [Parameter] public string RequiredText { get; set; } = "Required";
+    [Parameter] public bool ConfirmationIgnoreCase { get; set; }
+    [Parameter] public bool Destructive { get; set; } = true;
     [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback OnConfirm { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
+
+    private readonly string _instanceId = Guid.NewGuid().ToString("N");
+    private string _confirmationInput = string.Empty;
+    private bool _confirmationTouched;
+    private bool _lastOpen;
+    private string ConfirmationInputId => $"confirm-text-{_instanceId}";
+    private string ConfirmationDescriptionIds => $"{ConfirmationInputId}-help {ConfirmationInputId}-error";
+    private bool RequiresTypedConfirmation => !string.IsNullOrWhiteSpace(RequiredConfirmationText);
+    private bool ConfirmationMatches => !RequiresTypedConfirmation || string.Equals(
+        _confirmationInput.Trim(),
+        RequiredConfirmationText!.Trim(),
+        ConfirmationIgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+    private bool ConfirmationInvalid => RequiresTypedConfirmation && _confirmationTouched && !ConfirmationMatches;
+    private bool CanConfirm => !Busy && ConfirmationMatches;
+
+    protected override void OnParametersSet()
+    {
+        if (Open && !_lastOpen)
+        {
+            _confirmationInput = string.Empty;
+            _confirmationTouched = false;
+        }
+        else if (!Open)
+        {
+            _confirmationInput = string.Empty;
+            _confirmationTouched = false;
+        }
+        _lastOpen = Open;
+    }
+
+    private void ConfirmationInputChanged(ChangeEventArgs args)
+    {
+        _confirmationInput = args.Value?.ToString() ?? string.Empty;
+        _confirmationTouched = true;
+    }
 
     private async Task HandleOpenChangedAsync(bool value)
     {
@@ -55,7 +146,8 @@
 
     private async Task ConfirmClickedAsync(MouseEventArgs _)
     {
-        if (Busy) return;
+        _confirmationTouched = true;
+        if (!CanConfirm) return;
         await OnConfirm.InvokeAsync();
     }
 }
