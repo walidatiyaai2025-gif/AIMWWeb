@@ -6,6 +6,8 @@
             class="quick-actions-trigger"
             @onclick="Toggle"
             aria-expanded="@_open"
+            aria-haspopup="dialog"
+            aria-label="@(L.IsArabic ? "فتح الإجراءات السريعة" : "Open quick actions")"
             title="@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")">
         <span aria-hidden="true">＋</span>
         <em>@(L.IsArabic ? "إجراء سريع" : "Quick action")</em>
@@ -13,25 +15,28 @@
 
     @if (_open)
     {
-        <div class="quick-actions-popover">
+        <div class="quick-actions-popover" role="dialog" aria-modal="true" aria-label="@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")">
             <header>
                 <div>
                     <strong>@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")</strong>
-                    <small>@(L.IsArabic ? "ابدأ أهم عمليات النظام مباشرة" : "Start common workflows instantly")</small>
+                    <small>@(L.IsArabic ? "ابدأ أهم مسارات العمل مباشرة" : "Start the most common workflows instantly")</small>
                 </div>
-                <button type="button" @onclick="Close" aria-label="Close">×</button>
+                <button type="button" @onclick="Close" aria-label="@(L.IsArabic ? "إغلاق الإجراءات السريعة" : "Close quick actions")">×</button>
             </header>
 
             <div class="quick-actions-grid">
                 @foreach (var action in Actions)
                 {
-                    <button type="button" class="quick-action-item @action.ClassName" @onclick="() => Run(action)">
-                        <span class="quick-action-icon">@action.Icon</span>
+                    <button type="button"
+                            class="quick-action-item @action.ClassName"
+                            @onclick="() => Run(action)"
+                            title="@(L.IsArabic ? action.ArabicDescription : action.EnglishDescription)">
+                        <span class="quick-action-icon" aria-hidden="true">@action.Icon</span>
                         <span>
                             <strong>@(L.IsArabic ? action.ArabicTitle : action.EnglishTitle)</strong>
                             <small>@(L.IsArabic ? action.ArabicDescription : action.EnglishDescription)</small>
                         </span>
-                        <b>›</b>
+                        <b aria-hidden="true">›</b>
                     </button>
                 }
             </div>
@@ -41,7 +46,10 @@
 
 @if (_open)
 {
-    <button type="button" class="quick-actions-backdrop" @onclick="Close" aria-label="Close quick actions"></button>
+    <button type="button"
+            class="quick-actions-backdrop"
+            @onclick="Close"
+            aria-label="@(L.IsArabic ? "إغلاق الإجراءات السريعة" : "Close quick actions")"></button>
 }
 
 @code {
@@ -50,13 +58,15 @@
     private static readonly QuickAction[] Actions =
     [
         new("＋", "Add site", "إضافة موقع", "Connect another WordPress website", "ربط موقع WordPress جديد", "/sites/connect", "primary"),
-        new("▤", "Create content", "إنشاء محتوى", "Open the content workspace", "فتح مساحة إدارة المحتوى", "/module/posts", "content"),
-        new("▣", "Upload media", "رفع وسائط", "Open the media library", "فتح مكتبة الوسائط", "/module/media", "media"),
+        new("▤", "Create content", "إنشاء محتوى", "Open posts and start publishing work", "فتح المقالات وبدء عمل النشر", "/module/posts", "content"),
+        new("✦", "AI Center", "مركز الذكاء", "Generate reviewable AI suggestions", "إنشاء اقتراحات ذكاء قابلة للمراجعة", "/ai-center", "primary"),
+        new("◫", "Content planner", "مخطط المحتوى", "Move ideas into briefs and drafts", "تحويل الأفكار إلى ملخصات ومسودات", "/content-planner", "content"),
+        new("⚡", "Automation center", "مركز الأتمتة", "Manage controlled automation workflows", "إدارة تدفقات الأتمتة المحكومة", "/automation-center", "execution"),
+        new("▶", "Execution center", "مركز التنفيذ", "Review active, queued, and failed jobs", "مراجعة المهام النشطة والمنتظرة والفاشلة", "/module/execution", "execution"),
         new("↻", "Run synchronization", "تشغيل المزامنة", "Refresh local WordPress data", "تحديث بيانات WordPress المحلية", "/module/sync", "sync"),
-        new("◎", "Operations hub", "مركز عمليات المواقع", "Open site monitoring and operation history", "فتح مراقبة المواقع وسجل العمليات", "/operations", "execution"),
-        new("◈", "Site reliability", "موثوقية المواقع", "Compare connection and synchronization success rates", "مقارنة نجاح الاتصال والمزامنة", "/site-reliability", "seo"),
-        new("▶", "Execution center", "مركز التنفيذ", "Review active and queued jobs", "مراجعة المهام النشطة والمنتظرة", "/module/execution", "execution"),
-        new("◇", "SEO audit", "تدقيق SEO", "Analyze site optimization issues", "تحليل مشكلات تحسين الظهور", "/module/seo-audit", "seo")
+        new("◈", "SEO audit", "تدقيق SEO", "Analyze site optimization issues", "تحليل مشكلات تحسين الظهور", "/module/seo-audit", "seo"),
+        new("●", "Notifications", "الإشعارات", "Review operational and workflow notifications", "مراجعة إشعارات التشغيل وسير العمل", "/notifications", "media"),
+        new("▥", "Reports", "التقارير", "Review and export operational evidence", "مراجعة وتصدير الأدلة التشغيلية", "/module/reports", "seo")
     ];
 
     private void Toggle() => _open = !_open;
