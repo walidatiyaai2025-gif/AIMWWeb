@@ -2,12 +2,14 @@ window.appTheme = (() => {
     const colorKey = "aiwm-color-theme";
     const modeKey = "aiwm-appearance-mode";
     const sidebarKey = "aiwm-sidebar-collapsed";
+    const responsiveQuery = window.matchMedia("(max-width: 1024px)");
     const supportedColors = new Set(["gold", "ocean", "emerald", "violet", "rose", "amber", "cyan", "slate"]);
     const supportedModes = new Set(["dark", "light"]);
+    let reconcileQueued = false;
 
     function normalizeColor(value) { return supportedColors.has(value) ? value : "gold"; }
     function normalizeMode(value) { return supportedModes.has(value) ? value : "dark"; }
-    function isMobile() { return window.matchMedia("(max-width: 700px)").matches; }
+    function isResponsiveDrawer() { return responsiveQuery.matches; }
 
     function applyColor(value) {
         const theme = normalizeColor(value);
@@ -47,51 +49,114 @@ window.appTheme = (() => {
 
     function toggleMode() { return setMode(getMode() === "dark" ? "light" : "dark"); }
 
+    function getDesktopSidebarCollapsed() {
+        try { return localStorage.getItem(sidebarKey) === "1"; }
+        catch { return false; }
+    }
+
     function getSidebarCollapsed() {
-        try {
-            const stored = localStorage.getItem(sidebarKey);
-            if (stored === null) return isMobile();
-            return stored === "1";
-        }
-        catch { return isMobile(); }
+        // Tablet/mobile navigation is a transient drawer and always starts closed.
+        // Desktop collapse preference remains independent across viewport changes.
+        return isResponsiveDrawer() ? true : getDesktopSidebarCollapsed();
     }
 
     function syncBodyScroll(collapsed) {
-        document.body.classList.toggle("mobile-navigation-open", isMobile() && !collapsed);
+        document.body.classList.toggle("responsive-navigation-open", isResponsiveDrawer() && !collapsed);
     }
 
     function setSidebarCollapsed(value) {
         const collapsed = Boolean(value);
-        try { localStorage.setItem(sidebarKey, collapsed ? "1" : "0"); } catch { }
+        if (!isResponsiveDrawer()) {
+            try { localStorage.setItem(sidebarKey, collapsed ? "1" : "0"); } catch { }
+        }
         syncBodyScroll(collapsed);
         return collapsed;
     }
 
-    function closeMobileNavigation() {
-        if (!isMobile()) return;
-        const shell = document.querySelector(".app-shell");
+    function closeResponsiveNavigation() {
+        if (!isResponsiveDrawer()) return;
+        const shell = document.querySelector(".design-system-shell.app-shell");
         if (!shell || shell.classList.contains("sidebar-collapsed")) return;
-        document.querySelector(".sidebar-toggle")?.click();
+        shell.querySelector(".sidebar-toggle")?.click();
+    }
+
+    function reconcileSidebarForViewport() {
+        const shell = document.querySelector(".design-system-shell.app-shell");
+        const toggle = shell?.querySelector(".sidebar-toggle");
+        if (!shell || !toggle) return;
+
+        const collapsed = shell.classList.contains("sidebar-collapsed");
+        if (isResponsiveDrawer()) {
+            // Entering tablet/mobile mode must never leave the drawer covering content.
+            if (!collapsed) toggle.click();
+            else syncBodyScroll(true);
+            return;
+        }
+
+        const preferred = getDesktopSidebarCollapsed();
+        if (collapsed !== preferred) toggle.click();
+        else syncBodyScroll(collapsed);
+    }
+
+    function queueReconcile() {
+        if (reconcileQueued) return;
+        reconcileQueued = true;
+        requestAnimationFrame(() => {
+            reconcileQueued = false;
+            reconcileSidebarForViewport();
+        });
     }
 
     document.addEventListener("click", event => {
-        if (!isMobile()) return;
-        const shell = document.querySelector(".app-shell");
+        if (!isResponsiveDrawer()) return;
+        const shell = document.querySelector(".design-system-shell.app-shell");
         if (!shell || shell.classList.contains("sidebar-collapsed")) return;
+
+        const destination = event.target.closest(".sidebar a[href]");
+        if (destination) {
+            setTimeout(closeResponsiveNavigation, 0);
+            return;
+        }
+
+        // Razor owns the explicit close/backdrop controls; avoid double toggling.
+        if (event.target.closest(".responsive-nav-backdrop")) return;
         if (event.target.closest(".sidebar") || event.target.closest(".sidebar-toggle")) return;
-        closeMobileNavigation();
+        closeResponsiveNavigation();
     });
 
     document.addEventListener("keydown", event => {
-        if (event.key === "Escape") closeMobileNavigation();
+        if (event.key === "Escape") closeResponsiveNavigation();
     });
 
-    window.addEventListener("resize", () => {
-        const shell = document.querySelector(".app-shell");
-        syncBodyScroll(shell?.classList.contains("sidebar-collapsed") ?? true);
-    });
+    if (typeof responsiveQuery.addEventListener === "function") {
+        responsiveQuery.addEventListener("change", queueReconcile);
+    } else if (typeof responsiveQuery.addListener === "function") {
+        responsiveQuery.addListener(queueReconcile);
+    }
+
+    window.addEventListener("orientationchange", queueReconcile);
+    window.addEventListener("resize", queueReconcile, { passive: true });
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", queueReconcile);
+    } else {
+        queueReconcile();
+    }
 
     applyColor(get());
     applyMode(getMode());
-    return { get, set, apply: applyColor, getMode, setMode, toggleMode, getSidebarCollapsed, setSidebarCollapsed, closeMobileNavigation };
+    return {
+        get,
+        set,
+        apply: applyColor,
+        getMode,
+        setMode,
+        toggleMode,
+        getSidebarCollapsed,
+        setSidebarCollapsed,
+        closeMobileNavigation: closeResponsiveNavigation,
+        closeResponsiveNavigation,
+        isResponsiveDrawer,
+        reconcileSidebarForViewport
+    };
 })();

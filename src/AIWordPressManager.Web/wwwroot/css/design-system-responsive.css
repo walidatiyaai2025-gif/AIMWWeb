@@ -1,0 +1,492 @@
+/* UX-003 — responsive extension of the shared application shell.
+   This is a system layer, not page-specific styling. It is loaded after
+   design-system-shell.css so it can neutralize legacy breakpoint rules. */
+
+:root {
+    --shell-responsive-breakpoint: 1024px;
+    --shell-drawer-width: min(332px, 88vw);
+    --shell-safe-top: env(safe-area-inset-top, 0px);
+    --shell-safe-right: env(safe-area-inset-right, 0px);
+    --shell-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --shell-safe-left: env(safe-area-inset-left, 0px);
+}
+
+html,
+body {
+    max-width: 100%;
+}
+
+body.responsive-navigation-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+.design-system-shell .main-area,
+.design-system-shell .content,
+.design-system-shell .content > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.design-system-shell .content {
+    overflow-x: clip;
+}
+
+.design-system-shell .responsive-sidebar-close,
+.design-system-shell .responsive-nav-backdrop {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --shell-gutter: clamp(.85rem, 2.25vw, 1.35rem);
+        --shell-topbar-height: 70px;
+    }
+
+    .design-system-shell.app-shell,
+    .design-system-shell.app-shell.sidebar-collapsed {
+        display: block !important;
+        min-height: 100dvh;
+        grid-template-columns: none !important;
+    }
+
+    .design-system-shell .sidebar,
+    .design-system-shell.app-shell.sidebar-collapsed .sidebar {
+        position: fixed !important;
+        inset-block: 0;
+        inset-inline-start: 0;
+        z-index: 72;
+        width: var(--shell-drawer-width) !important;
+        max-width: calc(100vw - max(2rem, var(--shell-safe-right))) !important;
+        height: 100dvh !important;
+        min-height: 0;
+        padding:
+            max(1rem, var(--shell-safe-top))
+            max(1rem, var(--shell-safe-right))
+            max(1rem, var(--shell-safe-bottom))
+            max(1rem, var(--shell-safe-left)) !important;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border-inline-end: 1px solid var(--shell-border) !important;
+        border-inline-start: 0 !important;
+        background: color-mix(in srgb, var(--surface) 97%, transparent);
+        box-shadow: 18px 0 58px rgba(0, 0, 0, .34);
+        transform: translateX(0) !important;
+        transition: transform .22s ease, box-shadow .22s ease !important;
+        will-change: transform;
+    }
+
+    [dir="rtl"] .design-system-shell .sidebar,
+    [dir="rtl"] .design-system-shell.app-shell.sidebar-collapsed .sidebar {
+        border-inline-start: 1px solid var(--shell-border) !important;
+        border-inline-end: 0 !important;
+        box-shadow: -18px 0 58px rgba(0, 0, 0, .34);
+    }
+
+    .design-system-shell.app-shell.sidebar-collapsed .sidebar {
+        transform: translateX(-112%) !important;
+        pointer-events: none;
+        visibility: hidden;
+    }
+
+    [dir="rtl"] .design-system-shell.app-shell.sidebar-collapsed .sidebar {
+        transform: translateX(112%) !important;
+    }
+
+    .design-system-shell .responsive-sidebar-close {
+        position: absolute;
+        inset-block-start: max(.75rem, var(--shell-safe-top));
+        inset-inline-end: max(.75rem, var(--shell-safe-right));
+        z-index: 2;
+        display: grid;
+        place-items: center;
+        width: var(--shell-touch-target);
+        height: var(--shell-touch-target);
+        padding: 0;
+        border: 1px solid var(--shell-border);
+        border-radius: .75rem;
+        background: color-mix(in srgb, var(--surface2) 90%, transparent);
+        color: var(--text);
+        font: 700 1.35rem/1 system-ui, sans-serif;
+        cursor: pointer;
+    }
+
+    .design-system-shell .responsive-sidebar-close:hover,
+    .design-system-shell .responsive-sidebar-close:focus-visible {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+    }
+
+    .design-system-shell .brand,
+    .design-system-shell.app-shell.sidebar-collapsed .brand {
+        justify-content: flex-start !important;
+        min-height: 62px;
+        padding-inline-end: 3.25rem;
+    }
+
+    .design-system-shell.app-shell.sidebar-collapsed .brand > div,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-toggle > span:first-child,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-chevron,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-links a,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-links a:not(.active),
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-links a span {
+        display: flex;
+        font-size: inherit !important;
+    }
+
+    .design-system-shell.app-shell.sidebar-collapsed .brand > div {
+        display: block;
+    }
+
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-toggle > span:first-child,
+    .design-system-shell .nav-section-toggle > span:first-child {
+        display: inline !important;
+    }
+
+    .design-system-shell.app-shell.sidebar-collapsed .nav-chevron {
+        display: inline;
+    }
+
+    .design-system-shell .main-nav,
+    .design-system-shell.app-shell.sidebar-collapsed .main-nav {
+        display: grid !important;
+        align-content: start;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        width: 100%;
+        min-height: auto;
+        padding: .25rem .1rem 1rem;
+    }
+
+    .design-system-shell .nav-section,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section {
+        position: static;
+        width: 100%;
+        min-width: 0;
+        border-color: transparent;
+    }
+
+    .design-system-shell .nav-section[open] {
+        border-color: var(--shell-border);
+    }
+
+    .design-system-shell .nav-section-toggle,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-toggle {
+        justify-content: space-between !important;
+        min-height: 46px;
+        padding: .65rem .72rem;
+        text-align: start;
+    }
+
+    .design-system-shell .nav-section-links,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-links {
+        position: static !important;
+        display: grid !important;
+        width: 100%;
+        min-width: 0 !important;
+        padding: .25rem .35rem .55rem;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .design-system-shell .nav-section-links a,
+    .design-system-shell.app-shell.sidebar-collapsed .nav-section-links a {
+        justify-content: flex-start !important;
+        min-height: 46px;
+        padding: .65rem .72rem !important;
+    }
+
+    .design-system-shell.app-shell.sidebar-collapsed .sidebar-footer {
+        display: block !important;
+    }
+
+    .design-system-shell .responsive-nav-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 64;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        background: rgba(4, 8, 15, .60);
+        opacity: 0;
+        pointer-events: none;
+        cursor: default;
+        backdrop-filter: blur(3px);
+        transition: opacity .18s ease;
+    }
+
+    html[data-mode="light"] .design-system-shell .responsive-nav-backdrop {
+        background: rgba(20, 30, 45, .32);
+    }
+
+    .design-system-shell.app-shell:not(.sidebar-collapsed) .responsive-nav-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Disable the legacy pseudo-element backdrop now that UX-003 mounts a real button. */
+    .design-system-shell.app-shell:not(.sidebar-collapsed)::after {
+        content: none !important;
+        display: none !important;
+    }
+
+    .design-system-shell .main-area {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .design-system-shell .topbar {
+        position: sticky !important;
+        inset-block-start: 0;
+        z-index: 50 !important;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: .7rem;
+        min-height: calc(var(--shell-topbar-height) + var(--shell-safe-top));
+        padding:
+            max(.6rem, var(--shell-safe-top))
+            max(var(--shell-gutter), var(--shell-safe-right))
+            .6rem
+            max(var(--shell-gutter), var(--shell-safe-left));
+    }
+
+    .design-system-shell .topbar-title {
+        min-width: 0;
+        gap: .65rem;
+    }
+
+    .design-system-shell .topbar-heading-block {
+        min-width: 0;
+        max-width: min(42vw, 24rem);
+    }
+
+    .design-system-shell .app-breadcrumb,
+    .design-system-shell .topbar-context,
+    .design-system-shell .topbar-version {
+        display: none !important;
+    }
+
+    .design-system-shell .topbar h2 {
+        max-width: 100%;
+        margin: 0;
+        font-size: clamp(1rem, 2.4vw, 1.18rem);
+    }
+
+    .design-system-shell .topbar-actions {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: .38rem;
+        min-width: 0;
+    }
+
+    .design-system-shell .sidebar-toggle,
+    .design-system-shell .appearance-toggle,
+    .design-system-shell .theme-trigger,
+    .design-system-shell .language-switch,
+    .design-system-shell .command-trigger,
+    .design-system-shell .recent-access-trigger,
+    .design-system-shell .account-trigger,
+    .design-system-shell .user-avatar {
+        min-width: var(--shell-touch-target);
+        min-height: var(--shell-touch-target);
+    }
+
+    .design-system-shell .command-trigger {
+        width: var(--shell-touch-target);
+        min-width: var(--shell-touch-target);
+        padding-inline: .65rem;
+        justify-content: center;
+    }
+
+    .design-system-shell .command-trigger em,
+    .design-system-shell .command-trigger kbd,
+    .design-system-shell .language-label,
+    .design-system-shell .account-trigger .user-details,
+    .design-system-shell .account-chevron {
+        display: none !important;
+    }
+
+    .design-system-shell .language-switch {
+        width: var(--shell-touch-target);
+        min-width: var(--shell-touch-target);
+        padding-inline: .55rem;
+        overflow: hidden;
+    }
+
+    .design-system-shell .account-trigger {
+        padding: 0;
+        border-radius: .75rem;
+    }
+
+    .design-system-shell .user-avatar {
+        width: var(--shell-touch-target);
+        height: var(--shell-touch-target);
+    }
+
+    .design-system-shell .theme-popover,
+    .design-system-shell .account-popover {
+        position: fixed !important;
+        inset-block-start: calc(var(--shell-safe-top) + var(--shell-topbar-height) + .45rem) !important;
+        inset-inline: max(.75rem, var(--shell-safe-left)) max(.75rem, var(--shell-safe-right)) !important;
+        width: auto !important;
+        max-height: calc(100dvh - var(--shell-safe-top) - var(--shell-topbar-height) - var(--shell-safe-bottom) - 1.25rem);
+        overflow-y: auto;
+    }
+
+    .design-system-shell .content {
+        width: 100%;
+        max-width: 100%;
+        padding:
+            clamp(1rem, 2.2vw, 1.5rem)
+            max(var(--shell-gutter), var(--shell-safe-right))
+            max(2rem, calc(1.25rem + var(--shell-safe-bottom)))
+            max(var(--shell-gutter), var(--shell-safe-left));
+    }
+
+    .command-overlay {
+        padding:
+            calc(var(--shell-safe-top) + .75rem)
+            max(.75rem, var(--shell-safe-right))
+            max(.75rem, var(--shell-safe-bottom))
+            max(.75rem, var(--shell-safe-left));
+        place-items: start center;
+    }
+
+    .navigation-command-dialog {
+        width: min(760px, 100%);
+        max-height: calc(100dvh - var(--shell-safe-top) - var(--shell-safe-bottom) - 1.5rem);
+        border-radius: 1rem;
+    }
+
+    .recent-pages-panel {
+        top: 0;
+        bottom: 0;
+        height: 100dvh;
+        padding-block-start: var(--shell-safe-top);
+        padding-block-end: var(--shell-safe-bottom);
+    }
+}
+
+@media (max-width: 700px) {
+    :root {
+        --shell-gutter: .85rem;
+        --shell-topbar-height: 64px;
+        --shell-drawer-width: min(318px, 90vw);
+    }
+
+    .design-system-shell .topbar {
+        gap: .45rem;
+        padding-inline-start: max(.7rem, var(--shell-safe-left));
+        padding-inline-end: max(.7rem, var(--shell-safe-right));
+    }
+
+    .design-system-shell .topbar-title {
+        gap: .5rem;
+    }
+
+    .design-system-shell .topbar-heading-block {
+        display: block !important;
+        max-width: min(36vw, 10.5rem);
+    }
+
+    .design-system-shell .topbar h2 {
+        font-size: .98rem;
+    }
+
+    .design-system-shell .appearance-toggle,
+    .design-system-shell .theme-picker,
+    .design-system-shell .recent-access-trigger {
+        display: none !important;
+    }
+
+    .design-system-shell .content {
+        padding-block-start: .9rem;
+    }
+
+    .navigation-command-item {
+        grid-template-columns: 40px minmax(0, 1fr) auto !important;
+    }
+
+    .navigation-command-item code {
+        display: none !important;
+    }
+
+    .navigation-command-dialog > footer {
+        display: none !important;
+    }
+
+    .recent-pages-trigger {
+        inset-inline-end: max(.85rem, var(--shell-safe-right)) !important;
+        bottom: max(.85rem, var(--shell-safe-bottom)) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .design-system-shell .command-trigger {
+        display: none !important;
+    }
+
+    .design-system-shell .topbar-heading-block {
+        max-width: min(44vw, 9.5rem);
+    }
+
+    .design-system-shell .topbar-actions {
+        gap: .25rem;
+    }
+
+    .navigation-command-dialog {
+        border-radius: .8rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .design-system-shell .language-switch {
+        display: none !important;
+    }
+
+    .design-system-shell .topbar-heading-block {
+        max-width: 45vw;
+    }
+}
+
+@media (max-width: 1024px) and (max-height: 600px) and (orientation: landscape) {
+    .design-system-shell .sidebar,
+    .design-system-shell.app-shell.sidebar-collapsed .sidebar {
+        padding-block-start: max(.65rem, var(--shell-safe-top)) !important;
+        padding-block-end: max(.65rem, var(--shell-safe-bottom)) !important;
+    }
+
+    .design-system-shell .brand,
+    .design-system-shell.app-shell.sidebar-collapsed .brand {
+        min-height: 52px;
+        margin-bottom: .4rem;
+        padding-block: .35rem .55rem;
+    }
+
+    .design-system-shell .sidebar-footer,
+    .design-system-shell.app-shell.sidebar-collapsed .sidebar-footer {
+        display: none !important;
+    }
+
+    .design-system-shell .topbar {
+        --shell-topbar-height: 58px;
+    }
+
+    .command-overlay {
+        padding-block-start: calc(var(--shell-safe-top) + .4rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .design-system-shell .responsive-nav-backdrop,
+    .design-system-shell .sidebar,
+    .design-system-shell.app-shell.sidebar-collapsed .sidebar {
+        transition: none !important;
+    }
+}

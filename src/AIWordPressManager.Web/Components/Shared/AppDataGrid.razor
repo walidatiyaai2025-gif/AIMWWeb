@@ -45,7 +45,7 @@
     }
     else
     {
-        <div class="app-data-grid__viewport">
+        <div class="app-data-grid__viewport @(MobileRowTemplate is not null ? "has-mobile-alternative" : string.Empty)">
             <table>
                 <thead>
                     <tr>
@@ -74,6 +74,25 @@
                 </tbody>
             </table>
         </div>
+
+        @if (MobileRowTemplate is not null)
+        {
+            <div class="app-data-grid__mobile-list" role="list">
+                @foreach (var item in PagedItems)
+                {
+                    <article class="app-data-grid__mobile-item @(IsSelected(item) ? "is-selected" : string.Empty)" role="listitem" @key="GetKey(item)">
+                        @if (Selectable)
+                        {
+                            <label class="app-data-grid__mobile-selection">
+                                <input type="checkbox" checked="@IsSelected(item)" @onchange="args => ToggleItemAsync(item, args)" />
+                                <span>@SelectedText</span>
+                            </label>
+                        }
+                        <div class="app-data-grid__mobile-content">@MobileRowTemplate(item)</div>
+                    </article>
+                }
+            </div>
+        }
 
         <footer class="app-data-grid__footer">
             <div class="app-data-grid__summary">
@@ -107,6 +126,7 @@
     [Parameter, EditorRequired] public IReadOnlyList<TItem> Items { get; set; } = Array.Empty<TItem>();
     [Parameter, EditorRequired] public RenderFragment Header { get; set; } = default!;
     [Parameter, EditorRequired] public RenderFragment<TItem> RowTemplate { get; set; } = default!;
+    [Parameter] public RenderFragment<TItem>? MobileRowTemplate { get; set; }
     [Parameter] public RenderFragment? Toolbar { get; set; }
     [Parameter] public RenderFragment? EmptyActions { get; set; }
     [Parameter] public Func<TItem, string>? KeySelector { get; set; }

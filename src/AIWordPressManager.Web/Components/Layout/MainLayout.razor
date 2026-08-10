@@ -11,6 +11,13 @@
 
 <div class="app-shell design-system-shell @(_sidebarCollapsed ? "sidebar-collapsed" : string.Empty)" dir="@L.Direction">
     <aside class="sidebar" aria-label="@(L.IsArabic ? "التنقل الرئيسي" : "Primary navigation")">
+        <button type="button"
+                class="responsive-sidebar-close"
+                @onclick="ToggleSidebarAsync"
+                aria-label="@(L.IsArabic ? "إغلاق قائمة التنقل" : "Close navigation")">
+            <span aria-hidden="true">×</span>
+        </button>
+
         <a class="brand" href="/" aria-label="@(L.IsArabic ? "العودة إلى لوحة التحكم" : "Go to dashboard")">
             <span class="brand-mark" aria-hidden="true">AI</span>
             <div><strong>@L["AppName"]</strong><small>@L["BlazorServer"]</small></div>
@@ -47,6 +54,12 @@
             </a>
         </div>
     </aside>
+
+    <button type="button"
+            class="responsive-nav-backdrop"
+            @onclick="ToggleSidebarAsync"
+            aria-label="@(L.IsArabic ? "إغلاق قائمة التنقل" : "Close navigation")"
+            tabindex="-1"></button>
 
     <main class="main-area">
         <header class="topbar">
