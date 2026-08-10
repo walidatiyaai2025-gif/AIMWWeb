@@ -4,7 +4,7 @@
          role="@(Tone == "error" ? "alert" : "status")"
          aria-live="@(Tone == "error" ? "assertive" : "polite")"
          aria-atomic="true">
-        <span class="app-form-status__icon" aria-hidden="true">@Icon</span>
+        <span class="app-form-status__icon" aria-hidden="true">@EffectiveIcon</span>
         <div>
             @if (!string.IsNullOrWhiteSpace(Title))
             {
@@ -25,7 +25,9 @@
     [Parameter] public string? RecoveryText { get; set; }
     [Parameter] public string Tone { get; set; } = "info";
     [Parameter] public string Class { get; set; } = string.Empty;
-    [Parameter] public string Icon => Tone switch
+    [Parameter] public string? Icon { get; set; }
+
+    private string EffectiveIcon => !string.IsNullOrWhiteSpace(Icon) ? Icon : Tone switch
     {
         "success" => "✓",
         "warning" => "!",
