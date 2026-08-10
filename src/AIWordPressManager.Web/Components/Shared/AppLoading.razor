@@ -1,16 +1,21 @@
-<div class="app-loading @Class" role="status" aria-live="polite">
-    <span class="app-loading__spinner" aria-hidden="true"></span>
-    <div>
-        <strong>@Title</strong>
-        @if (!string.IsNullOrWhiteSpace(Message))
-        {
-            <p>@Message</p>
-        }
-    </div>
+<div class="app-loading @Class" aria-busy="true" data-feedback-wrapper="loading">
+    <AppStatePanel Kind="loading"
+                   Title="@Title"
+                   Description="@Message"
+                   Busy="true"
+                   Blocking="@Blocking"
+                   Class="app-loading__state" />
+    @if (ShowSkeleton)
+    {
+        <AppSkeleton Count="@SkeletonLines" Class="app-loading__skeleton" />
+    }
 </div>
 
 @code {
     [Parameter] public string Title { get; set; } = "Loading";
     [Parameter] public string? Message { get; set; }
     [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public bool Blocking { get; set; } = true;
+    [Parameter] public bool ShowSkeleton { get; set; }
+    [Parameter] public int SkeletonLines { get; set; } = 3;
 }

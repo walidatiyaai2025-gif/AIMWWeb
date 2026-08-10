@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.136.0` — UX-006
+**Current release:** `155.137.0` — UX-007
 
 ## Design principles
 
@@ -28,8 +28,8 @@
 | UX-004 | **CRITICAL** | **Completed** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 / `155.134.0` |
 | UX-005 | **HIGH** | **Completed** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 / `155.135.0` |
 | UX-006 | **HIGH** | **Completed** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 / `155.136.0` |
-| UX-007 | **HIGH** | **Next** | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
-| UX-008 | **HIGH** | Planned | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
+| UX-007 | **HIGH** | **Completed** | Loading, empty, success, warning, offline & error states | UX-001 | #52 / `155.137.0` |
+| UX-008 | **HIGH** | **Next** | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
 | UX-009 | **HIGH** | Planned | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
 | UX-010 | **HIGH** | Planned | Visual and accessibility regression gates | UX-003/004/009 | #55 |
 
@@ -213,6 +213,34 @@ UX-006 standardizes dense operational data interaction and is tracked as exactly
 - Test artifact #9071148244 is 73,890 bytes with SHA-256 `29bce85608cbf4d320621bc844357d2444475baf97e822c99766110f6c9e4204`.
 - One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-006 does not modify that service.
 
+## UX-007 — delivered application feedback states
+
+UX-007 standardizes application feedback and is tracked as exactly 100 completed implementation tasks in `docs/UX_007_100_TASKS.md`.
+
+### Shared feedback contract
+- `AppStatePanel` provides normalized info/loading/empty/success/warning/error/offline/cached/partial states, polite/assertive live-region rules, recovery guidance, guarded retry, freshness metadata, and optional diagnostic disclosure.
+- `AppStateBanner` provides compact retained-content feedback so cached/stale data and partial failures do not unnecessarily hide successful work.
+- `AppSkeleton` provides bounded presentation-only loading placeholders with reduced-motion fallback.
+- Existing `AppLoading` and `AppEmptyState` components now route through the shared contract while preserving current call sites.
+
+### State truthfulness and resilience
+- Generic service failures are not relabeled as offline; offline presentation is available only where a consumer can truthfully determine connectivity state.
+- State meaning uses icon/text plus non-color leading-edge treatment, logical RTL/LTR properties, safe long-text wrapping, mobile action stacking, reduced-motion handling, and forced-colors support.
+- Existing data-grid consumers inherit the improved loading/empty/no-results semantics through the source-compatible wrappers.
+
+### AI Usage adoption
+- First load now uses a shared loading state with skeletons; initial failure uses an actionable error/retry state; null snapshots use a guided empty state.
+- A valid successful snapshot remains visible while refresh is running.
+- Failed refreshes retain the prior snapshot and show cached/stale feedback with the last successful refresh time.
+- Failed AI calls produce partial-failure feedback without hiding successful telemetry.
+- Provider and operation subsection empties use non-blocking shared empty states.
+
+### Regression coverage
+- `FeedbackStateUxContractTests` protect state taxonomy, live-region semantics, retry/busy behavior, freshness, retained-content banners, skeletons, legacy wrappers, AI Usage adoption, CSS/load ordering, and the exact 100-task manifest.
+- Stable implementation head `7336f28e20f85c2ba63456e48488b56615048fc9` passed Build #1442 and .NET Build Verification #1050 with 310 passed, 0 failed, 0 skipped before release reconciliation.
+- Test artifact #9081891782 is 76,983 bytes with SHA-256 `de74354c97c56e46b63d5bd8ca5411b3d99486fd97cbb3eebd10b86e24398772`.
+- One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-007 does not modify that service.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -227,4 +255,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-007 — Loading, empty, success, warning, offline & error states** is the next High-priority design task and builds on the shared shell, accessibility, form, and dense-workspace contracts delivered by UX-001 through UX-006.
+**UX-008 — Arabic RTL / English LTR visual parity audit** is the next High-priority design task and builds on the shared shell, responsive, accessibility, forms, dense-workspace, and feedback-state contracts delivered by UX-001 through UX-007.

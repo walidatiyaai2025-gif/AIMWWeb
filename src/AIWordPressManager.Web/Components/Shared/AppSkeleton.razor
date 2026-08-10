@@ -1,0 +1,16 @@
+<div class="app-skeleton @Class"
+     role="presentation"
+     aria-hidden="true"
+     data-skeleton-count="@SafeCount">
+    @for (var index = 0; index < SafeCount; index++)
+    {
+        <span class="app-skeleton__line @(index == SafeCount - 1 ? "is-short" : string.Empty)"></span>
+    }
+</div>
+
+@code {
+    [Parameter] public int Count { get; set; } = 3;
+    [Parameter] public string Class { get; set; } = string.Empty;
+
+    private int SafeCount => Math.Clamp(Count, 1, 12);
+}
