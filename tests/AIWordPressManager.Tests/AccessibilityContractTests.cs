@@ -101,6 +101,7 @@ public sealed class AccessibilityContractTests
         var css = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/css/accessibility-hardening.css");
 
         css.Should().Contain(":focus-visible");
+        css.Should().Contain(".topbar h1");
         css.Should().Contain("prefers-reduced-motion: reduce");
         css.Should().Contain("data-reduced-motion=\"true\"");
         css.Should().Contain("prefers-contrast: more");
@@ -120,7 +121,7 @@ public sealed class AccessibilityContractTests
         center.Should().Contain("aria-keyshortcuts");
         center.Should().Contain("aria-labelledby");
         center.Should().Contain("aria-pressed");
-        center.Should().Contain("data.focusKey");
+        center.Should().Contain("dataset.focusKey");
         center.Should().Contain("close(true)");
     }
 
