@@ -10,7 +10,6 @@ window.appTheme = (() => {
     function normalizeColor(value) { return supportedColors.has(value) ? value : "gold"; }
     function normalizeMode(value) { return supportedModes.has(value) ? value : "dark"; }
     function isResponsiveDrawer() { return responsiveQuery.matches; }
-    function isArabic() { return document.documentElement.lang === "ar" || document.documentElement.dir === "rtl"; }
 
     function applyColor(value) {
         const theme = normalizeColor(value);
@@ -56,9 +55,8 @@ window.appTheme = (() => {
     }
 
     function getSidebarCollapsed() {
-        // Responsive navigation is a drawer and always starts closed. Desktop collapse
-        // preference remains independent so rotating a tablet or using a phone cannot
-        // overwrite the user's desktop workspace preference.
+        // Tablet/mobile navigation is a transient drawer and always starts closed.
+        // Desktop collapse preference remains independent across viewport changes.
         return isResponsiveDrawer() ? true : getDesktopSidebarCollapsed();
     }
 
@@ -77,46 +75,12 @@ window.appTheme = (() => {
 
     function closeResponsiveNavigation() {
         if (!isResponsiveDrawer()) return;
-        const shell = document.querySelector(".app-shell");
-        if (!shell || shell.classList.contains("sidebar-collapsed")) return;
-        document.querySelector(".sidebar-toggle")?.click();
-    }
-
-    function localizedLabel(english, arabic) {
-        return isArabic() ? arabic : english;
-    }
-
-    function mountResponsiveControls() {
         const shell = document.querySelector(".design-system-shell.app-shell");
-        const sidebar = shell?.querySelector(".sidebar");
-        if (!shell || !sidebar) return;
-
-        let closeButton = sidebar.querySelector(".responsive-sidebar-close");
-        if (!closeButton) {
-            closeButton = document.createElement("button");
-            closeButton.type = "button";
-            closeButton.className = "responsive-sidebar-close";
-            closeButton.innerHTML = "<span aria-hidden=\"true\">×</span>";
-            closeButton.addEventListener("click", closeResponsiveNavigation);
-            sidebar.prepend(closeButton);
-        }
-        closeButton.setAttribute("aria-label", localizedLabel("Close navigation", "إغلاق قائمة التنقل"));
-
-        let backdrop = shell.querySelector(".responsive-nav-backdrop");
-        if (!backdrop) {
-            backdrop = document.createElement("button");
-            backdrop.type = "button";
-            backdrop.className = "responsive-nav-backdrop";
-            backdrop.addEventListener("click", closeResponsiveNavigation);
-            const main = shell.querySelector(".main-area");
-            shell.insertBefore(backdrop, main || null);
-        }
-        backdrop.setAttribute("aria-label", localizedLabel("Close navigation", "إغلاق قائمة التنقل"));
-        backdrop.setAttribute("tabindex", "-1");
+        if (!shell || shell.classList.contains("sidebar-collapsed")) return;
+        shell.querySelector(".sidebar-toggle")?.click();
     }
 
     function reconcileSidebarForViewport() {
-        mountResponsiveControls();
         const shell = document.querySelector(".design-system-shell.app-shell");
         const toggle = shell?.querySelector(".sidebar-toggle");
         if (!shell || !toggle) return;
@@ -154,6 +118,8 @@ window.appTheme = (() => {
             return;
         }
 
+        // Razor owns the explicit close/backdrop controls; avoid double toggling.
+        if (event.target.closest(".responsive-nav-backdrop")) return;
         if (event.target.closest(".sidebar") || event.target.closest(".sidebar-toggle")) return;
         closeResponsiveNavigation();
     });
@@ -172,12 +138,8 @@ window.appTheme = (() => {
     window.addEventListener("resize", queueReconcile, { passive: true });
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => {
-            mountResponsiveControls();
-            queueReconcile();
-        });
+        document.addEventListener("DOMContentLoaded", queueReconcile);
     } else {
-        mountResponsiveControls();
         queueReconcile();
     }
 
