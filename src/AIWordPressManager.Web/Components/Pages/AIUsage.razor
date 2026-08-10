@@ -2,7 +2,6 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @using AIWordPressManager.Application.Abstractions.AI
-@using AIWordPressManager.Domain.Entities
 @inject AIUsageWebService UsageService
 @inject AppLanguageService L
 
@@ -122,9 +121,9 @@ else
 
         <AppDataGrid TItem="AIUsageEntry"
                      Items="@RecentRows"
-                     KeySelector="entry => entry.Id.ToString()"
+                     KeySelector="entry => UsageKey(entry)"
                      RowAriaLabelSelector="entry => UsageRowLabel(entry)"
-                     RowStateSelector="entry => entry.IsSuccess ? "success" : "error""
+                     RowStateSelector="entry => UsageRowState(entry)"
                      SearchKeySelector="entry => UsageSearchText(entry)"
                      CsvHeaders="@UsageCsvHeaders"
                      CsvRowSelector="entry => UsageCsvRow(entry)"
@@ -163,7 +162,7 @@ else
                 <th scope="col">@(L.IsArabic ? "الحالة" : "State")</th>
             </Header>
             <RowTemplate Context="entry">
-                <td><time datetime="@entry.CreatedAtUtc.ToString("O")">@entry.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</time></td>
+                <td><time datetime="@UsageTimestamp(entry)">@entry.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</time></td>
                 <td><strong>@entry.Provider</strong><small>@(entry.Model ?? "—")</small></td>
                 <td>@(entry.Operation ?? "—")</td>
                 <td>@SiteName(entry.SiteId)</td>
@@ -251,10 +250,13 @@ else
     }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
     private string UsageRowLabel(AIUsageEntry entry) => $"{entry.Provider}, {entry.Operation ?? "—"}, {SiteName(entry.SiteId)}, {(entry.IsSuccess ? (L.IsArabic ? "نجح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))}";
+    private static string UsageRowState(AIUsageEntry entry) => entry.IsSuccess ? "success" : "error";
+    private static string UsageTimestamp(AIUsageEntry entry) => entry.CreatedAtUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+    private static string UsageKey(AIUsageEntry entry) => $"{entry.CreatedAtUtc.Ticks}:{entry.Provider}:{entry.Operation}:{entry.SiteId}:{entry.InputTokens}:{entry.OutputTokens}";
 
     private IReadOnlyList<string> UsageCsvRow(AIUsageEntry entry) => new[]
     {
-        entry.CreatedAtUtc.ToString("O"),
+        UsageTimestamp(entry),
         entry.Provider,
         entry.Model ?? string.Empty,
         entry.Operation ?? string.Empty,
