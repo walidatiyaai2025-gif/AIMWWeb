@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.135.0` — UX-005
+**Current release:** `155.136.0` — UX-006
 
 ## Design principles
 
@@ -27,8 +27,8 @@
 | UX-003 | **CRITICAL** | **Completed** | Responsive mobile/tablet application shell | UX-001 | #48 / `155.133.0` |
 | UX-004 | **CRITICAL** | **Completed** | WCAG AA accessibility, keyboard & focus UX | UX-001 | #49 / `155.134.0` |
 | UX-005 | **HIGH** | **Completed** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 / `155.135.0` |
-| UX-006 | **HIGH** | **Next** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 |
-| UX-007 | **HIGH** | Planned | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
+| UX-006 | **HIGH** | **Completed** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 / `155.136.0` |
+| UX-007 | **HIGH** | **Next** | Loading, empty, success, warning, offline & error states | UX-001 | #52 |
 | UX-008 | **HIGH** | Planned | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
 | UX-009 | **HIGH** | Planned | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
 | UX-010 | **HIGH** | Planned | Visual and accessibility regression gates | UX-003/004/009 | #55 |
@@ -186,6 +186,33 @@ UX-005 standardizes the form interaction contract and is tracked as exactly 100 
 - Stable implementation head `ec5083c75d2ae16c4d819604cb5a660b9d532d18` passed Build #1427 and .NET Build Verification #1035 with 291 passed, 0 failed, 0 skipped before release reconciliation.
 - Test artifact #9070267846 is 71,715 bytes with SHA-256 `a7b9de8e3c7fcec2d061b5a0e97cc77607d956ba9d437d9e29bb4bf92c49820c`.
 
+## UX-006 — delivered dense data workspaces
+
+UX-006 standardizes dense operational data interaction and is tracked as exactly 100 completed implementation tasks in `docs/UX_006_100_TASKS.md`.
+
+### Shared data-grid contract
+- `AppDataGrid` now supports compact/comfortable/spacious density, optional striping, sticky headers, focusable scroll viewports and rows, explicit captions, row-state metadata, and non-color selection/state indicators.
+- External predicates combine with grid search without duplicating source collections; active-filter count, no-results recovery, clear-all behavior, pagination reset, sort direction, and filtered/sorted CSV export are explicit shared contracts.
+- Selection supports visible-page selection, select-all-filtered scope, hidden-selected reporting, stale-key reconciliation, and optional integrated bulk actions.
+- Empty data and filtered no-results are distinct states rather than one ambiguous blank-table path.
+
+### Filters and bulk actions
+- `AppFilterBar` provides a reusable busy-aware search/filter region with active-filter state, applied-filter chips and clear-all recovery.
+- `AppFilterChip` uses real keyboard-accessible remove buttons with explicit accessible names.
+- `AppBulkActionBar` exposes region/busy semantics, sticky safe-area placement, scope guidance, optional dangerous treatment, secondary actions, and a labelled clear-selection path.
+- Shared CSS preserves RTL/LTR directionality, mobile card fallbacks, bounded overflow, practical touch targets, reduced motion, and forced-colors behavior.
+
+### Production adoption
+- AI Usage now uses `AppFilterBar`/`AppFilterChip` for account-scoped site filtering.
+- Recent AI calls now render through `AppDataGrid` with search, CSV export, compact density, sticky/striped scanability, success/error row states, localized pagination, and mobile cards.
+- Usage-service identity and persistence boundaries remain unchanged; UX-006 only changes presentation and query-state interaction.
+
+### Regression coverage
+- `DenseWorkspaceUxContractTests` protect grid hierarchy, filtering, selection scope, paging/sort/export state, shared filter controls, bulk actions, responsive/RTL/forced-color CSS, AI Usage adoption, and the exact 100-task manifest.
+- Stable implementation head `fe507dff21b68b5f27f5e0a6ac7e27efe672958d` passed Build #1435 and .NET Build Verification #1043 with 300 passed, 0 failed, 0 skipped before release reconciliation.
+- Test artifact #9071148244 is 73,890 bytes with SHA-256 `29bce85608cbf4d320621bc844357d2444475baf97e822c99766110f6c9e4204`.
+- One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-006 does not modify that service.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -200,4 +227,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-006 — Data tables, filters, bulk actions & dense workspace UX** is the next High-priority design task and builds on the responsive shell, accessible interaction, and safer form contracts delivered by UX-003 through UX-005.
+**UX-007 — Loading, empty, success, warning, offline & error states** is the next High-priority design task and builds on the shared shell, accessibility, form, and dense-workspace contracts delivered by UX-001 through UX-006.

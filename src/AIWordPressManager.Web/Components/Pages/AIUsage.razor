@@ -19,30 +19,50 @@
     </div>
 </section>
 
-<section class="panel usage-toolbar">
-    <label>
-        <span>@(L.IsArabic ? "تصفية حسب الموقع" : "Filter by site")</span>
-        <select value="@_selectedSiteId" @onchange="OnSiteChangedAsync" disabled="@_loading">
-            <option value="">@(L.IsArabic ? "كل مواقعي" : "All my sites")</option>
-            @if (_snapshot is not null)
-            {
-                @foreach (var site in _snapshot.Sites)
+<AppFilterBar AriaLabel="@(L.IsArabic ? "فلاتر استخدام الذكاء الاصطناعي" : "AI usage filters")"
+              ActiveFilterCount="@SiteFilterCount"
+              ActiveFiltersText="@(L.IsArabic ? "فلتر نشط" : "active filter")"
+              NoFiltersText="@(L.IsArabic ? "عرض كل المواقع" : "Showing all sites")"
+              AppliedFiltersAriaLabel="@(L.IsArabic ? "الفلاتر المطبقة" : "Applied filters")"
+              ClearText="@(L.IsArabic ? "مسح الفلاتر" : "Clear filters")"
+              ClearAriaLabel="@(L.IsArabic ? "مسح فلتر الموقع" : "Clear site filter")"
+              Busy="@_loading"
+              ClearRequested="ClearSiteFilterAsync">
+    <ChildContent>
+        <label>
+            <span>@(L.IsArabic ? "تصفية حسب الموقع" : "Filter by site")</span>
+            <select value="@_selectedSiteId" @onchange="OnSiteChangedAsync" disabled="@_loading" aria-label="@(L.IsArabic ? "اختيار موقع لفلترة سجل الاستخدام" : "Choose site to filter usage history")">
+                <option value="">@(L.IsArabic ? "كل مواقعي" : "All my sites")</option>
+                @if (_snapshot is not null)
                 {
-                    <option value="@site.Id">@site.Name</option>
+                    @foreach (var site in _snapshot.Sites)
+                    {
+                        <option value="@site.Id">@site.Name</option>
+                    }
                 }
-            }
-        </select>
-    </label>
-    <small>@(L.IsArabic ? "لا يتم قبول UserId من العميل؛ الهوية مأخوذة من جلسة الدخول الحالية." : "Client-supplied UserId is not trusted; telemetry identity comes from the authenticated session.")</small>
-</section>
+            </select>
+        </label>
+        <small>@(L.IsArabic ? "الهوية مأخوذة من جلسة الدخول الحالية ولا يتم قبول UserId من العميل." : "Identity comes from the authenticated session; client-supplied UserId is not trusted.")</small>
+    </ChildContent>
+    <AppliedFilters>
+        @if (SiteFilterCount > 0)
+        {
+            <AppFilterChip Label="@(L.IsArabic ? "الموقع" : "Site")"
+                           Value="@SelectedSiteName"
+                           RemoveAriaLabel="@(L.IsArabic ? "إزالة فلتر الموقع" : "Remove site filter")"
+                           Disabled="@_loading"
+                           RemoveRequested="ClearSiteFilterAsync" />
+        }
+    </AppliedFilters>
+</AppFilterBar>
 
 @if (_loading)
 {
-    <section class="panel usage-loading">@(L.IsArabic ? "جارٍ تحميل سجل الاستخدام..." : "Loading AI usage telemetry...")</section>
+    <section class="panel usage-loading" role="status" aria-live="polite">@(L.IsArabic ? "جارٍ تحميل سجل الاستخدام..." : "Loading AI usage telemetry...")</section>
 }
 else if (!string.IsNullOrWhiteSpace(_error))
 {
-    <section class="alert error"><strong>@(L.IsArabic ? "تعذر تحميل سجل الاستخدام" : "Could not load AI usage")</strong><p>@_error</p></section>
+    <section class="alert error" role="alert"><strong>@(L.IsArabic ? "تعذر تحميل سجل الاستخدام" : "Could not load AI usage")</strong><p>@_error</p></section>
 }
 else if (_snapshot is null)
 {
@@ -98,32 +118,76 @@ else
 
     <section class="panel usage-recent">
         <header><div><span class="workspace-kicker">RECENT ACTIVITY</span><h2>@(L.IsArabic ? "آخر طلبات الذكاء الاصطناعي" : "Recent AI calls")</h2></div><small>@_snapshot.Recent.Count @(L.IsArabic ? "سجل محتفظ به" : "retained records")</small></header>
-        @if (_snapshot.Recent.Count == 0)
-        {
-            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد سجلات ضمن الفلتر الحالي." : "No records match the current filter.")</p></div>
-        }
-        else
-        {
-            <div class="usage-table-wrap">
-                <table class="usage-table">
-                    <thead><tr><th>@(L.IsArabic ? "الوقت" : "Time")</th><th>@(L.IsArabic ? "المزود" : "Provider")</th><th>@(L.IsArabic ? "العملية" : "Operation")</th><th>@(L.IsArabic ? "الموقع" : "Site")</th><th>Tokens</th><th>@(L.IsArabic ? "التكلفة" : "Cost")</th><th>@(L.IsArabic ? "الحالة" : "State")</th></tr></thead>
-                    <tbody>
-                    @foreach (var entry in _snapshot.Recent.Take(250))
+
+        <AppDataGrid TItem="AIUsageEntry"
+                     Items="@RecentRows"
+                     KeySelector="entry => UsageKey(entry)"
+                     RowAriaLabelSelector="entry => UsageRowLabel(entry)"
+                     RowStateSelector="entry => UsageRowState(entry)"
+                     SearchKeySelector="entry => UsageSearchText(entry)"
+                     CsvHeaders="@UsageCsvHeaders"
+                     CsvRowSelector="entry => UsageCsvRow(entry)"
+                     CsvFileName="ai-usage.csv"
+                     PageSize="25"
+                     PageSizeOptions="@(new[] { 10, 25, 50, 100 })"
+                     Density="compact"
+                     Striped="true"
+                     FocusableRows="true"
+                     TableLabel="@(L.IsArabic ? "جدول آخر طلبات الذكاء الاصطناعي" : "Recent AI usage calls")"
+                     Caption="@(L.IsArabic ? "آخر طلبات الذكاء الاصطناعي مع المزود والعملية والموقع والرموز والتكلفة والحالة." : "Recent AI calls with provider, operation, site, tokens, cost, and state.")"
+                     ViewportAriaLabel="@(L.IsArabic ? "جدول قابل للتمرير لطلبات الذكاء الاصطناعي" : "Scrollable recent AI calls table")"
+                     EmptyTitle="@(L.IsArabic ? "لا توجد طلبات بعد" : "No AI calls yet")"
+                     EmptyDescription="@(L.IsArabic ? "ستظهر طلبات الذكاء الاصطناعي هنا بعد تنفيذها." : "AI calls will appear here after they run.")"
+                     NoResultsTitle="@(L.IsArabic ? "لا توجد نتائج مطابقة" : "No matching AI calls")"
+                     NoResultsDescription="@(L.IsArabic ? "غيّر نص البحث أو امسحه لعرض سجلات أخرى." : "Change or clear the search text to see other records.")"
+                     SearchPlaceholder="@(L.IsArabic ? "بحث في المزود أو العملية أو الموقع..." : "Search provider, operation, site...")"
+                     SearchAriaLabel="@(L.IsArabic ? "بحث في طلبات الذكاء الاصطناعي" : "Search AI usage calls")"
+                     ClearSearchText="@(L.IsArabic ? "مسح البحث" : "Clear search")"
+                     ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
+                     ShowingText="@(L.IsArabic ? "عرض" : "Showing")"
+                     OfText="@(L.IsArabic ? "من" : "of")"
+                     RowsPerPageText="@(L.IsArabic ? "صفوف" : "Rows")"
+                     RowsPerPageAriaLabel="@(L.IsArabic ? "عدد الصفوف في الصفحة" : "Rows per page")"
+                     PaginationText="@(L.IsArabic ? "صفحات سجل الاستخدام" : "Usage log pagination")"
+                     PreviousPageText="@(L.IsArabic ? "الصفحة السابقة" : "Previous page")"
+                     NextPageText="@(L.IsArabic ? "الصفحة التالية" : "Next page")"
+                     PageText="@(L.IsArabic ? "صفحة" : "Page")">
+            <Header>
+                <th scope="col">@(L.IsArabic ? "الوقت" : "Time")</th>
+                <th scope="col">@(L.IsArabic ? "المزود" : "Provider")</th>
+                <th scope="col">@(L.IsArabic ? "العملية" : "Operation")</th>
+                <th scope="col">@(L.IsArabic ? "الموقع" : "Site")</th>
+                <th scope="col">Tokens</th>
+                <th scope="col">@(L.IsArabic ? "التكلفة" : "Cost")</th>
+                <th scope="col">@(L.IsArabic ? "الحالة" : "State")</th>
+            </Header>
+            <RowTemplate Context="entry">
+                <td><time datetime="@UsageTimestamp(entry)">@entry.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</time></td>
+                <td><strong>@entry.Provider</strong><small>@(entry.Model ?? "—")</small></td>
+                <td>@(entry.Operation ?? "—")</td>
+                <td>@SiteName(entry.SiteId)</td>
+                <td>@FormatNumber((long)entry.InputTokens + entry.OutputTokens)</td>
+                <td>@entry.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
+                <td><AppBadge Tone="@(entry.IsSuccess ? "success" : "danger")" Text="@(entry.IsSuccess ? (L.IsArabic ? "نجح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))" />@if (!entry.IsSuccess && !string.IsNullOrWhiteSpace(entry.Error)){<small class="usage-error">@entry.Error</small>}</td>
+            </RowTemplate>
+            <MobileRowTemplate Context="entry">
+                <div class="usage-mobile-row">
+                    <div><strong>@entry.Provider</strong><small>@(entry.Model ?? "—")</small></div>
+                    <AppBadge Tone="@(entry.IsSuccess ? "success" : "danger")" Text="@(entry.IsSuccess ? (L.IsArabic ? "نجح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))" />
+                    <dl>
+                        <div><dt>@(L.IsArabic ? "الوقت" : "Time")</dt><dd>@entry.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</dd></div>
+                        <div><dt>@(L.IsArabic ? "العملية" : "Operation")</dt><dd>@(entry.Operation ?? "—")</dd></div>
+                        <div><dt>@(L.IsArabic ? "الموقع" : "Site")</dt><dd>@SiteName(entry.SiteId)</dd></div>
+                        <div><dt>Tokens</dt><dd>@FormatNumber((long)entry.InputTokens + entry.OutputTokens)</dd></div>
+                        <div><dt>@(L.IsArabic ? "التكلفة" : "Cost")</dt><dd>@entry.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</dd></div>
+                    </dl>
+                    @if (!entry.IsSuccess && !string.IsNullOrWhiteSpace(entry.Error))
                     {
-                        <tr>
-                            <td><time>@entry.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</time></td>
-                            <td><strong>@entry.Provider</strong><small>@(entry.Model ?? "—")</small></td>
-                            <td>@(entry.Operation ?? "—")</td>
-                            <td>@SiteName(entry.SiteId)</td>
-                            <td>@FormatNumber((long)entry.InputTokens + entry.OutputTokens)</td>
-                            <td>@entry.EstimatedCost.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
-                            <td><span class="badge @(entry.IsSuccess ? "success" : "danger")">@(entry.IsSuccess ? (L.IsArabic ? "نجح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))</span>@if (!entry.IsSuccess && !string.IsNullOrWhiteSpace(entry.Error)){<small class="usage-error">@entry.Error</small>}</td>
-                        </tr>
+                        <small class="usage-error">@entry.Error</small>
                     }
-                    </tbody>
-                </table>
-            </div>
-        }
+                </div>
+            </MobileRowTemplate>
+        </AppDataGrid>
     </section>
 }
 
@@ -132,6 +196,13 @@ else
     private string _selectedSiteId = string.Empty;
     private string _error = string.Empty;
     private bool _loading;
+
+    private int SiteFilterCount => string.IsNullOrWhiteSpace(_selectedSiteId) ? 0 : 1;
+    private string SelectedSiteName => Guid.TryParse(_selectedSiteId, out var id) ? SiteName(id) : (L.IsArabic ? "كل المواقع" : "All sites");
+    private IReadOnlyList<AIUsageEntry> RecentRows => _snapshot?.Recent.Take(250).ToArray() ?? Array.Empty<AIUsageEntry>();
+    private IReadOnlyList<string> UsageCsvHeaders => L.IsArabic
+        ? new[] { "الوقت", "المزود", "النموذج", "العملية", "الموقع", "Input Tokens", "Output Tokens", "التكلفة", "الحالة", "الخطأ" }
+        : new[] { "Time", "Provider", "Model", "Operation", "Site", "Input Tokens", "Output Tokens", "Cost", "State", "Error" };
 
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnInitializedAsync() => await LoadAsync();
@@ -160,6 +231,42 @@ else
         _selectedSiteId = args.Value?.ToString() ?? string.Empty;
         await LoadAsync();
     }
+
+    private async Task ClearSiteFilterAsync()
+    {
+        if (_loading || string.IsNullOrWhiteSpace(_selectedSiteId)) return;
+        _selectedSiteId = string.Empty;
+        await LoadAsync();
+    }
+
+    private string UsageSearchText(AIUsageEntry entry) => string.Join(' ', new[]
+    {
+        entry.Provider,
+        entry.Model,
+        entry.Operation,
+        SiteName(entry.SiteId),
+        entry.IsSuccess ? "success" : "failed",
+        entry.Error
+    }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    private string UsageRowLabel(AIUsageEntry entry) => $"{entry.Provider}, {entry.Operation ?? "—"}, {SiteName(entry.SiteId)}, {(entry.IsSuccess ? (L.IsArabic ? "نجح" : "Success") : (L.IsArabic ? "فشل" : "Failed"))}";
+    private static string UsageRowState(AIUsageEntry entry) => entry.IsSuccess ? "success" : "error";
+    private static string UsageTimestamp(AIUsageEntry entry) => entry.CreatedAtUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+    private static string UsageKey(AIUsageEntry entry) => $"{entry.CreatedAtUtc.Ticks}:{entry.Provider}:{entry.Operation}:{entry.SiteId}:{entry.InputTokens}:{entry.OutputTokens}";
+
+    private IReadOnlyList<string> UsageCsvRow(AIUsageEntry entry) => new[]
+    {
+        UsageTimestamp(entry),
+        entry.Provider,
+        entry.Model ?? string.Empty,
+        entry.Operation ?? string.Empty,
+        SiteName(entry.SiteId),
+        entry.InputTokens.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        entry.OutputTokens.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        entry.EstimatedCost.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        entry.IsSuccess ? "Success" : "Failed",
+        entry.Error ?? string.Empty
+    };
 
     private string SiteName(Guid? siteId)
     {

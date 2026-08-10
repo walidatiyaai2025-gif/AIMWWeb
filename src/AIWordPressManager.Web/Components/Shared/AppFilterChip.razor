@@ -1,0 +1,27 @@
+<span class="app-filter-chip @Class" data-tone="@Tone">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <span class="app-filter-chip__label">@Label</span>
+    }
+    <strong class="app-filter-chip__value">@Value</strong>
+    @if (RemoveRequested.HasDelegate)
+    {
+        <button type="button"
+                class="app-filter-chip__remove"
+                disabled="@Disabled"
+                aria-label="@(RemoveAriaLabel ?? $"Remove {Label} filter")"
+                @onclick="RemoveAsync">×</button>
+    }
+</span>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Tone { get; set; } = "neutral";
+    [Parameter] public string? RemoveAriaLabel { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback RemoveRequested { get; set; }
+
+    private Task RemoveAsync(MouseEventArgs _) => Disabled ? Task.CompletedTask : RemoveRequested.InvokeAsync();
+}
