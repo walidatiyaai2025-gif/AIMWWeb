@@ -1,11 +1,13 @@
 # TEAM PROGRESS 188 — UX-003 Responsive Mobile/Tablet Application Shell
 
 ## Status
-IMPLEMENTED on `agent/ux-003-responsive-shell`; implementation-head CI required before release reconciliation.
+RELEASE CANDIDATE `155.133.0` on `agent/ux-003-responsive-shell`; exact release-head CI is required before merge.
 
 ## Tracking
 - Issue #48 — UX-003: responsive mobile and tablet application shell.
+- PR #58 — UX-003: responsive mobile and tablet application shell.
 - Base: release `155.132.0`, `main` `4839fbb7e44170a59df26e2800504bc8a80330e4`.
+- Release candidate: `155.133.0`.
 - UI/UX master plan: `docs/UI_UX_MASTER_PLAN.md`.
 
 ## Audit findings
@@ -43,5 +45,15 @@ IMPLEMENTED on `agent/ux-003-responsive-shell`; implementation-head CI required 
 - Desktop shell behavior remains unchanged outside the responsive breakpoint except for shared overflow guards.
 - `MobileRowTemplate` is opt-in; existing `AppDataGrid` consumers continue rendering the current table without required call-site changes.
 
-## Validation
-Pending GitHub Actions Build and .NET Build Verification on the implementation head.
+## Validation history
+Several early .NET Build Verification runs were automatically cancelled because concurrent team commits moved PR #58 while the workflow uses `cancel-in-progress: true`. Logs from the first cancellation showed `Build succeeded`, `0 Error(s)` before cancellation; these cancelled runs are not used as release evidence.
+
+Stable implementation head `a015a43485d0bfbfc68d7dcb7285259f15ea7bdb`:
+- Build #1413 — SUCCESS (Restore + Build + Test).
+- .NET Build Verification #1021 — SUCCESS (Restore + Build + automated tests + test result upload).
+
+## Release gate
+- Version reconciled to `155.133.0`.
+- Release notes: `docs/releases/155.133.0.md`.
+- UX plan must record UX-003 Completed / UX-004 Next.
+- Build and .NET Build Verification must both pass on the exact final release head before PR #58 can leave draft and merge.
