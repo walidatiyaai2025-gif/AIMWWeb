@@ -1,0 +1,56 @@
+<section class="app-filter-bar @Class"
+         role="search"
+         aria-label="@AriaLabel"
+         aria-busy="@Busy">
+    <div class="app-filter-bar__controls">
+        @ChildContent
+    </div>
+
+    <div class="app-filter-bar__meta">
+        @if (ActiveFilterCount > 0)
+        {
+            <div class="app-filter-bar__active" role="status" aria-live="polite" aria-atomic="true">
+                <AppBadge Tone="info" Text="@ActiveFilterCount.ToString()" />
+                <span>@ActiveFiltersText</span>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(NoFiltersText))
+        {
+            <span class="app-filter-bar__none">@NoFiltersText</span>
+        }
+
+        @if (AppliedFilters is not null && ActiveFilterCount > 0)
+        {
+            <div class="app-filter-bar__chips" aria-label="@AppliedFiltersAriaLabel">
+                @AppliedFilters
+            </div>
+        }
+
+        @if (ActiveFilterCount > 0 && ClearRequested.HasDelegate)
+        {
+            <AppButton Size="small"
+                       Icon="×"
+                       Text="@ClearText"
+                       AriaLabel="@ClearAriaLabel"
+                       Disabled="@Busy"
+                       OnClick="ClearAsync" />
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string AriaLabel { get; set; } = "Data filters";
+    [Parameter] public string ActiveFiltersText { get; set; } = "active filters";
+    [Parameter] public string? NoFiltersText { get; set; }
+    [Parameter] public string AppliedFiltersAriaLabel { get; set; } = "Applied filters";
+    [Parameter] public string ClearText { get; set; } = "Clear filters";
+    [Parameter] public string? ClearAriaLabel { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public int ActiveFilterCount { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? AppliedFilters { get; set; }
+    [Parameter] public EventCallback ClearRequested { get; set; }
+
+    private Task ClearAsync(MouseEventArgs _) => Busy ? Task.CompletedTask : ClearRequested.InvokeAsync();
+}
