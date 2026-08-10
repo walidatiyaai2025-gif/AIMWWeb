@@ -319,6 +319,7 @@
     [Parameter] public string ClearFiltersText { get; set; } = "Clear filters";
     [Parameter] public string ClearFiltersAriaLabel { get; set; } = "Clear all filters";
     [Parameter] public string SelectVisibleRowsText { get; set; } = "Select visible rows";
+    [Parameter] public string ClearVisibleRowsText { get; set; } = "Clear visible rows";
     [Parameter] public string SelectRowText { get; set; } = "Select row";
     [Parameter] public string SelectAllFilteredText { get; set; } = "Select all filtered rows";
     [Parameter] public string ClearSelectionText { get; set; } = "Clear selection";
@@ -361,7 +362,7 @@
     private int EffectiveActiveFilterCount => Math.Max(0, ActiveFilterCount) + (!string.IsNullOrWhiteSpace(_searchText) ? 1 : 0);
     private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {FilteredItems.Count}";
     private string SortStateText => $"{SortText}: {(_sortDescending ? SortDescendingText : SortAscendingText)}";
-    private string SelectVisibleRowsLabel => AllPageSelected ? ClearSelectionAriaLabel : SelectVisibleRowsText;
+    private string SelectVisibleRowsLabel => AllPageSelected ? ClearVisibleRowsText : SelectVisibleRowsText;
 
     protected override void OnParametersSet()
     {
