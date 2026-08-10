@@ -1,7 +1,10 @@
 @typeparam TItem
 @inject IJSRuntime JS
 
-<div class="app-data-grid @Class" aria-busy="@Loading">
+<div class="app-data-grid app-data-grid--@Density @(Striped ? "is-striped" : string.Empty) @(StickyHeader ? "has-sticky-header" : string.Empty) @Class"
+     data-density="@Density"
+     data-filtered="@(EffectiveActiveFilterCount > 0).ToString().ToLowerInvariant()"
+     aria-busy="@Loading">
     <div class="app-data-grid__commandbar">
         <div class="app-data-grid__commandbar-main">
             @if (SearchKeySelector is not null)
@@ -13,18 +16,41 @@
                               ClearAriaLabel="@ClearSearchText"
                               Class="app-data-grid__search" />
             }
+            @if (Filters is not null)
+            {
+                <div class="app-data-grid__filters" role="group" aria-label="@FiltersAriaLabel">
+                    @Filters
+                </div>
+            }
             @if (Toolbar is not null)
             {
                 @Toolbar
             }
         </div>
         <div class="app-data-grid__commandbar-actions">
+            @if (EffectiveActiveFilterCount > 0 && ClearFiltersRequested.HasDelegate)
+            {
+                <AppButton Icon="×"
+                           Text="@ClearFiltersText"
+                           Size="small"
+                           AriaLabel="@ClearFiltersAriaLabel"
+                           OnClick="ClearFiltersAsync" />
+            }
+            @if (Selectable && _selectedKeys.Count > 0)
+            {
+                <AppButton Icon="×"
+                           Text="@ClearSelectionText"
+                           Size="small"
+                           AriaLabel="@ClearSelectionAriaLabel"
+                           OnClick="ClearSelectionAsync" />
+            }
             @if (SortKeySelector is not null)
             {
                 <AppButton Icon="@(_sortDescending ? "↓" : "↑")"
                            Text="@SortText"
                            Size="small"
-                           AriaLabel="@SortText"
+                           Title="@SortStateText"
+                           AriaLabel="@SortStateText"
                            AriaPressed="@_sortDescending"
                            OnClick="ToggleSortAsync" />
             }
@@ -39,13 +65,25 @@
         </div>
     </div>
 
+    @if (FilterSummary is not null || EffectiveActiveFilterCount > 0)
+    {
+        <div class="app-data-grid__filter-summary" role="status" aria-live="polite" aria-atomic="true">
+            @if (EffectiveActiveFilterCount > 0)
+            {
+                <AppBadge Tone="info" Text="@EffectiveActiveFilterCount.ToString()" />
+                <span>@ActiveFiltersText</span>
+            }
+            @FilterSummary
+        </div>
+    }
+
     @if (Loading)
     {
         <div role="status" aria-live="polite" aria-atomic="true">
             <AppLoading Title="@LoadingTitle" Message="@LoadingMessage" />
         </div>
     }
-    else if (FilteredItems.Count == 0)
+    else if (Items.Count == 0)
     {
         <div role="status" aria-live="polite" aria-atomic="true">
             <AppEmptyState Icon="@EmptyIcon" Title="@EmptyTitle" Description="@EmptyDescription">
@@ -53,10 +91,42 @@
             </AppEmptyState>
         </div>
     }
+    else if (FilteredItems.Count == 0)
+    {
+        <div class="app-data-grid__no-results" role="status" aria-live="polite" aria-atomic="true">
+            <AppEmptyState Icon="⌕" Title="@NoResultsTitle" Description="@NoResultsDescription">
+                <Actions>
+                    @if (ClearFiltersRequested.HasDelegate || !string.IsNullOrWhiteSpace(_searchText))
+                    {
+                        <AppButton Icon="×" Text="@ClearFiltersText" OnClick="ClearFiltersAsync" />
+                    }
+                </Actions>
+            </AppEmptyState>
+        </div>
+    }
     else
     {
-        <div class="app-data-grid__viewport @(MobileRowTemplate is not null ? "has-mobile-alternative" : string.Empty)">
-            <table aria-label="@TableLabel" aria-rowcount="@FilteredItems.Count">
+        @if (Selectable && AllowSelectAllFiltered && FilteredItems.Count > PagedItems.Count)
+        {
+            <div class="app-data-grid__selection-scope" role="status" aria-live="polite" aria-atomic="true">
+                <span>@SelectionScopeText</span>
+                @if (!AllFilteredSelected)
+                {
+                    <AppButton Size="small" Text="@SelectAllFilteredText" OnClick="SelectAllFilteredAsync" />
+                }
+                else
+                {
+                    <AppButton Size="small" Text="@ClearSelectionText" OnClick="ClearSelectionAsync" />
+                }
+            </div>
+        }
+
+        <div class="app-data-grid__viewport @(MobileRowTemplate is not null ? "has-mobile-alternative" : string.Empty)" tabindex="0" aria-label="@ViewportAriaLabel">
+            <table aria-label="@TableLabel" aria-describedby="@SummaryId" aria-rowcount="@FilteredItems.Count">
+                @if (!string.IsNullOrWhiteSpace(Caption))
+                {
+                    <caption class="sr-only">@Caption</caption>
+                }
                 <thead>
                     <tr>
                         @if (Selectable)
@@ -65,7 +135,7 @@
                                 <input type="checkbox"
                                        checked="@AllPageSelected"
                                        @onchange="TogglePageAsync"
-                                       aria-label="@SelectVisibleRowsText" />
+                                       aria-label="@SelectVisibleRowsLabel" />
                             </th>
                         }
                         @Header
@@ -74,12 +144,17 @@
                 <tbody>
                     @foreach (var item in PagedItems)
                     {
-                        <tr class="@(IsSelected(item) ? "is-selected" : string.Empty)" @key="GetKey(item)">
+                        var selected = IsSelected(item);
+                        <tr class="@(selected ? "is-selected" : string.Empty) @GetRowClass(item)"
+                            data-row-state="@GetRowState(item)"
+                            aria-selected="@(Selectable ? selected.ToString().ToLowerInvariant() : null)"
+                            tabindex="@(FocusableRows ? "0" : null)"
+                            @key="GetKey(item)">
                             @if (Selectable)
                             {
                                 <td class="app-data-grid__selection">
                                     <input type="checkbox"
-                                           checked="@IsSelected(item)"
+                                           checked="@selected"
                                            @onchange="args => ToggleItemAsync(item, args)"
                                            aria-label="@GetRowAriaLabel(item)" />
                                 </td>
@@ -96,12 +171,18 @@
             <div class="app-data-grid__mobile-list" role="list" aria-label="@TableLabel">
                 @foreach (var item in PagedItems)
                 {
-                    <article class="app-data-grid__mobile-item @(IsSelected(item) ? "is-selected" : string.Empty)" role="listitem" @key="GetKey(item)">
+                    var selected = IsSelected(item);
+                    <article class="app-data-grid__mobile-item @(selected ? "is-selected" : string.Empty) @GetRowClass(item)"
+                             data-row-state="@GetRowState(item)"
+                             aria-selected="@(Selectable ? selected.ToString().ToLowerInvariant() : null)"
+                             role="listitem"
+                             tabindex="@(FocusableRows ? "0" : null)"
+                             @key="GetKey(item)">
                         @if (Selectable)
                         {
                             <label class="app-data-grid__mobile-selection">
                                 <input type="checkbox"
-                                       checked="@IsSelected(item)"
+                                       checked="@selected"
                                        @onchange="args => ToggleItemAsync(item, args)"
                                        aria-label="@GetRowAriaLabel(item)" />
                                 <span>@SelectedText</span>
@@ -114,10 +195,14 @@
         }
 
         <footer class="app-data-grid__footer">
-            <div class="app-data-grid__summary" role="status" aria-live="polite" aria-atomic="true">
+            <div id="@SummaryId" class="app-data-grid__summary" role="status" aria-live="polite" aria-atomic="true">
                 @if (Selectable)
                 {
                     <AppBadge Tone="info" Text="@($"{_selectedKeys.Count} {SelectedText}")" />
+                    @if (HiddenSelectedCount > 0)
+                    {
+                        <span class="app-data-grid__hidden-selection">@($"{HiddenSelectedCount} {HiddenSelectedText}")</span>
+                    }
                 }
                 <span>@SummaryText</span>
             </div>
@@ -127,7 +212,7 @@
                     <select value="@_effectivePageSize"
                             @onchange="PageSizeChangedAsync"
                             aria-label="@RowsPerPageAriaLabel">
-                        @foreach (var option in PageSizeOptions)
+                        @foreach (var option in PageSizeOptions.Where(x => x > 0).Distinct().OrderBy(x => x))
                         {
                             <option value="@option">@option</option>
                         }
@@ -150,6 +235,21 @@
                 </nav>
             </div>
         </footer>
+
+        @if (Selectable && BulkActions is not null && _selectedKeys.Count > 0)
+        {
+            <AppBulkActionBar SelectedCount="@_selectedKeys.Count"
+                              Busy="@BulkBusy"
+                              SelectedText="@BulkSelectedText"
+                              Description="@BulkDescription"
+                              ScopeText="@BulkScopeText"
+                              AriaLabel="@BulkActionsAriaLabel"
+                              ClearText="@ClearSelectionText"
+                              ClearAriaLabel="@ClearSelectionAriaLabel"
+                              ClearRequested="ClearSelectionFromBulkAsync">
+                <Actions>@BulkActions(_selectedKeys.ToArray())</Actions>
+            </AppBulkActionBar>
+        }
     }
 </div>
 
@@ -159,54 +259,93 @@
     [Parameter, EditorRequired] public RenderFragment<TItem> RowTemplate { get; set; } = default!;
     [Parameter] public RenderFragment<TItem>? MobileRowTemplate { get; set; }
     [Parameter] public RenderFragment? Toolbar { get; set; }
+    [Parameter] public RenderFragment? Filters { get; set; }
+    [Parameter] public RenderFragment? FilterSummary { get; set; }
     [Parameter] public RenderFragment? EmptyActions { get; set; }
+    [Parameter] public RenderFragment<IReadOnlyCollection<string>>? BulkActions { get; set; }
     [Parameter] public Func<TItem, string>? KeySelector { get; set; }
     [Parameter] public Func<TItem, string?>? RowAriaLabelSelector { get; set; }
+    [Parameter] public Func<TItem, string?>? RowClassSelector { get; set; }
+    [Parameter] public Func<TItem, string?>? RowStateSelector { get; set; }
     [Parameter] public Func<TItem, string?>? SortKeySelector { get; set; }
     [Parameter] public Func<TItem, string?>? SearchKeySelector { get; set; }
+    [Parameter] public Func<TItem, bool>? FilterPredicate { get; set; }
     [Parameter] public Func<TItem, IReadOnlyList<string>>? CsvRowSelector { get; set; }
     [Parameter] public IReadOnlyList<string> CsvHeaders { get; set; } = Array.Empty<string>();
     [Parameter] public string CsvFileName { get; set; } = "export.csv";
     [Parameter] public EventCallback<IReadOnlyCollection<string>> SelectionChanged { get; set; }
     [Parameter] public EventCallback<IReadOnlyList<TItem>> ExportRequested { get; set; }
+    [Parameter] public EventCallback<string> SearchChanged { get; set; }
+    [Parameter] public EventCallback<bool> SortChanged { get; set; }
+    [Parameter] public EventCallback ClearFiltersRequested { get; set; }
     [Parameter] public int PageSize { get; set; } = 10;
     [Parameter] public IReadOnlyList<int> PageSizeOptions { get; set; } = new[] { 5, 10, 25, 50 };
+    [Parameter] public int ActiveFilterCount { get; set; }
     [Parameter] public bool Selectable { get; set; }
     [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool BulkBusy { get; set; }
+    [Parameter] public bool AllowSelectAllFiltered { get; set; } = true;
+    [Parameter] public bool PreserveSelectionForMissingItems { get; set; }
+    [Parameter] public bool StickyHeader { get; set; } = true;
+    [Parameter] public bool Striped { get; set; }
+    [Parameter] public bool FocusableRows { get; set; }
+    [Parameter] public string Density { get; set; } = "comfortable";
     [Parameter] public string Class { get; set; } = string.Empty;
     [Parameter] public string TableLabel { get; set; } = "Data table";
+    [Parameter] public string? Caption { get; set; }
+    [Parameter] public string ViewportAriaLabel { get; set; } = "Scrollable data table";
     [Parameter] public string LoadingTitle { get; set; } = "Loading data";
     [Parameter] public string? LoadingMessage { get; set; }
     [Parameter] public string EmptyIcon { get; set; } = "◎";
     [Parameter] public string EmptyTitle { get; set; } = "No data";
     [Parameter] public string? EmptyDescription { get; set; }
+    [Parameter] public string NoResultsTitle { get; set; } = "No matching results";
+    [Parameter] public string? NoResultsDescription { get; set; } = "Change or clear the current filters and try again.";
     [Parameter] public string SelectedText { get; set; } = "selected";
+    [Parameter] public string HiddenSelectedText { get; set; } = "selected outside this filter";
     [Parameter] public string ShowingText { get; set; } = "Showing";
     [Parameter] public string OfText { get; set; } = "of";
     [Parameter] public string RowsPerPageText { get; set; } = "Rows";
     [Parameter] public string RowsPerPageAriaLabel { get; set; } = "Rows per page";
     [Parameter] public string SortText { get; set; } = "Sort";
+    [Parameter] public string SortAscendingText { get; set; } = "Sorted ascending";
+    [Parameter] public string SortDescendingText { get; set; } = "Sorted descending";
     [Parameter] public string ExportText { get; set; } = "Export CSV";
     [Parameter] public string SearchPlaceholder { get; set; } = "Search...";
     [Parameter] public string SearchAriaLabel { get; set; } = "Search data";
     [Parameter] public string ClearSearchText { get; set; } = "Clear search";
+    [Parameter] public string FiltersAriaLabel { get; set; } = "Table filters";
+    [Parameter] public string ActiveFiltersText { get; set; } = "active filters";
+    [Parameter] public string ClearFiltersText { get; set; } = "Clear filters";
+    [Parameter] public string ClearFiltersAriaLabel { get; set; } = "Clear all filters";
     [Parameter] public string SelectVisibleRowsText { get; set; } = "Select visible rows";
     [Parameter] public string SelectRowText { get; set; } = "Select row";
+    [Parameter] public string SelectAllFilteredText { get; set; } = "Select all filtered rows";
+    [Parameter] public string ClearSelectionText { get; set; } = "Clear selection";
+    [Parameter] public string ClearSelectionAriaLabel { get; set; } = "Clear selected rows";
+    [Parameter] public string SelectionScopeText { get; set; } = "Selection currently applies to visible rows unless all filtered rows are selected.";
+    [Parameter] public string BulkSelectedText { get; set; } = "items selected";
+    [Parameter] public string? BulkDescription { get; set; }
+    [Parameter] public string? BulkScopeText { get; set; }
+    [Parameter] public string BulkActionsAriaLabel { get; set; } = "Bulk actions";
     [Parameter] public string PaginationText { get; set; } = "Pagination";
     [Parameter] public string PreviousPageText { get; set; } = "Previous page";
     [Parameter] public string NextPageText { get; set; } = "Next page";
     [Parameter] public string PageText { get; set; } = "Page";
 
     private readonly HashSet<string> _selectedKeys = new(StringComparer.Ordinal);
+    private readonly string _instanceId = Guid.NewGuid().ToString("N");
     private int CurrentPage { get; set; } = 1;
     private int _effectivePageSize;
     private bool _sortDescending;
     private string _searchText = string.Empty;
 
+    private string SummaryId => $"app-data-grid-summary-{_instanceId}";
     private int SafePageSize => Math.Max(1, _effectivePageSize > 0 ? _effectivePageSize : PageSize);
+    private IReadOnlyList<TItem> PredicateItems => FilterPredicate is null ? Items : Items.Where(FilterPredicate).ToList();
     private IReadOnlyList<TItem> FilteredItems => string.IsNullOrWhiteSpace(_searchText) || SearchKeySelector is null
-        ? Items
-        : Items.Where(x => (SearchKeySelector(x) ?? string.Empty).Contains(_searchText.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList();
+        ? PredicateItems
+        : PredicateItems.Where(x => (SearchKeySelector(x) ?? string.Empty).Contains(_searchText.Trim(), StringComparison.CurrentCultureIgnoreCase)).ToList();
     private IEnumerable<TItem> SortedItems => SortKeySelector is null
         ? FilteredItems
         : (_sortDescending
@@ -215,18 +354,30 @@
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredItems.Count / (double)SafePageSize));
     private IReadOnlyList<TItem> PagedItems => SortedItems.Skip((CurrentPage - 1) * SafePageSize).Take(SafePageSize).ToList();
     private bool AllPageSelected => PagedItems.Count > 0 && PagedItems.All(IsSelected);
+    private bool AllFilteredSelected => FilteredItems.Count > 0 && FilteredItems.All(IsSelected);
+    private int HiddenSelectedCount => _selectedKeys.Count(key => FilteredItems.All(item => GetKey(item) != key));
     private int FirstVisible => FilteredItems.Count == 0 ? 0 : ((CurrentPage - 1) * SafePageSize) + 1;
     private int LastVisible => Math.Min(CurrentPage * SafePageSize, FilteredItems.Count);
+    private int EffectiveActiveFilterCount => Math.Max(0, ActiveFilterCount) + (!string.IsNullOrWhiteSpace(_searchText) ? 1 : 0);
     private string SummaryText => $"{ShowingText} {FirstVisible}-{LastVisible} {OfText} {FilteredItems.Count}";
+    private string SortStateText => $"{SortText}: {(_sortDescending ? SortDescendingText : SortAscendingText)}";
+    private string SelectVisibleRowsLabel => AllPageSelected ? ClearSelectionAriaLabel : SelectVisibleRowsText;
 
     protected override void OnParametersSet()
     {
         if (_effectivePageSize <= 0) _effectivePageSize = Math.Max(1, PageSize);
         if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+        if (!PreserveSelectionForMissingItems && _selectedKeys.Count > 0)
+        {
+            var available = Items.Select(GetKey).ToHashSet(StringComparer.Ordinal);
+            _selectedKeys.RemoveWhere(key => !available.Contains(key));
+        }
     }
 
     private string GetKey(TItem item) => KeySelector?.Invoke(item) ?? item?.GetHashCode().ToString() ?? string.Empty;
     private bool IsSelected(TItem item) => _selectedKeys.Contains(GetKey(item));
+    private string GetRowClass(TItem item) => RowClassSelector?.Invoke(item) ?? string.Empty;
+    private string GetRowState(TItem item) => RowStateSelector?.Invoke(item) ?? string.Empty;
     private string GetRowAriaLabel(TItem item)
     {
         var label = RowAriaLabelSelector?.Invoke(item);
@@ -239,14 +390,22 @@
     {
         _searchText = value;
         CurrentPage = 1;
-        await Task.CompletedTask;
+        await SearchChanged.InvokeAsync(value);
+    }
+
+    private async Task ClearFiltersAsync(MouseEventArgs _)
+    {
+        _searchText = string.Empty;
+        CurrentPage = 1;
+        await SearchChanged.InvokeAsync(string.Empty);
+        await ClearFiltersRequested.InvokeAsync();
     }
 
     private async Task ToggleItemAsync(TItem item, ChangeEventArgs args)
     {
         var key = GetKey(item);
         if (args.Value is true) _selectedKeys.Add(key); else _selectedKeys.Remove(key);
-        await SelectionChanged.InvokeAsync(_selectedKeys.ToArray());
+        await NotifySelectionChangedAsync();
     }
 
     private async Task TogglePageAsync(ChangeEventArgs args)
@@ -257,12 +416,35 @@
             var key = GetKey(item);
             if (select) _selectedKeys.Add(key); else _selectedKeys.Remove(key);
         }
-        await SelectionChanged.InvokeAsync(_selectedKeys.ToArray());
+        await NotifySelectionChangedAsync();
     }
 
+    private async Task SelectAllFilteredAsync(MouseEventArgs _)
+    {
+        foreach (var item in FilteredItems) _selectedKeys.Add(GetKey(item));
+        await NotifySelectionChangedAsync();
+    }
+
+    private Task ClearSelectionFromBulkAsync() => ClearSelectionCoreAsync();
+    private Task ClearSelectionAsync(MouseEventArgs _) => ClearSelectionCoreAsync();
+
+    private async Task ClearSelectionCoreAsync()
+    {
+        _selectedKeys.Clear();
+        await NotifySelectionChangedAsync();
+    }
+
+    private Task NotifySelectionChangedAsync() => SelectionChanged.InvokeAsync(_selectedKeys.ToArray());
     private Task PreviousPageAsync(MouseEventArgs _) { if (CurrentPage > 1) CurrentPage--; return Task.CompletedTask; }
     private Task NextPageAsync(MouseEventArgs _) { if (CurrentPage < TotalPages) CurrentPage++; return Task.CompletedTask; }
-    private Task ToggleSortAsync(MouseEventArgs _) { _sortDescending = !_sortDescending; CurrentPage = 1; return Task.CompletedTask; }
+
+    private async Task ToggleSortAsync(MouseEventArgs _)
+    {
+        _sortDescending = !_sortDescending;
+        CurrentPage = 1;
+        await SortChanged.InvokeAsync(_sortDescending);
+    }
+
     private Task ExportAsync(MouseEventArgs _) => ExportRequested.InvokeAsync(SortedItems.ToList());
 
     private async Task ExportCsvAsync(MouseEventArgs _)
