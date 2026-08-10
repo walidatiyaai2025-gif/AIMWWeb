@@ -1,0 +1,33 @@
+@if (Messages.Count > 0)
+{
+    <section class="app-validation-summary @Class"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             tabindex="-1"
+             data-form-validation-summary
+             data-auto-focus="@AutoFocus.ToString().ToLowerInvariant()">
+        <div class="app-validation-summary__icon" aria-hidden="true">!</div>
+        <div>
+            <strong>@Title</strong>
+            @if (!string.IsNullOrWhiteSpace(Description))
+            {
+                <p>@Description</p>
+            }
+            <ul>
+                @foreach (var message in Messages.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
+                {
+                    <li>@message</li>
+                }
+            </ul>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<string> Messages { get; set; } = Array.Empty<string>();
+    [Parameter] public string Title { get; set; } = "Please review the highlighted fields";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public bool AutoFocus { get; set; } = true;
+}
