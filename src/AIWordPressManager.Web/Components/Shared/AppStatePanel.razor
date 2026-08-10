@@ -31,7 +31,7 @@
             <div class="app-state-panel__freshness">
                 @if (UpdatedAtUtc.HasValue)
                 {
-                    <time datetime="@UpdatedAtUtc.Value.ToString("O", System.Globalization.CultureInfo.InvariantCulture)">@UpdatedAtUtc.Value.ToLocalTime().ToString(TimestampFormat)</time>
+                    <time datetime="@UpdatedTimestamp">@UpdatedAtUtc.Value.ToLocalTime().ToString(TimestampFormat)</time>
                 }
                 @if (!string.IsNullOrWhiteSpace(FreshnessText))
                 {
@@ -86,7 +86,7 @@
     [Parameter] public RenderFragment? Actions { get; set; }
     [Parameter] public EventCallback RetryRequested { get; set; }
 
-    private string NormalizedKind => Kind.Trim().ToLowerInvariant() switch
+    private string NormalizedKind => (Kind ?? string.Empty).Trim().ToLowerInvariant() switch
     {
         "loading" => "loading",
         "empty" => "empty",
@@ -101,6 +101,7 @@
 
     private string EffectiveRole => Assertive || NormalizedKind == "error" ? "alert" : "status";
     private string EffectiveLive => Assertive || NormalizedKind == "error" ? "assertive" : "polite";
+    private string UpdatedTimestamp => UpdatedAtUtc?.ToString("O", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
     private string EffectiveIcon => Icon ?? NormalizedKind switch
     {
         "empty" => "○",
