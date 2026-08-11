@@ -1,0 +1,226 @@
+/* UX-008: final-layer RTL/LTR parity contract. Keep one DOM/layout and use logical properties. */
+:root {
+    --bidi-inline-gap:.625rem;
+    --bidi-control-gap:.5rem;
+}
+
+html[dir="ltr"], body[dir="ltr"], [dir="ltr"] { direction:ltr; }
+html[dir="rtl"], body[dir="rtl"], [dir="rtl"] { direction:rtl; }
+
+.app-shell,
+.main-area,
+.content,
+.panel,
+.app-card,
+.app-dialog,
+.app-state-panel,
+.app-state-banner,
+.app-data-grid,
+.app-filter-bar,
+.app-bulk-action-bar { text-align:start; }
+
+/* Isolate mixed-direction values instead of allowing punctuation to jump across labels. */
+.app-bidi-text { unicode-bidi:isolate; display:inline; max-inline-size:100%; overflow-wrap:anywhere; }
+.app-bidi-text--technical,
+.app-bidi-text--numeric,
+.app-bidi-text--ltr,
+.bidi-technical,
+.bidi-number,
+code,
+pre,
+kbd,
+samp { direction:ltr; unicode-bidi:isolate; text-align:start; }
+.app-bidi-text--technical,
+.bidi-technical,
+code,
+pre,
+samp { font-variant-ligatures:none; }
+.app-bidi-text--numeric,
+.bidi-number,
+time,
+[data-bidi-number="true"] { font-variant-numeric:tabular-nums; unicode-bidi:isolate; }
+
+/* Directional glyphs mirror only when their meaning is spatial. Neutral icons never mirror. */
+.app-directional-icon { display:inline-grid; place-items:center; inline-size:1em; block-size:1em; transform-origin:center; }
+html[dir="rtl"] .app-directional-icon--mirror-rtl,
+[dir="rtl"] .app-directional-icon--mirror-rtl { transform:scaleX(-1); }
+
+/* Shell and navigation parity. */
+.brand,
+.nav-section-toggle,
+.main-nav a,
+.topbar-title,
+.topbar-actions,
+.app-breadcrumb,
+.command-trigger,
+.command-item,
+.command-group-heading,
+.theme-popover-head,
+.theme-swatch { text-align:start; }
+.brand,
+.nav-section-toggle,
+.main-nav a,
+.topbar-title,
+.app-breadcrumb,
+.command-trigger,
+.command-item,
+.theme-popover-head,
+.theme-swatch { gap:var(--bidi-inline-gap); }
+.nav-chevron { margin-inline-start:auto; }
+.sidebar-footer { text-align:start; }
+.topbar-actions { margin-inline-start:auto; }
+.app-breadcrumb b { display:inline-grid; place-items:center; transform-origin:center; }
+html[dir="rtl"] .app-breadcrumb b,
+[dir="rtl"] .app-breadcrumb b { transform:scaleX(-1); }
+
+/* Menus/popovers attach to the logical end edge rather than a hard-coded physical side. */
+.theme-popover,
+.account-menu-popover,
+.notification-center,
+.recent-pages-popover,
+.quick-actions-popover { inset-inline-end:0; inset-inline-start:auto; }
+.command-item code { margin-inline-start:auto; min-inline-size:0; overflow-wrap:anywhere; }
+.command-item kbd { margin-inline-start:var(--bidi-control-gap); }
+.command-dialog header input { text-align:start; }
+.command-dialog footer { text-align:start; }
+
+/* Forms preserve label/control order and readable technical values in both directions. */
+.app-form-field,
+.app-form-actions,
+.app-validation-summary,
+.form-group,
+.field-row,
+.settings-field { text-align:start; }
+.app-form-field label,
+.form-group label,
+.settings-field label { text-align:start; }
+input,
+textarea,
+select { text-align:start; }
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[data-bidi="technical"],
+textarea[data-bidi="technical"] { direction:ltr; unicode-bidi:isolate; text-align:start; }
+input[type="number"],
+input[data-bidi="number"] { direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums; }
+.app-form-actions { justify-content:flex-end; }
+
+/* Dialogs keep the same hierarchy while close/actions follow logical edges. */
+.app-dialog__header,
+.app-dialog__footer,
+.modal-header,
+.modal-footer { text-align:start; }
+.app-dialog__close,
+.modal-close { margin-inline-start:auto; }
+.app-dialog__footer,
+.modal-footer { justify-content:flex-end; }
+.app-dialog__body pre,
+.app-state-panel__details pre { direction:ltr; text-align:start; overflow:auto; }
+
+/* Dense workspaces: selection stays on inline-start; actions and paging stay on inline-end. */
+.app-data-grid__commandbar,
+.app-data-grid__commandbar-main,
+.app-data-grid__commandbar-actions,
+.app-data-grid__filter-summary,
+.app-data-grid__selection-scope,
+.app-data-grid__footer,
+.app-data-grid__footer-controls,
+.app-data-grid__pagination,
+.app-filter-bar,
+.app-filter-bar__controls,
+.app-filter-bar__summary,
+.app-bulk-action-bar { text-align:start; }
+.app-data-grid__commandbar-actions,
+.app-data-grid__footer-controls { margin-inline-start:auto; }
+.app-data-grid th,
+.app-data-grid td { text-align:start; }
+.app-data-grid th.app-data-grid__selection,
+.app-data-grid td.app-data-grid__selection { text-align:center; }
+.app-data-grid__summary { min-inline-size:0; }
+.app-data-grid__pagination { direction:inherit; }
+.app-data-grid__pagination > span { direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums; }
+.app-data-grid__mobile-item,
+.app-data-grid__mobile-content,
+.app-data-grid__mobile-selection { text-align:start; }
+.app-data-grid__mobile-selection { justify-content:flex-start; }
+
+/* State and notification surfaces keep semantic accent on inline-start. */
+.app-state-panel,
+.app-state-banner,
+.alert,
+.notification-item { border-inline-start-width:4px; }
+.app-state-panel__actions,
+.app-state-banner__actions { justify-content:flex-start; }
+.app-state-panel__freshness,
+.app-state-banner__freshness { direction:inherit; }
+.app-state-panel__freshness time,
+.app-state-banner__freshness time { direction:ltr; unicode-bidi:isolate; }
+
+/* Technical/build metadata is always isolated LTR without forcing surrounding Arabic copy to LTR. */
+.build-version-badge,
+.topbar-version,
+.app-version strong,
+.app-version small,
+.build-info-card strong,
+.build-info-details code,
+[data-bidi-technical="true"] { direction:ltr; unicode-bidi:isolate; text-align:start; }
+.build-info-grid,
+.build-info-card,
+.build-info-details { text-align:start; }
+
+/* Lists and definition pairs retain logical indentation. */
+ul, ol { padding-inline-start:1.4rem; padding-inline-end:0; }
+dl, dd { margin-inline-start:0; }
+blockquote { margin-inline:0; padding-inline-start:1rem; border-inline-start:3px solid currentColor; }
+
+/* Tables and horizontal scrollers start from the reading edge. */
+.table-responsive,
+.app-data-grid__viewport,
+.data-scroll,
+.horizontal-scroll { overscroll-behavior-inline:contain; }
+html[dir="rtl"] .table-responsive,
+html[dir="rtl"] .app-data-grid__viewport,
+[dir="rtl"] .table-responsive,
+[dir="rtl"] .app-data-grid__viewport { scroll-snap-type:inline proximity; }
+
+/* Direction attributes exposed by runtime are useful to feature CSS without duplicating layouts. */
+[data-app-direction="rtl"] .rtl-only { display:initial; }
+[data-app-direction="ltr"] .rtl-only { display:none !important; }
+[data-app-direction="ltr"] .ltr-only { display:initial; }
+[data-app-direction="rtl"] .ltr-only { display:none !important; }
+
+@media (max-width:1024px) {
+    .topbar-actions,
+    .app-data-grid__commandbar-actions,
+    .app-data-grid__footer-controls { margin-inline-start:0; }
+    .responsive-sidebar-close { inset-inline-end:calc(.75rem + env(safe-area-inset-right)); inset-inline-start:auto; }
+    html[dir="rtl"] .responsive-sidebar-close { inset-inline-end:auto; inset-inline-start:calc(.75rem + env(safe-area-inset-left)); }
+}
+
+@media (max-width:700px) {
+    .app-form-actions,
+    .app-dialog__footer,
+    .modal-footer,
+    .app-data-grid__footer,
+    .app-data-grid__footer-controls,
+    .app-state-panel__actions,
+    .app-state-banner__actions { align-items:stretch; }
+    .app-form-actions > *,
+    .app-dialog__footer > *,
+    .modal-footer > * { inline-size:100%; }
+    .command-item code { margin-inline-start:0; inline-size:100%; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+    .app-directional-icon { transition:none !important; }
+}
+
+@media (forced-colors:active) {
+    .app-state-panel,
+    .app-state-banner,
+    .alert,
+    .notification-item,
+    blockquote { border-inline-start-color:CanvasText; }
+    .app-directional-icon { forced-color-adjust:auto; }
+}
