@@ -9,7 +9,7 @@
     }
     else if (!string.IsNullOrWhiteSpace(BidiMode))
     {
-        <AppBidiText Mode="@BidiMode" Text="@Text" />
+        <AppBidiText Mode="@(BidiMode ?? "auto")" Text="@Text" />
     }
     else
     {
