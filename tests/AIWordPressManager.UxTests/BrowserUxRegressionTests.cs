@@ -34,9 +34,10 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var pageErrors = new List<string>();
         page.PageError += (_, message) => pageErrors.Add(message);
 
-        var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         response.Should().NotBeNull();
         response!.Status.Should().BeLessThan(400);
+        await page.Locator("body").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 15000 });
         await UxAudit.PrepareAsync(page);
         pageErrors.Should().BeEmpty($"public route {route.Path} must not throw browser page errors");
 
@@ -53,7 +54,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var pageErrors = new List<string>();
         page.PageError += (_, message) => pageErrors.Add(message);
 
-        var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         response.Should().NotBeNull();
         response!.Status.Should().BeLessThan(400);
         await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
@@ -73,7 +74,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
     {
         await using var context = await host.CreateContextAsync(viewport);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
         await UxAudit.PrepareAsync(page);
 
@@ -89,9 +90,10 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var viewport = UxRouteCatalog.Viewports[^1];
         await using var context = await host.CreateContextAsync(viewport);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
         await page.EvaluateAsync("() => localStorage.setItem('aiwp-language', 'ar')");
-        await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.Commit });
         await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
         await UxAudit.PrepareAsync(page);
 
@@ -107,7 +109,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
     {
         await using var context = await host.CreateContextAsync(UxRouteCatalog.Viewports[^1]);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(host.BaseUrl + "/", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync(host.BaseUrl + "/", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
         await page.Keyboard.PressAsync("Tab");
         var active = await page.EvaluateAsync<string>("() => document.activeElement?.tagName?.toLowerCase() || ''");
