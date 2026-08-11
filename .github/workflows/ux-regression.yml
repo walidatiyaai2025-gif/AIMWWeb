@@ -1,0 +1,66 @@
+name: UX Regression Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ux-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DOTNET_NOLOGO: 1
+      UX_REGRESSION_MODE: verify
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            Directory.Packages.props
+
+      - name: Restore application solution
+        run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
+
+      - name: Build application for browser host
+        run: dotnet build AIWordPressManager.Web.sln --configuration Release --no-restore
+
+      - name: Restore UX regression project
+        run: dotnet restore tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --disable-parallel
+
+      - name: Build UX regression project
+        run: dotnet build tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --configuration Release --no-restore
+
+      - name: Install Chromium for Playwright
+        shell: pwsh
+        run: tests/AIWordPressManager.UxTests/bin/Release/net8.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run route visual and accessibility gates
+        run: dotnet test tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --configuration Release --no-build --logger "trx;LogFileName=ux-regression.trx"
+
+      - name: Upload UX regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-regression-evidence
+          path: |
+            artifacts/ux-regression/**
+            tests/AIWordPressManager.UxTests/TestResults/*.trx
+          if-no-files-found: warn
+          retention-days: 30
