@@ -162,10 +162,19 @@ public sealed class UxTestHost : IAsyncLifetime
         await page.Locator("input[name='userName']").FillAsync("Admin");
         await page.Locator("input[name='password']").FillAsync("Admin@123");
         await page.Locator("button[type='submit']").ClickAsync();
-        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-        await page.WaitForTimeoutAsync(500);
+
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline && page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
+            await Task.Delay(100);
+
         if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("UX regression fixture could not authenticate the seeded administrator.");
+
+        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15000
+        });
         await context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = _storageStatePath });
     }
 
