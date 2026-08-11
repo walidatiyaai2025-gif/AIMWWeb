@@ -14,7 +14,12 @@ public static class UxAudit
     public static async Task PrepareAsync(IPage page)
     {
         await page.AddStyleTagAsync(new PageAddStyleTagOptions { Content = StabilityCss });
-        await page.EvaluateAsync("() => document.fonts?.ready ?? Promise.resolve()");
+        await page.EvaluateAsync("""
+            () => Promise.race([
+              document.fonts?.ready ?? Promise.resolve(),
+              new Promise(resolve => setTimeout(resolve, 2000))
+            ])
+            """);
         await page.WaitForTimeoutAsync(150);
     }
 
