@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Playwright;
@@ -122,11 +123,29 @@ public static class UxAudit
 
     public static async Task SaveVisualEvidenceAsync(IPage page, UxTestHost host, UxRouteCase route, UxViewport viewport, VisualMetrics metrics)
     {
-        var stem = $"{route.Key}--{viewport.Key}";
-        var screenshotPath = host.ArtifactPath("screenshots", stem + ".png");
+        var fileName = $"{route.Key}--{viewport.Key}.png";
+        var stem = Path.GetFileNameWithoutExtension(fileName);
+        var screenshotPath = host.ArtifactPath("screenshots", fileName);
         await page.ScreenshotAsync(new PageScreenshotOptions { Path = screenshotPath, FullPage = true });
+
         var metricsPath = host.ArtifactPath("metrics", stem + ".json");
         await File.WriteAllTextAsync(metricsPath, JsonSerializer.Serialize(metrics, new JsonSerializerOptions { WriteIndented = true }));
+
+        var sha256 = await ComputeSha256Async(screenshotPath);
+        await File.WriteAllTextAsync(host.ArtifactPath("hashes", stem + ".sha256"), sha256 + Environment.NewLine);
+
+        var baselinePath = host.RepositoryPath("tests", "AIWordPressManager.UxTests", "Baselines", "approved-screenshot-sha256.json");
+        var baselines = JsonSerializer.Deserialize<Dictionary<string, string>>(await File.ReadAllTextAsync(baselinePath))
+            ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (baselines.TryGetValue(fileName, out var approvedHash) && !string.IsNullOrWhiteSpace(approvedHash))
+            sha256.Should().Be(approvedHash.Trim(), $"approved visual baseline {fileName} changed; inspect UX evidence before updating the baseline");
+    }
+
+    private static async Task<string> ComputeSha256Async(string path)
+    {
+        await using var stream = File.OpenRead(path);
+        var hash = await SHA256.HashDataAsync(stream);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }
 
