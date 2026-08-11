@@ -170,11 +170,10 @@ public sealed class UxTestHost : IAsyncLifetime
         if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("UX regression fixture could not authenticate the seeded administrator.");
 
-        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = 15000
-        });
+        var authenticatedResponse = await page.GotoAsync(BaseUrl + "/", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        if (authenticatedResponse is null || authenticatedResponse.Status >= 400 || page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"UX regression fixture did not retain an authenticated application session. URL: {page.Url}; status: {authenticatedResponse?.Status}.");
+
         await context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = _storageStatePath });
     }
 
