@@ -1,0 +1,31 @@
+<div class="app-page app-page--@NormalizedWidth app-page--@NormalizedDensity @Class"
+     data-page-key="@PageKey"
+     data-page-width="@NormalizedWidth"
+     data-page-density="@NormalizedDensity"
+     aria-label="@AriaLabel">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string PageKey { get; set; } = string.Empty;
+    [Parameter] public string Width { get; set; } = "wide";
+    [Parameter] public string Density { get; set; } = "comfortable";
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string NormalizedWidth => Width.Trim().ToLowerInvariant() switch
+    {
+        "narrow" => "narrow",
+        "standard" => "standard",
+        "fluid" => "fluid",
+        _ => "wide"
+    };
+
+    private string NormalizedDensity => Density.Trim().ToLowerInvariant() switch
+    {
+        "compact" => "compact",
+        "spacious" => "spacious",
+        _ => "comfortable"
+    };
+}
