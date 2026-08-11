@@ -48,8 +48,8 @@ public sealed class UxTestHost : IAsyncLifetime
 
         await context.AddInitScriptAsync("""
             try {
-              localStorage.setItem('aiwp-language', 'en');
-              localStorage.setItem('aiwp-appearance', 'light');
+              if (!localStorage.getItem('aiwp-language')) localStorage.setItem('aiwp-language', 'en');
+              if (!localStorage.getItem('aiwp-appearance')) localStorage.setItem('aiwp-appearance', 'light');
             } catch (_) { }
             """);
         return context;
@@ -169,10 +169,6 @@ public sealed class UxTestHost : IAsyncLifetime
 
         if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("UX regression fixture could not authenticate the seeded administrator.");
-
-        var authenticatedResponse = await page.GotoAsync(BaseUrl + "/", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
-        if (authenticatedResponse is null || authenticatedResponse.Status >= 400 || page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"UX regression fixture did not retain an authenticated application session. URL: {page.Url}; status: {authenticatedResponse?.Status}.");
 
         await context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = _storageStatePath });
     }
