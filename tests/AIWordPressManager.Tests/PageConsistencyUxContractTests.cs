@@ -5,14 +5,15 @@ namespace AIWordPressManager.Tests;
 public sealed class PageConsistencyUxContractTests
 {
     [Fact]
-    public void App_page_defines_width_density_identity_and_optional_bidi_scope_without_nesting_main()
+    public void App_page_defines_width_density_identity_and_optional_metadata_passthrough_without_nesting_main()
     {
         var component = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Shared/AppPage.razor");
         component.Should().Contain("class=\"app-page app-page--@NormalizedWidth app-page--@NormalizedDensity @Class\"");
         component.Should().Contain("data-page-key=\"@PageKey\"");
         component.Should().Contain("data-page-width=\"@NormalizedWidth\"");
         component.Should().Contain("data-page-density=\"@NormalizedDensity\"");
-        component.Should().Contain("data-bidi-scope=\"@BidiScope\"");
+        component.Should().Contain("@attributes=\"AdditionalAttributes\"");
+        component.Should().Contain("CaptureUnmatchedValues = true");
         component.Should().Contain("\"narrow\" => \"narrow\"");
         component.Should().Contain("\"standard\" => \"standard\"");
         component.Should().Contain("\"fluid\" => \"fluid\"");
@@ -113,7 +114,7 @@ public sealed class PageConsistencyUxContractTests
     public void Build_release_page_uses_shared_page_toolbar_and_preserves_ux008_bidi_contract()
     {
         var page = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor");
-        page.Should().Contain("<AppPage PageKey=\"build-release\" BidiScope=\"build-info\"");
+        page.Should().Contain("<AppPage PageKey=\"build-release\" data-bidi-scope=\"build-info\"");
         page.Should().Contain("<AppToolbar Class=\"build-info-hero\"");
         page.Should().Contain("<Meta>");
         page.Should().Contain("<AppBidiText Mode=\"version\">v@(Build.Version)</AppBidiText>");
