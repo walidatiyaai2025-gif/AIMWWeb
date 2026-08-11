@@ -170,6 +170,10 @@ public sealed class UxTestHost : IAsyncLifetime
         if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("UX regression fixture could not authenticate the seeded administrator.");
 
+        var cookies = await context.CookiesAsync();
+        if (!cookies.Any(cookie => string.Equals(cookie.Name, "AIWM.Auth", StringComparison.Ordinal)))
+            throw new InvalidOperationException("UX regression fixture completed login navigation without receiving the AIWM.Auth cookie.");
+
         await context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = _storageStatePath });
     }
 
