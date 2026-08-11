@@ -2,8 +2,8 @@
      data-page-key="@PageKey"
      data-page-width="@NormalizedWidth"
      data-page-density="@NormalizedDensity"
-     data-bidi-scope="@BidiScope"
-     aria-label="@AriaLabel">
+     aria-label="@AriaLabel"
+     @attributes="AdditionalAttributes">
     @ChildContent
 </div>
 
@@ -11,10 +11,10 @@
     [Parameter] public string PageKey { get; set; } = string.Empty;
     [Parameter] public string Width { get; set; } = "wide";
     [Parameter] public string Density { get; set; } = "comfortable";
-    [Parameter] public string? BidiScope { get; set; }
     [Parameter] public string? AriaLabel { get; set; }
     [Parameter] public string Class { get; set; } = string.Empty;
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string NormalizedWidth => Width.Trim().ToLowerInvariant() switch
     {
