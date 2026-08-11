@@ -29,6 +29,8 @@ else
 @code {
     [Parameter] public string? Text { get; set; }
     [Parameter] public string? Icon { get; set; }
+    [Parameter] public string IconIntent { get; set; } = "neutral";
+    [Parameter] public bool? MirrorIconInRtl { get; set; }
     [Parameter] public string? Href { get; set; }
     [Parameter] public string? Target { get; set; }
     [Parameter] public string Type { get; set; } = "button";
@@ -48,6 +50,16 @@ else
     private string? EffectiveHref => Disabled ? null : Href;
     private string? DisabledTabIndex => Disabled ? "-1" : null;
     private string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? Text : AriaLabel;
+    private string NormalizedIconIntent => IconIntent.Trim().ToLowerInvariant() switch
+    {
+        "back" or "previous" => "back",
+        "forward" or "next" => "forward",
+        "enter" => "enter",
+        "external" => "external",
+        _ => "neutral"
+    };
+    private bool ShouldMirrorIcon => MirrorIconInRtl ?? NormalizedIconIntent is "back" or "forward" or "enter";
+    private string IconClass => $"app-button__icon app-directional-icon{(ShouldMirrorIcon ? " app-directional-icon--mirror-rtl" : string.Empty)}";
 
     private RenderFragment ButtonContent => builder =>
     {
@@ -62,7 +74,8 @@ else
         else if (!string.IsNullOrWhiteSpace(Icon))
         {
             builder.OpenElement(sequence++, "span");
-            builder.AddAttribute(sequence++, "class", "app-button__icon");
+            builder.AddAttribute(sequence++, "class", IconClass);
+            builder.AddAttribute(sequence++, "data-directional-icon", NormalizedIconIntent);
             builder.AddAttribute(sequence++, "aria-hidden", "true");
             builder.AddContent(sequence++, Icon);
             builder.CloseElement();

@@ -1,0 +1,21 @@
+<span class="app-directional-icon @(MirrorInRtl ? "app-directional-icon--mirror-rtl" : string.Empty) @Class"
+      data-directional-icon="@NormalizedIntent"
+      aria-hidden="true">@Icon</span>
+
+@code {
+    [Parameter, EditorRequired] public string Icon { get; set; } = string.Empty;
+    [Parameter] public string Intent { get; set; } = "neutral";
+    [Parameter] public bool? Mirror { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
+
+    private string NormalizedIntent => Intent.Trim().ToLowerInvariant() switch
+    {
+        "back" or "previous" => "back",
+        "forward" or "next" => "forward",
+        "enter" => "enter",
+        "external" => "external",
+        _ => "neutral"
+    };
+
+    private bool MirrorInRtl => Mirror ?? NormalizedIntent is "back" or "forward" or "enter";
+}
