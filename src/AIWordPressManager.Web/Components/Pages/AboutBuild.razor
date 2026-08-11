@@ -8,13 +8,13 @@
 
 <PageTitle>@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Build & Release Notes")</PageTitle>
 
-<AppPage PageKey="build-release" Class="build-info-page" Width="standard" AriaLabel="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Build and release notes")">
+<AppPage PageKey="build-release" BidiScope="build-info" Class="build-info-page" Width="standard" AriaLabel="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Build and release notes")">
     <AppToolbar Class="build-info-hero"
                 Eyebrow="@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")"
                 Title="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Version & Release Notes")"
                 Subtitle="@(L.IsArabic ? "بيانات البناء الفعلية مع تاريخ الإصدارات من مصدر واحد داخل المشروع." : "Live build metadata with version history from a single source in the project.")">
         <Meta>
-            <AppBadge Tone="accent" BidiMode="version" Text="@($"v{Build.Version}")" />
+            <strong class="build-version-badge"><AppBidiText Mode="version">v@(Build.Version)</AppBidiText></strong>
             <AppBidiText Mode="technical">@Build.Branch</AppBidiText>
             <AppBidiText Mode="technical">@Build.Commit</AppBidiText>
         </Meta>
