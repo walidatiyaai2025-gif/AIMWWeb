@@ -8,13 +8,13 @@
 
 <PageTitle>@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Build & Release Notes")</PageTitle>
 
-<div class="build-info-page">
+<div class="build-info-page" data-bidi-scope="build-info">
     <AppCard Class="build-info-hero"
              Eyebrow="@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")"
              Title="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Version & Release Notes")"
              Subtitle="@(L.IsArabic ? "بيانات البناء الفعلية مع تاريخ الإصدارات من مصدر واحد داخل المشروع." : "Live build metadata with version history from a single source in the project.")">
         <Header>
-            <strong class="build-version-badge">v@(Build.Version)</strong>
+            <strong class="build-version-badge"><AppBidiText Mode="version">v@(Build.Version)</AppBidiText></strong>
         </Header>
         <ChildContent>
             <div class="d-flex gap-2 flex-wrap">
@@ -25,18 +25,18 @@
     </AppCard>
 
     <section class="build-info-grid">
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong>@Build.Version</strong></AppCard>
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong>@Build.Branch</strong></AppCard>
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong>@Build.Commit</strong></AppCard>
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong>@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong><AppBidiText Mode="version">@Build.Version</AppBidiText></strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong><AppBidiText Mode="technical">@Build.Branch</AppBidiText></strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong><AppBidiText Mode="technical">@Build.Commit</AppBidiText></strong></AppCard>
+        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong><AppBidiText Mode="date">@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText></strong></AppCard>
     </section>
 
     @if (CurrentRelease is not null)
     {
         <AppCard Class="build-info-details" Title="@(L.IsArabic ? "ما الجديد في هذه النسخة" : "What is new in this release")">
             <div class="d-flex justify-content-between gap-3 flex-wrap">
-                <div><strong>@CurrentRelease.Title</strong><small style="display:block">@(CurrentRelease.Date?.ToString("yyyy-MM-dd") ?? "—")</small></div>
-                <span class="settings-badge success">v@(CurrentRelease.Version)</span>
+                <div><strong>@CurrentRelease.Title</strong><small style="display:block"><AppBidiText Mode="date">@(CurrentRelease.Date?.ToString("yyyy-MM-dd") ?? "—")</AppBidiText></small></div>
+                <span class="settings-badge success"><AppBidiText Mode="version">v@(CurrentRelease.Version)</AppBidiText></span>
             </div>
             <ul style="margin:1rem 0 0;display:grid;gap:.55rem">
                 @foreach (var change in CurrentRelease.Changes)
@@ -58,7 +58,7 @@
                 @foreach (var release in Releases)
                 {
                     <details open="@(release.Version == Build.Version)">
-                        <summary style="cursor:pointer;font-weight:700">v@(release.Version) · @release.Title · @(release.Date?.ToString("yyyy-MM-dd") ?? "—")</summary>
+                        <summary style="cursor:pointer;font-weight:700"><AppBidiText Mode="version">v@(release.Version)</AppBidiText> · @release.Title · <AppBidiText Mode="date">@(release.Date?.ToString("yyyy-MM-dd") ?? "—")</AppBidiText></summary>
                         <ul style="margin:.8rem 0 0;display:grid;gap:.45rem">
                             @foreach (var change in release.Changes)
                             {
@@ -72,10 +72,10 @@
     </AppCard>
 
     <AppCard Class="build-info-details" Title="@(L.IsArabic ? "التفاصيل التقنية" : "Technical details")">
-        <div><span>@(L.IsArabic ? "اسم التجميعة" : "Assembly")</span><code>@Build.AssemblyName</code></div>
-        <div><span>@(L.IsArabic ? "الإصدار التفصيلي" : "Informational version")</span><code>@Build.InformationalVersion</code></div>
-        <div><span>API</span><code>/api/build</code></div>
-        <div><span>@(L.IsArabic ? "مصدر سجل الإصدارات" : "Release notes source")</span><code>RELEASE_NOTES.md</code></div>
+        <div><span>@(L.IsArabic ? "اسم التجميعة" : "Assembly")</span><code><AppBidiText Mode="technical">@Build.AssemblyName</AppBidiText></code></div>
+        <div><span>@(L.IsArabic ? "الإصدار التفصيلي" : "Informational version")</span><code><AppBidiText Mode="technical">@Build.InformationalVersion</AppBidiText></code></div>
+        <div><span>API</span><code><AppBidiText Mode="path">/api/build</AppBidiText></code></div>
+        <div><span>@(L.IsArabic ? "مصدر سجل الإصدارات" : "Release notes source")</span><code><AppBidiText Mode="path">RELEASE_NOTES.md</AppBidiText></code></div>
     </AppCard>
 </div>
 
