@@ -8,7 +8,7 @@
 
 <PageTitle>@(L.IsArabic ? "حسابي" : "My Account")</PageTitle>
 
-<div class="settings-page">
+<AppPage PageKey="account-profile" Class="settings-page" Width="standard">
     <AppToolbar
         Eyebrow="@(L.IsArabic ? "إعدادات الحساب" : "ACCOUNT SETTINGS")"
         Title="@(L.IsArabic ? "حسابي" : "My Account")"
@@ -24,13 +24,15 @@
     }
     else if (!string.IsNullOrWhiteSpace(_error))
     {
-        <AppCard>
-            <AppEmptyState Icon="!" Title="@(L.IsArabic ? "تعذر تحميل الحساب" : "Account could not be loaded")" Description="@_error" />
+        <AppCard Tone="danger">
+            <ChildContent>
+                <AppEmptyState Icon="!" Title="@(L.IsArabic ? "تعذر تحميل الحساب" : "Account could not be loaded")" Description="@_error" />
+            </ChildContent>
         </AppCard>
     }
     else if (_profile is not null)
     {
-        <section class="app-stat-grid">
+        <section class="app-stat-grid" aria-label="@(L.IsArabic ? "ملخص الحساب" : "Account summary")">
             <AppStatCard Icon="◎" Label="@(L.IsArabic ? "اسم المستخدم" : "Username")" Value="@_profile.UserName" Description="@_profile.UserId.ToString()" Tone="accent" />
             <AppStatCard Icon="◆" Label="@(L.IsArabic ? "الدور" : "Role")" Value="@_profile.Role" Description="@(_profile.IsActive ? (L.IsArabic ? "الحساب نشط" : "Account active") : (L.IsArabic ? "الحساب موقوف" : "Account inactive"))" Tone="info" />
             <AppStatCard Icon="◉" Label="@(L.IsArabic ? "المواقع" : "Sites")" Value="@_profile.SiteCount.ToString()" Description="@(L.IsArabic ? "مواقع WordPress المملوكة للحساب" : "WordPress sites owned by this account")" Tone="success" />
@@ -39,81 +41,84 @@
 
         <AppCard Eyebrow="@(L.IsArabic ? "الأمان" : "SECURITY")"
                  Title="@(L.IsArabic ? "تغيير كلمة المرور" : "Change password")"
-                 Subtitle="@(L.IsArabic ? "أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة قوية." : "Enter your current password, then choose a strong new password.")">
-            <div data-form-ux aria-busy="@_working">
-                <AppFormStatus Tone="@(_isError ? "error" : "success")"
-                               Title="@(_isError ? (L.IsArabic ? "تعذر تغيير كلمة المرور" : "Password change failed") : (L.IsArabic ? "تم الحفظ" : "Saved"))"
-                               Message="@_message"
-                               RecoveryText="@(_isError ? (L.IsArabic ? "راجع الحقول أدناه وحاول مرة أخرى." : "Review the fields below and try again.") : null)" />
+                 Subtitle="@(L.IsArabic ? "أدخل كلمة المرور الحالية ثم اختر كلمة مرور جديدة قوية." : "Enter your current password, then choose a strong new password.")"
+                 HeadingLevel="3">
+            <ChildContent>
+                <div data-form-ux aria-busy="@_working">
+                    <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                                   Title="@(_isError ? (L.IsArabic ? "تعذر تغيير كلمة المرور" : "Password change failed") : (L.IsArabic ? "تم الحفظ" : "Saved"))"
+                                   Message="@_message"
+                                   RecoveryText="@(_isError ? (L.IsArabic ? "راجع الحقول أدناه وحاول مرة أخرى." : "Review the fields below and try again.") : null)" />
 
-                <AppValidationSummary Messages="@_validationMessages"
-                                      Title="@(L.IsArabic ? "راجع بيانات كلمة المرور" : "Review the password fields")"
-                                      Description="@(L.IsArabic ? "صحح الحقول المحددة قبل إعادة المحاولة." : "Correct the highlighted fields before trying again.")" />
+                    <AppValidationSummary Messages="@_validationMessages"
+                                          Title="@(L.IsArabic ? "راجع بيانات كلمة المرور" : "Review the password fields")"
+                                          Description="@(L.IsArabic ? "صحح الحقول المحددة قبل إعادة المحاولة." : "Correct the highlighted fields before trying again.")" />
 
-                <div class="form-ux-grid">
-                    <AppFormField InputId="current-password"
-                                  Label="@(L.IsArabic ? "كلمة المرور الحالية" : "Current password")"
-                                  Required="true"
-                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
-                                  HelperText="@(L.IsArabic ? "أدخل كلمة المرور المستخدمة حاليًا لهذا الحساب." : "Enter the password currently used for this account.")"
-                                  Invalid="@HasValidationError(CurrentPasswordRequiredMessage)"
-                                  ErrorText="@(HasValidationError(CurrentPasswordRequiredMessage) ? CurrentPasswordRequiredMessage : null)">
-                        <InputText id="current-password"
-                                   @bind-Value="_currentPassword"
-                                   type="password"
-                                   autocomplete="current-password"
-                                   disabled="@_working"
-                                   aria-invalid="@HasValidationError(CurrentPasswordRequiredMessage)"
-                                   aria-describedby="current-password-help current-password-error" />
-                    </AppFormField>
+                    <div class="form-ux-grid">
+                        <AppFormField InputId="current-password"
+                                      Label="@(L.IsArabic ? "كلمة المرور الحالية" : "Current password")"
+                                      Required="true"
+                                      RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                      HelperText="@(L.IsArabic ? "أدخل كلمة المرور المستخدمة حاليًا لهذا الحساب." : "Enter the password currently used for this account.")"
+                                      Invalid="@HasValidationError(CurrentPasswordRequiredMessage)"
+                                      ErrorText="@(HasValidationError(CurrentPasswordRequiredMessage) ? CurrentPasswordRequiredMessage : null)">
+                            <InputText id="current-password"
+                                       @bind-Value="_currentPassword"
+                                       type="password"
+                                       autocomplete="current-password"
+                                       disabled="@_working"
+                                       aria-invalid="@HasValidationError(CurrentPasswordRequiredMessage)"
+                                       aria-describedby="current-password-help current-password-error" />
+                        </AppFormField>
 
-                    <AppFormField InputId="new-password"
-                                  Label="@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")"
-                                  Required="true"
-                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
-                                  HelperText="@(L.IsArabic ? "8 أحرف على الأقل مع حرف كبير وصغير ورقم." : "At least 8 characters with uppercase, lowercase, and a number.")"
-                                  Invalid="@NewPasswordInvalid"
-                                  ErrorText="@NewPasswordError">
-                        <InputText id="new-password"
-                                   @bind-Value="_newPassword"
-                                   type="password"
-                                   autocomplete="new-password"
-                                   disabled="@_working"
-                                   aria-invalid="@NewPasswordInvalid"
-                                   aria-describedby="new-password-help new-password-error" />
-                    </AppFormField>
+                        <AppFormField InputId="new-password"
+                                      Label="@(L.IsArabic ? "كلمة المرور الجديدة" : "New password")"
+                                      Required="true"
+                                      RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                      HelperText="@(L.IsArabic ? "8 أحرف على الأقل مع حرف كبير وصغير ورقم." : "At least 8 characters with uppercase, lowercase, and a number.")"
+                                      Invalid="@NewPasswordInvalid"
+                                      ErrorText="@NewPasswordError">
+                            <InputText id="new-password"
+                                       @bind-Value="_newPassword"
+                                       type="password"
+                                       autocomplete="new-password"
+                                       disabled="@_working"
+                                       aria-invalid="@NewPasswordInvalid"
+                                       aria-describedby="new-password-help new-password-error" />
+                        </AppFormField>
 
-                    <AppFormField InputId="confirm-password"
-                                  Label="@(L.IsArabic ? "تأكيد كلمة المرور الجديدة" : "Confirm new password")"
-                                  Required="true"
-                                  RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
-                                  HelperText="@(L.IsArabic ? "أعد كتابة كلمة المرور الجديدة بالضبط." : "Re-enter the new password exactly.")"
-                                  Invalid="@ConfirmPasswordInvalid"
-                                  ErrorText="@(ConfirmPasswordInvalid ? ConfirmationMessage : null)"
-                                  Class="form-ux-full">
-                        <InputText id="confirm-password"
-                                   @bind-Value="_confirmPassword"
-                                   type="password"
-                                   autocomplete="new-password"
-                                   disabled="@_working"
-                                   aria-invalid="@ConfirmPasswordInvalid"
-                                   aria-describedby="confirm-password-help confirm-password-error" />
-                    </AppFormField>
+                        <AppFormField InputId="confirm-password"
+                                      Label="@(L.IsArabic ? "تأكيد كلمة المرور الجديدة" : "Confirm new password")"
+                                      Required="true"
+                                      RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                      HelperText="@(L.IsArabic ? "أعد كتابة كلمة المرور الجديدة بالضبط." : "Re-enter the new password exactly.")"
+                                      Invalid="@ConfirmPasswordInvalid"
+                                      ErrorText="@(ConfirmPasswordInvalid ? ConfirmationMessage : null)"
+                                      Class="form-ux-full">
+                            <InputText id="confirm-password"
+                                       @bind-Value="_confirmPassword"
+                                       type="password"
+                                       autocomplete="new-password"
+                                       disabled="@_working"
+                                       aria-invalid="@ConfirmPasswordInvalid"
+                                       aria-describedby="confirm-password-help confirm-password-error" />
+                        </AppFormField>
+                    </div>
+
+                    <AppFormActions SaveText="@(L.IsArabic ? "تغيير كلمة المرور" : "Change password")"
+                                    SavingText="@(L.IsArabic ? "جارٍ التغيير" : "Changing")"
+                                    SaveAriaLabel="@(L.IsArabic ? "حفظ كلمة المرور الجديدة" : "Save new password")"
+                                    SaveIcon="🔒"
+                                    Busy="@_working"
+                                    Disabled="@(!PasswordFormHasValues)"
+                                    ShowCancel="false"
+                                    Hint="@(L.IsArabic ? "لن يتم حفظ كلمة المرور إلا بعد اجتياز جميع قواعد الأمان." : "The password is saved only after all security rules pass.")"
+                                    OnSave="ChangePasswordAsync" />
                 </div>
-
-                <AppFormActions SaveText="@(L.IsArabic ? "تغيير كلمة المرور" : "Change password")"
-                                SavingText="@(L.IsArabic ? "جارٍ التغيير" : "Changing")"
-                                SaveAriaLabel="@(L.IsArabic ? "حفظ كلمة المرور الجديدة" : "Save new password")"
-                                SaveIcon="🔒"
-                                Busy="@_working"
-                                Disabled="@(!PasswordFormHasValues)"
-                                ShowCancel="false"
-                                Hint="@(L.IsArabic ? "لن يتم حفظ كلمة المرور إلا بعد اجتياز جميع قواعد الأمان." : "The password is saved only after all security rules pass.")"
-                                OnSave="ChangePasswordAsync" />
-            </div>
+            </ChildContent>
         </AppCard>
     }
-</div>
+</AppPage>
 
 @code {
     private AccountProfileService AccountService => ActivatorUtilities.CreateInstance<AccountProfileService>(Services);
