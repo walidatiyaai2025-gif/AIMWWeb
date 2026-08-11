@@ -5,17 +5,33 @@ namespace AIWordPressManager.Tests;
 public sealed class RtlLtrParityContractTests
 {
     [Fact]
-    public void Host_exposes_direction_metadata_and_loads_parity_layers_last()
+    public void Host_exposes_direction_metadata_and_loads_bootstrap_and_parity_layers_in_order()
     {
         var host = ReadRepositoryFile("src/AIWordPressManager.Web/Components/App.razor");
         host.Should().Contain("data-app-language=\"en\"");
         host.Should().Contain("data-app-direction=\"ltr\"");
+        var bootstrap = host.IndexOf("js/language-bootstrap.js", StringComparison.Ordinal);
+        var firstStylesheet = host.IndexOf("css/app.css", StringComparison.Ordinal);
         var feedback = host.IndexOf("css/feedback-states.css", StringComparison.Ordinal);
         var parity = host.IndexOf("css/rtl-ltr-parity.css", StringComparison.Ordinal);
         var language = host.IndexOf("js/app-language.js", StringComparison.Ordinal);
         var bidi = host.IndexOf("js/bidi-runtime.js", StringComparison.Ordinal);
+        bootstrap.Should().BeGreaterThanOrEqualTo(0);
+        firstStylesheet.Should().BeGreaterThan(bootstrap);
         parity.Should().BeGreaterThan(feedback);
         bidi.Should().BeGreaterThan(language);
+    }
+
+    [Fact]
+    public void Prepaint_bootstrap_applies_saved_language_before_body_rendering()
+    {
+        var script = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/js/language-bootstrap.js");
+        script.Should().Contain("localStorage.getItem('aiwp-language') === 'ar'");
+        script.Should().Contain("root.lang = language");
+        script.Should().Contain("root.dir = direction");
+        script.Should().Contain("root.dataset.appLanguage = language");
+        script.Should().Contain("root.dataset.appDirection = direction");
+        script.Should().Contain("server-rendered English/LTR defaults");
     }
 
     [Fact]
@@ -81,7 +97,7 @@ public sealed class RtlLtrParityContractTests
         dialog.Should().Contain("data-bidi-scope=\"dialog\"");
         dialog.Should().Contain("\"auto\" => \"auto\"");
         badge.Should().Contain("[Parameter] public string? BidiMode");
-        badge.Should().Contain("<AppBidiText Mode=\"@BidiMode\" Text=\"@Text\" />");
+        badge.Should().Contain("<AppBidiText Mode=\"@(BidiMode ?? \"auto\")\" Text=\"@Text\" />");
         badge.Should().Contain("data-bidi-mode=\"@EffectiveBidiMode\"");
     }
 
@@ -97,6 +113,7 @@ public sealed class RtlLtrParityContractTests
         css.Should().Contain(".app-dialog__close");
         css.Should().Contain("input[type=\"email\"]");
         css.Should().Contain("input[type=\"number\"]");
+        css.Should().Contain(".content > ul");
     }
 
     [Fact]
