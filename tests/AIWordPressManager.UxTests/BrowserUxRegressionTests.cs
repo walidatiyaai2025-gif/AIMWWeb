@@ -37,7 +37,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         response.Should().NotBeNull();
         response!.Status.Should().BeLessThan(400);
-        await page.Locator("body").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 15000 });
+        await page.Locator("body").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 10000 });
         await UxAudit.PrepareAsync(page);
         pageErrors.Should().BeEmpty($"public route {route.Path} must not throw browser page errors");
 
@@ -55,15 +55,11 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         page.PageError += (_, message) => pageErrors.Add(message);
 
         var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
-        response.Should().NotBeNull();
-        response!.Status.Should().BeLessThan(400);
-        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        AssertAuthenticatedRoute(page, response, route.Path);
+        await WaitForApplicationShellAsync(page);
         await UxAudit.PrepareAsync(page);
 
-        page.Url.Should().NotContain("/login");
-        page.Url.Should().NotContain("/setup");
         pageErrors.Should().BeEmpty($"authenticated route {route.Path} must not throw browser page errors");
-
         var issues = await UxAudit.AccessibilityIssuesAsync(page, requireApplicationShell: true);
         issues.Should().BeEmpty($"authenticated route {route.Path} must pass the browser accessibility smoke audit");
     }
@@ -74,8 +70,9 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
     {
         await using var context = await host.CreateContextAsync(viewport);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
-        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+        AssertAuthenticatedRoute(page, response, route.Path);
+        await WaitForApplicationShellAsync(page);
         await UxAudit.PrepareAsync(page);
 
         var metrics = await UxAudit.CaptureVisualMetricsAsync(page);
@@ -90,11 +87,13 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var viewport = UxRouteCatalog.Viewports[^1];
         await using var context = await host.CreateContextAsync(viewport);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
-        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+        AssertAuthenticatedRoute(page, response, route.Path);
+        await WaitForApplicationShellAsync(page);
         await page.EvaluateAsync("() => localStorage.setItem('aiwp-language', 'ar')");
         await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.Commit });
-        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        AssertAuthenticatedLocation(page, route.Path);
+        await WaitForApplicationShellAsync(page);
         await UxAudit.PrepareAsync(page);
 
         var metrics = await UxAudit.CaptureVisualMetricsAsync(page);
@@ -109,12 +108,33 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
     {
         await using var context = await host.CreateContextAsync(UxRouteCatalog.Viewports[^1]);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(host.BaseUrl + "/", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
-        await page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
+        var response = await page.GotoAsync(host.BaseUrl + "/", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+        AssertAuthenticatedRoute(page, response, "/");
+        await WaitForApplicationShellAsync(page);
         await page.Keyboard.PressAsync("Tab");
         var active = await page.EvaluateAsync<string>("() => document.activeElement?.tagName?.toLowerCase() || ''");
         active.Should().NotBe("body");
         active.Should().NotBe("html");
         active.Should().NotBeNullOrWhiteSpace();
     }
+
+    private static void AssertAuthenticatedRoute(IPage page, IResponse? response, string routePath)
+    {
+        response.Should().NotBeNull($"authenticated route {routePath} must produce an HTTP response");
+        response!.Status.Should().BeLessThan(400, $"authenticated route {routePath} must not return an HTTP error");
+        AssertAuthenticatedLocation(page, routePath);
+    }
+
+    private static void AssertAuthenticatedLocation(IPage page, string routePath)
+    {
+        page.Url.Should().NotContain("/login", $"authenticated route {routePath} must retain the seeded administrator session");
+        page.Url.Should().NotContain("/setup", $"authenticated route {routePath} must use the isolated completed database setup");
+    }
+
+    private static Task WaitForApplicationShellAsync(IPage page) =>
+        page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 10000
+        });
 }
