@@ -7,7 +7,7 @@
 
 <PageTitle>@L["Dashboard"]</PageTitle>
 
-<div class="dashboard-v2">
+<AppPage PageKey="dashboard" Class="dashboard-v2" Width="wide">
     <AppToolbar Eyebrow="@(L.IsArabic ? "مركز القيادة" : "COMMAND CENTER")"
                 Title="@(L.IsArabic ? "لوحة تحكم AI WordPress Manager" : "AI WordPress Manager Dashboard")"
                 Subtitle="@(L.IsArabic ? "بيانات مباشرة من SQLite ومركز التنفيذ، بتحديث تلقائي كل 15 ثانية." : "Live SQLite and execution-center data, refreshed every 15 seconds.")">
@@ -25,78 +25,104 @@
     }
     else if (!string.IsNullOrWhiteSpace(_error))
     {
-        <AppCard>
-            <AppEmptyState Icon="!"
-                           Title="@(L.IsArabic ? "تعذر تحميل لوحة التحكم" : "Dashboard could not be loaded")"
-                           Description="@_error">
-                <Actions>
-                    <AppButton Text="@(L.IsArabic ? "إعادة المحاولة" : "Try again")" Variant="primary" OnClick="RefreshClickedAsync" />
-                </Actions>
-            </AppEmptyState>
+        <AppCard Tone="danger">
+            <ChildContent>
+                <AppEmptyState Icon="!"
+                               Title="@(L.IsArabic ? "تعذر تحميل لوحة التحكم" : "Dashboard could not be loaded")"
+                               Description="@_error">
+                    <Actions>
+                        <AppButton Text="@(L.IsArabic ? "إعادة المحاولة" : "Try again")" Variant="primary" OnClick="RefreshClickedAsync" />
+                    </Actions>
+                </AppEmptyState>
+            </ChildContent>
         </AppCard>
     }
     else if (_data is not null)
     {
-        <section class="app-stat-grid">
+        <section class="app-stat-grid" aria-label="@(L.IsArabic ? "ملخص لوحة التحكم" : "Dashboard summary")">
             <AppStatCard Icon="◉" Label="@L["TotalSites"]" Value="@(_data.Sites.TotalSites.ToString())" Description="@($"{_data.Sites.ConnectedSites} {L["Connected"]}")" Tone="accent" />
             <AppStatCard Icon="▤" Label="@(L.IsArabic ? "المحتوى المحلي" : "Cached content")" Value="@((_data.Posts + _data.Pages).ToString())" Description="@($"{_data.Posts} {(L.IsArabic ? "مقال" : "posts")} · {_data.Pages} {(L.IsArabic ? "صفحة" : "pages")}")" Tone="success" />
             <AppStatCard Icon="▶" Label="@(L.IsArabic ? "مهام نشطة" : "Active jobs")" Value="@(_data.ActiveJobs.ToString())" Description="@($"{_data.FailedJobs} {(L.IsArabic ? "فاشلة" : "failed")}")" Tone="warning" />
             <AppStatCard Icon="◷" Label="@L["LastSync"]" Value="@FormatDate(_data.LastSynchronizationAtUtc)" Description="@($"{_data.Media} {(L.IsArabic ? "ملف وسائط" : "media items")}")" Tone="info" ValueClass="dashboard-date" />
         </section>
 
-        <section class="dashboard-main-grid">
+        <section class="dashboard-main-grid" aria-label="@(L.IsArabic ? "تفاصيل لوحة التحكم" : "Dashboard details")">
             <div class="dashboard-column">
-                <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "الحالة المباشرة" : "LIVE STATUS")</span><h2>@(L.IsArabic ? "صحة المنصة" : "Platform health")</h2></div><span class="badge @(_data.HealthScore >= 80 ? "success" : "warning")">@_data.HealthScore%</span></header>
-                    <div class="health-meter"><span style="width:@($"{_data.HealthScore}%")"></span></div>
-                    <div class="health-metrics">
-                        <div><strong>@_data.HealthScore%</strong><small>@(L.IsArabic ? "الصحة العامة" : "Overall health")</small></div>
-                        <div><strong>@_data.Sites.ConnectedSites</strong><small>@(L.IsArabic ? "اتصالات سليمة" : "Healthy connections")</small></div>
-                        <div><strong>@_data.FailedJobs</strong><small>@(L.IsArabic ? "مهام فاشلة" : "Failed jobs")</small></div>
-                    </div>
-                </article>
+                <AppCard Class="dashboard-card"
+                         Eyebrow="@(L.IsArabic ? "الحالة المباشرة" : "LIVE STATUS")"
+                         Title="@(L.IsArabic ? "صحة المنصة" : "Platform health")"
+                         Tone="@(_data.HealthScore >= 80 ? "success" : "warning")">
+                    <Header>
+                        <AppBadge Tone="@(_data.HealthScore >= 80 ? "success" : "warning")" Text="@($"{_data.HealthScore}%")" BidiMode="number" />
+                    </Header>
+                    <ChildContent>
+                        <AppProgressBar Value="@_data.HealthScore"
+                                        Tone="@(_data.HealthScore >= 80 ? "success" : "warning")"
+                                        Label="@(L.IsArabic ? "مؤشر صحة المنصة" : "Platform health score")" />
+                        <div class="health-metrics">
+                            <div><strong>@_data.HealthScore%</strong><small>@(L.IsArabic ? "الصحة العامة" : "Overall health")</small></div>
+                            <div><strong>@_data.Sites.ConnectedSites</strong><small>@(L.IsArabic ? "اتصالات سليمة" : "Healthy connections")</small></div>
+                            <div><strong>@_data.FailedJobs</strong><small>@(L.IsArabic ? "مهام فاشلة" : "Failed jobs")</small></div>
+                        </div>
+                    </ChildContent>
+                </AppCard>
 
-                <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "المحتوى" : "CONTENT")</span><h2>@(L.IsArabic ? "المخزون المحلي" : "Local inventory")</h2></div><a href="/sites">@(L.IsArabic ? "فتح المواقع" : "Open sites")</a></header>
-                    <div class="priority-list">
-                        <div><span class="priority-dot high"></span><div><strong>@(L.IsArabic ? "المقالات" : "Posts")</strong><small>@(L.IsArabic ? "محفوظة في SQLite" : "Cached in SQLite")</small></div><b>@_data.Posts</b></div>
-                        <div><span class="priority-dot medium"></span><div><strong>@(L.IsArabic ? "الصفحات" : "Pages")</strong><small>@(L.IsArabic ? "محفوظة في SQLite" : "Cached in SQLite")</small></div><b>@_data.Pages</b></div>
-                        <div><span class="priority-dot low"></span><div><strong>@(L.IsArabic ? "الوسائط" : "Media")</strong><small>@(L.IsArabic ? "صور وملفات" : "Images and files")</small></div><b>@_data.Media</b></div>
-                    </div>
-                </article>
+                <AppCard Class="dashboard-card"
+                         Eyebrow="@(L.IsArabic ? "المحتوى" : "CONTENT")"
+                         Title="@(L.IsArabic ? "المخزون المحلي" : "Local inventory")">
+                    <Header>
+                        <AppButton Href="/sites" Size="small" Variant="ghost" Text="@(L.IsArabic ? "فتح المواقع" : "Open sites")" />
+                    </Header>
+                    <ChildContent>
+                        <div class="priority-list">
+                            <div><span class="priority-dot high"></span><div><strong>@(L.IsArabic ? "المقالات" : "Posts")</strong><small>@(L.IsArabic ? "محفوظة في SQLite" : "Cached in SQLite")</small></div><b>@_data.Posts</b></div>
+                            <div><span class="priority-dot medium"></span><div><strong>@(L.IsArabic ? "الصفحات" : "Pages")</strong><small>@(L.IsArabic ? "محفوظة في SQLite" : "Cached in SQLite")</small></div><b>@_data.Pages</b></div>
+                            <div><span class="priority-dot low"></span><div><strong>@(L.IsArabic ? "الوسائط" : "Media")</strong><small>@(L.IsArabic ? "صور وملفات" : "Images and files")</small></div><b>@_data.Media</b></div>
+                        </div>
+                    </ChildContent>
+                </AppCard>
             </div>
 
             <div class="dashboard-column">
-                <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "التشغيل" : "OPERATIONS")</span><h2>@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")</h2></div><a href="/module/execution">@(L.IsArabic ? "عرض الكل" : "View all")</a></header>
-                    <div class="job-list">
-                        @if (_data.RecentJobs.Count == 0)
-                        {
-                            <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "لا توجد مهام بعد" : "No jobs yet")</strong><small>@(L.IsArabic ? "ستظهر العمليات الحقيقية هنا تلقائيًا" : "Real operations will appear here automatically")</small></div></div>
-                        }
-                        else
-                        {
-                            @foreach (var job in _data.RecentJobs)
+                <AppCard Class="dashboard-card"
+                         Eyebrow="@(L.IsArabic ? "التشغيل" : "OPERATIONS")"
+                         Title="@(L.IsArabic ? "المهام الأخيرة" : "Recent jobs")">
+                    <Header>
+                        <AppButton Href="/module/execution" Size="small" Variant="ghost" Text="@(L.IsArabic ? "عرض الكل" : "View all")" />
+                    </Header>
+                    <ChildContent>
+                        <div class="job-list">
+                            @if (_data.RecentJobs.Count == 0)
                             {
-                                <div><span class="job-state @JobClass(job.Status)">@JobIcon(job.Status)</span><div><strong>@job.Title</strong><small>@job.SiteName · @TranslateStatus(job.Status) · @job.Progress%</small></div></div>
+                                <div><span class="job-state queued">◷</span><div><strong>@(L.IsArabic ? "لا توجد مهام بعد" : "No jobs yet")</strong><small>@(L.IsArabic ? "ستظهر العمليات الحقيقية هنا تلقائيًا" : "Real operations will appear here automatically")</small></div></div>
                             }
-                        }
-                    </div>
-                </article>
+                            else
+                            {
+                                @foreach (var job in _data.RecentJobs)
+                                {
+                                    <div><span class="job-state @JobClass(job.Status)">@JobIcon(job.Status)</span><div><strong>@job.Title</strong><small>@job.SiteName · @TranslateStatus(job.Status) · @job.Progress%</small></div></div>
+                                }
+                            }
+                        </div>
+                    </ChildContent>
+                </AppCard>
 
-                <article class="panel dashboard-card">
-                    <header><div><span class="workspace-kicker">@(L.IsArabic ? "اختصارات" : "QUICK ACCESS")</span><h2>@(L.IsArabic ? "ابدأ بسرعة" : "Jump back in")</h2></div></header>
-                    <div class="quick-grid">
-                        <a href="/sites"><span>◉</span>@(L.IsArabic ? "المواقع" : "Sites")</a>
-                        <a href="/module/media"><span>▣</span>@(L.IsArabic ? "الوسائط" : "Media")</a>
-                        <a href="/module/execution"><span>▶</span>@(L.IsArabic ? "التنفيذ" : "Execution")</a>
-                        <a href="/system-health"><span>♥</span>@(L.IsArabic ? "صحة النظام" : "System health")</a>
-                    </div>
-                </article>
+                <AppCard Class="dashboard-card"
+                         Eyebrow="@(L.IsArabic ? "اختصارات" : "QUICK ACCESS")"
+                         Title="@(L.IsArabic ? "ابدأ بسرعة" : "Jump back in")">
+                    <ChildContent>
+                        <div class="quick-grid">
+                            <a href="/sites"><span>◉</span>@(L.IsArabic ? "المواقع" : "Sites")</a>
+                            <a href="/module/media"><span>▣</span>@(L.IsArabic ? "الوسائط" : "Media")</a>
+                            <a href="/module/execution"><span>▶</span>@(L.IsArabic ? "التنفيذ" : "Execution")</a>
+                            <a href="/system-health"><span>♥</span>@(L.IsArabic ? "صحة النظام" : "System health")</a>
+                        </div>
+                    </ChildContent>
+                </AppCard>
             </div>
         </section>
     }
-</div>
+</AppPage>
 
 @code {
     private DashboardLiveView? _data;

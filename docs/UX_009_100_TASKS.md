@@ -1,0 +1,108 @@
+# UX-009 — 100 completed code tasks
+
+**Issue:** #54 — Page-by-page visual hierarchy & consistency audit  
+**Scope:** shared page hierarchy, visual rhythm, production adoption, responsive consistency and regression protection.  
+**Compatibility:** presentation/component composition only; database schema, tenant ownership, authentication, API contracts, AI routing, approval semantics and persistence behavior remain authoritative and unchanged.
+
+- [x] 001 Add AppPage as the shared production-page composition wrapper.
+- [x] 002 Expose a stable PageKey data contract on AppPage for page-level auditing.
+- [x] 003 Expose narrow page width mode on AppPage.
+- [x] 004 Expose standard page width mode on AppPage.
+- [x] 005 Expose wide page width mode on AppPage.
+- [x] 006 Expose fluid page width mode on AppPage.
+- [x] 007 Expose compact page density mode on AppPage.
+- [x] 008 Expose comfortable page density mode on AppPage.
+- [x] 009 Expose spacious page density mode on AppPage.
+- [x] 010 Preserve optional bidi-scope metadata through AppPage so UX-008 remains authoritative.
+- [x] 011 Change AppToolbar default heading level from page h1 to section h2 under the shell h1.
+- [x] 012 Allow AppToolbar consumers to render an h3.
+- [x] 013 Allow AppToolbar consumers to render an h4.
+- [x] 014 Give AppToolbar generated title IDs for programmatic labelling.
+- [x] 015 Associate AppToolbar section semantics with its title using aria-labelledby.
+- [x] 016 Associate AppToolbar section semantics with its subtitle using aria-describedby.
+- [x] 017 Preserve explicit aria-label fallback when a toolbar has no title.
+- [x] 018 Add neutral visual tone to AppToolbar.
+- [x] 019 Add reusable Meta content region to AppToolbar for compact build/status context.
+- [x] 020 Add compact density to AppToolbar.
+- [x] 021 Add spacious density to AppToolbar.
+- [x] 022 Expose toolbar tone/density/heading metadata for regression inspection.
+- [x] 023 Change AppCard default heading hierarchy to h3.
+- [x] 024 Allow AppCard h2 hierarchy for exceptional top-level content sections.
+- [x] 025 Give AppCard generated title IDs.
+- [x] 026 Give AppCard generated subtitle IDs.
+- [x] 027 Associate AppCard with its title using aria-labelledby.
+- [x] 028 Associate AppCard with its subtitle using aria-describedby.
+- [x] 029 Add neutral/accent/success/warning/danger/info tone normalization to AppCard.
+- [x] 030 Add compact card density.
+- [x] 031 Add spacious card density.
+- [x] 032 Expose AppCard heading/tone/density metadata.
+- [x] 033 Preserve AppCard Header/Footer/ChildContent source compatibility.
+- [x] 034 Change AppSection default heading hierarchy to h3.
+- [x] 035 Allow AppSection h2/h4 hierarchy when consumers explicitly opt in.
+- [x] 036 Give AppSection generated title and subtitle relationships.
+- [x] 037 Add normalized semantic tones to AppSection.
+- [x] 038 Add compact and spacious density modes to AppSection.
+- [x] 039 Preserve AppSection Header/Actions alias compatibility.
+- [x] 040 Add optional BidiMode rendering to AppStatCard values.
+- [x] 041 Add accessible fallback naming to AppStatCard from label and value.
+- [x] 042 Normalize AppStatCard semantic tones instead of passing arbitrary tone classes.
+- [x] 043 Add compact AppStatCard density.
+- [x] 044 Add spacious AppStatCard density.
+- [x] 045 Add AppStatCard Meta region for secondary operational context.
+- [x] 046 Expose AppStatCard tone/density data metadata.
+- [x] 047 Add page gap tokens for compact/comfortable/spacious composition.
+- [x] 048 Add narrow/standard/wide page max-width tokens.
+- [x] 049 Contain page children with min-width:0 to stop layout drift from long content.
+- [x] 050 Normalize toolbar/card/section heading typography across heading levels.
+- [x] 051 Cap explanatory copy to a readable line length without clipping.
+- [x] 052 Normalize page toolbar action alignment and wrapping.
+- [x] 053 Add shared two-column page grid utility.
+- [x] 054 Add shared three-column page grid utility.
+- [x] 055 Add shared action-cluster utility.
+- [x] 056 Add shared metadata-row utility.
+- [x] 057 Normalize legacy panel surfaces only inside pages that opt into AppPage.
+- [x] 058 Normalize legacy workspace kicker typography inside AppPage.
+- [x] 059 Normalize practical legacy button targets inside audited AppPage scopes.
+- [x] 060 Reconcile legacy dashboard-card selectors with AppCard structure to avoid double padding.
+- [x] 061 Reconcile AI session-history legacy selector with AppSection structure.
+- [x] 062 Add stat-card compact/spacious CSS density behavior.
+- [x] 063 Add stat-card metadata styling.
+- [x] 064 Add build release-list and change-list shared rhythm.
+- [x] 065 Add prompt-template choice-list shared rhythm.
+- [x] 066 Add AI Center min-width and state-surface containment guards.
+- [x] 067 Add 1024px page/grid/tablet consistency behavior.
+- [x] 068 Add 700px page/actions/cards mobile consistency behavior.
+- [x] 069 Preserve reduced-motion behavior in the consistency layer.
+- [x] 070 Preserve forced-colors borders in the consistency layer.
+- [x] 071 Load page-consistency.css after feedback-state styling.
+- [x] 072 Keep rtl-ltr-parity.css after page-consistency.css so UX-008 direction rules remain final.
+- [x] 073 Wrap Dashboard in AppPage while preserving its refresh timer and service boundary.
+- [x] 074 Keep Dashboard AppToolbar as the page intro under the shell h1.
+- [x] 075 Add an accessible label to the Dashboard KPI summary.
+- [x] 076 Migrate Dashboard platform-health panel to AppCard.
+- [x] 077 Replace Dashboard custom health meter use with shared AppProgressBar.
+- [x] 078 Migrate Dashboard local-inventory panel to AppCard.
+- [x] 079 Migrate Dashboard recent-jobs panel to AppCard.
+- [x] 080 Migrate Dashboard quick-access panel to AppCard.
+- [x] 081 Use shared AppButton actions in Dashboard card headers.
+- [x] 082 Preserve Dashboard loading/error data flow while applying shared danger surface semantics.
+- [x] 083 Wrap Build & Release Notes in a standard-width AppPage.
+- [x] 084 Migrate Build & Release hero card to AppToolbar.
+- [x] 085 Move build version/branch/commit context into AppToolbar Meta.
+- [x] 086 Preserve UX-008 technical bidi isolation for build version, branch, commit, date and API path.
+- [x] 087 Use shared compact cards for build metadata tiles.
+- [x] 088 Use shared hierarchy for current release, release history and technical-details cards.
+- [x] 089 Replace release-history blank markup with AppEmptyState.
+- [x] 090 Wrap Account Profile in a standard-width AppPage and preserve form/security logic.
+- [x] 091 Migrate Account Profile load error to a semantic danger AppCard.
+- [x] 092 Wrap Account Email Settings in AppPage and replace its local hero with AppToolbar.
+- [x] 093 Migrate account outbound-mail and recipient regions to AppSection.
+- [x] 094 Replace account-email error/empty/recipient card drift with AppStateBanner/AppEmptyState/AppCard.
+- [x] 095 Wrap System Health in AppPage and label its summary/detail regions without changing diagnostic logic.
+- [x] 096 Migrate AI Prompt Templates from local hero/panels to AppToolbar/AppSection/AppSearchBox/shared states.
+- [x] 097 Migrate AI Center hero and KPI panels to AppToolbar/AppStatCard.
+- [x] 098 Normalize AI Center inner heading levels and output feedback states while preserving AI/approval service calls.
+- [x] 099 Add PageConsistencyUxContractTests covering shared hierarchy, CSS load order, page adoption and compatibility.
+- [x] 100 Guard UX-009 with an exact 100-completed-task manifest and preserve database/auth/API/AI/persistence contracts.
+
+Browser-driven screenshot/visual-diff and automated axe gates remain UX-010 scope; UX-009 does not falsely claim those gates.

@@ -8,76 +8,89 @@
 
 <PageTitle>@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Build & Release Notes")</PageTitle>
 
-<div class="build-info-page" data-bidi-scope="build-info">
-    <AppCard Class="build-info-hero"
-             Eyebrow="@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")"
-             Title="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Version & Release Notes")"
-             Subtitle="@(L.IsArabic ? "بيانات البناء الفعلية مع تاريخ الإصدارات من مصدر واحد داخل المشروع." : "Live build metadata with version history from a single source in the project.")">
-        <Header>
+<AppPage PageKey="build-release" data-bidi-scope="build-info" Class="build-info-page" Width="standard" AriaLabel="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Build and release notes")">
+    <AppToolbar Class="build-info-hero"
+                Eyebrow="@(L.IsArabic ? "بيانات النسخة الحالية" : "CURRENT BUILD")"
+                Title="@(L.IsArabic ? "الإصدار وسجل التغييرات" : "Version & Release Notes")"
+                Subtitle="@(L.IsArabic ? "بيانات البناء الفعلية مع تاريخ الإصدارات من مصدر واحد داخل المشروع." : "Live build metadata with version history from a single source in the project.")">
+        <Meta>
             <strong class="build-version-badge"><AppBidiText Mode="version">v@(Build.Version)</AppBidiText></strong>
-        </Header>
-        <ChildContent>
-            <div class="d-flex gap-2 flex-wrap">
-                <AppButton Href="/api/build" Target="_blank" Variant="primary" Icon="↗" Text="@(L.IsArabic ? "فتح بيانات API" : "Open build API")" />
-                <button class="btn" @onclick="CopyBuildReportAsync">@(L.IsArabic ? "نسخ تقرير البناء" : "Copy build report")</button>
-            </div>
-        </ChildContent>
-    </AppCard>
+            <AppBidiText Mode="technical">@Build.Branch</AppBidiText>
+            <AppBidiText Mode="technical">@Build.Commit</AppBidiText>
+        </Meta>
+        <Actions>
+            <AppButton Href="/api/build" Target="_blank" Variant="primary" Icon="↗" Text="@(L.IsArabic ? "فتح بيانات API" : "Open build API")" />
+            <AppButton Icon="⧉" Text="@(L.IsArabic ? "نسخ تقرير البناء" : "Copy build report")" OnClick="CopyBuildReportClickedAsync" />
+        </Actions>
+    </AppToolbar>
 
-    <section class="build-info-grid">
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong><AppBidiText Mode="version">@Build.Version</AppBidiText></strong></AppCard>
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong><AppBidiText Mode="technical">@Build.Branch</AppBidiText></strong></AppCard>
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong><AppBidiText Mode="technical">@Build.Commit</AppBidiText></strong></AppCard>
-        <AppCard Class="build-info-card"><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong><AppBidiText Mode="date">@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText></strong></AppCard>
+    <section class="build-info-grid" aria-label="@(L.IsArabic ? "بيانات البناء" : "Build metadata")">
+        <AppCard Class="build-info-card" Density="compact"><ChildContent><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong><AppBidiText Mode="version">@Build.Version</AppBidiText></strong></ChildContent></AppCard>
+        <AppCard Class="build-info-card" Density="compact"><ChildContent><small>@(L.IsArabic ? "الفرع" : "Branch")</small><strong><AppBidiText Mode="technical">@Build.Branch</AppBidiText></strong></ChildContent></AppCard>
+        <AppCard Class="build-info-card" Density="compact"><ChildContent><small>@(L.IsArabic ? "الالتزام" : "Commit")</small><strong><AppBidiText Mode="technical">@Build.Commit</AppBidiText></strong></ChildContent></AppCard>
+        <AppCard Class="build-info-card" Density="compact"><ChildContent><small>@(L.IsArabic ? "وقت البناء" : "Build time")</small><strong><AppBidiText Mode="date">@Build.BuildTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText></strong></ChildContent></AppCard>
     </section>
 
     @if (CurrentRelease is not null)
     {
-        <AppCard Class="build-info-details" Title="@(L.IsArabic ? "ما الجديد في هذه النسخة" : "What is new in this release")">
-            <div class="d-flex justify-content-between gap-3 flex-wrap">
-                <div><strong>@CurrentRelease.Title</strong><small style="display:block"><AppBidiText Mode="date">@(CurrentRelease.Date?.ToString("yyyy-MM-dd") ?? "—")</AppBidiText></small></div>
-                <span class="settings-badge success"><AppBidiText Mode="version">v@(CurrentRelease.Version)</AppBidiText></span>
-            </div>
-            <ul style="margin:1rem 0 0;display:grid;gap:.55rem">
-                @foreach (var change in CurrentRelease.Changes)
-                {
-                    <li>@change</li>
-                }
-            </ul>
+        <AppCard Class="build-info-details" HeadingLevel="3"
+                 Eyebrow="@(L.IsArabic ? "الإصدار الحالي" : "CURRENT RELEASE")"
+                 Title="@(L.IsArabic ? "ما الجديد في هذه النسخة" : "What is new in this release")">
+            <Header>
+                <AppBadge Tone="success" BidiMode="version" Text="@($"v{CurrentRelease.Version}")" />
+            </Header>
+            <ChildContent>
+                <div class="app-meta-row">
+                    <strong>@CurrentRelease.Title</strong>
+                    <AppBidiText Mode="date">@(CurrentRelease.Date?.ToString("yyyy-MM-dd") ?? "—")</AppBidiText>
+                </div>
+                <ul class="build-change-list">
+                    @foreach (var change in CurrentRelease.Changes)
+                    {
+                        <li>@change</li>
+                    }
+                </ul>
+            </ChildContent>
         </AppCard>
     }
 
-    <AppCard Class="build-info-details" Title="@(L.IsArabic ? "سجل الإصدارات" : "Release history")">
-        @if (Releases.Count == 0)
-        {
-            <div class="empty-state"><p>@(L.IsArabic ? "لا يوجد سجل إصدارات متاح." : "No release history is available.")</p></div>
-        }
-        else
-        {
-            <div style="display:grid;gap:1rem">
-                @foreach (var release in Releases)
-                {
-                    <details open="@(release.Version == Build.Version)">
-                        <summary style="cursor:pointer;font-weight:700"><AppBidiText Mode="version">v@(release.Version)</AppBidiText> · @release.Title · <AppBidiText Mode="date">@(release.Date?.ToString("yyyy-MM-dd") ?? "—")</AppBidiText></summary>
-                        <ul style="margin:.8rem 0 0;display:grid;gap:.45rem">
-                            @foreach (var change in release.Changes)
-                            {
-                                <li>@change</li>
-                            }
-                        </ul>
-                    </details>
-                }
-            </div>
-        }
+    <AppCard Class="build-info-details" HeadingLevel="3" Title="@(L.IsArabic ? "سجل الإصدارات" : "Release history")">
+        <ChildContent>
+            @if (Releases.Count == 0)
+            {
+                <AppEmptyState Title="@(L.IsArabic ? "لا يوجد سجل إصدارات" : "No release history")"
+                               Description="@(L.IsArabic ? "لا يوجد سجل إصدارات متاح حاليًا." : "No release history is currently available.")"
+                               Blocking="false" />
+            }
+            else
+            {
+                <div class="build-release-list">
+                    @foreach (var release in Releases)
+                    {
+                        <details open="@(release.Version == Build.Version)">
+                            <summary><AppBidiText Mode="version">v@(release.Version)</AppBidiText> · @release.Title · <AppBidiText Mode="date">@(release.Date?.ToString("yyyy-MM-dd") ?? "—")</AppBidiText></summary>
+                            <ul>
+                                @foreach (var change in release.Changes)
+                                {
+                                    <li>@change</li>
+                                }
+                            </ul>
+                        </details>
+                    }
+                </div>
+            }
+        </ChildContent>
     </AppCard>
 
-    <AppCard Class="build-info-details" Title="@(L.IsArabic ? "التفاصيل التقنية" : "Technical details")">
-        <div><span>@(L.IsArabic ? "اسم التجميعة" : "Assembly")</span><code><AppBidiText Mode="technical">@Build.AssemblyName</AppBidiText></code></div>
-        <div><span>@(L.IsArabic ? "الإصدار التفصيلي" : "Informational version")</span><code><AppBidiText Mode="technical">@Build.InformationalVersion</AppBidiText></code></div>
-        <div><span>API</span><code><AppBidiText Mode="path">/api/build</AppBidiText></code></div>
-        <div><span>@(L.IsArabic ? "مصدر سجل الإصدارات" : "Release notes source")</span><code><AppBidiText Mode="path">RELEASE_NOTES.md</AppBidiText></code></div>
+    <AppCard Class="build-info-details" HeadingLevel="3" Title="@(L.IsArabic ? "التفاصيل التقنية" : "Technical details")">
+        <ChildContent>
+            <div><span>@(L.IsArabic ? "اسم التجميعة" : "Assembly")</span><code><AppBidiText Mode="technical">@Build.AssemblyName</AppBidiText></code></div>
+            <div><span>@(L.IsArabic ? "الإصدار التفصيلي" : "Informational version")</span><code><AppBidiText Mode="technical">@Build.InformationalVersion</AppBidiText></code></div>
+            <div><span>API</span><code><AppBidiText Mode="path">/api/build</AppBidiText></code></div>
+            <div><span>@(L.IsArabic ? "مصدر سجل الإصدارات" : "Release notes source")</span><code><AppBidiText Mode="path">RELEASE_NOTES.md</AppBidiText></code></div>
+        </ChildContent>
     </AppCard>
-</div>
+</AppPage>
 
 @code {
     private BuildInformation Build => BuildInfo.Current;
@@ -88,6 +101,8 @@
     {
         Releases = new ReleaseNotesService(Environment).GetAll();
     }
+
+    private Task CopyBuildReportClickedAsync(MouseEventArgs _) => CopyBuildReportAsync();
 
     private async Task CopyBuildReportAsync()
     {

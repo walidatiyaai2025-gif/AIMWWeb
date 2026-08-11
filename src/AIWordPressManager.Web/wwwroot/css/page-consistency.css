@@ -1,0 +1,177 @@
+/* UX-009: page-by-page hierarchy and consistency contract.
+   This layer normalizes composition without replacing feature-owned behavior. */
+:root {
+    --page-gap-compact:.75rem;
+    --page-gap-comfortable:1rem;
+    --page-gap-spacious:1.5rem;
+    --page-max-narrow:760px;
+    --page-max-standard:1120px;
+    --page-max-wide:1480px;
+}
+
+.app-page {
+    display:grid;
+    gap:var(--page-gap-comfortable);
+    width:100%;
+    min-width:0;
+    margin-inline:auto;
+    align-content:start;
+}
+.app-page--compact { gap:var(--page-gap-compact); }
+.app-page--spacious { gap:var(--page-gap-spacious); }
+.app-page--narrow { max-inline-size:var(--page-max-narrow); }
+.app-page--standard { max-inline-size:var(--page-max-standard); }
+.app-page--wide { max-inline-size:var(--page-max-wide); }
+.app-page--fluid { max-inline-size:none; }
+.app-page > *,
+.app-page :where(.app-toolbar__main,.app-card__heading,.app-section__heading,.app-card__body,.app-section__body) { min-width:0; }
+
+/* One predictable hierarchy: shell h1, page toolbar h2, cards/sections h3 by default. */
+.app-toolbar :is(h1,h2,h3,h4),
+.app-card__heading :is(h2,h3,h4),
+.app-section__heading :is(h2,h3,h4) {
+    margin:0;
+    color:var(--ui-text);
+    text-wrap:balance;
+    overflow-wrap:anywhere;
+}
+.app-toolbar :is(h1,h2,h3,h4) { font-size:clamp(1.35rem,2vw,2rem); line-height:1.18; }
+.app-card__heading :is(h2,h3,h4),
+.app-section__heading :is(h2,h3,h4) { font-size:1.08rem; line-height:1.3; }
+.app-toolbar p,
+.app-card__heading p,
+.app-section__heading p { max-inline-size:72ch; line-height:1.65; }
+
+.app-toolbar {
+    min-width:0;
+    align-items:flex-start;
+    padding:var(--ui-space-5);
+}
+.app-toolbar--compact { padding:var(--ui-space-4); gap:var(--ui-space-4); }
+.app-toolbar--spacious { padding:var(--ui-space-6); }
+.app-toolbar--neutral { background:var(--ui-surface); }
+.app-toolbar--success { border-color:color-mix(in srgb,var(--ui-success) 32%,var(--ui-border)); background:linear-gradient(135deg,color-mix(in srgb,var(--ui-success) 8%,var(--ui-surface)),var(--ui-surface)); }
+.app-toolbar--warning { border-color:color-mix(in srgb,var(--ui-warning) 34%,var(--ui-border)); background:linear-gradient(135deg,color-mix(in srgb,var(--ui-warning) 9%,var(--ui-surface)),var(--ui-surface)); }
+.app-toolbar--danger { border-color:color-mix(in srgb,var(--ui-danger) 34%,var(--ui-border)); background:linear-gradient(135deg,color-mix(in srgb,var(--ui-danger) 8%,var(--ui-surface)),var(--ui-surface)); }
+.app-toolbar--info { border-color:color-mix(in srgb,var(--ui-info) 32%,var(--ui-border)); background:linear-gradient(135deg,color-mix(in srgb,var(--ui-info) 8%,var(--ui-surface)),var(--ui-surface)); }
+.app-toolbar__meta { display:flex; flex-wrap:wrap; align-items:center; gap:var(--ui-space-2); margin-top:var(--ui-space-3); color:var(--ui-muted); font-size:.82rem; }
+.app-toolbar__actions { align-items:center; align-self:center; }
+.app-toolbar__actions > :where(.app-button,.btn,a,button) { flex:0 0 auto; }
+
+.app-card,
+.app-section { min-width:0; }
+.app-card--compact .app-card__header,
+.app-card--compact .app-card__body,
+.app-card--compact .app-card__footer,
+.app-section--compact .app-section__header,
+.app-section--compact .app-section__body { padding:var(--ui-space-4); }
+.app-card--spacious .app-card__header,
+.app-card--spacious .app-card__body,
+.app-card--spacious .app-card__footer,
+.app-section--spacious .app-section__header,
+.app-section--spacious .app-section__body { padding:var(--ui-space-6); }
+.app-card--accent,
+.app-section--accent { border-color:color-mix(in srgb,var(--ui-accent) 34%,var(--ui-border)); }
+.app-card--success,
+.app-section--success { border-color:color-mix(in srgb,var(--ui-success) 30%,var(--ui-border)); }
+.app-card--warning,
+.app-section--warning { border-color:color-mix(in srgb,var(--ui-warning) 34%,var(--ui-border)); }
+.app-card--danger,
+.app-section--danger { border-color:color-mix(in srgb,var(--ui-danger) 32%,var(--ui-border)); }
+.app-card--info,
+.app-section--info { border-color:color-mix(in srgb,var(--ui-info) 30%,var(--ui-border)); }
+.app-card__header-content,
+.app-section__actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:var(--ui-space-2); }
+
+/* Shared composition utilities used by audited production pages. */
+.app-page-grid { display:grid; gap:var(--ui-space-4); min-width:0; }
+.app-page-grid--2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.app-page-grid--3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.app-action-cluster { display:flex; flex-wrap:wrap; align-items:center; gap:var(--ui-space-2); }
+.app-meta-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--ui-space-3); color:var(--ui-muted); font-size:.82rem; }
+.app-meta-row > :where(code,time,.app-bidi-text) { min-width:0; }
+
+/* Normalize legacy panel islands only inside pages that opt into AppPage. */
+.app-page .panel {
+    min-width:0;
+    border-color:var(--ui-border);
+    border-radius:var(--ui-radius-lg);
+    background:var(--ui-surface);
+    box-shadow:var(--ui-shadow);
+}
+.app-page .workspace-kicker {
+    color:var(--ui-accent-strong);
+    font-size:.72rem;
+    font-weight:800;
+    letter-spacing:.08em;
+    line-height:1.25;
+}
+.app-page .panel > header :is(h2,h3,h4) { margin:.15rem 0 0; color:var(--ui-text); font-size:1.08rem; line-height:1.3; }
+.app-page .panel > header p { color:var(--ui-muted); }
+.app-page :where(.btn,.compact.btn) { min-height:44px; border-radius:var(--ui-radius-sm); }
+.app-page .btn.compact { min-height:36px; }
+
+/* Legacy feature CSS can target classes now carried by shared components. */
+.app-page .dashboard-card.app-card { margin:0; padding:0; }
+.app-page .dashboard-card.app-card > .app-card__header { margin:0; padding:var(--ui-space-5); border-bottom:1px solid var(--ui-border); }
+.app-page .dashboard-card.app-card > .app-card__body { padding:var(--ui-space-5); }
+.app-page .dashboard-card.app-card > .app-card__header + .app-card__body { padding-top:var(--ui-space-5); }
+.app-page .ai-session-history.app-section { padding:0; }
+.app-page .build-info-hero.app-toolbar { overflow:visible; }
+.app-page .settings-nav.app-section { overflow:visible; }
+
+/* Stat surfaces use one scan rhythm regardless of feature stylesheet. */
+.app-page .app-stat-grid { align-items:stretch; }
+.app-page .app-stat-card { height:100%; }
+.app-page .app-stat-card strong { font-variant-numeric:tabular-nums; }
+.app-stat-card--compact { min-height:92px; padding:var(--ui-space-4); }
+.app-stat-card--spacious { min-height:132px; padding:var(--ui-space-6); }
+.app-stat-card__meta { display:flex; flex-wrap:wrap; gap:var(--ui-space-2); margin-top:var(--ui-space-2); color:var(--ui-muted); font-size:.76rem; }
+.app-stat-card.neutral .app-stat-card__icon { background:var(--ui-surface-2); color:var(--ui-muted); }
+
+/* Audited page-specific reconciliation without restoring CSS islands. */
+.build-change-list,
+.build-release-list { display:grid; gap:var(--ui-space-3); margin-block:var(--ui-space-4) 0; }
+.build-release-list details { padding:var(--ui-space-3); border:1px solid var(--ui-border); border-radius:var(--ui-radius-md); background:var(--ui-surface-2); }
+.build-release-list summary { cursor:pointer; font-weight:800; }
+.settings-choice-list { display:grid; gap:var(--ui-space-2); margin-top:var(--ui-space-3); }
+.ai-center-page .ai-center-layout { min-width:0; }
+.ai-center-page .ai-composer,
+.ai-center-page .ai-output-panel,
+.ai-center-page .ai-prompt-library { min-width:0; }
+.ai-center-page .ai-output-panel .app-state-panel,
+.ai-center-page .ai-output-panel .app-loading,
+.ai-center-page .ai-output-panel .app-empty-state { min-height:320px; }
+
+/* Reusable surface spacing: avoid page-owned arbitrary top margins. */
+.app-page :where(.app-filter-bar,.app-state-panel,.app-state-banner,.app-data-grid,.app-bulk-action-bar) { margin-block:0; }
+.app-page :where(.app-card,.app-section,.app-details-panel,.app-data-grid,.panel) + :where(.app-card,.app-section,.app-details-panel,.app-data-grid,.panel) { margin-block-start:0; }
+
+@media (max-width:1024px) {
+    .app-page--narrow,.app-page--standard,.app-page--wide { max-inline-size:none; }
+    .app-page-grid--3 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .app-toolbar__actions { align-self:flex-start; }
+}
+
+@media (max-width:700px) {
+    .app-page { gap:var(--page-gap-compact); }
+    .app-page-grid--2,.app-page-grid--3 { grid-template-columns:1fr; }
+    .app-toolbar,.app-toolbar--spacious { padding:var(--ui-space-4); }
+    .app-toolbar__actions { width:100%; }
+    .app-toolbar__actions > :where(.app-button,.btn,a,button) { flex:1 1 10rem; max-width:100%; }
+    .app-card__header,.app-card__footer,.app-section__header { align-items:flex-start; flex-direction:column; }
+    .app-card__header-content,.app-section__actions { width:100%; justify-content:flex-start; }
+    .app-action-cluster > :where(.app-button,.btn,a,button) { flex:1 1 9rem; }
+    .app-page .dashboard-card.app-card > .app-card__header,
+    .app-page .dashboard-card.app-card > .app-card__body { padding:var(--ui-space-4); }
+    .app-stat-card--spacious { min-height:108px; padding:var(--ui-space-5); }
+}
+
+@media (prefers-reduced-motion:reduce) {
+    .app-page :where(.app-card,.app-section,.app-toolbar,.panel) { scroll-behavior:auto; }
+}
+
+@media (forced-colors:active) {
+    .app-page :where(.app-toolbar,.app-card,.app-section,.panel) { border-color:CanvasText; box-shadow:none; }
+    .build-release-list details { border-color:CanvasText; }
+}

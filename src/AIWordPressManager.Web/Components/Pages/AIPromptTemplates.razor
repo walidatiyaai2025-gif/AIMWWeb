@@ -9,139 +9,132 @@
 
 <PageTitle>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI Prompt Templates")</PageTitle>
 
-<div class="settings-page">
-    <section class="panel settings-hero">
-        <div>
-            <span class="workspace-kicker">PROMPT REGISTRY</span>
-            <h1>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI Prompt Templates")</h1>
-            <p>@(L.IsArabic
-                ? "إدارة القوالب العربية والإنجليزية مع سجل إصدارات غير قابل لإعادة الكتابة واستعادة آمنة لأي إصدار سابق."
-                : "Manage Arabic and English prompts with append-only revision history and safe restoration of any previous revision.")</p>
-        </div>
-        <div class="settings-status">
-            <span>↺</span>
-            <div>
-                <strong>@(L.IsArabic ? "إصدارات محفوظة" : "Versioned registry")</strong>
-                <small>@(L.IsArabic ? "للمسؤولين فقط" : "Administrators only")</small>
-            </div>
-        </div>
-    </section>
+<AppPage PageKey="ai-prompt-templates" Class="settings-page" Width="wide">
+    <AppToolbar Eyebrow="PROMPT REGISTRY"
+                Title="@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI Prompt Templates")"
+                Subtitle="@(L.IsArabic ? "إدارة القوالب العربية والإنجليزية مع سجل إصدارات غير قابل لإعادة الكتابة واستعادة آمنة لأي إصدار سابق." : "Manage Arabic and English prompts with append-only revision history and safe restoration of any previous revision.")">
+        <Meta>
+            <AppBadge Tone="info" Text="@(L.IsArabic ? "للمسؤولين فقط" : "Administrators only")" />
+            <AppBadge Tone="accent" Text="@($"{_templates.Count} {(L.IsArabic ? "قالب" : "templates")}")" BidiMode="number" />
+        </Meta>
+        <Actions>
+            <AppButton Href="/settings" Icon="←" IconIntent="back" Text="@L["Settings"]" />
+            <AppButton Variant="primary" Icon="＋" Text="@(L.IsArabic ? "قالب جديد" : "New template")" OnClick="NewTemplateClicked" />
+        </Actions>
+    </AppToolbar>
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
-        <div class="alert @(_isError ? "error" : "success")">@_message</div>
+        <AppStateBanner Kind="@(_isError ? "error" : "success")"
+                        Title="@(_isError ? (L.IsArabic ? "تعذر تنفيذ العملية" : "Action failed") : (L.IsArabic ? "تم تنفيذ العملية" : "Action completed"))"
+                        Description="@_message" />
     }
 
     <div class="settings-layout">
-        <nav class="panel settings-nav" aria-label="Prompt template list">
-            <a href="/settings"><span>←</span><div><strong>@L["Settings"]</strong><small>@(L.IsArabic ? "العودة للإعدادات" : "Back to settings")</small></div></a>
-            <button type="button" class="btn primary full" @onclick="NewTemplate">＋ @(L.IsArabic ? "قالب جديد" : "New template")</button>
-            <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "بحث بالقالب..." : "Search templates...")" />
-            @foreach (var template in FilteredTemplates)
-            {
-                <button type="button" class="settings-choice @(_selectedKey == template.Key ? "active" : string.Empty)" @onclick="() => Select(template.Key)">
-                    <strong>@DisplayTitle(template)</strong>
-                    <small>@template.Key · r@template.Revision · @(template.Enabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</small>
-                </button>
-            }
-        </nav>
+        <AppSection Class="settings-nav" Density="compact"
+                    Eyebrow="LIBRARY"
+                    Title="@(L.IsArabic ? "مكتبة القوالب" : "Template library")"
+                    Subtitle="@(L.IsArabic ? "ابحث واختر قالبًا لتحريره." : "Search and select a template to edit.")"
+                    HeadingLevel="3">
+            <ChildContent>
+                <AppSearchBox Value="@_search"
+                              ValueChanged="SearchChanged"
+                              Placeholder="@(L.IsArabic ? "بحث بالقالب..." : "Search templates...")"
+                              AriaLabel="@(L.IsArabic ? "بحث في قوالب الذكاء الاصطناعي" : "Search AI prompt templates")" />
+                <div class="settings-choice-list">
+                    @foreach (var template in FilteredTemplates)
+                    {
+                        <button type="button" class="settings-choice @(_selectedKey == template.Key ? "active" : string.Empty)" @onclick="() => Select(template.Key)">
+                            <strong>@DisplayTitle(template)</strong>
+                            <small><AppBidiText Mode="technical">@template.Key</AppBidiText> · <AppBidiText Mode="version">r@template.Revision</AppBidiText> · @(template.Enabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</small>
+                        </button>
+                    }
+                    @if (!FilteredTemplates.Any())
+                    {
+                        <AppEmptyState Title="@(L.IsArabic ? "لا توجد قوالب مطابقة" : "No matching templates")"
+                                       Description="@(L.IsArabic ? "غيّر نص البحث أو أنشئ قالبًا جديدًا." : "Change the search text or create a new template.")"
+                                       Blocking="false" />
+                    }
+                </div>
+            </ChildContent>
+        </AppSection>
 
-        <main class="settings-content">
-            <section class="panel settings-section">
-                <header>
-                    <div>
-                        <span class="workspace-kicker">EDITOR</span>
-                        <h2>@(_isNew ? (L.IsArabic ? "قالب جديد" : "New template") : DisplayTitle(_selected))</h2>
-                        <p>@(L.IsArabic ? "مفتاح القالب ثابت بعد إنشائه حتى لا تنكسر الاستدعاءات الموجودة في النظام." : "The template key is immutable after creation so existing runtime references remain stable.")</p>
-                    </div>
+        <div class="settings-content">
+            <AppSection Eyebrow="EDITOR"
+                        Title="@(_isNew ? (L.IsArabic ? "قالب جديد" : "New template") : DisplayTitle(_selected))"
+                        Subtitle="@(L.IsArabic ? "مفتاح القالب ثابت بعد إنشائه حتى لا تنكسر الاستدعاءات الموجودة في النظام." : "The template key is immutable after creation so existing runtime references remain stable.")"
+                        HeadingLevel="3">
+                <Header>
                     @if (!_isNew && _selected is not null)
                     {
-                        <span class="settings-badge @(_selected.Enabled ? "success" : string.Empty)">r@_selected.Revision</span>
+                        <AppBadge Tone="@(_selected.Enabled ? "success" : "warning")" BidiMode="version" Text="@($"r{_selected.Revision}")" />
                     }
-                </header>
-
-                <div class="database-info-grid">
-                    <label>
-                        <small>@(L.IsArabic ? "مفتاح القالب" : "Template key")</small>
-                        <input @bind="_editKey" disabled="@(!_isNew)" autocomplete="off" placeholder="content.rewrite" />
-                    </label>
-                    <label>
-                        <small>@(L.IsArabic ? "الحالة" : "Status")</small>
-                        <select @bind="_editEnabled">
-                            <option value="true">@(L.IsArabic ? "مفعل" : "Enabled")</option>
-                            <option value="false">@(L.IsArabic ? "متوقف" : "Disabled")</option>
-                        </select>
-                    </label>
-                </div>
-
-                <div class="database-info-grid">
-                    <label>
-                        <small>@(L.IsArabic ? "العنوان بالإنجليزية" : "English title")</small>
-                        <input @bind="_titleEn" maxlength="120" autocomplete="off" />
-                    </label>
-                    <label>
-                        <small>@(L.IsArabic ? "العنوان بالعربية" : "Arabic title")</small>
-                        <input @bind="_titleAr" maxlength="120" dir="rtl" autocomplete="off" />
-                    </label>
-                </div>
-
-                <label class="ai-content-input">
-                    <span>@(L.IsArabic ? "الأمر بالإنجليزية" : "English prompt")</span>
-                    <textarea @bind="_promptEn" rows="8" maxlength="20000" dir="ltr"></textarea>
-                </label>
-                <label class="ai-content-input">
-                    <span>@(L.IsArabic ? "الأمر بالعربية" : "Arabic prompt")</span>
-                    <textarea @bind="_promptAr" rows="8" maxlength="20000" dir="rtl"></textarea>
-                </label>
-
-                <div class="settings-option-row">
-                    <div>
-                        <strong>@(L.IsArabic ? "حفظ إصدار جديد" : "Save new revision")</strong>
-                        <small>@(L.IsArabic ? "إذا لم تتغير البيانات فلن يتم إنشاء إصدار مكرر." : "If the content did not change, a duplicate revision is not created.")</small>
+                </Header>
+                <ChildContent>
+                    <div class="database-info-grid">
+                        <label>
+                            <small>@(L.IsArabic ? "مفتاح القالب" : "Template key")</small>
+                            <input @bind="_editKey" disabled="@(!_isNew)" autocomplete="off" placeholder="content.rewrite" data-bidi="technical" />
+                        </label>
+                        <label>
+                            <small>@(L.IsArabic ? "الحالة" : "Status")</small>
+                            <select @bind="_editEnabled">
+                                <option value="true">@(L.IsArabic ? "مفعل" : "Enabled")</option>
+                                <option value="false">@(L.IsArabic ? "متوقف" : "Disabled")</option>
+                            </select>
+                        </label>
                     </div>
-                    <button class="btn primary" disabled="@_saving" @onclick="Save">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))</button>
-                </div>
-            </section>
+
+                    <div class="database-info-grid">
+                        <label><small>@(L.IsArabic ? "العنوان بالإنجليزية" : "English title")</small><input @bind="_titleEn" maxlength="120" autocomplete="off" /></label>
+                        <label><small>@(L.IsArabic ? "العنوان بالعربية" : "Arabic title")</small><input @bind="_titleAr" maxlength="120" dir="rtl" autocomplete="off" /></label>
+                    </div>
+
+                    <label class="ai-content-input"><span>@(L.IsArabic ? "الأمر بالإنجليزية" : "English prompt")</span><textarea @bind="_promptEn" rows="8" maxlength="20000" dir="ltr"></textarea></label>
+                    <label class="ai-content-input"><span>@(L.IsArabic ? "الأمر بالعربية" : "Arabic prompt")</span><textarea @bind="_promptAr" rows="8" maxlength="20000" dir="rtl"></textarea></label>
+
+                    <div class="settings-option-row">
+                        <div><strong>@(L.IsArabic ? "حفظ إصدار جديد" : "Save new revision")</strong><small>@(L.IsArabic ? "إذا لم تتغير البيانات فلن يتم إنشاء إصدار مكرر." : "If the content did not change, a duplicate revision is not created.")</small></div>
+                        <AppButton Variant="primary" Icon="✓" Busy="@_saving" Disabled="@_saving"
+                                   Text="@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))"
+                                   OnClick="SaveClicked" />
+                    </div>
+                </ChildContent>
+            </AppSection>
 
             @if (!_isNew && _selected is not null)
             {
-                <section class="panel settings-section">
-                    <header>
-                        <div>
-                            <span class="workspace-kicker">VERSION HISTORY</span>
-                            <h2>@(L.IsArabic ? "سجل الإصدارات" : "Revision history")</h2>
-                            <p>@(L.IsArabic ? "الاستعادة لا تمسح التاريخ؛ تنشئ إصدارًا جديدًا من محتوى الإصدار المختار." : "Restoring never rewrites history; it creates a new revision from the selected historical content.")</p>
-                        </div>
-                        <span class="settings-badge">@_history.Count</span>
-                    </header>
-
-                    @if (_history.Count == 0)
-                    {
-                        <div class="empty-state"><p>@(L.IsArabic ? "لا يوجد سجل لهذا القالب." : "No history is available for this template.")</p></div>
-                    }
-                    else
-                    {
-                        <div class="ai-history-list">
-                            @foreach (var version in _history)
-                            {
-                                <article>
-                                    <div>
-                                        <strong>r@version.Revision · @version.ChangeType</strong>
-                                        <small>@version.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") · @version.CreatedBy</small>
-                                    </div>
-                                    <p>@Preview(L.IsArabic ? version.PromptAr : version.PromptEn)</p>
-                                    <div class="ai-history-actions">
-                                        <button class="btn compact" disabled="@(version.Revision == _selected.Revision)" @onclick="() => Restore(version.Revision)">↺ @(L.IsArabic ? "استعادة" : "Restore")</button>
-                                    </div>
-                                </article>
-                            }
-                        </div>
-                    }
-                </section>
+                <AppSection Eyebrow="VERSION HISTORY"
+                            Title="@(L.IsArabic ? "سجل الإصدارات" : "Revision history")"
+                            Subtitle="@(L.IsArabic ? "الاستعادة لا تمسح التاريخ؛ تنشئ إصدارًا جديدًا من محتوى الإصدار المختار." : "Restoring never rewrites history; it creates a new revision from the selected historical content.")"
+                            HeadingLevel="3">
+                    <Header><AppBadge Tone="info" Text="@_history.Count.ToString()" BidiMode="number" /></Header>
+                    <ChildContent>
+                        @if (_history.Count == 0)
+                        {
+                            <AppEmptyState Title="@(L.IsArabic ? "لا يوجد سجل لهذا القالب" : "No revision history")"
+                                           Description="@(L.IsArabic ? "سيظهر السجل بعد حفظ أول تعديل." : "History appears after the first saved change.")"
+                                           Blocking="false" />
+                        }
+                        else
+                        {
+                            <div class="ai-history-list">
+                                @foreach (var version in _history)
+                                {
+                                    <article>
+                                        <div><strong><AppBidiText Mode="version">r@version.Revision</AppBidiText> · @version.ChangeType</strong><small><AppBidiText Mode="date">@version.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText> · @version.CreatedBy</small></div>
+                                        <p>@Preview(L.IsArabic ? version.PromptAr : version.PromptEn)</p>
+                                        <div class="ai-history-actions"><AppButton Size="small" Icon="↺" Disabled="@(version.Revision == _selected.Revision)" Text="@(L.IsArabic ? "استعادة" : "Restore")" OnClick="_ => Restore(version.Revision)" /></div>
+                                    </article>
+                                }
+                            </div>
+                        }
+                    </ChildContent>
+                </AppSection>
             }
-        </main>
+        </div>
     </div>
-</div>
+</AppPage>
 
 @code {
     private readonly List<AIPromptTemplateDefinition> _templates = new();
@@ -212,6 +205,10 @@
         _history.Clear();
         _message = string.Empty;
     }
+
+    private Task SearchChanged(string value) { _search = value; return Task.CompletedTask; }
+    private void NewTemplateClicked(MouseEventArgs _) => NewTemplate();
+    private void SaveClicked(MouseEventArgs _) => Save();
 
     private void Save()
     {

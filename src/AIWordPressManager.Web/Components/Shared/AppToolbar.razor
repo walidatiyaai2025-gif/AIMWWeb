@@ -1,4 +1,10 @@
-<section class="app-toolbar @Class" aria-label="@AriaLabel">
+<section class="app-toolbar app-toolbar--@NormalizedTone app-toolbar--@NormalizedDensity @Class"
+         aria-label="@ExplicitAriaLabel"
+         aria-labelledby="@LabelledById"
+         aria-describedby="@DescribedById"
+         data-heading-level="@NormalizedHeadingLevel"
+         data-toolbar-tone="@NormalizedTone"
+         data-toolbar-density="@NormalizedDensity">
     <div class="app-toolbar__main">
         @if (!string.IsNullOrWhiteSpace(Eyebrow))
         {
@@ -6,11 +12,30 @@
         }
         @if (!string.IsNullOrWhiteSpace(Title))
         {
-            <h1>@Title</h1>
+            @if (NormalizedHeadingLevel == 1)
+            {
+                <h1 id="@TitleId">@Title</h1>
+            }
+            else if (NormalizedHeadingLevel == 3)
+            {
+                <h3 id="@TitleId">@Title</h3>
+            }
+            else if (NormalizedHeadingLevel >= 4)
+            {
+                <h4 id="@TitleId">@Title</h4>
+            }
+            else
+            {
+                <h2 id="@TitleId">@Title</h2>
+            }
         }
         @if (!string.IsNullOrWhiteSpace(Subtitle))
         {
-            <p>@Subtitle</p>
+            <p id="@SubtitleId">@Subtitle</p>
+        }
+        @if (Meta is not null)
+        {
+            <div class="app-toolbar__meta">@Meta</div>
         }
     </div>
     @if (Actions is not null)
@@ -24,6 +49,33 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Subtitle { get; set; }
     [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string Tone { get; set; } = "accent";
+    [Parameter] public string Density { get; set; } = "comfortable";
+    [Parameter] public int HeadingLevel { get; set; } = 2;
     [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? Meta { get; set; }
     [Parameter] public RenderFragment? Actions { get; set; }
+
+    private readonly string _instanceId = Guid.NewGuid().ToString("N");
+    private string TitleId => $"app-toolbar-{_instanceId}-title";
+    private string SubtitleId => $"app-toolbar-{_instanceId}-description";
+    private int NormalizedHeadingLevel => Math.Clamp(HeadingLevel, 1, 4);
+    private string NormalizedTone => Tone.Trim().ToLowerInvariant() switch
+    {
+        "neutral" => "neutral",
+        "success" => "success",
+        "warning" => "warning",
+        "danger" => "danger",
+        "info" => "info",
+        _ => "accent"
+    };
+    private string NormalizedDensity => Density.Trim().ToLowerInvariant() switch
+    {
+        "compact" => "compact",
+        "spacious" => "spacious",
+        _ => "comfortable"
+    };
+    private string? ExplicitAriaLabel => string.IsNullOrWhiteSpace(Title) ? AriaLabel : null;
+    private string? LabelledById => string.IsNullOrWhiteSpace(Title) ? null : TitleId;
+    private string? DescribedById => string.IsNullOrWhiteSpace(Subtitle) ? null : SubtitleId;
 }

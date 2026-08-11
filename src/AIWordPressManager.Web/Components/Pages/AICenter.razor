@@ -17,51 +17,51 @@
 
 <PageTitle>@(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</PageTitle>
 
-<div class="ai-center-page">
-    <section class="panel ai-center-hero">
-        <div>
-            <span class="workspace-kicker">AI WORKSPACE</span>
-            <h1>@(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")</h1>
-            <p>@(L.IsArabic ? "ولّد اقتراحات منظمة مع مقارنة قبل وبعد، سبب التغيير، درجة الثقة والحقول المتأثرة، ثم أرسلها إلى الموافقات." : "Generate structured suggestions with before/after evidence, rationale, confidence, affected fields, and approval governance.")</p>
-        </div>
-        <div class="ai-center-hero-actions">
-            <a class="btn" href="/module/ai-usage">◫ @(L.IsArabic ? "الاستخدام والتكلفة" : "Usage & cost")</a>
-            <a class="btn" href="/approvals">✓ @(L.IsArabic ? "قائمة الموافقات" : "Approval queue")</a>
-            <button class="btn" @onclick="LoadMetadataAsync">↻ @(L.IsArabic ? "تحديث البيانات" : "Refresh data")</button>
-            <button class="btn" @onclick="Clear">@(L.IsArabic ? "جلسة جديدة" : "New session")</button>
-        </div>
+<AppPage PageKey="ai-center" Class="ai-center-page" Width="fluid">
+    <AppToolbar Class="ai-center-hero"
+                Eyebrow="AI WORKSPACE"
+                Title="@(L.IsArabic ? "مركز الذكاء الاصطناعي" : "AI Center")"
+                Subtitle="@(L.IsArabic ? "ولّد اقتراحات منظمة مع مقارنة قبل وبعد، سبب التغيير، درجة الثقة والحقول المتأثرة، ثم أرسلها إلى الموافقات." : "Generate structured suggestions with before/after evidence, rationale, confidence, affected fields, and approval governance.")">
+        <Actions>
+            <AppButton Href="/module/ai-usage" Icon="◫" Text="@(L.IsArabic ? "الاستخدام والتكلفة" : "Usage & cost")" />
+            <AppButton Href="/approvals" Icon="✓" Text="@(L.IsArabic ? "قائمة الموافقات" : "Approval queue")" />
+            <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث البيانات" : "Refresh data")" OnClick="LoadMetadataClickedAsync" />
+            <AppButton Icon="＋" Text="@(L.IsArabic ? "جلسة جديدة" : "New session")" OnClick="ClearClicked" />
+        </Actions>
+    </AppToolbar>
+
+    <section class="app-stat-grid" aria-label="@(L.IsArabic ? "ملخص مركز الذكاء الاصطناعي" : "AI Center summary")">
+        <AppStatCard Icon="⌘" Label="@(L.IsArabic ? "القوالب المتاحة" : "Available prompts")" Value="@_prompts.Count.ToString()" Description="@(L.IsArabic ? "من سجل القوالب" : "from prompt registry")" Tone="accent" ValueBidiMode="number" />
+        <AppStatCard Icon="◫" Label="@(L.IsArabic ? "طلبات الاستخدام الأخيرة" : "Recent usage records")" Value="@_usageCount.ToString()" Description="@(L.IsArabic ? "آخر 100 سجل خاص بحسابك" : "latest 100 records for your account")" Tone="info" ValueBidiMode="number" />
+        <AppStatCard Icon="↺" Label="@(L.IsArabic ? "نتائج الجلسة" : "Session results")" Value="@_history.Count.ToString()" Description="@(L.IsArabic ? "متاحة للاستعادة" : "available for reuse")" Tone="success" ValueBidiMode="number" />
+        <AppStatCard Icon="✓" Label="@(L.IsArabic ? "حالة الموافقة" : "Approval state")" Value="@ApprovalStateText" Description="@(_lastApprovalId?.ToString("N")[..8] ?? "—")" Tone="@ApprovalTone" />
     </section>
 
-    <section class="ai-center-stats">
-        <article class="panel"><small>@(L.IsArabic ? "القوالب المتاحة" : "Available prompts")</small><strong>@_prompts.Count</strong><span>@(L.IsArabic ? "من سجل القوالب" : "from prompt registry")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "طلبات الاستخدام الأخيرة" : "Recent usage records")</small><strong>@_usageCount</strong><span>@(L.IsArabic ? "آخر 100 سجل خاص بحسابك" : "latest 100 records for your account")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "نتائج الجلسة" : "Session results")</small><strong>@_history.Count</strong><span>@(L.IsArabic ? "متاحة للاستعادة" : "available for reuse")</span></article>
-        <article class="panel"><small>@(L.IsArabic ? "حالة الموافقة" : "Approval state")</small><strong>@ApprovalStateText</strong><span>@(_lastApprovalId?.ToString("N")[..8] ?? "—")</span></article>
-    </section>
-
-    <section class="ai-center-layout">
+    <section class="ai-center-layout" aria-label="@(L.IsArabic ? "مساحة إنشاء ومراجعة الاقتراح" : "Suggestion creation and review workspace")">
         <aside class="panel ai-prompt-library">
-            <header><div><span class="workspace-kicker">PROMPTS</span><h2>@(L.IsArabic ? "مكتبة القوالب" : "Prompt library")</h2></div></header>
-            <input class="search-input" @bind="_promptSearch" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث في القوالب..." : "Search prompts...")" />
+            <header><div><span class="workspace-kicker">PROMPTS</span><h3>@(L.IsArabic ? "مكتبة القوالب" : "Prompt library")</h3></div></header>
+            <input class="search-input" @bind="_promptSearch" @bind:event="oninput" placeholder="@(L.IsArabic ? "ابحث في القوالب..." : "Search prompts...")" aria-label="@(L.IsArabic ? "بحث في مكتبة القوالب" : "Search prompt library")" />
             <div class="ai-prompt-list">
                 @foreach (var prompt in FilteredPrompts)
                 {
                     <button type="button" class="@(_promptKey == prompt.Key ? "active" : string.Empty)" @onclick="() => SelectPrompt(prompt)">
-                        <strong>@prompt.Title</strong><small>@prompt.Key</small>
+                        <strong>@prompt.Title</strong><small><AppBidiText Mode="technical">@prompt.Key</AppBidiText></small>
                     </button>
                 }
                 @if (!FilteredPrompts.Any())
                 {
-                    <div class="empty-state"><p>@(L.IsArabic ? "لا توجد قوالب مطابقة." : "No matching prompts.")</p></div>
+                    <AppEmptyState Title="@(L.IsArabic ? "لا توجد قوالب مطابقة" : "No matching prompts")"
+                                   Description="@(L.IsArabic ? "غيّر نص البحث لعرض قوالب أخرى." : "Change the search text to view other prompts.")"
+                                   Blocking="false" />
                 }
             </div>
         </aside>
 
-        <main class="panel ai-composer">
-            <header><div><span class="workspace-kicker">COMPOSER</span><h2>@(L.IsArabic ? "إنشاء اقتراح" : "Create suggestion")</h2></div><span class="badge @(_working ? "warning" : "success")">@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "جاهز" : "Ready"))</span></header>
+        <section class="panel ai-composer" aria-labelledby="ai-composer-title">
+            <header><div><span class="workspace-kicker">COMPOSER</span><h3 id="ai-composer-title">@(L.IsArabic ? "إنشاء اقتراح" : "Create suggestion")</h3></div><AppBadge Tone="@(_working ? "warning" : "success")" Text="@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "جاهز" : "Ready"))" /></header>
             <div class="ai-options-grid">
-                <label><span>@(L.IsArabic ? "مفتاح القالب" : "Prompt key")</span><input @bind="_promptKey" placeholder="content.rewrite" /></label>
-                <label><span>@(L.IsArabic ? "النموذج الاختياري" : "Optional model")</span><input @bind="_model" placeholder="Default provider model" /></label>
+                <label><span>@(L.IsArabic ? "مفتاح القالب" : "Prompt key")</span><input @bind="_promptKey" placeholder="content.rewrite" data-bidi="technical" /></label>
+                <label><span>@(L.IsArabic ? "النموذج الاختياري" : "Optional model")</span><input @bind="_model" placeholder="Default provider model" data-bidi="technical" /></label>
                 <label><span>Temperature: @_temperature.ToString("0.0")</span><input type="range" min="0" max="1" step="0.1" @bind="_temperature" /></label>
                 <label><span>@(L.IsArabic ? "الحد الأقصى للرموز" : "Max output tokens")</span><input type="number" min="100" max="8000" @bind="_maxTokens" /></label>
                 <label class="wide"><span>@(L.IsArabic ? "الموقع" : "Site")</span>
@@ -76,112 +76,81 @@
             </div>
             <label class="ai-content-input"><span>@(L.IsArabic ? "القيمة الأصلية / المحتوى الحالي" : "Original value / current content")</span><textarea @bind="_content" rows="14" placeholder="@(L.IsArabic ? "ألصق القيمة الحالية التي تريد تحسينها..." : "Paste the current value you want the AI to improve...")"></textarea></label>
             <div class="ai-composer-footer">
-                <span>@ContentLength @(L.IsArabic ? "حرف" : "characters")</span>
-                <button class="btn primary" disabled="@(_working || string.IsNullOrWhiteSpace(_content))" @onclick="GenerateAsync">✦ @(_working ? (L.IsArabic ? "جارٍ إنشاء الاقتراح..." : "Generating suggestion...") : (L.IsArabic ? "إنشاء اقتراح" : "Generate suggestion"))</button>
+                <span><AppBidiText Mode="number">@ContentLength</AppBidiText> @(L.IsArabic ? "حرف" : "characters")</span>
+                <AppButton Variant="primary" Icon="✦" Busy="@_working" Disabled="@(_working || string.IsNullOrWhiteSpace(_content))" Text="@(_working ? (L.IsArabic ? "جارٍ إنشاء الاقتراح..." : "Generating suggestion...") : (L.IsArabic ? "إنشاء اقتراح" : "Generate suggestion"))" OnClick="GenerateClickedAsync" />
             </div>
-        </main>
+        </section>
 
-        <aside class="panel ai-output-panel">
+        <aside class="panel ai-output-panel" aria-labelledby="ai-output-title">
             <header>
-                <div><span class="workspace-kicker">SUGGESTION</span><h2>@(L.IsArabic ? "القيمة المقترحة" : "Proposed value")</h2></div>
+                <div><span class="workspace-kicker">SUGGESTION</span><h3 id="ai-output-title">@(L.IsArabic ? "القيمة المقترحة" : "Proposed value")</h3></div>
                 @if (!string.IsNullOrWhiteSpace(_output))
                 {
-                    <button class="btn compact" @onclick="CopyOutputAsync">@(L.IsArabic ? "نسخ" : "Copy")</button>
+                    <AppButton Size="small" Icon="⧉" Text="@(L.IsArabic ? "نسخ" : "Copy")" OnClick="CopyOutputClickedAsync" />
                 }
             </header>
             @if (_working)
             {
-                <div class="ai-output-loading"><span></span><span></span><span></span><p>@(L.IsArabic ? "يتولى المزود إنشاء اقتراح منظم وقابل للمراجعة..." : "The provider is building a structured, reviewable suggestion...")</p></div>
+                <AppLoading Title="@(L.IsArabic ? "جارٍ إنشاء الاقتراح" : "Generating suggestion")" Message="@(L.IsArabic ? "يتولى المزود إنشاء اقتراح منظم وقابل للمراجعة..." : "The provider is building a structured, reviewable suggestion...")" />
             }
             else if (!string.IsNullOrWhiteSpace(_error))
             {
-                <div class="alert error"><strong>@(L.IsArabic ? "فشل إنشاء الاقتراح" : "Suggestion generation failed")</strong><p>@_error</p></div>
+                <AppStatePanel Kind="error" Title="@(L.IsArabic ? "فشل إنشاء الاقتراح" : "Suggestion generation failed")" Description="@_error" />
             }
             else if (_suggestion is null)
             {
-                <div class="empty-state ai-output-empty"><span>✦</span><h3>@(L.IsArabic ? "الاقتراح سيظهر هنا" : "Your suggestion will appear here")</h3><p>@(L.IsArabic ? "اختر قالبًا، أدخل القيمة الأصلية، ثم أنشئ الاقتراح." : "Choose a prompt, enter the original value, and generate a suggestion.")</p></div>
+                <AppEmptyState Icon="✦" Title="@(L.IsArabic ? "الاقتراح سيظهر هنا" : "Your suggestion will appear here")" Description="@(L.IsArabic ? "اختر قالبًا، أدخل القيمة الأصلية، ثم أنشئ الاقتراح." : "Choose a prompt, enter the original value, and generate a suggestion.")" Blocking="false" />
             }
             else
             {
                 <article class="ai-generated-output">@_suggestion.After</article>
-                <div class="ai-result-meta"><span>@_suggestion.After.Length @(L.IsArabic ? "حرف" : "characters")</span><span>@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</span></div>
+                <div class="ai-result-meta"><span><AppBidiText Mode="number">@_suggestion.After.Length</AppBidiText> @(L.IsArabic ? "حرف" : "characters")</span><span><AppBidiText Mode="time">@(_lastElapsed is null ? "—" : $"{_lastElapsed.Value.TotalSeconds:0.0}s")</AppBidiText></span></div>
 
                 <section class="ai-suggestion-evidence">
                     <div class="ai-suggestion-summary">
-                        <div>
-                            <span class="workspace-kicker">RATIONALE</span>
-                            <h3>@(L.IsArabic ? "سبب الاقتراح" : "Why this change")</h3>
-                            <p>@_suggestion.Explanation</p>
-                        </div>
-                        <div class="ai-confidence-card">
-                            <small>@(L.IsArabic ? "درجة الثقة" : "Confidence")</small>
-                            <strong>@_suggestion.Confidence.ToString("P0")</strong>
-                            <span>@ConfidenceText(_suggestion.Confidence)</span>
-                        </div>
+                        <div><span class="workspace-kicker">RATIONALE</span><h4>@(L.IsArabic ? "سبب الاقتراح" : "Why this change")</h4><p>@_suggestion.Explanation</p></div>
+                        <div class="ai-confidence-card"><small>@(L.IsArabic ? "درجة الثقة" : "Confidence")</small><strong>@_suggestion.Confidence.ToString("P0")</strong><span>@ConfidenceText(_suggestion.Confidence)</span></div>
                     </div>
-                    <div class="ai-affected-fields">
-                        <small>@(L.IsArabic ? "الحقول المتأثرة" : "Affected fields")</small>
-                        <div>
-                            @foreach (var field in _suggestion.AffectedFields)
-                            {
-                                <span class="badge">@field</span>
-                            }
-                        </div>
-                    </div>
+                    <div class="ai-affected-fields"><small>@(L.IsArabic ? "الحقول المتأثرة" : "Affected fields")</small><div>@foreach (var field in _suggestion.AffectedFields) { <AppBadge Tone="info" Text="@field" /> }</div></div>
                 </section>
 
                 <section class="ai-approval-box">
-                    <div class="ai-approval-heading">
-                        <div><span class="workspace-kicker">GOVERNANCE</span><h3>@(L.IsArabic ? "إرسال للموافقة" : "Submit for approval")</h3></div>
-                        <button class="btn compact" disabled="@(!_lastApprovalId.HasValue)" @onclick="RefreshApprovalStatus">↻ @(L.IsArabic ? "تحديث الحالة" : "Refresh state")</button>
-                    </div>
+                    <div class="ai-approval-heading"><div><span class="workspace-kicker">GOVERNANCE</span><h4>@(L.IsArabic ? "إرسال للموافقة" : "Submit for approval")</h4></div><AppButton Size="small" Icon="↻" Disabled="@(!_lastApprovalId.HasValue)" Text="@(L.IsArabic ? "تحديث الحالة" : "Refresh state")" OnClick="RefreshApprovalStatusClicked" /></div>
                     <div class="ai-approval-grid">
-                        <label><span>@(L.IsArabic ? "درجة الخطورة" : "Risk level")</span>
-                            <select @bind="_riskLevel">
-                                @foreach (var risk in Enum.GetValues<ApprovalRiskLevel>())
-                                {
-                                    <option value="@risk">@RiskText(risk)</option>
-                                }
-                            </select>
-                        </label>
-                        <label><span>@(L.IsArabic ? "نوع العملية" : "Operation type")</span><input @bind="_operationType" /></label>
+                        <label><span>@(L.IsArabic ? "درجة الخطورة" : "Risk level")</span><select @bind="_riskLevel">@foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()) { <option value="@risk">@RiskText(risk)</option> }</select></label>
+                        <label><span>@(L.IsArabic ? "نوع العملية" : "Operation type")</span><input @bind="_operationType" data-bidi="technical" /></label>
                         <label class="wide"><span>@(L.IsArabic ? "عنوان طلب الموافقة" : "Approval title")</span><input @bind="_approvalTitle" /></label>
                     </div>
-                    <div class="ai-compare-grid">
-                        <div><small>@(L.IsArabic ? "قبل" : "Before")</small><pre>@_suggestion.Before</pre></div>
-                        <div><small>@(L.IsArabic ? "بعد" : "After")</small><pre>@_suggestion.After</pre></div>
-                    </div>
-                    <button class="btn primary full" disabled="@_submittingApproval" @onclick="SubmitForApprovalAsync">✓ @(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال إلى قائمة الموافقات" : "Submit to approval queue"))</button>
+                    <div class="ai-compare-grid"><div><small>@(L.IsArabic ? "قبل" : "Before")</small><pre>@_suggestion.Before</pre></div><div><small>@(L.IsArabic ? "بعد" : "After")</small><pre>@_suggestion.After</pre></div></div>
+                    <AppButton Class="full" Variant="primary" Icon="✓" Busy="@_submittingApproval" Disabled="@_submittingApproval" Text="@(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال إلى قائمة الموافقات" : "Submit to approval queue"))" OnClick="SubmitForApprovalClickedAsync" />
                     @if (_lastApprovalId.HasValue)
                     {
-                        <div class="ai-approval-status"><span class="badge @ApprovalBadgeClass">@ApprovalStateText</span><a href="/approvals">@(L.IsArabic ? "فتح قائمة الموافقات" : "Open approval queue") ↗</a></div>
+                        <div class="ai-approval-status"><AppBadge Tone="@ApprovalTone" Text="@ApprovalStateText" /><AppButton Href="/approvals" Size="small" Icon="↗" Text="@(L.IsArabic ? "فتح قائمة الموافقات" : "Open approval queue")" /></div>
                     }
                 </section>
             }
         </aside>
     </section>
 
-    <section class="panel ai-session-history">
-        <header><div><span class="workspace-kicker">SESSION HISTORY</span><h2>@(L.IsArabic ? "اقتراحات الجلسة" : "Session suggestions")</h2></div><button class="btn compact" disabled="@(_history.Count == 0)" @onclick="ClearHistory">@(L.IsArabic ? "مسح السجل" : "Clear history")</button></header>
-        @if (_history.Count == 0)
-        {
-            <div class="empty-state"><p>@(L.IsArabic ? "لا توجد اقتراحات في هذه الجلسة بعد." : "No suggestions have been generated in this session yet.")</p></div>
-        }
-        else
-        {
-            <div class="ai-history-list">
-                @foreach (var item in _history)
-                {
-                    <article>
-                        <div><strong>@item.Title</strong><small>@item.PromptKey · @item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") · @item.Elapsed.TotalSeconds.ToString("0.0")s · @item.Suggestion.Confidence.ToString("P0")</small></div>
-                        <p>@Preview(item.Suggestion.After)</p>
-                        <div class="ai-history-actions"><button class="btn compact" @onclick="() => RestoreHistory(item)">@(L.IsArabic ? "استعادة" : "Restore")</button><button class="btn compact" @onclick="() => CopyHistoryAsync(item)">@(L.IsArabic ? "نسخ" : "Copy")</button></div>
-                    </article>
-                }
-            </div>
-        }
-    </section>
-</div>
+    <AppSection Class="ai-session-history" Eyebrow="SESSION HISTORY" Title="@(L.IsArabic ? "اقتراحات الجلسة" : "Session suggestions")" HeadingLevel="3">
+        <Header><AppButton Size="small" Variant="ghost" Disabled="@(_history.Count == 0)" Text="@(L.IsArabic ? "مسح السجل" : "Clear history")" OnClick="ClearHistoryClicked" /></Header>
+        <ChildContent>
+            @if (_history.Count == 0)
+            {
+                <AppEmptyState Title="@(L.IsArabic ? "لا توجد اقتراحات في هذه الجلسة" : "No session suggestions yet")" Description="@(L.IsArabic ? "ستظهر الاقتراحات هنا بعد أول عملية إنشاء." : "Suggestions appear here after the first generation.")" Blocking="false" />
+            }
+            else
+            {
+                <div class="ai-history-list">
+                    @foreach (var item in _history)
+                    {
+                        <article><div><strong>@item.Title</strong><small><AppBidiText Mode="technical">@item.PromptKey</AppBidiText> · <AppBidiText Mode="date">@item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText> · <AppBidiText Mode="time">@item.Elapsed.TotalSeconds.ToString("0.0")s</AppBidiText> · @item.Suggestion.Confidence.ToString("P0")</small></div><p>@Preview(item.Suggestion.After)</p><div class="ai-history-actions"><AppButton Size="small" Text="@(L.IsArabic ? "استعادة" : "Restore")" OnClick="_ => RestoreHistory(item)" /><AppButton Size="small" Text="@(L.IsArabic ? "نسخ" : "Copy")" OnClick="_ => CopyHistoryAsync(item)" /></div></article>
+                    }
+                </div>
+            }
+        </ChildContent>
+    </AppSection>
+</AppPage>
 
 @code {
     private readonly List<PromptOption> _prompts = new();
@@ -202,6 +171,7 @@
     private IEnumerable<PromptOption> FilteredPrompts => _prompts.Where(x => string.IsNullOrWhiteSpace(_promptSearch) || x.Key.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase) || x.Title.Contains(_promptSearch, StringComparison.OrdinalIgnoreCase));
     private string ApprovalStateText => _lastApprovalStatus?.ToString() ?? (L.IsArabic ? "لم يُرسل" : "Not submitted");
     private string ApprovalBadgeClass => _lastApprovalStatus switch { ApprovalStatus.Approved or ApprovalStatus.Executed => "success", ApprovalStatus.Rejected or ApprovalStatus.Cancelled => "error", _ => "warning" };
+    private string ApprovalTone => _lastApprovalStatus switch { ApprovalStatus.Approved or ApprovalStatus.Executed => "success", ApprovalStatus.Rejected or ApprovalStatus.Cancelled => "danger", _ => "warning" };
 
     protected override void OnInitialized()
     {
@@ -211,6 +181,13 @@
     }
 
     protected override async Task OnInitializedAsync() => await LoadMetadataAsync();
+    private Task LoadMetadataClickedAsync(MouseEventArgs _) => LoadMetadataAsync();
+    private void ClearClicked(MouseEventArgs _) => Clear();
+    private Task GenerateClickedAsync(MouseEventArgs _) => GenerateAsync();
+    private Task CopyOutputClickedAsync(MouseEventArgs _) => CopyOutputAsync();
+    private Task SubmitForApprovalClickedAsync(MouseEventArgs _) => SubmitForApprovalAsync();
+    private void RefreshApprovalStatusClicked(MouseEventArgs _) => RefreshApprovalStatus();
+    private void ClearHistoryClicked(MouseEventArgs _) => ClearHistory();
 
     private async Task LoadMetadataAsync()
     {

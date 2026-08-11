@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.138.0` — UX-008
+**Current release:** `155.139.0` — UX-009
 
 ## Design principles
 
@@ -30,243 +30,111 @@
 | UX-006 | **HIGH** | **Completed** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 / `155.136.0` |
 | UX-007 | **HIGH** | **Completed** | Loading, empty, success, warning, offline & error states | UX-001 | #52 / `155.137.0` |
 | UX-008 | **HIGH** | **Completed** | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 / `155.138.0` |
-| UX-009 | **HIGH** | **Next** | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
-| UX-010 | **HIGH** | Planned | Visual and accessibility regression gates | UX-003/004/009 | #55 |
+| UX-009 | **HIGH** | **Completed** | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 / `155.139.0` |
+| UX-010 | **HIGH** | **Next** | Visual and accessibility regression gates | UX-003/004/009 | #55 |
 
 ## UX-001 — delivered foundation
 
-UX-001 established the shared shell contract that later design tasks build on.
-
-### Design system foundation
-- Extended the existing `--ui-*` token layer with shell semantics instead of creating a competing token system.
-- Standardized shell width, content gutters, elevations, radii, focus treatment, touch targets, and motion.
-- Preserved existing runtime accent selection and dark/light mode.
-
-### Application shell
-- Refined sidebar, brand block, grouped navigation, active states, topbar hierarchy, and content canvas.
-- Removed stale hard-coded branch/version decoration from CSS; build identity is rendered only from `BuildInformationService`.
-- Made primary landmarks and interactive controls screen-reader identifiable.
-- Added a keyboard skip link to the application content.
-
-### Discoverability baseline
-- Surfaced AI Center, AI Usage & Cost, Content Planner, Prompt Templates, and provider configuration in the AI workspace.
-- Expanded command discovery for approvals, schedules, logs/errors, backup/restore, and current AI routes.
-- Corrected page-title route matching so `/` cannot falsely identify unrelated routes as Dashboard.
-
-### Responsive baseline
-- Kept desktop navigation stable, tablet topbar compact, and mobile navigation off-canvas.
-- Resolved conflicting legacy mobile navigation rules so the off-canvas sidebar remains vertically usable.
-- Added practical touch targets, responsive content gutters, reduced-motion behavior, and tablet language-control treatment.
+- Established the shared design-system token layer, shell spacing, elevations, radii, focus treatment, touch targets and motion.
+- Refined sidebar, grouped navigation, topbar hierarchy, content canvas, skip link and primary landmarks.
+- Preserved runtime accent selection and dark/light mode.
+- Surfaced core AI, planner, execution, reporting and settings destinations in production navigation.
 
 ## UX-002 — delivered navigation architecture
 
-UX-002 removes navigation drift by treating destinations as product information architecture rather than duplicated UI strings.
-
-### Navigation catalog
-- Established one server-side catalog for primary navigation, command search, current-location titles, localized descriptions, search aliases, and role visibility.
-- Administrator-only destinations are discoverable only to authenticated administrators.
-- Automation Center, Notification Inbox, account destinations, and administrative settings are represented without hidden production URLs.
-
-### Search and recent access
-- Command search matches page names, capability descriptions, keywords, and routes.
-- Results are grouped by workspace with localized context and route hints.
-- Recent/Favorites receives the authorized catalog through JS interop instead of maintaining a stale client-only route list.
-- `Ctrl+Shift+P` remains available; desktop/tablet uses topbar access while the floating launcher remains for mobile.
-
-### Workflow shortcuts
-- Quick Actions now focus on the highest-value site, content, AI, planner, automation, execution, synchronization, SEO, notification, and reporting workflows.
-- Tenant ownership and authorization remain independent authoritative boundaries; navigation changes do not change data access.
-
-### Regression coverage
-- Unique routes and group keys are enforced by tests.
-- Localized catalog metadata is verified.
-- Important production destinations, most-specific route matching, admin visibility, root-route safety, and capability-keyword search are covered.
-- Implementation and self-review heads passed both Build and .NET Build Verification before release reconciliation.
+- Established one navigation catalog for sidebar destinations, command search, current-location titles, descriptions, search aliases and role visibility.
+- Added grouped command search and authorized recent/favorite destinations without duplicating route lists.
+- Preserved tenant ownership and authorization as independent authoritative boundaries.
 
 ## UX-003 — delivered responsive shell
 
-UX-003 turns the UX-001 shell into a production responsive application rather than a compressed desktop layout.
-
-### Responsive drawer contract
-- Tablet and mobile widths up to 1024px use one off-canvas navigation model.
-- Responsive drawer state is ephemeral and independent from the persisted desktop collapsed-sidebar preference.
-- Entering tablet/mobile mode starts with navigation closed so content is never unexpectedly covered.
-- Route selection, backdrop click, explicit close control, and Escape close the drawer.
-- Drawer close/backdrop controls are Razor-owned elements inside `MainLayout`; JavaScript does not inject nodes into Blazor-managed shell DOM.
-- Resize and orientation changes reconcile drawer state without corrupting desktop preference.
-
-### Safe-area and viewport behavior
-- The application viewport opts into `viewport-fit=cover`.
-- Shared shell spacing uses device safe-area insets for topbar, drawer, popovers, command search, and bottom actions.
-- Dynamic viewport units (`dvh`) keep drawers and overlays aligned when browser chrome changes.
-
-### Tablet and phone condensation
-- The topbar collapses secondary context before primary actions.
-- Search, language, account, appearance, theme, and recent controls progressively condense by available width instead of wrapping unpredictably.
-- The mobile floating Recent/Favorites launcher remains available when the topbar version is hidden.
-- Landscape-short layouts prioritize navigation and content over decorative/footer information.
-
-### Overflow and dense-workspace safety
-- Shell surfaces enforce `min-width: 0` and constrain accidental horizontal page overflow.
-- Drawer navigation remains vertically scrollable while page-body scroll is locked.
-- Practical touch targets remain at least 44px/46px for shell controls and navigation destinations.
-- `AppDataGrid` exposes an optional `MobileRowTemplate` so dense workspaces can switch from the desktop table to phone-card rows without duplicating filter, paging, sorting, selection, or export state.
-- Existing data-grid consumers remain unchanged unless they opt into the mobile-card template; bounded component scrolling remains the safe fallback.
-- Shared dialogs constrain wide content to the viewport, keep overflow inside the dialog body, allow long text to wrap, and let phone footer actions wrap instead of clipping.
-
-### Regression coverage
-- Static contract tests verify the shared 1024px breakpoint across CSS/runtime state logic.
-- Tests protect independent desktop/mobile state, Razor-owned drawer controls, safe-area viewport support, dynamic viewport sizing, overflow containment, and landscape guards.
-- Tests also protect the opt-in data-grid mobile-card contract and shared dialog overflow/action behavior.
+- Standardized the 1024px tablet/mobile off-canvas navigation contract and kept it independent from the desktop collapsed preference.
+- Added safe-area/dynamic viewport behavior, responsive topbar condensation and overflow containment.
+- Added mobile-card support to `AppDataGrid` and hardened shared dialog overflow/action behavior.
 - Stable implementation head `a015a43485d0bfbfc68d7dcb7285259f15ea7bdb` passed Build #1413 and .NET Build Verification #1021 before release reconciliation.
 
 ## UX-004 — delivered accessibility, keyboard and focus hardening
 
-UX-004 converts accessibility from a collection of local affordances into a shared application contract. The implementation is tracked as exactly 50 completed tasks in `docs/UX_004_50_TASKS.md`.
-
-### Keyboard and modal focus contract
-- A shared runtime discovers visible modal dialogs and moves focus to the preferred or first usable control.
-- Tab and Shift+Tab remain contained inside the active modal; stray focus is redirected back into it.
-- Modal close restores the original opener when it remains available and background scrolling is locked while modal interaction is active.
-- Shared Escape behavior targets explicitly marked close controls without changing domain workflows.
-
-### Landmarks, page context and announcements
-- Route content is the actual `main` landmark and is programmatically associated with the shared page `h1`.
-- Breadcrumbs use a navigation landmark and expose the current page.
-- Client-side page-title changes move focus to `#main-content` and announce the new context through a shared polite live region.
-- Command, recent/favorites and accessibility shortcuts expose keyboard metadata to assistive technology.
-
-### Shared component semantics
-- `AppDialog` provides unique IDs, programmatic title/description relationships, configurable close names and focusable dialog containers.
-- `AppButton` provides accessible-name fallback, busy state, optional pressed state and correct disabled-link behavior.
-- `AppSearchBox` provides configurable clear naming, busy-state announcements and autocomplete control.
-- `AppDataGrid` provides table naming, filtered row count, accessible selection labels, pagination landmarks, labelled page-size controls and polite state updates.
-- All new component parameters are optional/defaulted, preserving source compatibility for existing call sites.
-
-### Display preferences and contrast
-- Accessibility settings now expose dialog/toggle semantics, preserve keyboard focus after preference rerenders and restore focus to the trigger on close.
-- Shared final-layer CSS enforces visible keyboard focus, preserves the semantic page `h1` visual hierarchy, honors OS and user reduced-motion preferences, supports higher contrast/forced colors, provides non-color selected-row indication and keeps common interaction targets at 44px or larger.
-
-### Regression coverage
-- `AccessibilityContractTests` protect modal runtime behavior, shell landmarks, shared dialog/button/search/grid semantics, accessibility settings, host loading order and accessibility CSS contracts.
-- A regression guard asserts exactly 50 completed UX-004 implementation tasks.
-- Implementation head `a6e409ff69ec784c3d6d2e331fd565d9d34cd177` passed .NET Build Verification #1030 with 279 passed, 0 failed, 0 skipped; Build #1422 completed Restore, Build and Test successfully before release reconciliation.
-- Browser-driven axe/visual accessibility automation remains scoped to UX-010 and is not falsely claimed as part of UX-004.
+- Added modal focus containment/restoration, route-context focus and announcement behavior, accessible shell landmarks and keyboard metadata.
+- Hardened `AppDialog`, `AppButton`, `AppSearchBox` and `AppDataGrid` semantics while preserving source compatibility.
+- Added visible-focus, contrast, reduced-motion and forced-colors final-layer protection.
+- `AccessibilityContractTests` protect the shared contracts and exactly 50 completed UX-004 tasks.
+- Implementation head `a6e409ff69ec784c3d6d2e331fd565d9d34cd177` passed .NET Build Verification #1030 with 279 passed, 0 failed, 0 skipped; Build #1422 completed Restore, Build and Test successfully.
 
 ## UX-005 — delivered forms, validation and destructive-action UX
 
-UX-005 standardizes the form interaction contract and is tracked as exactly 100 completed implementation tasks in `docs/UX_005_100_TASKS.md`.
-
-### Shared form primitives
-- `AppFormField` standardizes label association, required/optional wording, helper copy, constraints, field-level errors, and deterministic ARIA relationship IDs.
-- `AppValidationSummary` provides a focusable assertive summary for preflight validation failures.
-- `AppFormStatus` separates assertive errors from polite success/information outcomes and can include recovery guidance.
-- `AppFormActions` standardizes save/cancel busy behavior, prevents double activation, and supports contextual and unsaved-state messaging.
-
-### Destructive confirmations
-- `AppConfirmDialog` now supports impact and recovery guidance without breaking existing call sites.
-- High-risk actions can require typed confirmation before the confirm action becomes available.
-- Typed confirmation state resets with dialog lifecycle and remains blocked while work is busy.
-- Confirmation copy, action names, close labels, and recovery guidance are localized-ready.
-
-### Form runtime and visual system
-- `form-ux.js` discovers invalid controls, reflects native invalid state, and focuses newly rendered validation summaries after Blazor rerenders.
-- `forms-ux.css` standardizes themed controls, invalid treatment, 44px practical targets, responsive action layouts, RTL logical properties, reduced motion, and forced-colors behavior.
-- The form layer loads after UX-004 accessibility hardening so focus and accessibility contracts remain authoritative.
-
-### High-risk adoption
-- Account Profile performs service-aligned password preflight validation before the existing account service call and exposes field-specific accessible errors.
-- AI Provider Settings validates all model names before persistence and requires typing `REMOVE` before stored encrypted keys can be deleted.
-- Application User administration validates create/edit and password-reset forms, confirms account disable impact/recovery, and requires the selected username before administrator password reset.
-- Existing application services remain the authoritative security and persistence boundary.
-
-### Regression coverage
-- `FormUxContractTests` protect shared form primitives, destructive confirmations, form runtime, CSS, host loading order, and the three high-risk adoption points.
-- A regression guard asserts exactly 100 completed UX-005 implementation tasks.
-- Stable implementation head `ec5083c75d2ae16c4d819604cb5a660b9d532d18` passed Build #1427 and .NET Build Verification #1035 with 291 passed, 0 failed, 0 skipped before release reconciliation.
-- Test artifact #9070267846 is 71,715 bytes with SHA-256 `a7b9de8e3c7fcec2d061b5a0e97cc77607d956ba9d437d9e29bb4bf92c49820c`.
+- Standardized `AppFormField`, `AppValidationSummary`, `AppFormStatus`, `AppFormActions` and high-risk confirmations.
+- Added form runtime/CSS for invalid focus, themed controls, practical targets, responsive/RTL/reduced-motion/forced-colors behavior.
+- Adopted the contract in Account Profile, AI Provider Settings and Application User administration.
+- `FormUxContractTests` protect the shared form/destructive-action contracts and exactly 100 completed tasks.
+- Stable implementation head `ec5083c75d2ae16c4d819604cb5a660b9d532d18` passed Build #1427 and .NET Build Verification #1035 with 291 passed, 0 failed, 0 skipped.
+- Test artifact #9070267846: 71,715 bytes; SHA-256 `a7b9de8e3c7fcec2d061b5a0e97cc77607d956ba9d437d9e29bb4bf92c49820c`.
 
 ## UX-006 — delivered dense data workspaces
 
-UX-006 standardizes dense operational data interaction and is tracked as exactly 100 completed implementation tasks in `docs/UX_006_100_TASKS.md`.
-
-### Shared data-grid contract
-- `AppDataGrid` now supports compact/comfortable/spacious density, optional striping, sticky headers, focusable scroll viewports and rows, explicit captions, row-state metadata, and non-color selection/state indicators.
-- External predicates combine with grid search without duplicating source collections; active-filter count, no-results recovery, clear-all behavior, pagination reset, sort direction, and filtered/sorted CSV export are explicit shared contracts.
-- Selection supports visible-page selection, select-all-filtered scope, hidden-selected reporting, stale-key reconciliation, and optional integrated bulk actions.
-- Empty data and filtered no-results are distinct states rather than one ambiguous blank-table path.
-
-### Filters and bulk actions
-- `AppFilterBar` provides a reusable busy-aware search/filter region with active-filter state, applied-filter chips and clear-all recovery.
-- `AppFilterChip` uses real keyboard-accessible remove buttons with explicit accessible names.
-- `AppBulkActionBar` exposes region/busy semantics, sticky safe-area placement, scope guidance, optional dangerous treatment, secondary actions, and a labelled clear-selection path.
-- Shared CSS preserves RTL/LTR directionality, mobile card fallbacks, bounded overflow, practical touch targets, reduced motion, and forced-colors behavior.
-
-### Production adoption
-- AI Usage now uses `AppFilterBar`/`AppFilterChip` for account-scoped site filtering.
-- Recent AI calls now render through `AppDataGrid` with search, CSV export, compact density, sticky/striped scanability, success/error row states, localized pagination, and mobile cards.
-- Usage-service identity and persistence boundaries remain unchanged; UX-006 only changes presentation and query-state interaction.
-
-### Regression coverage
-- `DenseWorkspaceUxContractTests` protect grid hierarchy, filtering, selection scope, paging/sort/export state, shared filter controls, bulk actions, responsive/RTL/forced-color CSS, AI Usage adoption, and the exact 100-task manifest.
-- Stable implementation head `fe507dff21b68b5f27f5e0a6ac7e27efe672958d` passed Build #1435 and .NET Build Verification #1043 with 300 passed, 0 failed, 0 skipped before release reconciliation.
-- Test artifact #9071148244 is 73,890 bytes with SHA-256 `29bce85608cbf4d320621bc844357d2444475baf97e822c99766110f6c9e4204`.
-- One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-006 does not modify that service.
+- Expanded `AppDataGrid` with density, sticky headers, external filters, result-state separation, stable selection scope, paging/sort/export and mobile alternatives.
+- Added `AppFilterBar`, `AppFilterChip` and hardened `AppBulkActionBar`.
+- Adopted the shared dense-workspace contract in AI Usage.
+- `DenseWorkspaceUxContractTests` protect the grid/filter/bulk/responsive contracts and exactly 100 completed tasks.
+- Stable implementation head `fe507dff21b68b5f27f5e0a6ac7e27efe672958d` passed Build #1435 and .NET Build Verification #1043 with 300 passed, 0 failed, 0 skipped.
+- Test artifact #9071148244: 73,890 bytes; SHA-256 `29bce85608cbf4d320621bc844357d2444475baf97e822c99766110f6c9e4204`.
 
 ## UX-007 — delivered application feedback states
 
-UX-007 standardizes application feedback and is tracked as exactly 100 completed implementation tasks in `docs/UX_007_100_TASKS.md`.
-
-### Shared feedback contract
-- `AppStatePanel` provides normalized info/loading/empty/success/warning/error/offline/cached/partial states, polite/assertive live-region rules, recovery guidance, guarded retry, freshness metadata, and optional diagnostic disclosure.
-- `AppStateBanner` provides compact retained-content feedback so cached/stale data and partial failures do not unnecessarily hide successful work.
-- `AppSkeleton` provides bounded presentation-only loading placeholders with reduced-motion fallback.
-- Existing `AppLoading` and `AppEmptyState` components now route through the shared contract while preserving current call sites.
-
-### State truthfulness and resilience
-- Generic service failures are not relabeled as offline; offline presentation is available only where a consumer can truthfully determine connectivity state.
-- State meaning uses icon/text plus non-color leading-edge treatment, logical RTL/LTR properties, safe long-text wrapping, mobile action stacking, reduced-motion handling, and forced-colors support.
-- Existing data-grid consumers inherit the improved loading/empty/no-results semantics through the source-compatible wrappers.
-
-### AI Usage adoption
-- First load now uses a shared loading state with skeletons; initial failure uses an actionable error/retry state; null snapshots use a guided empty state.
-- A valid successful snapshot remains visible while refresh is running.
-- Failed refreshes retain the prior snapshot and show cached/stale feedback with the last successful refresh time.
-- Failed AI calls produce partial-failure feedback without hiding successful telemetry.
-- Provider and operation subsection empties use non-blocking shared empty states.
-
-### Regression coverage
-- `FeedbackStateUxContractTests` protect state taxonomy, live-region semantics, retry/busy behavior, freshness, retained-content banners, skeletons, legacy wrappers, AI Usage adoption, CSS/load ordering, and the exact 100-task manifest.
-- Stable implementation head `7336f28e20f85c2ba63456e48488b56615048fc9` passed Build #1442 and .NET Build Verification #1050 with 310 passed, 0 failed, 0 skipped before release reconciliation.
-- Test artifact #9081891782 is 76,983 bytes with SHA-256 `de74354c97c56e46b63d5bd8ca5411b3d99486fd97cbb3eebd10b86e24398772`.
-- One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-007 does not modify that service.
+- Added `AppStatePanel`, `AppStateBanner` and `AppSkeleton`; routed existing loading/empty wrappers through the shared contract.
+- Standardized truthful loading, empty, success, warning, error, cached/stale, partial-failure and retry presentation.
+- AI Usage retains the last successful snapshot during refresh and distinguishes partial/stale failures without hiding valid telemetry.
+- `FeedbackStateUxContractTests` protect state semantics and exactly 100 completed tasks.
+- Stable implementation head `7336f28e20f85c2ba63456e48488b56615048fc9` passed Build #1442 and .NET Build Verification #1050 with 310 passed, 0 failed, 0 skipped.
+- Test artifact #9081891782: 76,983 bytes; SHA-256 `de74354c97c56e46b63d5bd8ca5411b3d99486fd97cbb3eebd10b86e24398772`.
 
 ## UX-008 — delivered RTL/LTR visual parity
 
-UX-008 hardens Arabic RTL / English LTR parity and is tracked as exactly 100 completed code tasks in `docs/UX_008_100_TASKS.md`.
+- Added `AppBidiText`, directional icon intent/mirroring, optional badge bidi mode and dialog direction scoping.
+- Added pre-paint language bootstrap and runtime root/body direction metadata synchronization.
+- Added final `rtl-ltr-parity.css` using logical properties for shell, navigation, forms, dialogs, grids, feedback surfaces and technical metadata.
+- Build & Release Notes isolates version, branch, commit, timestamps and technical paths while preserving copied build-report payload.
+- `RtlLtrParityContractTests` protect direction/bootstrap/bidi/logical-layout contracts and exactly 100 completed tasks.
+- Stable implementation head `a65d89edc7d273efa8b5fbb7df9461bf9adffd1c` passed Build #1448 and .NET Build Verification #1056 with 322 passed, 0 failed, 0 skipped before release reconciliation.
+- Test artifact #9091043961: 80,064 bytes; SHA-256 `c882deb552b9b736123980803576fba6b56ff29b157a416ed9a0c6ae5f407969`.
+- Browser-driven screenshot/visual-diff automation remains UX-010 scope.
 
-### Shared bidi and direction contracts
-- `AppBidiText` provides semantic `bdi` isolation for mixed-direction technical, numeric, date, time, version, path, URL and email values without forcing surrounding Arabic copy into LTR.
-- `AppDirectionalIcon` and source-compatible `AppButton` icon intent distinguish spatial back/forward/enter glyphs from neutral icons so only spatial meaning mirrors in RTL.
-- `AppBadge` accepts optional bidi mode, and `AppDialog` accepts an optional direction scope without changing existing call sites.
-- `language-bootstrap.js` applies a saved Arabic preference before the first stylesheet paints; `app-language.js` and `bidi-runtime.js` keep root/body language and direction metadata synchronized afterwards.
+## UX-009 — delivered page hierarchy & visual consistency
 
-### Logical layout parity
-- Final-layer `rtl-ltr-parity.css` reconciles shell, navigation, breadcrumbs, popovers, forms, dialogs, data grids, bulk actions, feedback surfaces and technical metadata through logical inline properties rather than a duplicate Arabic layout.
-- Paging and breadcrumb spatial glyphs mirror in RTL, while neutral controls preserve their visual meaning.
-- Email/URL/telephone/numeric controls and code/path/version/date values remain readable through scoped LTR isolation and tabular numeric treatment.
-- Responsive safe-area placement, mobile action stacking, reduced-motion behavior and forced-colors semantics are retained across both directions.
+UX-009 removes page-level visual drift and is tracked as exactly 100 completed code tasks in `docs/UX_009_100_TASKS.md`.
+
+### Shared composition hierarchy
+
+- Added `AppPage` as the reusable page composition wrapper with page identity, narrow/standard/wide/fluid widths, compact/comfortable/spacious density and passthrough metadata.
+- Standardized the semantic hierarchy as shell `h1` → page `AppToolbar` `h2` → `AppCard` / `AppSection` `h3` by default, with explicit bounded overrides where needed.
+- `AppToolbar`, `AppCard` and `AppSection` now expose generated title/description relationships, normalized semantic tones and density metadata while preserving existing content/action regions.
+- `AppStatCard` now supports accessible fallback naming, normalized tone/density, bidi-safe values and optional secondary metadata.
+
+### Consistency layer
+
+- Added `page-consistency.css` with shared page gaps/max widths, action clusters, metadata rows, two/three-column page grids, readable heading/copy rhythm and min-width containment.
+- The consistency layer reconciles legacy panel/card selectors only inside pages that opt into `AppPage`, preventing a new global CSS island.
+- Tablet/mobile action wrapping, density changes, reduced-motion and forced-colors behavior are explicit.
+- Load order is `feedback-states.css` → `page-consistency.css` → `rtl-ltr-parity.css`, keeping UX-008 direction rules authoritative.
 
 ### Production adoption
-- Build & Release Notes isolates version, branch, commit, timestamp, release dates, assembly metadata and API/file paths so Arabic labels and technical values do not reorder punctuation.
-- Copied build-report content remains unchanged; UX-008 changes presentation direction only.
+
+- Dashboard now uses shared page, toolbar, card and progress hierarchy while preserving its live 15-second refresh timer, refresh lock and dashboard service calls.
+- Build & Release Notes uses the shared hierarchy while retaining the literal `data-bidi-scope="build-info"` and technical bidi contracts protected by UX-008.
+- Account Profile and Account Email Settings use shared page/section/state/card composition without changing password, encrypted SMTP or recipient service boundaries.
+- System Health uses shared page/stat/section hierarchy without changing diagnostics, CSV or grid behavior.
+- AI Prompt Templates uses shared page/toolbar/section/search/state composition while preserving append-only revisions and restore semantics.
+- AI Center uses shared page/toolbar/stat/state hierarchy while preserving `Orchestrator.ExecuteAsync`, `AISuggestionContract.TryParse` and `ApprovalService.Submit` behavior.
 
 ### Regression coverage
-- `RtlLtrParityContractTests` protect pre-paint direction bootstrap, runtime metadata synchronization, bidi primitives, directional icon rules, dialog/badge extensions, logical CSS, data-grid paging, responsive/reduced-motion/forced-colors behavior, Build/Release adoption and the exact 100-task manifest.
-- Stable implementation head `a65d89edc7d273efa8b5fbb7df9461bf9adffd1c` passed Build #1448 and .NET Build Verification #1056 with 322 passed, 0 failed, 0 skipped before release reconciliation.
-- Test artifact #9091043961 is 80,064 bytes with SHA-256 `c882deb552b9b736123980803576fba6b56ff29b157a416ed9a0c6ae5f407969`.
-- One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-008 does not modify that service.
-- Browser-driven screenshot/visual-diff automation remains scoped to UX-010 and is not falsely claimed as part of UX-008.
+
+- `PageConsistencyUxContractTests` protect page identity/width/density, heading hierarchy, toolbar/card/section/stat contracts, CSS/load order, production adoption and compatibility boundaries.
+- The first implementation CI exposed one UX-008 static marker compatibility regression; the shared wrapper was improved with unmatched-attribute passthrough and the literal protected marker was restored instead of weakening the older test.
+- Stable corrected implementation head `9584447199fd80daf16e305dc961b01103ca01e4` passed Build #1457 and .NET Build Verification #1065.
+- Automated tests: 334 passed, 0 failed, 0 skipped.
+- Test artifact #9091966297: 83,088 bytes; SHA-256 `0e1267e72c21dbe4f8bf873151e7d2f50311b08da3f07cb0800cdbb58df63fa6`.
+- Build: 0 errors. One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-009 does not modify that service.
+- Browser-driven screenshot/visual-diff and automated axe gates remain UX-010 scope.
 
 ## UX Definition of Done
 
@@ -282,4 +150,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-009 — Page-by-page visual hierarchy & consistency audit** is the next High-priority design task and builds on the shared design-system, responsive, accessibility, forms, dense-workspace, feedback-state and RTL/LTR parity contracts delivered by UX-001 through UX-008.
+**UX-010 — Visual and accessibility regression gates** is the next High-priority design task. It will add browser-driven visual comparison and automated accessibility checks on top of the shared shell, responsive, accessibility, forms, dense-workspace, feedback-state, RTL/LTR and page-consistency contracts delivered by UX-001 through UX-009.

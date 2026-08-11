@@ -8,90 +8,112 @@
 
 <PageTitle>@(L.IsArabic ? "إعدادات بريد الحساب" : "Account Email Settings")</PageTitle>
 
-<div class="settings-page">
-    <section class="panel settings-hero">
-        <div>
-            <span class="workspace-kicker">ACCOUNT EMAIL</span>
-            <h1>@(L.IsArabic ? "بريد الداشبورد والحساب" : "Dashboard & account email")</h1>
-            <p>@(L.IsArabic ? "اضبط بريد الإرسال العام للحساب وحتى ثلاثة مستلمين لملخصات وتنبيهات الداشبورد. كلمات المرور تحفظ مشفرة ولا يتم عرضها بعد الحفظ." : "Configure the account-wide outbound mail profile and up to three dashboard recipients. Passwords are stored encrypted and are never displayed after saving.")</p>
-            <div class="d-flex gap-2 mt-3"><a class="btn" href="/email/schedules">@(L.IsArabic ? "جدولة ملخص الداشبورد" : "Dashboard email schedules")</a><a class="btn" href="/email/history">@(L.IsArabic ? "سجل الإرسال" : "Delivery history")</a></div>
-        </div>
-    </section>
+<AppPage PageKey="account-email-settings" Class="settings-page" Width="standard">
+    <AppToolbar Eyebrow="ACCOUNT EMAIL"
+                Title="@(L.IsArabic ? "بريد الداشبورد والحساب" : "Dashboard & account email")"
+                Subtitle="@(L.IsArabic ? "اضبط بريد الإرسال العام للحساب وحتى ثلاثة مستلمين لملخصات وتنبيهات الداشبورد. كلمات المرور تحفظ مشفرة ولا يتم عرضها بعد الحفظ." : "Configure the account-wide outbound mail profile and up to three dashboard recipients. Passwords are stored encrypted and are never displayed after saving.")">
+        <Actions>
+            <AppButton Href="/email/schedules" Icon="◷" Text="@(L.IsArabic ? "جدولة ملخص الداشبورد" : "Dashboard email schedules")" />
+            <AppButton Href="/email/history" Icon="≡" Text="@(L.IsArabic ? "سجل الإرسال" : "Delivery history")" />
+        </Actions>
+    </AppToolbar>
 
     @if (!string.IsNullOrWhiteSpace(_error))
     {
-        <section class="panel"><p class="text-danger">@_error</p></section>
+        <AppStateBanner Kind="error"
+                        Title="@(L.IsArabic ? "تعذر تنفيذ آخر عملية" : "The last action could not be completed")"
+                        Description="@_error" />
     }
 
-    <section class="panel settings-section">
-        <header><div><h2>@(L.IsArabic ? "إعداد الإرسال العام" : "Account outbound mail profile")</h2><p>@(L.IsArabic ? "المواقع التي تختار Use dashboard/account mail profile ستستخدم هذا الإعداد." : "Sites configured to use the dashboard/account mail profile inherit this configuration.")</p></div></header>
-        <div class="grid-2 mt-3">
-            <div><label>SMTP Host</label><input class="form-control" @bind="_profile.Host" maxlength="255" disabled="@_busy" /></div>
-            <div><label>SMTP Port</label><input class="form-control" type="number" min="1" max="65535" @bind="_profile.Port" disabled="@_busy" /></div>
-            <div><label>@(L.IsArabic ? "اسم المستخدم" : "Username")</label><input class="form-control" @bind="_profile.UserName" maxlength="320" disabled="@_busy" /></div>
-            <div>
-                <label>@(L.IsArabic ? "كلمة المرور" : "Password")</label>
-                <input class="form-control" type="password" @bind="_profile.Password" maxlength="2048" disabled="@_busy" autocomplete="new-password" />
-                <small>@(_savedProfile.HasSavedPassword ? (L.IsArabic ? "يوجد سر محفوظ ومشفر. اترك الحقل فارغًا للاحتفاظ به." : "An encrypted password is saved. Leave this blank to keep it.") : (L.IsArabic ? "لا يوجد سر محفوظ." : "No password is currently stored."))</small>
+    <AppSection Eyebrow="SMTP"
+                Title="@(L.IsArabic ? "إعداد الإرسال العام" : "Account outbound mail profile")"
+                Subtitle="@(L.IsArabic ? "المواقع التي تختار Use dashboard/account mail profile ستستخدم هذا الإعداد." : "Sites configured to use the dashboard/account mail profile inherit this configuration.")"
+                HeadingLevel="3">
+        <ChildContent>
+            <div class="grid-2">
+                <div><label>SMTP Host</label><input class="form-control" @bind="_profile.Host" maxlength="255" disabled="@_busy" /></div>
+                <div><label>SMTP Port</label><input class="form-control" type="number" min="1" max="65535" @bind="_profile.Port" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "اسم المستخدم" : "Username")</label><input class="form-control" @bind="_profile.UserName" maxlength="320" disabled="@_busy" /></div>
+                <div>
+                    <label>@(L.IsArabic ? "كلمة المرور" : "Password")</label>
+                    <input class="form-control" type="password" @bind="_profile.Password" maxlength="2048" disabled="@_busy" autocomplete="new-password" />
+                    <small>@(_savedProfile.HasSavedPassword ? (L.IsArabic ? "يوجد سر محفوظ ومشفر. اترك الحقل فارغًا للاحتفاظ به." : "An encrypted password is saved. Leave this blank to keep it.") : (L.IsArabic ? "لا يوجد سر محفوظ." : "No password is currently stored."))</small>
+                </div>
+                <div><label>@(L.IsArabic ? "بريد المرسل" : "From address")</label><input class="form-control" type="email" @bind="_profile.FromAddress" maxlength="320" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "اسم المرسل" : "From name")</label><input class="form-control" @bind="_profile.FromName" maxlength="160" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "الرد إلى" : "Reply-to address")</label><input class="form-control" type="email" @bind="_profile.ReplyToAddress" maxlength="320" disabled="@_busy" /></div>
             </div>
-            <div><label>@(L.IsArabic ? "بريد المرسل" : "From address")</label><input class="form-control" type="email" @bind="_profile.FromAddress" maxlength="320" disabled="@_busy" /></div>
-            <div><label>@(L.IsArabic ? "اسم المرسل" : "From name")</label><input class="form-control" @bind="_profile.FromName" maxlength="160" disabled="@_busy" /></div>
-            <div><label>@(L.IsArabic ? "الرد إلى" : "Reply-to address")</label><input class="form-control" type="email" @bind="_profile.ReplyToAddress" maxlength="320" disabled="@_busy" /></div>
-        </div>
-        <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.EnableSsl" disabled="@_busy" /> TLS / SSL</label>
-        <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.IsEnabled" disabled="@_busy" /> @(L.IsArabic ? "تفعيل الإرسال العام للحساب" : "Enable account outbound email")</label>
-        <div class="d-flex gap-2 mt-3">
-            <button class="btn primary" @onclick="SaveProfileAsync" disabled="@_busy">@(L.IsArabic ? "حفظ إعداد البريد" : "Save mail profile")</button>
-            @if (_savedProfile.HasSavedPassword)
-            {
-                <button class="btn" @onclick="ClearPasswordAsync" disabled="@_busy">@(L.IsArabic ? "مسح كلمة المرور المحفوظة" : "Clear saved password")</button>
-            }
-        </div>
-        <SmtpDiagnosticsPanel GetProfileAsync="GetAccountTestProfileAsync" SuggestedRecipient="@SuggestedTestRecipient" />
-    </section>
-
-    <section class="panel settings-section">
-        <header><div><h2>@(L.IsArabic ? "مستلمو الداشبورد" : "Dashboard recipients")</h2><p>@(L.IsArabic ? "يمكن إضافة حتى ثلاثة عناوين للحساب." : "Add up to three account-level recipients.")</p></div><strong>@_recipients.Count / 3</strong></header>
-        <div class="grid-2 mt-3">
-            <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
-            <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
-        </div>
-        <button class="btn primary mt-2" @onclick="AddRecipientAsync" disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))">@(L.IsArabic ? "إضافة البريد" : "Add email")</button>
-    </section>
-
-    <section class="panel settings-section">
-        @if (_loading)
-        {
-            <p>@(L.IsArabic ? "جاري التحميل..." : "Loading...")</p>
-        }
-        else if (_recipients.Count == 0)
-        {
-            <p>@(L.IsArabic ? "لا توجد عناوين داشبورد حتى الآن." : "No dashboard recipients are configured yet.")</p>
-        }
-        else
-        {
-            <div class="database-info-grid">
-                @foreach (var item in _recipients)
+            <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.EnableSsl" disabled="@_busy" /> TLS / SSL</label>
+            <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.IsEnabled" disabled="@_busy" /> @(L.IsArabic ? "تفعيل الإرسال العام للحساب" : "Enable account outbound email")</label>
+            <div class="app-action-cluster mt-3">
+                <AppButton Variant="primary" Icon="✓" Text="@(L.IsArabic ? "حفظ إعداد البريد" : "Save mail profile")" Busy="@_busy" Disabled="@_busy" OnClick="SaveProfileClickedAsync" />
+                @if (_savedProfile.HasSavedPassword)
                 {
-                    <article class="panel" style="padding:1rem">
-                        @if (_editingId == item.Id)
-                        {
-                            <div class="grid-2"><input class="form-control" type="email" @bind="_editEmail" maxlength="320" /><input class="form-control" @bind="_editDisplayName" maxlength="120" /></div>
-                            <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_editEnabled" /> @(L.IsArabic ? "مفعل" : "Enabled")</label>
-                            <div class="d-flex gap-2 mt-2"><button class="btn primary" @onclick="SaveEditAsync" disabled="@_busy">@(L.IsArabic ? "حفظ" : "Save")</button><button class="btn" @onclick="CancelEdit" disabled="@_busy">@(L.IsArabic ? "إلغاء" : "Cancel")</button></div>
-                        }
-                        else
-                        {
-                            <strong>@item.EmailAddress</strong><p>@(string.IsNullOrWhiteSpace(item.DisplayName) ? "—" : item.DisplayName)</p>
-                            <span class="settings-badge @(item.IsEnabled ? "success" : "warning")">@(item.IsEnabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))</span>
-                            <div class="d-flex gap-2 mt-2"><button class="btn" @onclick="() => BeginEdit(item)" disabled="@_busy">@(L.IsArabic ? "تعديل" : "Edit")</button><button class="btn" @onclick="() => DeleteRecipientAsync(item.Id)" disabled="@_busy">@(L.IsArabic ? "حذف" : "Delete")</button></div>
-                        }
-                    </article>
+                    <AppButton Variant="danger" Icon="×" Text="@(L.IsArabic ? "مسح كلمة المرور المحفوظة" : "Clear saved password")" Disabled="@_busy" OnClick="ClearPasswordClickedAsync" />
                 }
             </div>
-        }
-    </section>
-</div>
+            <SmtpDiagnosticsPanel GetProfileAsync="GetAccountTestProfileAsync" SuggestedRecipient="@SuggestedTestRecipient" />
+        </ChildContent>
+    </AppSection>
+
+    <AppSection Eyebrow="RECIPIENTS"
+                Title="@(L.IsArabic ? "مستلمو الداشبورد" : "Dashboard recipients")"
+                Subtitle="@(L.IsArabic ? "يمكن إضافة حتى ثلاثة عناوين للحساب." : "Add up to three account-level recipients.")"
+                HeadingLevel="3">
+        <Header>
+            <AppBadge Tone="@(_recipients.Count >= 3 ? "warning" : "info")" Text="@($"{_recipients.Count} / 3")" BidiMode="number" />
+        </Header>
+        <ChildContent>
+            <div class="grid-2">
+                <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+                <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+            </div>
+            <AppButton Class="mt-2" Variant="primary" Icon="＋" Text="@(L.IsArabic ? "إضافة البريد" : "Add email")" Disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))" OnClick="AddRecipientClickedAsync" />
+        </ChildContent>
+    </AppSection>
+
+    <AppSection Eyebrow="DIRECTORY"
+                Title="@(L.IsArabic ? "العناوين المحفوظة" : "Saved recipients")"
+                Subtitle="@(L.IsArabic ? "راجع المستلمين وعدّل حالة التفعيل أو العنوان." : "Review recipients and edit address or enabled state.")"
+                HeadingLevel="3">
+        <ChildContent>
+            @if (_loading)
+            {
+                <AppLoading Title="@(L.IsArabic ? "جاري تحميل المستلمين" : "Loading recipients")" />
+            }
+            else if (_recipients.Count == 0)
+            {
+                <AppEmptyState Title="@(L.IsArabic ? "لا توجد عناوين داشبورد" : "No dashboard recipients")"
+                               Description="@(L.IsArabic ? "أضف أول مستلم باستخدام النموذج أعلاه." : "Add the first recipient using the form above.")"
+                               Blocking="false" />
+            }
+            else
+            {
+                <div class="database-info-grid">
+                    @foreach (var item in _recipients)
+                    {
+                        <AppCard Density="compact" Tone="@(item.IsEnabled ? "neutral" : "warning")">
+                            <ChildContent>
+                                @if (_editingId == item.Id)
+                                {
+                                    <div class="grid-2"><input class="form-control" type="email" @bind="_editEmail" maxlength="320" /><input class="form-control" @bind="_editDisplayName" maxlength="120" /></div>
+                                    <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_editEnabled" /> @(L.IsArabic ? "مفعل" : "Enabled")</label>
+                                    <div class="app-action-cluster mt-2"><AppButton Variant="primary" Text="@(L.IsArabic ? "حفظ" : "Save")" Disabled="@_busy" OnClick="SaveEditClickedAsync" /><AppButton Text="@(L.IsArabic ? "إلغاء" : "Cancel")" Disabled="@_busy" OnClick="CancelEditClicked" /></div>
+                                }
+                                else
+                                {
+                                    <strong>@item.EmailAddress</strong><p>@(string.IsNullOrWhiteSpace(item.DisplayName) ? "—" : item.DisplayName)</p>
+                                    <AppBadge Tone="@(item.IsEnabled ? "success" : "warning")" Text="@(item.IsEnabled ? (L.IsArabic ? "مفعل" : "Enabled") : (L.IsArabic ? "متوقف" : "Disabled"))" />
+                                    <div class="app-action-cluster mt-2"><AppButton Text="@(L.IsArabic ? "تعديل" : "Edit")" Disabled="@_busy" OnClick="_ => BeginEdit(item)" /><AppButton Variant="danger" Text="@(L.IsArabic ? "حذف" : "Delete")" Disabled="@_busy" OnClick="_ => DeleteRecipientAsync(item.Id)" /></div>
+                                }
+                            </ChildContent>
+                        </AppCard>
+                    }
+                </div>
+            }
+        </ChildContent>
+    </AppSection>
+</AppPage>
 
 @code {
     private AccountEmailSettingsService Service => new(Db, CurrentUser, SecretProtection);
@@ -123,6 +145,11 @@
     }
 
     private Task<SiteMailDeliveryProfile> GetAccountTestProfileAsync() => Service.GetTestProfileAsync();
+    private Task SaveProfileClickedAsync(MouseEventArgs _) => SaveProfileAsync();
+    private Task ClearPasswordClickedAsync(MouseEventArgs _) => ClearPasswordAsync();
+    private Task AddRecipientClickedAsync(MouseEventArgs _) => AddRecipientAsync();
+    private Task SaveEditClickedAsync(MouseEventArgs _) => SaveEditAsync();
+    private void CancelEditClicked(MouseEventArgs _) => CancelEdit();
 
     private async Task SaveProfileAsync()
     {
