@@ -111,6 +111,12 @@
 .app-page :where(.btn,.compact.btn) { min-height:44px; border-radius:var(--ui-radius-sm); }
 .app-page .btn.compact { min-height:36px; }
 
+/* Legacy feature CSS can target a class now carried by AppCard; neutralize outer padding/margins. */
+.app-page .dashboard-card.app-card { margin:0; padding:0; }
+.app-page .dashboard-card.app-card > .app-card__header { margin:0; padding:var(--ui-space-5); border-bottom:1px solid var(--ui-border); }
+.app-page .dashboard-card.app-card > .app-card__body { padding:var(--ui-space-5); }
+.app-page .dashboard-card.app-card > .app-card__header + .app-card__body { padding-top:var(--ui-space-5); }
+
 /* Stat surfaces use one scan rhythm regardless of feature stylesheet. */
 .app-page .app-stat-grid { align-items:stretch; }
 .app-page .app-stat-card { height:100%; }
@@ -135,6 +141,8 @@
     .app-card__header,.app-card__footer,.app-section__header { align-items:flex-start; flex-direction:column; }
     .app-card__header-content,.app-section__actions { width:100%; justify-content:flex-start; }
     .app-action-cluster > :where(.app-button,.btn,a,button) { flex:1 1 9rem; }
+    .app-page .dashboard-card.app-card > .app-card__header,
+    .app-page .dashboard-card.app-card > .app-card__body { padding:var(--ui-space-4); }
 }
 
 @media (prefers-reduced-motion:reduce) {
