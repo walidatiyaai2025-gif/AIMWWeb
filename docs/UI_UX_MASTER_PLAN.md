@@ -3,7 +3,7 @@
 **Workstream:** Product Design / UI / UX  
 **Priority:** Front-line delivery priority  
 **Tracking:** GitHub Issues #46–#55  
-**Current release:** `155.137.0` — UX-007
+**Current release:** `155.138.0` — UX-008
 
 ## Design principles
 
@@ -29,8 +29,8 @@
 | UX-005 | **HIGH** | **Completed** | Forms, validation, confirmations & destructive-action UX | UX-001/004 | #50 / `155.135.0` |
 | UX-006 | **HIGH** | **Completed** | Data tables, filters, bulk actions & dense workspace UX | UX-001/003 | #51 / `155.136.0` |
 | UX-007 | **HIGH** | **Completed** | Loading, empty, success, warning, offline & error states | UX-001 | #52 / `155.137.0` |
-| UX-008 | **HIGH** | **Next** | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 |
-| UX-009 | **HIGH** | Planned | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
+| UX-008 | **HIGH** | **Completed** | Arabic RTL / English LTR visual parity audit | UX-001/003 | #53 / `155.138.0` |
+| UX-009 | **HIGH** | **Next** | Page-by-page visual hierarchy & consistency audit | UX-001–008 | #54 |
 | UX-010 | **HIGH** | Planned | Visual and accessibility regression gates | UX-003/004/009 | #55 |
 
 ## UX-001 — delivered foundation
@@ -241,6 +241,33 @@ UX-007 standardizes application feedback and is tracked as exactly 100 completed
 - Test artifact #9081891782 is 76,983 bytes with SHA-256 `de74354c97c56e46b63d5bd8ca5411b3d99486fd97cbb3eebd10b86e24398772`.
 - One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-007 does not modify that service.
 
+## UX-008 — delivered RTL/LTR visual parity
+
+UX-008 hardens Arabic RTL / English LTR parity and is tracked as exactly 100 completed code tasks in `docs/UX_008_100_TASKS.md`.
+
+### Shared bidi and direction contracts
+- `AppBidiText` provides semantic `bdi` isolation for mixed-direction technical, numeric, date, time, version, path, URL and email values without forcing surrounding Arabic copy into LTR.
+- `AppDirectionalIcon` and source-compatible `AppButton` icon intent distinguish spatial back/forward/enter glyphs from neutral icons so only spatial meaning mirrors in RTL.
+- `AppBadge` accepts optional bidi mode, and `AppDialog` accepts an optional direction scope without changing existing call sites.
+- `language-bootstrap.js` applies a saved Arabic preference before the first stylesheet paints; `app-language.js` and `bidi-runtime.js` keep root/body language and direction metadata synchronized afterwards.
+
+### Logical layout parity
+- Final-layer `rtl-ltr-parity.css` reconciles shell, navigation, breadcrumbs, popovers, forms, dialogs, data grids, bulk actions, feedback surfaces and technical metadata through logical inline properties rather than a duplicate Arabic layout.
+- Paging and breadcrumb spatial glyphs mirror in RTL, while neutral controls preserve their visual meaning.
+- Email/URL/telephone/numeric controls and code/path/version/date values remain readable through scoped LTR isolation and tabular numeric treatment.
+- Responsive safe-area placement, mobile action stacking, reduced-motion behavior and forced-colors semantics are retained across both directions.
+
+### Production adoption
+- Build & Release Notes isolates version, branch, commit, timestamp, release dates, assembly metadata and API/file paths so Arabic labels and technical values do not reorder punctuation.
+- Copied build-report content remains unchanged; UX-008 changes presentation direction only.
+
+### Regression coverage
+- `RtlLtrParityContractTests` protect pre-paint direction bootstrap, runtime metadata synchronization, bidi primitives, directional icon rules, dialog/badge extensions, logical CSS, data-grid paging, responsive/reduced-motion/forced-colors behavior, Build/Release adoption and the exact 100-task manifest.
+- Stable implementation head `a65d89edc7d273efa8b5fbb7df9461bf9adffd1c` passed Build #1448 and .NET Build Verification #1056 with 322 passed, 0 failed, 0 skipped before release reconciliation.
+- Test artifact #9091043961 is 80,064 bytes with SHA-256 `c882deb552b9b736123980803576fba6b56ff29b157a416ed9a0c6ae5f407969`.
+- One pre-existing CS8604 warning remains in `Services/PublicEntryRouting.cs`; UX-008 does not modify that service.
+- Browser-driven screenshot/visual-diff automation remains scoped to UX-010 and is not falsely claimed as part of UX-008.
+
 ## UX Definition of Done
 
 A UX task is complete only when applicable requirements are met:
@@ -255,4 +282,4 @@ A UX task is complete only when applicable requirements are met:
 
 ## Next task
 
-**UX-008 — Arabic RTL / English LTR visual parity audit** is the next High-priority design task and builds on the shared shell, responsive, accessibility, forms, dense-workspace, and feedback-state contracts delivered by UX-001 through UX-007.
+**UX-009 — Page-by-page visual hierarchy & consistency audit** is the next High-priority design task and builds on the shared design-system, responsive, accessibility, forms, dense-workspace, feedback-state and RTL/LTR parity contracts delivered by UX-001 through UX-008.
