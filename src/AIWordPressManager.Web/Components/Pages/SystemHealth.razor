@@ -5,7 +5,7 @@
 
 <PageTitle>@(L.IsArabic ? "صحة النظام" : "System Health")</PageTitle>
 
-<div class="system-health-page">
+<AppPage PageKey="system-health" Class="system-health-page" Width="wide">
     <AppToolbar Eyebrow="@(L.IsArabic ? "التشخيص المباشر" : "LIVE DIAGNOSTICS")"
                 Title="@(L.IsArabic ? "صحة النظام والتشخيص" : "System Health & Diagnostics")"
                 Subtitle="@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة SQLite والسجلات من مصدر النظام الحقيقي." : "Real application, local storage, SQLite, and logging diagnostics.")">
@@ -28,7 +28,7 @@
     }
     else
     {
-        <section class="app-stat-grid">
+        <section class="app-stat-grid" aria-label="@(L.IsArabic ? "ملخص صحة النظام" : "System health summary")">
             <AppStatCard Icon="♥" Label="@(L.IsArabic ? "الحالة العامة" : "Overall status")"
                          Value="@(snapshot.IsHealthy ? (L.IsArabic ? "سليم" : "Healthy") : (L.IsArabic ? "تحذير" : "Warning"))"
                          Description="@($"{HealthyCount} / {snapshot.Checks.Count}")" Tone="@(snapshot.IsHealthy ? "success" : "danger")" />
@@ -41,7 +41,7 @@
                          Value="@FormatDate(snapshot.CheckedAtUtc)" Description="@($"v{snapshot.Version}")" Tone="info" ValueClass="health-date" />
         </section>
 
-        <section class="system-health-layout">
+        <section class="system-health-layout" aria-label="@(L.IsArabic ? "تفاصيل صحة النظام" : "System health details")">
             <div class="system-health-main">
                 <AppDataGrid TItem="SystemHealthCheck"
                              Items="@snapshot.Checks"
@@ -97,7 +97,7 @@
                     </ChildContent>
                 </AppDetailsPanel>
 
-                <AppSection Title="@(L.IsArabic ? "معلومات الفحص" : "Diagnostic information")">
+                <AppSection Title="@(L.IsArabic ? "معلومات الفحص" : "Diagnostic information")" HeadingLevel="3">
                     <ChildContent>
                         <dl class="health-info-list">
                             <div><dt>@(L.IsArabic ? "الإصدار" : "Version")</dt><dd>@snapshot.Version</dd></div>
@@ -117,7 +117,7 @@
             </aside>
         </section>
     }
-</div>
+</AppPage>
 
 @code {
     private SystemHealthSnapshot? snapshot;
