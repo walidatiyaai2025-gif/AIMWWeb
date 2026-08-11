@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Microsoft.Playwright;
 using Xunit;
 
@@ -9,6 +10,7 @@ namespace AIWordPressManager.UxTests;
 public sealed class UxTestHost : IAsyncLifetime
 {
     private readonly List<string> _appLog = [];
+    private readonly List<string> _httpProbeLog = [];
     private IPlaywright? _playwright;
     private IBrowser? _browser;
     private Process? _appProcess;
@@ -32,10 +34,12 @@ public sealed class UxTestHost : IAsyncLifetime
         BaseUrl = $"http://127.0.0.1:{port}";
         StartApplication(port);
         await WaitForHealthAsync();
+        await ProbeResponseAsync("/welcome", null, expectHtmlBytes: true);
 
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        await CreateAuthenticatedStorageStateAsync();
+        var authCookie = await CreateAuthenticatedStorageStateAsync();
+        await ProbeResponseAsync("/", authCookie, expectHtmlBytes: true);
     }
 
     public async Task<IBrowserContext> CreateContextAsync(UxViewport viewport, bool authenticated = true)
@@ -84,8 +88,8 @@ public sealed class UxTestHost : IAsyncLifetime
 
         if (!string.IsNullOrWhiteSpace(_repositoryRoot))
         {
-            var logPath = ArtifactPath("logs", "web-host.log");
-            await File.WriteAllLinesAsync(logPath, _appLog);
+            await File.WriteAllLinesAsync(ArtifactPath("logs", "web-host.log"), _appLog);
+            await File.WriteAllLinesAsync(ArtifactPath("logs", "http-probe.log"), _httpProbeLog);
         }
 
         try { if (Directory.Exists(_runRoot)) Directory.Delete(_runRoot, recursive: true); }
@@ -121,6 +125,8 @@ public sealed class UxTestHost : IAsyncLifetime
         startInfo.Environment["HOME"] = _runRoot;
         startInfo.Environment["XDG_DATA_HOME"] = Path.Combine(_runRoot, ".local", "share");
         startInfo.Environment["DOTNET_NOLOGO"] = "1";
+        startInfo.Environment["Logging__LogLevel__Microsoft.AspNetCore.Hosting.Diagnostics"] = "Information";
+        startInfo.Environment["Logging__LogLevel__Microsoft.AspNetCore.Routing.EndpointMiddleware"] = "Information";
 
         _appProcess = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
         _appProcess.OutputDataReceived += (_, e) => { if (e.Data is not null) lock (_appLog) _appLog.Add("OUT " + e.Data); };
@@ -151,7 +157,7 @@ public sealed class UxTestHost : IAsyncLifetime
         throw new TimeoutException("Web application did not become healthy in time.", lastError);
     }
 
-    private async Task CreateAuthenticatedStorageStateAsync()
+    private async Task<string> CreateAuthenticatedStorageStateAsync()
     {
         await using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
         {
@@ -171,10 +177,52 @@ public sealed class UxTestHost : IAsyncLifetime
             throw new InvalidOperationException("UX regression fixture could not authenticate the seeded administrator.");
 
         var cookies = await context.CookiesAsync();
-        if (!cookies.Any(cookie => string.Equals(cookie.Name, "AIWM.Auth", StringComparison.Ordinal)))
+        var authCookie = cookies.FirstOrDefault(cookie => string.Equals(cookie.Name, "AIWM.Auth", StringComparison.Ordinal));
+        if (authCookie is null)
             throw new InvalidOperationException("UX regression fixture completed login navigation without receiving the AIWM.Auth cookie.");
 
         await context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = _storageStatePath });
+        return authCookie.Value;
+    }
+
+    private async Task ProbeResponseAsync(string path, string? authCookieValue, bool expectHtmlBytes)
+    {
+        using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+        using var client = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
+        using var request = new HttpRequestMessage(HttpMethod.Get, BaseUrl + path);
+        request.Headers.TryAddWithoutValidation("Accept", "text/html");
+        if (!string.IsNullOrWhiteSpace(authCookieValue))
+            request.Headers.TryAddWithoutValidation("Cookie", $"AIWM.Auth={authCookieValue}");
+
+        using var headersCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, headersCts.Token);
+        var location = response.Headers.Location?.ToString() ?? "-";
+        var contentType = response.Content.Headers.ContentType?.ToString() ?? "-";
+        _httpProbeLog.Add($"{path} status={(int)response.StatusCode} location={location} content-type={contentType}");
+
+        var firstBytes = Array.Empty<byte>();
+        Exception? readError = null;
+        try
+        {
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            var buffer = new byte[512];
+            using var bodyCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), bodyCts.Token);
+            firstBytes = buffer[..read];
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or IOException)
+        {
+            readError = ex;
+        }
+
+        var preview = firstBytes.Length == 0 ? "<no bytes>" : Encoding.UTF8.GetString(firstBytes).Replace("\r", " ").Replace("\n", " ");
+        _httpProbeLog.Add($"{path} bytes={firstBytes.Length} preview={preview}");
+
+        if (expectHtmlBytes && (response.StatusCode != HttpStatusCode.OK || firstBytes.Length == 0))
+        {
+            var reason = readError is null ? string.Empty : $"; read={readError.GetType().Name}: {readError.Message}";
+            throw new InvalidOperationException($"UX HTTP probe failed for {path}: status={(int)response.StatusCode}, location={location}, content-type={contentType}, firstBytes={firstBytes.Length}{reason}.");
+        }
     }
 
     private static int ReserveTcpPort()
