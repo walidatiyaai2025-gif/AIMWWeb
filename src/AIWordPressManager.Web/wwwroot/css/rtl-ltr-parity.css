@@ -39,6 +39,9 @@ samp { font-variant-ligatures:none; }
 .bidi-number,
 time,
 [data-bidi-number="true"] { font-variant-numeric:tabular-nums; unicode-bidi:isolate; }
+.app-badge[data-bidi-mode="number"],
+.app-badge[data-bidi-mode="numeric"],
+.app-badge[data-bidi-mode="version"] { direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums; }
 
 /* Directional glyphs mirror only when their meaning is spatial. Neutral icons never mirror. */
 .app-directional-icon { display:inline-grid; place-items:center; inline-size:1em; block-size:1em; transform-origin:center; }
@@ -140,6 +143,8 @@ input[data-bidi="number"] { direction:ltr; unicode-bidi:isolate; font-variant-nu
 .app-data-grid__summary { min-inline-size:0; }
 .app-data-grid__pagination { direction:inherit; }
 .app-data-grid__pagination > span { direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums; }
+html[dir="rtl"] .app-data-grid__pagination .app-button__icon,
+[dir="rtl"] .app-data-grid__pagination .app-button__icon { transform:scaleX(-1); }
 .app-data-grid__mobile-item,
 .app-data-grid__mobile-content,
 .app-data-grid__mobile-selection { text-align:start; }
