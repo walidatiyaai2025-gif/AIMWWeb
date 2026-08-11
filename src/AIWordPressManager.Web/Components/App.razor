@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en" dir="ltr" data-app-language="en" data-app-direction="ltr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -54,13 +54,15 @@
     <link rel="stylesheet" href="css/accessibility-hardening.css" />
     <link rel="stylesheet" href="css/forms-ux.css" />
     <link rel="stylesheet" href="css/feedback-states.css" />
+    <link rel="stylesheet" href="css/rtl-ltr-parity.css" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <script src="js/app-theme.js"></script>
     <HeadOutlet />
 </head>
-<body dir="ltr">
+<body dir="ltr" data-app-language="en" data-app-direction="ltr">
     <Routes @rendermode="InteractiveServer" />
     <script src="js/app-language.js"></script>
+    <script src="js/bidi-runtime.js"></script>
     <script src="js/command-palette.js"></script>
     <script src="js/notification-center.js"></script>
     <script src="js/recent-pages.js"></script>
