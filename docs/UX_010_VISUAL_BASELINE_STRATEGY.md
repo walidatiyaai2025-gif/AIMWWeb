@@ -10,7 +10,7 @@ Every high-risk route is rendered in Chromium at the approved phone, tablet and 
 
 The same runs capture full-page PNG screenshots plus JSON geometry metrics. They are uploaded as the `ux-regression-evidence` artifact for 30 days. The committed registry at `tests/AIWordPressManager.UxTests/Baselines/approved-screenshot-sha256.json` is the approval switch for strict screenshot matching.
 
-A screenshot is promoted to a strict baseline only after review. Add an entry whose key is `<route-key>--<viewport-key>.png` and whose value is the SHA-256 of the approved artifact. From that point forward, the UX test compares the newly captured image to that hash and fails CI on any pixel change. Removing or replacing an approved hash is therefore a deliberate baseline review action, not an automatic test update.
+A screenshot becomes an **approved SHA-256 baseline** only after review. Add an entry whose key is `<route-key>--<viewport-key>.png` and whose value is the SHA-256 of the approved artifact. From that point forward, the UX test compares the newly captured image to that hash and fails CI on any pixel change. Removing or replacing an approved hash is therefore a deliberate baseline review action, not an automatic test update.
 
 ## Determinism controls
 
