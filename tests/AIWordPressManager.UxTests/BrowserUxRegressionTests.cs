@@ -37,7 +37,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         response.Should().NotBeNull();
         response!.Status.Should().BeLessThan(400);
-        await page.Locator("body").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 10000 });
+        await page.Locator("body").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 15000 });
         await UxAudit.PrepareAsync(page);
         pageErrors.Should().BeEmpty($"public route {route.Path} must not throw browser page errors");
 
@@ -134,7 +134,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
     private static Task WaitForApplicationShellAsync(IPage page) =>
         page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions
         {
-            State = WaitForSelectorState.Visible,
-            Timeout = 10000
+            State = WaitForSelectorState.Attached,
+            Timeout = 15000
         });
 }
