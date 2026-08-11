@@ -8,6 +8,8 @@
                  aria-label="@ExplicitAriaLabel"
                  aria-labelledby="@LabelledById"
                  aria-describedby="@DescribedById"
+                 dir="@NormalizedDirection"
+                 data-bidi-scope="dialog"
                  tabindex="-1"
                  @onclick:stopPropagation="true">
             <header class="app-dialog__header">
@@ -50,6 +52,7 @@
     [Parameter] public string CloseAriaLabel { get; set; } = "Close dialog";
     [Parameter] public string Size { get; set; } = "medium";
     [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string? Direction { get; set; }
     [Parameter] public bool CloseOnBackdrop { get; set; } = true;
     [Parameter] public bool ShowCloseButton { get; set; } = true;
     [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -62,6 +65,13 @@
     private string? ExplicitAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? null : AriaLabel;
     private string? LabelledById => string.IsNullOrWhiteSpace(AriaLabel) ? TitleId : null;
     private string? DescribedById => string.IsNullOrWhiteSpace(Subtitle) ? null : SubtitleId;
+    private string? NormalizedDirection => Direction?.Trim().ToLowerInvariant() switch
+    {
+        "rtl" => "rtl",
+        "ltr" => "ltr",
+        "auto" => "auto",
+        _ => null
+    };
 
     private Task CloseAsync() => OpenChanged.InvokeAsync(false);
     private Task HandleBackdropAsync() => CloseOnBackdrop ? CloseAsync() : Task.CompletedTask;
