@@ -111,16 +111,37 @@
 .app-page :where(.btn,.compact.btn) { min-height:44px; border-radius:var(--ui-radius-sm); }
 .app-page .btn.compact { min-height:36px; }
 
-/* Legacy feature CSS can target a class now carried by AppCard; neutralize outer padding/margins. */
+/* Legacy feature CSS can target classes now carried by shared components. */
 .app-page .dashboard-card.app-card { margin:0; padding:0; }
 .app-page .dashboard-card.app-card > .app-card__header { margin:0; padding:var(--ui-space-5); border-bottom:1px solid var(--ui-border); }
 .app-page .dashboard-card.app-card > .app-card__body { padding:var(--ui-space-5); }
 .app-page .dashboard-card.app-card > .app-card__header + .app-card__body { padding-top:var(--ui-space-5); }
+.app-page .ai-session-history.app-section { padding:0; }
+.app-page .build-info-hero.app-toolbar { overflow:visible; }
+.app-page .settings-nav.app-section { overflow:visible; }
 
 /* Stat surfaces use one scan rhythm regardless of feature stylesheet. */
 .app-page .app-stat-grid { align-items:stretch; }
 .app-page .app-stat-card { height:100%; }
 .app-page .app-stat-card strong { font-variant-numeric:tabular-nums; }
+.app-stat-card--compact { min-height:92px; padding:var(--ui-space-4); }
+.app-stat-card--spacious { min-height:132px; padding:var(--ui-space-6); }
+.app-stat-card__meta { display:flex; flex-wrap:wrap; gap:var(--ui-space-2); margin-top:var(--ui-space-2); color:var(--ui-muted); font-size:.76rem; }
+.app-stat-card.neutral .app-stat-card__icon { background:var(--ui-surface-2); color:var(--ui-muted); }
+
+/* Audited page-specific reconciliation without restoring CSS islands. */
+.build-change-list,
+.build-release-list { display:grid; gap:var(--ui-space-3); margin-block:var(--ui-space-4) 0; }
+.build-release-list details { padding:var(--ui-space-3); border:1px solid var(--ui-border); border-radius:var(--ui-radius-md); background:var(--ui-surface-2); }
+.build-release-list summary { cursor:pointer; font-weight:800; }
+.settings-choice-list { display:grid; gap:var(--ui-space-2); margin-top:var(--ui-space-3); }
+.ai-center-page .ai-center-layout { min-width:0; }
+.ai-center-page .ai-composer,
+.ai-center-page .ai-output-panel,
+.ai-center-page .ai-prompt-library { min-width:0; }
+.ai-center-page .ai-output-panel .app-state-panel,
+.ai-center-page .ai-output-panel .app-loading,
+.ai-center-page .ai-output-panel .app-empty-state { min-height:320px; }
 
 /* Reusable surface spacing: avoid page-owned arbitrary top margins. */
 .app-page :where(.app-filter-bar,.app-state-panel,.app-state-banner,.app-data-grid,.app-bulk-action-bar) { margin-block:0; }
@@ -143,6 +164,7 @@
     .app-action-cluster > :where(.app-button,.btn,a,button) { flex:1 1 9rem; }
     .app-page .dashboard-card.app-card > .app-card__header,
     .app-page .dashboard-card.app-card > .app-card__body { padding:var(--ui-space-4); }
+    .app-stat-card--spacious { min-height:108px; padding:var(--ui-space-5); }
 }
 
 @media (prefers-reduced-motion:reduce) {
@@ -151,4 +173,5 @@
 
 @media (forced-colors:active) {
     .app-page :where(.app-toolbar,.app-card,.app-section,.panel) { border-color:CanvasText; box-shadow:none; }
+    .build-release-list details { border-color:CanvasText; }
 }
