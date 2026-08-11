@@ -55,6 +55,14 @@ public sealed class UxTestHost : IAsyncLifetime
         return context;
     }
 
+    public string RepositoryPath(params string[] segments)
+    {
+        var all = new string[segments.Length + 1];
+        all[0] = _repositoryRoot;
+        Array.Copy(segments, 0, all, 1, segments.Length);
+        return Path.Combine(all);
+    }
+
     public string ArtifactPath(string category, string fileName)
     {
         var directory = Path.Combine(ArtifactRoot, category);
