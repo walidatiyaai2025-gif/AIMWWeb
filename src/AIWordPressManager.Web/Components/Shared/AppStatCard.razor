@@ -1,11 +1,27 @@
-<article class="app-stat-card @Tone @Class">
+<article class="app-stat-card @NormalizedTone app-stat-card--@NormalizedDensity @Class"
+         aria-label="@EffectiveAriaLabel"
+         data-stat-tone="@NormalizedTone"
+         data-stat-density="@NormalizedDensity">
     <span class="app-stat-card__icon" aria-hidden="true">@Icon</span>
     <div class="app-stat-card__content">
         <small>@Label</small>
-        <strong class="@ValueClass">@Value</strong>
+        <strong class="@ValueClass">
+            @if (!string.IsNullOrWhiteSpace(ValueBidiMode))
+            {
+                <AppBidiText Mode="@ValueBidiMode" Text="@Value" />
+            }
+            else
+            {
+                @Value
+            }
+        </strong>
         @if (!string.IsNullOrWhiteSpace(Description))
         {
             <span>@Description</span>
+        }
+        @if (Meta is not null)
+        {
+            <div class="app-stat-card__meta">@Meta</div>
         }
     </div>
 </article>
@@ -16,6 +32,29 @@
     [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
     [Parameter] public string? Description { get; set; }
     [Parameter] public string Tone { get; set; } = "accent";
+    [Parameter] public string Density { get; set; } = "comfortable";
+    [Parameter] public string? ValueBidiMode { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
     [Parameter] public string Class { get; set; } = string.Empty;
     [Parameter] public string ValueClass { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? Meta { get; set; }
+
+    private string NormalizedTone => Tone.Trim().ToLowerInvariant() switch
+    {
+        "neutral" => "neutral",
+        "success" => "success",
+        "warning" => "warning",
+        "danger" => "danger",
+        "info" => "info",
+        _ => "accent"
+    };
+    private string NormalizedDensity => Density.Trim().ToLowerInvariant() switch
+    {
+        "compact" => "compact",
+        "spacious" => "spacious",
+        _ => "comfortable"
+    };
+    private string EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel)
+        ? string.Join(": ", new[] { Label, Value }.Where(value => !string.IsNullOrWhiteSpace(value)))
+        : AriaLabel;
 }
