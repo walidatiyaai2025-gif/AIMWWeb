@@ -174,10 +174,19 @@ html[dir="rtl"] .app-data-grid__pagination .app-button__icon,
 .build-info-card,
 .build-info-details { text-align:start; }
 
-/* Lists and definition pairs retain logical indentation. */
-ul, ol { padding-inline-start:1.4rem; padding-inline-end:0; }
-dl, dd { margin-inline-start:0; }
-blockquote { margin-inline:0; padding-inline-start:1rem; border-inline-start:3px solid currentColor; }
+/* Content prose keeps logical indentation without rewriting component-owned list layouts. */
+.content > ul,
+.content > ol,
+.app-card__body > ul,
+.app-card__body > ol,
+.app-dialog__body > ul,
+.app-dialog__body > ol { padding-inline-start:1.4rem; padding-inline-end:0; }
+.content dl,
+.app-card__body dl,
+.app-dialog__body dl { margin-inline-start:0; }
+.content blockquote,
+.app-card__body blockquote,
+.app-dialog__body blockquote { margin-inline:0; padding-inline-start:1rem; border-inline-start:3px solid currentColor; }
 
 /* Tables and horizontal scrollers start from the reading edge. */
 .table-responsive,
@@ -226,6 +235,8 @@ html[dir="rtl"] .app-data-grid__viewport,
     .app-state-banner,
     .alert,
     .notification-item,
-    blockquote { border-inline-start-color:CanvasText; }
+    .content blockquote,
+    .app-card__body blockquote,
+    .app-dialog__body blockquote { border-inline-start-color:CanvasText; }
     .app-directional-icon { forced-color-adjust:auto; }
 }
