@@ -1,4 +1,4 @@
-<span class="app-badge app-badge--@Tone @Class" title="@Title">
+<span class="app-badge app-badge--@Tone @Class" title="@Title" data-bidi-mode="@EffectiveBidiMode">
     @if (!string.IsNullOrWhiteSpace(Icon))
     {
         <span class="app-badge__icon" aria-hidden="true">@Icon</span>
@@ -6,6 +6,10 @@
     @if (ChildContent is not null)
     {
         @ChildContent
+    }
+    else if (!string.IsNullOrWhiteSpace(BidiMode))
+    {
+        <AppBidiText Mode="@BidiMode" Text="@Text" />
     }
     else
     {
@@ -19,5 +23,8 @@
     [Parameter] public string Tone { get; set; } = "neutral";
     [Parameter] public string Class { get; set; } = string.Empty;
     [Parameter] public string? Title { get; set; }
+    [Parameter] public string? BidiMode { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string EffectiveBidiMode => string.IsNullOrWhiteSpace(BidiMode) ? "inherit" : BidiMode.Trim().ToLowerInvariant();
 }
