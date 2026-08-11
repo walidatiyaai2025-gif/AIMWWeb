@@ -158,7 +158,7 @@ public sealed class UxTestHost : IAsyncLifetime
             ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
         });
         var page = await context.NewPageAsync();
-        await page.GotoAsync(BaseUrl + "/login", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync(BaseUrl + "/login?returnUrl=%2F", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("input[name='userName']").FillAsync("Admin");
         await page.Locator("input[name='password']").FillAsync("Admin@123");
         await page.Locator("button[type='submit']").ClickAsync();
