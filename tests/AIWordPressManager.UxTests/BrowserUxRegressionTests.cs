@@ -25,6 +25,23 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         new object[] { UxRouteCatalog.AuthenticatedRoutes.Single(x => x.Key == "account-profile") }
     };
 
+    [Fact]
+    public async Task Blazor_bootstrap_asset_is_available_before_authentication()
+    {
+        await using var context = await host.CreateContextAsync(UxRouteCatalog.Viewports[^1], authenticated: false);
+        var page = await context.NewPageAsync();
+
+        var response = await page.GotoAsync(
+            host.BaseUrl + "/_framework/blazor.web.js",
+            new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+
+        response.Should().NotBeNull();
+        response!.Status.Should().Be(200);
+        page.Url.Should().NotContain("/login");
+        response.Headers.TryGetValue("content-type", out var contentType).Should().BeTrue();
+        contentType.Should().Contain("javascript");
+    }
+
     [Theory]
     [MemberData(nameof(PublicRouteCases))]
     public async Task Public_routes_render_without_server_or_browser_failure(UxRouteCase route)
