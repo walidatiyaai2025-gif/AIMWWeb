@@ -1,13 +1,15 @@
 namespace AIWordPressManager.Web.Services;
 
 /// <summary>
-/// Keeps the Razor Components application protected while allowing only the framework bootstrap
-/// static endpoint to remain reachable before authentication.
+/// Defines the single framework bootstrap request that may bypass the application-wide
+/// authenticated Razor Components policy. Both path and endpoint identity must match.
 /// </summary>
 public static class RazorComponentEndpointSecurity
 {
+    public const string BlazorWebBootstrapPath = "/_framework/blazor.web.js";
     public const string BlazorWebStaticFilesDisplayName = "Blazor web static files";
 
-    public static bool ShouldAllowAnonymous(string? displayName)
-        => string.Equals(displayName, BlazorWebStaticFilesDisplayName, StringComparison.Ordinal);
+    public static bool ShouldBypassAuthorization(string? path, string? displayName)
+        => string.Equals(path, BlazorWebBootstrapPath, StringComparison.Ordinal)
+           && string.Equals(displayName, BlazorWebStaticFilesDisplayName, StringComparison.Ordinal);
 }
