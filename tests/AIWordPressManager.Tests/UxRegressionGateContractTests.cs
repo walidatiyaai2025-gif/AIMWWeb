@@ -50,6 +50,16 @@ public sealed class UxRegressionGateContractTests
     }
 
     [Fact]
+    public void Browser_host_fails_fast_when_framework_bootstrap_is_not_public_javascript()
+    {
+        var host = ReadRepositoryFile("tests/AIWordPressManager.UxTests/UxTestHost.cs");
+        host.Should().Contain("/_framework/blazor.web.js");
+        host.Should().Contain("expectedMediaTypeFragment: \"javascript\"");
+        host.Should().Contain("AllowAutoRedirect = false");
+        host.Should().Contain("UX HTTP probe failed");
+    }
+
+    [Fact]
     public void Route_catalog_contains_public_operational_and_high_risk_workspaces()
     {
         var catalog = ReadRepositoryFile("tests/AIWordPressManager.UxTests/UxRouteCatalog.cs");
@@ -117,9 +127,10 @@ public sealed class UxRegressionGateContractTests
     }
 
     [Fact]
-    public void Browser_suite_covers_routes_breakpoints_rtl_keyboard_and_evidence()
+    public void Browser_suite_covers_routes_breakpoints_rtl_keyboard_bootstrap_and_evidence()
     {
         var tests = ReadRepositoryFile("tests/AIWordPressManager.UxTests/BrowserUxRegressionTests.cs");
+        tests.Should().Contain("Blazor_bootstrap_asset_is_available_before_authentication");
         tests.Should().Contain("Public_routes_render_without_server_or_browser_failure");
         tests.Should().Contain("Authenticated_routes_render_and_pass_accessibility_smoke");
         tests.Should().Contain("High_risk_pages_hold_visual_contract_at_key_breakpoints");
