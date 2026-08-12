@@ -34,12 +34,13 @@ public sealed class UxTestHost : IAsyncLifetime
         BaseUrl = $"http://127.0.0.1:{port}";
         StartApplication(port);
         await WaitForHealthAsync();
-        await ProbeResponseAsync("/welcome", null, expectHtmlBytes: true);
+        await ProbeResponseAsync("/welcome", null, expectBodyBytes: true, expectedMediaTypeFragment: "html");
+        await ProbeResponseAsync("/_framework/blazor.web.js", null, expectBodyBytes: true, expectedMediaTypeFragment: "javascript");
 
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         var authCookie = await CreateAuthenticatedStorageStateAsync();
-        await ProbeResponseAsync("/", authCookie, expectHtmlBytes: true);
+        await ProbeResponseAsync("/", authCookie, expectBodyBytes: true, expectedMediaTypeFragment: "html");
     }
 
     public async Task<IBrowserContext> CreateContextAsync(UxViewport viewport, bool authenticated = true)
@@ -185,12 +186,16 @@ public sealed class UxTestHost : IAsyncLifetime
         return authCookie.Value;
     }
 
-    private async Task ProbeResponseAsync(string path, string? authCookieValue, bool expectHtmlBytes)
+    private async Task ProbeResponseAsync(
+        string path,
+        string? authCookieValue,
+        bool expectBodyBytes,
+        string? expectedMediaTypeFragment = null)
     {
         using var handler = new HttpClientHandler { AllowAutoRedirect = false };
         using var client = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
         using var request = new HttpRequestMessage(HttpMethod.Get, BaseUrl + path);
-        request.Headers.TryAddWithoutValidation("Accept", "text/html");
+        request.Headers.TryAddWithoutValidation("Accept", "text/html,application/javascript,*/*");
         if (!string.IsNullOrWhiteSpace(authCookieValue))
             request.Headers.TryAddWithoutValidation("Cookie", $"AIWM.Auth={authCookieValue}");
 
@@ -198,6 +203,7 @@ public sealed class UxTestHost : IAsyncLifetime
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, headersCts.Token);
         var location = response.Headers.Location?.ToString() ?? "-";
         var contentType = response.Content.Headers.ContentType?.ToString() ?? "-";
+        var mediaType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
         _httpProbeLog.Add($"{path} status={(int)response.StatusCode} location={location} content-type={contentType}");
 
         var firstBytes = Array.Empty<byte>();
@@ -218,10 +224,16 @@ public sealed class UxTestHost : IAsyncLifetime
         var preview = firstBytes.Length == 0 ? "<no bytes>" : Encoding.UTF8.GetString(firstBytes).Replace("\r", " ").Replace("\n", " ");
         _httpProbeLog.Add($"{path} bytes={firstBytes.Length} preview={preview}");
 
-        if (expectHtmlBytes && (response.StatusCode != HttpStatusCode.OK || firstBytes.Length == 0))
+        var wrongStatus = response.StatusCode != HttpStatusCode.OK;
+        var missingBody = expectBodyBytes && firstBytes.Length == 0;
+        var wrongMediaType = !string.IsNullOrWhiteSpace(expectedMediaTypeFragment) &&
+            !mediaType.Contains(expectedMediaTypeFragment, StringComparison.OrdinalIgnoreCase);
+
+        if (wrongStatus || missingBody || wrongMediaType)
         {
             var reason = readError is null ? string.Empty : $"; read={readError.GetType().Name}: {readError.Message}";
-            throw new InvalidOperationException($"UX HTTP probe failed for {path}: status={(int)response.StatusCode}, location={location}, content-type={contentType}, firstBytes={firstBytes.Length}{reason}.");
+            throw new InvalidOperationException(
+                $"UX HTTP probe failed for {path}: status={(int)response.StatusCode}, location={location}, content-type={contentType}, firstBytes={firstBytes.Length}, expected-media~={expectedMediaTypeFragment ?? "-"}{reason}.");
         }
     }
 
