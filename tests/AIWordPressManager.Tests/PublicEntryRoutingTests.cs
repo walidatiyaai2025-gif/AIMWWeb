@@ -11,9 +11,12 @@ public sealed class PublicEntryRoutingTests
     [InlineData("/", "GET", true, false)]
     [InlineData("/welcome", "GET", false, false)]
     [InlineData("/", "POST", false, false)]
+    [InlineData("/", null, false, false)]
+    [InlineData("/", "", false, false)]
+    [InlineData("/", "   ", false, false)]
     public void ShouldRedirectToLanding_AppliesOnlyToAnonymousRootReads(
         string path,
-        string method,
+        string? method,
         bool isAuthenticated,
         bool expected)
     {
