@@ -36,6 +36,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 });
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorFrameworkAuthorizationResultHandler>();
 
 builder.Services.AddInfrastructure();
 builder.Services.AddPersistence();
@@ -335,13 +336,9 @@ app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (Guid siteId, SeoAud
 app.MapPost("/api/sites/{siteId:guid}/content/trash", async (Guid siteId, BulkTrashRequest request, BulkTrashExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
 app.MapPost("/api/sites/{siteId:guid}/content/status", async (Guid siteId, BulkStatusRequest request, BulkStatusExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
 
-var razorComponents = app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-Microsoft.AspNetCore.Builder.AuthorizationEndpointConventionBuilderExtensions.RequireAuthorization(razorComponents);
-razorComponents.Add(endpointBuilder =>
-{
-    if (RazorComponentEndpointSecurity.ShouldAllowAnonymous(endpointBuilder.DisplayName))
-        endpointBuilder.Metadata.Add(new AllowAnonymousAttribute());
-});
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode()
+    .RequireAuthorization();
 app.Run();
 
 public sealed record AIGenerateApiRequest(string Content, string? PromptKey, string? Culture, string? SystemPrompt, string? Model, double? Temperature, int? MaxOutputTokens, Guid? SiteId, string? UserId);
