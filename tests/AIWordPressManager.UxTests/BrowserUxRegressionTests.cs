@@ -7,6 +7,8 @@ namespace AIWordPressManager.UxTests;
 [Collection(UxRegressionCollection.Name)]
 public sealed class BrowserUxRegressionTests(UxTestHost host)
 {
+    private const float DomProbeTimeoutMs = 5000;
+
     public static IEnumerable<object[]> PublicRouteCases =>
         UxRouteCatalog.PublicRoutes.Select(route => new object[] { route });
 
@@ -54,7 +56,7 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
         var response = await page.GotoAsync(host.BaseUrl + route.Path, new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
         response.Should().NotBeNull();
         response!.Status.Should().BeLessThan(400);
-        await page.Locator("body").WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 15000 });
+        await WaitForSelectorWithDiagnosticsAsync(page, "body");
         await UxAudit.PrepareAsync(page);
         pageErrors.Should().BeEmpty($"public route {route.Path} must not throw browser page errors");
 
@@ -149,9 +151,41 @@ public sealed class BrowserUxRegressionTests(UxTestHost host)
     }
 
     private static Task WaitForApplicationShellAsync(IPage page) =>
-        page.Locator("#main-content").WaitForAsync(new LocatorWaitForOptions
+        WaitForSelectorWithDiagnosticsAsync(page, "#main-content");
+
+    private static async Task WaitForSelectorWithDiagnosticsAsync(IPage page, string selector)
+    {
+        try
         {
-            State = WaitForSelectorState.Attached,
-            Timeout = 15000
-        });
+            await page.Locator(selector).WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = DomProbeTimeoutMs
+            });
+        }
+        catch (Exception ex) when (ex is TimeoutException or PlaywrightException)
+        {
+            var readyState = await TryEvaluateAsync(page, "() => document.readyState");
+            var content = await TryContentAsync(page);
+            content = content.Replace("\r", " ").Replace("\n", " ").Trim();
+            if (content.Length > 2000) content = content[..2000] + "…";
+
+            throw new TimeoutException(
+                $"Browser DOM did not expose '{selector}' within {DomProbeTimeoutMs:0}ms. " +
+                $"url={page.Url}; readyState={readyState}; html={content}",
+                ex);
+        }
+    }
+
+    private static async Task<string> TryEvaluateAsync(IPage page, string expression)
+    {
+        try { return await page.EvaluateAsync<string>(expression) ?? "<null>"; }
+        catch (Exception ex) { return $"<{ex.GetType().Name}>"; }
+    }
+
+    private static async Task<string> TryContentAsync(IPage page)
+    {
+        try { return await page.ContentAsync(); }
+        catch (Exception ex) { return $"<{ex.GetType().Name}: {ex.Message}>"; }
+    }
 }
