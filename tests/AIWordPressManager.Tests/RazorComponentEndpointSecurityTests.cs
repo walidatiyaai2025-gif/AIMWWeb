@@ -6,30 +6,40 @@ namespace AIWordPressManager.Tests;
 public sealed class RazorComponentEndpointSecurityTests
 {
     [Fact]
-    public void Blazor_web_static_files_endpoint_is_the_only_public_component_endpoint()
+    public void Exact_blazor_bootstrap_endpoint_is_the_only_authorization_bypass()
     {
-        RazorComponentEndpointSecurity.ShouldAllowAnonymous(
+        RazorComponentEndpointSecurity.ShouldBypassAuthorization(
+                RazorComponentEndpointSecurity.BlazorWebBootstrapPath,
                 RazorComponentEndpointSecurity.BlazorWebStaticFilesDisplayName)
             .Should().BeTrue();
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("/")]
-    [InlineData("Blazor web static file")]
-    [InlineData("Blazor web static files ")]
-    [InlineData("Blazor hub")]
-    public void Other_component_endpoints_remain_protected(string? displayName)
+    [InlineData(null, "Blazor web static files")]
+    [InlineData("", "Blazor web static files")]
+    [InlineData("/_framework/blazor.web.js/", "Blazor web static files")]
+    [InlineData("/_framework/blazor.server.js", "Blazor web static files")]
+    [InlineData("/_framework/blazor.web.js", null)]
+    [InlineData("/_framework/blazor.web.js", "")]
+    [InlineData("/_framework/blazor.web.js", "Blazor web static file")]
+    [InlineData("/_framework/blazor.web.js", "Blazor hub")]
+    public void Other_paths_or_endpoints_remain_protected(string? path, string? displayName)
     {
-        RazorComponentEndpointSecurity.ShouldAllowAnonymous(displayName)
+        RazorComponentEndpointSecurity.ShouldBypassAuthorization(path, displayName)
             .Should().BeFalse();
     }
 
     [Fact]
-    public void Framework_endpoint_matching_is_case_sensitive_to_avoid_broad_exemptions()
+    public void Bootstrap_bypass_matching_is_case_sensitive_to_avoid_broad_exemptions()
     {
-        RazorComponentEndpointSecurity.ShouldAllowAnonymous("blazor web static files")
+        RazorComponentEndpointSecurity.ShouldBypassAuthorization(
+                "/_FRAMEWORK/blazor.web.js",
+                RazorComponentEndpointSecurity.BlazorWebStaticFilesDisplayName)
+            .Should().BeFalse();
+
+        RazorComponentEndpointSecurity.ShouldBypassAuthorization(
+                RazorComponentEndpointSecurity.BlazorWebBootstrapPath,
+                "blazor web static files")
             .Should().BeFalse();
     }
 }
