@@ -1,0 +1,38 @@
+name: PR Plan Link
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  require-plan-link:
+    name: Require GitHub plan link
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate tracking issue reference
+        shell: bash
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          body="${PR_BODY:-}"
+          reference_pattern='(close[sd]?|fix(e[sd])?|resolve[sd]?|refs?|reference[sd]?|relates[[:space:]]+to)[[:space:]]*:?[[:space:]]*#[0-9]+'
+
+          if printf '%s\n' "$body" | grep -Eiq "$reference_pattern"; then
+            echo "GitHub plan tracking reference found."
+            exit 0
+          fi
+
+          echo "::error title=Missing GitHub plan tracking::PR body must reference a tracked GitHub issue, for example: Refs #78"
+          echo "Add the reference under the 'GitHub plan tracking' section and re-run the check."
+          exit 1
