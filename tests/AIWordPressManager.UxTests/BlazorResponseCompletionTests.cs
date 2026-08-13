@@ -56,7 +56,13 @@ public sealed class BlazorResponseCompletionTests(UxTestHost host)
             var failed = new List<string>();
             var console = new List<string>();
             var pageErrors = new List<string>();
+            var domContentLoaded = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
+            page.DOMContentLoaded += (_, _) =>
+            {
+                domContentLoaded.TrySetResult(true);
+                Console.WriteLine("[UX-NET] domcontentloaded");
+            };
             page.Request += (_, request) =>
             {
                 lock (sync) pending[request.Url] = request.ResourceType;
@@ -94,18 +100,8 @@ public sealed class BlazorResponseCompletionTests(UxTestHost host)
             response.Should().NotBeNull();
             response!.Status.Should().Be(200);
 
-            await Task.Delay(BrowserDiagnosticWindow);
-
-            string readyState;
-            try
-            {
-                readyState = await page.EvaluateAsync<string>("() => document.readyState")
-                    .WaitAsync(TimeSpan.FromSeconds(2));
-            }
-            catch (Exception ex)
-            {
-                readyState = $"<{ex.GetType().Name}: {ex.Message}>";
-            }
+            var completion = await Task.WhenAny(domContentLoaded.Task, Task.Delay(BrowserDiagnosticWindow));
+            var reachedDomContentLoaded = completion == domContentLoaded.Task && domContentLoaded.Task.IsCompletedSuccessfully;
 
             string[] pendingSnapshot;
             string[] failedSnapshot;
@@ -119,15 +115,13 @@ public sealed class BlazorResponseCompletionTests(UxTestHost host)
                 pageErrorSnapshot = pageErrors.ToArray();
             }
 
-            Console.WriteLine($"[UX-NET] readyState={readyState}");
+            Console.WriteLine($"[UX-NET] domcontentloaded-reached={reachedDomContentLoaded}");
             Console.WriteLine($"[UX-NET] pending={string.Join(" | ", pendingSnapshot.DefaultIfEmpty("<none>"))}");
             Console.WriteLine($"[UX-NET] failed={string.Join(" | ", failedSnapshot.DefaultIfEmpty("<none>"))}");
             Console.WriteLine($"[UX-NET] console={string.Join(" | ", consoleSnapshot.DefaultIfEmpty("<none>"))}");
             Console.WriteLine($"[UX-NET] pageErrors={string.Join(" | ", pageErrorSnapshot.DefaultIfEmpty("<none>"))}");
 
-            readyState.Should().BeOneOf(
-                "interactive",
-                "complete",
+            reachedDomContentLoaded.Should().BeTrue(
                 $"after a complete 200 HTML response, parser-blocking resources must settle; pending: {string.Join(" | ", pendingSnapshot.DefaultIfEmpty("<none>"))}; failed: {string.Join(" | ", failedSnapshot.DefaultIfEmpty("<none>"))}; console: {string.Join(" | ", consoleSnapshot.DefaultIfEmpty("<none>"))}; pageErrors: {string.Join(" | ", pageErrorSnapshot.DefaultIfEmpty("<none>"))}");
         }
         finally
