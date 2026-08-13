@@ -65,6 +65,25 @@ public sealed class UxRegressionWorkflowShardingTests
         host.Should().Contain("SetDefaultNavigationTimeout");
     }
 
+    [Fact]
+    public void Browser_gate_hard_bounds_navigation_dom_commands_and_context_cleanup()
+    {
+        var browserTests = ReadRepositoryFile("tests/AIWordPressManager.UxTests/BrowserUxRegressionTests.cs");
+        var cleanup = ReadRepositoryFile("tests/AIWordPressManager.UxTests/PlaywrightCleanupExtensions.cs");
+
+        browserTests.Should().Contain("WaitUntil = WaitUntilState.DOMContentLoaded");
+        browserTests.Should().Contain("NavigationHardTimeout");
+        browserTests.Should().Contain("DomHardTimeout");
+        browserTests.Should().Contain("DiagnosticHardTimeout");
+        browserTests.Should().Contain(".WaitAsync(DomHardTimeout)");
+        browserTests.Should().Contain("CloseBoundedAsync");
+        browserTests.Should().NotContain("await using var context = await host.CreateContextAsync");
+
+        cleanup.Should().Contain("CloseTimeout = TimeSpan.FromSeconds(5)");
+        cleanup.Should().Contain("context.CloseAsync().WaitAsync(CloseTimeout)");
+        cleanup.Should().Contain("context-close:timeout");
+    }
+
     private static string ReadRepositoryFile(string relativePath)
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
