@@ -73,6 +73,10 @@ jobs:
             --configuration Release \
             --no-build \
             --filter '${{ matrix.filter }}' \
+            --blame-hang \
+            --blame-hang-timeout 3m \
+            --blame-hang-dump-type mini \
+            --logger "console;verbosity=detailed" \
             --logger "trx;LogFileName=ux-regression-${{ matrix.shard }}.trx"
           test_exit=$?
           finished_at=$(date +%s)
@@ -92,6 +96,6 @@ jobs:
           name: ux-regression-evidence-${{ matrix.shard }}
           path: |
             artifacts/ux-regression/**
-            tests/AIWordPressManager.UxTests/TestResults/*.trx
+            tests/AIWordPressManager.UxTests/TestResults/**
           if-no-files-found: warn
           retention-days: 30

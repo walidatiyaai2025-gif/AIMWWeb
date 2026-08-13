@@ -45,6 +45,26 @@ public sealed class UxRegressionWorkflowShardingTests
         workflow.Should().Contain("ux-regression-evidence-${{ matrix.shard }}");
     }
 
+    [Fact]
+    public void Workflow_and_fixture_fail_fast_with_persistent_hang_evidence()
+    {
+        var workflow = ReadRepositoryFile(".github/workflows/ux-regression.yml");
+        var host = ReadRepositoryFile("tests/AIWordPressManager.UxTests/UxTestHost.cs");
+
+        workflow.Should().Contain("--blame-hang");
+        workflow.Should().Contain("--blame-hang-timeout 3m");
+        workflow.Should().Contain("--blame-hang-dump-type mini");
+        workflow.Should().Contain("console;verbosity=detailed");
+        workflow.Should().Contain("tests/AIWordPressManager.UxTests/TestResults/**");
+
+        host.Should().Contain("fixture-checkpoints.log");
+        host.Should().Contain("initialize:complete");
+        host.Should().Contain("authentication:submit:start");
+        host.Should().Contain("dispose:browser:timeout");
+        host.Should().Contain("dispose:application:timeout");
+        host.Should().Contain("SetDefaultNavigationTimeout");
+    }
+
     private static string ReadRepositoryFile(string relativePath)
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

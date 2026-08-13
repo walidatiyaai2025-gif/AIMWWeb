@@ -9,8 +9,10 @@ namespace AIWordPressManager.UxTests;
 
 public sealed class UxTestHost : IAsyncLifetime
 {
+    private const float PlaywrightTimeoutMs = 10000;
     private readonly List<string> _appLog = [];
     private readonly List<string> _httpProbeLog = [];
+    private readonly object _checkpointLock = new();
     private IPlaywright? _playwright;
     private IBrowser? _browser;
     private Process? _appProcess;
@@ -29,18 +31,41 @@ public sealed class UxTestHost : IAsyncLifetime
         Directory.CreateDirectory(_runRoot);
         Directory.CreateDirectory(ArtifactRoot);
         _storageStatePath = Path.Combine(_runRoot, "auth-state.json");
+        Checkpoint("initialize:start");
 
         var port = ReserveTcpPort();
         BaseUrl = $"http://127.0.0.1:{port}";
+        Checkpoint($"application:start:{BaseUrl}");
         StartApplication(port);
+        Checkpoint("health:wait");
         await WaitForHealthAsync();
-        await ProbeResponseAsync("/welcome", null, expectBodyBytes: true, expectedMediaTypeFragment: "html");
-        await ProbeResponseAsync("/_framework/blazor.web.js", null, expectBodyBytes: true, expectedMediaTypeFragment: "javascript");
+        Checkpoint("health:ok");
 
+        Checkpoint("probe:welcome:start");
+        await ProbeResponseAsync("/welcome", null, expectBodyBytes: true, expectedMediaTypeFragment: "html");
+        Checkpoint("probe:welcome:ok");
+        Checkpoint("probe:blazor:start");
+        await ProbeResponseAsync("/_framework/blazor.web.js", null, expectBodyBytes: true, expectedMediaTypeFragment: "javascript");
+        Checkpoint("probe:blazor:ok");
+
+        Checkpoint("playwright:create:start");
         _playwright = await Playwright.CreateAsync();
-        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+        Checkpoint("playwright:create:ok");
+        Checkpoint("browser:launch:start");
+        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless = true,
+            Timeout = PlaywrightTimeoutMs
+        });
+        Checkpoint("browser:launch:ok");
+
+        Checkpoint("authentication:start");
         var authCookie = await CreateAuthenticatedStorageStateAsync();
+        Checkpoint("authentication:ok");
+        Checkpoint("probe:authenticated-root:start");
         await ProbeResponseAsync("/", authCookie, expectBodyBytes: true, expectedMediaTypeFragment: "html");
+        Checkpoint("probe:authenticated-root:ok");
+        Checkpoint("initialize:complete");
     }
 
     public async Task<IBrowserContext> CreateContextAsync(UxViewport viewport, bool authenticated = true)
@@ -50,6 +75,8 @@ public sealed class UxTestHost : IAsyncLifetime
             ViewportSize = new ViewportSize { Width = viewport.Width, Height = viewport.Height },
             StorageStatePath = authenticated ? _storageStatePath : null
         });
+        context.SetDefaultTimeout(PlaywrightTimeoutMs);
+        context.SetDefaultNavigationTimeout(PlaywrightTimeoutMs);
 
         await context.AddInitScriptAsync("""
             try {
@@ -77,14 +104,57 @@ public sealed class UxTestHost : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (_browser is not null) await _browser.DisposeAsync();
-        _playwright?.Dispose();
+        Checkpoint("dispose:start");
+
+        if (_browser is not null)
+        {
+            Checkpoint("dispose:browser:start");
+            try
+            {
+                var disposeTask = _browser.DisposeAsync().AsTask();
+                var completed = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(10)));
+                if (completed == disposeTask)
+                {
+                    await disposeTask;
+                    Checkpoint("dispose:browser:ok");
+                }
+                else
+                {
+                    Checkpoint("dispose:browser:timeout");
+                }
+            }
+            catch (Exception ex)
+            {
+                Checkpoint($"dispose:browser:error:{ex.GetType().Name}");
+            }
+        }
+
+        try
+        {
+            _playwright?.Dispose();
+            Checkpoint("dispose:playwright:ok");
+        }
+        catch (Exception ex)
+        {
+            Checkpoint($"dispose:playwright:error:{ex.GetType().Name}");
+        }
 
         if (_appProcess is { HasExited: false })
         {
+            Checkpoint("dispose:application:kill");
             try { _appProcess.Kill(entireProcessTree: true); }
-            catch { }
-            await _appProcess.WaitForExitAsync();
+            catch (Exception ex) { Checkpoint($"dispose:application:kill-error:{ex.GetType().Name}"); }
+
+            try
+            {
+                using var shutdownCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await _appProcess.WaitForExitAsync(shutdownCts.Token);
+                Checkpoint("dispose:application:exited");
+            }
+            catch (OperationCanceledException)
+            {
+                Checkpoint("dispose:application:timeout");
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(_repositoryRoot))
@@ -95,6 +165,7 @@ public sealed class UxTestHost : IAsyncLifetime
 
         try { if (Directory.Exists(_runRoot)) Directory.Delete(_runRoot, recursive: true); }
         catch { }
+        Checkpoint("dispose:complete");
     }
 
     private void StartApplication(int port)
@@ -160,15 +231,28 @@ public sealed class UxTestHost : IAsyncLifetime
 
     private async Task<string> CreateAuthenticatedStorageStateAsync()
     {
+        Checkpoint("authentication:context:create");
         await using var context = await Browser.NewContextAsync(new BrowserNewContextOptions
         {
             ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
         });
+        context.SetDefaultTimeout(PlaywrightTimeoutMs);
+        context.SetDefaultNavigationTimeout(PlaywrightTimeoutMs);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(BaseUrl + "/login?returnUrl=%2F", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        Checkpoint("authentication:login-navigation:start");
+        await page.GotoAsync(BaseUrl + "/login?returnUrl=%2F", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.DOMContentLoaded,
+            Timeout = PlaywrightTimeoutMs
+        });
+        Checkpoint("authentication:login-navigation:ok");
+
         await page.Locator("input[name='userName']").FillAsync("Admin");
         await page.Locator("input[name='password']").FillAsync("Admin@123");
-        await page.Locator("button[type='submit']").ClickAsync();
+        Checkpoint("authentication:submit:start");
+        await page.Locator("button[type='submit']").ClickAsync(new LocatorClickOptions { Timeout = PlaywrightTimeoutMs });
+        Checkpoint($"authentication:submit:returned:{page.Url}");
 
         var deadline = DateTime.UtcNow.AddSeconds(15);
         while (DateTime.UtcNow < deadline && page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
@@ -176,13 +260,16 @@ public sealed class UxTestHost : IAsyncLifetime
 
         if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("UX regression fixture could not authenticate the seeded administrator.");
+        Checkpoint($"authentication:navigation-complete:{page.Url}");
 
         var cookies = await context.CookiesAsync();
         var authCookie = cookies.FirstOrDefault(cookie => string.Equals(cookie.Name, "AIWM.Auth", StringComparison.Ordinal));
         if (authCookie is null)
             throw new InvalidOperationException("UX regression fixture completed login navigation without receiving the AIWM.Auth cookie.");
+        Checkpoint("authentication:cookie:ok");
 
         await context.StorageStateAsync(new BrowserContextStorageStateOptions { Path = _storageStatePath });
+        Checkpoint("authentication:storage-state:ok");
         return authCookie.Value;
     }
 
@@ -234,6 +321,18 @@ public sealed class UxTestHost : IAsyncLifetime
             var reason = readError is null ? string.Empty : $"; read={readError.GetType().Name}: {readError.Message}";
             throw new InvalidOperationException(
                 $"UX HTTP probe failed for {path}: status={(int)response.StatusCode}, location={location}, content-type={contentType}, firstBytes={firstBytes.Length}, expected-media~={expectedMediaTypeFragment ?? "-"}{reason}.");
+        }
+    }
+
+    private void Checkpoint(string message)
+    {
+        var line = $"{DateTime.UtcNow:O} {message}";
+        Console.WriteLine($"[UX-HOST] {message}");
+        if (string.IsNullOrWhiteSpace(_repositoryRoot)) return;
+
+        lock (_checkpointLock)
+        {
+            File.AppendAllText(ArtifactPath("logs", "fixture-checkpoints.log"), line + Environment.NewLine);
         }
     }
 
