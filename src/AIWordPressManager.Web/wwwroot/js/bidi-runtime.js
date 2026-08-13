@@ -12,15 +12,21 @@
   function sync() {
     const language = normalizeLanguage(root.lang || localStorage.getItem('aiwp-language'));
     const direction = normalizeDirection(root.dir, language);
-    root.lang = language;
-    root.dir = direction;
+
+    // The observer below watches lang/dir. Reassigning identical values from
+    // inside its callback creates a self-sustaining MutationObserver microtask
+    // loop that can starve document parsing and prevent DOMContentLoaded.
+    if (root.lang !== language) root.lang = language;
+    if (root.dir !== direction) root.dir = direction;
     root.dataset.appLanguage = language;
     root.dataset.appDirection = direction;
+
     if (document.body) {
-      document.body.dir = direction;
+      if (document.body.dir !== direction) document.body.dir = direction;
       document.body.dataset.appLanguage = language;
       document.body.dataset.appDirection = direction;
     }
+
     document.dispatchEvent(new CustomEvent('aiwp:directionchange', { detail: { language, direction } }));
     return { language, direction };
   }
