@@ -35,6 +35,9 @@
             <AuthorizeView Policy="@AIWordPressManager.Web.Services.ApplicationPermissionCatalog.UsersManage">
                 <a href="/admin/sessions"><span>SEC</span><div><strong>@(L.IsArabic ? "إدارة الجلسات" : "Session management")</strong><small>@(L.IsArabic ? "المخزون والإبطال الإداري" : "Inventory and administrator revocation")</small></div></a>
             </AuthorizeView>
+            <AuthorizeView Policy="@AIWordPressManager.Web.Services.ApplicationPermissionCatalog.SettingsManage">
+                <a href="/admin/security-audit"><span>AUD</span><div><strong>@(L.IsArabic ? "سجل التدقيق الأمني" : "Security audit trail")</strong><small>@(L.IsArabic ? "الدخول والحسابات والأدوار والجلسات" : "Sign-in, accounts, roles, and sessions")</small></div></a>
+            </AuthorizeView>
             <AuthorizeView Roles="Administrator">
                 <a href="/settings/ai-providers"><span>AI</span><div><strong>@(L.IsArabic ? "مزودو الذكاء الاصطناعي" : "AI providers")</strong><small>@(L.IsArabic ? "المفاتيح والنماذج والأولوية" : "Keys, models, and priority")</small></div></a>
                 <a href="/settings/ai-prompts"><span>✦</span><div><strong>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI prompt templates")</strong><small>@(L.IsArabic ? "الإصدارات والاستعادة" : "Versions and restore")</small></div></a>
