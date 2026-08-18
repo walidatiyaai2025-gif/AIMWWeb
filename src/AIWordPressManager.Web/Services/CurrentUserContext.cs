@@ -30,6 +30,23 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
 
     public bool IsInRole(string role) => accessor.HttpContext?.User.IsInRole(role) == true;
 
+    public bool HasPermission(string permission) =>
+        ApplicationPermissionCatalog.PrincipalHasPermission(accessor.HttpContext?.User, permission);
+
+    public Guid RequirePermission(string permission)
+    {
+        // Elevated application permissions are intentionally HTTP-principal-only.
+        // A background owner identity proves tenant ownership, not administrative authority.
+        if (accessor.HttpContext?.User.Identity?.IsAuthenticated != true ||
+            !ApplicationPermissionCatalog.PrincipalHasPermission(accessor.HttpContext.User, permission) ||
+            !TryGetHttpUserId(out var userId))
+        {
+            throw new UnauthorizedAccessException($"Permission '{permission}' is required.");
+        }
+
+        return userId;
+    }
+
     public Guid RequireAdministrator()
     {
         if (accessor.HttpContext?.User.Identity?.IsAuthenticated != true ||

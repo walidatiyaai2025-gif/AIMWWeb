@@ -13,11 +13,35 @@ namespace AIWordPressManager.Tests;
 public sealed class ApplicationUserAdministrationServiceTests
 {
     [Fact]
-    public async Task Non_Administrator_Cannot_List_Application_Users()
+    public async Task Normal_User_Cannot_List_Application_Users()
     {
         await using var fixture = await Fixture.CreateAsync("User");
         var action = () => fixture.Service.ListAsync();
         await action.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task UsersView_Claim_Can_List_But_Cannot_Create_Application_Users()
+    {
+        await using var fixture = await Fixture.CreateAsync("User", ApplicationPermissionCatalog.UsersView);
+
+        var users = await fixture.Service.ListAsync();
+        users.Should().ContainSingle(x => x.Id == fixture.Actor.Id);
+
+        var create = () => fixture.Service.CreateAsync("blocked.editor", "StrongPass1", "StrongPass1", "User");
+        await create.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task UsersManage_Claim_Can_Create_User_Without_Administrator_Role()
+    {
+        await using var fixture = await Fixture.CreateAsync("User", ApplicationPermissionCatalog.UsersManage);
+
+        var result = await fixture.Service.CreateAsync("editor.one", "StrongPass1", "StrongPass1", "User");
+
+        result.IsSuccess.Should().BeTrue();
+        var stored = await fixture.Context.AuthUsers.AsNoTracking().SingleAsync(x => x.UserName == "editor.one");
+        stored.PasswordHash.Should().NotBe("StrongPass1");
     }
 
     [Fact]
@@ -58,7 +82,7 @@ public sealed class ApplicationUserAdministrationServiceTests
         var actor = await fixture.Context.AuthUsers.SingleAsync(x => x.Id == fixture.Actor.Id);
         actor.SetRole("User", DateTime.UtcNow);
         await fixture.Context.SaveChangesAsync();
-        fixture.SetActorRole("Administrator");
+        fixture.SetActorIdentity("Administrator");
 
         var result = await fixture.Service.SetActiveAsync(otherAdmin.Id, false);
         result.IsSuccess.Should().BeFalse();
@@ -92,10 +116,14 @@ public sealed class ApplicationUserAdministrationServiceTests
 
         private Fixture(SqliteConnection connection, AppDbContext context, AuthUser actor, ApplicationUserAdministrationService service, IsolatedHttpContextAccessor accessor)
         {
-            _connection = connection; Context = context; Actor = actor; Service = service; _accessor = accessor;
+            _connection = connection;
+            Context = context;
+            Actor = actor;
+            Service = service;
+            _accessor = accessor;
         }
 
-        public static async Task<Fixture> CreateAsync(string actorRole = "Administrator")
+        public static async Task<Fixture> CreateAsync(string actorRole = "Administrator", params string[] permissions)
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
@@ -104,20 +132,24 @@ public sealed class ApplicationUserAdministrationServiceTests
             var actor = new AuthUser("test.admin", "hash", DateTime.UtcNow, actorRole);
             context.AuthUsers.Add(actor);
             await context.SaveChangesAsync();
-            var accessor = new IsolatedHttpContextAccessor(CreateHttpContext(actor, actorRole));
+            var accessor = new IsolatedHttpContextAccessor(CreateHttpContext(actor, actorRole, permissions));
             var service = new ApplicationUserAdministrationService(context, new CurrentUserContext(accessor));
             return new Fixture(connection, context, actor, service, accessor);
         }
 
-        public void SetActorRole(string role) => _accessor.HttpContext = CreateHttpContext(Actor, role);
+        public void SetActorIdentity(string role, params string[] permissions) =>
+            _accessor.HttpContext = CreateHttpContext(Actor, role, permissions);
 
-        private static HttpContext CreateHttpContext(AuthUser actor, string role)
+        private static HttpContext CreateHttpContext(AuthUser actor, string role, IEnumerable<string> permissions)
         {
-            var identity = new ClaimsIdentity([
-                new Claim(ClaimTypes.NameIdentifier, actor.Id.ToString()),
-                new Claim(ClaimTypes.Name, actor.UserName),
-                new Claim(ClaimTypes.Role, role)
-            ], "Test");
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, actor.Id.ToString()),
+                new(ClaimTypes.Name, actor.UserName),
+                new(ClaimTypes.Role, role)
+            };
+            claims.AddRange(permissions.Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
+            var identity = new ClaimsIdentity(claims, "Test");
             return new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
         }
 

@@ -17,7 +17,7 @@ public sealed class ApplicationUserAdministrationService(
         string? search = null,
         CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissionCatalog.UsersView);
         var query = dbContext.AuthUsers.AsNoTracking();
         var term = (search ?? string.Empty).Trim().ToUpperInvariant();
         if (term.Length > 0)
@@ -30,7 +30,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> CreateAsync(string userName, string password, string confirmPassword, string role, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
         var validation = Validate(userName, password, confirmPassword, role, true);
         if (validation is not null) return UserAdministrationResult.Failed(validation);
 
@@ -57,7 +57,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> UpdateAsync(Guid userId, string userName, string role, CancellationToken cancellationToken = default)
     {
-        var actorId = currentUser.RequireAdministrator();
+        var actorId = currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
 
@@ -85,7 +85,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> SetActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken = default)
     {
-        var actorId = currentUser.RequireAdministrator();
+        var actorId = currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         if (!isActive && user.Id == actorId) return UserAdministrationResult.Failed("You cannot disable your own account.");
@@ -99,7 +99,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> UnlockAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         user.Unlock(DateTime.UtcNow);
@@ -109,7 +109,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> ResetPasswordAsync(Guid userId, string password, string confirmPassword, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         var validation = Validate(user.UserName, password, confirmPassword, user.Role, true);
@@ -124,7 +124,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<IReadOnlyList<LoginAuditDto>> GetLoginAuditAsync(Guid userId, int take = 50, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissionCatalog.UsersView);
         take = Math.Clamp(take, 1, 200);
         var userName = await dbContext.AuthUsers.AsNoTracking().Where(x => x.Id == userId).Select(x => x.UserName).SingleOrDefaultAsync(cancellationToken);
         if (userName is null) return [];
