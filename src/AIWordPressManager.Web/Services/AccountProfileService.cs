@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -7,9 +8,13 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class AccountProfileService(
     AppDbContext dbContext,
-    CurrentUserContext currentUser)
+    CurrentUserContext currentUser,
+    ApplicationSessionStore? sessionStore = null,
+    IHttpContextAccessor? httpContextAccessor = null)
 {
     private readonly PasswordHasher<AuthUser> _hasher = new();
+    private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
+    private readonly ApplicationSecurityAuditService _securityAudit = new(dbContext, currentUser, httpContextAccessor);
 
     public async Task<AccountProfileView> GetAsync(CancellationToken cancellationToken = default)
     {
@@ -46,7 +51,10 @@ public sealed class AccountProfileService(
         var confirmation = confirmPassword ?? string.Empty;
 
         if (_hasher.VerifyHashedPassword(user, user.PasswordHash, current) == PasswordVerificationResult.Failed)
+        {
+            await AuditPasswordAsync(user, "Failed", "Current password verification failed", null, cancellationToken);
             return PasswordChangeResult.Failed("The current password is incorrect.");
+        }
 
         if (next.Length < 8)
             return PasswordChangeResult.Failed("The new password must contain at least 8 characters.");
@@ -62,7 +70,51 @@ public sealed class AccountProfileService(
 
         user.SetPasswordHash(_hasher.HashPassword(user, next), DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var currentSessionId = GetCurrentSessionId(httpContextAccessor?.HttpContext?.User);
+        var activeSessions = await _sessionStore.ListAsync(user.Id, includeInactive: false, cancellationToken);
+        var revokedCount = 0;
+        foreach (var session in activeSessions.Where(x => !currentSessionId.HasValue || x.SessionId != currentSessionId.Value))
+        {
+            await _sessionStore.RevokeAsync(session.SessionId, "Password changed by account owner.", cancellationToken);
+            revokedCount++;
+        }
+
+        await AuditPasswordAsync(
+            user,
+            "Succeeded",
+            "Password changed by account owner",
+            new Dictionary<string, string> { ["revokedOtherSessions"] = revokedCount.ToString() },
+            cancellationToken);
         return PasswordChangeResult.Succeeded();
+    }
+
+    private Task AuditPasswordAsync(
+        AuthUser user,
+        string outcome,
+        string reason,
+        IReadOnlyDictionary<string, string>? metadata,
+        CancellationToken cancellationToken)
+    {
+        var values = metadata is null
+            ? new Dictionary<string, string>()
+            : new Dictionary<string, string>(metadata);
+        values["reason"] = reason;
+        return _securityAudit.RecordCurrentAsync(
+            "Account",
+            "Password.Changed",
+            outcome,
+            "ApplicationUser",
+            user.Id.ToString("D"),
+            user.UserName,
+            values,
+            cancellationToken);
+    }
+
+    private static Guid? GetCurrentSessionId(ClaimsPrincipal? principal)
+    {
+        var value = principal?.FindFirstValue(ApplicationSessionStore.SessionIdClaimType);
+        return Guid.TryParse(value, out var sessionId) ? sessionId : null;
     }
 }
 
