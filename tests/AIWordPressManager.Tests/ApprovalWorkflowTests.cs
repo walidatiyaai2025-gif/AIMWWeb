@@ -170,7 +170,12 @@ public sealed class ApprovalWorkflowTests : IDisposable
         var httpContext = new DefaultHttpContext
         {
             User = new ClaimsPrincipal(new ClaimsIdentity(
-                [new Claim(ClaimTypes.NameIdentifier, _ownerA.ToString()), new Claim(ClaimTypes.Name, "alice@example.com")], "test"))
+                [
+                    new Claim(ClaimTypes.NameIdentifier, _ownerA.ToString()),
+                    new Claim(ClaimTypes.Name, "alice@example.com"),
+                    new Claim(ApplicationPermissionCatalog.ClaimType, ApplicationPermissionCatalog.ApprovalsDecide)
+                ],
+                "test"))
         };
         var accessor = new HttpContextAccessor { HttpContext = httpContext };
         var notifications = NotificationInboxService.ForDatabase(Path.Combine(_testDirectory, "http-notifications.db"));
@@ -181,7 +186,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
             services.GetRequiredService<IServiceScopeFactory>(),
             accessor);
         var ownerAItem = service.Submit(_ownerA, CreateSubmission(null, "http-a", "AI Suggestion"), "seed-a@example.com");
-        var ownerBItem = service.Submit(_ownerB, CreateSubmission(null, "http-b", "AI Suggestion"), "seed-b@example.com");
+        var ownerBItem = _approvals.Submit(_ownerB, CreateSubmission(null, "http-b", "AI Suggestion"), "seed-b@example.com");
         service.GetItems().Should().ContainSingle(x => x.Id == ownerAItem.Id);
         service.GetById(ownerBItem.Id).Should().BeNull();
         var rejected = service.Reject(ownerAItem.Id, "spoofed-reviewer@example.com", "No");
