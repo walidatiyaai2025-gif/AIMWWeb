@@ -16,6 +16,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts => Set<EmailDeliveryAttempt>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<PlanEntitlement> PlanEntitlements => Set<PlanEntitlement>();
+    public DbSet<AccountSubscription> AccountSubscriptions => Set<AccountSubscription>();
+    public DbSet<AccountSubscriptionTransition> AccountSubscriptionTransitions => Set<AccountSubscriptionTransition>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -185,6 +187,31 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.ValueType).HasConversion<string>().HasMaxLength(16).IsRequired();
             entity.Property(x => x.Value).HasMaxLength(1000).IsRequired();
             entity.HasOne<SubscriptionPlan>().WithMany().HasForeignKey(x => x.PlanId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AccountSubscription>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.OwnerUserId).IsUnique();
+            entity.HasIndex(x => x.PlanId);
+            entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.LastProviderEventAtUtc);
+            entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+            entity.Property(x => x.ProviderKey).HasMaxLength(64);
+            entity.Property(x => x.ProviderSubscriptionReference).HasMaxLength(200);
+            entity.HasOne<AuthUser>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<SubscriptionPlan>().WithMany().HasForeignKey(x => x.PlanId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<AccountSubscriptionTransition>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.SubscriptionId, x.OccurredAtUtc });
+            entity.Property(x => x.FromStatus).HasConversion<string>().HasMaxLength(16).IsRequired();
+            entity.Property(x => x.ToStatus).HasConversion<string>().HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Source).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+            entity.HasOne<AccountSubscription>().WithMany().HasForeignKey(x => x.SubscriptionId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
