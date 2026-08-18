@@ -10,14 +10,15 @@ public sealed class ApplicationUserAdministrationService(
     AppDbContext dbContext,
     CurrentUserContext currentUser)
 {
-    private static readonly string[] AllowedRoles = ["Administrator", "User"];
     private readonly PasswordHasher<AuthUser> _hasher = new();
+
+    public IReadOnlyList<ApplicationRoleDefinition> Roles => ApplicationRoles.All;
 
     public async Task<IReadOnlyList<ApplicationUserSummary>> ListAsync(
         string? search = null,
         CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissions.UsersRead);
         var query = dbContext.AuthUsers.AsNoTracking();
         var term = (search ?? string.Empty).Trim().ToUpperInvariant();
         if (term.Length > 0)
@@ -30,7 +31,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> CreateAsync(string userName, string password, string confirmPassword, string role, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissions.UsersManage);
         var validation = Validate(userName, password, confirmPassword, role, true);
         if (validation is not null) return UserAdministrationResult.Failed(validation);
 
@@ -40,7 +41,7 @@ public sealed class ApplicationUserAdministrationService(
             return UserAdministrationResult.Failed("This username is already registered.");
 
         var now = DateTime.UtcNow;
-        var user = new AuthUser(cleanUserName, "temporary", now, NormalizeRole(role));
+        var user = new AuthUser(cleanUserName, "temporary", now, ApplicationRoles.Normalize(role));
         user.SetPasswordHash(_hasher.HashPassword(user, password), now);
         dbContext.AuthUsers.Add(user);
         try
@@ -57,7 +58,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> UpdateAsync(Guid userId, string userName, string role, CancellationToken cancellationToken = default)
     {
-        var actorId = currentUser.RequireAdministrator();
+        var actorId = currentUser.RequirePermission(ApplicationPermissions.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
 
@@ -69,8 +70,9 @@ public sealed class ApplicationUserAdministrationService(
         if (await dbContext.AuthUsers.AsNoTracking().AnyAsync(x => x.Id != userId && x.NormalizedUserName == normalized, cancellationToken))
             return UserAdministrationResult.Failed("This username is already registered.");
 
-        var normalizedRole = NormalizeRole(role);
-        if (user.Role == "Administrator" && normalizedRole != "Administrator")
+        var normalizedRole = ApplicationRoles.Normalize(role);
+        if (string.Equals(user.Role, ApplicationRoles.Administrator, StringComparison.Ordinal) &&
+            !string.Equals(normalizedRole, ApplicationRoles.Administrator, StringComparison.Ordinal))
         {
             if (actorId == user.Id) return UserAdministrationResult.Failed("You cannot remove your own administrator role.");
             if (!await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken)) return UserAdministrationResult.Failed("At least one active administrator must remain.");
@@ -85,11 +87,12 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> SetActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken = default)
     {
-        var actorId = currentUser.RequireAdministrator();
+        var actorId = currentUser.RequirePermission(ApplicationPermissions.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         if (!isActive && user.Id == actorId) return UserAdministrationResult.Failed("You cannot disable your own account.");
-        if (!isActive && user.Role == "Administrator" && !await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken))
+        if (!isActive && string.Equals(user.Role, ApplicationRoles.Administrator, StringComparison.Ordinal) &&
+            !await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken))
             return UserAdministrationResult.Failed("At least one active administrator must remain.");
 
         user.SetActive(isActive, DateTime.UtcNow);
@@ -99,7 +102,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> UnlockAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissions.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         user.Unlock(DateTime.UtcNow);
@@ -109,7 +112,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<UserAdministrationResult> ResetPasswordAsync(Guid userId, string password, string confirmPassword, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissions.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         var validation = Validate(user.UserName, password, confirmPassword, user.Role, true);
@@ -124,7 +127,7 @@ public sealed class ApplicationUserAdministrationService(
 
     public async Task<IReadOnlyList<LoginAuditDto>> GetLoginAuditAsync(Guid userId, int take = 50, CancellationToken cancellationToken = default)
     {
-        currentUser.RequireAdministrator();
+        currentUser.RequirePermission(ApplicationPermissions.UsersRead);
         take = Math.Clamp(take, 1, 200);
         var userName = await dbContext.AuthUsers.AsNoTracking().Where(x => x.Id == userId).Select(x => x.UserName).SingleOrDefaultAsync(cancellationToken);
         if (userName is null) return [];
@@ -133,16 +136,16 @@ public sealed class ApplicationUserAdministrationService(
     }
 
     private Task<bool> HasAnotherActiveAdministratorAsync(Guid excludedUserId, CancellationToken cancellationToken) =>
-        dbContext.AuthUsers.AsNoTracking().AnyAsync(x => x.Id != excludedUserId && x.IsActive && x.Role == "Administrator", cancellationToken);
-
-    private static string NormalizeRole(string role) => AllowedRoles.FirstOrDefault(x => string.Equals(x, role?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
+        dbContext.AuthUsers.AsNoTracking().AnyAsync(
+            x => x.Id != excludedUserId && x.IsActive && x.Role == ApplicationRoles.Administrator,
+            cancellationToken);
 
     private static string? Validate(string userName, string password, string confirmPassword, string role, bool requirePassword)
     {
         var cleanUserName = (userName ?? string.Empty).Trim();
         if (cleanUserName.Length is < 3 or > 64) return "Username must be between 3 and 64 characters.";
         if (!Regex.IsMatch(cleanUserName, "^[A-Za-z0-9._-]+$")) return "Username can contain letters, numbers, dots, underscores, and hyphens only.";
-        if (string.IsNullOrEmpty(NormalizeRole(role))) return "Role must be Administrator or User.";
+        if (string.IsNullOrEmpty(ApplicationRoles.Normalize(role))) return "Role must be one of the configured application roles.";
         if (!requirePassword) return null;
         var safePassword = password ?? string.Empty;
         if (safePassword.Length < 8) return "Password must contain at least 8 characters.";
