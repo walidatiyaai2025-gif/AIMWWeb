@@ -14,7 +14,7 @@ namespace AIWordPressManager.Tests;
 public sealed class LocalAuthenticationSessionTests
 {
     [Fact]
-    public async Task Successful_login_issues_server_tracked_session_claim()
+    public async Task Successful_login_issues_server_tracked_session_claim_and_security_audit()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -31,8 +31,9 @@ public sealed class LocalAuthenticationSessionTests
         await using var services = new ServiceCollection()
             .AddSingleton<IAuthenticationService>(authentication)
             .BuildServiceProvider();
-        var context = new DefaultHttpContext { RequestServices = services };
+        var context = new DefaultHttpContext { RequestServices = services, TraceIdentifier = "login-trace" };
         context.Request.Headers.UserAgent = "Session test browser";
+        context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.8");
         var sessionStore = new ApplicationSessionStore(db);
         var service = new LocalAuthenticationService(db, new ApplicationRoleStore(db), sessionStore);
 
@@ -47,6 +48,45 @@ public sealed class LocalAuthenticationSessionTests
         persisted.Should().NotBeNull();
         persisted!.UserId.Should().Be(user.Id);
         persisted.UserAgent.Should().Be("Session test browser");
+
+        var audit = await new ApplicationSecurityAuditStore(db).ListAsync(new SecurityAuditQuery(Category: "Authentication"));
+        audit.Should().ContainSingle(x => x.Action == "SignIn" && x.Outcome == "Succeeded" && x.ActorUserId == user.Id);
+        audit.Single().CorrelationId.Should().Be("login-trace");
+        audit.Single().IpAddress.Should().Be("127.0.0.8");
+        var raw = await db.ApplicationSettings.AsNoTracking()
+            .Where(x => x.Key == ApplicationSecurityAuditStore.SettingsKey)
+            .Select(x => x.Value)
+            .SingleAsync();
+        raw.Contains(password, StringComparison.Ordinal).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Failed_password_login_is_audited_without_persisting_submitted_password()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options);
+        await db.Database.EnsureCreatedAsync();
+
+        var user = new AuthUser("blocked.user", "temporary", DateTime.UtcNow, "User");
+        user.SetPasswordHash(new PasswordHasher<AuthUser>().HashPassword(user, "StrongPass1"), DateTime.UtcNow);
+        db.AuthUsers.Add(user);
+        await db.SaveChangesAsync();
+        const string submittedPassword = "WrongSecret9";
+        var context = new DefaultHttpContext { TraceIdentifier = "failed-login" };
+        var service = new LocalAuthenticationService(db);
+
+        var result = await service.SignInAsync(context, user.UserName, submittedPassword, rememberMe: false);
+
+        result.IsSuccess.Should().BeFalse();
+        var audit = await new ApplicationSecurityAuditStore(db).ListAsync(new SecurityAuditQuery(Category: "Authentication"));
+        audit.Should().ContainSingle(x => x.Action == "SignIn" && x.Outcome == "Failed" && x.ActorUserId == user.Id);
+        audit.Single().Metadata["reason"].Should().Be("Invalid password");
+        var raw = await db.ApplicationSettings.AsNoTracking()
+            .Where(x => x.Key == ApplicationSecurityAuditStore.SettingsKey)
+            .Select(x => x.Value)
+            .SingleAsync();
+        raw.Contains(submittedPassword, StringComparison.Ordinal).Should().BeFalse();
     }
 
     private sealed class CapturingAuthenticationService : IAuthenticationService
