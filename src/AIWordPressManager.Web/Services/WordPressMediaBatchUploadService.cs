@@ -281,7 +281,7 @@ public sealed class WordPressMediaBatchUploadService(
     private sealed record MediaBatchUploadPlan(
         int Index,
         MediaBatchUploadItem Item,
-        MediaUploadValidation Validation)
+        MediaUploadValidationResult Validation)
     {
         public static MediaBatchUploadPlan Create(int index, MediaBatchUploadItem item) =>
             new(index, item, MediaUploadPolicy.Validate(item.File.Name, item.File.Size, item.File.ContentType));
