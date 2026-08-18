@@ -107,15 +107,19 @@ public static class DependencyInjection
         services.AddScoped<PlanEntitlementService>();
         services.AddScoped<IPlanEntitlementCatalog>(sp => sp.GetRequiredService<PlanEntitlementService>());
         services.AddScoped<IPlanEntitlementResolver>(sp => sp.GetRequiredService<PlanEntitlementService>());
-        services.AddScoped<IAccountSubscriptionService, AccountSubscriptionService>();
+        services.AddScoped<AccountSubscriptionService>();
+        services.AddScoped<IAccountSubscriptionService, ProviderBindingAccountSubscriptionService>();
         services.AddScoped<ISubscriptionLifecyclePolicyService, SubscriptionLifecyclePolicyService>();
         services.AddHostedService<SubscriptionLifecyclePolicyWorker>();
         services.AddScoped<PayPalConfigurationService>();
         services.AddScoped<IPayPalConfigurationService>(sp => sp.GetRequiredService<PayPalConfigurationService>());
         services.AddScoped<IPayPalRuntimeConfigurationProvider>(sp => sp.GetRequiredService<PayPalConfigurationService>());
-        services.AddScoped<IPayPalSubscriptionCheckoutService, PayPalSubscriptionCheckoutService>();
+        services.AddScoped<PayPalSubscriptionCheckoutService>();
+        services.AddScoped<IPayPalSubscriptionCheckoutService, PayPalBoundSubscriptionCheckoutService>();
         services.AddScoped<IPayPalWebhookInbox, PayPalWebhookInbox>();
         services.AddScoped<IPayPalWebhookIntakeService, PayPalWebhookIntakeService>();
+        services.AddScoped<IPayPalSubscriptionSynchronizationService, PayPalSubscriptionSynchronizationService>();
+        services.AddHostedService<PayPalSubscriptionSynchronizationWorker>();
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.

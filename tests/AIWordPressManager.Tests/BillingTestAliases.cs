@@ -1,0 +1,1 @@
+global using PaymentGatewayRegistry = AIWordPressManager.Infrastructure.Billing.PaymentGatewayRegistry;
