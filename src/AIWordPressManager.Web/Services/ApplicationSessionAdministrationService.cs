@@ -36,6 +36,22 @@ public sealed class ApplicationSessionAdministrationService(
         return SessionAdministrationResult.Succeeded(sessionId);
     }
 
+    public async Task<SessionAdministrationResult> EndUserSessionsAsync(
+        Guid userId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
+        if (userId == Guid.Empty) return SessionAdministrationResult.Failed("User ID is required.");
+
+        var activeSessions = await sessionStore.ListAsync(userId, includeInactive: false, cancellationToken);
+        if (activeSessions.Count == 0)
+            return SessionAdministrationResult.Failed("No active sessions were found for this account.");
+
+        await sessionStore.RevokeUserAsync(userId, reason, cancellationToken);
+        return SessionAdministrationResult.Succeeded(Guid.Empty);
+    }
+
     public async Task<SessionAdministrationResult> EndMySessionAsync(
         Guid sessionId,
         string reason,
