@@ -16,6 +16,7 @@ public sealed class EmailTemplateRendererTests
         keys.Should().Contain(EmailTemplateKeys.SiteOperationalReport);
         keys.Should().Contain(EmailTemplateKeys.SiteSeoSummary);
         keys.Should().Contain(EmailTemplateKeys.SiteSyncFailure);
+        keys.Should().Contain(EmailTemplateKeys.SiteJobFailure);
         keys.Should().Contain(EmailTemplateKeys.DashboardDigest);
         keys.Should().Contain(EmailTemplateKeys.SecurityAlert);
         keys.Should().Contain(EmailTemplateKeys.BillingEvent);
