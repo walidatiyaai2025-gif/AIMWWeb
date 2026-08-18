@@ -65,8 +65,20 @@ public sealed class SubscriptionLifecyclePolicyService(
     {
         if (utcNow.Kind != DateTimeKind.Utc) throw new ArgumentException("Evaluation timestamp must be UTC.", nameof(utcNow));
         take = Math.Clamp(take, 1, 500);
+
+        // Select only subscriptions that can require an automatic transition now. This keeps
+        // long-lived healthy/suspended rows from permanently occupying the bounded worker batch.
         var ids = await dbContext.AccountSubscriptions.AsNoTracking()
-            .Where(x => x.Status != AccountSubscriptionStatus.Expired)
+            .Where(x =>
+                (x.Status == AccountSubscriptionStatus.Trialing &&
+                 x.TrialEndsAtUtc.HasValue && x.TrialEndsAtUtc.Value <= utcNow) ||
+                (x.Status == AccountSubscriptionStatus.Active &&
+                 x.CancelAtPeriodEnd && x.CurrentPeriodEndsAtUtc.HasValue && x.CurrentPeriodEndsAtUtc.Value <= utcNow) ||
+                x.Status == AccountSubscriptionStatus.PastDue ||
+                (x.Status == AccountSubscriptionStatus.Grace &&
+                 x.GraceUntilUtc.HasValue && x.GraceUntilUtc.Value <= utcNow) ||
+                (x.Status == AccountSubscriptionStatus.Cancelled &&
+                 x.CurrentPeriodEndsAtUtc.HasValue && x.CurrentPeriodEndsAtUtc.Value <= utcNow))
             .OrderBy(x => x.UpdatedAtUtc)
             .ThenBy(x => x.Id)
             .Select(x => x.Id)
