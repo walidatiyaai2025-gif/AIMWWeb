@@ -133,11 +133,46 @@
             </AppSection>
         </aside>
     </div>
+
+    <AppSection Title="@(L.IsArabic ? "تعيين الأدوار للمستخدمين" : "User role assignments")"
+                Subtitle="@(L.IsArabic ? "طبّق دورًا نشطًا على الحساب. حماية المدير الأخير ومنع إزالة صلاحياتك الإدارية من نفسك تظل مطبقة في الخدمة." : "Assign an active role to each account. Last-administrator and self-demotion protections remain enforced by the service.")">
+        <ChildContent>
+            <div class="role-assignment-list">
+                @foreach (var user in _users)
+                {
+                    <div class="role-assignment-row">
+                        <div class="role-assignment-user">
+                            <strong>@user.UserName</strong>
+                            <small>@(L.IsArabic ? "الدور الحالي" : "Current role"): @RoleDisplay(user.Role)</small>
+                        </div>
+                        <select value="@SelectedAssignment(user)"
+                                @onchange="args => ChangeAssignment(user.Id, args.Value?.ToString())"
+                                disabled="@_working"
+                                aria-label="@(L.IsArabic ? $"دور {user.UserName}" : $"Role for {user.UserName}")">
+                            @foreach (var role in _roleOptions)
+                            {
+                                <option value="@role.Name">@(L.IsArabic ? role.DisplayNameArabic : role.DisplayNameEnglish)</option>
+                            }
+                        </select>
+                        <AppButton Size="small"
+                                   Variant="primary"
+                                   Text="@(L.IsArabic ? "حفظ التعيين" : "Save assignment")"
+                                   Disabled="@(_working || string.Equals(SelectedAssignment(user), user.Role, StringComparison.Ordinal))"
+                                   OnClick="_ => SaveAssignmentAsync(user)" />
+                    </div>
+                }
+            </div>
+        </ChildContent>
+    </AppSection>
 </div>
 
 @code {
     private ApplicationRoleAdministrationService _service = default!;
+    private ApplicationUserAdministrationService _userService = default!;
     private IReadOnlyList<CustomApplicationRole> _roles = [];
+    private IReadOnlyList<ApplicationUserSummary> _users = [];
+    private IReadOnlyList<ApplicationRoleOption> _roleOptions = [];
+    private readonly Dictionary<Guid, string> _assignments = new();
     private readonly HashSet<string> _selectedPermissions = new(StringComparer.Ordinal);
     private string _name = string.Empty;
     private string _displayNameEnglish = string.Empty;
@@ -152,6 +187,7 @@
     {
         L.Changed += LanguageChanged;
         _service = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<ApplicationRoleAdministrationService>(Services);
+        _userService = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<ApplicationUserAdministrationService>(Services);
     }
 
     protected override async Task OnInitializedAsync()
@@ -166,6 +202,13 @@
         {
             _working = true;
             _roles = await _service.ListAsync();
+            _users = await _userService.ListAsync();
+            _roleOptions = await _userService.GetAssignableRolesAsync();
+            _assignments.Clear();
+            foreach (var user in _users)
+                _assignments[user.Id] = _roleOptions.Any(x => string.Equals(x.Name, user.Role, StringComparison.OrdinalIgnoreCase))
+                    ? _roleOptions.First(x => string.Equals(x.Name, user.Role, StringComparison.OrdinalIgnoreCase)).Name
+                    : user.Role;
             _isError = false;
         }
         catch (Exception ex)
@@ -262,6 +305,44 @@
         {
             _working = false;
         }
+    }
+
+    private string SelectedAssignment(ApplicationUserSummary user) =>
+        _assignments.TryGetValue(user.Id, out var role) ? role : user.Role;
+
+    private void ChangeAssignment(Guid userId, string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return;
+        _assignments[userId] = role;
+    }
+
+    private async Task SaveAssignmentAsync(ApplicationUserSummary user)
+    {
+        try
+        {
+            _working = true;
+            var result = await _userService.UpdateAsync(user.Id, user.UserName, SelectedAssignment(user));
+            _isError = !result.IsSuccess;
+            _message = result.IsSuccess
+                ? (L.IsArabic ? $"تم تحديث دور {user.UserName}." : $"Updated role for {user.UserName}.")
+                : result.Message;
+            if (result.IsSuccess) await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private string RoleDisplay(string roleName)
+    {
+        var option = _roleOptions.FirstOrDefault(x => string.Equals(x.Name, roleName, StringComparison.OrdinalIgnoreCase));
+        return option is null ? roleName : (L.IsArabic ? option.DisplayNameArabic : option.DisplayNameEnglish);
     }
 
     private void ResetEditor(bool keepMessage = false)
