@@ -95,6 +95,36 @@ public sealed class SiteBulkOperationOwnershipTests
         (await fixture.Db.Sites.IgnoreQueryFilters().SingleAsync(x => x.Id == second.Id)).IsDeleted.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task View_only_permission_cannot_mutate_owned_sites()
+    {
+        await using var fixture = await SiteServiceFixture.CreateAsync(ApplicationPermissionCatalog.SitesView);
+        var owned = fixture.AddSite("ReadOnly", fixture.OwnerId);
+        await fixture.Db.SaveChangesAsync();
+
+        var action = async () => await fixture.Service.SetSitesDisabledAsync([owned.Id], true);
+
+        await action.Should().ThrowAsync<UnauthorizedAccessException>();
+        fixture.Db.ChangeTracker.Clear();
+        (await fixture.Db.Sites.IgnoreQueryFilters().SingleAsync(x => x.Id == owned.Id))
+            .ConnectionStatus.Should().Be(SiteConnectionStatus.Unknown);
+    }
+
+    [Fact]
+    public async Task Manage_permission_can_mutate_owned_sites()
+    {
+        await using var fixture = await SiteServiceFixture.CreateAsync(ApplicationPermissionCatalog.SitesManage);
+        var owned = fixture.AddSite("Managed", fixture.OwnerId);
+        await fixture.Db.SaveChangesAsync();
+
+        var changed = await fixture.Service.SetSitesDisabledAsync([owned.Id], true);
+
+        changed.Should().Be(1);
+        fixture.Db.ChangeTracker.Clear();
+        (await fixture.Db.Sites.IgnoreQueryFilters().SingleAsync(x => x.Id == owned.Id))
+            .ConnectionStatus.Should().Be(SiteConnectionStatus.Disabled);
+    }
+
     private sealed class SiteServiceFixture : IAsyncDisposable
     {
         private readonly SqliteConnection _connection;
@@ -111,7 +141,7 @@ public sealed class SiteBulkOperationOwnershipTests
         public Guid OwnerId { get; }
         public SiteWebService Service { get; }
 
-        public static async Task<SiteServiceFixture> CreateAsync()
+        public static async Task<SiteServiceFixture> CreateAsync(string permission = ApplicationPermissionCatalog.SitesManage)
         {
             var connection = new SqliteConnection("Data Source=:memory:;Foreign Keys=True");
             await connection.OpenAsync();
@@ -121,7 +151,11 @@ public sealed class SiteBulkOperationOwnershipTests
 
             var ownerId = Guid.NewGuid();
             var identity = new ClaimsIdentity(
-                [new Claim(ClaimTypes.NameIdentifier, ownerId.ToString()), new Claim(ClaimTypes.Name, "bulk-test")],
+                [
+                    new Claim(ClaimTypes.NameIdentifier, ownerId.ToString()),
+                    new Claim(ClaimTypes.Name, "bulk-test"),
+                    new Claim(ApplicationPermissionCatalog.ClaimType, permission)
+                ],
                 "bulk-test");
             var accessor = new FixedHttpContextAccessor
             {
