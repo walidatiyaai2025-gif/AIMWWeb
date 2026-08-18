@@ -38,6 +38,16 @@ public sealed class EmailTemplateRenderer : IEmailTemplateRenderer
                 "Site: {SiteName}\nFailure: {FailureReason}\nOccurred: {OccurredAt}\nCorrelation: {CorrelationId}\n{SiteUrl}",
                 "الموقع: {SiteName}\nسبب الفشل: {FailureReason}\nوقت الحدوث: {OccurredAt}\nرقم التتبع: {CorrelationId}\n{SiteUrl}"),
 
+            [EmailTemplateKeys.SiteJobFailure] = new(
+                "Site job failure",
+                "فشل مهمة الموقع",
+                ["SiteName", "JobType", "FailureReason", "OccurredAt"],
+                ["CorrelationId", "SiteUrl"],
+                "[{SiteName}] Job failed - {JobType}",
+                "فشل مهمة [{SiteName}] - {JobType}",
+                "Site: {SiteName}\nJob: {JobType}\nFailure: {FailureReason}\nOccurred: {OccurredAt}\nCorrelation: {CorrelationId}\n{SiteUrl}",
+                "الموقع: {SiteName}\nالمهمة: {JobType}\nسبب الفشل: {FailureReason}\nوقت الحدوث: {OccurredAt}\nرقم التتبع: {CorrelationId}\n{SiteUrl}"),
+
             [EmailTemplateKeys.DashboardDigest] = new(
                 "Dashboard digest",
                 "ملخص الداشبورد",
@@ -83,7 +93,7 @@ public sealed class EmailTemplateRenderer : IEmailTemplateRenderer
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.TemplateKey))
-            throw new ArgumentException("Template key is required.", nameof(request));
+            throw new ArgumentException("Email template key is required.", nameof(request));
 
         if (!Definitions.TryGetValue(request.TemplateKey.Trim(), out var definition))
             throw new KeyNotFoundException($"Email template '{request.TemplateKey}' is not registered.");
