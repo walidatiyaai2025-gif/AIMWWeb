@@ -40,12 +40,42 @@ public sealed class ApplicationSessionAdministrationServiceTests
     }
 
     [Fact]
+    public async Task UsersManage_can_end_all_sessions_for_selected_account_without_touching_other_accounts()
+    {
+        await using var fixture = await Fixture.CreateAsync(includeUsersManage: true);
+        var targetUserId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var first = await fixture.Store.CreateAsync(targetUserId, "target.user", "User", null, "Browser A", false);
+        var second = await fixture.Store.CreateAsync(targetUserId, "target.user", "User", null, "Browser B", true);
+        var unrelated = await fixture.Store.CreateAsync(otherUserId, "other.user", "User", null, "Browser C", false);
+
+        var result = await fixture.Service.EndUserSessionsAsync(targetUserId, "Administrator ended all account sessions");
+
+        result.IsSuccess.Should().BeTrue();
+        (await fixture.Store.ValidateAsync(first.SessionId, targetUserId)).IsValid.Should().BeFalse();
+        (await fixture.Store.ValidateAsync(second.SessionId, targetUserId)).IsValid.Should().BeFalse();
+        (await fixture.Store.ValidateAsync(unrelated.SessionId, otherUserId)).IsValid.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task User_without_UsersManage_cannot_use_administrator_end_session_operation()
     {
         await using var fixture = await Fixture.CreateAsync(includeUsersManage: false);
         var target = await fixture.Store.CreateAsync(Guid.NewGuid(), "target.user", "User", null, null, false);
 
         var action = () => fixture.Service.EndSessionAsync(target.SessionId, "Not allowed");
+
+        await action.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task User_without_UsersManage_cannot_end_all_sessions_for_another_account()
+    {
+        await using var fixture = await Fixture.CreateAsync(includeUsersManage: false);
+        var targetUserId = Guid.NewGuid();
+        await fixture.Store.CreateAsync(targetUserId, "target.user", "User", null, null, false);
+
+        var action = () => fixture.Service.EndUserSessionsAsync(targetUserId, "Not allowed");
 
         await action.Should().ThrowAsync<UnauthorizedAccessException>();
     }
