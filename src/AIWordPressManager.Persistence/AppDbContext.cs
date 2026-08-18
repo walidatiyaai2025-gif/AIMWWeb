@@ -14,6 +14,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<EmailSchedule> EmailSchedules => Set<EmailSchedule>();
     public DbSet<EmailOutboxMessage> EmailOutboxMessages => Set<EmailOutboxMessage>();
     public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts => Set<EmailDeliveryAttempt>();
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -153,6 +154,24 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.ErrorCategory).HasMaxLength(100);
             entity.Property(x => x.SanitizedError).HasMaxLength(1000);
             entity.HasOne<EmailOutboxMessage>().WithMany().HasForeignKey(x => x.OutboxMessageId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SubscriptionPlan>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.NormalizedCode).IsUnique();
+            entity.HasIndex(x => new { x.IsEnabled, x.SortOrder });
+            entity.Property(x => x.Code).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.NormalizedCode).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.NameEn).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.NameAr).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.DescriptionEn).HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.DescriptionAr).HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.BillingInterval).HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Price).HasPrecision(18, 4);
+            entity.Property(x => x.Currency).HasMaxLength(3).IsRequired();
+            entity.Property(x => x.GatewayProductId).HasMaxLength(200);
+            entity.Property(x => x.GatewayPlanId).HasMaxLength(200);
         });
     }
 }
