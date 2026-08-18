@@ -7,12 +7,14 @@ namespace AIWordPressManager.Web.Services;
 public sealed class ApplicationRoleAdministrationService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
-    ApplicationRoleStore roleStore)
+    ApplicationRoleStore? roleStore = null)
 {
+    private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
+
     public async Task<IReadOnlyList<CustomApplicationRole>> ListAsync(CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        return await roleStore.GetAsync(cancellationToken);
+        return await _roleStore.GetAsync(cancellationToken);
     }
 
     public async Task<RoleAdministrationResult> SaveAsync(
@@ -35,7 +37,7 @@ public sealed class ApplicationRoleAdministrationService(
             .OrderBy(x => x, StringComparer.Ordinal)
             .ToArray();
 
-        var roles = (await roleStore.GetAsync(cancellationToken)).ToList();
+        var roles = (await _roleStore.GetAsync(cancellationToken)).ToList();
         var normalized = ApplicationRoleStore.Normalize(cleanName);
         var index = roles.FindIndex(x => ApplicationRoleStore.Normalize(x.Name) == normalized);
         var existing = index >= 0 ? roles[index] : null;
@@ -50,7 +52,7 @@ public sealed class ApplicationRoleAdministrationService(
         if (index >= 0) roles[index] = updated;
         else roles.Add(updated);
 
-        await roleStore.SaveAsync(roles, cancellationToken);
+        await _roleStore.SaveAsync(roles, cancellationToken);
         return RoleAdministrationResult.Succeeded(updated.Name);
     }
 
@@ -60,7 +62,7 @@ public sealed class ApplicationRoleAdministrationService(
         CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        var roles = (await roleStore.GetAsync(cancellationToken)).ToList();
+        var roles = (await _roleStore.GetAsync(cancellationToken)).ToList();
         var normalized = ApplicationRoleStore.Normalize(name);
         var index = roles.FindIndex(x => ApplicationRoleStore.Normalize(x.Name) == normalized);
         if (index < 0) return RoleAdministrationResult.Failed("Custom role was not found.");
@@ -75,7 +77,7 @@ public sealed class ApplicationRoleAdministrationService(
         }
 
         roles[index] = role with { IsActive = isActive };
-        await roleStore.SaveAsync(roles, cancellationToken);
+        await _roleStore.SaveAsync(roles, cancellationToken);
         return RoleAdministrationResult.Succeeded(role.Name);
     }
 
