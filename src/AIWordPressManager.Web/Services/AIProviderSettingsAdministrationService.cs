@@ -1,4 +1,5 @@
 using AIWordPressManager.Application.Settings;
+using AIWordPressManager.Persistence;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -10,27 +11,66 @@ namespace AIWordPressManager.Web.Services;
 /// </summary>
 public sealed class AIProviderSettingsAdministrationService(
     IApplicationSettingsService settingsService,
-    CurrentUserContext currentUser)
+    CurrentUserContext currentUser,
+    AppDbContext? dbContext = null,
+    IHttpContextAccessor? httpContextAccessor = null)
 {
+    private readonly ApplicationSecurityAuditService? _securityAudit = dbContext is null
+        ? null
+        : new ApplicationSecurityAuditService(dbContext, currentUser, httpContextAccessor);
+
     public Task<AiSettings> GetAiSettingsAsync(CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
         return settingsService.GetAiSettingsAsync(cancellationToken);
     }
 
-    public Task SaveAiSettingsAsync(
+    public async Task SaveAiSettingsAsync(
         AiSettings settings,
         IReadOnlyDictionary<string, string?> plainApiKeys,
         CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        return settingsService.SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
+        await settingsService.SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
+        if (_securityAudit is null) return;
+
+        var credentialProviders = plainApiKeys
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Value))
+            .Select(pair => pair.Key)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        await _securityAudit.RecordCurrentAsync(
+            "Configuration",
+            "AIProviders.Updated",
+            "Succeeded",
+            "AIProviderSettings",
+            "runtime",
+            "AI provider runtime settings",
+            new Dictionary<string, string>
+            {
+                ["enabled"] = settings.Enabled.ToString(),
+                ["automaticFallback"] = settings.AutomaticFallback.ToString(),
+                ["providerCount"] = settings.Providers.Count.ToString(),
+                ["credentialProvidersUpdated"] = string.Join(',', credentialProviders)
+            },
+            cancellationToken);
     }
 
-    public Task ClearAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default)
+    public async Task ClearAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        return settingsService.ClearAiProviderApiKeyAsync(provider, cancellationToken);
+        await settingsService.ClearAiProviderApiKeyAsync(provider, cancellationToken);
+        if (_securityAudit is null) return;
+
+        await _securityAudit.RecordCurrentAsync(
+            "Configuration",
+            "AIProvider.CredentialCleared",
+            "Succeeded",
+            "AIProvider",
+            provider,
+            provider,
+            null,
+            cancellationToken);
     }
 
     public Task<AiSettings> GetAsync(CancellationToken cancellationToken = default) => GetAiSettingsAsync(cancellationToken);
