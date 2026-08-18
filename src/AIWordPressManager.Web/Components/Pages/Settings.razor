@@ -31,6 +31,10 @@
             <a href="#language"><span>文</span><div><strong>@L["LanguageSettings"]</strong><small>@(L.IsArabic ? "العربية والإنجليزية" : "Arabic and English")</small></div></a>
             <a href="#appearance"><span>◐</span><div><strong>@(L.IsArabic ? "المظهر والألوان" : "Appearance and colors")</strong><small>@(L.IsArabic ? "الوضع والثيم" : "Mode and theme")</small></div></a>
             <a href="#accessibility"><span>Aa</span><div><strong>@(L.IsArabic ? "سهولة الاستخدام" : "Accessibility")</strong><small>@(L.IsArabic ? "الخط والكثافة والحركة" : "Font, density, and motion")</small></div></a>
+            <a href="/settings/sessions"><span>◉</span><div><strong>@(L.IsArabic ? "جلساتي" : "My sessions")</strong><small>@(L.IsArabic ? "الأجهزة والجلسات النشطة" : "Devices and active sessions")</small></div></a>
+            <AuthorizeView Policy="@AIWordPressManager.Web.Services.ApplicationPermissionCatalog.UsersManage">
+                <a href="/admin/sessions"><span>SEC</span><div><strong>@(L.IsArabic ? "إدارة الجلسات" : "Session management")</strong><small>@(L.IsArabic ? "المخزون والإبطال الإداري" : "Inventory and administrator revocation")</small></div></a>
+            </AuthorizeView>
             <AuthorizeView Roles="Administrator">
                 <a href="/settings/ai-providers"><span>AI</span><div><strong>@(L.IsArabic ? "مزودو الذكاء الاصطناعي" : "AI providers")</strong><small>@(L.IsArabic ? "المفاتيح والنماذج والأولوية" : "Keys, models, and priority")</small></div></a>
                 <a href="/settings/ai-prompts"><span>✦</span><div><strong>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI prompt templates")</strong><small>@(L.IsArabic ? "الإصدارات والاستعادة" : "Versions and restore")</small></div></a>
