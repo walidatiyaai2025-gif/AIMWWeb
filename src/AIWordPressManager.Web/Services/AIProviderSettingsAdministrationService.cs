@@ -33,13 +33,13 @@ public sealed class AIProviderSettingsAdministrationService(
         return settingsService.ClearAiProviderApiKeyAsync(provider, cancellationToken);
     }
 
-    internal Task<AiSettings> GetAsync(CancellationToken cancellationToken = default) => GetAiSettingsAsync(cancellationToken);
+    public Task<AiSettings> GetAsync(CancellationToken cancellationToken = default) => GetAiSettingsAsync(cancellationToken);
 
-    internal Task SaveAsync(
+    public Task SaveAsync(
         AiSettings settings,
         IReadOnlyDictionary<string, string?> plainApiKeys,
         CancellationToken cancellationToken = default) => SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
 
-    internal Task ClearApiKeyAsync(string provider, CancellationToken cancellationToken = default) =>
+    public Task ClearApiKeyAsync(string provider, CancellationToken cancellationToken = default) =>
         ClearAiProviderApiKeyAsync(provider, cancellationToken);
 }
