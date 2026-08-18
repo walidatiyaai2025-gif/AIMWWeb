@@ -77,7 +77,7 @@ public sealed class AIProviderSettingsAdministrationServiceTests
 
         var audit = await new ApplicationSecurityAuditStore(db).ListAsync(new SecurityAuditQuery(Category: "Configuration"));
         audit.Should().ContainSingle(x => x.Action == "AIProviders.Updated" && x.ActorUserId == actorId);
-        audit.Single().Metadata["credentialProvidersUpdated"].Should().Be("OpenAI");
+        audit.Single().Metadata["providersWithNewKey"].Should().Be("OpenAI");
         var raw = await db.ApplicationSettings.AsNoTracking()
             .Where(x => x.Key == ApplicationSecurityAuditStore.SettingsKey)
             .Select(x => x.Value)
