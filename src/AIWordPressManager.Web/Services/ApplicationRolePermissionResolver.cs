@@ -1,15 +1,16 @@
-using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
 /// <summary>
 /// Resolves role names and grants exclusively from trusted server-side state.
-/// Built-in roles remain code-defined for backward compatibility; custom roles are persisted.
+/// Built-in roles remain code-defined for backward compatibility; custom roles are persisted
+/// in the provider-neutral application settings registry.
 /// </summary>
 public sealed class ApplicationRolePermissionResolver(AppDbContext dbContext)
 {
+    private readonly ApplicationRoleRegistryStore _store = new(dbContext);
+
     public async Task<string?> ResolveRoleNameAsync(string? role, CancellationToken cancellationToken = default)
     {
         var clean = (role ?? string.Empty).Trim();
@@ -18,11 +19,15 @@ public sealed class ApplicationRolePermissionResolver(AppDbContext dbContext)
         if (string.Equals(clean, "Administrator", StringComparison.OrdinalIgnoreCase)) return "Administrator";
         if (string.Equals(clean, "User", StringComparison.OrdinalIgnoreCase)) return "User";
 
-        var normalized = clean.ToUpperInvariant();
-        return await dbContext.Set<ApplicationRole>().AsNoTracking()
-            .Where(x => x.NormalizedName == normalized)
-            .Select(x => x.Name)
-            .SingleOrDefaultAsync(cancellationToken);
+        try
+        {
+            var roles = await _store.LoadAsync(cancellationToken);
+            return roles.FirstOrDefault(item => string.Equals(item.Name, clean, StringComparison.OrdinalIgnoreCase))?.Name;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     public async Task<IReadOnlyList<string>> GetPermissionsAsync(string? role, CancellationToken cancellationToken = default)
@@ -33,23 +38,23 @@ public sealed class ApplicationRolePermissionResolver(AppDbContext dbContext)
         var clean = (role ?? string.Empty).Trim();
         if (clean.Length == 0) return Array.Empty<string>();
 
-        var normalized = clean.ToUpperInvariant();
-        var roleId = await dbContext.Set<ApplicationRole>().AsNoTracking()
-            .Where(x => x.NormalizedName == normalized)
-            .Select(x => (Guid?)x.Id)
-            .SingleOrDefaultAsync(cancellationToken);
-        if (!roleId.HasValue) return Array.Empty<string>();
+        try
+        {
+            var roles = await _store.LoadAsync(cancellationToken);
+            var customRole = roles.FirstOrDefault(item => string.Equals(item.Name, clean, StringComparison.OrdinalIgnoreCase));
+            if (customRole is null) return Array.Empty<string>();
 
-        var permissions = await dbContext.Set<ApplicationRoleGrant>().AsNoTracking()
-            .Where(x => x.RoleId == roleId.Value)
-            .Select(x => x.Permission)
-            .ToListAsync(cancellationToken);
-
-        return permissions
-            .Where(permission => ApplicationPermissionCatalog.All.Contains(permission, StringComparer.Ordinal))
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(permission => permission, StringComparer.Ordinal)
-            .ToArray();
+            return customRole.Permissions
+                .Where(permission => ApplicationPermissionCatalog.All.Contains(permission, StringComparer.Ordinal))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(permission => permission, StringComparer.Ordinal)
+                .ToArray();
+        }
+        catch (InvalidOperationException)
+        {
+            // A malformed or unsupported registry must never grant authority.
+            return Array.Empty<string>();
+        }
     }
 
     public async Task<bool> HasPermissionAsync(string? role, string permission, CancellationToken cancellationToken = default)
@@ -61,17 +66,22 @@ public sealed class ApplicationRolePermissionResolver(AppDbContext dbContext)
 
     public async Task<IReadOnlyList<ApplicationRoleOption>> ListRolesAsync(CancellationToken cancellationToken = default)
     {
-        var customRoles = await dbContext.Set<ApplicationRole>().AsNoTracking()
-            .OrderBy(x => x.Name)
-            .Select(x => new ApplicationRoleOption(x.Name, x.DisplayNameEn, x.DisplayNameAr, false))
-            .ToListAsync(cancellationToken);
+        IReadOnlyList<PersistedApplicationRole> customRoles;
+        try
+        {
+            customRoles = await _store.LoadAsync(cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            customRoles = Array.Empty<PersistedApplicationRole>();
+        }
 
         var roles = new List<ApplicationRoleOption>
         {
             new("Administrator", "Administrator", "مدير", true),
             new("User", "User", "مستخدم", true)
         };
-        roles.AddRange(customRoles);
+        roles.AddRange(customRoles.Select(role => new ApplicationRoleOption(role.Name, role.DisplayNameEn, role.DisplayNameAr, false)));
         return roles;
     }
 }
