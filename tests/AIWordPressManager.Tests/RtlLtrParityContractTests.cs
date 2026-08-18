@@ -26,11 +26,15 @@ public sealed class RtlLtrParityContractTests
     public void Prepaint_bootstrap_applies_saved_language_before_body_rendering()
     {
         var script = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/js/language-bootstrap.js");
-        script.Should().Contain("localStorage.getItem('aiwp-language') === 'ar'");
+        script.Should().Contain("const cookieName = 'aiwp-language'");
+        script.Should().Contain("localStorage.getItem(cookieName)");
+        script.Should().Contain("cookieLanguage === 'ar'");
+        script.Should().Contain("storedLanguage === 'ar'");
         script.Should().Contain("root.lang = language");
         script.Should().Contain("root.dir = direction");
         script.Should().Contain("root.dataset.appLanguage = language");
         script.Should().Contain("root.dataset.appDirection = direction");
+        script.Should().Contain("document.cookie = `${cookieName}=${language};path=/;SameSite=Lax`");
         script.Should().Contain("server-rendered English/LTR defaults");
     }
 

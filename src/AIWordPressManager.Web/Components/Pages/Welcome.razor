@@ -1,11 +1,11 @@
 @page "/welcome"
 @layout LandingLayout
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@rendermode InteractiveServer
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
 @inject DashboardLiveService DashboardService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationState
+@inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "AI WordPress Manager | إدارة WordPress بذكاء" : "AI WordPress Manager | Intelligent WordPress Operations")</PageTitle>
@@ -321,6 +321,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var preferredLanguage = HttpContextAccessor.HttpContext?.Request.Cookies["aiwp-language"];
+        L.SetCulture(preferredLanguage == "ar" ? "ar" : "en");
+
         var authenticationState = await AuthenticationState.GetAuthenticationStateAsync();
         _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
         if (!_isAuthenticated) return;

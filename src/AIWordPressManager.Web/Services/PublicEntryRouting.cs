@@ -7,6 +7,7 @@ public static class PublicEntryRouting
     public static bool ShouldRedirectToLanding(string? path, string? method, bool isAuthenticated)
     {
         if (isAuthenticated) return false;
+        if (string.IsNullOrWhiteSpace(method)) return false;
         if (!HttpMethods.IsGet(method) && !HttpMethods.IsHead(method)) return false;
         return string.Equals(path, "/", StringComparison.Ordinal);
     }

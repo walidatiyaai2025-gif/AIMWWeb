@@ -14,7 +14,7 @@
     <section class="panel approval-hero">
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "سير العمل الآمن" : "CONTROLLED WORKFLOW")</span>
-            <h1>@(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</h1>
+            <h2>@(L.IsArabic ? "قائمة الموافقات" : "Approval Queue")</h2>
             <p>@(L.IsArabic ? "راجع التغييرات المقترحة قبل اعتمادها. التنفيذ والرجوع كلاهما يمران بفحص الملكية ونسخة WordPress الحالية." : "Review proposed changes before approval. Execution and rollback both recheck ownership and the current WordPress version.")</p>
         </div>
         <div class="approval-hero-actions">
@@ -33,9 +33,9 @@
 
     <section class="panel approval-toolbar">
         <div class="approval-filters">
-            <input class="search-input" placeholder="@(L.IsArabic ? "ابحث بالعنوان أو الموقع أو نوع العملية..." : "Search title, site, or operation...")" @bind="_search" @bind:event="oninput" />
-            <select @bind="_statusFilter"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>@foreach (var status in Enum.GetValues<ApprovalStatus>()) { <option value="@status.ToString()">@StatusText(status)</option> }</select>
-            <select @bind="_riskFilter"><option value="all">@(L.IsArabic ? "كل المخاطر" : "All risks")</option>@foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()) { <option value="@risk.ToString()">@RiskText(risk)</option> }</select>
+            <input class="search-input" placeholder="@(L.IsArabic ? "ابحث بالعنوان أو الموقع أو نوع العملية..." : "Search title, site, or operation...")" aria-label="@(L.IsArabic ? "البحث في قائمة الموافقات" : "Search approvals")" @bind="_search" @bind:event="oninput" />
+            <select @bind="_statusFilter" aria-label="@(L.IsArabic ? "تصفية الموافقات حسب الحالة" : "Filter approvals by status")"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>@foreach (var status in Enum.GetValues<ApprovalStatus>()) { <option value="@status.ToString()">@StatusText(status)</option> }</select>
+            <select @bind="_riskFilter" aria-label="@(L.IsArabic ? "تصفية الموافقات حسب مستوى المخاطر" : "Filter approvals by risk")"><option value="all">@(L.IsArabic ? "كل المخاطر" : "All risks")</option>@foreach (var risk in Enum.GetValues<ApprovalRiskLevel>()) { <option value="@risk.ToString()">@RiskText(risk)</option> }</select>
         </div>
         <div class="approval-reviewer"><label>@(L.IsArabic ? "المراجع الحالي" : "Current reviewer")</label><strong>@_reviewer</strong></div>
     </section>
@@ -79,7 +79,7 @@
                             @if (item.Status == ApprovalStatus.Pending)
                             {
                                 <div class="approval-decision-box">
-                                    <textarea rows="3" @bind="_notes" placeholder="@(L.IsArabic ? "ملاحظات المراجع..." : "Reviewer notes...")"></textarea>
+                                    <textarea rows="3" @bind="_notes" aria-label="@(L.IsArabic ? "ملاحظات المراجع" : "Reviewer notes")" placeholder="@(L.IsArabic ? "ملاحظات المراجع..." : "Reviewer notes...")"></textarea>
                                     @if (capability.CanExecute)
                                     {
                                         <label class="check-row"><input type="checkbox" @bind="_executeImmediately" /> <span>@(L.IsArabic ? "إضافة التغيير المعتمد إلى قائمة التنفيذ الحقيقي فور الموافقة" : "Queue the approved change for real execution immediately")</span></label>

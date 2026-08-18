@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 namespace AIWordPressManager.Persistence.Migrations;
 
+[DbContext(typeof(AppDbContext))]
 [Migration("20260808011500_AddEmailSchedules")]
 public partial class AddEmailSchedules : Migration
 {

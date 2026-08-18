@@ -1,0 +1,101 @@
+name: UX Regression Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ux-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-accessibility:
+    name: visual-accessibility (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: smoke-public
+            filter: FullyQualifiedName~Blazor_bootstrap_asset_is_available_before_authentication|FullyQualifiedName~Public_routes_render_without_server_or_browser_failure|FullyQualifiedName~Keyboard_focus_enters_the_authenticated_application
+          - shard: authenticated-routes
+            filter: FullyQualifiedName~Authenticated_routes_render_and_pass_accessibility_smoke
+          - shard: visual-breakpoints
+            filter: FullyQualifiedName~High_risk_pages_hold_visual_contract_at_key_breakpoints
+          - shard: rtl
+            filter: FullyQualifiedName~Selected_high_risk_pages_preserve_material_contract_in_arabic_rtl
+    env:
+      DOTNET_NOLOGO: 1
+      UX_REGRESSION_MODE: verify
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            Directory.Packages.props
+
+      - name: Restore application solution
+        run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
+
+      - name: Build application for browser host
+        run: dotnet build AIWordPressManager.Web.sln --configuration Release --no-restore
+
+      - name: Restore UX regression project
+        run: dotnet restore tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --disable-parallel
+
+      - name: Build UX regression project
+        run: dotnet build tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --configuration Release --no-restore
+
+      - name: Install Chromium for Playwright
+        shell: pwsh
+        run: tests/AIWordPressManager.UxTests/bin/Release/net8.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run ${{ matrix.shard }} visual and accessibility gates
+        shell: bash
+        run: |
+          started_at=$(date +%s)
+          set +e
+          dotnet test tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj \
+            --configuration Release \
+            --no-build \
+            --filter '${{ matrix.filter }}' \
+            --blame-hang \
+            --blame-hang-timeout 3m \
+            --blame-hang-dump-type mini \
+            --logger "console;verbosity=detailed" \
+            --logger "trx;LogFileName=ux-regression-${{ matrix.shard }}.trx"
+          test_exit=$?
+          finished_at=$(date +%s)
+          elapsed_seconds=$((finished_at - started_at))
+          {
+            echo "### UX regression shard: ${{ matrix.shard }}"
+            echo "- Duration: ${elapsed_seconds}s"
+            echo "- Exit code: ${test_exit}"
+            echo '- Filter: `${{ matrix.filter }}`'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$test_exit"
+
+      - name: Upload ${{ matrix.shard }} UX regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-regression-evidence-${{ matrix.shard }}
+          path: |
+            artifacts/ux-regression/**
+            tests/AIWordPressManager.UxTests/TestResults/**
+          if-no-files-found: warn
+          retention-days: 30
