@@ -13,22 +13,58 @@ namespace AIWordPressManager.Tests;
 public sealed class ApplicationUserAdministrationServiceTests
 {
     [Fact]
-    public async Task Non_Administrator_Cannot_List_Application_Users()
+    public async Task Legacy_User_Cannot_List_Application_Users()
     {
-        await using var fixture = await Fixture.CreateAsync("User");
+        await using var fixture = await Fixture.CreateAsync(ApplicationRoles.LegacyUser);
         var action = () => fixture.Service.ListAsync();
         await action.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Manager_Can_Read_Users_But_Cannot_Create_Accounts()
+    {
+        await using var fixture = await Fixture.CreateAsync(ApplicationRoles.Manager);
+
+        var users = await fixture.Service.ListAsync();
+        users.Should().ContainSingle(x => x.Id == fixture.Actor.Id);
+
+        var create = () => fixture.Service.CreateAsync("blocked.user", "StrongPass1", "StrongPass1", ApplicationRoles.Operator);
+        await create.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
     [Fact]
     public async Task Administrator_Can_Create_User_With_Hashed_Password()
     {
         await using var fixture = await Fixture.CreateAsync();
-        var result = await fixture.Service.CreateAsync("editor.one", "StrongPass1", "StrongPass1", "User");
+        var result = await fixture.Service.CreateAsync("editor.one", "StrongPass1", "StrongPass1", ApplicationRoles.LegacyUser);
         result.IsSuccess.Should().BeTrue();
         var stored = await fixture.Context.AuthUsers.AsNoTracking().SingleAsync(x => x.UserName == "editor.one");
         stored.PasswordHash.Should().NotBe("StrongPass1");
         new PasswordHasher<AuthUser>().VerifyHashedPassword(stored, stored.PasswordHash, "StrongPass1").Should().NotBe(PasswordVerificationResult.Failed);
+    }
+
+    [Fact]
+    public async Task Administrator_Can_Assign_New_Roles_Using_Canonical_Names()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+
+        var result = await fixture.Service.CreateAsync("ops.manager", "StrongPass1", "StrongPass1", " manager ");
+
+        result.IsSuccess.Should().BeTrue();
+        var stored = await fixture.Context.AuthUsers.AsNoTracking().SingleAsync(x => x.UserName == "ops.manager");
+        stored.Role.Should().Be(ApplicationRoles.Manager);
+    }
+
+    [Fact]
+    public async Task Unknown_Role_Is_Rejected_Without_Persisting_User()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+
+        var result = await fixture.Service.CreateAsync("unknown.role", "StrongPass1", "StrongPass1", "SuperUser");
+
+        result.IsSuccess.Should().BeFalse();
+        result.Message.Should().Contain("configured application roles");
+        (await fixture.Context.AuthUsers.AsNoTracking().AnyAsync(x => x.UserName == "unknown.role")).Should().BeFalse();
     }
 
     [Fact]
@@ -45,7 +81,7 @@ public sealed class ApplicationUserAdministrationServiceTests
     public async Task Signed_In_Administrator_Cannot_Demote_Self()
     {
         await using var fixture = await Fixture.CreateAsync();
-        var result = await fixture.Service.UpdateAsync(fixture.Actor.Id, fixture.Actor.UserName, "User");
+        var result = await fixture.Service.UpdateAsync(fixture.Actor.Id, fixture.Actor.UserName, ApplicationRoles.Manager);
         result.IsSuccess.Should().BeFalse();
         result.Message.Should().Contain("own administrator role");
     }
@@ -54,11 +90,11 @@ public sealed class ApplicationUserAdministrationServiceTests
     public async Task Last_Active_Administrator_Cannot_Be_Disabled()
     {
         await using var fixture = await Fixture.CreateAsync();
-        var otherAdmin = await fixture.AddUserAsync("backup.admin", "Administrator");
+        var otherAdmin = await fixture.AddUserAsync("backup.admin", ApplicationRoles.Administrator);
         var actor = await fixture.Context.AuthUsers.SingleAsync(x => x.Id == fixture.Actor.Id);
-        actor.SetRole("User", DateTime.UtcNow);
+        actor.SetRole(ApplicationRoles.LegacyUser, DateTime.UtcNow);
         await fixture.Context.SaveChangesAsync();
-        fixture.SetActorRole("Administrator");
+        fixture.SetActorRole(ApplicationRoles.Administrator);
 
         var result = await fixture.Service.SetActiveAsync(otherAdmin.Id, false);
         result.IsSuccess.Should().BeFalse();
@@ -69,7 +105,7 @@ public sealed class ApplicationUserAdministrationServiceTests
     public async Task ResetPassword_Clears_Lockout_State()
     {
         await using var fixture = await Fixture.CreateAsync();
-        var user = await fixture.AddUserAsync("locked.user", "User");
+        var user = await fixture.AddUserAsync("locked.user", ApplicationRoles.LegacyUser);
         for (var i = 0; i < 5; i++) user.RecordFailedLogin(DateTime.UtcNow);
         await fixture.Context.SaveChangesAsync();
 
@@ -95,7 +131,7 @@ public sealed class ApplicationUserAdministrationServiceTests
             _connection = connection; Context = context; Actor = actor; Service = service; _accessor = accessor;
         }
 
-        public static async Task<Fixture> CreateAsync(string actorRole = "Administrator")
+        public static async Task<Fixture> CreateAsync(string actorRole = ApplicationRoles.Administrator)
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
