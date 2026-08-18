@@ -144,8 +144,6 @@ public sealed class GatewayCheckoutSession
     public string ProviderSessionReference { get; }
     public Uri CheckoutUri { get; }
     public DateTime? ExpiresAtUtc { get; }
-
-    // Checkout creation and browser navigation never prove subscription/payment state.
     public GatewayEvidenceAuthority Authority => GatewayEvidenceAuthority.NavigationOnly;
 }
 
@@ -168,11 +166,19 @@ public sealed class GatewayWebhookEnvelope
     public string CorrelationId { get; }
 }
 
-public sealed record GatewayWebhookVerificationResult(
-    bool IsAuthentic,
-    GatewayVerifiedEvent? Event,
-    string? SanitizedFailure)
+public sealed class GatewayWebhookVerificationResult
 {
+    private GatewayWebhookVerificationResult(bool isAuthentic, GatewayVerifiedEvent? gatewayEvent, string? sanitizedFailure)
+    {
+        IsAuthentic = isAuthentic;
+        Event = gatewayEvent;
+        SanitizedFailure = sanitizedFailure;
+    }
+
+    public bool IsAuthentic { get; }
+    public GatewayVerifiedEvent? Event { get; }
+    public string? SanitizedFailure { get; }
+
     public static GatewayWebhookVerificationResult Verified(GatewayVerifiedEvent gatewayEvent) =>
         new(true, gatewayEvent ?? throw new ArgumentNullException(nameof(gatewayEvent)), null);
 
@@ -263,8 +269,19 @@ public sealed class GatewayPlanChangeRequest
     public string CorrelationId { get; }
 }
 
-public sealed record GatewayCommandResult(bool Accepted, string? ProviderOperationReference, string SanitizedSummary)
+public sealed class GatewayCommandResult
 {
+    private GatewayCommandResult(bool accepted, string? providerOperationReference, string sanitizedSummary)
+    {
+        Accepted = accepted;
+        ProviderOperationReference = providerOperationReference;
+        SanitizedSummary = sanitizedSummary;
+    }
+
+    public bool Accepted { get; }
+    public string? ProviderOperationReference { get; }
+    public string SanitizedSummary { get; }
+
     public static GatewayCommandResult AcceptedResult(string? providerOperationReference, string summary) =>
         new(true, PaymentGatewayContract.OptionalBounded(providerOperationReference, 200, nameof(providerOperationReference)), PaymentGatewayContract.RequireBounded(summary, 500, nameof(summary)));
 
