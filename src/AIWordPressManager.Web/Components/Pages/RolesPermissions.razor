@@ -1,0 +1,281 @@
+@page "/admin/roles-permissions"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = AIWordPressManager.Web.Services.ApplicationPermissionCatalog.SettingsManage)]
+@implements IDisposable
+@inject IServiceProvider Services
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles & Permissions")</PageTitle>
+
+<div class="roles-permissions-page" dir="@L.Direction">
+    <AppToolbar Eyebrow="@(L.IsArabic ? "الأمان والتحكم في الوصول" : "SECURITY & ACCESS CONTROL")"
+                Title="@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles & permissions")"
+                Subtitle="@(L.IsArabic ? "أنشئ أدوارًا تشغيلية بصلاحيات محددة دون منح صلاحيات إدارة الحسابات أو إعدادات الأمان." : "Create operational roles with explicit permissions without granting account administration or security settings access.")">
+        <Actions>
+            <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Busy="@_working" Disabled="@_working" OnClick="RefreshAsync" />
+            <a class="app-button" href="/admin/application-users">@(L.IsArabic ? "مستخدمو التطبيق" : "Application users")</a>
+            <AppButton Variant="primary" Icon="＋" Text="@(L.IsArabic ? "دور جديد" : "New role")" Disabled="@_working" OnClick="StartCreate" />
+        </Actions>
+    </AppToolbar>
+
+    <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                   Title="@(_isError ? (L.IsArabic ? "تعذر تنفيذ العملية" : "Action failed") : (L.IsArabic ? "تم تحديث الأدوار" : "Roles updated"))"
+                   Message="@_message" />
+
+    <section class="role-security-note">
+        <strong>@(L.IsArabic ? "حدود إدارية محمية" : "Protected administration boundary")</strong>
+        <p>@(L.IsArabic
+            ? "Users.Manage وSettings.Manage محجوزتان لدور Administrator المدمج. لا يمكن لأي دور مخصص الحصول عليهما."
+            : "Users.Manage and Settings.Manage remain reserved to the built-in Administrator role and cannot be granted to custom roles.")</p>
+    </section>
+
+    <div class="role-layout">
+        <section class="role-list" aria-label="@(L.IsArabic ? "الأدوار المخصصة" : "Custom roles")">
+            <AppCard>
+                <div class="role-list-heading">
+                    <div>
+                        <h2>@(L.IsArabic ? "الأدوار المخصصة" : "Custom roles")</h2>
+                        <p>@(L.IsArabic ? "تعريفات محفوظة في إعدادات التطبيق وتُحل على الخادم عند تسجيل الدخول." : "Persisted application definitions resolved server-side when users sign in.")</p>
+                    </div>
+                    <AppBadge Tone="info" Text="@_roles.Count.ToString()" />
+                </div>
+
+                @if (_loading)
+                {
+                    <AppLoading Title="@(L.IsArabic ? "تحميل الأدوار" : "Loading roles")" Message="@(L.IsArabic ? "جارٍ تحميل مصفوفة الوصول." : "Loading the access matrix.")" />
+                }
+                else if (_roles.Count == 0)
+                {
+                    <div class="role-empty">
+                        <strong>@(L.IsArabic ? "لا توجد أدوار مخصصة بعد" : "No custom roles yet")</strong>
+                        <p>@(L.IsArabic ? "أنشئ دورًا بأقل مجموعة صلاحيات يحتاجها فريق التشغيل." : "Create a role with the smallest permission set the operator needs.")</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var role in _roles)
+                    {
+                        <article class="role-row @(!role.IsActive ? "inactive" : null)">
+                            <div class="role-row-copy">
+                                <div class="role-row-title">
+                                    <strong>@(L.IsArabic ? role.DisplayNameArabic : role.DisplayNameEnglish)</strong>
+                                    <code>@role.Name</code>
+                                    <AppBadge Tone="@(role.IsActive ? "success" : "warning")"
+                                              Text="@(role.IsActive ? (L.IsArabic ? "نشط" : "Active") : (L.IsArabic ? "معطل" : "Inactive"))" />
+                                </div>
+                                <small>@(L.IsArabic ? $"{role.Permissions.Count} صلاحيات" : $"{role.Permissions.Count} permissions")</small>
+                            </div>
+                            <div class="role-row-actions">
+                                <AppButton Size="small" Text="@(L.IsArabic ? "تعديل" : "Edit")" Disabled="@_working" OnClick="_ => EditRole(role)" />
+                                <AppButton Size="small" Variant="@(role.IsActive ? "danger" : "primary")"
+                                           Text="@(role.IsActive ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))"
+                                           Disabled="@_working" OnClick="_ => ToggleActiveAsync(role)" />
+                            </div>
+                        </article>
+                    }
+                }
+            </AppCard>
+        </section>
+
+        <aside class="role-editor">
+            <AppSection Title="@(_editingExisting ? (L.IsArabic ? "تعديل الدور" : "Edit role") : (L.IsArabic ? "إنشاء دور" : "Create role"))"
+                        Subtitle="@(L.IsArabic ? "اسم الدور ثابت بعد الإنشاء حتى تظل تعيينات المستخدمين متسقة." : "The role name is immutable after creation so user assignments remain stable.")">
+                <ChildContent>
+                    <div class="role-form" data-form-ux aria-busy="@_working">
+                        <AppFormField InputId="custom-role-name"
+                                      Label="@(L.IsArabic ? "اسم الدور" : "Role name")"
+                                      Required="true"
+                                      RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
+                                      HelperText="@(L.IsArabic ? "أحرف إنجليزية وأرقام ونقطة وشرطة وشرطة سفلية؛ يبدأ بحرف." : "English letters, numbers, dots, hyphens, and underscores; start with a letter.")">
+                            <input id="custom-role-name" @bind="_name" disabled="@(_working || _editingExisting)" maxlength="64" />
+                        </AppFormField>
+                        <AppFormField InputId="custom-role-name-en" Label="@(L.IsArabic ? "الاسم الظاهر بالإنجليزية" : "English display name")">
+                            <input id="custom-role-name-en" @bind="_displayNameEnglish" disabled="@_working" maxlength="120" />
+                        </AppFormField>
+                        <AppFormField InputId="custom-role-name-ar" Label="@(L.IsArabic ? "الاسم الظاهر بالعربية" : "Arabic display name")">
+                            <input id="custom-role-name-ar" @bind="_displayNameArabic" disabled="@_working" maxlength="120" dir="rtl" />
+                        </AppFormField>
+
+                        <div class="permission-editor">
+                            <div class="permission-heading">
+                                <strong>@(L.IsArabic ? "الصلاحيات" : "Permissions")</strong>
+                                <span>@(L.IsArabic ? "اختر أقل صلاحيات لازمة." : "Choose least privilege.")</span>
+                            </div>
+                            @foreach (var permission in ApplicationPermissionCatalog.Definitions)
+                            {
+                                var assignable = permission.CustomRoleAssignable;
+                                var selected = _selectedPermissions.Contains(permission.Id);
+                                <label class="permission-option @(!assignable ? "reserved" : null)">
+                                    <input type="checkbox"
+                                           checked="@selected"
+                                           disabled="@(_working || !assignable)"
+                                           @onchange="args => TogglePermission(permission.Id, args.Value)" />
+                                    <span>
+                                        <strong>@(L.IsArabic ? permission.ArabicName : permission.EnglishName)</strong>
+                                        <code>@permission.Id</code>
+                                    </span>
+                                    @if (!assignable)
+                                    {
+                                        <AppBadge Tone="warning" Text="@(L.IsArabic ? "Administrator فقط" : "Administrator only")" />
+                                    }
+                                </label>
+                            }
+                        </div>
+
+                        <AppFormActions SaveText="@(L.IsArabic ? "حفظ الدور" : "Save role")"
+                                        SavingText="@(L.IsArabic ? "جارٍ الحفظ" : "Saving")"
+                                        CancelText="@(L.IsArabic ? "إلغاء" : "Cancel")"
+                                        Busy="@_working"
+                                        OnSave="SaveAsync"
+                                        OnCancel="CancelEdit" />
+                    </div>
+                </ChildContent>
+            </AppSection>
+        </aside>
+    </div>
+</div>
+
+@code {
+    private ApplicationRoleAdministrationService _service = default!;
+    private IReadOnlyList<CustomApplicationRole> _roles = [];
+    private readonly HashSet<string> _selectedPermissions = new(StringComparer.Ordinal);
+    private string _name = string.Empty;
+    private string _displayNameEnglish = string.Empty;
+    private string _displayNameArabic = string.Empty;
+    private string? _message;
+    private bool _loading = true;
+    private bool _working;
+    private bool _isError;
+    private bool _editingExisting;
+
+    protected override void OnInitialized()
+    {
+        L.Changed += LanguageChanged;
+        _service = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<ApplicationRoleAdministrationService>(Services);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _loading = false;
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _working = true;
+            _roles = await _service.ListAsync();
+            _isError = false;
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private Task RefreshAsync(MouseEventArgs _args) => LoadAsync();
+
+    private Task StartCreate(MouseEventArgs _args)
+    {
+        ResetEditor();
+        return Task.CompletedTask;
+    }
+
+    private Task CancelEdit(MouseEventArgs _args)
+    {
+        ResetEditor();
+        return Task.CompletedTask;
+    }
+
+    private Task EditRole(CustomApplicationRole role)
+    {
+        _editingExisting = true;
+        _name = role.Name;
+        _displayNameEnglish = role.DisplayNameEnglish;
+        _displayNameArabic = role.DisplayNameArabic;
+        _selectedPermissions.Clear();
+        foreach (var permission in role.Permissions.Where(ApplicationPermissionCatalog.IsCustomRoleAssignable))
+            _selectedPermissions.Add(permission);
+        _message = null;
+        _isError = false;
+        return Task.CompletedTask;
+    }
+
+    private void TogglePermission(string permission, object? value)
+    {
+        if (!ApplicationPermissionCatalog.IsCustomRoleAssignable(permission)) return;
+        if (value is bool enabled && enabled) _selectedPermissions.Add(permission);
+        else _selectedPermissions.Remove(permission);
+    }
+
+    private async Task SaveAsync(MouseEventArgs _args)
+    {
+        try
+        {
+            _working = true;
+            var result = await _service.SaveAsync(_name, _displayNameEnglish, _displayNameArabic, _selectedPermissions);
+            _isError = !result.IsSuccess;
+            _message = result.IsSuccess
+                ? (L.IsArabic ? $"تم حفظ الدور {result.RoleName}." : $"Saved role {result.RoleName}.")
+                : result.Message;
+            if (result.IsSuccess)
+            {
+                await LoadAsync();
+                ResetEditor(keepMessage: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private async Task ToggleActiveAsync(CustomApplicationRole role)
+    {
+        try
+        {
+            _working = true;
+            var result = await _service.SetActiveAsync(role.Name, !role.IsActive);
+            _isError = !result.IsSuccess;
+            _message = result.IsSuccess
+                ? (L.IsArabic ? "تم تحديث حالة الدور." : "Role status updated.")
+                : result.Message;
+            if (result.IsSuccess) await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private void ResetEditor(bool keepMessage = false)
+    {
+        _editingExisting = false;
+        _name = _displayNameEnglish = _displayNameArabic = string.Empty;
+        _selectedPermissions.Clear();
+        if (!keepMessage)
+        {
+            _message = null;
+            _isError = false;
+        }
+    }
+
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
