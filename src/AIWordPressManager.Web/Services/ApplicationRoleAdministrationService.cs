@@ -8,10 +8,12 @@ public sealed class ApplicationRoleAdministrationService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
     ApplicationRoleStore? roleStore = null,
-    ApplicationSessionStore? sessionStore = null)
+    ApplicationSessionStore? sessionStore = null,
+    IHttpContextAccessor? httpContextAccessor = null)
 {
     private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
     private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
+    private readonly ApplicationSecurityAuditService _securityAudit = new(dbContext, currentUser, httpContextAccessor);
 
     public async Task<IReadOnlyList<CustomApplicationRole>> ListAsync(CancellationToken cancellationToken = default)
     {
@@ -55,8 +57,25 @@ public sealed class ApplicationRoleAdministrationService(
         else roles.Add(updated);
 
         await _roleStore.SaveAsync(roles, cancellationToken);
-        if (existing is not null && !PermissionSetsEqual(existing.Permissions, updated.Permissions))
+        var grantsChanged = existing is not null && !PermissionSetsEqual(existing.Permissions, updated.Permissions);
+        if (grantsChanged)
             await _sessionStore.RevokeRoleAsync(updated.Name, "Role permissions changed.", cancellationToken);
+
+        await _securityAudit.RecordCurrentAsync(
+            "Authorization",
+            existing is null ? "Role.Created" : "Role.Updated",
+            "Succeeded",
+            "ApplicationRole",
+            updated.Name,
+            updated.DisplayNameEnglish,
+            new Dictionary<string, string>
+            {
+                ["permissionCount"] = updated.Permissions.Count.ToString(),
+                ["permissions"] = string.Join(',', updated.Permissions),
+                ["grantsChanged"] = grantsChanged.ToString(),
+                ["active"] = updated.IsActive.ToString()
+            },
+            cancellationToken);
         return RoleAdministrationResult.Succeeded(updated.Name);
     }
 
@@ -77,13 +96,33 @@ public sealed class ApplicationRoleAdministrationService(
             var hasAssignedUsers = await dbContext.AuthUsers.AsNoTracking()
                 .AnyAsync(x => x.IsActive && x.Role == role.Name, cancellationToken);
             if (hasAssignedUsers)
+            {
+                await _securityAudit.RecordCurrentAsync(
+                    "Authorization",
+                    "Role.Disabled",
+                    "Blocked",
+                    "ApplicationRole",
+                    role.Name,
+                    role.DisplayNameEnglish,
+                    new Dictionary<string, string> { ["reason"] = "Active users remain assigned" },
+                    cancellationToken);
                 return RoleAdministrationResult.Failed("Reassign active users before disabling this role.");
+            }
         }
 
         if (role.IsActive == isActive) return RoleAdministrationResult.Succeeded(role.Name);
         roles[index] = role with { IsActive = isActive };
         await _roleStore.SaveAsync(roles, cancellationToken);
         await _sessionStore.RevokeRoleAsync(role.Name, isActive ? "Role reactivated." : "Role disabled.", cancellationToken);
+        await _securityAudit.RecordCurrentAsync(
+            "Authorization",
+            isActive ? "Role.Enabled" : "Role.Disabled",
+            "Succeeded",
+            "ApplicationRole",
+            role.Name,
+            role.DisplayNameEnglish,
+            null,
+            cancellationToken);
         return RoleAdministrationResult.Succeeded(role.Name);
     }
 
