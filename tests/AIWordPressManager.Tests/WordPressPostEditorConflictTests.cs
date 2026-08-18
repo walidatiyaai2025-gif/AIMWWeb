@@ -1,8 +1,10 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 
 namespace AIWordPressManager.Tests;
 
@@ -15,7 +17,7 @@ public sealed class WordPressPostEditorConflictTests
         var api = new FakeApiClient();
         api.GetResponses.Enqueue(ContentResponse(7, "2026-08-09T09:00:00Z"));
         api.GetResponses.Enqueue(ContentResponse(7, "2026-08-09T09:05:00Z"));
-        var service = new WordPressPostEditorWebService(api, new AppNotificationService());
+        var service = CreateService(api);
 
         var loaded = await service.GetAsync(siteId, "post", 7);
         loaded.IsSuccess.Should().BeTrue();
@@ -36,7 +38,7 @@ public sealed class WordPressPostEditorConflictTests
         api.GetResponses.Enqueue(ContentResponse(7, "2026-08-09T09:00:00Z"));
         api.GetResponses.Enqueue(ContentResponse(7, "2026-08-09T09:00:00Z"));
         api.SendResponses.Enqueue(ContentResponse(7, "2026-08-09T09:01:00Z"));
-        var service = new WordPressPostEditorWebService(api, new AppNotificationService());
+        var service = CreateService(api);
 
         await service.GetAsync(siteId, "post", 7);
         var result = await service.UpdateAsync(siteId, Request(7));
@@ -50,7 +52,7 @@ public sealed class WordPressPostEditorConflictTests
     public async Task UpdateAsync_Rejects_Unsupported_Status_Before_Remote_Call()
     {
         var api = new FakeApiClient();
-        var service = new WordPressPostEditorWebService(api, new AppNotificationService());
+        var service = CreateService(api);
         var request = Request(7) with { Status = "invalid-status" };
 
         var result = await service.UpdateAsync(Guid.NewGuid(), request);
@@ -69,6 +71,27 @@ public sealed class WordPressPostEditorConflictTests
 
         WordPressPostEditorWebService.HasRemoteChanged(expected, sameInstant).Should().BeFalse();
         WordPressPostEditorWebService.HasRemoteChanged(expected, expected.AddSeconds(1)).Should().BeTrue();
+    }
+
+    private static WordPressPostEditorWebService CreateService(FakeApiClient api)
+    {
+        var userId = Guid.NewGuid();
+        var identity = new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Name, "content-editor-test"),
+                new Claim(ApplicationPermissionCatalog.ClaimType, ApplicationPermissionCatalog.ContentEdit)
+            ],
+            "test");
+        var accessor = new FixedHttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
+
+        return new WordPressPostEditorWebService(
+            api,
+            new AppNotificationService(),
+            new CurrentUserContext(accessor));
     }
 
     private static WordPressContentUpdateRequest Request(int id) => new(
@@ -124,5 +147,10 @@ public sealed class WordPressPostEditorConflictTests
 
         public Task<WordPressApiResponse<JsonDocument>> SendContentAsync(Guid siteId, HttpMethod method, string relativePath, HttpContent content, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+    }
+
+    private sealed class FixedHttpContextAccessor : IHttpContextAccessor
+    {
+        public HttpContext? HttpContext { get; set; }
     }
 }
