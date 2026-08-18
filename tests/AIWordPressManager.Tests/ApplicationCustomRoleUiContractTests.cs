@@ -31,6 +31,19 @@ public sealed class ApplicationCustomRoleUiContractTests
     }
 
     [Fact]
+    public void Application_user_editor_uses_server_defined_active_roles_instead_of_a_two_role_hard_code()
+    {
+        var page = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/ApplicationUsers.razor");
+
+        page.Should().Contain("_roleOptions = await _service.GetAssignableRolesAsync()");
+        page.Should().Contain("@foreach (var role in _roleOptions)");
+        page.Should().Contain("IsRoleOptionAvailable(_role)");
+        page.Should().Contain("href=\"/admin/roles-permissions\"");
+        page.Should().NotContain("<option value=\"User\">");
+        page.Should().NotContain("<option value=\"Administrator\">");
+    }
+
+    [Fact]
     public void Custom_role_navigation_is_administrator_only()
     {
         var item = AppNavigationCatalog.AllItems.Single(x => x.Path == "/admin/roles-permissions");
