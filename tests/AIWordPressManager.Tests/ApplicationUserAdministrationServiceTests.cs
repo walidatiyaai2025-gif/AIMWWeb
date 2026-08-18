@@ -42,6 +42,10 @@ public sealed class ApplicationUserAdministrationServiceTests
         result.IsSuccess.Should().BeTrue();
         var stored = await fixture.Context.AuthUsers.AsNoTracking().SingleAsync(x => x.UserName == "editor.one");
         stored.PasswordHash.Should().NotBe("StrongPass1");
+        var audit = await new ApplicationSecurityAuditStore(fixture.Context).ListAsync(new SecurityAuditQuery(Category: "Account"));
+        audit.Should().ContainSingle(x => x.Action == "User.Created" && x.Outcome == "Succeeded" && x.TargetId == stored.Id.ToString("D"));
+        audit.Single().ActorUserId.Should().Be(fixture.Actor.Id);
+        audit.Single().Metadata["role"].Should().Be("User");
     }
 
     [Fact]
@@ -56,13 +60,15 @@ public sealed class ApplicationUserAdministrationServiceTests
     }
 
     [Fact]
-    public async Task Administrator_Cannot_Disable_Own_Account()
+    public async Task Administrator_Cannot_Disable_Own_Account_And_Block_Is_Audited()
     {
         await using var fixture = await Fixture.CreateAsync();
         var result = await fixture.Service.SetActiveAsync(fixture.Actor.Id, false);
         result.IsSuccess.Should().BeFalse();
         result.Message.Should().Contain("own account");
         (await fixture.Context.AuthUsers.AsNoTracking().SingleAsync(x => x.Id == fixture.Actor.Id)).IsActive.Should().BeTrue();
+        var audit = await new ApplicationSecurityAuditStore(fixture.Context).ListAsync(new SecurityAuditQuery(Category: "Account"));
+        audit.Should().ContainSingle(x => x.Action == "User.Disabled" && x.Outcome == "Blocked" && x.TargetId == fixture.Actor.Id.ToString("D"));
     }
 
     [Fact]
@@ -104,6 +110,8 @@ public sealed class ApplicationUserAdministrationServiceTests
         stored.FailedAccessCount.Should().Be(0);
         stored.LockedUntilUtc.Should().BeNull();
         new PasswordHasher<AuthUser>().VerifyHashedPassword(stored, stored.PasswordHash, "NewStrong2").Should().NotBe(PasswordVerificationResult.Failed);
+        var audit = await new ApplicationSecurityAuditStore(fixture.Context).ListAsync(new SecurityAuditQuery(Category: "Account"));
+        audit.Should().Contain(x => x.Action == "Password.Reset" && x.Outcome == "Succeeded" && x.TargetId == user.Id.ToString("D"));
     }
 
     private sealed class Fixture : IAsyncDisposable
@@ -133,7 +141,7 @@ public sealed class ApplicationUserAdministrationServiceTests
             context.AuthUsers.Add(actor);
             await context.SaveChangesAsync();
             var accessor = new IsolatedHttpContextAccessor(CreateHttpContext(actor, actorRole, permissions));
-            var service = new ApplicationUserAdministrationService(context, new CurrentUserContext(accessor));
+            var service = new ApplicationUserAdministrationService(context, new CurrentUserContext(accessor), httpContextAccessor: accessor);
             return new Fixture(connection, context, actor, service, accessor);
         }
 
@@ -150,7 +158,7 @@ public sealed class ApplicationUserAdministrationServiceTests
             };
             claims.AddRange(permissions.Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
             var identity = new ClaimsIdentity(claims, "Test");
-            return new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
+            return new DefaultHttpContext { User = new ClaimsPrincipal(identity), TraceIdentifier = "user-admin-test" };
         }
 
         public async Task<AuthUser> AddUserAsync(string userName, string role)

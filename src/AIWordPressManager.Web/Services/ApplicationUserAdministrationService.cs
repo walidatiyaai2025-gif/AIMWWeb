@@ -10,11 +10,13 @@ public sealed class ApplicationUserAdministrationService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
     ApplicationRoleStore? roleStore = null,
-    ApplicationSessionStore? sessionStore = null)
+    ApplicationSessionStore? sessionStore = null,
+    IHttpContextAccessor? httpContextAccessor = null)
 {
     private readonly PasswordHasher<AuthUser> _hasher = new();
     private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
     private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
+    private readonly ApplicationSecurityAuditService _securityAudit = new(dbContext, currentUser, httpContextAccessor);
 
     public async Task<IReadOnlyList<ApplicationUserSummary>> ListAsync(
         string? search = null,
@@ -59,13 +61,15 @@ public sealed class ApplicationUserAdministrationService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            return UserAdministrationResult.Succeeded(user.Id);
         }
         catch (DbUpdateException)
         {
             dbContext.Entry(user).State = EntityState.Detached;
             return UserAdministrationResult.Failed("This username is already registered.");
         }
+
+        await AuditUserAsync("User.Created", "Succeeded", user, new Dictionary<string, string> { ["role"] = resolvedRole }, cancellationToken);
+        return UserAdministrationResult.Succeeded(user.Id);
     }
 
     public async Task<UserAdministrationResult> UpdateAsync(Guid userId, string userName, string role, CancellationToken cancellationToken = default)
@@ -88,10 +92,20 @@ public sealed class ApplicationUserAdministrationService(
         if (string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(resolvedRole, "Administrator", StringComparison.Ordinal))
         {
-            if (actorId == user.Id) return UserAdministrationResult.Failed("You cannot remove your own administrator role.");
-            if (!await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken)) return UserAdministrationResult.Failed("At least one active administrator must remain.");
+            if (actorId == user.Id)
+            {
+                await AuditUserAsync("User.RoleChanged", "Blocked", user, new Dictionary<string, string> { ["requestedRole"] = resolvedRole, ["reason"] = "Self-demotion blocked" }, cancellationToken);
+                return UserAdministrationResult.Failed("You cannot remove your own administrator role.");
+            }
+            if (!await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken))
+            {
+                await AuditUserAsync("User.RoleChanged", "Blocked", user, new Dictionary<string, string> { ["requestedRole"] = resolvedRole, ["reason"] = "Last active administrator" }, cancellationToken);
+                return UserAdministrationResult.Failed("At least one active administrator must remain.");
+            }
         }
 
+        var oldUserName = user.UserName;
+        var oldRole = user.Role;
         var roleChanged = !string.Equals(user.Role, resolvedRole, StringComparison.Ordinal);
         var now = DateTime.UtcNow;
         user.SetUserName(cleanUserName, now);
@@ -99,6 +113,13 @@ public sealed class ApplicationUserAdministrationService(
         await dbContext.SaveChangesAsync(cancellationToken);
         if (roleChanged)
             await _sessionStore.RevokeUserAsync(user.Id, "Account role changed.", cancellationToken);
+        await AuditUserAsync("User.Updated", "Succeeded", user, new Dictionary<string, string>
+        {
+            ["previousUserName"] = oldUserName,
+            ["previousRole"] = oldRole,
+            ["role"] = resolvedRole,
+            ["roleChanged"] = roleChanged.ToString()
+        }, cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
@@ -107,16 +128,25 @@ public sealed class ApplicationUserAdministrationService(
         var actorId = currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
         var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
-        if (!isActive && user.Id == actorId) return UserAdministrationResult.Failed("You cannot disable your own account.");
+        if (!isActive && user.Id == actorId)
+        {
+            await AuditUserAsync("User.Disabled", "Blocked", user, new Dictionary<string, string> { ["reason"] = "Self-disable blocked" }, cancellationToken);
+            return UserAdministrationResult.Failed("You cannot disable your own account.");
+        }
         if (!isActive && string.Equals(user.Role, "Administrator", StringComparison.OrdinalIgnoreCase) &&
             !await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken))
+        {
+            await AuditUserAsync("User.Disabled", "Blocked", user, new Dictionary<string, string> { ["reason"] = "Last active administrator" }, cancellationToken);
             return UserAdministrationResult.Failed("At least one active administrator must remain.");
+        }
 
         var changed = user.IsActive != isActive;
         user.SetActive(isActive, DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
         if (changed && !isActive)
             await _sessionStore.RevokeUserAsync(user.Id, "Account disabled.", cancellationToken);
+        if (changed)
+            await AuditUserAsync(isActive ? "User.Enabled" : "User.Disabled", "Succeeded", user, null, cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
@@ -127,6 +157,7 @@ public sealed class ApplicationUserAdministrationService(
         if (user is null) return UserAdministrationResult.Failed("Application user was not found.");
         user.Unlock(DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await AuditUserAsync("User.Unlocked", "Succeeded", user, null, cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
@@ -144,6 +175,7 @@ public sealed class ApplicationUserAdministrationService(
         user.Unlock(now);
         await dbContext.SaveChangesAsync(cancellationToken);
         await _sessionStore.RevokeUserAsync(user.Id, "Password reset.", cancellationToken);
+        await AuditUserAsync("Password.Reset", "Succeeded", user, null, cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
@@ -156,6 +188,22 @@ public sealed class ApplicationUserAdministrationService(
         return await dbContext.LoginAudits.AsNoTracking().Where(x => x.UserName == userName).OrderByDescending(x => x.AttemptedAtUtc).Take(take)
             .Select(x => new LoginAuditDto(x.Id, x.UserName, x.Succeeded, x.Reason, x.IpAddress, x.UserAgent, x.AttemptedAtUtc)).ToListAsync(cancellationToken);
     }
+
+    private Task AuditUserAsync(
+        string action,
+        string outcome,
+        AuthUser user,
+        IReadOnlyDictionary<string, string>? metadata,
+        CancellationToken cancellationToken) =>
+        _securityAudit.RecordCurrentAsync(
+            "Account",
+            action,
+            outcome,
+            "ApplicationUser",
+            user.Id.ToString("D"),
+            user.UserName,
+            metadata,
+            cancellationToken);
 
     private Task<bool> HasAnotherActiveAdministratorAsync(Guid excludedUserId, CancellationToken cancellationToken) =>
         dbContext.AuthUsers.AsNoTracking().AnyAsync(

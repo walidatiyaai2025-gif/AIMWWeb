@@ -1,12 +1,18 @@
 using System.Security.Claims;
+using AIWordPressManager.Persistence;
 
 namespace AIWordPressManager.Web.Services;
 
 public sealed class ApplicationSessionAdministrationService(
     ApplicationSessionStore sessionStore,
     CurrentUserContext currentUser,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    AppDbContext? dbContext = null)
 {
+    private readonly ApplicationSecurityAuditService? _securityAudit = dbContext is null
+        ? null
+        : new ApplicationSecurityAuditService(dbContext, currentUser, httpContextAccessor);
+
     public async Task<IReadOnlyList<ApplicationSessionSummary>> ListAllAsync(
         bool includeInactive = false,
         CancellationToken cancellationToken = default)
@@ -33,6 +39,22 @@ public sealed class ApplicationSessionAdministrationService(
         if (session is null) return SessionAdministrationResult.Failed("Session was not found.");
 
         await sessionStore.RevokeAsync(sessionId, reason, cancellationToken);
+        if (_securityAudit is not null)
+        {
+            await _securityAudit.RecordCurrentAsync(
+                "Session",
+                "Session.Revoked",
+                "Succeeded",
+                "ApplicationSession",
+                session.SessionId.ToString("D"),
+                session.UserName,
+                new Dictionary<string, string>
+                {
+                    ["targetUserId"] = session.UserId.ToString("D"),
+                    ["reason"] = reason
+                },
+                cancellationToken);
+        }
         return SessionAdministrationResult.Succeeded(sessionId);
     }
 
@@ -49,6 +71,22 @@ public sealed class ApplicationSessionAdministrationService(
             return SessionAdministrationResult.Failed("No active sessions were found for this account.");
 
         await sessionStore.RevokeUserAsync(userId, reason, cancellationToken);
+        if (_securityAudit is not null)
+        {
+            await _securityAudit.RecordCurrentAsync(
+                "Session",
+                "Session.UserBulkRevoked",
+                "Succeeded",
+                "ApplicationUser",
+                userId.ToString("D"),
+                activeSessions[0].UserName,
+                new Dictionary<string, string>
+                {
+                    ["sessionCount"] = activeSessions.Count.ToString(),
+                    ["reason"] = reason
+                },
+                cancellationToken);
+        }
         return SessionAdministrationResult.Succeeded(Guid.Empty);
     }
 
@@ -63,6 +101,18 @@ public sealed class ApplicationSessionAdministrationService(
             return SessionAdministrationResult.Failed("Session was not found for the current account.");
 
         await sessionStore.RevokeAsync(sessionId, reason, cancellationToken);
+        if (_securityAudit is not null)
+        {
+            await _securityAudit.RecordCurrentAsync(
+                "Session",
+                "Session.SelfRevoked",
+                "Succeeded",
+                "ApplicationSession",
+                session.SessionId.ToString("D"),
+                session.UserName,
+                new Dictionary<string, string> { ["reason"] = reason },
+                cancellationToken);
+        }
         return SessionAdministrationResult.Succeeded(sessionId);
     }
 

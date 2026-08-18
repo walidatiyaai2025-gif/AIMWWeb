@@ -2,8 +2,11 @@
 @rendermode InteractiveServer
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
 @using AIWordPressManager.Application.Settings
+@using AIWordPressManager.Persistence
 @inject IApplicationSettingsService RuntimeSettingsService
+@inject AppDbContext DbContext
 @inject CurrentUserContext CurrentUser
+@inject IHttpContextAccessor HttpContextAccessor
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "إعدادات مزودي الذكاء الاصطناعي" : "AI Provider Settings")</PageTitle>
@@ -176,7 +179,7 @@
     private bool _removeConfirmationOpen;
     private string _message = string.Empty;
 
-    private AIProviderSettingsAdministrationService SettingsService => new(RuntimeSettingsService, CurrentUser);
+    private AIProviderSettingsAdministrationService SettingsService => new(RuntimeSettingsService, CurrentUser, DbContext, HttpContextAccessor);
     private string RemovalProviderSummary => string.Join(", ", _providers.Where(x => x.RemoveStoredKey && x.HasStoredKey).Select(x => x.Name));
 
     protected override async Task OnInitializedAsync() => await LoadAsync();

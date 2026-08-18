@@ -15,12 +15,14 @@ public sealed class AIProviderSettingsPermissionContractTests
     }
 
     [Fact]
-    public void AI_provider_settings_page_routes_storage_calls_through_admin_facade()
+    public void AI_provider_settings_page_routes_storage_calls_through_admin_facade_with_audit_context()
     {
         var page = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor");
 
         page.Should().Contain("AIProviderSettingsAdministrationService SettingsService");
-        page.Should().Contain("new(RuntimeSettingsService, CurrentUser)");
+        page.Should().Contain("new(RuntimeSettingsService, CurrentUser, DbContext, HttpContextAccessor)");
+        page.Should().Contain("@inject AppDbContext DbContext");
+        page.Should().Contain("@inject IHttpContextAccessor HttpContextAccessor");
         page.Should().NotContain("RuntimeSettingsService.");
     }
 

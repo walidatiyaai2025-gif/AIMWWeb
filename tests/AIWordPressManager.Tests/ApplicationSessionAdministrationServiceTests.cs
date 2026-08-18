@@ -27,7 +27,7 @@ public sealed class ApplicationSessionAdministrationServiceTests
     }
 
     [Fact]
-    public async Task UsersManage_can_end_another_users_session()
+    public async Task UsersManage_can_end_another_users_session_and_event_is_audited()
     {
         await using var fixture = await Fixture.CreateAsync(includeUsersManage: true);
         var targetUserId = Guid.NewGuid();
@@ -37,6 +37,10 @@ public sealed class ApplicationSessionAdministrationServiceTests
 
         result.IsSuccess.Should().BeTrue();
         (await fixture.Store.ValidateAsync(target.SessionId, targetUserId)).IsValid.Should().BeFalse();
+        var audit = await new ApplicationSecurityAuditStore(fixture.Context).ListAsync(new SecurityAuditQuery(Category: "Session"));
+        audit.Should().ContainSingle(x => x.Action == "Session.Revoked" && x.Outcome == "Succeeded" && x.TargetId == target.SessionId.ToString("D"));
+        audit.Single().ActorUserId.Should().Be(fixture.ActorId);
+        audit.Single().Metadata["targetUserId"].Should().Be(targetUserId.ToString("D"));
     }
 
     [Fact]
@@ -55,6 +59,25 @@ public sealed class ApplicationSessionAdministrationServiceTests
         (await fixture.Store.ValidateAsync(first.SessionId, targetUserId)).IsValid.Should().BeFalse();
         (await fixture.Store.ValidateAsync(second.SessionId, targetUserId)).IsValid.Should().BeFalse();
         (await fixture.Store.ValidateAsync(unrelated.SessionId, otherUserId)).IsValid.Should().BeTrue();
+        var audit = await new ApplicationSecurityAuditStore(fixture.Context).ListAsync(new SecurityAuditQuery(Category: "Session"));
+        audit.Should().ContainSingle(x => x.Action == "Session.UserBulkRevoked" && x.TargetId == targetUserId.ToString("D"));
+        audit.Single().Metadata["sessionCount"].Should().Be("2");
+    }
+
+    [Fact]
+    public async Task Self_service_revocation_is_audited_for_current_actor_only()
+    {
+        await using var fixture = await Fixture.CreateAsync(includeUsersManage: false);
+        var current = await fixture.Store.CreateAsync(fixture.ActorId, "session.admin", "User", null, "Current", false);
+        var otherMine = await fixture.Store.CreateAsync(fixture.ActorId, "session.admin", "User", null, "Other", false);
+        fixture.SetCurrentSession(current.SessionId);
+
+        var result = await fixture.Service.EndMySessionAsync(otherMine.SessionId, "Ended by owner");
+
+        result.IsSuccess.Should().BeTrue();
+        var audit = await new ApplicationSecurityAuditStore(fixture.Context).ListAsync(new SecurityAuditQuery(Category: "Session"));
+        audit.Should().ContainSingle(x => x.Action == "Session.SelfRevoked" && x.TargetId == otherMine.SessionId.ToString("D"));
+        audit.Single().ActorUserId.Should().Be(fixture.ActorId);
     }
 
     [Fact]
@@ -122,12 +145,13 @@ public sealed class ApplicationSessionAdministrationServiceTests
                 claims.Add(new Claim(ApplicationPermissionCatalog.ClaimType, ApplicationPermissionCatalog.UsersManage));
             var httpContext = new DefaultHttpContext
             {
-                User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"))
+                User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")),
+                TraceIdentifier = "session-audit-test"
             };
             var accessor = new IsolatedHttpContextAccessor(httpContext);
             var currentUser = new CurrentUserContext(accessor);
             var store = new ApplicationSessionStore(context);
-            var service = new ApplicationSessionAdministrationService(store, currentUser, accessor);
+            var service = new ApplicationSessionAdministrationService(store, currentUser, accessor, context);
             return new Fixture(connection, context, actorId, httpContext, store, service);
         }
 

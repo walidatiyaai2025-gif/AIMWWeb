@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-18T14:06:00Z",
+  "updatedAtUtc": "2026-08-18T14:43:19Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -91,7 +91,7 @@
     { "id": "ADM-001", "phase": 7, "area": "Administration", "nameAr": "لوحة إدارة مستخدمي التطبيق", "nameEn": "Application user management dashboard", "status": "completed", "priority": "critical", "version": "existing", "notes": "The application-user dashboard already provides search, create/edit, enable/disable, unlock, password reset, and login-audit review. IDN-009 adds the Users.Manage policy boundary to the route while preserving service-level continuity protections." },
     { "id": "ADM-002", "phase": 7, "area": "Authorization", "nameAr": "محرك الصلاحيات", "nameEn": "Permission engine", "status": "in_progress", "priority": "critical", "version": null, "notes": "Core permission evaluation, persisted custom role/grant administration, server-issued claims, ASP.NET policies, and routed component authorization enforcement are delivered. PR #115 adds AuthorizeRouteView plus cascading authentication state; broader module page and direct service mutation boundaries remain tracked in #116." },
     { "id": "ADM-003", "phase": 7, "area": "Configuration", "nameAr": "Feature Flags", "nameEn": "Feature flags", "status": "planned", "priority": "medium", "version": null, "notes": "Enable and disable modules without rebuilding." },
-    { "id": "ADM-004", "phase": 7, "area": "Audit", "nameAr": "سجل تدقيق أمني كامل", "nameEn": "Complete security audit trail", "status": "planned", "priority": "critical", "version": null, "notes": "Login, account, permission, content, and execution events." },
+    { "id": "ADM-004", "phase": 7, "area": "Audit", "nameAr": "سجل تدقيق أمني كامل", "nameEn": "Complete security audit trail", "status": "completed", "priority": "critical", "version": null, "notes": "Provider-neutral Security.Audit.v1 now records authentication, account, role/grant, session, and sensitive AI-provider settings changes with server-owned actor/request context, fail-closed corrupt-registry handling, optimistic concurrency, 365-day/10,000-event retention, strict secret metadata sanitization, and a Settings.Manage bilingual RTL/LTR audit workspace. The reconciled implementation passed 480/480 automated tests with zero build warnings/errors, Build success, and all four UX shards; /admin/security-audit returned 200 with zero accessibility violations." },
     { "id": "ADM-005", "phase": 7, "area": "WordPress", "nameAr": "إدارة إضافات WordPress", "nameEn": "WordPress plugin management", "status": "planned", "priority": "medium", "version": null, "notes": "Requires capability checks and guarded activation/deactivation." },
     { "id": "ADM-006", "phase": 7, "area": "WordPress", "nameAr": "إدارة قوالب WordPress", "nameEn": "WordPress theme management", "status": "planned", "priority": "medium", "version": null, "notes": "Requires safe preview, capability checks, and rollback policy." },
 
