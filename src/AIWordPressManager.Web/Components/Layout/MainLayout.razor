@@ -1,3 +1,4 @@
+@using System.Security.Claims
 @inherits LayoutComponentBase
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
@@ -225,8 +226,16 @@
 @code {
     private BuildInformation Build => BuildInfo.Current;
     private string CurrentPath => new Uri(Navigation.Uri).AbsolutePath;
-    private AppNavigationItem? CurrentItem => AppNavigationCatalog.FindItem(CurrentPath, _isAdministrator);
-    private AppNavigationGroup? CurrentGroup => AppNavigationCatalog.FindGroup(CurrentPath, _isAdministrator);
+    private AppNavigationItem? CurrentItem =>
+        AppNavigationCatalog.VisibleItems(_isAdministrator)
+            .Where(CanNavigate)
+            .Where(item => item.MatchesPath(CurrentPath))
+            .OrderByDescending(item => item.Path.Length)
+            .FirstOrDefault();
+    private AppNavigationGroup? CurrentGroup =>
+        CurrentItem is { } currentItem
+            ? AppNavigationCatalog.Groups.FirstOrDefault(group => string.Equals(group.Key, currentItem.GroupKey, StringComparison.Ordinal))
+            : null;
     private string ActiveGroup => CurrentGroup?.Key ?? "system";
     private string SectionTitle => CurrentGroup is null
         ? (L.IsArabic ? "النظام" : "System")
@@ -243,6 +252,7 @@
 
     private IEnumerable<AppNavigationItem> CommandItems =>
         AppNavigationCatalog.VisibleItems(_isAdministrator)
+            .Where(CanNavigate)
             .Where(item => item.MatchesSearch(_commandQuery));
 
     private IEnumerable<CommandGroupResult> CommandGroupResults =>
@@ -256,6 +266,7 @@
     private bool _sidebarCollapsed;
     private bool _commandOpen;
     private bool _isAdministrator;
+    private ClaimsPrincipal _principal = new();
     private string _commandQuery = string.Empty;
     private string _selectedTheme = "gold";
     private string _appearanceMode = "dark";
@@ -275,7 +286,8 @@
     protected override async Task OnInitializedAsync()
     {
         var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        _isAdministrator = authenticationState.User.IsInRole("Administrator");
+        _principal = authenticationState.User;
+        _isAdministrator = _principal.IsInRole("Administrator");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -292,12 +304,17 @@
         StateHasChanged();
     }
 
+    private bool CanNavigate(AppNavigationItem item) =>
+        (!item.AdministratorOnly || _isAdministrator) &&
+        ApplicationNavigationPermissionCatalog.CanAccess(_principal, item.Path);
+
     private bool IsVisibleSidebarItem(AppNavigationItem item) =>
-        item.ShowInSidebar && (!item.AdministratorOnly || _isAdministrator);
+        item.ShowInSidebar && CanNavigate(item);
 
     private async Task SyncRecentNavigationCatalogAsync()
     {
         var items = AppNavigationCatalog.VisibleItems(_isAdministrator)
+            .Where(CanNavigate)
             .Select(item => new
             {
                 path = item.Path,
@@ -348,6 +365,9 @@
 
     private void RunCommand(AppNavigationItem item)
     {
+        if (!CanNavigate(item))
+            return;
+
         _commandOpen = false;
         Navigation.NavigateTo(item.Path);
     }
