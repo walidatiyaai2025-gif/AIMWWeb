@@ -5,13 +5,19 @@ namespace AIWordPressManager.Tests;
 public sealed class UxRegressionGateContractTests
 {
     [Fact]
-    public void Workflow_installs_chromium_runs_browser_gate_and_uploads_evidence()
+    public void Workflow_uses_matching_playwright_container_runs_browser_gate_and_uploads_evidence()
     {
         var workflow = ReadRepositoryFile(".github/workflows/ux-regression.yml");
         workflow.Should().Contain("name: UX Regression Gate");
         workflow.Should().Contain("pull_request:");
         workflow.Should().Contain("branches: [ main ]");
-        workflow.Should().Contain("playwright.ps1 install --with-deps chromium");
+        workflow.Should().Contain("mcr.microsoft.com/playwright/dotnet:v1.49.0-noble");
+        workflow.Should().Contain("Verify container .NET SDK");
+        workflow.Should().NotContain("playwright.ps1 install");
+        workflow.Should().Contain("shard: smoke-public");
+        workflow.Should().Contain("shard: authenticated-routes");
+        workflow.Should().Contain("shard: visual-breakpoints");
+        workflow.Should().Contain("shard: rtl");
         workflow.Should().Contain("AIWordPressManager.UxTests.csproj");
         workflow.Should().Contain("ux-regression-evidence");
         workflow.Should().Contain("artifacts/ux-regression/**");
@@ -27,7 +33,7 @@ public sealed class UxRegressionGateContractTests
         var solution = ReadRepositoryFile("AIWordPressManager.Web.sln");
         project.Should().Contain("<PackageReference Include=\"Microsoft.Playwright\" />");
         project.Should().Contain("<IsTestProject>true</IsTestProject>");
-        packages.Should().Contain("PackageVersion Include=\"Microsoft.Playwright\"");
+        packages.Should().Contain("PackageVersion Include=\"Microsoft.Playwright\" Version=\"1.49.0\"");
         solution.Should().NotContain("AIWordPressManager.UxTests");
     }
 
