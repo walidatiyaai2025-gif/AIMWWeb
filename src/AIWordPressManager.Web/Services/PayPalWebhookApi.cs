@@ -1,5 +1,5 @@
 using System.Text;
-using Microsoft.AspNetCore.Http.HttpResults;
+using AIWordPressManager.Application.Abstractions.Billing;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -17,7 +17,7 @@ public static class PayPalWebhookApi
 
     private static async Task<IResult> HandleAsync(
         HttpRequest request,
-        PayPalWebhookIntakeService intake,
+        IPayPalWebhookIntakeService intake,
         CancellationToken cancellationToken)
     {
         if (request.ContentLength is > MaximumBodyCharacters)
