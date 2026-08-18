@@ -501,6 +501,13 @@ public sealed class ApprovalWorkflowService
     {
         RequireOwner(ownerUserId);
 
+        var principal = _httpContextAccessor?.HttpContext?.User;
+        if (principal?.Identity?.IsAuthenticated == true &&
+            (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var principalOwner) || principalOwner != ownerUserId))
+        {
+            throw new UnauthorizedAccessException("Approval owner identity does not match the authenticated user.");
+        }
+
         if (_scopeFactory is not null)
         {
             try
@@ -538,10 +545,7 @@ public sealed class ApprovalWorkflowService
             }
         }
 
-        var principal = _httpContextAccessor?.HttpContext?.User;
         if (principal?.Identity?.IsAuthenticated == true &&
-            Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var principalOwner) &&
-            principalOwner == ownerUserId &&
             ApplicationPermissionCatalog.PrincipalHasPermission(principal, ApplicationPermissionCatalog.ApprovalsDecide))
         {
             return;
