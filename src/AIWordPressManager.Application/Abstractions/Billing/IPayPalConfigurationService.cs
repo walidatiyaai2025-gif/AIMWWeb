@@ -10,17 +10,20 @@ public sealed record PayPalConfigurationView(
     bool Enabled,
     PayPalEnvironment Environment,
     string ClientId,
-    bool HasClientSecret);
+    bool HasClientSecret,
+    string WebhookId = "");
 
 public sealed record PayPalConfigurationUpdate(
     bool Enabled,
     PayPalEnvironment Environment,
-    string ClientId);
+    string ClientId,
+    string? WebhookId = null);
 
 public sealed record PayPalRuntimeConfiguration(
     PayPalEnvironment Environment,
     string ClientId,
-    string ClientSecret);
+    string ClientSecret,
+    string WebhookId = "");
 
 public sealed record PayPalConfigurationDiagnosticResult(
     bool Success,
@@ -57,6 +60,7 @@ public static class PayPalApiEndpoints
     public static readonly Uri SandboxBaseUri = new("https://api-m.sandbox.paypal.com/");
     public static readonly Uri LiveBaseUri = new("https://api-m.paypal.com/");
     public const string OAuthTokenPath = "v1/oauth2/token";
+    public const string VerifyWebhookSignaturePath = "v1/notifications/verify-webhook-signature";
 
     public static Uri GetApiBaseUri(PayPalEnvironment environment) => environment switch
     {

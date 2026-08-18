@@ -355,6 +355,7 @@ app.MapGet("/api/notifications", (string? userId, bool? unreadOnly, int? take, N
 app.MapPost("/api/notifications/{id:guid}/read", (Guid id, NotificationInboxService service) => { service.MarkRead(id); return Results.NoContent(); })
     .RequireAuthorization(ApplicationPermissionCatalog.OperationsView);
 app.MapMediaApi();
+app.MapPayPalWebhookApi();
 app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (Guid siteId, SeoAuditExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
     .RequireAuthorization(ApplicationPermissionCatalog.OperationsExecute);
 app.MapPost("/api/sites/{siteId:guid}/content/trash", async (Guid siteId, BulkTrashRequest request, BulkTrashExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })

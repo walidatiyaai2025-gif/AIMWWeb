@@ -32,7 +32,9 @@ public sealed class PayPalSubscriptionCheckoutTests
         var first = await gateway.CreateSubscriptionCheckoutAsync(request);
         var second = await gateway.CreateSubscriptionCheckoutAsync(request);
 
-        gateway.Descriptor.Capabilities.Should().Be(PaymentGatewayCapability.SubscriptionCheckout);
+        gateway.Descriptor.Supports(PaymentGatewayCapability.SubscriptionCheckout).Should().BeTrue();
+        gateway.Descriptor.Supports(PaymentGatewayCapability.WebhookVerification).Should().BeTrue();
+        gateway.Descriptor.Supports(PaymentGatewayCapability.SubscriptionLookup).Should().BeFalse();
         first.ProviderSessionReference.Should().Be("I-SUBSCRIPTION1");
         first.Authority.Should().Be(GatewayEvidenceAuthority.NavigationOnly);
         first.CheckoutUri.Host.Should().Be("www.sandbox.paypal.com");

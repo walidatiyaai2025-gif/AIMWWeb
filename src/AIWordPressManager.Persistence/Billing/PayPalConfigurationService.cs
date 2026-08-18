@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Domain.Entities;
@@ -15,8 +16,10 @@ public sealed class PayPalConfigurationService(
     internal const string EnvironmentKey = "Billing.PayPal.Environment";
     internal const string ClientIdKey = "Billing.PayPal.ClientId";
     internal const string ProtectedClientSecretKey = "Billing.PayPal.ProtectedClientSecret";
+    internal const string WebhookIdKey = "Billing.PayPal.WebhookId";
 
-    private static readonly string[] Keys = [EnabledKey, EnvironmentKey, ClientIdKey, ProtectedClientSecretKey];
+    private static readonly string[] Keys = [EnabledKey, EnvironmentKey, ClientIdKey, ProtectedClientSecretKey, WebhookIdKey];
+    private static readonly Regex WebhookIdPattern = new("^[A-Za-z0-9]+$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public async Task<PayPalConfigurationView> GetAsync(CancellationToken cancellationToken = default)
     {
@@ -34,6 +37,10 @@ public sealed class PayPalConfigurationService(
         var clientId = NormalizeClientId(configuration.ClientId, configuration.Enabled);
         var values = await LoadValuesAsync(cancellationToken);
         var existingProtectedSecret = values.TryGetValue(ProtectedClientSecretKey, out var existing) ? existing : string.Empty;
+        var existingWebhookId = values.TryGetValue(WebhookIdKey, out var storedWebhookId) ? storedWebhookId.Trim() : string.Empty;
+        var webhookId = configuration.WebhookId is null
+            ? existingWebhookId
+            : NormalizeWebhookId(configuration.WebhookId);
 
         string? protectedSecret = null;
         if (!string.IsNullOrWhiteSpace(plainClientSecret))
@@ -53,9 +60,11 @@ public sealed class PayPalConfigurationService(
         await UpsertAsync(ClientIdKey, clientId, cancellationToken);
         if (!string.IsNullOrWhiteSpace(protectedSecret))
             await UpsertAsync(ProtectedClientSecretKey, protectedSecret, cancellationToken);
+        if (configuration.WebhookId is not null)
+            await UpsertAsync(WebhookIdKey, webhookId, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new(configuration.Enabled, configuration.Environment, clientId, hasSecretAfterSave);
+        return new(configuration.Enabled, configuration.Environment, clientId, hasSecretAfterSave, webhookId);
     }
 
     public async Task<PayPalConfigurationView> ClearClientSecretAsync(CancellationToken cancellationToken = default)
@@ -102,7 +111,7 @@ public sealed class PayPalConfigurationService(
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("The stored PayPal credential decrypted to an empty value. Re-enter the client secret.");
 
-        return new(view.Environment, view.ClientId, secret);
+        return new(view.Environment, view.ClientId, secret, view.WebhookId);
     }
 
     private async Task<Dictionary<string, string>> LoadValuesAsync(CancellationToken cancellationToken) =>
@@ -120,7 +129,8 @@ public sealed class PayPalConfigurationService(
             : PayPalEnvironment.Sandbox;
         var clientId = values.TryGetValue(ClientIdKey, out var clientIdRaw) ? clientIdRaw.Trim() : string.Empty;
         var hasSecret = values.TryGetValue(ProtectedClientSecretKey, out var secret) && !string.IsNullOrWhiteSpace(secret);
-        return new(enabled, environment, clientId, hasSecret);
+        var webhookId = values.TryGetValue(WebhookIdKey, out var webhookIdRaw) ? webhookIdRaw.Trim() : string.Empty;
+        return new(enabled, environment, clientId, hasSecret, webhookId);
     }
 
     private async Task UpsertAsync(string key, string value, CancellationToken cancellationToken)
@@ -139,6 +149,15 @@ public sealed class PayPalConfigurationService(
             throw new ArgumentException("PayPal client ID is required when the integration is enabled.", nameof(clientId));
         if (clean.Length > 300)
             throw new ArgumentException("PayPal client ID must be at most 300 characters.", nameof(clientId));
+        return clean;
+    }
+
+    private static string NormalizeWebhookId(string? webhookId)
+    {
+        var clean = (webhookId ?? string.Empty).Trim();
+        if (clean.Length == 0) return string.Empty;
+        if (clean.Length > 50 || !WebhookIdPattern.IsMatch(clean))
+            throw new ArgumentException("PayPal webhook ID must be alphanumeric and at most 50 characters.", nameof(webhookId));
         return clean;
     }
 
