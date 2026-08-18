@@ -75,7 +75,11 @@
                             <div class="job-progress"><span style="width:@job.Progress%"></span></div>
                             @if (!string.IsNullOrWhiteSpace(job.Error)) { <div class="job-error">@job.Error</div> }
                             <footer>
-                                @if (external)
+                                @if (!CanExecute && IsUserMutable(job))
+                                {
+                                    <span class="job-controlled">@(L.IsArabic ? "صلاحية عرض فقط — التحكم في التنفيذ غير متاح" : "View-only access — execution controls are unavailable")</span>
+                                }
+                                else if (external)
                                 {
                                     @if (job.Status == "Failed") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة الآمنة" : "Safe retry")</button> }
                                     else if (job.Status is "Waiting" or "Running") { <span class="job-controlled">@(L.IsArabic ? "تنفيذ معتمد مُدار — لا إيقاف أثناء الكتابة" : "Managed approved execution — not interruptible during mutation")</span> }
@@ -119,6 +123,8 @@
     [Parameter, SupplyParameterFromQuery(Name = "siteId")]
     public Guid? WorkspaceSiteId { get; set; }
 
+    private ExecutionCenterUserCommandService Commands => new(ExecutionService, CurrentUser);
+    private bool CanExecute => CurrentUser.HasPermission(ApplicationPermissionCatalog.OperationsExecute);
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => _selectedSiteId == Guid.Empty ? _jobs : _jobs.Where(x => x.SiteId == _selectedSiteId);
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionActivity> VisibleActivities { get { var ids = SiteJobs.Select(x => x.Id).ToHashSet(); return _activities.Where(x => ids.Contains(x.JobId)).Take(40); } }
@@ -163,16 +169,21 @@
 
     private void RefreshWithNotice() { Refresh(); Notifications.Success(L.IsArabic ? "تم تحديث مركز التنفيذ." : "Execution Center refreshed."); }
     private int Count(string status) => SiteJobs.Count(x => x.Status == status);
-    private void Pause(Guid id) => RunOwnedAction(id, () => ExecutionService.Pause(id, _ownerUserId), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
-    private void Resume(Guid id) => RunOwnedAction(id, () => ExecutionService.Resume(id, _ownerUserId), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
-    private void Retry(Guid id) => RunOwnedAction(id, () => ExecutionService.Retry(id, _ownerUserId), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
-    private void Cancel(Guid id) => RunOwnedAction(id, () => ExecutionService.Cancel(id, _ownerUserId), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
+    private void Pause(Guid id) => RunOwnedAction(id, () => Commands.Pause(id), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
+    private void Resume(Guid id) => RunOwnedAction(id, () => Commands.Resume(id), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
+    private void Retry(Guid id) => RunOwnedAction(id, () => Commands.Retry(id), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
+    private void Cancel(Guid id) => RunOwnedAction(id, () => Commands.Cancel(id), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
 
     private void RunOwnedAction(Guid id, Action action, string successMessage)
     {
         try { _ = _jobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user."); action(); Refresh(); Notifications.Success(successMessage); }
         catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
     }
+
+    private static bool IsUserMutable(AIWordPressManager.Web.Services.ExecutionJob job) =>
+        string.Equals(job.ExecutionMode, ExecutionCenterService.ExternalExecutionMode, StringComparison.Ordinal)
+            ? job.Status == "Failed"
+            : job.Status is "Running" or "Paused" or "Failed" or "Cancelled";
 
     private static string StatusClass(string status) => status.ToLowerInvariant();
     private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة مؤقتًا", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status };

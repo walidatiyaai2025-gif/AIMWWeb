@@ -135,7 +135,7 @@ public sealed class ApprovalWorkflowService
 
     public ApprovalItem Submit(Guid ownerUserId, ApprovalSubmission request, string? actor = null)
     {
-        RequireOwner(ownerUserId);
+        RequireDecisionPermission(ownerUserId);
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.OperationType)) throw new InvalidOperationException("Operation type is required.");
         if (string.IsNullOrWhiteSpace(request.Title)) throw new InvalidOperationException("Approval title is required.");
@@ -191,7 +191,7 @@ public sealed class ApprovalWorkflowService
 
     public ApprovalItem Approve(Guid ownerUserId, Guid id, string reviewer, string? notes, bool executeImmediately)
     {
-        RequireOwner(ownerUserId);
+        RequireDecisionPermission(ownerUserId);
         var pending = GetRequiredOwnedItem(ownerUserId, id);
         EnsureSiteStillOwned(ownerUserId, pending);
 
@@ -244,8 +244,11 @@ public sealed class ApprovalWorkflowService
         return Reject(ownerUserId, id, ResolveRuntimeActor(ownerUserId), notes);
     }
 
-    public ApprovalItem Reject(Guid ownerUserId, Guid id, string reviewer, string? notes) =>
-        Review(ownerUserId, id, ApprovalStatus.Rejected, reviewer, notes, "Rejected");
+    public ApprovalItem Reject(Guid ownerUserId, Guid id, string reviewer, string? notes)
+    {
+        RequireDecisionPermission(ownerUserId);
+        return Review(ownerUserId, id, ApprovalStatus.Rejected, reviewer, notes, "Rejected");
+    }
 
     public ApprovalItem UpdateProposal(Guid id, object? updatedAfter, string actor, string? notes)
     {
@@ -255,7 +258,7 @@ public sealed class ApprovalWorkflowService
 
     public ApprovalItem UpdateProposal(Guid ownerUserId, Guid id, object? updatedAfter, string actor, string? notes)
     {
-        RequireOwner(ownerUserId);
+        RequireDecisionPermission(ownerUserId);
         var item = GetRequiredOwnedItem(ownerUserId, id);
         EnsureSiteStillOwned(ownerUserId, item);
         var afterJson = NormalizeJson(updatedAfter);
@@ -492,6 +495,66 @@ public sealed class ApprovalWorkflowService
     private static void RequireOwner(Guid ownerUserId)
     {
         if (ownerUserId == Guid.Empty) throw new UnauthorizedAccessException("A valid owner identity is required.");
+    }
+
+    private void RequireDecisionPermission(Guid ownerUserId)
+    {
+        RequireOwner(ownerUserId);
+
+        var principal = _httpContextAccessor?.HttpContext?.User;
+        if (principal?.Identity?.IsAuthenticated == true &&
+            (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var principalOwner) || principalOwner != ownerUserId))
+        {
+            throw new UnauthorizedAccessException("Approval owner identity does not match the authenticated user.");
+        }
+
+        if (_scopeFactory is not null)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+                if (dbContext is not null)
+                {
+                    var role = dbContext.AuthUsers.AsNoTracking()
+                        .Where(x => x.Id == ownerUserId && x.IsActive)
+                        .Select(x => x.Role)
+                        .SingleOrDefault();
+                    if (string.IsNullOrWhiteSpace(role))
+                        throw new UnauthorizedAccessException("Approval decision permission is unavailable for this account.");
+
+                    var storedRolesJson = ApplicationRoleStore.IsBuiltInRole(role)
+                        ? null
+                        : dbContext.ApplicationSettings.AsNoTracking()
+                            .Where(x => x.Key == ApplicationRoleStore.SettingsKey)
+                            .Select(x => x.Value)
+                            .SingleOrDefault();
+                    var permissions = ApplicationRoleStore.ResolvePermissions(role, storedRolesJson);
+                    if (!permissions.Contains(ApplicationPermissionCatalog.ApprovalsDecide, StringComparer.Ordinal))
+                        throw new UnauthorizedAccessException($"Permission '{ApplicationPermissionCatalog.ApprovalsDecide}' is required.");
+                    return;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new UnauthorizedAccessException("Approval decision permission could not be verified.", ex);
+            }
+        }
+
+        if (principal?.Identity?.IsAuthenticated == true &&
+            ApplicationPermissionCatalog.PrincipalHasPermission(principal, ApplicationPermissionCatalog.ApprovalsDecide))
+        {
+            return;
+        }
+
+        // The explicit database-path constructor is reserved for internal workers and isolated tests.
+        if (_scopeFactory is null && _httpContextAccessor is null) return;
+
+        throw new UnauthorizedAccessException($"Permission '{ApplicationPermissionCatalog.ApprovalsDecide}' is required.");
     }
 
     private static ApprovalRiskLevel ResolveRisk(string operationType, ApprovalRiskLevel? requested)

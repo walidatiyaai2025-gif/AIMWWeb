@@ -19,20 +19,7 @@ public sealed class ApplicationRoleStore(AppDbContext dbContext)
             .Select(x => x.Value)
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (string.IsNullOrWhiteSpace(value)) return [];
-
-        try
-        {
-            return (JsonSerializer.Deserialize<List<CustomApplicationRole>>(value, JsonOptions) ?? [])
-                .Where(IsValidStoredRole)
-                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-        }
-        catch (JsonException)
-        {
-            // Security configuration fails closed if persisted JSON is damaged.
-            return [];
-        }
+        return DeserializeStoredRoles(value);
     }
 
     public async Task<IReadOnlyList<string>> ResolvePermissionsAsync(string? role, CancellationToken cancellationToken = default)
@@ -40,10 +27,24 @@ public sealed class ApplicationRoleStore(AppDbContext dbContext)
         var builtIn = ApplicationPermissionCatalog.ForRole(role);
         if (builtIn.Count > 0 || IsBuiltInRole(role)) return builtIn;
 
+        var value = await dbContext.ApplicationSettings
+            .AsNoTracking()
+            .Where(x => x.Key == SettingsKey)
+            .Select(x => x.Value)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return ResolvePermissions(role, value);
+    }
+
+    public static IReadOnlyList<string> ResolvePermissions(string? role, string? storedRolesJson)
+    {
+        var builtIn = ApplicationPermissionCatalog.ForRole(role);
+        if (builtIn.Count > 0 || IsBuiltInRole(role)) return builtIn;
+
         var normalized = Normalize(role);
         if (normalized.Length == 0) return [];
 
-        var customRole = (await GetAsync(cancellationToken))
+        var customRole = DeserializeStoredRoles(storedRolesJson)
             .FirstOrDefault(x => x.IsActive && Normalize(x.Name) == normalized);
         if (customRole is null) return [];
 
@@ -109,6 +110,24 @@ public sealed class ApplicationRoleStore(AppDbContext dbContext)
         string.Equals(role?.Trim(), "User", StringComparison.OrdinalIgnoreCase);
 
     public static string Normalize(string? role) => (role ?? string.Empty).Trim().ToUpperInvariant();
+
+    private static IReadOnlyList<CustomApplicationRole> DeserializeStoredRoles(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+
+        try
+        {
+            return (JsonSerializer.Deserialize<List<CustomApplicationRole>>(value, JsonOptions) ?? [])
+                .Where(IsValidStoredRole)
+                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (JsonException)
+        {
+            // Security configuration fails closed if persisted JSON is damaged.
+            return [];
+        }
+    }
 
     private static bool IsValidStoredRole(CustomApplicationRole role) =>
         role is not null &&
