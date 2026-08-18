@@ -1,0 +1,172 @@
+@page "/admin/security-audit"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
+@implements IDisposable
+@using AIWordPressManager.Persistence
+@inject AppDbContext DbContext
+@inject CurrentUserContext CurrentUser
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "سجل التدقيق الأمني" : "Security Audit Trail")</PageTitle>
+
+<div class="settings-page" dir="@(L.IsArabic ? "rtl" : "ltr")">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">SECURITY AUDIT</span>
+            <h2>@(L.IsArabic ? "سجل التدقيق الأمني" : "Security audit trail")</h2>
+            <p>@(L.IsArabic
+                ? "راجع قرارات تسجيل الدخول وتغييرات الحسابات والأدوار والجلسات من سجل مركزي لا يخزن كلمات المرور أو مفاتيح API أو رموز المصادقة."
+                : "Review sign-in decisions and account, role, and session security changes in one central trail that never stores passwords, API keys, or authentication tokens.")</p>
+        </div>
+        <a class="button secondary" href="/settings">@(L.IsArabic ? "العودة للإعدادات" : "Back to settings")</a>
+    </section>
+
+    <section class="panel settings-section">
+        <header>
+            <div>
+                <span class="workspace-kicker">FILTERS</span>
+                <h2>@(L.IsArabic ? "تصفية الأحداث" : "Filter events")</h2>
+                <p>@(L.IsArabic ? "اعرض أحدث الأحداث حسب الفئة والنتيجة أو ابحث عن مستخدم أو هدف أو إجراء." : "Show the latest events by category and outcome, or search actor, target, or action text.")</p>
+            </div>
+        </header>
+
+        <div class="form-ux-grid">
+            <label>
+                <span>@(L.IsArabic ? "الفئة" : "Category")</span>
+                <select @bind="_category" aria-label="@(L.IsArabic ? "تصفية حسب فئة التدقيق" : "Filter audit category")">
+                    <option value="">@(L.IsArabic ? "كل الفئات" : "All categories")</option>
+                    <option value="Authentication">Authentication</option>
+                    <option value="Account">Account</option>
+                    <option value="Authorization">Authorization</option>
+                    <option value="Session">Session</option>
+                    <option value="Configuration">Configuration</option>
+                </select>
+            </label>
+            <label>
+                <span>@(L.IsArabic ? "النتيجة" : "Outcome")</span>
+                <select @bind="_outcome" aria-label="@(L.IsArabic ? "تصفية حسب نتيجة التدقيق" : "Filter audit outcome")">
+                    <option value="">@(L.IsArabic ? "كل النتائج" : "All outcomes")</option>
+                    <option value="Succeeded">Succeeded</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Blocked">Blocked</option>
+                </select>
+            </label>
+            <label>
+                <span>@(L.IsArabic ? "بحث" : "Search")</span>
+                <input @bind="_search" @bind:event="oninput"
+                       placeholder="@(L.IsArabic ? "مستخدم، هدف أو إجراء..." : "Actor, target, or action...")"
+                       aria-label="@(L.IsArabic ? "البحث في سجل التدقيق الأمني" : "Search security audit trail")" />
+            </label>
+        </div>
+        <div class="sessions-actions">
+            <button type="button" class="button primary" disabled="@_loading" @onclick="LoadAsync">@(L.IsArabic ? "تطبيق" : "Apply")</button>
+            <button type="button" class="button secondary" disabled="@_loading" @onclick="ClearAsync">@(L.IsArabic ? "مسح" : "Clear")</button>
+        </div>
+    </section>
+
+    <section class="panel settings-section">
+        <header>
+            <div>
+                <span class="workspace-kicker">LATEST EVENTS</span>
+                <h2>@(L.IsArabic ? "أحدث الأحداث الأمنية" : "Latest security events")</h2>
+                <p>@(L.IsArabic ? $"يعرض حتى {_take} حدثًا حديثًا." : $"Showing up to {_take} recent events.")</p>
+            </div>
+            <span class="settings-badge">@_events.Count</span>
+        </header>
+
+        @if (_loading)
+        {
+            <p role="status">@(L.IsArabic ? "جارٍ تحميل سجل التدقيق..." : "Loading security audit trail...")</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="settings-note" role="alert"><span>!</span><p>@_error</p></div>
+        }
+        else if (_events.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد أحداث مطابقة." : "No matching security events.")</p>
+        }
+        else
+        {
+            <div class="sessions-list">
+                @foreach (var item in _events)
+                {
+                    <article class="settings-subsection" @key="item.EventId">
+                        <div class="sessions-row">
+                            <div>
+                                <strong>@item.Action</strong>
+                                <small>@item.Category · @FormatWhen(item.OccurredAtUtc)</small>
+                            </div>
+                            <span class="settings-badge @OutcomeTone(item.Outcome)">@item.Outcome</span>
+                        </div>
+                        <div class="sessions-meta">
+                            <span><b>@(L.IsArabic ? "المنفذ" : "Actor"):</b> @ActorText(item)</span>
+                            <span><b>@(L.IsArabic ? "الهدف" : "Target"):</b> @TargetText(item)</span>
+                            <span><b>IP:</b> @(string.IsNullOrWhiteSpace(item.IpAddress) ? "—" : item.IpAddress)</span>
+                            <span><b>@(L.IsArabic ? "التتبع" : "Correlation"):</b> @(string.IsNullOrWhiteSpace(item.CorrelationId) ? "—" : item.CorrelationId)</span>
+                        </div>
+                        @if (item.Metadata.Count > 0)
+                        {
+                            <small>@MetadataText(item)</small>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private readonly List<SecurityAuditRecord> _events = new();
+    private string _category = string.Empty;
+    private string _outcome = string.Empty;
+    private string _search = string.Empty;
+    private string _error = string.Empty;
+    private bool _loading = true;
+    private int _take = 200;
+
+    private ApplicationSecurityAuditService Service => new(DbContext, CurrentUser, HttpContextAccessor);
+
+    protected override void OnInitialized() => L.Changed += LanguageChanged;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = string.Empty;
+        try
+        {
+            _events.Clear();
+            _events.AddRange(await Service.ListAsync(new SecurityAuditQuery(
+                Category: EmptyToNull(_category),
+                Outcome: EmptyToNull(_outcome),
+                Search: EmptyToNull(_search),
+                Take: _take)));
+        }
+        catch (Exception ex)
+        {
+            _error = L.IsArabic ? $"تعذر قراءة سجل التدقيق: {ex.Message}" : $"Could not read security audit trail: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ClearAsync()
+    {
+        _category = _outcome = _search = string.Empty;
+        await LoadAsync();
+    }
+
+    private static string? EmptyToNull(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string FormatWhen(DateTime value) => value.ToLocalTime().ToString("g");
+    private static string OutcomeTone(string outcome) => outcome switch { "Succeeded" => "success", "Failed" => "danger", "Blocked" => "warning", _ => string.Empty };
+    private string ActorText(SecurityAuditRecord item) => string.IsNullOrWhiteSpace(item.ActorUserName) ? (L.IsArabic ? "النظام / غير معروف" : "System / unknown") : item.ActorUserName;
+    private static string TargetText(SecurityAuditRecord item) => string.IsNullOrWhiteSpace(item.TargetDisplayName) ? (string.IsNullOrWhiteSpace(item.TargetId) ? item.TargetType : $"{item.TargetType}: {item.TargetId}") : $"{item.TargetType}: {item.TargetDisplayName}";
+    private static string MetadataText(SecurityAuditRecord item) => string.Join(" · ", item.Metadata.Select(pair => $"{pair.Key}={pair.Value}"));
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
