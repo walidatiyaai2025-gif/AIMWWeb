@@ -104,6 +104,40 @@ public sealed class SubscriptionLifecyclePolicyTests
         (await fixture.Subscriptions.GetCurrentAsync(owner.Id))!.Status.Should().Be(AccountSubscriptionStatus.Suspended);
     }
 
+    [Fact]
+    public async Task Batch_Skips_NonDue_Rows_So_Bounded_Work_Cannot_Starve_Due_Subscriptions()
+    {
+        await using var fixture = await Fixture.CreateAsync(graceDays: 0);
+
+        for (var i = 0; i < 3; i++)
+        {
+            var owner = await fixture.AddUserAsync($"healthy-owner-{i}");
+            var plan = await fixture.AddPlanAsync($"healthy-plan-{i}", 0);
+            await fixture.Subscriptions.CreateAsync(new(
+                owner.Id,
+                plan.Id,
+                AccountSubscriptionStatus.Active,
+                CurrentPeriodStartUtc: Now.AddDays(-1),
+                CurrentPeriodEndsAtUtc: Now.AddDays(1)));
+        }
+
+        var dueOwner = await fixture.AddUserAsync("due-owner");
+        var duePlan = await fixture.AddPlanAsync("due-plan", 0);
+        var due = await fixture.Subscriptions.CreateAsync(new(
+            dueOwner.Id,
+            duePlan.Id,
+            AccountSubscriptionStatus.PastDue));
+
+        var result = await fixture.Policy.EvaluateBatchAsync(Now, take: 1);
+
+        result.Scanned.Should().Be(1);
+        result.Changed.Should().Be(1);
+        (await fixture.Context.AccountSubscriptions.AsNoTracking().SingleAsync(x => x.Id == due.Id)).Status
+            .Should().Be(AccountSubscriptionStatus.Suspended);
+        (await fixture.Context.AccountSubscriptions.AsNoTracking().CountAsync(x => x.Status == AccountSubscriptionStatus.Active))
+            .Should().Be(3);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private Fixture(SqliteConnection connection, AppDbContext context, int graceDays)
