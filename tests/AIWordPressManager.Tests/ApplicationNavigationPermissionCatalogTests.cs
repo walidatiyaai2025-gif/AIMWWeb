@@ -13,7 +13,9 @@ public sealed class ApplicationNavigationPermissionCatalogTests
     [InlineData("/content", ApplicationPermissionCatalog.ContentView)]
     [InlineData("/content/editor/post/42", ApplicationPermissionCatalog.ContentView)]
     [InlineData("/module/media", ApplicationPermissionCatalog.ContentView)]
+    [InlineData("/execution-center", ApplicationPermissionCatalog.OperationsView)]
     [InlineData("/module/execution", ApplicationPermissionCatalog.OperationsView)]
+    [InlineData("/approvals", ApplicationPermissionCatalog.ApprovalsView)]
     [InlineData("/module/approvals", ApplicationPermissionCatalog.ApprovalsView)]
     public void Protected_navigation_paths_map_to_expected_permission(string path, string permission)
     {
@@ -46,8 +48,8 @@ public sealed class ApplicationNavigationPermissionCatalogTests
         ApplicationNavigationPermissionCatalog.CanAccess(principal, "/module/posts").Should().BeTrue();
         ApplicationNavigationPermissionCatalog.CanAccess(principal, "/module/media").Should().BeTrue();
         ApplicationNavigationPermissionCatalog.CanAccess(principal, "/sites").Should().BeFalse();
-        ApplicationNavigationPermissionCatalog.CanAccess(principal, "/module/execution").Should().BeFalse();
-        ApplicationNavigationPermissionCatalog.CanAccess(principal, "/module/approvals").Should().BeFalse();
+        ApplicationNavigationPermissionCatalog.CanAccess(principal, "/execution-center").Should().BeFalse();
+        ApplicationNavigationPermissionCatalog.CanAccess(principal, "/approvals").Should().BeFalse();
     }
 
     [Fact]
