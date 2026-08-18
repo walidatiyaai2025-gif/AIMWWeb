@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IJobCancellationRegistry, JobCancellationRegistry>();
         services.AddScoped<IPaymentGatewayRegistry, PaymentGatewayRegistry>();
+        services.AddHttpClient<PayPalConfigurationDiagnostics>(client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddScoped<IPayPalConfigurationDiagnostics>(sp => sp.GetRequiredService<PayPalConfigurationDiagnostics>());
 
         services.AddSingleton<VersionedAIPromptRegistry>();
         services.AddSingleton<IAIPromptRegistry>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
