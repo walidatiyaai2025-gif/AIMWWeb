@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - shard: smoke-public
-            filter: FullyQualifiedName~Blazor_bootstrap_asset_is_available_before_authentication|FullyQualifiedName~Public_routes_render_without_server_or_browser_failure|FullyQualifiedName~Keyboard_focus_enters_the_authenticated_application
+            filter: FullyQualifiedName~Blazor_bootstrap_asset_is_available_before_authentication|FullyQualifiedName~Public_routes_render_without_server_or_browser_failure|FullyQualifiedName~Keyboard_focus_enters_the_authenticated_application|FullyQualifiedName~Content_view_only_role_can_read_owned_content_without_mutation_affordances
           - shard: authenticated-routes
             filter: FullyQualifiedName~Authenticated_routes_render_and_pass_accessibility_smoke
           - shard: visual-breakpoints
