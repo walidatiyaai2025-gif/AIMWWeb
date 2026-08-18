@@ -31,17 +31,17 @@
                 HeadingLevel="3">
         <ChildContent>
             <div class="grid-2">
-                <div><label>SMTP Host</label><input class="form-control" @bind="_profile.Host" maxlength="255" disabled="@_busy" /></div>
-                <div><label>SMTP Port</label><input class="form-control" type="number" min="1" max="65535" @bind="_profile.Port" disabled="@_busy" /></div>
-                <div><label>@(L.IsArabic ? "اسم المستخدم" : "Username")</label><input class="form-control" @bind="_profile.UserName" maxlength="320" disabled="@_busy" /></div>
+                <div><label>SMTP Host</label><input class="form-control" aria-label="SMTP Host" @bind="_profile.Host" maxlength="255" disabled="@_busy" /></div>
+                <div><label>SMTP Port</label><input class="form-control" aria-label="SMTP Port" type="number" min="1" max="65535" @bind="_profile.Port" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "اسم المستخدم" : "Username")</label><input class="form-control" aria-label="@(L.IsArabic ? "اسم مستخدم SMTP" : "SMTP username")" @bind="_profile.UserName" maxlength="320" disabled="@_busy" /></div>
                 <div>
                     <label>@(L.IsArabic ? "كلمة المرور" : "Password")</label>
-                    <input class="form-control" type="password" @bind="_profile.Password" maxlength="2048" disabled="@_busy" autocomplete="new-password" />
+                    <input class="form-control" aria-label="@(L.IsArabic ? "كلمة مرور SMTP" : "SMTP password")" type="password" @bind="_profile.Password" maxlength="2048" disabled="@_busy" autocomplete="new-password" />
                     <small>@(_savedProfile.HasSavedPassword ? (L.IsArabic ? "يوجد سر محفوظ ومشفر. اترك الحقل فارغًا للاحتفاظ به." : "An encrypted password is saved. Leave this blank to keep it.") : (L.IsArabic ? "لا يوجد سر محفوظ." : "No password is currently stored."))</small>
                 </div>
-                <div><label>@(L.IsArabic ? "بريد المرسل" : "From address")</label><input class="form-control" type="email" @bind="_profile.FromAddress" maxlength="320" disabled="@_busy" /></div>
-                <div><label>@(L.IsArabic ? "اسم المرسل" : "From name")</label><input class="form-control" @bind="_profile.FromName" maxlength="160" disabled="@_busy" /></div>
-                <div><label>@(L.IsArabic ? "الرد إلى" : "Reply-to address")</label><input class="form-control" type="email" @bind="_profile.ReplyToAddress" maxlength="320" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "بريد المرسل" : "From address")</label><input class="form-control" aria-label="@(L.IsArabic ? "بريد المرسل" : "From address")" type="email" @bind="_profile.FromAddress" maxlength="320" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "اسم المرسل" : "From name")</label><input class="form-control" aria-label="@(L.IsArabic ? "اسم المرسل" : "From name")" @bind="_profile.FromName" maxlength="160" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "الرد إلى" : "Reply-to address")</label><input class="form-control" aria-label="@(L.IsArabic ? "عنوان الرد إلى" : "Reply-to address")" type="email" @bind="_profile.ReplyToAddress" maxlength="320" disabled="@_busy" /></div>
             </div>
             <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.EnableSsl" disabled="@_busy" /> TLS / SSL</label>
             <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_profile.IsEnabled" disabled="@_busy" /> @(L.IsArabic ? "تفعيل الإرسال العام للحساب" : "Enable account outbound email")</label>
@@ -65,8 +65,8 @@
         </Header>
         <ChildContent>
             <div class="grid-2">
-                <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
-                <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+                <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" aria-label="@(L.IsArabic ? "بريد المستلم الجديد" : "New recipient email address")" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+                <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" aria-label="@(L.IsArabic ? "اسم المستلم الجديد أو الوصف" : "New recipient display name")" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
             </div>
             <AppButton Class="mt-2" Variant="primary" Icon="＋" Text="@(L.IsArabic ? "إضافة البريد" : "Add email")" Disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))" OnClick="AddRecipientClickedAsync" />
         </ChildContent>
@@ -96,7 +96,7 @@
                             <ChildContent>
                                 @if (_editingId == item.Id)
                                 {
-                                    <div class="grid-2"><input class="form-control" type="email" @bind="_editEmail" maxlength="320" /><input class="form-control" @bind="_editDisplayName" maxlength="120" /></div>
+                                    <div class="grid-2"><input class="form-control" aria-label="@(L.IsArabic ? "تعديل بريد المستلم" : "Edit recipient email address")" type="email" @bind="_editEmail" maxlength="320" /><input class="form-control" aria-label="@(L.IsArabic ? "تعديل اسم المستلم أو الوصف" : "Edit recipient display name")" @bind="_editDisplayName" maxlength="120" /></div>
                                     <label class="d-flex gap-2 align-items-center mt-2"><input type="checkbox" @bind="_editEnabled" /> @(L.IsArabic ? "مفعل" : "Enabled")</label>
                                     <div class="app-action-cluster mt-2"><AppButton Variant="primary" Text="@(L.IsArabic ? "حفظ" : "Save")" Disabled="@_busy" OnClick="SaveEditClickedAsync" /><AppButton Text="@(L.IsArabic ? "إلغاء" : "Cancel")" Disabled="@_busy" OnClick="CancelEditClicked" /></div>
                                 }
