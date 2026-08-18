@@ -6,7 +6,8 @@ namespace AIWordPressManager.Web.Services;
 public sealed class WordPressUsersWebService(
     IWordPressApiClient apiClient,
     ExecutionOperationTracker executionTracker,
-    ILogger<WordPressUsersWebService> logger)
+    ILogger<WordPressUsersWebService> logger,
+    CurrentUserContext currentUser)
 {
     public async Task<UserPageResult> GetAsync(
         Guid siteId,
@@ -95,6 +96,8 @@ public sealed class WordPressUsersWebService(
         WordPressUserEditModel model,
         CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (string.IsNullOrWhiteSpace(model.Username))
             return Task.FromResult(new UserOperationResult(false, "اسم المستخدم مطلوب."));
         if (string.IsNullOrWhiteSpace(model.Email))
@@ -135,6 +138,8 @@ public sealed class WordPressUsersWebService(
         WordPressUserEditModel model,
         CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (userId <= 0)
             return Task.FromResult(new UserOperationResult(false, "رقم المستخدم غير صحيح."));
         if (string.IsNullOrWhiteSpace(model.Email))
@@ -173,6 +178,8 @@ public sealed class WordPressUsersWebService(
         int userId,
         CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (userId <= 0)
             return Task.FromResult(new UserOperationResult(false, "رقم المستخدم غير صحيح."));
 
@@ -202,6 +209,8 @@ public sealed class WordPressUsersWebService(
         int userId,
         CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (userId <= 0)
             return Task.FromResult(new UserOperationResult(false, "رقم المستخدم غير صحيح."));
 
