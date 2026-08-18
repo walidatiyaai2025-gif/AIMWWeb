@@ -1,8 +1,30 @@
+const appLanguageCookie = 'aiwp-language';
+
+function normalizeAppLanguage(value) {
+  return value === 'ar' ? 'ar' : 'en';
+}
+
+function readAppLanguageCookie() {
+  const prefix = `${appLanguageCookie}=`;
+  const match = document.cookie
+    .split(';')
+    .map(value => value.trim())
+    .find(value => value.startsWith(prefix));
+  return match ? match.substring(prefix.length) : null;
+}
+
+function persistAppLanguage(value) {
+  const culture = normalizeAppLanguage(value);
+  localStorage.setItem(appLanguageCookie, culture);
+  document.cookie = `${appLanguageCookie}=${culture};path=/;SameSite=Lax`;
+  return culture;
+}
+
 window.appLanguage = {
-  get: () => localStorage.getItem('aiwp-language') || 'en',
-  set: (value) => localStorage.setItem('aiwp-language', value === 'ar' ? 'ar' : 'en'),
+  get: () => normalizeAppLanguage(localStorage.getItem(appLanguageCookie) || readAppLanguageCookie()),
+  set: value => persistAppLanguage(value),
   apply: (lang, dir) => {
-    const culture = lang === 'ar' ? 'ar' : 'en';
+    const culture = normalizeAppLanguage(lang);
     const direction = culture === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = culture;
     document.documentElement.dir = direction;
@@ -20,19 +42,10 @@ window.appLanguage = {
     }
   },
   toggleAndReload: () => {
-    const current = localStorage.getItem('aiwp-language') || 'en';
+    const current = window.appLanguage.get();
     const next = current === 'ar' ? 'en' : 'ar';
-    const direction = next === 'ar' ? 'rtl' : 'ltr';
-    localStorage.setItem('aiwp-language', next);
-    document.documentElement.lang = next;
-    document.documentElement.dir = direction;
-    document.documentElement.dataset.appLanguage = next;
-    document.documentElement.dataset.appDirection = direction;
-    if (document.body) {
-      document.body.dir = direction;
-      document.body.dataset.appLanguage = next;
-      document.body.dataset.appDirection = direction;
-    }
+    persistAppLanguage(next);
+    window.appLanguage.apply(next);
     window.location.reload();
   }
 };
