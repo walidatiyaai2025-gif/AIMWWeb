@@ -1,0 +1,114 @@
+@page "/settings/sessions"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using AIWordPressManager.Persistence
+@inject AppDbContext DbContext
+@inject CurrentUserContext CurrentUser
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "جلساتي" : "My Sessions")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">MY SESSIONS</span>
+            <h1>@(L.IsArabic ? "جلسات تسجيل الدخول" : "Sign-in sessions")</h1>
+            <p>@(L.IsArabic
+                ? "راجع الأجهزة التي ما زالت تملك جلسة نشطة لحسابك وأنهِ أي جلسة لا تتعرف عليها."
+                : "Review devices that still have an active session for your account and end any session you do not recognize.")</p>
+        </div>
+        @if (CurrentUser.HasPermission(ApplicationPermissionCatalog.UsersManage))
+        {
+            <a class="button secondary" href="/admin/sessions">@(L.IsArabic ? "إدارة كل الجلسات" : "Manage all sessions")</a>
+        }
+    </section>
+
+    <section class="panel settings-section">
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="settings-note" role="status"><span>ⓘ</span><p>@_message</p></div>
+        }
+
+        @if (_loading)
+        {
+            <p role="status">@(L.IsArabic ? "جارٍ تحميل جلساتك..." : "Loading your sessions...")</p>
+        }
+        else if (_sessions.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد جلسات نشطة." : "No active sessions were found.")</p>
+        }
+        else
+        {
+            @foreach (var session in _sessions)
+            {
+                <article class="settings-subsection" @key="session.SessionId">
+                    <div>
+                        <strong>@(session.IsCurrent ? (L.IsArabic ? "هذا الجهاز" : "This device") : (L.IsArabic ? "جلسة أخرى" : "Another session"))</strong>
+                        <small>@FormatWhen(session.LastSeenAtUtc) · @(session.Persistent ? (L.IsArabic ? "متذكر" : "Remembered") : (L.IsArabic ? "جلسة المتصفح" : "Browser session"))</small>
+                    </div>
+                    <p>@(string.IsNullOrWhiteSpace(session.UserAgent) ? "—" : session.UserAgent)</p>
+                    <small>IP: @(string.IsNullOrWhiteSpace(session.IpAddress) ? "—" : session.IpAddress)</small>
+                    <div class="sessions-actions">
+                        @if (session.IsCurrent)
+                        {
+                            <span class="settings-badge success">@(L.IsArabic ? "الجلسة الحالية" : "Current session")</span>
+                        }
+                        else
+                        {
+                            <button class="button danger" disabled="@_busy" @onclick="() => EndAsync(session.SessionId)">
+                                @(L.IsArabic ? "إنهاء" : "End")
+                            </button>
+                        }
+                    </div>
+                </article>
+            }
+        }
+    </section>
+</div>
+
+@code {
+    private readonly List<ApplicationSessionSummary> _sessions = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string _message = string.Empty;
+
+    private ApplicationSessionAdministrationService Service =>
+        new(new ApplicationSessionStore(DbContext), CurrentUser, HttpContextAccessor);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sessions.Clear();
+            _sessions.AddRange(await Service.ListMineAsync());
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task EndAsync(Guid sessionId)
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            var result = await Service.EndMySessionAsync(sessionId, "Ended by account owner.");
+            _message = result.IsSuccess
+                ? (L.IsArabic ? "تم إنهاء الجلسة." : "Session ended.")
+                : result.Message;
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string FormatWhen(DateTime value) => value.ToLocalTime().ToString("g");
+}

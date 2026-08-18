@@ -2,7 +2,7 @@
   "product": "AI WordPress Manager",
   "branch": "main",
   "baselineVersion": "155.94.0",
-  "updatedAtUtc": "2026-08-18T12:16:00Z",
+  "updatedAtUtc": "2026-08-18T13:43:30Z",
   "statusDefinitions": {
     "completed": "Implemented and accepted; build/runtime verification may be identified in notes.",
     "in_progress": "Partially implemented or currently being completed.",
@@ -46,7 +46,7 @@
     { "id": "IDN-008", "phase": 2, "area": "Security", "nameAr": "إدارة المستخدمين داخل التطبيق", "nameEn": "Application user administration", "status": "completed", "priority": "critical", "version": "155.105.0", "notes": "Administrator-only application-user workspace supports list/search, create/edit, enable/disable, unlock, password reset, and recent login-audit review; service-level authorization, self-disable/self-demotion protection, last-active-administrator continuity, password hashing, bilingual RTL/LTR UI, and automated verification are included." },
     { "id": "IDN-009", "phase": 2, "area": "Security", "nameAr": "الأدوار والصلاحيات الدقيقة", "nameEn": "Roles and granular permissions", "status": "in_progress", "priority": "critical", "version": null, "notes": "Core permission engine is implemented: canonical permission catalog, server-derived permission claims, ASP.NET authorization policies, legacy-cookie role bridge, fail-closed unknown roles, and Users.View/Users.Manage enforcement are covered by automated tests. Broader module-by-module policy rollout and persisted custom role/grant management remain." },
     { "id": "IDN-010", "phase": 2, "area": "Security", "nameAr": "قفل الحساب ومحاولات الدخول", "nameEn": "Account lockout and failed sign-in tracking", "status": "completed", "priority": "high", "version": "155.103.0", "notes": "Five failed sign-ins lock the account for 15 minutes; active and expired lockout behavior, post-expiry attempt reset, successful reset, and existing login audit tracking are covered by automated verification." },
-    { "id": "IDN-011", "phase": 2, "area": "Security", "nameAr": "إدارة الجلسات وتسجيل الخروج من كل الأجهزة", "nameEn": "Session management and sign-out all", "status": "planned", "priority": "high", "version": null, "notes": "Session inventory and revocation are pending." },
+    { "id": "IDN-011", "phase": 2, "area": "Security", "nameAr": "إدارة الجلسات وتسجيل الخروج من كل الأجهزة", "nameEn": "Session management and sign-out all", "status": "completed", "priority": "high", "version": null, "notes": "Server-backed session IDs, fail-closed authenticated-request validation, expiry and revocation, stale account/role/permission claim rejection, logout and security-change revocation, administrator inventory/bulk revocation, self-service session visibility/revocation, and provider-neutral persistence are implemented. PR #107 was validated after merging current main with 454/454 automated tests, zero build warnings/errors, Build success, and all four UX regression shards green." },
     { "id": "IDN-012", "phase": 2, "area": "Security", "nameAr": "المصادقة متعددة العوامل", "nameEn": "Multi-factor authentication", "status": "planned", "priority": "medium", "version": null, "notes": "Future security enhancement." },
 
     { "id": "SIT-001", "phase": 3, "area": "Sites", "nameAr": "إضافة وتعديل وتعطيل وحذف الموقع", "nameEn": "Add, edit, disable, and remove sites", "status": "completed", "priority": "critical", "version": "existing", "notes": "Site lifecycle is owner-scoped." },

@@ -7,9 +7,11 @@ namespace AIWordPressManager.Web.Services;
 public sealed class ApplicationRoleAdministrationService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
-    ApplicationRoleStore? roleStore = null)
+    ApplicationRoleStore? roleStore = null,
+    ApplicationSessionStore? sessionStore = null)
 {
     private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
+    private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
 
     public async Task<IReadOnlyList<CustomApplicationRole>> ListAsync(CancellationToken cancellationToken = default)
     {
@@ -53,6 +55,8 @@ public sealed class ApplicationRoleAdministrationService(
         else roles.Add(updated);
 
         await _roleStore.SaveAsync(roles, cancellationToken);
+        if (existing is not null && !PermissionSetsEqual(existing.Permissions, updated.Permissions))
+            await _sessionStore.RevokeRoleAsync(updated.Name, "Role permissions changed.", cancellationToken);
         return RoleAdministrationResult.Succeeded(updated.Name);
     }
 
@@ -76,10 +80,16 @@ public sealed class ApplicationRoleAdministrationService(
                 return RoleAdministrationResult.Failed("Reassign active users before disabling this role.");
         }
 
+        if (role.IsActive == isActive) return RoleAdministrationResult.Succeeded(role.Name);
         roles[index] = role with { IsActive = isActive };
         await _roleStore.SaveAsync(roles, cancellationToken);
+        await _sessionStore.RevokeRoleAsync(role.Name, isActive ? "Role reactivated." : "Role disabled.", cancellationToken);
         return RoleAdministrationResult.Succeeded(role.Name);
     }
+
+    private static bool PermissionSetsEqual(IReadOnlyList<string> left, IReadOnlyList<string> right) =>
+        left.OrderBy(value => value, StringComparer.Ordinal)
+            .SequenceEqual(right.OrderBy(value => value, StringComparer.Ordinal), StringComparer.Ordinal);
 
     private static string? Validate(
         string name,

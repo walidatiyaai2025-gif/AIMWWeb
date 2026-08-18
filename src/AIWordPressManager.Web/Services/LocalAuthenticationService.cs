@@ -11,12 +11,14 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class LocalAuthenticationService(
     AppDbContext dbContext,
-    ApplicationRoleStore? roleStore = null)
+    ApplicationRoleStore? roleStore = null,
+    ApplicationSessionStore? sessionStore = null)
 {
     public const string FirstRunLandingPath = "/welcome";
 
     private readonly PasswordHasher<AuthUser> _hasher = new();
     private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
+    private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
 
     public Task<bool> HasAccountsAsync(CancellationToken cancellationToken = default) =>
         dbContext.AuthUsers.AsNoTracking().AnyAsync(cancellationToken);
@@ -159,22 +161,50 @@ public sealed class LocalAuthenticationService(
         AddAudit(context, user.UserName, true, "Success", now);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        ApplicationSessionRecord session;
+        try
+        {
+            session = await _sessionStore.CreateAsync(
+                user.Id,
+                user.UserName,
+                resolvedRole,
+                context.Connection.RemoteIpAddress?.ToString(),
+                context.Request.Headers.UserAgent.ToString(),
+                rememberMe,
+                cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            AddAudit(context, user.UserName, false, "Session registry unavailable", DateTime.UtcNow);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return LoginResult.Failed("Secure session storage is unavailable. Contact an administrator.");
+        }
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.UserName),
-            new(ClaimTypes.Role, resolvedRole)
+            new(ClaimTypes.Role, resolvedRole),
+            new(ApplicationSessionStore.SessionIdClaimType, session.SessionId.ToString("D"))
         };
         claims.AddRange((await _roleStore.ResolvePermissionsAsync(resolvedRole, cancellationToken))
             .Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
-        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
+        try
         {
-            IsPersistent = rememberMe,
-            AllowRefresh = true,
-            ExpiresUtc = rememberMe ? DateTimeOffset.UtcNow.AddDays(14) : null
-        });
+            await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
+            {
+                IsPersistent = rememberMe,
+                AllowRefresh = true,
+                ExpiresUtc = rememberMe ? DateTimeOffset.UtcNow.AddDays(14) : null
+            });
+        }
+        catch
+        {
+            await _sessionStore.RevokeAsync(session.SessionId, "Cookie sign-in failed.", cancellationToken);
+            throw;
+        }
 
         var hasOwnedSites = await dbContext.Sites
             .AsNoTracking()
@@ -238,6 +268,9 @@ public sealed class LocalAuthenticationService(
     {
         dbContext.LoginAudits.Add(new LoginAudit(userName, succeeded, reason, context.Connection.RemoteIpAddress?.ToString(), context.Request.Headers.UserAgent.ToString(), utcNow));
     }
+
+    private static string? ValidateRegistration(string userName, string password, string confirmPassword, bool unused = false) =>
+        ValidateRegistration(userName, password, confirmPassword);
 
     private static bool IsSafeLocalPath(string? path)
     {

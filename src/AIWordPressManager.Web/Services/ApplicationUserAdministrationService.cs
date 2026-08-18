@@ -9,10 +9,12 @@ namespace AIWordPressManager.Web.Services;
 public sealed class ApplicationUserAdministrationService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
-    ApplicationRoleStore? roleStore = null)
+    ApplicationRoleStore? roleStore = null,
+    ApplicationSessionStore? sessionStore = null)
 {
     private readonly PasswordHasher<AuthUser> _hasher = new();
     private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
+    private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
 
     public async Task<IReadOnlyList<ApplicationUserSummary>> ListAsync(
         string? search = null,
@@ -90,10 +92,13 @@ public sealed class ApplicationUserAdministrationService(
             if (!await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken)) return UserAdministrationResult.Failed("At least one active administrator must remain.");
         }
 
+        var roleChanged = !string.Equals(user.Role, resolvedRole, StringComparison.Ordinal);
         var now = DateTime.UtcNow;
         user.SetUserName(cleanUserName, now);
         user.SetRole(resolvedRole, now);
         await dbContext.SaveChangesAsync(cancellationToken);
+        if (roleChanged)
+            await _sessionStore.RevokeUserAsync(user.Id, "Account role changed.", cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
@@ -107,8 +112,11 @@ public sealed class ApplicationUserAdministrationService(
             !await HasAnotherActiveAdministratorAsync(user.Id, cancellationToken))
             return UserAdministrationResult.Failed("At least one active administrator must remain.");
 
+        var changed = user.IsActive != isActive;
         user.SetActive(isActive, DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
+        if (changed && !isActive)
+            await _sessionStore.RevokeUserAsync(user.Id, "Account disabled.", cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
@@ -135,6 +143,7 @@ public sealed class ApplicationUserAdministrationService(
         user.SetPasswordHash(_hasher.HashPassword(user, password), now);
         user.Unlock(now);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await _sessionStore.RevokeUserAsync(user.Id, "Password reset.", cancellationToken);
         return UserAdministrationResult.Succeeded(user.Id);
     }
 
