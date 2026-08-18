@@ -60,10 +60,10 @@
     <link rel="stylesheet" href="css/page-consistency.css" />
     <link rel="stylesheet" href="css/rtl-ltr-parity.css" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="@PageRenderMode" />
 </head>
 <body dir="ltr" data-app-language="en" data-app-direction="ltr">
-    <Routes @rendermode="InteractiveServer" />
+    <Routes @rendermode="@PageRenderMode" />
     <script src="js/app-language.js"></script>
     <script src="js/bidi-runtime.js"></script>
     <script src="js/command-palette.js"></script>
@@ -80,3 +80,13 @@
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private IComponentRenderMode? PageRenderMode =>
+        HttpContext.Request.Path.StartsWithSegments(PublicEntryRouting.LandingPath)
+            ? null
+            : InteractiveServer;
+}
