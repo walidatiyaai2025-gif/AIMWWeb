@@ -345,6 +345,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
         DateTime utcNow,
         CancellationToken cancellationToken)
     {
+        var concurrencyToken = Guid.NewGuid().ToByteArray();
         await dbContext.Set<PayPalWebhookProcessingState>()
             .Where(x => x.Id == stateId && x.ClaimToken == claimToken)
             .ExecuteUpdateAsync(setters => setters
@@ -355,7 +356,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
                 .SetProperty(x => x.NextAttemptAtUtc, (DateTime?)null)
                 .SetProperty(x => x.LastError, (string?)null)
                 .SetProperty(x => x.UpdatedAtUtc, utcNow)
-                .SetProperty(x => x.ConcurrencyToken, Guid.NewGuid().ToByteArray()),
+                .SetProperty(x => x.ConcurrencyToken, concurrencyToken),
                 cancellationToken);
     }
 
@@ -371,6 +372,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
         var delayMinutes = Math.Min(60, 1 << exponent);
         var nextAttempt = utcNow.AddMinutes(delayMinutes);
         var sanitizedError = $"PayPal subscription synchronization failed ({exception.GetType().Name}).";
+        var concurrencyToken = Guid.NewGuid().ToByteArray();
 
         await dbContext.Set<PayPalWebhookProcessingState>()
             .Where(x => x.Id == stateId && x.ClaimToken == claimToken)
@@ -381,7 +383,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
                 .SetProperty(x => x.ClaimUntilUtc, (DateTime?)null)
                 .SetProperty(x => x.LastError, sanitizedError)
                 .SetProperty(x => x.UpdatedAtUtc, utcNow)
-                .SetProperty(x => x.ConcurrencyToken, Guid.NewGuid().ToByteArray()),
+                .SetProperty(x => x.ConcurrencyToken, concurrencyToken),
                 cancellationToken);
     }
 
