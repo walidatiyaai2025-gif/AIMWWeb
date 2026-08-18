@@ -104,6 +104,9 @@ public static class DependencyInjection
         services.AddHostedService<SiteSyncFailureAlertWorker>();
         services.AddHostedService<ExecutionJobFailureAlertWorker>();
         services.AddScoped<ISubscriptionPlanCatalog, SubscriptionPlanCatalog>();
+        services.AddScoped<PlanEntitlementService>();
+        services.AddScoped<IPlanEntitlementCatalog>(sp => sp.GetRequiredService<PlanEntitlementService>());
+        services.AddScoped<IPlanEntitlementResolver>(sp => sp.GetRequiredService<PlanEntitlementService>());
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.
