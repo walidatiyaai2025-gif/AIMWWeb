@@ -135,7 +135,7 @@ else
                                               RequiredText="@(L.IsArabic ? "مطلوب" : "Required")"
                                               HelperText="@(L.IsArabic ? "أعد كتابة كلمة المرور نفسها." : "Re-enter the same password.")"
                                               Invalid="@HasEditorError(CreatePasswordMismatchMessage)"
-                                              ErrorText="@(HasEditorError(CreatePasswordMismatchMessage) ? CreatePasswordMismatchMismatchMessage : null)">
+                                              ErrorText="@(HasEditorError(CreatePasswordMismatchMessage) ? CreatePasswordMismatchMessage : null)">
                                     <input id="admin-user-confirm-password" type="password" @bind="_confirmPassword" autocomplete="new-password" disabled="@_working" aria-invalid="@HasEditorError(CreatePasswordMismatchMessage)" aria-describedby="admin-user-confirm-password-help admin-user-confirm-password-error" />
                                 </AppFormField>
                             }
