@@ -17,6 +17,7 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
     private const int MaxMetadataEntries = 24;
     private static readonly TimeSpan Retention = TimeSpan.FromDays(365);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly SemaphoreSlim MutationGate = new(1, 1);
     private static readonly string[] SensitiveMetadataFragments =
     [
         "password", "passwd", "pwd", "secret", "token", "apikey", "api-key", "api_key",
@@ -83,48 +84,56 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
 
     private async Task MutateAsync(Action<List<SecurityAuditRecord>> mutation, CancellationToken cancellationToken)
     {
-        for (var attempt = 0; attempt < 4; attempt++)
+        await MutationGate.WaitAsync(cancellationToken);
+        try
         {
-            var setting = await dbContext.ApplicationSettings.SingleOrDefaultAsync(x => x.Key == SettingsKey, cancellationToken);
-            List<SecurityAuditRecord> records;
-            try
+            for (var attempt = 0; attempt < 4; attempt++)
             {
-                records = Deserialize(setting?.Value).ToList();
-            }
-            catch (InvalidOperationException)
-            {
-                if (setting is not null) dbContext.Entry(setting).State = EntityState.Detached;
-                throw;
-            }
+                var setting = await dbContext.ApplicationSettings.SingleOrDefaultAsync(x => x.Key == SettingsKey, cancellationToken);
+                List<SecurityAuditRecord> records;
+                try
+                {
+                    records = Deserialize(setting?.Value).ToList();
+                }
+                catch (InvalidOperationException)
+                {
+                    if (setting is not null) dbContext.Entry(setting).State = EntityState.Detached;
+                    throw;
+                }
 
-            mutation(records);
-            Prune(records, DateTime.UtcNow);
-            var json = JsonSerializer.Serialize(new SecurityAuditRegistryDocument(CurrentVersion, records), JsonOptions);
-            var now = DateTime.UtcNow;
+                mutation(records);
+                Prune(records, DateTime.UtcNow);
+                var json = JsonSerializer.Serialize(new SecurityAuditRegistryDocument(CurrentVersion, records), JsonOptions);
+                var now = DateTime.UtcNow;
 
-            if (setting is null)
-            {
-                setting = new ApplicationSetting(SettingsKey, json, now);
-                dbContext.ApplicationSettings.Add(setting);
-            }
-            else
-            {
-                setting.SetValue(SettingsKey, json, now);
-            }
+                if (setting is null)
+                {
+                    setting = new ApplicationSetting(SettingsKey, json, now);
+                    dbContext.ApplicationSettings.Add(setting);
+                }
+                else
+                {
+                    setting.SetValue(SettingsKey, json, now);
+                }
 
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken);
-                return;
+                try
+                {
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                    return;
+                }
+                catch (DbUpdateConcurrencyException) when (attempt < 3)
+                {
+                    dbContext.Entry(setting).State = EntityState.Detached;
+                }
+                catch (DbUpdateException) when (attempt < 3)
+                {
+                    dbContext.Entry(setting).State = EntityState.Detached;
+                }
             }
-            catch (DbUpdateConcurrencyException) when (attempt < 3)
-            {
-                dbContext.Entry(setting).State = EntityState.Detached;
-            }
-            catch (DbUpdateException) when (attempt < 3)
-            {
-                dbContext.Entry(setting).State = EntityState.Detached;
-            }
+        }
+        finally
+        {
+            MutationGate.Release();
         }
 
         throw new DbUpdateConcurrencyException("Security audit registry changed concurrently. Retry the operation.");
@@ -161,17 +170,8 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
         record.Metadata.Count > MaxMetadataEntries ||
         record.Metadata.Any(pair => IsSensitiveMetadataKey(pair.Key));
 
-    private static SecurityAuditRecord Normalize(SecurityAuditEvent auditEvent, DateTime occurredAtUtc)
-    {
-        var metadata = (auditEvent.Metadata ?? new Dictionary<string, string>())
-            .Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && !IsSensitiveMetadataKey(pair.Key))
-            .Take(MaxMetadataEntries)
-            .ToDictionary(
-                pair => Clean(pair.Key, 64),
-                pair => Clean(pair.Value, 300),
-                StringComparer.OrdinalIgnoreCase);
-
-        return new SecurityAuditRecord(
+    private static SecurityAuditRecord Normalize(SecurityAuditEvent auditEvent, DateTime occurredAtUtc) =>
+        new(
             Guid.NewGuid(),
             occurredAtUtc,
             CleanRequired(auditEvent.Category, 64, nameof(auditEvent.Category)),
@@ -185,12 +185,30 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
             Clean(auditEvent.CorrelationId, 128),
             Clean(auditEvent.IpAddress, 64),
             Clean(auditEvent.UserAgent, 300),
-            metadata);
+            SanitizeMetadata(auditEvent.Metadata));
+
+    private static IReadOnlyDictionary<string, string> SanitizeMetadata(IReadOnlyDictionary<string, string>? metadata)
+    {
+        var sanitized = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (metadata is null) return sanitized;
+
+        foreach (var pair in metadata)
+        {
+            if (sanitized.Count >= MaxMetadataEntries) break;
+            if (string.IsNullOrWhiteSpace(pair.Key) || IsSensitiveMetadataKey(pair.Key)) continue;
+            var key = Clean(pair.Key, 64);
+            if (key.Length == 0 || sanitized.ContainsKey(key)) continue;
+            sanitized[key] = Clean(pair.Value, 300);
+        }
+
+        return sanitized;
     }
 
     private static bool IsSensitiveMetadataKey(string? key)
     {
-        var normalized = (key ?? string.Empty).Replace(" ", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+        var normalized = (key ?? string.Empty)
+            .Replace(" ", string.Empty, StringComparison.Ordinal)
+            .ToLowerInvariant();
         return SensitiveMetadataFragments.Any(fragment => normalized.Contains(fragment, StringComparison.Ordinal));
     }
 
