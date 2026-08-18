@@ -1,13 +1,46 @@
+@inject AppLanguageService L
+
 <TrackedErrorBoundary @ref="_errorBoundary">
     <ChildContent>
         <Router AppAssembly="typeof(Program).Assembly" OnNavigateAsync="HandleNavigationAsync">
             <Found Context="routeData">
-                <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+                <PermissionRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+                    <Authorizing>
+                        <div class="settings-page">
+                            <section class="panel settings-section" role="status">
+                                <h1>@(L.IsArabic ? "جارٍ التحقق من الصلاحيات" : "Checking access")</h1>
+                                <p>@(L.IsArabic ? "يتم التحقق من جلسة الدخول والصلاحيات المطلوبة لهذه الصفحة." : "Your sign-in session and the permissions required for this page are being verified.")</p>
+                            </section>
+                        </div>
+                    </Authorizing>
+                    <NotAuthorized>
+                        <div class="settings-page">
+                            <section class="panel settings-hero">
+                                <div>
+                                    <span class="workspace-kicker">ACCESS CONTROL</span>
+                                    <h1>@(L.IsArabic ? "غير مصرح بالوصول" : "Access denied")</h1>
+                                    <p>@(L.IsArabic ? "حسابك مسجل الدخول، لكنه لا يملك الصلاحية المطلوبة لفتح هذه الصفحة." : "Your account is signed in but doesn't have the permission required to open this page.")</p>
+                                </div>
+                                <span class="settings-badge danger">403</span>
+                            </section>
+                            <section class="panel settings-section" role="alert">
+                                <p>@(L.IsArabic ? "إذا تغير دورك أو صلاحياتك مؤخرًا، سجّل الدخول من جديد بعد أن يراجع مسؤول النظام التعيين." : "If your role or permissions changed recently, sign in again after an administrator reviews the assignment.")</p>
+                                <div class="d-flex gap-2 flex-wrap" style="margin-top:1rem">
+                                    <a class="btn primary" href="/">@(L.IsArabic ? "العودة للرئيسية" : "Back to dashboard")</a>
+                                    <a class="btn" href="/account/profile">@(L.IsArabic ? "فتح حسابي" : "Open my account")</a>
+                                </div>
+                            </section>
+                        </div>
+                    </NotAuthorized>
+                </PermissionRouteView>
                 <FocusOnNavigate RouteData="routeData" Selector="h1" />
             </Found>
             <NotFound>
                 <LayoutView Layout="typeof(MainLayout)">
-                    <div class="empty-state"><h1>الصفحة غير موجودة</h1><p>تحقق من الرابط أو ارجع إلى لوحة التحكم.</p></div>
+                    <div class="empty-state">
+                        <h1>@(L.IsArabic ? "الصفحة غير موجودة" : "Page not found")</h1>
+                        <p>@(L.IsArabic ? "تحقق من الرابط أو ارجع إلى لوحة التحكم." : "Check the address or return to the dashboard.")</p>
+                    </div>
                 </LayoutView>
             </NotFound>
         </Router>
@@ -18,21 +51,21 @@
                 <section class="panel settings-hero">
                     <div>
                         <span class="workspace-kicker">ERROR CENTER</span>
-                        <h1>حدث خطأ غير متوقع</h1>
-                        <p>تم تسجيل الخطأ تلقائيًا. انسخ رقم الخطأ ثم افتح شاشة السجلات للوصول إلى التفاصيل.</p>
+                        <h1>@(L.IsArabic ? "حدث خطأ غير متوقع" : "An unexpected error occurred")</h1>
+                        <p>@(L.IsArabic ? "تم تسجيل الخطأ تلقائيًا. انسخ رقم الخطأ ثم افتح شاشة السجلات للوصول إلى التفاصيل." : "The error was logged automatically. Copy the error ID and open Logs to inspect the details.")</p>
                     </div>
                     <span class="settings-badge danger">ERROR</span>
                 </section>
                 <section class="panel settings-section">
                     <div class="database-info-grid">
-                        <div><small>رقم الخطأ</small><strong>@(_errorBoundary?.ErrorId ?? "N/A")</strong></div>
-                        <div><small>رقم الارتباط</small><strong>@(_errorBoundary?.CorrelationId ?? "N/A")</strong></div>
-                        <div><small>الوقت</small><strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</strong></div>
+                        <div><small>@(L.IsArabic ? "رقم الخطأ" : "Error ID")</small><strong>@(_errorBoundary?.ErrorId ?? "N/A")</strong></div>
+                        <div><small>@(L.IsArabic ? "رقم الارتباط" : "Correlation ID")</small><strong>@(_errorBoundary?.CorrelationId ?? "N/A")</strong></div>
+                        <div><small>@(L.IsArabic ? "الوقت" : "Time")</small><strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</strong></div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap" style="margin-top:1rem">
-                        <button class="btn primary" @onclick="Recover">إعادة تحميل الشاشة</button>
-                        <a class="btn" href="/logs">فتح السجلات</a>
-                        <a class="btn" href="/">العودة للرئيسية</a>
+                        <button class="btn primary" @onclick="Recover">@(L.IsArabic ? "إعادة تحميل الشاشة" : "Reload page")</button>
+                        <a class="btn" href="/logs">@(L.IsArabic ? "فتح السجلات" : "Open logs")</a>
+                        <a class="btn" href="/">@(L.IsArabic ? "العودة للرئيسية" : "Back to dashboard")</a>
                     </div>
                 </section>
             </div>

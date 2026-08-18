@@ -10,6 +10,7 @@ using AIWordPressManager.Web.Localization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,7 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     ApplicationPermissionCatalog.AddPolicies(options);
 });
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorFrameworkAuthorizationResultHandler>();
 
 builder.Services.AddInfrastructure();
