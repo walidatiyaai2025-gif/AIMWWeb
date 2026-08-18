@@ -5,6 +5,7 @@
 @inject WordPressSyncWebService SyncService
 @inject WordPressMediaWebService MediaService
 @inject CurrentUserContext CurrentUser
+@inject IServiceProvider Services
 @inject AppLanguageService L
 
 <PageTitle>@L["MediaManager"]</PageTitle>
@@ -51,30 +52,80 @@ else
 
         @if (CanEditContent)
         {
-            <AppSection Eyebrow="@(L.IsArabic ? "رفع ملف" : "UPLOAD")"
-                        Title="@L["UploadMedia"]"
-                        Subtitle="@(L.IsArabic ? "ارفع صورًا ومستندات مسموحًا بها حتى 25 MB. يتم التحقق من الامتداد ونوع المحتوى قبل الإرسال." : "Upload approved images and documents up to 25 MB. Extension and content type are validated before WordPress receives the file.")">
+            <AppSection Eyebrow="@(L.IsArabic ? "رفع عدة ملفات" : "BATCH UPLOAD")"
+                        Title="@(L.IsArabic ? "رفع وسائط متعددة" : "Upload multiple media files")"
+                        Subtitle="@(L.IsArabic ? $"اختر حتى {WordPressMediaBatchUploadService.MaxBatchFiles} ملفًا. يتم التحقق من كل ملف قبل إرساله، ويمكن ضبط البيانات الوصفية لكل ملف بشكل مستقل." : $"Select up to {WordPressMediaBatchUploadService.MaxBatchFiles} files. Every file is validated before upload and has independent metadata.")">
                 <ChildContent>
                     <div class="form-grid">
-                        <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
-                        <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
-                        <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
-                        <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
+                        <label style="grid-column:1/-1">
+                            <span>@L["ChooseFile"]</span>
+                            <InputFile OnChange="OnFilesSelected" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.xls,.xlsx,.zip" />
+                        </label>
                     </div>
-                    @if (_selectedFile is not null)
+
+                    @if (_uploadDrafts.Count > 0)
                     {
-                        var validation = MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType);
-                        <div class="selected-file">
-                            <strong>@_selectedFile.Name</strong>
-                            <small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small>
-                            @if (!validation.IsValid)
+                        <div style="display:grid;gap:12px;margin-top:14px">
+                            @foreach (var draft in _uploadDrafts)
                             {
-                                <small style="display:block;color:var(--danger,#dc2626);margin-top:6px">@L.TranslateMessage(validation.Message)</small>
+                                <article @key="draft.Id" class="panel" style="padding:14px">
+                                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+                                        <div>
+                                            <strong>@draft.File.Name</strong>
+                                            <small class="block-muted">@FormatSize(draft.File.Size) — @draft.File.ContentType</small>
+                                        </div>
+                                        <AppBadge Tone="@(draft.Validation.IsValid ? "success" : "danger")" Text="@(draft.Validation.IsValid ? (L.IsArabic ? "صالح" : "Valid") : (L.IsArabic ? "مرفوض" : "Rejected"))" />
+                                    </div>
+                                    @if (!draft.Validation.IsValid)
+                                    {
+                                        <small style="display:block;color:var(--danger,#dc2626);margin-top:8px">@L.TranslateMessage(draft.Validation.Message)</small>
+                                    }
+                                    else
+                                    {
+                                        <div class="form-grid" style="margin-top:12px">
+                                            <label><span>@L["Title"]</span><InputText @bind-Value="draft.Title" disabled="@_busy" /></label>
+                                            <label><span>@L["AltText"]</span><InputText @bind-Value="draft.AltText" disabled="@_busy" /></label>
+                                            <label style="grid-column:1/-1"><span>@L["Caption"]</span><InputText @bind-Value="draft.Caption" disabled="@_busy" /></label>
+                                        </div>
+                                    }
+                                </article>
                             }
                         </div>
                     }
-                    <div class="actions">
-                        <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || !SelectedFileIsValid)" OnClick="UploadClickedAsync" />
+
+                    @if (_batchProgress is not null)
+                    {
+                        <div class="panel" style="padding:12px;margin-top:14px" role="status">
+                            <div style="display:flex;justify-content:space-between;gap:10px"><strong>@(L.IsArabic ? "تقدم الدفعة" : "Batch progress")</strong><span>@_batchProgress.Completed / @_batchProgress.Total (@_batchProgress.Percent%)</span></div>
+                            <progress value="@_batchProgress.Completed" max="@_batchProgress.Total" style="width:100%;margin-top:8px"></progress>
+                            <small class="block-muted">@_batchProgress.Item.OriginalFileName — @TranslateBatchState(_batchProgress.Item.State)</small>
+                        </div>
+                    }
+
+                    @if (_lastBatchResult is not null)
+                    {
+                        <div class="panel" style="padding:12px;margin-top:14px">
+                            <strong>@(L.IsArabic ? "نتيجة آخر دفعة" : "Last batch result")</strong>
+                            <p style="margin:6px 0 10px">@_lastBatchResult.Message</p>
+                            <div style="display:grid;gap:6px">
+                                @foreach (var item in _lastBatchResult.Items)
+                                {
+                                    <small><strong>@item.OriginalFileName</strong> — @TranslateBatchState(item.State)@(!string.IsNullOrWhiteSpace(item.Message) ? $": {L.TranslateMessage(item.Message)}" : string.Empty)</small>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="actions" style="margin-top:14px">
+                        <AppButton Variant="primary" Icon="⇧"
+                                   Text="@UploadButtonText"
+                                   Busy="@_busy"
+                                   Disabled="@(_busy || ValidUploadCount == 0)"
+                                   OnClick="UploadBatchClickedAsync" />
+                        @if (_uploadDrafts.Count > 0)
+                        {
+                            <AppButton Text="@L["Cancel"]" Disabled="@_busy" OnClick="ClearUploadSelectionClicked" />
+                        }
                     </div>
                 </ChildContent>
             </AppSection>
@@ -237,8 +288,10 @@ else
     [Parameter] public Guid SiteId { get; set; }
     private AIWordPressManager.Domain.Entities.Site? _site;
     private ContentExplorerView? _data;
-    private IBrowserFile? _selectedFile;
-    private string _uploadTitle = string.Empty, _altText = string.Empty, _caption = string.Empty;
+    private readonly List<MediaUploadDraft> _uploadDrafts = [];
+    private MediaBatchUploadProgress? _batchProgress;
+    private MediaBatchUploadResult? _lastBatchResult;
+    private WordPressMediaBatchUploadService? _batchUploadService;
     private string? _message;
     private bool _loading = true, _busy, _aiBusy, _isError;
 
@@ -248,16 +301,23 @@ else
     private int _pendingDeleteId;
     private string _pendingDeleteTitle = string.Empty;
 
+    private WordPressMediaBatchUploadService BatchUploadService =>
+        _batchUploadService ??= Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<WordPressMediaBatchUploadService>(Services);
     private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private IReadOnlyList<MediaExplorerItem> MediaItems => (_data?.Media ?? Array.Empty<MediaExplorerItem>()).ToList();
     private int ImageCount => MediaItems.Count(x => x.MediaType == "image");
     private int FileCount => MediaItems.Count - ImageCount;
+    private int ValidUploadCount => _uploadDrafts.Count(x => x.Validation.IsValid);
+    private string UploadButtonText => _busy
+        ? L["Uploading"]
+        : L.IsArabic
+            ? $"رفع {ValidUploadCount} ملف صالح"
+            : $"Upload {ValidUploadCount} valid file(s)";
     private string LatestModified => MediaItems.Where(x => x.ModifiedAtUtc.HasValue).OrderByDescending(x => x.ModifiedAtUtc).Select(x => FormatDate(x.ModifiedAtUtc)).FirstOrDefault() ?? L["Unknown"];
     private IReadOnlyList<string> CsvHeaders => L.IsArabic
         ? new[] { "المعرف", "العنوان", "نوع الوسائط", "نوع MIME", "الرابط", "آخر تعديل" }
         : new[] { "Id", "Title", "Media type", "MIME type", "URL", "Modified" };
     private string CsvFileName => $"media-{SiteId:N}-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
-    private bool SelectedFileIsValid => _selectedFile is not null && MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType).IsValid;
     private bool IsEditingImage => _editing is not null && (_editing.MediaType.Equals("image", StringComparison.OrdinalIgnoreCase) || _editing.MimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
     private int OptimizationScore => _editing is null ? 0
         : (!string.IsNullOrWhiteSpace(_editTitle) ? 25 : 0)
@@ -276,40 +336,97 @@ else
         _loading = false;
     }
 
-    private void OnFileSelected(InputFileChangeEventArgs args)
+    private void OnFilesSelected(InputFileChangeEventArgs args)
     {
-        if (!CanEditContent) return;
-        _selectedFile = args.File;
-        if (string.IsNullOrWhiteSpace(_uploadTitle)) _uploadTitle = Path.GetFileNameWithoutExtension(args.File.Name);
-        var validation = MediaUploadPolicy.Validate(args.File.Name, args.File.Size, args.File.ContentType);
-        _isError = !validation.IsValid;
-        _message = validation.IsValid ? null : L.TranslateMessage(validation.Message);
+        if (!CanEditContent || _busy) return;
+        try
+        {
+            var files = args.GetMultipleFiles(WordPressMediaBatchUploadService.MaxBatchFiles);
+            _uploadDrafts.Clear();
+            foreach (var file in files)
+            {
+                var validation = MediaUploadPolicy.Validate(file.Name, file.Size, file.ContentType);
+                _uploadDrafts.Add(new MediaUploadDraft(
+                    file,
+                    Path.GetFileNameWithoutExtension(file.Name),
+                    string.Empty,
+                    string.Empty,
+                    validation));
+            }
+
+            _lastBatchResult = null;
+            _batchProgress = null;
+            _isError = _uploadDrafts.Count > 0 && ValidUploadCount == 0;
+            _message = _isError
+                ? (L.IsArabic ? "كل الملفات المحددة مرفوضة بواسطة سياسة الرفع." : "Every selected file was rejected by the upload policy.")
+                : null;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _uploadDrafts.Clear();
+            _isError = true;
+            _message = L.IsArabic
+                ? $"اختر بحد أقصى {WordPressMediaBatchUploadService.MaxBatchFiles} ملفًا في الدفعة الواحدة."
+                : $"Select at most {WordPressMediaBatchUploadService.MaxBatchFiles} files per batch.";
+            _batchProgress = null;
+            _lastBatchResult = null;
+            _ = ex;
+        }
     }
 
-    private Task UploadClickedAsync(MouseEventArgs _) => UploadAsync();
+    private Task UploadBatchClickedAsync(MouseEventArgs _) => UploadBatchAsync();
+    private Task ClearUploadSelectionClicked(MouseEventArgs _)
+    {
+        if (!_busy) _uploadDrafts.Clear();
+        _batchProgress = null;
+        return Task.CompletedTask;
+    }
     private Task RefreshClickedAsync(MouseEventArgs _) => RefreshAsync();
     private Task SaveOptimizationClickedAsync(MouseEventArgs _) => SaveOptimizationAsync();
     private Task SuggestAltClickedAsync(MouseEventArgs _) => SuggestAltAsync();
     private Task CancelOptimizationClickedAsync(MouseEventArgs _) { ClearOptimization(); return Task.CompletedTask; }
 
-    private async Task UploadAsync()
+    private async Task UploadBatchAsync()
     {
-        if (_selectedFile is null) return;
+        if (_uploadDrafts.Count == 0 || ValidUploadCount == 0) return;
         try
         {
             CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
-            _busy = true; _isError = false; _message = null;
-            var result = await MediaService.UploadAsync(SiteId, _selectedFile, _uploadTitle, _altText, _caption);
-            _isError = !result.IsSuccess;
-            _message = L.TranslateMessage(result.Message);
-            if (result.IsSuccess)
-            {
+            _busy = true;
+            _isError = false;
+            _message = null;
+            _batchProgress = null;
+            _lastBatchResult = null;
+
+            var items = _uploadDrafts
+                .Select(x => new MediaBatchUploadItem(x.File, x.Title, x.AltText, x.Caption))
+                .ToArray();
+            var result = await BatchUploadService.UploadAsync(
+                SiteId,
+                items,
+                progress => InvokeAsync(() =>
+                {
+                    _batchProgress = progress;
+                    StateHasChanged();
+                }));
+
+            _lastBatchResult = result;
+            _isError = result.Succeeded == 0;
+            _message = result.Message;
+            if (result.Succeeded > 0)
                 await RefreshLocalAsync();
-                _selectedFile = null; _uploadTitle = string.Empty; _altText = string.Empty; _caption = string.Empty;
-            }
+
+            _uploadDrafts.Clear();
         }
-        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
-        finally { _busy = false; }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = L.TranslateMessage(ex.Message);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task OpenOptimizationAsync(MediaExplorerItem item)
@@ -445,10 +562,41 @@ else
         builder.CloseElement();
     };
 
+    private string TranslateBatchState(MediaBatchUploadState state) => L.IsArabic
+        ? state switch
+        {
+            MediaBatchUploadState.Succeeded => "نجح",
+            MediaBatchUploadState.Failed => "فشل",
+            MediaBatchUploadState.Rejected => "مرفوض",
+            _ => state.ToString()
+        }
+        : state switch
+        {
+            MediaBatchUploadState.Succeeded => "Succeeded",
+            MediaBatchUploadState.Failed => "Failed",
+            MediaBatchUploadState.Rejected => "Rejected",
+            _ => state.ToString()
+        };
+
     private string DisplayTitle(string value) => string.IsNullOrWhiteSpace(value) ? L["UntitledMedia"] : value;
     private string FormatDate(DateTimeOffset? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "dd/MM/yyyy HH:mm" : "MMM d, yyyy HH:mm") : L["Unknown"];
     private static string FormatSize(long bytes) => bytes >= 1024 * 1024 ? $"{bytes / 1024d / 1024d:0.##} MB" : $"{bytes / 1024d:0.##} KB";
     private static string PlainText(string value) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<[^>]+>", string.Empty)).Trim();
     private void Changed() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= Changed;
+
+    private sealed class MediaUploadDraft(
+        IBrowserFile file,
+        string title,
+        string altText,
+        string caption,
+        MediaUploadValidation validation)
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public IBrowserFile File { get; } = file;
+        public string Title { get; set; } = title;
+        public string AltText { get; set; } = altText;
+        public string Caption { get; set; } = caption;
+        public MediaUploadValidation Validation { get; } = validation;
+    }
 }
