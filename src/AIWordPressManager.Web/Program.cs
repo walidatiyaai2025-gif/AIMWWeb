@@ -35,6 +35,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    ApplicationPermissionCatalog.AddPolicies(options);
 });
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorFrameworkAuthorizationResultHandler>();
 
