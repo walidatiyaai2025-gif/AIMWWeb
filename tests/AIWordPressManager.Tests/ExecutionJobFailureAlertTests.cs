@@ -7,6 +7,7 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using DomainExecutionJob = AIWordPressManager.Domain.Entities.ExecutionJob;
 
 namespace AIWordPressManager.Tests;
 
@@ -86,7 +87,7 @@ public sealed class ExecutionJobFailureAlertTests
         var owner = await fixture.AddUserAsync();
         var site = await fixture.AddSiteAsync(owner.Id, "ar-KW");
         fixture.Context.SiteEmailRecipients.Add(new SiteEmailRecipient(site.Id, owner.Id, "ops@example.com", null, DateTime.UtcNow));
-        var job = new ExecutionJob(site.Id, "Content Audit", DateTime.UtcNow.AddMinutes(-2));
+        var job = new DomainExecutionJob(site.Id, "Content Audit", DateTime.UtcNow.AddMinutes(-2));
         job.Fail("Authorization=top-secret Bearer abc.def.ghi failed.", DateTime.UtcNow.AddMinutes(-1));
         fixture.Context.ExecutionJobs.Add(job);
         await fixture.Context.SaveChangesAsync();
@@ -117,7 +118,7 @@ public sealed class ExecutionJobFailureAlertTests
         var owner = await fixture.AddUserAsync();
         var site = await fixture.AddSiteAsync(owner.Id);
         fixture.Context.SiteEmailRecipients.Add(new SiteEmailRecipient(site.Id, owner.Id, "ops@example.com", null, DateTime.UtcNow));
-        var job = new ExecutionJob(site.Id, "Content Audit", DateTime.UtcNow.AddMinutes(-2));
+        var job = new DomainExecutionJob(site.Id, "Content Audit", DateTime.UtcNow.AddMinutes(-2));
         job.Complete(DateTime.UtcNow.AddMinutes(-1));
         fixture.Context.ExecutionJobs.Add(job);
         await fixture.Context.SaveChangesAsync();
