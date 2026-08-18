@@ -1,0 +1,38 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+@if (RequiredPermission is { Length: > 0 } permission)
+{
+    <AuthorizeView Policy="@permission">
+        <Authorized Context="routeAuthorizationState">
+            <AuthorizeRouteView RouteData="RouteData" DefaultLayout="DefaultLayout">
+                <Authorizing>@Authorizing</Authorizing>
+                <NotAuthorized>@NotAuthorized</NotAuthorized>
+            </AuthorizeRouteView>
+        </Authorized>
+        <Authorizing>@Authorizing</Authorizing>
+        <NotAuthorized>@NotAuthorized</NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <AuthorizeRouteView RouteData="RouteData" DefaultLayout="DefaultLayout">
+        <Authorizing>@Authorizing</Authorizing>
+        <NotAuthorized>@NotAuthorized</NotAuthorized>
+    </AuthorizeRouteView>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public RouteData RouteData { get; set; } = default!;
+
+    [Parameter]
+    public Type? DefaultLayout { get; set; }
+
+    [Parameter]
+    public RenderFragment? Authorizing { get; set; }
+
+    [Parameter]
+    public RenderFragment? NotAuthorized { get; set; }
+
+    private string? RequiredPermission => ApplicationRoutePermissionCatalog.For(RouteData.PageType);
+}
