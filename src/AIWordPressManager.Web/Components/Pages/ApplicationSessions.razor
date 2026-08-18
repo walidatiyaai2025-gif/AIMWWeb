@@ -24,6 +24,52 @@
     <section class="panel settings-section">
         <header class="sessions-toolbar">
             <div>
+                <h2>@(L.IsArabic ? "الحسابات النشطة" : "Active accounts")</h2>
+                <p>@(L.IsArabic ? "يمكنك إنهاء جميع الجلسات النشطة لحساب محدد دفعة واحدة." : "End every active session for a selected account in one action.")</p>
+            </div>
+        </header>
+
+        @if (ActiveAccounts.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد حسابات بجلسات نشطة." : "No accounts currently have active sessions.")</p>
+        }
+        else
+        {
+            <div class="sessions-list">
+                @foreach (var account in ActiveAccounts)
+                {
+                    <article class="settings-subsection" @key="account.UserId">
+                        <div class="sessions-row">
+                            <div>
+                                <strong>@account.UserName</strong>
+                                <small>@account.Role · @(L.IsArabic ? $"{account.ActiveSessions} جلسة نشطة" : $"{account.ActiveSessions} active session(s)")</small>
+                            </div>
+                            @if (account.HasCurrentSession)
+                            {
+                                <span class="settings-badge success">@(L.IsArabic ? "حسابك الحالي" : "Your current account")</span>
+                            }
+                            else
+                            {
+                                <button class="button danger" disabled="@_busy" @onclick="() => EndUserAsync(account.UserId, account.UserName)">
+                                    @(L.IsArabic ? "إنهاء كل الجلسات" : "End all sessions")
+                                </button>
+                            }
+                        </div>
+                        @if (account.HasCurrentSession)
+                        {
+                            <small>@(L.IsArabic
+                                ? "لحماية جلسة الإدارة الحالية، استخدم صفحة «جلساتي» لإنهاء الجلسات الأخرى أو سجّل الخروج لإنهاء الجلسة الحالية."
+                                : "To protect the current administration circuit, use My sessions to end other sessions or sign out to end the current session.")</small>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="panel settings-section">
+        <header class="sessions-toolbar">
+            <div>
                 <h2>@(L.IsArabic ? "مخزون الجلسات" : "Session inventory")</h2>
                 <p>@(L.IsArabic ? "آخر نشاط، الحساب، الدور، الجهاز وعنوان الشبكة." : "Last activity, account, role, device and network address.")</p>
             </div>
@@ -101,6 +147,18 @@
     private ApplicationSessionAdministrationService Service =>
         new(new ApplicationSessionStore(DbContext), CurrentUser, HttpContextAccessor);
 
+    private IReadOnlyList<ActiveAccountSummary> ActiveAccounts => _sessions
+        .Where(IsActive)
+        .GroupBy(session => new { session.UserId, session.UserName, session.Role })
+        .Select(group => new ActiveAccountSummary(
+            group.Key.UserId,
+            group.Key.UserName,
+            group.Key.Role,
+            group.Count(),
+            group.Any(session => session.IsCurrent)))
+        .OrderBy(account => account.UserName, StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
     private async Task LoadAsync()
@@ -136,7 +194,26 @@
         }
     }
 
-    private bool IsActive(ApplicationSessionSummary session) =>
+    private async Task EndUserAsync(Guid userId, string userName)
+    {
+        if (_busy) return;
+        _busy = true;
+        _message = string.Empty;
+        try
+        {
+            var result = await Service.EndUserSessionsAsync(userId, "All account sessions ended by administrator.");
+            _message = result.IsSuccess
+                ? (L.IsArabic ? $"تم إنهاء كل الجلسات النشطة للحساب {userName}." : $"All active sessions for {userName} were ended.")
+                : result.Message;
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static bool IsActive(ApplicationSessionSummary session) =>
         !session.RevokedAtUtc.HasValue && session.ExpiresAtUtc > DateTime.UtcNow;
 
     private string Status(ApplicationSessionSummary session)
@@ -146,5 +223,12 @@
         return L.IsArabic ? "نشطة" : "Active";
     }
 
-    private string FormatWhen(DateTime value) => value.ToLocalTime().ToString("g");
+    private static string FormatWhen(DateTime value) => value.ToLocalTime().ToString("g");
+
+    private sealed record ActiveAccountSummary(
+        Guid UserId,
+        string UserName,
+        string Role,
+        int ActiveSessions,
+        bool HasCurrentSession);
 }
