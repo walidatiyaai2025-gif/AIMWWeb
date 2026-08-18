@@ -15,6 +15,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<EmailOutboxMessage> EmailOutboxMessages => Set<EmailOutboxMessage>();
     public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts => Set<EmailDeliveryAttempt>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+    public DbSet<PlanEntitlement> PlanEntitlements => Set<PlanEntitlement>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -172,6 +173,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Currency).HasMaxLength(3).IsRequired();
             entity.Property(x => x.GatewayProductId).HasMaxLength(200);
             entity.Property(x => x.GatewayPlanId).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<PlanEntitlement>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.PlanId, x.NormalizedKey }).IsUnique();
+            entity.HasIndex(x => x.PlanId);
+            entity.Property(x => x.Key).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.NormalizedKey).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.ValueType).HasConversion<string>().HasMaxLength(16).IsRequired();
+            entity.Property(x => x.Value).HasMaxLength(1000).IsRequired();
+            entity.HasOne<SubscriptionPlan>().WithMany().HasForeignKey(x => x.PlanId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
