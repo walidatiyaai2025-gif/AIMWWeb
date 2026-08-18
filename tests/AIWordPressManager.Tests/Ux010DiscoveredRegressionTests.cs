@@ -55,6 +55,9 @@ public sealed class Ux010DiscoveredRegressionTests
         page.Should().Contain("aria-label=\"@(L.IsArabic ? \"كلمة مرور SMTP\" : \"SMTP password\")\"");
         page.Should().Contain("aria-label=\"@(L.IsArabic ? \"بريد المستلم الجديد\" : \"New recipient email address\")\"");
         page.Should().Contain("aria-label=\"@(L.IsArabic ? \"تعديل بريد المستلم\" : \"Edit recipient email address\")\"");
+
+        var diagnostics = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Shared/SmtpDiagnosticsPanel.razor");
+        diagnostics.Should().Contain("aria-label=\"@(L.IsArabic ? \"بريد مستلم الاختبار\" : \"Test recipient email address\")\"");
     }
 
     private static string ReadRepositoryFile(string relativePath)
