@@ -8,6 +8,8 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
     public bool IsAuthenticated => accessor.HttpContext?.User.Identity?.IsAuthenticated == true || BackgroundExecutionIdentity.TryGetOwnerUserId(out _);
 
     public Guid UserId => RequireUserId();
+    public string UserName => accessor.HttpContext?.User.Identity?.Name ?? string.Empty;
+    public string UserRole => accessor.HttpContext?.User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
     public Guid RequireUserId()
     {
@@ -30,19 +32,28 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
 
     public bool IsInRole(string role) => accessor.HttpContext?.User.IsInRole(role) == true;
 
-    public Guid RequireAdministrator()
+    public bool HasPermission(string permission) =>
+        ApplicationAuthorization.HasPermission(accessor.HttpContext?.User, permission);
+
+    public Guid RequirePermission(string permission)
     {
         if (accessor.HttpContext?.User.Identity?.IsAuthenticated != true ||
-            !IsInRole("Administrator") ||
+            !HasPermission(permission) ||
             !TryGetHttpUserId(out var userId))
         {
-            throw new UnauthorizedAccessException("Administrator access is required.");
+            throw new UnauthorizedAccessException($"Permission '{permission}' is required.");
         }
 
         return userId;
     }
 
-    public string UserName => accessor.HttpContext?.User.Identity?.Name ?? string.Empty;
+    public Guid RequireAdministrator()
+    {
+        if (!string.Equals(ApplicationRoles.Normalize(UserRole), ApplicationRoles.Administrator, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException("Administrator access is required.");
+
+        return RequirePermission(ApplicationPermissions.UsersManage);
+    }
 
     private bool TryGetHttpUserId(out Guid userId)
     {
