@@ -38,6 +38,7 @@ public sealed class SiteWebService(
 
     public async Task<Guid> AddSiteAsync(string name, string url, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
         var site = new Site(name.Trim(), normalizedUri, DateTime.UtcNow, OwnerId);
@@ -57,6 +58,7 @@ public sealed class SiteWebService(
 
     public async Task UpdateSiteAsync(Guid siteId, string name, string url, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
         var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
@@ -76,6 +78,7 @@ public sealed class SiteWebService(
 
     public async Task SetDisabledAsync(Guid siteId, bool disabled, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         site.RecordConnectionStatus(disabled ? SiteConnectionStatus.Disabled : SiteConnectionStatus.Unknown, DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -83,6 +86,7 @@ public sealed class SiteWebService(
 
     public async Task RemoveCredentialAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
         if (credential is not null) dbContext.SiteCredentials.Remove(credential);
@@ -92,6 +96,7 @@ public sealed class SiteWebService(
 
     public async Task<ConnectionTestViewResult> SaveCredentialAndTestAsync(Guid siteId, string userName, string applicationPassword, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         if (string.IsNullOrWhiteSpace(userName)) throw new InvalidOperationException("WordPress username is required.");
         if (string.IsNullOrWhiteSpace(applicationPassword)) throw new InvalidOperationException("Application Password is required.");
         var cleanUserName = userName.Trim();
@@ -122,6 +127,7 @@ public sealed class SiteWebService(
 
     public async Task<ConnectionTestViewResult> RetestAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var site = await RequireOwnedSiteAsync(siteId, true, cancellationToken);
         var credential = await dbContext.SiteCredentials.AsNoTracking().FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
         if (credential is null) return new(false, "Enter and save the WordPress credentials first.", null);
@@ -146,6 +152,7 @@ public sealed class SiteWebService(
 
     public async Task<SiteBulkRetestResult> RetestSitesAsync(IEnumerable<Guid> siteIds, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var ids = SiteBulkOperationPolicy.NormalizeIds(siteIds);
         var ownedSites = await RequireOwnedSitesAsync(ids, tracked: false, cancellationToken);
         var names = ownedSites.ToDictionary(x => x.Id, x => x.Name);
@@ -174,6 +181,7 @@ public sealed class SiteWebService(
 
     public async Task<int> SetSitesDisabledAsync(IEnumerable<Guid> siteIds, bool disabled, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var ids = SiteBulkOperationPolicy.NormalizeIds(siteIds);
         var sites = await RequireOwnedSitesAsync(ids, tracked: true, cancellationToken);
         var now = DateTime.UtcNow;
@@ -188,6 +196,7 @@ public sealed class SiteWebService(
 
     public async Task<int> DeleteSitesAsync(IEnumerable<Guid> siteIds, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var ids = SiteBulkOperationPolicy.NormalizeIds(siteIds);
         var sites = await RequireOwnedSitesAsync(ids, tracked: true, cancellationToken);
         var now = DateTime.UtcNow;
@@ -201,6 +210,7 @@ public sealed class SiteWebService(
 
     public async Task DeleteSiteAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        RequireManagePermission();
         var site = await dbContext.Sites.FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == OwnerId, cancellationToken);
         if (site is null) return;
         site.SoftDelete(DateTime.UtcNow);
@@ -209,6 +219,9 @@ public sealed class SiteWebService(
 
     public async Task EnsureOwnershipAsync(Guid siteId, CancellationToken cancellationToken = default) =>
         _ = await RequireOwnedSiteAsync(siteId, false, cancellationToken);
+
+    private void RequireManagePermission() =>
+        currentUser.RequirePermission(ApplicationPermissionCatalog.SitesManage);
 
     private async Task<Site> RequireOwnedSiteAsync(Guid siteId, bool tracked, CancellationToken cancellationToken)
     {

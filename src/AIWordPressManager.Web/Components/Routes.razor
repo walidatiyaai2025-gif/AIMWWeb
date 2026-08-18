@@ -4,7 +4,7 @@
     <ChildContent>
         <Router AppAssembly="typeof(Program).Assembly" OnNavigateAsync="HandleNavigationAsync">
             <Found Context="routeData">
-                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+                <PermissionRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
                     <Authorizing>
                         <div class="settings-page">
                             <section class="panel settings-section" role="status">
@@ -32,7 +32,7 @@
                             </section>
                         </div>
                     </NotAuthorized>
-                </AuthorizeRouteView>
+                </PermissionRouteView>
                 <FocusOnNavigate RouteData="routeData" Selector="h1" />
             </Found>
             <NotFound>
