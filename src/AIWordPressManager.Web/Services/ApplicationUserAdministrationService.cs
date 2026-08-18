@@ -61,14 +61,15 @@ public sealed class ApplicationUserAdministrationService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            await AuditUserAsync("User.Created", "Succeeded", user, new Dictionary<string, string> { ["role"] = resolvedRole }, cancellationToken);
-            return UserAdministrationResult.Succeeded(user.Id);
         }
         catch (DbUpdateException)
         {
             dbContext.Entry(user).State = EntityState.Detached;
             return UserAdministrationResult.Failed("This username is already registered.");
         }
+
+        await AuditUserAsync("User.Created", "Succeeded", user, new Dictionary<string, string> { ["role"] = resolvedRole }, cancellationToken);
+        return UserAdministrationResult.Succeeded(user.Id);
     }
 
     public async Task<UserAdministrationResult> UpdateAsync(Guid userId, string userName, string role, CancellationToken cancellationToken = default)
