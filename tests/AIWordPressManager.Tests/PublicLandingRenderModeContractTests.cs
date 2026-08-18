@@ -17,6 +17,29 @@ public sealed class PublicLandingRenderModeContractTests
     }
 
     [Fact]
+    public void Public_landing_does_not_override_static_ssr_with_an_interactive_page_render_mode()
+    {
+        var welcome = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/Welcome.razor");
+
+        welcome.Should().NotContain("@rendermode InteractiveServer",
+            "the anonymous landing page must not start a protected Blazor Server circuit");
+        welcome.Should().Contain("Request.Cookies[\"aiwp-language\"]",
+            "static SSR must still render the persisted Arabic/English preference on the server");
+    }
+
+    [Fact]
+    public void Public_landing_language_toggle_persists_for_static_ssr()
+    {
+        var language = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/js/app-language.js");
+        var bootstrap = ReadRepositoryFile("src/AIWordPressManager.Web/wwwroot/js/language-bootstrap.js");
+
+        language.Should().Contain("document.cookie = `${appLanguageCookie}=${culture};path=/;SameSite=Lax`");
+        language.Should().Contain("toggleAndReload");
+        bootstrap.Should().Contain("const cookieName = 'aiwp-language'");
+        bootstrap.Should().Contain("window.location.pathname === '/welcome'");
+    }
+
+    [Fact]
     public void Public_landing_remains_anonymous_without_relaxing_the_global_component_authorization_boundary()
     {
         var welcome = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/Welcome.razor");
