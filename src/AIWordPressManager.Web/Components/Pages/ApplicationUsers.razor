@@ -20,6 +20,7 @@ else
                     Subtitle="@(L.IsArabic ? "إنشاء الحسابات وإدارتها وفك القفل وإعادة تعيين كلمات المرور ومراجعة محاولات الدخول." : "Create accounts, manage access, unlock users, reset passwords, and review sign-in history.")">
             <Actions>
                 <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
+                <a class="app-button" href="/admin/roles-permissions">@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles & permissions")</a>
                 <AppButton Variant="primary" Icon="＋" Text="@(L.IsArabic ? "مستخدم جديد" : "New user")" Disabled="@_working" OnClick="StartCreateClicked" />
             </Actions>
         </AppToolbar>
@@ -89,7 +90,7 @@ else
 
             <aside>
                 <AppSection Title="@(_selectedId.HasValue ? (L.IsArabic ? "تعديل الحساب" : "Edit account") : (L.IsArabic ? "إنشاء حساب" : "Create account"))"
-                            Subtitle="@(L.IsArabic ? "تخضع هذه العمليات الآن لصلاحية Users.Manage المشتقة من هوية الخادم." : "These operations now require the server-derived Users.Manage permission.")">
+                            Subtitle="@(L.IsArabic ? "تخضع هذه العمليات لصلاحية Users.Manage، وتُحمّل الأدوار النشطة من تعريفات الخادم." : "These operations require Users.Manage, and active roles are loaded from server-side definitions.")">
                     <ChildContent>
                         <div class="admin-user-form" data-form-ux aria-busy="@_working">
                             <AppValidationSummary Messages="@_editorValidation"
@@ -105,8 +106,17 @@ else
                             </AppFormField>
                             <AppFormField InputId="admin-user-role"
                                           Label="@(L.IsArabic ? "الدور" : "Role")"
-                                          HelperText="@(L.IsArabic ? "اختر مديرًا فقط لمن يحتاج صلاحيات الإدارة الكاملة." : "Choose Administrator only for users who need full administrative access.")">
-                                <select id="admin-user-role" @bind="_role" disabled="@_working" aria-describedby="admin-user-role-help"><option value="User">@(L.IsArabic ? "مستخدم" : "User")</option><option value="Administrator">@(L.IsArabic ? "مدير" : "Administrator")</option></select>
+                                          HelperText="@(L.IsArabic ? "اختر أقل دور نشط يحقق احتياج المستخدم. إدارة تعريفات الأدوار متاحة من صفحة الأدوار والصلاحيات." : "Choose the least-privileged active role that fits the user. Manage role definitions from Roles & permissions.")">
+                                <select id="admin-user-role" @bind="_role" disabled="@_working" aria-describedby="admin-user-role-help">
+                                    @if (!IsRoleOptionAvailable(_role))
+                                    {
+                                        <option value="@_role" disabled>@(L.IsArabic ? $"{_role} (غير متاح)" : $"{_role} (unavailable)")</option>
+                                    }
+                                    @foreach (var role in _roleOptions)
+                                    {
+                                        <option value="@role.Name">@(L.IsArabic ? role.DisplayNameArabic : role.DisplayNameEnglish)</option>
+                                    }
+                                </select>
                             </AppFormField>
                             @if (!_selectedId.HasValue)
                             {
@@ -209,6 +219,7 @@ else
 @code {
     private ApplicationUserAdministrationService _service = default!;
     private IReadOnlyList<ApplicationUserSummary> _users = [];
+    private IReadOnlyList<ApplicationRoleOption> _roleOptions = [];
     private IReadOnlyList<LoginAuditDto> _audits = [];
     private readonly List<string> _editorValidation = new();
     private readonly List<string> _resetValidation = new();
@@ -236,7 +247,13 @@ else
 
     private async Task LoadAsync()
     {
-        try { _working = true; _users = await _service.ListAsync(_search); _isError = false; }
+        try
+        {
+            _working = true;
+            _users = await _service.ListAsync(_search);
+            _roleOptions = await _service.GetAssignableRolesAsync();
+            _isError = false;
+        }
         catch (Exception ex) { _isError = true; _message = ex.Message; }
         finally { _working = false; }
     }
@@ -257,11 +274,14 @@ else
 
     private bool HasEditorError(string message) => _editorValidation.Contains(message, StringComparer.Ordinal);
     private bool HasResetError(string message) => _resetValidation.Contains(message, StringComparer.Ordinal);
+    private bool IsRoleOptionAvailable(string role) => _roleOptions.Any(x => string.Equals(x.Name, role, StringComparison.OrdinalIgnoreCase));
 
     private bool ValidateEditor()
     {
         _editorValidation.Clear();
         if (string.IsNullOrWhiteSpace(_userName)) _editorValidation.Add(UserNameRequiredMessage);
+        if (!IsRoleOptionAvailable(_role))
+            _editorValidation.Add(L.IsArabic ? "اختر دورًا نشطًا متاحًا قبل الحفظ." : "Choose an active available role before saving.");
         if (!_selectedId.HasValue)
         {
             if (string.IsNullOrWhiteSpace(_password)) _editorValidation.Add(CreatePasswordRequiredMessage);
@@ -374,7 +394,12 @@ else
         if (!keepMessage) { _message = null; _isError = false; }
     }
 
-    private string RoleText(string role) => role == "Administrator" ? (L.IsArabic ? "مدير" : "Administrator") : (L.IsArabic ? "مستخدم" : "User");
+    private string RoleText(string role)
+    {
+        var option = _roleOptions.FirstOrDefault(x => string.Equals(x.Name, role, StringComparison.OrdinalIgnoreCase));
+        return option is null ? role : (L.IsArabic ? option.DisplayNameArabic : option.DisplayNameEnglish);
+    }
+
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= LanguageChanged;
