@@ -107,19 +107,7 @@ public sealed class PayPalPaymentGateway(
             using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            request.Content = new StringContent(
-                JsonSerializer.Serialize(new
-                {
-                    auth_algo = headers.AuthAlgorithm,
-                    cert_url = headers.CertificateUrl.ToString(),
-                    transmission_id = headers.TransmissionId,
-                    transmission_sig = headers.TransmissionSignature,
-                    transmission_time = headers.TransmissionTime,
-                    webhook_id = runtime.WebhookId,
-                    webhook_event = eventDocument.RootElement
-                }),
-                Encoding.UTF8,
-                "application/json");
+            request.Content = BuildWebhookVerificationContent(headers, runtime.WebhookId, envelope.Body);
 
             using var response = await SendAsync(request, "PayPal webhook verification", cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -135,7 +123,15 @@ public sealed class PayPalPaymentGateway(
                 if (!verified)
                     return GatewayWebhookVerificationResult.Rejected("PayPal webhook signature verification failed.");
 
-                return NormalizeVerifiedSubscriptionEvent(eventDocument.RootElement);
+                try
+                {
+                    return NormalizeVerifiedSubscriptionEvent(eventDocument.RootElement);
+                }
+                catch (InvalidOperationException)
+                {
+                    return GatewayWebhookVerificationResult.Rejected(
+                        "Verified PayPal webhook payload is missing required normalized subscription data.");
+                }
             }
             catch (JsonException ex)
             {
@@ -219,6 +215,34 @@ public sealed class PayPalPaymentGateway(
         {
             throw new InvalidOperationException($"{operation} could not reach the configured environment.", ex);
         }
+    }
+
+    private static HttpContent BuildWebhookVerificationContent(
+        VerificationHeaders headers,
+        string webhookId,
+        string rawWebhookEvent)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("auth_algo", headers.AuthAlgorithm);
+            writer.WriteString("cert_url", headers.CertificateUrl.ToString());
+            writer.WriteString("transmission_id", headers.TransmissionId);
+            writer.WriteString("transmission_sig", headers.TransmissionSignature);
+            writer.WriteString("transmission_time", headers.TransmissionTime);
+            writer.WriteString("webhook_id", webhookId);
+            writer.WritePropertyName("webhook_event");
+            writer.WriteRawValue(rawWebhookEvent, skipInputValidation: false);
+            writer.WriteEndObject();
+        }
+
+        var content = new ByteArrayContent(stream.ToArray());
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json")
+        {
+            CharSet = "utf-8"
+        };
+        return content;
     }
 
     private static bool TryReadVerificationHeaders(
