@@ -148,14 +148,15 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         AddAudit(context, user.UserName, true, "Success", now);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        var permissionResolver = new ApplicationRolePermissionResolver(dbContext);
+        var permissions = await permissionResolver.GetPermissionsAsync(user.Role, cancellationToken);
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.UserName),
             new(ClaimTypes.Role, user.Role)
         };
-        claims.AddRange(ApplicationPermissionCatalog.ForRole(user.Role)
-            .Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
+        claims.AddRange(permissions.Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
         await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
