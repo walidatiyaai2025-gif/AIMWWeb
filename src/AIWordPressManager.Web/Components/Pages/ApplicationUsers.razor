@@ -1,6 +1,6 @@
 @page "/admin/application-users"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrator")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = AIWordPressManager.Web.Services.ApplicationPermissionCatalog.UsersManage)]
 @implements IDisposable
 @inject IServiceProvider Services
 @inject AppLanguageService L
@@ -89,7 +89,7 @@ else
 
             <aside>
                 <AppSection Title="@(_selectedId.HasValue ? (L.IsArabic ? "تعديل الحساب" : "Edit account") : (L.IsArabic ? "إنشاء حساب" : "Create account"))"
-                            Subtitle="@(L.IsArabic ? "الأدوار الدقيقة ستتم ضمن IDN-009؛ المتاح هنا مدير أو مستخدم." : "Granular permissions are tracked by IDN-009; this screen manages Administrator/User roles.")">
+                            Subtitle="@(L.IsArabic ? "تخضع هذه العمليات الآن لصلاحية Users.Manage المشتقة من هوية الخادم." : "These operations now require the server-derived Users.Manage permission.")">
                     <ChildContent>
                         <div class="admin-user-form" data-form-ux aria-busy="@_working">
                             <AppValidationSummary Messages="@_editorValidation"
