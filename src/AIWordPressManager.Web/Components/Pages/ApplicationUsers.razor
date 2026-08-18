@@ -20,6 +20,7 @@ else
                     Subtitle="@(L.IsArabic ? "إنشاء الحسابات وإدارتها وفك القفل وإعادة تعيين كلمات المرور ومراجعة محاولات الدخول." : "Create accounts, manage access, unlock users, reset passwords, and review sign-in history.")">
             <Actions>
                 <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
+                <a class="app-button" href="/admin/roles-permissions">@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles & permissions")</a>
                 <AppButton Variant="primary" Icon="＋" Text="@(L.IsArabic ? "مستخدم جديد" : "New user")" Disabled="@_working" OnClick="StartCreateClicked" />
             </Actions>
         </AppToolbar>
@@ -33,7 +34,7 @@ else
             <AppStatCard Icon="◎" Label="@(L.IsArabic ? "إجمالي المستخدمين" : "Total users")" Value="@_users.Count.ToString()" />
             <AppStatCard Icon="✓" Label="@(L.IsArabic ? "نشط" : "Active")" Value="@_users.Count(x => x.IsActive).ToString()" Tone="success" />
             <AppStatCard Icon="⌁" Label="@(L.IsArabic ? "مقفل الآن" : "Locked now")" Value="@_users.Count(x => x.LockedUntilUtc > DateTime.UtcNow).ToString()" Tone="warning" />
-            <AppStatCard Icon="◆" Label="@(L.IsArabic ? "مديرون" : "Administrators")" Value="@_users.Count(x => x.Role == "Administrator" && x.IsActive).ToString()" Tone="info" />
+            <AppStatCard Icon="◆" Label="@(L.IsArabic ? "مديرون" : "Administrators")" Value="@_users.Count(x => x.Role == ApplicationRoles.Administrator && x.IsActive).ToString()" Tone="info" />
         </section>
 
         <AppCard>
@@ -89,7 +90,7 @@ else
 
             <aside>
                 <AppSection Title="@(_selectedId.HasValue ? (L.IsArabic ? "تعديل الحساب" : "Edit account") : (L.IsArabic ? "إنشاء حساب" : "Create account"))"
-                            Subtitle="@(L.IsArabic ? "الأدوار الدقيقة ستتم ضمن IDN-009؛ المتاح هنا مدير أو مستخدم." : "Granular permissions are tracked by IDN-009; this screen manages Administrator/User roles.")">
+                            Subtitle="@(L.IsArabic ? "عيّن أقل دور يحقق احتياج المستخدم. يمكن مراجعة المصفوفة الكاملة من صفحة الأدوار والصلاحيات." : "Assign the least-privileged role that fits the user. Review the full matrix in Roles & permissions.")">
                     <ChildContent>
                         <div class="admin-user-form" data-form-ux aria-busy="@_working">
                             <AppValidationSummary Messages="@_editorValidation"
@@ -105,8 +106,17 @@ else
                             </AppFormField>
                             <AppFormField InputId="admin-user-role"
                                           Label="@(L.IsArabic ? "الدور" : "Role")"
-                                          HelperText="@(L.IsArabic ? "اختر مديرًا فقط لمن يحتاج صلاحيات الإدارة الكاملة." : "Choose Administrator only for users who need full administrative access.")">
-                                <select id="admin-user-role" @bind="_role" disabled="@_working" aria-describedby="admin-user-role-help"><option value="User">@(L.IsArabic ? "مستخدم" : "User")</option><option value="Administrator">@(L.IsArabic ? "مدير" : "Administrator")</option></select>
+                                          HelperText="@(L.IsArabic ? "اختر Administrator فقط لإدارة الحسابات والأمان. الأدوار الأخرى تتبع مبدأ أقل صلاحية." : "Choose Administrator only for account and security administration. Other roles follow least privilege.")">
+                                <select id="admin-user-role" @bind="_role" disabled="@_working" aria-describedby="admin-user-role-help">
+                                    @foreach (var role in ApplicationRoles.All.Where(x => !x.IsLegacy))
+                                    {
+                                        <option value="@role.Name">@(L.IsArabic ? role.ArabicName : role.EnglishName)</option>
+                                    }
+                                    @if (string.Equals(_role, ApplicationRoles.LegacyUser, StringComparison.Ordinal))
+                                    {
+                                        <option value="@ApplicationRoles.LegacyUser">@(L.IsArabic ? "مستخدم قديم (توافق)" : "Legacy user (compatibility)")</option>
+                                    }
+                                </select>
                             </AppFormField>
                             @if (!_selectedId.HasValue)
                             {
@@ -214,7 +224,7 @@ else
     private readonly List<string> _resetValidation = new();
     private Guid? _selectedId;
     private ApplicationUserSummary? _pendingDisableUser;
-    private string _search = string.Empty, _userName = string.Empty, _role = "User", _password = string.Empty, _confirmPassword = string.Empty, _resetPassword = string.Empty, _resetConfirmPassword = string.Empty;
+    private string _search = string.Empty, _userName = string.Empty, _role = ApplicationRoles.Operator, _password = string.Empty, _confirmPassword = string.Empty, _resetPassword = string.Empty, _resetConfirmPassword = string.Empty;
     private string? _message;
     private bool _loading = true, _working, _isError, _disableConfirmationOpen, _resetConfirmationOpen;
 
@@ -249,7 +259,8 @@ else
 
     private async Task SelectUserAsync(ApplicationUserSummary user)
     {
-        _selectedId = user.Id; _userName = user.UserName; _role = user.Role;
+        _selectedId = user.Id; _userName = user.UserName; _role = ApplicationRoles.Normalize(user.Role);
+        if (_role.Length == 0) _role = ApplicationRoles.LegacyUser;
         _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty;
         _editorValidation.Clear(); _resetValidation.Clear();
         _audits = await _service.GetLoginAuditAsync(user.Id); _message = null;
@@ -369,12 +380,18 @@ else
 
     private void ClearEditor(bool keepMessage = false)
     {
-        _selectedId = null; _pendingDisableUser = null; _userName = _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty; _role = "User"; _audits = [];
+        _selectedId = null; _pendingDisableUser = null; _userName = _password = _confirmPassword = _resetPassword = _resetConfirmPassword = string.Empty; _role = ApplicationRoles.Operator; _audits = [];
         _editorValidation.Clear(); _resetValidation.Clear(); _disableConfirmationOpen = false; _resetConfirmationOpen = false;
         if (!keepMessage) { _message = null; _isError = false; }
     }
 
-    private string RoleText(string role) => role == "Administrator" ? (L.IsArabic ? "مدير" : "Administrator") : (L.IsArabic ? "مستخدم" : "User");
+    private string RoleText(string role)
+    {
+        var definition = ApplicationRoles.Find(role);
+        if (definition is null) return role;
+        return L.IsArabic ? definition.ArabicName : definition.EnglishName;
+    }
+
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= LanguageChanged;
