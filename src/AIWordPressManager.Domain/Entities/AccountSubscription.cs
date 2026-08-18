@@ -82,6 +82,17 @@ public sealed class AccountSubscription : Entity
         RequireUtc(occurredAtUtc, nameof(occurredAtUtc));
         ValidateProviderEvent(source, providerEventAtUtc);
 
+        if (targetStatus != Status)
+        {
+            if (!AccountSubscriptionStateMachine.CanTransition(Status, targetStatus))
+                throw new InvalidOperationException($"Subscription transition {Status} -> {targetStatus} is not allowed.");
+            ValidateGraceTransition(targetStatus, occurredAtUtc, graceUntilUtc);
+        }
+        else if (graceUntilUtc.HasValue)
+        {
+            throw new ArgumentException("Grace-until timestamp is only valid when entering Grace state.", nameof(graceUntilUtc));
+        }
+
         if (source == SubscriptionTransitionSource.Provider && providerEventAtUtc.HasValue)
             LastProviderEventAtUtc = providerEventAtUtc;
 
@@ -91,23 +102,7 @@ public sealed class AccountSubscription : Entity
             return false;
         }
 
-        if (!AccountSubscriptionStateMachine.CanTransition(Status, targetStatus))
-            throw new InvalidOperationException($"Subscription transition {Status} -> {targetStatus} is not allowed.");
-
-        if (targetStatus == AccountSubscriptionStatus.Grace)
-        {
-            if (!graceUntilUtc.HasValue)
-                throw new ArgumentException("Grace transition requires a grace-until timestamp.", nameof(graceUntilUtc));
-            RequireUtc(graceUntilUtc.Value, nameof(graceUntilUtc));
-            if (graceUntilUtc.Value <= occurredAtUtc)
-                throw new ArgumentException("Grace-until timestamp must be later than the transition time.", nameof(graceUntilUtc));
-            GraceUntilUtc = graceUntilUtc;
-        }
-        else
-        {
-            GraceUntilUtc = null;
-        }
-
+        GraceUntilUtc = targetStatus == AccountSubscriptionStatus.Grace ? graceUntilUtc : null;
         Status = targetStatus;
         if (targetStatus == AccountSubscriptionStatus.Suspended) SuspendedAtUtc = occurredAtUtc;
         if (targetStatus == AccountSubscriptionStatus.Cancelled) CancelledAtUtc = occurredAtUtc;
@@ -144,11 +139,33 @@ public sealed class AccountSubscription : Entity
     public void BindProviderReference(string? providerKey, string? providerSubscriptionReference, DateTime utcNow)
     {
         RequireUtc(utcNow, nameof(utcNow));
-        ProviderKey = OptionalBounded(providerKey, 64, nameof(providerKey));
-        ProviderSubscriptionReference = OptionalBounded(providerSubscriptionReference, 200, nameof(providerSubscriptionReference));
-        if ((ProviderKey is null) != (ProviderSubscriptionReference is null))
+        var cleanKey = OptionalBounded(providerKey, 64, nameof(providerKey));
+        var cleanReference = OptionalBounded(providerSubscriptionReference, 200, nameof(providerSubscriptionReference));
+        if ((cleanKey is null) != (cleanReference is null))
             throw new ArgumentException("Provider key and subscription reference must both be supplied or both be empty.");
+
+        ProviderKey = cleanKey;
+        ProviderSubscriptionReference = cleanReference;
         MarkUpdated(utcNow);
+    }
+
+    private static void ValidateGraceTransition(
+        AccountSubscriptionStatus targetStatus,
+        DateTime occurredAtUtc,
+        DateTime? graceUntilUtc)
+    {
+        if (targetStatus != AccountSubscriptionStatus.Grace)
+        {
+            if (graceUntilUtc.HasValue)
+                throw new ArgumentException("Grace-until timestamp is only valid when entering Grace state.", nameof(graceUntilUtc));
+            return;
+        }
+
+        if (!graceUntilUtc.HasValue)
+            throw new ArgumentException("Grace transition requires a grace-until timestamp.", nameof(graceUntilUtc));
+        RequireUtc(graceUntilUtc.Value, nameof(graceUntilUtc));
+        if (graceUntilUtc.Value <= occurredAtUtc)
+            throw new ArgumentException("Grace-until timestamp must be later than the transition time.", nameof(graceUntilUtc));
     }
 
     private void ValidateProviderEvent(SubscriptionTransitionSource source, DateTime? providerEventAtUtc)
@@ -235,6 +252,8 @@ public sealed class AccountSubscriptionTransition : Entity
             throw new ArgumentException("Transition reason is required and must be at most 500 characters.", nameof(reason));
         if (source == SubscriptionTransitionSource.Provider && !providerEventAtUtc.HasValue)
             throw new ArgumentException("Provider transition audit requires a provider event timestamp.", nameof(providerEventAtUtc));
+        if (source != SubscriptionTransitionSource.Provider && providerEventAtUtc.HasValue)
+            throw new ArgumentException("Only Provider transition audit can contain a provider event timestamp.", nameof(providerEventAtUtc));
 
         SubscriptionId = subscriptionId;
         FromStatus = fromStatus;
