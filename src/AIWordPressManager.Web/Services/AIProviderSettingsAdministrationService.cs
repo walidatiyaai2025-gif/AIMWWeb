@@ -34,7 +34,7 @@ public sealed class AIProviderSettingsAdministrationService(
         await settingsService.SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
         if (_securityAudit is null) return;
 
-        var credentialProviders = plainApiKeys
+        var providersWithNewKey = plainApiKeys
             .Where(pair => !string.IsNullOrWhiteSpace(pair.Value))
             .Select(pair => pair.Key)
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
@@ -51,7 +51,7 @@ public sealed class AIProviderSettingsAdministrationService(
                 ["enabled"] = settings.Enabled.ToString(),
                 ["automaticFallback"] = settings.AutomaticFallback.ToString(),
                 ["providerCount"] = settings.Providers.Count.ToString(),
-                ["credentialProvidersUpdated"] = string.Join(',', credentialProviders)
+                ["providersWithNewKey"] = string.Join(',', providersWithNewKey)
             },
             cancellationToken);
     }
