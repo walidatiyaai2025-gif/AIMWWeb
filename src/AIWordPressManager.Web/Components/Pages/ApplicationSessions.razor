@@ -145,7 +145,7 @@
     private string _message = string.Empty;
 
     private ApplicationSessionAdministrationService Service =>
-        new(new ApplicationSessionStore(DbContext), CurrentUser, HttpContextAccessor);
+        new(new ApplicationSessionStore(DbContext), CurrentUser, HttpContextAccessor, DbContext);
 
     private IReadOnlyList<ActiveAccountSummary> ActiveAccounts => _sessions
         .Where(IsActive)
