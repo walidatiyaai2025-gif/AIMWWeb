@@ -23,7 +23,8 @@ public static class DependencyInjection
         services.AddHttpClient<PayPalConfigurationDiagnostics>(client => client.Timeout = TimeSpan.FromSeconds(15));
         services.AddScoped<IPayPalConfigurationDiagnostics>(sp => sp.GetRequiredService<PayPalConfigurationDiagnostics>());
         services.AddHttpClient<PayPalPaymentGateway>(client => client.Timeout = TimeSpan.FromSeconds(30));
-        services.AddScoped<IPaymentGateway>(sp => sp.GetRequiredService<PayPalPaymentGateway>());
+        services.AddHttpClient<PayPalLifecyclePaymentGateway>(client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddScoped<IPaymentGateway>(sp => sp.GetRequiredService<PayPalLifecyclePaymentGateway>());
 
         services.AddSingleton<VersionedAIPromptRegistry>();
         services.AddSingleton<IAIPromptRegistry>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
