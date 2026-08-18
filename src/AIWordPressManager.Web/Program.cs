@@ -70,6 +70,7 @@ builder.Services.AddScoped<AppNotificationService>();
 builder.Services.AddScoped<ContentPlannerService>();
 builder.Services.AddScoped<AIUsageWebService>();
 builder.Services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
+builder.Services.AddScoped<SecurityAuditEmailAlertRelay>();
 builder.Services.AddScoped(_ => { var language = new AppLanguageService(); language.SetCulture("en"); return language; });
 builder.Services.AddSingleton<BuildInformationService>();
 builder.Services.AddSingleton<ExecutionCenterService>();
@@ -88,6 +89,7 @@ builder.Services.AddHostedService<AutomationSchedulerService>();
 builder.Services.AddHostedService<BulkContentOperationWorker>();
 builder.Services.AddHostedService<EmailOutboxWorker>();
 builder.Services.AddHostedService<EmailScheduleWorker>();
+builder.Services.AddHostedService<SecurityAuditEmailAlertWorker>();
 
 var app = builder.Build();
 
