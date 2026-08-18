@@ -115,6 +115,7 @@ public static class DependencyInjection
         services.AddScoped<IPayPalRuntimeConfigurationProvider>(sp => sp.GetRequiredService<PayPalConfigurationService>());
         services.AddScoped<IPayPalSubscriptionCheckoutService, PayPalSubscriptionCheckoutService>();
         services.AddScoped<IPayPalWebhookInbox, PayPalWebhookInbox>();
+        services.AddScoped<IPayPalWebhookIntakeService, PayPalWebhookIntakeService>();
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.
