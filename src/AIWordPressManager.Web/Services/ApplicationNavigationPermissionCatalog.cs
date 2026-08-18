@@ -21,7 +21,9 @@ public static class ApplicationNavigationPermissionCatalog
             ["/module/taxonomy"] = ApplicationPermissionCatalog.ContentView,
             ["/module/comments"] = ApplicationPermissionCatalog.ContentView,
             ["/module/users"] = ApplicationPermissionCatalog.ContentView,
+            ["/execution-center"] = ApplicationPermissionCatalog.OperationsView,
             ["/module/execution"] = ApplicationPermissionCatalog.OperationsView,
+            ["/approvals"] = ApplicationPermissionCatalog.ApprovalsView,
             ["/module/approvals"] = ApplicationPermissionCatalog.ApprovalsView
         };
 
