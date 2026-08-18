@@ -107,6 +107,7 @@ public static class DependencyInjection
         services.AddScoped<PlanEntitlementService>();
         services.AddScoped<IPlanEntitlementCatalog>(sp => sp.GetRequiredService<PlanEntitlementService>());
         services.AddScoped<IPlanEntitlementResolver>(sp => sp.GetRequiredService<PlanEntitlementService>());
+        services.AddScoped<IAccountSubscriptionService, AccountSubscriptionService>();
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.
