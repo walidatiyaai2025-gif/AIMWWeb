@@ -1,8 +1,10 @@
 using AIWordPressManager.Application.Abstractions;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Abstractions.Email;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Persistence.Backups;
+using AIWordPressManager.Persistence.Billing;
 using AIWordPressManager.Persistence.Email;
 using AIWordPressManager.Persistence.Initialization;
 using AIWordPressManager.Persistence.Sites;
@@ -101,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<ExecutionJobFailureAlertRelay>();
         services.AddHostedService<SiteSyncFailureAlertWorker>();
         services.AddHostedService<ExecutionJobFailureAlertWorker>();
+        services.AddScoped<ISubscriptionPlanCatalog, SubscriptionPlanCatalog>();
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.
