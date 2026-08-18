@@ -17,7 +17,24 @@ public sealed class SubscriptionPlanCatalog(AppDbContext dbContext) : ISubscript
         return await query
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.NormalizedCode)
-            .Select(x => ToItem(x))
+            .Select(x => new SubscriptionPlanItem(
+                x.Id,
+                x.Code,
+                x.NameEn,
+                x.NameAr,
+                x.DescriptionEn,
+                x.DescriptionAr,
+                x.BillingInterval,
+                x.Price,
+                x.Currency,
+                x.TrialDays,
+                x.GracePeriodDays,
+                x.IsEnabled,
+                x.SortOrder,
+                x.GatewayProductId,
+                x.GatewayPlanId,
+                x.CreatedAtUtc,
+                x.UpdatedAtUtc))
             .ToListAsync(cancellationToken);
     }
 
@@ -32,7 +49,26 @@ public sealed class SubscriptionPlanCatalog(AppDbContext dbContext) : ISubscript
         if (!includeDisabled)
             query = query.Where(x => x.IsEnabled);
 
-        return await query.Select(x => ToItem(x)).SingleOrDefaultAsync(cancellationToken);
+        return await query
+            .Select(x => new SubscriptionPlanItem(
+                x.Id,
+                x.Code,
+                x.NameEn,
+                x.NameAr,
+                x.DescriptionEn,
+                x.DescriptionAr,
+                x.BillingInterval,
+                x.Price,
+                x.Currency,
+                x.TrialDays,
+                x.GracePeriodDays,
+                x.IsEnabled,
+                x.SortOrder,
+                x.GatewayProductId,
+                x.GatewayPlanId,
+                x.CreatedAtUtc,
+                x.UpdatedAtUtc))
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<SubscriptionPlanItem> CreateAsync(
@@ -40,7 +76,6 @@ public sealed class SubscriptionPlanCatalog(AppDbContext dbContext) : ISubscript
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var now = DateTime.UtcNow;
         var plan = new SubscriptionPlan(
             request.Code,
             request.NameEn,
@@ -56,11 +91,9 @@ public sealed class SubscriptionPlanCatalog(AppDbContext dbContext) : ISubscript
             request.SortOrder,
             request.GatewayProductId,
             request.GatewayPlanId,
-            now);
+            DateTime.UtcNow);
 
-        var duplicate = await dbContext.SubscriptionPlans.AsNoTracking()
-            .AnyAsync(x => x.NormalizedCode == plan.NormalizedCode, cancellationToken);
-        if (duplicate)
+        if (await CodeExistsAsync(plan.NormalizedCode, cancellationToken))
             throw DuplicateCode(plan.Code);
 
         dbContext.SubscriptionPlans.Add(plan);
@@ -68,10 +101,12 @@ public sealed class SubscriptionPlanCatalog(AppDbContext dbContext) : ISubscript
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (await CodeExistsAsync(plan.NormalizedCode, cancellationToken))
+        catch (DbUpdateException ex)
         {
             dbContext.Entry(plan).State = EntityState.Detached;
-            throw DuplicateCode(plan.Code, ex);
+            if (await CodeExistsAsync(plan.NormalizedCode, cancellationToken))
+                throw DuplicateCode(plan.Code, ex);
+            throw;
         }
 
         return ToItem(plan);
