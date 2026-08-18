@@ -1,0 +1,180 @@
+@page "/account/sessions"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IDisposable
+@inject IServiceProvider Services
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "جلساتي" : "My Sessions")</PageTitle>
+
+<div class="my-sessions-page" dir="@L.Direction">
+    <AppToolbar Eyebrow="@(L.IsArabic ? "أمان الحساب" : "ACCOUNT SECURITY")"
+                Title="@(L.IsArabic ? "جلساتي" : "My sessions")"
+                Subtitle="@(L.IsArabic ? "راجع الأجهزة التي سجلت دخولها إلى حسابك وألغِ أي جلسة أخرى لم تعد تحتاجها." : "Review devices signed in to your account and revoke any other session you no longer need.")">
+        <Actions>
+            <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Busy="@_working" Disabled="@_working" OnClick="RefreshAsync" />
+            <AppButton Variant="danger" Text="@(L.IsArabic ? "إلغاء الجلسات الأخرى" : "Revoke other sessions")" Busy="@_working" Disabled="@(_working || OtherActiveCount == 0)" OnClick="RevokeOthersAsync" />
+        </Actions>
+    </AppToolbar>
+
+    <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                   Title="@(_isError ? (L.IsArabic ? "تعذر تنفيذ العملية" : "Action failed") : (L.IsArabic ? "تم تحديث الجلسات" : "Sessions updated"))"
+                   Message="@_message" />
+
+    <section class="session-summary">
+        <AppStatCard Icon="✓" Label="@(L.IsArabic ? "جلسات نشطة" : "Active sessions")" Value="@_sessions.Count(x => x.IsActive).ToString()" Tone="success" />
+        <AppStatCard Icon="◎" Label="@(L.IsArabic ? "أجهزة أخرى" : "Other active devices")" Value="@OtherActiveCount.ToString()" Tone="info" />
+    </section>
+
+    <AppCard>
+        @if (_loading)
+        {
+            <AppLoading Title="@(L.IsArabic ? "تحميل الجلسات" : "Loading sessions")"
+                        Message="@(L.IsArabic ? "جارٍ تحميل الجلسات المرتبطة بحسابك." : "Loading sessions associated with your account.")" />
+        }
+        else
+        {
+            <div class="my-session-list">
+                @foreach (var session in _sessions)
+                {
+                    <article class="my-session-card @(session.IsCurrent ? "current" : null)">
+                        <div class="my-session-main">
+                            <div class="session-title-row">
+                                <strong>@DeviceText(session.UserAgent)</strong>
+                                <AppBadge Tone="@(session.IsActive ? "success" : session.RevokedAtUtc.HasValue ? "warning" : "neutral")" Text="@StatusText(session)" />
+                                @if (session.IsCurrent)
+                                {
+                                    <AppBadge Tone="info" Text="@(L.IsArabic ? "هذه الجلسة" : "This session")" />
+                                }
+                            </div>
+                            <span>@(string.IsNullOrWhiteSpace(session.IpAddress) ? "—" : session.IpAddress) · @session.Role</span>
+                            <small>@(L.IsArabic ? "آخر نشاط" : "Last seen"): @FormatDate(session.LastSeenAtUtc)</small>
+                            <small>@(L.IsArabic ? "تنتهي" : "Expires"): @FormatDate(session.ExpiresAtUtc)</small>
+                        </div>
+                        <div class="my-session-actions">
+                            @if (session.IsCurrent)
+                            {
+                                <span>@(L.IsArabic ? "استخدم تسجيل الخروج لإنهاء هذه الجلسة." : "Use sign out to end this session.")</span>
+                            }
+                            else if (session.IsActive)
+                            {
+                                <AppButton Size="small" Variant="danger" Text="@(L.IsArabic ? "إلغاء" : "Revoke")" Disabled="@_working" OnClick="_ => RevokeAsync(session)" />
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </AppCard>
+</div>
+
+@code {
+    private ApplicationSessionAdministrationService _service = default!;
+    private IReadOnlyList<ApplicationSessionView> _sessions = [];
+    private string? _message;
+    private bool _loading = true;
+    private bool _working;
+    private bool _isError;
+
+    private int OtherActiveCount => _sessions.Count(x => x.IsActive && !x.IsCurrent);
+
+    protected override void OnInitialized()
+    {
+        L.Changed += LanguageChanged;
+        _service = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<ApplicationSessionAdministrationService>(Services);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _loading = false;
+    }
+
+    private Task RefreshAsync(MouseEventArgs _args) => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _working = true;
+            _sessions = await _service.ListOwnAsync(activeOnly: false);
+            _isError = false;
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private async Task RevokeAsync(ApplicationSessionView session)
+    {
+        try
+        {
+            _working = true;
+            var result = await _service.RevokeOwnAsync(session.SessionId);
+            _isError = !result.IsSuccess;
+            _message = result.IsSuccess
+                ? (L.IsArabic ? "تم إلغاء الجلسة." : "Session revoked.")
+                : result.Message;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private async Task RevokeOthersAsync(MouseEventArgs _args)
+    {
+        try
+        {
+            _working = true;
+            var result = await _service.RevokeOtherOwnSessionsAsync();
+            _isError = !result.IsSuccess;
+            _message = result.IsSuccess
+                ? (L.IsArabic ? $"تم إلغاء {result.RevokedCount} جلسة أخرى." : $"Revoked {result.RevokedCount} other session(s).")
+                : result.Message;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private string StatusText(ApplicationSessionView session) => session.IsActive
+        ? (L.IsArabic ? "نشطة" : "Active")
+        : session.RevokedAtUtc.HasValue
+            ? (L.IsArabic ? "ملغاة" : "Revoked")
+            : (L.IsArabic ? "منتهية" : "Expired");
+
+    private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
+
+    private static string DeviceText(string userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent)) return "Unknown device";
+        if (userAgent.Contains("Edg/", StringComparison.OrdinalIgnoreCase)) return "Microsoft Edge";
+        if (userAgent.Contains("Chrome/", StringComparison.OrdinalIgnoreCase)) return "Chrome";
+        if (userAgent.Contains("Firefox/", StringComparison.OrdinalIgnoreCase)) return "Firefox";
+        if (userAgent.Contains("Safari/", StringComparison.OrdinalIgnoreCase)) return "Safari";
+        return userAgent.Length > 44 ? userAgent[..44] + "…" : userAgent;
+    }
+
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
