@@ -9,11 +9,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class LocalAuthenticationService(AppDbContext dbContext)
+public sealed class LocalAuthenticationService(
+    AppDbContext dbContext,
+    ApplicationRoleStore? roleStore = null)
 {
     public const string FirstRunLandingPath = "/welcome";
 
     private readonly PasswordHasher<AuthUser> _hasher = new();
+    private readonly ApplicationRoleStore _roleStore = roleStore ?? new ApplicationRoleStore(dbContext);
 
     public Task<bool> HasAccountsAsync(CancellationToken cancellationToken = default) =>
         dbContext.AuthUsers.AsNoTracking().AnyAsync(cancellationToken);
@@ -141,6 +144,14 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
             return LoginResult.Failed("Invalid username or password.");
         }
 
+        var resolvedRole = await _roleStore.ResolveAssignableRoleNameAsync(user.Role, cancellationToken);
+        if (resolvedRole is null)
+        {
+            AddAudit(context, user.UserName, false, "Unavailable application role", now);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return LoginResult.Failed("Account access is unavailable. Contact an administrator.");
+        }
+
         if (verification == PasswordVerificationResult.SuccessRehashNeeded)
             user.SetPasswordHash(_hasher.HashPassword(user, safePassword), now);
 
@@ -152,9 +163,9 @@ public sealed class LocalAuthenticationService(AppDbContext dbContext)
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.UserName),
-            new(ClaimTypes.Role, user.Role)
+            new(ClaimTypes.Role, resolvedRole)
         };
-        claims.AddRange(ApplicationPermissionCatalog.ForRole(user.Role)
+        claims.AddRange((await _roleStore.ResolvePermissionsAsync(resolvedRole, cancellationToken))
             .Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
