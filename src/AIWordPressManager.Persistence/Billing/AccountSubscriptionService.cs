@@ -11,7 +11,11 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
         if (ownerUserId == Guid.Empty) throw new ArgumentException("Owner user ID is required.", nameof(ownerUserId));
         return dbContext.AccountSubscriptions.AsNoTracking()
             .Where(x => x.OwnerUserId == ownerUserId)
-            .Select(x => ToItemProjection(x))
+            .Select(x => new AccountSubscriptionItem(
+                x.Id, x.OwnerUserId, x.PlanId, x.Status, x.TrialStartedAtUtc, x.TrialEndsAtUtc,
+                x.CurrentPeriodStartUtc, x.CurrentPeriodEndsAtUtc, x.CancelAtPeriodEnd, x.GraceUntilUtc,
+                x.CancelledAtUtc, x.SuspendedAtUtc, x.ExpiredAtUtc, x.ProviderKey,
+                x.ProviderSubscriptionReference, x.LastProviderEventAtUtc, x.CreatedAtUtc, x.UpdatedAtUtc))
             .SingleOrDefaultAsync(cancellationToken);
     }
 
@@ -163,12 +167,6 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
         new($"Account '{ownerUserId:D}' already has a current subscription record.", inner);
 
     private static AccountSubscriptionItem ToItem(AccountSubscription x) => new(
-        x.Id, x.OwnerUserId, x.PlanId, x.Status, x.TrialStartedAtUtc, x.TrialEndsAtUtc,
-        x.CurrentPeriodStartUtc, x.CurrentPeriodEndsAtUtc, x.CancelAtPeriodEnd, x.GraceUntilUtc,
-        x.CancelledAtUtc, x.SuspendedAtUtc, x.ExpiredAtUtc, x.ProviderKey,
-        x.ProviderSubscriptionReference, x.LastProviderEventAtUtc, x.CreatedAtUtc, x.UpdatedAtUtc);
-
-    private static AccountSubscriptionItem ToItemProjection(AccountSubscription x) => new(
         x.Id, x.OwnerUserId, x.PlanId, x.Status, x.TrialStartedAtUtc, x.TrialEndsAtUtc,
         x.CurrentPeriodStartUtc, x.CurrentPeriodEndsAtUtc, x.CancelAtPeriodEnd, x.GraceUntilUtc,
         x.CancelledAtUtc, x.SuspendedAtUtc, x.ExpiredAtUtc, x.ProviderKey,
