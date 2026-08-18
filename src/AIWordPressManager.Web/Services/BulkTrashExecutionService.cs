@@ -6,10 +6,13 @@ public sealed class BulkTrashExecutionService(
     IWordPressApiClient apiClient,
     SiteWebService sites,
     WordPressSyncWebService syncService,
-    ExecutionOperationTracker tracker)
+    ExecutionOperationTracker tracker,
+    CurrentUserContext currentUser)
 {
     public async Task<BulkTrashResult> RunAsync(Guid siteId, BulkTrashRequest request, CancellationToken cancellationToken = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         var site = await sites.GetSiteAsync(siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
         var ownerUserId = site.OwnerUserId

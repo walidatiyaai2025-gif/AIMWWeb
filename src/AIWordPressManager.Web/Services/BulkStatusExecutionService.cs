@@ -6,7 +6,8 @@ public sealed class BulkStatusExecutionService(
     IWordPressPostEditorService editor,
     SiteWebService sites,
     WordPressSyncWebService syncService,
-    ExecutionOperationTracker tracker)
+    ExecutionOperationTracker tracker,
+    CurrentUserContext currentUser)
 {
     private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -18,6 +19,8 @@ public sealed class BulkStatusExecutionService(
         BulkStatusRequest request,
         CancellationToken cancellationToken = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         var site = await sites.GetSiteAsync(siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
         var ownerUserId = site.OwnerUserId

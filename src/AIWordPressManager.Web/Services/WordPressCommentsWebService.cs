@@ -3,7 +3,9 @@ using AIWordPressManager.Application.Abstractions.WordPress;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class WordPressCommentsWebService(IWordPressApiClient apiClient)
+public sealed class WordPressCommentsWebService(
+    IWordPressApiClient apiClient,
+    CurrentUserContext currentUser)
 {
     public async Task<CommentPageResult> GetAsync(
         Guid siteId,
@@ -80,6 +82,8 @@ public sealed class WordPressCommentsWebService(IWordPressApiClient apiClient)
         string contentText,
         CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (postId <= 0 || parentId <= 0)
             return new(false, "بيانات التعليق غير صحيحة.");
         if (string.IsNullOrWhiteSpace(contentText))
@@ -104,6 +108,8 @@ public sealed class WordPressCommentsWebService(IWordPressApiClient apiClient)
         bool force,
         CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (commentId <= 0)
             return new(false, "رقم التعليق غير صحيح.");
 
@@ -125,6 +131,8 @@ public sealed class WordPressCommentsWebService(IWordPressApiClient apiClient)
         string status,
         CancellationToken ct)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (commentId <= 0)
             return new(false, "رقم التعليق غير صحيح.");
 

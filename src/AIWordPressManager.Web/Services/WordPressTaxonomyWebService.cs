@@ -7,7 +7,8 @@ namespace AIWordPressManager.Web.Services;
 public sealed class WordPressTaxonomyWebService(
     AppDbContext dbContext,
     IWordPressApiClient apiClient,
-    WordPressSyncWebService syncService)
+    WordPressSyncWebService syncService,
+    CurrentUserContext currentUser)
 {
     public async Task<IReadOnlyList<TaxonomyTermView>> GetAsync(Guid siteId, string taxonomy, CancellationToken ct = default)
     {
@@ -30,6 +31,8 @@ public sealed class WordPressTaxonomyWebService(
 
     public async Task<TaxonomyOperationResult> CreateAsync(Guid siteId, string taxonomy, TaxonomyTermEditModel model, CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (string.IsNullOrWhiteSpace(model.Name))
             return new(false, "اسم التصنيف أو الوسم مطلوب.", 0);
 
@@ -46,6 +49,8 @@ public sealed class WordPressTaxonomyWebService(
 
     public async Task<TaxonomyOperationResult> UpdateAsync(Guid siteId, string taxonomy, int id, TaxonomyTermEditModel model, CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (id <= 0) return new(false, "رقم العنصر غير صحيح.", 0);
         if (string.IsNullOrWhiteSpace(model.Name)) return new(false, "اسم التصنيف أو الوسم مطلوب.", id);
 
@@ -61,6 +66,8 @@ public sealed class WordPressTaxonomyWebService(
 
     public async Task<TaxonomyOperationResult> DeleteAsync(Guid siteId, string taxonomy, int id, CancellationToken ct = default)
     {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+
         if (id <= 0) return new(false, "رقم العنصر غير صحيح.", 0);
 
         var type = NormalizeTaxonomy(taxonomy);
