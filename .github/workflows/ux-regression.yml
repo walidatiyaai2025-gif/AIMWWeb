@@ -18,6 +18,8 @@ jobs:
   visual-accessibility:
     name: visual-accessibility (${{ matrix.shard }})
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright/dotnet:v1.49.0-noble
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -39,14 +41,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-          cache: true
-          cache-dependency-path: |
-            **/*.csproj
-            Directory.Packages.props
+      - name: Verify container .NET SDK
+        run: dotnet --info
 
       - name: Restore application solution
         run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
@@ -59,10 +55,6 @@ jobs:
 
       - name: Build UX regression project
         run: dotnet build tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --configuration Release --no-restore
-
-      - name: Install Chromium for Playwright
-        shell: pwsh
-        run: tests/AIWordPressManager.UxTests/bin/Release/net8.0/playwright.ps1 install --with-deps chromium
 
       - name: Run ${{ matrix.shard }} visual and accessibility gates
         shell: bash
