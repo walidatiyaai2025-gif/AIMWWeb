@@ -98,7 +98,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailOutbox, EmailOutboxService>();
         services.AddScoped<OperationalEmailAlertService>();
         services.AddScoped<SiteSyncFailureAlertRelay>();
+        services.AddScoped<ExecutionJobFailureAlertRelay>();
         services.AddHostedService<SiteSyncFailureAlertWorker>();
+        services.AddHostedService<ExecutionJobFailureAlertWorker>();
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.

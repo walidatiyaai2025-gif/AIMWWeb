@@ -12,6 +12,7 @@ public static class EmailTemplateKeys
     public const string SiteOperationalReport = "site.operational-report";
     public const string SiteSeoSummary = "site.seo-summary";
     public const string SiteSyncFailure = "site.sync-failure";
+    public const string SiteJobFailure = "site.job-failure";
     public const string DashboardDigest = "account.dashboard-digest";
     public const string SecurityAlert = "account.security-alert";
     public const string BillingEvent = "account.billing-event";
