@@ -1,3 +1,5 @@
+using System.Data;
+using System.Data.Common;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Domain.Entities;
@@ -25,6 +27,8 @@ public sealed class DatabaseInitializationService(
         else
         {
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+            if (IsSupportedNonSqliteProvider(provider))
+                await EnsureNonSqliteCompatibilityAsync(provider, cancellationToken);
         }
 
         if (!await dbContext.Database.CanConnectAsync(cancellationToken))
@@ -36,6 +40,137 @@ public sealed class DatabaseInitializationService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Database initialization completed successfully using provider {Provider}.", provider);
+    }
+
+    private async Task EnsureNonSqliteCompatibilityAsync(string provider, CancellationToken cancellationToken)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        var closeWhenFinished = connection.State != ConnectionState.Open;
+        if (closeWhenFinished)
+            await connection.OpenAsync(cancellationToken);
+
+        try
+        {
+            var existingTables = ReadSchemaNames(connection, "Tables", "TABLE_NAME");
+            var createScript = dbContext.Database.GenerateCreateScript();
+            var commands = RelationalSchemaUpgradePlanner.SelectMissingTableCommands(createScript, existingTables);
+
+            foreach (var command in commands)
+                await dbContext.Database.ExecuteSqlRawAsync(command, cancellationToken);
+
+            if (commands.Count > 0)
+            {
+                logger.LogInformation(
+                    "Applied {CommandCount} provider-native schema compatibility commands using {Provider}.",
+                    commands.Count,
+                    provider);
+            }
+
+            await EnsureNonSqliteEmailOutboxScopeAsync(provider, connection, cancellationToken);
+        }
+        finally
+        {
+            if (closeWhenFinished && connection.State == ConnectionState.Open)
+                await connection.CloseAsync();
+        }
+    }
+
+    private async Task EnsureNonSqliteEmailOutboxScopeAsync(
+        string provider,
+        DbConnection connection,
+        CancellationToken cancellationToken)
+    {
+        var existingTables = ReadSchemaNames(connection, "Tables", "TABLE_NAME");
+        if (!existingTables.Contains("EmailOutboxMessages"))
+            return;
+
+        var columns = ReadColumnNames(connection, "EmailOutboxMessages");
+        if (!columns.Contains("Scope"))
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(GetAddOutboxScopeSql(provider), cancellationToken);
+            logger.LogInformation("Added Scope to EmailOutboxMessages using provider {Provider}.", provider);
+        }
+
+        await dbContext.Database.ExecuteSqlRawAsync(GetBackfillOutboxScopeSql(provider), cancellationToken);
+    }
+
+    private static HashSet<string> ReadSchemaNames(DbConnection connection, string collectionName, string nameColumn)
+    {
+        var schema = connection.GetSchema(collectionName);
+        var column = schema.Columns
+            .Cast<DataColumn>()
+            .FirstOrDefault(x => string.Equals(x.ColumnName, nameColumn, StringComparison.OrdinalIgnoreCase));
+
+        if (column is null)
+            throw new InvalidOperationException($"Provider schema collection '{collectionName}' does not expose '{nameColumn}'.");
+
+        return schema.Rows
+            .Cast<DataRow>()
+            .Select(x => Convert.ToString(x[column]))
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static HashSet<string> ReadColumnNames(DbConnection connection, string tableName)
+    {
+        var schema = connection.GetSchema("Columns");
+        var tableColumn = schema.Columns
+            .Cast<DataColumn>()
+            .FirstOrDefault(x => string.Equals(x.ColumnName, "TABLE_NAME", StringComparison.OrdinalIgnoreCase));
+        var nameColumn = schema.Columns
+            .Cast<DataColumn>()
+            .FirstOrDefault(x => string.Equals(x.ColumnName, "COLUMN_NAME", StringComparison.OrdinalIgnoreCase));
+
+        if (tableColumn is null || nameColumn is null)
+            throw new InvalidOperationException("Provider column schema does not expose TABLE_NAME and COLUMN_NAME.");
+
+        return schema.Rows
+            .Cast<DataRow>()
+            .Where(x => string.Equals(Convert.ToString(x[tableColumn]), tableName, StringComparison.OrdinalIgnoreCase))
+            .Select(x => Convert.ToString(x[nameColumn]))
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSupportedNonSqliteProvider(string provider) =>
+        provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase) ||
+        provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) ||
+        provider.Contains("Postgre", StringComparison.OrdinalIgnoreCase) ||
+        provider.Contains("MySql", StringComparison.OrdinalIgnoreCase) ||
+        provider.Contains("Maria", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetAddOutboxScopeSql(string provider)
+    {
+        if (provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase))
+            return "ALTER TABLE [EmailOutboxMessages] ADD [Scope] nvarchar(16) NOT NULL CONSTRAINT [DF_EmailOutboxMessages_Scope] DEFAULT N'Account';";
+
+        if (provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) ||
+            provider.Contains("Postgre", StringComparison.OrdinalIgnoreCase))
+            return "ALTER TABLE \"EmailOutboxMessages\" ADD COLUMN \"Scope\" character varying(16) NOT NULL DEFAULT 'Account';";
+
+        if (provider.Contains("MySql", StringComparison.OrdinalIgnoreCase) ||
+            provider.Contains("Maria", StringComparison.OrdinalIgnoreCase))
+            return "ALTER TABLE `EmailOutboxMessages` ADD COLUMN `Scope` varchar(16) NOT NULL DEFAULT 'Account';";
+
+        throw new NotSupportedException($"No non-SQLite email schema compatibility SQL is defined for provider '{provider}'.");
+    }
+
+    private static string GetBackfillOutboxScopeSql(string provider)
+    {
+        if (provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase))
+            return "UPDATE [EmailOutboxMessages] SET [Scope] = CASE WHEN [SiteId] IS NULL THEN 'Account' ELSE 'Site' END WHERE [Scope] IS NULL OR [Scope] = '' OR [Scope] = 'Account';";
+
+        if (provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) ||
+            provider.Contains("Postgre", StringComparison.OrdinalIgnoreCase))
+            return "UPDATE \"EmailOutboxMessages\" SET \"Scope\" = CASE WHEN \"SiteId\" IS NULL THEN 'Account' ELSE 'Site' END WHERE \"Scope\" IS NULL OR \"Scope\" = '' OR \"Scope\" = 'Account';";
+
+        if (provider.Contains("MySql", StringComparison.OrdinalIgnoreCase) ||
+            provider.Contains("Maria", StringComparison.OrdinalIgnoreCase))
+            return "UPDATE `EmailOutboxMessages` SET `Scope` = CASE WHEN `SiteId` IS NULL THEN 'Account' ELSE 'Site' END WHERE `Scope` IS NULL OR `Scope` = '' OR `Scope` = 'Account';";
+
+        throw new NotSupportedException($"No non-SQLite email schema compatibility SQL is defined for provider '{provider}'.");
     }
 
     private async Task EnsureSqliteCompatibilityAsync(CancellationToken cancellationToken)
@@ -203,7 +338,7 @@ public sealed class DatabaseInitializationService(
     private async Task EnsureSqliteSiteOwnerColumnAsync(CancellationToken cancellationToken)
     {
         var connection = (SqliteConnection)dbContext.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
+        if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
         var hasColumn = false;
@@ -251,7 +386,7 @@ public sealed class DatabaseInitializationService(
     private async Task EnsureSqliteEmailOutboxScopeAsync(CancellationToken cancellationToken)
     {
         var connection = (SqliteConnection)dbContext.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
+        if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
         var tableExists = false;

@@ -3,6 +3,7 @@ using AIWordPressManager.Application.Abstractions.Email;
 using AIWordPressManager.Application.Abstractions.Persistence;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Persistence.Backups;
+using AIWordPressManager.Persistence.Email;
 using AIWordPressManager.Persistence.Initialization;
 using AIWordPressManager.Persistence.Sites;
 using AIWordPressManager.Persistence.WordPress;
@@ -95,6 +96,9 @@ public static class DependencyInjection
         services.AddScoped<ICategoryPlannerService, CategoryPlannerService>();
         services.AddScoped<IInternalLinkSuggestionService, InternalLinkSuggestionService>();
         services.AddScoped<IEmailOutbox, EmailOutboxService>();
+        services.AddScoped<OperationalEmailAlertService>();
+        services.AddScoped<SiteSyncFailureAlertRelay>();
+        services.AddHostedService<SiteSyncFailureAlertWorker>();
         // Deferred until the Web implementation of IAiSuggestionProvider is registered.
         // services.AddScoped<ISuggestedChangeService, SuggestedChangeService>();
         // Deferred until the Web implementation of IWordPressPostEditorService is registered.
