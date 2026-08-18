@@ -1,0 +1,150 @@
+@page "/admin/sessions"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.UsersManage)]
+@using AIWordPressManager.Persistence
+@inject AppDbContext DbContext
+@inject CurrentUserContext CurrentUser
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "إدارة الجلسات" : "Session Management")</PageTitle>
+
+<div class="settings-page">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">SECURITY SESSIONS</span>
+            <h1>@(L.IsArabic ? "إدارة جلسات التطبيق" : "Application sessions")</h1>
+            <p>@(L.IsArabic
+                ? "راجع الجلسات النشطة وأنهِ أي جلسة لم تعد موثوقة. الجلسات الملغاة أو المنتهية لا يمكنها استخدام الصلاحيات القديمة."
+                : "Review active sessions and end any session that is no longer trusted. Revoked or expired sessions cannot continue using stale permissions.")</p>
+        </div>
+        <a class="button secondary" href="/settings/sessions">@(L.IsArabic ? "جلساتي" : "My sessions")</a>
+    </section>
+
+    <section class="panel settings-section">
+        <header class="sessions-toolbar">
+            <div>
+                <h2>@(L.IsArabic ? "مخزون الجلسات" : "Session inventory")</h2>
+                <p>@(L.IsArabic ? "آخر نشاط، الحساب، الدور، الجهاز وعنوان الشبكة." : "Last activity, account, role, device and network address.")</p>
+            </div>
+            <label class="sessions-toggle">
+                <input type="checkbox" @bind="_includeInactive" @bind:after="LoadAsync" />
+                <span>@(L.IsArabic ? "إظهار المنتهية والملغاة" : "Show expired and revoked")</span>
+            </label>
+        </header>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="settings-note" role="status"><span>ⓘ</span><p>@_message</p></div>
+        }
+
+        @if (_loading)
+        {
+            <p role="status">@(L.IsArabic ? "جارٍ تحميل الجلسات..." : "Loading sessions...")</p>
+        }
+        else if (_sessions.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد جلسات مطابقة." : "No matching sessions.")</p>
+        }
+        else
+        {
+            <div class="sessions-list">
+                @foreach (var session in _sessions)
+                {
+                    <article class="settings-subsection" @key="session.SessionId">
+                        <div class="sessions-row">
+                            <div>
+                                <strong>@session.UserName</strong>
+                                <small>@session.Role · @FormatWhen(session.LastSeenAtUtc)</small>
+                            </div>
+                            <span class="settings-badge @(IsActive(session) ? "success" : string.Empty)">@Status(session)</span>
+                        </div>
+                        <div class="sessions-meta">
+                            <span><b>@(L.IsArabic ? "بدأت" : "Created"):</b> @FormatWhen(session.CreatedAtUtc)</span>
+                            <span><b>@(L.IsArabic ? "تنتهي" : "Expires"):</b> @FormatWhen(session.ExpiresAtUtc)</span>
+                            <span><b>IP:</b> @(string.IsNullOrWhiteSpace(session.IpAddress) ? "—" : session.IpAddress)</span>
+                            <span><b>@(L.IsArabic ? "الجهاز" : "Device"):</b> @(string.IsNullOrWhiteSpace(session.UserAgent) ? "—" : session.UserAgent)</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(session.RevokedReason))
+                        {
+                            <small>@(L.IsArabic ? "سبب الإنهاء" : "End reason"): @session.RevokedReason</small>
+                        }
+                        @if (IsActive(session))
+                        {
+                            <div class="sessions-actions">
+                                @if (session.IsCurrent)
+                                {
+                                    <span class="settings-badge">@(L.IsArabic ? "الجلسة الحالية" : "Current session")</span>
+                                }
+                                else
+                                {
+                                    <button class="button danger" disabled="@_busy" @onclick="() => EndAsync(session.SessionId)">
+                                        @(L.IsArabic ? "إنهاء الجلسة" : "End session")
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private readonly List<ApplicationSessionSummary> _sessions = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _includeInactive;
+    private string _message = string.Empty;
+
+    private ApplicationSessionAdministrationService Service =>
+        new(new ApplicationSessionStore(DbContext), CurrentUser, HttpContextAccessor);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _sessions.Clear();
+            _sessions.AddRange(await Service.ListAllAsync(_includeInactive));
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task EndAsync(Guid sessionId)
+    {
+        if (_busy) return;
+        _busy = true;
+        _message = string.Empty;
+        try
+        {
+            var result = await Service.EndSessionAsync(sessionId, "Ended by administrator.");
+            _message = result.IsSuccess
+                ? (L.IsArabic ? "تم إنهاء الجلسة." : "Session ended.")
+                : result.Message;
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private bool IsActive(ApplicationSessionSummary session) =>
+        !session.RevokedAtUtc.HasValue && session.ExpiresAtUtc > DateTime.UtcNow;
+
+    private string Status(ApplicationSessionSummary session)
+    {
+        if (session.RevokedAtUtc.HasValue) return L.IsArabic ? "ملغاة" : "Revoked";
+        if (session.ExpiresAtUtc <= DateTime.UtcNow) return L.IsArabic ? "منتهية" : "Expired";
+        return L.IsArabic ? "نشطة" : "Active";
+    }
+
+    private string FormatWhen(DateTime value) => value.ToLocalTime().ToString("g");
+}
