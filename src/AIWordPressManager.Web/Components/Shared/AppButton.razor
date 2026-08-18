@@ -1,10 +1,13 @@
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
 @if (!string.IsNullOrWhiteSpace(Href))
 {
     <a class="app-button @VariantClass @SizeClass @Class"
        href="@EffectiveHref"
        target="@Target"
        tabindex="@DisabledTabIndex"
-       aria-disabled="@Disabled"
+       aria-disabled="@EffectiveDisabled"
        aria-busy="@Busy"
        aria-label="@EffectiveAriaLabel"
        aria-pressed="@AriaPressed"
@@ -16,7 +19,7 @@ else
 {
     <button class="app-button @VariantClass @SizeClass @Class"
             type="@Type"
-            disabled="@Disabled"
+            disabled="@EffectiveDisabled"
             aria-busy="@Busy"
             aria-label="@EffectiveAriaLabel"
             aria-pressed="@AriaPressed"
@@ -45,10 +48,12 @@ else
     [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private bool _permissionDisabled;
+    private bool EffectiveDisabled => Disabled || _permissionDisabled;
     private string VariantClass => $"app-button--{Variant}";
     private string SizeClass => $"app-button--{Size}";
-    private string? EffectiveHref => Disabled ? null : Href;
-    private string? DisabledTabIndex => Disabled ? "-1" : null;
+    private string? EffectiveHref => EffectiveDisabled ? null : Href;
+    private string? DisabledTabIndex => EffectiveDisabled ? "-1" : null;
     private string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? Text : AriaLabel;
     private string NormalizedIconIntent => IconIntent.Trim().ToLowerInvariant() switch
     {
@@ -60,6 +65,18 @@ else
     };
     private bool ShouldMirrorIcon => MirrorIconInRtl ?? NormalizedIconIntent is "back" or "forward" or "enter";
     private string IconClass => $"app-button__icon app-directional-icon{(ShouldMirrorIcon ? " app-directional-icon--mirror-rtl" : string.Empty)}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _permissionDisabled = false;
+        if (!OnClick.HasDelegate || !ApplicationContentMutationUiPolicy.RequiresContentEdit(new Uri(Navigation.Uri).AbsolutePath))
+            return;
+
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _permissionDisabled = !ApplicationPermissionCatalog.PrincipalHasPermission(
+            authenticationState.User,
+            ApplicationPermissionCatalog.ContentEdit);
+    }
 
     private RenderFragment ButtonContent => builder =>
     {
