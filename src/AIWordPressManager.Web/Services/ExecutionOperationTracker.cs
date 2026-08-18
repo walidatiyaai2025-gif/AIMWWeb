@@ -8,17 +8,29 @@ public sealed class ExecutionOperationTracker
     private readonly string _connectionString;
     private readonly object _sync = new();
 
-    public ExecutionOperationTracker(ExecutionCenterService executionCenter)
+    public ExecutionOperationTracker(ExecutionCenterService executionCenter, string? databasePath = null)
     {
         _executionCenter = executionCenter;
-        var dataDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AIWordPressManager",
-            "Data");
-        Directory.CreateDirectory(dataDirectory);
+        var resolvedPath = databasePath;
+        if (string.IsNullOrWhiteSpace(resolvedPath))
+        {
+            var dataDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "AIWordPressManager",
+                "Data");
+            Directory.CreateDirectory(dataDirectory);
+            resolvedPath = Path.Combine(dataDirectory, "execution-center.db");
+        }
+        else
+        {
+            resolvedPath = Path.GetFullPath(resolvedPath);
+            var directory = Path.GetDirectoryName(resolvedPath);
+            if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
+        }
+
         _connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = Path.Combine(dataDirectory, "execution-center.db"),
+            DataSource = resolvedPath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();
