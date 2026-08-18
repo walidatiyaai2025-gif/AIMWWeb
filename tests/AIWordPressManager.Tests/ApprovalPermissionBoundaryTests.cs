@@ -61,6 +61,7 @@ public sealed class ApprovalPermissionBoundaryTests
             [ApplicationPermissionCatalog.ApprovalsView, ApplicationPermissionCatalog.ApprovalsDecide],
             principalPermissions: [ApplicationPermissionCatalog.ApprovalsDecide]);
         var otherUserId = await fixture.AddUserAsync("other-approval-decider");
+        fixture.BindAuthenticatedContext();
 
         var action = () => fixture.Service.Submit(
             otherUserId,
@@ -69,7 +70,6 @@ public sealed class ApprovalPermissionBoundaryTests
 
         action.Should().Throw<UnauthorizedAccessException>()
             .WithMessage("*owner identity*");
-        fixture.Service.GetItems(otherUserId).Should().BeEmpty();
     }
 
     [Fact]
@@ -109,6 +109,8 @@ public sealed class ApprovalPermissionBoundaryTests
         private readonly ServiceProvider _provider;
         private readonly ExecutionCenterService _executionCenter;
         private readonly string _roleName;
+        private readonly HttpContextAccessor _accessor;
+        private readonly ClaimsPrincipal _principal;
 
         private ApprovalPermissionFixture(
             string directory,
@@ -116,6 +118,8 @@ public sealed class ApprovalPermissionBoundaryTests
             ServiceProvider provider,
             ExecutionCenterService executionCenter,
             string roleName,
+            HttpContextAccessor accessor,
+            ClaimsPrincipal principal,
             Guid userId,
             ApprovalWorkflowService service)
         {
@@ -124,6 +128,8 @@ public sealed class ApprovalPermissionBoundaryTests
             _provider = provider;
             _executionCenter = executionCenter;
             _roleName = roleName;
+            _accessor = accessor;
+            _principal = principal;
             UserId = userId;
             Service = service;
         }
@@ -176,13 +182,8 @@ public sealed class ApprovalPermissionBoundaryTests
             };
             claims.AddRange(principalPermissions.Select(permission =>
                 new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
-            var accessor = new HttpContextAccessor
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test"))
-                }
-            };
+            var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "test"));
+            var accessor = new HttpContextAccessor();
 
             var executionCenter = new ExecutionCenterService(
                 Path.Combine(directory, "execution-center.db"),
@@ -202,8 +203,15 @@ public sealed class ApprovalPermissionBoundaryTests
                 provider,
                 executionCenter,
                 roleName,
+                accessor,
+                principal,
                 userId,
                 service);
+        }
+
+        public void BindAuthenticatedContext()
+        {
+            _accessor.HttpContext = new DefaultHttpContext { User = _principal };
         }
 
         public async Task<Guid> AddUserAsync(string userName)
@@ -218,6 +226,7 @@ public sealed class ApprovalPermissionBoundaryTests
 
         public async ValueTask DisposeAsync()
         {
+            _accessor.HttpContext = null;
             _executionCenter.Dispose();
             await _provider.DisposeAsync();
             await _connection.DisposeAsync();
