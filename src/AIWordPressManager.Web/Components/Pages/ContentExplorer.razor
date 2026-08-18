@@ -6,6 +6,7 @@
 @inject BulkContentOperationQueue BulkQueue
 @inject BulkTrashExecutionService TrashService
 @inject ExecutionOperationTracker OperationTracker
+@inject CurrentUserContext CurrentUser
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
 @inject AppLanguageService L
@@ -49,6 +50,11 @@ else
             </div>
         </section>
 
+        @if (!CanEditContent)
+        {
+            <div class="alert" role="status"><strong>@(L.IsArabic ? "وضع القراءة فقط: تحتاج صلاحية Content.Edit للتحرير أو تغيير الحالة أو النقل لسلة المهملات." : "Read-only mode: Content.Edit permission is required to edit, change status, or move content to trash.")</strong></div>
+        }
+
         @if (_syncing)
         {
             <div class="explorer-background-status" role="status">
@@ -75,7 +81,7 @@ else
             <button class="explorer-tab @Active("tags")" @onclick="SetTagsTab">⌗ @L["Tags"]</button>
             <button class="explorer-tab @Active("media")" @onclick="SetMediaTab">▣ @L["Media"]</button>
             <span class="explorer-nav-spacer"></span>
-            <a class="explorer-shortcut" href="@($"/sites/{Id}/taxonomy")">@(L.IsArabic ? "إدارة التصنيفات" : "Manage taxonomy")</a>
+            <a class="explorer-shortcut" href="@($"/sites/{Id}/taxonomy")">@(CanEditContent ? (L.IsArabic ? "إدارة التصنيفات" : "Manage taxonomy") : (L.IsArabic ? "عرض التصنيفات" : "View taxonomy"))</a>
             <a class="explorer-shortcut" href="@($"/sites/{Id}/seo")">SEO</a>
         </section>
 
@@ -108,7 +114,7 @@ else
                 <button class="btn" @onclick="ResetFiltersAsync">@(L.IsArabic ? "إعادة ضبط" : "Reset")</button>
             </section>
 
-            @if (_selected.Count > 0)
+            @if (_selected.Count > 0 && CanEditContent)
             {
                 <section class="bulk-action-bar panel">
                     <strong>@(L.IsArabic ? $"تم تحديد {_selected.Count} عنصر" : $"{_selected.Count} items selected")</strong>
@@ -129,19 +135,19 @@ else
         else if (_tab == "content")
         {
             <section class="panel explorer-table-panel">
-                <div class="explorer-table-head"><span><input type="checkbox" checked="@AllPageSelected" @onchange="TogglePageSelection" /></span><span>@L["Title"]</span><span>@L["Type"]</span><span>@L["Status"]</span><span>@L["LastModified"]</span><span>@L["Actions"]</span></div>
+                <div class="explorer-table-head"><span><input type="checkbox" disabled="@(!CanEditContent)" checked="@AllPageSelected" @onchange="TogglePageSelection" /></span><span>@L["Title"]</span><span>@L["Type"]</span><span>@L["Status"]</span><span>@L["LastModified"]</span><span>@L["Actions"]</span></div>
                 @foreach (var item in _pagedContent)
                 {
                     var key = ContentKey(item);
                     <article @key="key" class="explorer-table-row @(_selected.Contains(key) ? "selected" : string.Empty)">
-                        <span><input type="checkbox" checked="@_selected.Contains(key)" @onchange="e => ToggleItem(key, e)" /></span>
+                        <span><input type="checkbox" disabled="@(!CanEditContent)" checked="@_selected.Contains(key)" @onchange="e => ToggleItem(key, e)" /></span>
                         <div class="content-title-cell"><strong>@PlainText(item.Title)</strong><small>/@item.Slug</small></div>
                         <span class="content-type-pill">@(item.ContentType == "post" ? L["Post"] : L["Page"])</span>
                         <span class="badge @(item.Status == "publish" ? "success" : item.Status == "draft" ? "warning" : string.Empty)">@TranslateStatus(item.Status)</span>
                         <time>@FormatDate(item.ModifiedAtUtc)</time>
                         <div class="table-actions">
                             <button class="btn compact" @onclick="() => Preview(item)">@(L.IsArabic ? "معاينة" : "Preview")</button>
-                            <a class="btn compact primary" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@L["Edit"]</a>
+                            <a class="btn compact @(CanEditContent ? "primary" : string.Empty)" href="@($"/sites/{Id}/content/{item.ContentType}/{item.WordPressId}/edit")">@(CanEditContent ? L["Edit"] : (L.IsArabic ? "عرض" : "View"))</a>
                             @if (!string.IsNullOrWhiteSpace(item.Link))
                             {
                                 <button class="btn compact" @onclick="() => CopyLinkAsync(item.Link)">⧉</button>
@@ -195,8 +201,8 @@ else
             <section class="panel explorer-preview-modal" @onclick:stopPropagation="true">
                 <header><div><span class="workspace-kicker">@(L.IsArabic ? "معاينة المحتوى" : "CONTENT PREVIEW")</span><h2>@PlainText(_preview.Title)</h2></div><button class="icon-button" @onclick="ClosePreview">×</button></header>
                 <div class="explorer-preview-meta"><span>@(_preview.ContentType == "post" ? L["Post"] : L["Page"])</span><span>@TranslateStatus(_preview.Status)</span><span>@FormatDate(_preview.ModifiedAtUtc)</span></div>
-                <div class="explorer-preview-body"><p>@(L.IsArabic ? "هذه معاينة للبيانات المحلية المتزامنة. افتح المحرر لعرض وتعديل المحتوى الكامل." : "This preview uses locally synchronized metadata. Open the editor to view and change the full content.")</p><code>/@_preview.Slug</code></div>
-                <footer><a class="btn primary" href="@($"/sites/{Id}/content/{_preview.ContentType}/{_preview.WordPressId}/edit")">@L["Edit"]</a>@if (!string.IsNullOrWhiteSpace(_preview.Link)) { <button class="btn" @onclick="() => CopyLinkAsync(_preview.Link)">@(L.IsArabic ? "نسخ الرابط" : "Copy link")</button><a class="btn" href="@_preview.Link" target="_blank" rel="noopener">@(L.IsArabic ? "فتح في الموقع" : "Open on site") ↗</a> }</footer>
+                <div class="explorer-preview-body"><p>@(CanEditContent ? (L.IsArabic ? "هذه معاينة للبيانات المحلية المتزامنة. افتح المحرر لعرض وتعديل المحتوى الكامل." : "This preview uses locally synchronized metadata. Open the editor to view and change the full content.") : (L.IsArabic ? "هذه معاينة للبيانات المحلية المتزامنة. يمكنك فتح المحتوى الكامل في وضع القراءة فقط." : "This preview uses locally synchronized metadata. You can open the full content in read-only mode."))</p><code>/@_preview.Slug</code></div>
+                <footer><a class="btn @(CanEditContent ? "primary" : string.Empty)" href="@($"/sites/{Id}/content/{_preview.ContentType}/{_preview.WordPressId}/edit")">@(CanEditContent ? L["Edit"] : (L.IsArabic ? "عرض" : "View"))</a>@if (!string.IsNullOrWhiteSpace(_preview.Link)) { <button class="btn" @onclick="() => CopyLinkAsync(_preview.Link)">@(L.IsArabic ? "نسخ الرابط" : "Copy link")</button><a class="btn" href="@_preview.Link" target="_blank" rel="noopener">@(L.IsArabic ? "فتح في الموقع" : "Open on site") ↗</a> }</footer>
             </section>
         </div>
     }
@@ -226,8 +232,9 @@ else
     private long _loadVersion;
     private CancellationTokenSource? _searchDebounce;
 
+    private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_filteredContent.Count / (double)_pageSize));
-    private bool AllPageSelected => _pagedContent.Count > 0 && _pagedContent.All(x => _selected.Contains(ContentKey(x)));
+    private bool AllPageSelected => CanEditContent && _pagedContent.Count > 0 && _pagedContent.All(x => _selected.Contains(ContentKey(x)));
 
     protected override void OnInitialized() => L.Changed += Changed;
 
@@ -359,6 +366,7 @@ else
         if (_page > TotalPages) _page = TotalPages;
         RebuildPage();
         _selected.RemoveWhere(key => !_filteredContent.Any(x => ContentKey(x) == key));
+        if (!CanEditContent) _selected.Clear();
     }
 
     private void RebuildPage()
@@ -387,6 +395,7 @@ else
         if (_site is null || _data is null || _selected.Count == 0) return;
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _bulkQueuing = true;
             var targets = _data.Content.Where(x => _selected.Contains(ContentKey(x))).Select(x => new BulkContentTarget(x.ContentType, x.WordPressId, PlainText(x.Title))).ToList();
             var title = status == "publish" ? (L.IsArabic ? "نشر محتوى محدد" : "Publish selected content") : status == "pending" ? (L.IsArabic ? "إرسال محتوى للمراجعة" : "Send content for review") : (L.IsArabic ? "تحويل محتوى لمسودة" : "Move content to draft");
@@ -411,6 +420,7 @@ else
         if (_data is null || _selected.Count == 0) return;
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _bulkQueuing = true;
             var targets = _data.Content.Where(x => _selected.Contains(ContentKey(x))).Select(x => new BulkTrashTarget(x.ContentType, x.WordPressId)).ToList();
             var result = await TrashService.RunAsync(Id, new BulkTrashRequest(targets));
@@ -439,14 +449,14 @@ else
     private void SetMediaTab() => SetTab("media");
     private string Active(string tab) => _tab == tab ? "active" : string.Empty;
     private void ClearSelection() => _selected.Clear();
-    private void SelectAllFiltered() { foreach (var item in _filteredContent) _selected.Add(ContentKey(item)); }
+    private void SelectAllFiltered() { if (!CanEditContent) return; foreach (var item in _filteredContent) _selected.Add(ContentKey(item)); }
     private void Preview(ContentExplorerItem item) => _preview = item;
     private void ClosePreview() => _preview = null;
     private async Task CopyLinkAsync(string link) { await JS.InvokeVoidAsync("navigator.clipboard.writeText", link); Notifications.Success(L.IsArabic ? "تم نسخ الرابط." : "Link copied."); }
     private void Fail(Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); Notifications.Error(_message, L.IsArabic ? "تعذر إكمال العملية" : "Operation failed"); }
     private static string ContentKey(ContentExplorerItem item) => $"{item.ContentType}:{item.WordPressId}";
-    private void ToggleItem(string key, ChangeEventArgs args) { if (args.Value is bool selected && selected) _selected.Add(key); else _selected.Remove(key); }
-    private void TogglePageSelection(ChangeEventArgs args) { var selected = args.Value is bool value && value; foreach (var item in _pagedContent) { var key = ContentKey(item); if (selected) _selected.Add(key); else _selected.Remove(key); } }
+    private void ToggleItem(string key, ChangeEventArgs args) { if (!CanEditContent) return; if (args.Value is bool selected && selected) _selected.Add(key); else _selected.Remove(key); }
+    private void TogglePageSelection(ChangeEventArgs args) { if (!CanEditContent) return; var selected = args.Value is bool value && value; foreach (var item in _pagedContent) { var key = ContentKey(item); if (selected) _selected.Add(key); else _selected.Remove(key); } }
     private string FormatDate(DateTime? value) => value is null ? "—" : value.Value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private string TranslateStatus(string status) => L.IsArabic ? status switch { "publish" => "منشور", "draft" => "مسودة", "pending" => "قيد المراجعة", "private" => "خاص", "future" => "مجدول", _ => status } : status switch { "publish" => "Published", "draft" => "Draft", "pending" => "Pending Review", "private" => "Private", "future" => "Scheduled", _ => status };
     private static string PlainText(string value) => System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "<.*?>", string.Empty));
