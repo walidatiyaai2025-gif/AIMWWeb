@@ -28,6 +28,12 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
         return BackgroundExecutionIdentity.TryGetOwnerUserId(out userId);
     }
 
+    public bool TryGetSessionId(out Guid sessionId)
+    {
+        var value = accessor.HttpContext?.User.FindFirstValue(ApplicationSessionStore.SessionIdClaimType);
+        return Guid.TryParse(value, out sessionId);
+    }
+
     public bool IsInRole(string role) => accessor.HttpContext?.User.IsInRole(role) == true;
 
     public bool HasPermission(string permission) =>
