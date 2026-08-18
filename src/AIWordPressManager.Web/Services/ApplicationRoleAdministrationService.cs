@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +10,7 @@ public sealed class ApplicationRoleAdministrationService(
 {
     private static readonly Regex RoleNamePattern = new("^[A-Za-z][A-Za-z0-9._-]{2,63}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private readonly ApplicationRolePermissionResolver _resolver = new(dbContext);
+    private readonly ApplicationRoleRegistryStore _store = new(dbContext);
 
     public async Task<IReadOnlyList<ApplicationRoleSummary>> ListAsync(CancellationToken cancellationToken = default)
     {
@@ -21,12 +21,7 @@ public sealed class ApplicationRoleAdministrationService(
             .Select(group => new { Role = group.Key, Count = group.Count() })
             .ToListAsync(cancellationToken);
         var counts = usersByRole.ToDictionary(x => x.Role, x => x.Count, StringComparer.OrdinalIgnoreCase);
-
-        var customRoles = await dbContext.Set<ApplicationRole>().AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        var roleIds = customRoles.Select(x => x.Id).ToArray();
-        var grants = await dbContext.Set<ApplicationRoleGrant>().AsNoTracking()
-            .Where(x => roleIds.Contains(x.RoleId))
-            .ToListAsync(cancellationToken);
+        var customRoles = await _store.LoadAsync(cancellationToken);
 
         var result = new List<ApplicationRoleSummary>
         {
@@ -40,12 +35,7 @@ public sealed class ApplicationRoleAdministrationService(
             role.DisplayNameEn,
             role.DisplayNameAr,
             false,
-            grants.Where(grant => grant.RoleId == role.Id)
-                .Select(grant => grant.Permission)
-                .Where(permission => ApplicationPermissionCatalog.All.Contains(permission, StringComparer.Ordinal))
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(permission => permission, StringComparer.Ordinal)
-                .ToArray(),
+            role.Permissions,
             counts.GetValueOrDefault(role.Name))));
         return result;
     }
@@ -62,24 +52,33 @@ public sealed class ApplicationRoleAdministrationService(
         if (validation is not null) return RoleAdministrationResult.Failed(validation);
         if (IsBuiltInRole(cleanName)) return RoleAdministrationResult.Failed("Built-in roles cannot be recreated or replaced.");
 
-        var normalized = cleanName.ToUpperInvariant();
-        if (await dbContext.Set<ApplicationRole>().AsNoTracking().AnyAsync(x => x.NormalizedName == normalized, cancellationToken))
-            return RoleAdministrationResult.Failed("A role with this name already exists.");
-
-        var now = DateTime.UtcNow;
-        var role = new ApplicationRole(cleanName, cleanEn, cleanAr, now);
-        dbContext.Set<ApplicationRole>().Add(role);
-        foreach (var permission in cleanPermissions)
-            dbContext.Set<ApplicationRoleGrant>().Add(new ApplicationRoleGrant(role.Id, permission, now));
-
+        IReadOnlyList<PersistedApplicationRole> roles;
         try
         {
-            await dbContext.SaveChangesAsync(cancellationToken);
+            roles = await _store.LoadAsync(cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            return RoleAdministrationResult.Failed("The custom role registry is invalid and must be repaired before roles can be changed.");
+        }
+
+        if (roles.Any(role => string.Equals(role.Name, cleanName, StringComparison.OrdinalIgnoreCase)))
+            return RoleAdministrationResult.Failed("A role with this name already exists.");
+
+        var role = new PersistedApplicationRole(Guid.NewGuid(), cleanName, cleanEn, cleanAr, cleanPermissions);
+        var updated = roles.Append(role).ToArray();
+        try
+        {
+            await _store.SaveAsync(updated, cancellationToken);
             return RoleAdministrationResult.Succeeded(role.Id);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateConcurrencyException)
         {
-            return RoleAdministrationResult.Failed("The role could not be created because its name or grants conflict with existing data.");
+            return RoleAdministrationResult.Failed("Roles changed concurrently. Refresh and try again.");
+        }
+        catch (InvalidOperationException)
+        {
+            return RoleAdministrationResult.Failed("The custom role registry could not be validated.");
         }
     }
 
@@ -91,16 +90,24 @@ public sealed class ApplicationRoleAdministrationService(
         CancellationToken cancellationToken = default)
     {
         var actorId = currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
-        var role = await dbContext.Set<ApplicationRole>().SingleOrDefaultAsync(x => x.Id == roleId, cancellationToken);
+        IReadOnlyList<PersistedApplicationRole> roles;
+        try
+        {
+            roles = await _store.LoadAsync(cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            return RoleAdministrationResult.Failed("The custom role registry is invalid and must be repaired before roles can be changed.");
+        }
+
+        var role = roles.FirstOrDefault(item => item.Id == roleId);
         if (role is null) return RoleAdministrationResult.Failed("Custom role was not found.");
 
         var validation = Validate(role.Name, displayNameEn, displayNameAr, permissions, out _, out var cleanEn, out var cleanAr, out var cleanPermissions);
         if (validation is not null) return RoleAdministrationResult.Failed(validation);
 
-        var existingGrants = await dbContext.Set<ApplicationRoleGrant>().Where(x => x.RoleId == role.Id).ToListAsync(cancellationToken);
-        var currentlyManagesUsers = existingGrants.Any(x => x.Permission == ApplicationPermissionCatalog.UsersManage);
+        var currentlyManagesUsers = role.Permissions.Contains(ApplicationPermissionCatalog.UsersManage, StringComparer.Ordinal);
         var willManageUsers = cleanPermissions.Contains(ApplicationPermissionCatalog.UsersManage, StringComparer.Ordinal);
-
         if (currentlyManagesUsers && !willManageUsers)
         {
             var affectedActiveUsers = await dbContext.AuthUsers.AsNoTracking()
@@ -115,28 +122,46 @@ public sealed class ApplicationRoleAdministrationService(
                 return RoleAdministrationResult.Failed("At least one active account with Users.Manage must remain.");
         }
 
-        role.SetDisplayNames(cleanEn, cleanAr, DateTime.UtcNow);
-        dbContext.Set<ApplicationRoleGrant>().RemoveRange(existingGrants);
-        var now = DateTime.UtcNow;
-        foreach (var permission in cleanPermissions)
-            dbContext.Set<ApplicationRoleGrant>().Add(new ApplicationRoleGrant(role.Id, permission, now));
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return RoleAdministrationResult.Succeeded(role.Id);
+        var replacement = role with { DisplayNameEn = cleanEn, DisplayNameAr = cleanAr, Permissions = cleanPermissions };
+        var updated = roles.Select(item => item.Id == roleId ? replacement : item).ToArray();
+        try
+        {
+            await _store.SaveAsync(updated, cancellationToken);
+            return RoleAdministrationResult.Succeeded(role.Id);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return RoleAdministrationResult.Failed("Roles changed concurrently. Refresh and try again.");
+        }
     }
 
     public async Task<RoleAdministrationResult> DeleteAsync(Guid roleId, CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.UsersManage);
-        var role = await dbContext.Set<ApplicationRole>().SingleOrDefaultAsync(x => x.Id == roleId, cancellationToken);
-        if (role is null) return RoleAdministrationResult.Failed("Custom role was not found.");
+        IReadOnlyList<PersistedApplicationRole> roles;
+        try
+        {
+            roles = await _store.LoadAsync(cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            return RoleAdministrationResult.Failed("The custom role registry is invalid and must be repaired before roles can be changed.");
+        }
 
+        var role = roles.FirstOrDefault(item => item.Id == roleId);
+        if (role is null) return RoleAdministrationResult.Failed("Custom role was not found.");
         if (await dbContext.AuthUsers.AsNoTracking().AnyAsync(x => x.Role == role.Name, cancellationToken))
             return RoleAdministrationResult.Failed("This role is assigned to one or more accounts and cannot be deleted.");
 
-        dbContext.Set<ApplicationRole>().Remove(role);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return RoleAdministrationResult.Succeeded(role.Id);
+        try
+        {
+            await _store.SaveAsync(roles.Where(item => item.Id != roleId).ToArray(), cancellationToken);
+            return RoleAdministrationResult.Succeeded(role.Id);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return RoleAdministrationResult.Failed("Roles changed concurrently. Refresh and try again.");
+        }
     }
 
     private async Task<bool> HasActiveUsersManagerOutsideRoleAsync(string excludedRole, CancellationToken cancellationToken)
