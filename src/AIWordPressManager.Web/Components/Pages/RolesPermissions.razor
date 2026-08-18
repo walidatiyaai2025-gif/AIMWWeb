@@ -1,0 +1,204 @@
+@page "/admin/roles-permissions"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrator")]
+@implements IDisposable
+@inject IServiceProvider Services
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles & Permissions")</PageTitle>
+
+<div class="roles-page" dir="@L.Direction">
+    <AppToolbar Eyebrow="@(L.IsArabic ? "الأمان والتحكم في الوصول" : "SECURITY & ACCESS CONTROL")"
+                Title="@(L.IsArabic ? "الأدوار والصلاحيات" : "Roles & permissions")"
+                Subtitle="@(L.IsArabic ? "راجع مصفوفة الصلاحيات وعيّن دورًا تشغيليًا لكل حساب بدون منح صلاحيات إدارية ضمنية." : "Review the permission matrix and assign an operational role to each account without implicit administrative access.")">
+        <Actions>
+            <AppButton Icon="↻" Text="@(L.IsArabic ? "تحديث" : "Refresh")" Busy="@_working" Disabled="@_working" OnClick="RefreshAsync" />
+            <a class="app-button" href="/admin/application-users">@(L.IsArabic ? "إدارة الحسابات" : "Manage accounts")</a>
+        </Actions>
+    </AppToolbar>
+
+    <AppFormStatus Tone="@(_isError ? "error" : "success")"
+                   Title="@(_isError ? (L.IsArabic ? "تعذر تنفيذ العملية" : "Action failed") : (L.IsArabic ? "تم تحديث الوصول" : "Access updated"))"
+                   Message="@_message" />
+
+    <section class="role-grid" aria-label="@(L.IsArabic ? "مصفوفة الأدوار" : "Role matrix")">
+        @foreach (var role in ApplicationRoles.All.Where(x => !x.IsLegacy))
+        {
+            <article class="role-card">
+                <div class="role-card-head">
+                    <div>
+                        <span class="role-kicker">@role.Name</span>
+                        <h2>@(L.IsArabic ? role.ArabicName : role.EnglishName)</h2>
+                    </div>
+                    <strong>@role.Permissions.Count / @ApplicationPermissions.All.Count</strong>
+                </div>
+                <p>@RoleSummary(role.Name)</p>
+                <div class="permission-list">
+                    @foreach (var permission in ApplicationPermissions.All)
+                    {
+                        var granted = role.Permissions.Contains(permission.Id);
+                        <span class="permission-chip @(granted ? "granted" : "denied")">
+                            <b aria-hidden="true">@(granted ? "✓" : "—")</b>
+                            @(L.IsArabic ? permission.ArabicName : permission.EnglishName)
+                        </span>
+                    }
+                </div>
+            </article>
+        }
+    </section>
+
+    <AppSection Title="@(L.IsArabic ? "تعيين الأدوار" : "Role assignments")"
+                Subtitle="@(L.IsArabic ? "فقط مدير النظام يستطيع تغيير دور الحساب. لا يمكن لمدير النظام إزالة دوره الإداري من نفسه." : "Only an Administrator can change account roles. An Administrator cannot remove their own administrator role.")">
+        <ChildContent>
+            @if (_loading)
+            {
+                <AppLoading Title="@(L.IsArabic ? "تحميل الحسابات" : "Loading accounts")"
+                            Message="@(L.IsArabic ? "جارٍ تحميل تعيينات الأدوار الحالية." : "Loading current role assignments.")" />
+            }
+            else
+            {
+                <div class="role-assignment-list">
+                    @foreach (var user in _users)
+                    {
+                        <div class="role-assignment-row">
+                            <div class="account-copy">
+                                <strong>@user.UserName</strong>
+                                <small>@(L.IsArabic ? "الدور الحالي" : "Current role"): @RoleName(user.Role)</small>
+                            </div>
+                            <select value="@SelectedRole(user.Id)"
+                                    @onchange="args => SelectRole(user.Id, args.Value?.ToString())"
+                                    disabled="@_working"
+                                    aria-label="@(L.IsArabic ? $"دور {user.UserName}" : $"Role for {user.UserName}")">
+                                @foreach (var role in ApplicationRoles.All.Where(x => !x.IsLegacy))
+                                {
+                                    <option value="@role.Name">@(L.IsArabic ? role.ArabicName : role.EnglishName)</option>
+                                }
+                                @if (string.Equals(user.Role, ApplicationRoles.LegacyUser, StringComparison.Ordinal))
+                                {
+                                    <option value="@ApplicationRoles.LegacyUser">@(L.IsArabic ? "مستخدم قديم (توافق)" : "Legacy user (compatibility)")</option>
+                                }
+                            </select>
+                            <AppButton Variant="primary"
+                                       Size="small"
+                                       Text="@(L.IsArabic ? "حفظ الدور" : "Save role")"
+                                       Busy="@(_workingUserId == user.Id)"
+                                       Disabled="@(_working || string.Equals(SelectedRole(user.Id), user.Role, StringComparison.Ordinal))"
+                                       OnClick="_ => SaveRoleAsync(user)" />
+                        </div>
+                    }
+                </div>
+            }
+        </ChildContent>
+    </AppSection>
+
+    <aside class="legacy-note">
+        <strong>@(L.IsArabic ? "توافق الحسابات القديمة" : "Legacy account compatibility")</strong>
+        <p>@(L.IsArabic
+            ? "الدور User القديم يظل صالحًا للحسابات الموجودة حتى يتم تحويلها عمدًا إلى Manager أو Operator أو Viewer. لا يحصل هذا الدور على صلاحية قراءة أو إدارة مستخدمي التطبيق."
+            : "The legacy User role remains valid for existing accounts until deliberately migrated to Manager, Operator, or Viewer. It does not gain application-user read or management permission.")</p>
+    </aside>
+</div>
+
+@code {
+    private ApplicationUserAdministrationService _service = default!;
+    private IReadOnlyList<ApplicationUserSummary> _users = [];
+    private readonly Dictionary<Guid, string> _selectedRoles = new();
+    private bool _loading = true;
+    private bool _working;
+    private bool _isError;
+    private Guid? _workingUserId;
+    private string? _message;
+
+    protected override void OnInitialized()
+    {
+        L.Changed += LanguageChanged;
+        _service = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<ApplicationUserAdministrationService>(Services);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _loading = false;
+    }
+
+    private async Task RefreshAsync(MouseEventArgs _)
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _working = true;
+            _users = await _service.ListAsync();
+            _selectedRoles.Clear();
+            foreach (var user in _users)
+                _selectedRoles[user.Id] = ApplicationRoles.Normalize(user.Role) is { Length: > 0 } normalized ? normalized : ApplicationRoles.LegacyUser;
+            _isError = false;
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _working = false;
+        }
+    }
+
+    private void SelectRole(Guid userId, string? role)
+    {
+        var normalized = ApplicationRoles.Normalize(role);
+        if (normalized.Length > 0) _selectedRoles[userId] = normalized;
+    }
+
+    private string SelectedRole(Guid userId) =>
+        _selectedRoles.TryGetValue(userId, out var role) ? role : ApplicationRoles.LegacyUser;
+
+    private async Task SaveRoleAsync(ApplicationUserSummary user)
+    {
+        try
+        {
+            _working = true;
+            _workingUserId = user.Id;
+            var result = await _service.UpdateAsync(user.Id, user.UserName, SelectedRole(user.Id));
+            _isError = !result.IsSuccess;
+            _message = result.IsSuccess
+                ? (L.IsArabic ? $"تم تحديث دور {user.UserName}." : $"Updated the role for {user.UserName}.")
+                : result.Message;
+            if (result.IsSuccess) await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _isError = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _workingUserId = null;
+            _working = false;
+        }
+    }
+
+    private string RoleName(string role)
+    {
+        var definition = ApplicationRoles.Find(role);
+        if (definition is null) return role;
+        return L.IsArabic ? definition.ArabicName : definition.EnglishName;
+    }
+
+    private string RoleSummary(string role) => role switch
+    {
+        ApplicationRoles.Administrator => L.IsArabic ? "تحكم كامل بالحسابات والإعدادات والتشغيل." : "Full account, configuration, and operational control.",
+        ApplicationRoles.Manager => L.IsArabic ? "إدارة التشغيل والمحتوى والمواقع دون إدارة الحسابات أو إعدادات النظام الحساسة." : "Manages operations, content, and sites without account administration or sensitive system settings.",
+        ApplicationRoles.Operator => L.IsArabic ? "تنفيذ أعمال المحتوى والتشغيل اليومية دون تغيير الاتصالات أو الأسرار." : "Runs daily content and operational work without changing connections or secrets.",
+        ApplicationRoles.Viewer => L.IsArabic ? "وصول للقراءة والتقارير والتشخيص فقط." : "Read-only access to operational data, reports, and diagnostics.",
+        _ => L.IsArabic ? "دور توافق للحسابات القديمة." : "Compatibility role for existing accounts."
+    };
+
+    private void LanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => L.Changed -= LanguageChanged;
+}
