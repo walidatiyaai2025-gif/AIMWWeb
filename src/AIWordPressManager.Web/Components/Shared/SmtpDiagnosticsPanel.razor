@@ -8,7 +8,7 @@
     <div class="grid-2 mt-2">
         <div>
             <label>@(L.IsArabic ? "بريد الاختبار" : "Test recipient")</label>
-            <input class="form-control" type="email" @bind="_testRecipient" maxlength="320" disabled="@_busy" />
+            <input class="form-control" type="email" aria-label="@(L.IsArabic ? "بريد مستلم الاختبار" : "Test recipient email address")" @bind="_testRecipient" maxlength="320" disabled="@_busy" />
         </div>
         <div class="d-flex gap-2 align-items-end">
             <button class="btn" @onclick="DiagnoseAsync" disabled="@_busy">@(L.IsArabic ? "فحص الاتصال" : "Diagnose connection")</button>
