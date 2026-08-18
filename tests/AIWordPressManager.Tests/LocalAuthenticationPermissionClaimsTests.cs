@@ -42,6 +42,57 @@ public sealed class LocalAuthenticationPermissionClaimsTests
         permissionValues.Should().BeEquivalentTo(ApplicationPermissionCatalog.ForRole(role));
     }
 
+    [Fact]
+    public async Task Successful_sign_in_emits_only_server_persisted_custom_role_grants()
+    {
+        await using var fixture = await Fixture.CreateAsync("ContentReviewer");
+        await new ApplicationRoleRegistryStore(fixture.Context).SaveAsync(
+        [
+            new PersistedApplicationRole(
+                Guid.NewGuid(),
+                "ContentReviewer",
+                "Content reviewer",
+                "مراجع المحتوى",
+                [ApplicationPermissionCatalog.ContentView, ApplicationPermissionCatalog.ApprovalsView])
+        ]);
+
+        var result = await fixture.Service.SignInAsync(
+            fixture.HttpContext,
+            fixture.User.UserName,
+            Fixture.Password,
+            rememberMe: false);
+
+        result.IsSuccess.Should().BeTrue();
+        var permissionValues = fixture.Authentication.SignedInPrincipal!.FindAll(ApplicationPermissionCatalog.ClaimType)
+            .Select(claim => claim.Value)
+            .ToArray();
+        permissionValues.Should().BeEquivalentTo(
+            ApplicationPermissionCatalog.ContentView,
+            ApplicationPermissionCatalog.ApprovalsView);
+        permissionValues.Should().NotContain(ApplicationPermissionCatalog.UsersManage);
+    }
+
+    [Fact]
+    public async Task Corrupt_custom_role_registry_fails_closed_during_sign_in()
+    {
+        await using var fixture = await Fixture.CreateAsync("ContentReviewer");
+        fixture.Context.ApplicationSettings.Add(new ApplicationSetting(
+            ApplicationRoleRegistryStore.RegistryKey,
+            "{not-valid-json",
+            DateTime.UtcNow));
+        await fixture.Context.SaveChangesAsync();
+
+        var result = await fixture.Service.SignInAsync(
+            fixture.HttpContext,
+            fixture.User.UserName,
+            Fixture.Password,
+            rememberMe: false);
+
+        result.IsSuccess.Should().BeTrue();
+        fixture.Authentication.SignedInPrincipal.Should().NotBeNull();
+        fixture.Authentication.SignedInPrincipal!.FindAll(ApplicationPermissionCatalog.ClaimType).Should().BeEmpty();
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         public const string Password = "StrongPass1";
