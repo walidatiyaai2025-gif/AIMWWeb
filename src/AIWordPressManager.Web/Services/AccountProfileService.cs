@@ -9,11 +9,10 @@ namespace AIWordPressManager.Web.Services;
 public sealed class AccountProfileService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
-    ApplicationSessionStore? sessionStore = null,
     IHttpContextAccessor? httpContextAccessor = null)
 {
     private readonly PasswordHasher<AuthUser> _hasher = new();
-    private readonly ApplicationSessionStore _sessionStore = sessionStore ?? new ApplicationSessionStore(dbContext);
+    private readonly ApplicationSessionStore _sessionStore = new(dbContext);
     private readonly ApplicationSecurityAuditService _securityAudit = new(dbContext, currentUser, httpContextAccessor);
 
     public async Task<AccountProfileView> GetAsync(CancellationToken cancellationToken = default)
