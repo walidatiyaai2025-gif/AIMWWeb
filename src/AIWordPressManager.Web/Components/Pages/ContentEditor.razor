@@ -26,10 +26,18 @@ else
             <div class="editor-command-actions">
                 <a class="btn" href="@ExplorerUrl">← @L["BackToExplorer"]</a>
                 @if (!string.IsNullOrWhiteSpace(_model.Link)) { <a class="btn" href="@_model.Link" target="_blank">@L["ViewOnWordPress"] ↗</a> }
-                <button type="button" class="btn" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال للموافقة" : "Send for approval"))</button>
-                <button type="button" class="btn primary" disabled="@(_saving || _submittingApproval)" @onclick="SaveAsync">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                <button type="button" class="btn" disabled="@(!CanEdit || _saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال للموافقة" : "Send for approval"))</button>
+                <button type="button" class="btn primary" disabled="@(!CanEdit || _saving || _submittingApproval)" @onclick="SaveAsync">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
             </div>
         </header>
+
+        @if (!CanEdit)
+        {
+            <div class="panel" role="status">
+                <strong>@(L.IsArabic ? "وضع العرض فقط" : "View-only mode")</strong>
+                <span>@(L.IsArabic ? "يمكنك مراجعة المحتوى، لكن الحفظ وإرسال التغييرات للموافقة يتطلبان صلاحية Content.Edit." : "You can review this content, but saving or submitting changes for approval requires Content.Edit.")</span>
+            </div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
@@ -76,8 +84,8 @@ else
                             <label><span>@L["PingStatus"]</span><InputSelect @bind-Value="_model.PingStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
                             @if (_model.ContentType == "post") { <label class="check-row"><InputCheckbox @bind-Value="_model.Sticky" /> <span>@L["StickyPost"]</span></label> }
                         </div>
-                        <button class="btn primary full" type="submit" disabled="@(_saving || _submittingApproval)">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
-                        <button class="btn full" type="button" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(L.IsArabic ? "حفظ كمقترح للموافقة" : "Submit change for approval")</button>
+                        <button class="btn primary full" type="submit" disabled="@(!CanEdit || _saving || _submittingApproval)">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                        <button class="btn full" type="button" disabled="@(!CanEdit || _saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(L.IsArabic ? "حفظ كمقترح للموافقة" : "Submit change for approval")</button>
                         <small>@(L.IsArabic ? "التنفيذ بعد الموافقة يتحقق من نسخة WordPress مرة أخرى ولن يكتب فوق تعديل أحدث." : "Approved execution rechecks the WordPress version and will not overwrite a newer remote edit.")</small>
                     </section>
 
@@ -125,6 +133,7 @@ else
     private IReadOnlyList<MediaExplorerItem> _media = Array.Empty<MediaExplorerItem>();
     private string _mediaSearch = string.Empty;
     private string ExplorerUrl => $"/sites/{SiteId}/explorer";
+    private bool CanEdit => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private int TitleLength => PlainText(_model?.Title ?? string.Empty).Length;
     private int ExcerptLength => PlainText(_model?.Excerpt ?? string.Empty).Length;
     private int SeoScore => (_model is null ? 0 : 20 + (TitleLength is >= 30 and <= 65 ? 25 : 0) + (ExcerptLength is >= 80 and <= 160 ? 25 : 0) + (!string.IsNullOrWhiteSpace(_model.Slug) ? 15 : 0) + (_model.FeaturedMediaId > 0 ? 15 : 0));
@@ -156,6 +165,13 @@ else
     private async Task SaveAsync()
     {
         if (_model is null) return;
+        if (!CanEdit)
+        {
+            _isError = true;
+            _message = L.IsArabic ? "صلاحية Content.Edit مطلوبة لحفظ التغييرات." : "Content.Edit permission is required to save changes.";
+            return;
+        }
+
         try
         {
             _saving = true; _isError = false; _message = null;
@@ -176,8 +192,8 @@ else
         if (_model is null || _site is null || _baselineRequest is null) return Task.CompletedTask;
         try
         {
+            var ownerUserId = CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _submittingApproval = true; _isError = false; _message = null;
-            var ownerUserId = CurrentUser.RequireUserId();
             var after = _model.ToRequest(_baselineRequest.ExpectedModifiedGmt);
             var approval = ApprovalService.Submit(
                 ownerUserId,
