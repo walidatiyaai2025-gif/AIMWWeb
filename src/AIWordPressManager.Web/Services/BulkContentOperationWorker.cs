@@ -141,6 +141,7 @@ public sealed class BulkContentOperationWorker(
         if (WordPressPostEditorWebService.HasRemoteChanged(desired.ExpectedModifiedGmt, remote.ModifiedGmt))
             throw new InvalidOperationException(WordPressPostEditorWebService.ConflictMessage);
 
+        using var mutationAuthorization = BackgroundContentMutationAuthorization.Push();
         var updateResult = await editor.UpdateAsync(siteId, desired with { ForceOverwrite = false }, cancellationToken);
         if (updateResult.IsFailure)
             throw new InvalidOperationException(updateResult.Error.Message);
@@ -175,18 +176,22 @@ public sealed class BulkContentOperationWorker(
 
     private async Task ProcessBulkAsync(BulkContentOperationRequest request, CancellationToken cancellationToken)
     {
+        if (request.OwnerUserId == Guid.Empty)
+            throw new UnauthorizedAccessException("Bulk execution owner is missing.");
+
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var ownerUserId = await dbContext.Sites
+        var authoritativeOwner = await dbContext.Sites
             .AsNoTracking()
-            .Where(x => x.Id == request.SiteId)
+            .Where(x => x.Id == request.SiteId && !x.IsDeleted)
             .Select(x => x.OwnerUserId)
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (!ownerUserId.HasValue || ownerUserId.Value == Guid.Empty)
-            throw new UnauthorizedAccessException("Background execution could not resolve an owner for the selected site.");
+        if (!authoritativeOwner.HasValue || authoritativeOwner.Value != request.OwnerUserId)
+            throw new UnauthorizedAccessException("The selected site is no longer owned by the bulk operation owner.");
 
-        using var executionIdentity = BackgroundExecutionIdentity.Push(ownerUserId.Value);
+        using var executionIdentity = BackgroundExecutionIdentity.Push(request.OwnerUserId);
+        using var mutationAuthorization = BackgroundContentMutationAuthorization.Push();
         var editor = scope.ServiceProvider.GetRequiredService<IWordPressPostEditorService>();
         var syncService = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
         var succeeded = 0;
@@ -217,19 +222,19 @@ public sealed class BulkContentOperationWorker(
         {
             var message = $"Bulk operation completed. {succeeded} item(s) updated.";
             tracker.Complete(request.JobId, total, total, message);
-            Notify(ownerUserId.Value, request, "Bulk operation completed", message, NotificationSeverity.Success);
+            Notify(request.OwnerUserId, request, "Bulk operation completed", message, NotificationSeverity.Success);
         }
         else if (succeeded > 0)
         {
             var message = $"Completed with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
             tracker.Complete(request.JobId, total, total, message);
-            Notify(ownerUserId.Value, request, "Bulk operation completed with warnings", message, NotificationSeverity.Warning);
+            Notify(request.OwnerUserId, request, "Bulk operation completed with warnings", message, NotificationSeverity.Warning);
         }
         else
         {
             var message = $"All items failed. {string.Join(" | ", failures.Take(3))}";
             tracker.Fail(request.JobId, message);
-            Notify(ownerUserId.Value, request, "Bulk operation failed", message, NotificationSeverity.Error);
+            Notify(request.OwnerUserId, request, "Bulk operation failed", message, NotificationSeverity.Error);
         }
     }
 

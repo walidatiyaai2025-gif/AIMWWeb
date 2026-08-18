@@ -63,6 +63,36 @@ public sealed class WordPressPostEditorConflictTests
     }
 
     [Fact]
+    public async Task Background_owner_identity_alone_does_not_bypass_ContentEdit()
+    {
+        var api = new FakeApiClient();
+        var service = CreateService(api, ApplicationPermissionCatalog.ContentView);
+        using var ownerIdentity = BackgroundExecutionIdentity.Push(Guid.NewGuid());
+
+        var action = () => service.UpdateAsync(Guid.NewGuid(), Request(7));
+
+        await action.Should().ThrowAsync<UnauthorizedAccessException>()
+            .WithMessage($"*{ApplicationPermissionCatalog.ContentEdit}*");
+        api.GetCalls.Should().Be(0);
+        api.SendCalls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Authorized_background_continuation_can_execute_without_HTTP_ContentEdit_claim()
+    {
+        var api = new FakeApiClient();
+        api.SendResponses.Enqueue(ContentResponse(7, "2026-08-09T09:01:00Z"));
+        var service = CreateService(api, ApplicationPermissionCatalog.ContentView);
+        using var ownerIdentity = BackgroundExecutionIdentity.Push(Guid.NewGuid());
+        using var mutationAuthorization = BackgroundContentMutationAuthorization.Push();
+
+        var result = await service.UpdateAsync(Guid.NewGuid(), Request(7));
+
+        result.IsSuccess.Should().BeTrue();
+        api.SendCalls.Should().Be(1);
+    }
+
+    [Fact]
     public async Task UpdateAsync_Rejects_Unsupported_Status_Before_Remote_Call_For_ContentEditor()
     {
         var api = new FakeApiClient();

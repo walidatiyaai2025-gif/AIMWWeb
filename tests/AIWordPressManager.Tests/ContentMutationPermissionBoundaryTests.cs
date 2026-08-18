@@ -20,6 +20,25 @@ public sealed class ContentMutationPermissionBoundaryTests
     }
 
     [Fact]
+    public async Task Bulk_queue_rejects_view_only_before_scope_tracker_or_channel_work()
+    {
+        var queue = new BulkContentOperationQueue(
+            Accessor(ApplicationPermissionCatalog.ContentView),
+            null!,
+            null!);
+        var request = new BulkContentOperationRequest(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Protected site",
+            "publish",
+            [new BulkContentTarget("post", 42, "Protected post")]);
+
+        var action = async () => await queue.QueueAsync(request);
+
+        await AssertContentEditRequired(action);
+    }
+
+    [Fact]
     public async Task Bulk_trash_rejects_view_only_before_site_or_job_work()
     {
         var service = new BulkTrashExecutionService(null!, null!, null!, null!, CurrentUser(ApplicationPermissionCatalog.ContentView));
@@ -109,7 +128,10 @@ public sealed class ContentMutationPermissionBoundaryTests
             .WithMessage($"*{ApplicationPermissionCatalog.ContentEdit}*");
     }
 
-    private static CurrentUserContext CurrentUser(params string[] permissions)
+    private static CurrentUserContext CurrentUser(params string[] permissions) =>
+        new(Accessor(permissions));
+
+    private static IHttpContextAccessor Accessor(params string[] permissions)
     {
         var claims = new List<Claim>
         {
@@ -122,7 +144,7 @@ public sealed class ContentMutationPermissionBoundaryTests
         {
             User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"))
         };
-        return new CurrentUserContext(new TestAccessor(context));
+        return new TestAccessor(context);
     }
 
     private sealed class TestAccessor(HttpContext context) : IHttpContextAccessor

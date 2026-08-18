@@ -30,6 +30,32 @@ public sealed class ExecutionOperationTracker
     public Guid Start(Guid ownerUserId, Guid siteId, string title, string type, string siteName, int totalItems) =>
         StartCore(_executionCenter.Enqueue(ownerUserId, siteId, title, type, siteName, Math.Max(1, totalItems)));
 
+    public void BindOwner(Guid jobId, Guid ownerUserId, Guid siteId)
+    {
+        if (jobId == Guid.Empty) throw new ArgumentException("Execution job ID is required.", nameof(jobId));
+        if (ownerUserId == Guid.Empty) throw new ArgumentException("Execution owner user ID is required.", nameof(ownerUserId));
+        if (siteId == Guid.Empty) throw new ArgumentException("Execution site ID is required.", nameof(siteId));
+
+        lock (_sync)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                UPDATE ExecutionCenterJobs
+                SET OwnerUserId=$ownerUserId, SiteId=$siteId
+                WHERE Id=$id
+                  AND (OwnerUserId IS NULL OR OwnerUserId=$ownerUserId)
+                  AND (SiteId IS NULL OR SiteId=$siteId);
+                """;
+            command.Parameters.AddWithValue("$id", jobId.ToString());
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString());
+            command.Parameters.AddWithValue("$siteId", siteId.ToString());
+            if (command.ExecuteNonQuery() != 1)
+                throw new UnauthorizedAccessException("Execution job ownership could not be bound to the current user and site.");
+        }
+    }
+
     public void Report(Guid jobId, int processedItems, int totalItems, string message)
     {
         var safeTotal = Math.Max(1, totalItems);

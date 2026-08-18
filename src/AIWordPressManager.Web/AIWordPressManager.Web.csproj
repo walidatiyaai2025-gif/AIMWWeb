@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <AssemblyMetadata Include="GitBranch" Value="$(GitBranch)" />
+    <InternalsVisibleTo Include="AIWordPressManager.Tests" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AIWordPressManager.Application\AIWordPressManager.Application.csproj" />

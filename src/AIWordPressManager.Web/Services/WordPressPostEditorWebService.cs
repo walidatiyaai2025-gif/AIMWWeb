@@ -147,8 +147,13 @@ public sealed class WordPressPostEditorWebService(
         return expectedModifiedGmt.Value.ToUniversalTime() != remoteModifiedGmt.Value.ToUniversalTime();
     }
 
-    private void RequireEditPermission() =>
+    private void RequireEditPermission()
+    {
+        if (BackgroundContentMutationAuthorization.IsGranted)
+            return;
+
         currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+    }
 
     private async Task<Result<WordPressEditableContent>> FetchAsync(
         Guid siteId,
