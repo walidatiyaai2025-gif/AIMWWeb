@@ -61,9 +61,9 @@ public static class ApplicationRoles
         Create(Manager, "Manager", "مدير تشغيل", ManagerPermissions()),
         Create(Operator, "Operator", "مشغّل", OperatorPermissions()),
         Create(Viewer, "Viewer", "مشاهد", ViewerPermissions()),
-        // Existing databases already contain the User role. Keep it operationally compatible
-        // with the pre-IDN-009 authenticated-user experience instead of silently revoking access.
-        Create(LegacyUser, "Legacy user", "مستخدم قديم", ManagerPermissions(), isLegacy: true)
+        // Existing databases already contain the User role. Preserve its old non-admin boundary:
+        // operational access stays available, but application-user administration remains denied.
+        Create(LegacyUser, "Legacy user", "مستخدم قديم", LegacyUserPermissions(), isLegacy: true)
     ];
 
     public static IReadOnlyList<ApplicationRoleDefinition> All => Definitions;
@@ -103,6 +103,9 @@ public static class ApplicationRoles
         ApplicationPermissions.BackupsRead,
         ApplicationPermissions.BackupsManage
     ];
+
+    private static IEnumerable<string> LegacyUserPermissions() => ManagerPermissions()
+        .Where(x => x != ApplicationPermissions.UsersRead);
 
     private static IEnumerable<string> OperatorPermissions() =>
     [
