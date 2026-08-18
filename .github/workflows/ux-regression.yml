@@ -20,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright/dotnet:v1.49.0-noble
-      options: --user 1001
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -42,14 +41,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-          cache: true
-          cache-dependency-path: |
-            **/*.csproj
-            Directory.Packages.props
+      - name: Verify container .NET SDK
+        run: dotnet --info
 
       - name: Restore application solution
         run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
