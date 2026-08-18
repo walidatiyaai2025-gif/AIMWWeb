@@ -16,4 +16,7 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.Playwright" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj" />
+  </ItemGroup>
 </Project>
