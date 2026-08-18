@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -70,7 +69,7 @@ public sealed class AccountProfileService(
         user.SetPasswordHash(_hasher.HashPassword(user, next), DateTime.UtcNow);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var currentSessionId = GetCurrentSessionId(httpContextAccessor?.HttpContext?.User);
+        var currentSessionId = currentUser.TryGetSessionId(out var resolvedSessionId) ? resolvedSessionId : (Guid?)null;
         var activeSessions = await _sessionStore.ListAsync(user.Id, includeInactive: false, cancellationToken);
         var revokedCount = 0;
         foreach (var session in activeSessions.Where(x => !currentSessionId.HasValue || x.SessionId != currentSessionId.Value))
@@ -108,12 +107,6 @@ public sealed class AccountProfileService(
             user.UserName,
             values,
             cancellationToken);
-    }
-
-    private static Guid? GetCurrentSessionId(ClaimsPrincipal? principal)
-    {
-        var value = principal?.FindFirstValue(ApplicationSessionStore.SessionIdClaimType);
-        return Guid.TryParse(value, out var sessionId) ? sessionId : null;
     }
 }
 
