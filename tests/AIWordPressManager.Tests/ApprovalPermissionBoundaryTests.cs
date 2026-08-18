@@ -54,6 +54,25 @@ public sealed class ApprovalPermissionBoundaryTests
     }
 
     [Fact]
+    public async Task Authenticated_owner_cannot_mutate_for_another_decider_account()
+    {
+        await using var fixture = await ApprovalPermissionFixture.CreateAsync(
+            "ApprovalDecider",
+            [ApplicationPermissionCatalog.ApprovalsView, ApplicationPermissionCatalog.ApprovalsDecide],
+            principalPermissions: [ApplicationPermissionCatalog.ApprovalsDecide]);
+        var otherUserId = await fixture.AddUserAsync("other-approval-decider");
+
+        var action = () => fixture.Service.Submit(
+            otherUserId,
+            CreateSubmission("cross-owner"),
+            "spoofed-other@example.com");
+
+        action.Should().Throw<UnauthorizedAccessException>()
+            .WithMessage("*owner identity*");
+        fixture.Service.GetItems(otherUserId).Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Inactive_account_fails_closed_before_approval_mutation()
     {
         await using var fixture = await ApprovalPermissionFixture.CreateAsync(
@@ -89,12 +108,14 @@ public sealed class ApprovalPermissionBoundaryTests
         private readonly SqliteConnection _connection;
         private readonly ServiceProvider _provider;
         private readonly ExecutionCenterService _executionCenter;
+        private readonly string _roleName;
 
         private ApprovalPermissionFixture(
             string directory,
             SqliteConnection connection,
             ServiceProvider provider,
             ExecutionCenterService executionCenter,
+            string roleName,
             Guid userId,
             ApprovalWorkflowService service)
         {
@@ -102,6 +123,7 @@ public sealed class ApprovalPermissionBoundaryTests
             _connection = connection;
             _provider = provider;
             _executionCenter = executionCenter;
+            _roleName = roleName;
             UserId = userId;
             Service = service;
         }
@@ -179,8 +201,19 @@ public sealed class ApprovalPermissionBoundaryTests
                 connection,
                 provider,
                 executionCenter,
+                roleName,
                 userId,
                 service);
+        }
+
+        public async Task<Guid> AddUserAsync(string userName)
+        {
+            await using var scope = _provider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var user = new AuthUser(userName, "test-password-hash", DateTime.UtcNow, _roleName);
+            db.AuthUsers.Add(user);
+            await db.SaveChangesAsync();
+            return user.Id;
         }
 
         public async ValueTask DisposeAsync()
