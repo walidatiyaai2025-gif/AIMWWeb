@@ -8,6 +8,8 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
     public bool IsAuthenticated => accessor.HttpContext?.User.Identity?.IsAuthenticated == true || BackgroundExecutionIdentity.TryGetOwnerUserId(out _);
 
     public Guid UserId => RequireUserId();
+    public string UserName => accessor.HttpContext?.User.Identity?.Name ?? string.Empty;
+    public string SessionId => TryGetSessionId(out var sessionId) ? sessionId : string.Empty;
 
     public Guid RequireUserId()
     {
@@ -26,6 +28,13 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
             return true;
 
         return BackgroundExecutionIdentity.TryGetOwnerUserId(out userId);
+    }
+
+    public bool TryGetSessionId(out string sessionId)
+    {
+        sessionId = string.Empty;
+        var value = accessor.HttpContext?.User.FindFirstValue(ApplicationSessionStore.ClaimType);
+        return ApplicationSessionStore.TryNormalizeSessionId(value, out sessionId);
     }
 
     public bool IsInRole(string role) => accessor.HttpContext?.User.IsInRole(role) == true;
@@ -58,8 +67,6 @@ public sealed class CurrentUserContext(IHttpContextAccessor accessor)
 
         return userId;
     }
-
-    public string UserName => accessor.HttpContext?.User.Identity?.Name ?? string.Empty;
 
     private bool TryGetHttpUserId(out Guid userId)
     {
