@@ -6,7 +6,8 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class WordPressPostEditorWebService(
     IWordPressApiClient apiClient,
-    AppNotificationService notifications) : IWordPressPostEditorService
+    AppNotificationService notifications,
+    CurrentUserContext currentUser) : IWordPressPostEditorService
 {
     public const string ConflictMessage = "This content changed in WordPress after you opened the editor. Reload the latest remote version before saving again.";
     private readonly Dictionary<(Guid SiteId, string ContentType, int WordPressId), DateTimeOffset?> _loadedVersions = [];
@@ -28,6 +29,8 @@ public sealed class WordPressPostEditorWebService(
         WordPressContentUpdateRequest request,
         CancellationToken cancellationToken = default)
     {
+        RequireEditPermission();
+
         try
         {
             if (string.IsNullOrWhiteSpace(request.Title))
@@ -143,6 +146,9 @@ public sealed class WordPressPostEditorWebService(
 
         return expectedModifiedGmt.Value.ToUniversalTime() != remoteModifiedGmt.Value.ToUniversalTime();
     }
+
+    private void RequireEditPermission() =>
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
 
     private async Task<Result<WordPressEditableContent>> FetchAsync(
         Guid siteId,
