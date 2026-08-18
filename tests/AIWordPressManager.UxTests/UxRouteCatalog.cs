@@ -18,6 +18,7 @@ public static class UxRouteCatalog
         new("ai-center", "/ai-center", HighRisk: true),
         new("ai-usage", "/module/ai-usage"),
         new("prompt-templates", "/settings/ai-prompts", HighRisk: true, AdminOnly: true),
+        new("security-audit", "/admin/security-audit", HighRisk: true, AdminOnly: true),
         new("approvals", "/approvals", HighRisk: true),
         new("account-profile", "/account/profile", HighRisk: true),
         new("account-email", "/account/email-settings", HighRisk: true),
