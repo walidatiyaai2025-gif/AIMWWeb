@@ -31,6 +31,8 @@ public sealed class WordPressMediaWebService(
         string? caption,
         CancellationToken cancellationToken = default)
     {
+        RequireEditPermission();
+
         var validation = MediaUploadPolicy.Validate(file.Name, file.Size, file.ContentType);
         if (!validation.IsValid) return MediaActionResult.Fail(validation.Message);
 
@@ -129,6 +131,8 @@ public sealed class WordPressMediaWebService(
         MediaMetadataUpdate request,
         CancellationToken cancellationToken = default)
     {
+        RequireEditPermission();
+
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
         if (string.IsNullOrWhiteSpace(request.Title)) return MediaActionResult.Fail("Media title is required.");
 
@@ -196,6 +200,8 @@ public sealed class WordPressMediaWebService(
 
     public async Task<MediaActionResult> ReplaceAsync(Guid siteId, int mediaId, IBrowserFile replacement, string? title, CancellationToken cancellationToken = default)
     {
+        RequireEditPermission();
+
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
 
         var validation = MediaUploadPolicy.Validate(replacement.Name, replacement.Size, replacement.ContentType);
@@ -232,6 +238,8 @@ public sealed class WordPressMediaWebService(
 
     public async Task<MediaActionResult> DeleteAsync(Guid siteId, int mediaId, CancellationToken cancellationToken = default)
     {
+        RequireEditPermission();
+
         if (mediaId <= 0) return MediaActionResult.Fail("Invalid media ID.");
 
         var ownerUserId = currentUser.UserId;
@@ -271,6 +279,8 @@ public sealed class WordPressMediaWebService(
 
     public ApprovalItem RequestBulkDelete(Guid siteId, string siteName, IReadOnlyCollection<int> mediaIds, string requestedBy)
     {
+        RequireEditPermission();
+
         var validIds = mediaIds.Where(id => id > 0).Distinct().ToArray();
         if (validIds.Length == 0) throw new InvalidOperationException("Select at least one valid media item.");
         return approvals.Submit(new ApprovalSubmission(
@@ -281,6 +291,8 @@ public sealed class WordPressMediaWebService(
 
     public ExecutionJob QueueMetadataUpdate(Guid siteId, string siteName, IReadOnlyCollection<int> mediaIds)
     {
+        RequireEditPermission();
+
         var count = mediaIds.Count(id => id > 0);
         if (count == 0) throw new InvalidOperationException("Select at least one media item.");
         return execution.Enqueue(currentUser.UserId, siteId, "Bulk media metadata update", "Bulk Media Metadata", siteName, count);
@@ -291,6 +303,9 @@ public sealed class WordPressMediaWebService(
         if (!expectedModifiedGmt.HasValue || !remoteModifiedGmt.HasValue) return false;
         return expectedModifiedGmt.Value.ToUniversalTime() != remoteModifiedGmt.Value.ToUniversalTime();
     }
+
+    private void RequireEditPermission() =>
+        currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
 
     private async Task<string> ReconcileDeletedMediaCacheAsync(Guid siteId, int mediaId, CancellationToken cancellationToken)
     {
