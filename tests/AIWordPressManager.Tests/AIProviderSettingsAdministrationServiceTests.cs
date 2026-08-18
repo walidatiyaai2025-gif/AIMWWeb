@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using AIWordPressManager.Application.Settings;
+using AIWordPressManager.Persistence;
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Tests;
 
@@ -42,6 +45,44 @@ public sealed class AIProviderSettingsAdministrationServiceTests
         runtime.LastSavedSettings.Should().BeSameAs(settings);
         runtime.LastPlainApiKeys.Should().BeSameAs(keys);
         runtime.LastClearedProvider.Should().Be("OpenAI");
+    }
+
+    [Fact]
+    public async Task Settings_audit_records_provider_names_but_never_plain_credentials()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options);
+        await db.Database.EnsureCreatedAsync();
+
+        var runtime = new RecordingSettingsService();
+        var actorId = Guid.NewGuid();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, actorId.ToString("D")),
+            new(ClaimTypes.Name, "settings.admin"),
+            new(ClaimTypes.Role, "User"),
+            new(ApplicationPermissionCatalog.ClaimType, ApplicationPermissionCatalog.SettingsManage)
+        };
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")),
+            TraceIdentifier = "settings-audit"
+        };
+        var accessor = new IsolatedHttpContextAccessor(context);
+        var service = new AIProviderSettingsAdministrationService(runtime, new CurrentUserContext(accessor), db, accessor);
+        const string plainCredential = "TOP-SECRET-API-KEY";
+
+        await service.SaveAsync(SampleSettings(), new Dictionary<string, string?> { ["OpenAI"] = plainCredential });
+
+        var audit = await new ApplicationSecurityAuditStore(db).ListAsync(new SecurityAuditQuery(Category: "Configuration"));
+        audit.Should().ContainSingle(x => x.Action == "AIProviders.Updated" && x.ActorUserId == actorId);
+        audit.Single().Metadata["credentialProvidersUpdated"].Should().Be("OpenAI");
+        var raw = await db.ApplicationSettings.AsNoTracking()
+            .Where(x => x.Key == ApplicationSecurityAuditStore.SettingsKey)
+            .Select(x => x.Value)
+            .SingleAsync();
+        raw.Contains(plainCredential, StringComparison.Ordinal).Should().BeFalse();
     }
 
     [Fact]
