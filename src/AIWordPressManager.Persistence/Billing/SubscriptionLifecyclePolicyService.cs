@@ -20,8 +20,15 @@ public sealed class SubscriptionLifecyclePolicyService(
         if (subscriptionId == Guid.Empty) throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
         if (utcNow.Kind != DateTimeKind.Utc) throw new ArgumentException("Evaluation timestamp must be UTC.", nameof(utcNow));
 
-        var snapshot = await LoadSnapshotAsync(subscriptionId, cancellationToken)
+        var rawSnapshot = await LoadSnapshotAsync(subscriptionId, cancellationToken)
             ?? throw new KeyNotFoundException("Account subscription was not found.");
+        var snapshot = rawSnapshot with
+        {
+            TrialEndsAtUtc = NormalizePersistedUtc(rawSnapshot.TrialEndsAtUtc),
+            CurrentPeriodEndsAtUtc = NormalizePersistedUtc(rawSnapshot.CurrentPeriodEndsAtUtc),
+            GraceUntilUtc = NormalizePersistedUtc(rawSnapshot.GraceUntilUtc)
+        };
+
         var decision = SubscriptionLifecyclePolicy.Evaluate(new(
             snapshot.Status,
             snapshot.TrialEndsAtUtc,
@@ -120,6 +127,17 @@ public sealed class SubscriptionLifecyclePolicyService(
              subscription.GraceUntilUtc,
              plan.GracePeriodDays))
         .SingleOrDefaultAsync(cancellationToken);
+
+    private static DateTime? NormalizePersistedUtc(DateTime? value)
+    {
+        if (!value.HasValue) return null;
+        return value.Value.Kind switch
+        {
+            DateTimeKind.Utc => value.Value,
+            DateTimeKind.Local => value.Value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+        };
+    }
 
     private sealed record PolicySnapshot(
         AccountSubscriptionStatus Status,
