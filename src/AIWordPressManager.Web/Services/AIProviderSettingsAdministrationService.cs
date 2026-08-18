@@ -12,13 +12,13 @@ public sealed class AIProviderSettingsAdministrationService(
     IApplicationSettingsService settingsService,
     CurrentUserContext currentUser)
 {
-    public Task<AiSettings> GetAsync(CancellationToken cancellationToken = default)
+    public Task<AiSettings> GetAiSettingsAsync(CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
         return settingsService.GetAiSettingsAsync(cancellationToken);
     }
 
-    public Task SaveAsync(
+    public Task SaveAiSettingsAsync(
         AiSettings settings,
         IReadOnlyDictionary<string, string?> plainApiKeys,
         CancellationToken cancellationToken = default)
@@ -27,9 +27,19 @@ public sealed class AIProviderSettingsAdministrationService(
         return settingsService.SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
     }
 
-    public Task ClearApiKeyAsync(string provider, CancellationToken cancellationToken = default)
+    public Task ClearAiProviderApiKeyAsync(string provider, CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
         return settingsService.ClearAiProviderApiKeyAsync(provider, cancellationToken);
     }
+
+    internal Task<AiSettings> GetAsync(CancellationToken cancellationToken = default) => GetAiSettingsAsync(cancellationToken);
+
+    internal Task SaveAsync(
+        AiSettings settings,
+        IReadOnlyDictionary<string, string?> plainApiKeys,
+        CancellationToken cancellationToken = default) => SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
+
+    internal Task ClearApiKeyAsync(string provider, CancellationToken cancellationToken = default) =>
+        ClearAiProviderApiKeyAsync(provider, cancellationToken);
 }
