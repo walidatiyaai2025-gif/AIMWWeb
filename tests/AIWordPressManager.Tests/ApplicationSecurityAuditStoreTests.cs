@@ -66,7 +66,7 @@ public sealed class ApplicationSecurityAuditStoreTests
             .Where(x => x.Key == ApplicationSecurityAuditStore.SettingsKey)
             .Select(x => x.Value)
             .SingleAsync();
-        raw.Should().NotContain("NeverPersistMe", StringComparison.Ordinal);
+        raw.Contains("NeverPersistMe", StringComparison.Ordinal).Should().BeFalse();
 
         var record = (await fixture.Store.ListAsync()).Single();
         record.Metadata.Should().ContainKey("role");
@@ -110,6 +110,33 @@ public sealed class ApplicationSecurityAuditStoreTests
     }
 
     [Fact]
+    public async Task Concurrent_appends_from_separate_contexts_do_not_lose_events()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var tasks = Enumerable.Range(0, 8).Select(async index =>
+        {
+            await using var context = fixture.CreateContext();
+            var store = new ApplicationSecurityAuditStore(context);
+            await store.AppendAsync(new SecurityAuditEvent(
+                "Concurrency",
+                "Append",
+                "Succeeded",
+                null,
+                null,
+                "Test",
+                index.ToString()));
+        });
+
+        await Task.WhenAll(tasks);
+
+        await using var verifyContext = fixture.CreateContext();
+        var events = await new ApplicationSecurityAuditStore(verifyContext)
+            .ListAsync(new SecurityAuditQuery(Category: "Concurrency", Take: 20));
+        events.Should().HaveCount(8);
+        events.Select(x => x.TargetId).Should().BeEquivalentTo(Enumerable.Range(0, 8).Select(x => x.ToString()));
+    }
+
+    [Fact]
     public async Task Mutation_prunes_expired_records_and_caps_registry()
     {
         await using var fixture = await Fixture.CreateAsync();
@@ -147,7 +174,7 @@ public sealed class ApplicationSecurityAuditStoreTests
             .SingleAsync();
         using var document = JsonDocument.Parse(raw);
         document.RootElement.GetProperty("events").GetArrayLength().Should().BeLessThanOrEqualTo(10_000);
-        raw.Should().NotContain(records[0].eventId.ToString("D"), StringComparison.OrdinalIgnoreCase);
+        raw.Contains(records[0].eventId.ToString("D"), StringComparison.OrdinalIgnoreCase).Should().BeFalse();
     }
 
     private sealed class Fixture : IAsyncDisposable
