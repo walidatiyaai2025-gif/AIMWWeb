@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject WordPressCommentsWebService CommentsService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@L["CommentsManager"]</PageTitle>
@@ -31,6 +32,11 @@ else
                 <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
             </Actions>
         </AppToolbar>
+
+        @if (!CanEditContent)
+        {
+            <div class="alert" role="status"><strong>@(L.IsArabic ? "وضع القراءة فقط: تحتاج صلاحية Content.Edit لاعتماد التعليقات أو تغيير حالتها أو الرد عليها أو حذفها." : "Read-only mode: Content.Edit permission is required to moderate, reply to, or delete comments.")</strong></div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
@@ -79,7 +85,7 @@ else
                          CsvRowSelector="@CommentCsvRow"
                          CsvFileName="@CsvFileName"
                          PageSize="10"
-                         Selectable="true"
+                         Selectable="@CanEditContent"
                          EmptyTitle="@L["NoComments"]"
                          EmptyDescription="@L["NoCommentsHelp"]"
                          SearchPlaceholder="@L["SearchComments"]"
@@ -120,7 +126,7 @@ else
                         {
                             <a href="@comment.Link" target="_blank" rel="noopener">@L["Open"] ↗</a>
                         }
-                        @if (_replyingTo == comment.Id)
+                        @if (_replyingTo == comment.Id && CanEditContent)
                         {
                             <div class="reply-box">
                                 <textarea rows="4" @bind="_replyText" placeholder="@L["WriteReply"]"></textarea>
@@ -134,29 +140,36 @@ else
                     <td><AppBadge Tone="@StatusTone(comment.Status)" Text="@TranslateStatus(comment.Status)" /></td>
                     <td>@FormatDate(comment.DateUtc)</td>
                     <td>
-                        <div class="table-actions comment-actions">
-                            @if (comment.Status != "approved")
-                            {
-                                <AppButton Size="small" Variant="primary" Text="@L["Approve"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.ApproveAsync(SiteId, comment.Id))" />
-                            }
-                            @if (comment.Status != "hold")
-                            {
-                                <AppButton Size="small" Text="@L["Unapprove"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.HoldAsync(SiteId, comment.Id))" />
-                            }
-                            @if (comment.Status != "spam")
-                            {
-                                <AppButton Size="small" Text="@L["MarkSpam"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.SpamAsync(SiteId, comment.Id))" />
-                            }
-                            @if (comment.Status != "trash")
-                            {
-                                <AppButton Size="small" Variant="danger" Text="@L["MoveToTrash"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.TrashAsync(SiteId, comment.Id))" />
-                            }
-                            @if (comment.Status == "trash")
-                            {
-                                <AppButton Size="small" Variant="danger" Text="@L["DeletePermanently"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.DeleteAsync(SiteId, comment.Id, true))" />
-                            }
-                            <AppButton Size="small" Text="@L["Reply"]" Disabled="@_working" OnClick="args => StartReplyClicked(comment)" />
-                        </div>
+                        @if (CanEditContent)
+                        {
+                            <div class="table-actions comment-actions">
+                                @if (comment.Status != "approved")
+                                {
+                                    <AppButton Size="small" Variant="primary" Text="@L["Approve"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.ApproveAsync(SiteId, comment.Id))" />
+                                }
+                                @if (comment.Status != "hold")
+                                {
+                                    <AppButton Size="small" Text="@L["Unapprove"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.HoldAsync(SiteId, comment.Id))" />
+                                }
+                                @if (comment.Status != "spam")
+                                {
+                                    <AppButton Size="small" Text="@L["MarkSpam"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.SpamAsync(SiteId, comment.Id))" />
+                                }
+                                @if (comment.Status != "trash")
+                                {
+                                    <AppButton Size="small" Variant="danger" Text="@L["MoveToTrash"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.TrashAsync(SiteId, comment.Id))" />
+                                }
+                                @if (comment.Status == "trash")
+                                {
+                                    <AppButton Size="small" Variant="danger" Text="@L["DeletePermanently"]" Disabled="@_working" OnClick="args => RunAsync(() => CommentsService.DeleteAsync(SiteId, comment.Id, true))" />
+                                }
+                                <AppButton Size="small" Text="@L["Reply"]" Disabled="@_working" OnClick="args => StartReplyClicked(comment)" />
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="block-muted">@(L.IsArabic ? "قراءة فقط" : "Read only")</span>
+                        }
                     </td>
                 </RowTemplate>
             </AppDataGrid>
@@ -181,6 +194,7 @@ else
     private int _page = 1, _replyingTo;
     private bool _loading = true, _working, _isError;
 
+    private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private int ApprovedCount => _result.Items.Count(x => x.Status == "approved");
     private int PendingCount => _result.Items.Count(x => x.Status == "hold");
     private IReadOnlyList<string> CsvHeaders => L.IsArabic
@@ -221,7 +235,7 @@ else
     private Task PreviousPageClickedAsync(MouseEventArgs _) => PreviousPageAsync();
     private Task NextPageClickedAsync(MouseEventArgs _) => NextPageAsync();
     private Task CancelReplyClicked(MouseEventArgs _) { CancelReply(); return Task.CompletedTask; }
-    private Task StartReplyClicked(WordPressCommentView comment) { StartReply(comment); return Task.CompletedTask; }
+    private Task StartReplyClicked(WordPressCommentView comment) { CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit); StartReply(comment); return Task.CompletedTask; }
 
     private async Task ReloadFromFirstPageAsync() { _page = 1; await LoadAsync(); }
     private async Task PreviousPageAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
@@ -231,6 +245,7 @@ else
 
     private async Task SendReplyAsync(WordPressCommentView comment)
     {
+        CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
         if (string.IsNullOrWhiteSpace(_replyText)) { _isError = true; _message = L["ReplyRequired"]; return; }
         await RunAsync(() => CommentsService.ReplyAsync(SiteId, comment.PostId, comment.Id, _replyText));
         CancelReply();
@@ -240,6 +255,7 @@ else
     {
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _working = true;
             var result = await operation();
             _isError = !result.Success;
