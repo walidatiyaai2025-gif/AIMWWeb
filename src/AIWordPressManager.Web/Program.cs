@@ -35,6 +35,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    ApplicationAuthorization.AddPermissionPolicies(options);
 });
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BlazorFrameworkAuthorizationResultHandler>();
 
@@ -257,22 +258,27 @@ app.Use(async (context, next) =>
 });
 
 app.MapHealthChecks("/health/live").AllowAnonymous();
-app.MapGet("/health/details", async (SystemHealthWebService service, CancellationToken cancellationToken) => Results.Ok(await service.CheckAsync(cancellationToken)));
-app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service.Current));
-app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationToken cancellationToken) => Results.Ok(await service.GetAsync(cancellationToken)));
-app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new { jobs = service.GetJobs(), history = service.GetHistory(100) }));
+app.MapGet("/health/details", async (SystemHealthWebService service, CancellationToken cancellationToken) => Results.Ok(await service.CheckAsync(cancellationToken)))
+    .RequireAuthorization(ApplicationPermissions.SystemRead);
+app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service.Current))
+    .RequireAuthorization(ApplicationPermissions.SystemRead);
+app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationToken cancellationToken) => Results.Ok(await service.GetAsync(cancellationToken)))
+    .RequireAuthorization(ApplicationPermissions.SystemRead);
+app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new { jobs = service.GetJobs(), history = service.GetHistory(100) }))
+    .RequireAuthorization(ApplicationPermissions.AutomationRead);
 
-app.MapGet("/api/ai/prompts", (string? culture, IAIPromptRegistry registry) => Results.Ok(registry.GetAll(string.IsNullOrWhiteSpace(culture) ? "en" : culture)));
+app.MapGet("/api/ai/prompts", (string? culture, IAIPromptRegistry registry) => Results.Ok(registry.GetAll(string.IsNullOrWhiteSpace(culture) ? "en" : culture)))
+    .RequireAuthorization(ApplicationPermissions.AiUse);
 app.MapGet("/api/ai/usage", async (int? take, Guid? siteId, AIUsageWebService service, CancellationToken cancellationToken) =>
 {
     try { return Results.Ok(await service.GetRecentAsync(take ?? 100, siteId, cancellationToken)); }
     catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
-});
+}).RequireAuthorization(ApplicationPermissions.AiUse);
 app.MapGet("/api/ai/usage/summary", async (Guid? siteId, AIUsageWebService service, CancellationToken cancellationToken) =>
 {
     try { return Results.Ok(await service.GetAsync(siteId, 5_000, cancellationToken)); }
     catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); }
-});
+}).RequireAuthorization(ApplicationPermissions.AiUse);
 app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrator orchestrator, IAIPromptRegistry registry, CurrentUserContext currentUser, SiteWebService siteService, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(input.Content)) return Results.BadRequest(new { error = "Content is required." });
@@ -302,39 +308,53 @@ app.MapPost("/api/ai/generate", async (AIGenerateApiRequest input, IAIOrchestrat
         currentUser.UserId.ToString("D"),
         input.PromptKey), cancellationToken);
     return result.IsSuccess ? Results.Ok(result) : Results.BadRequest(result);
-});
+}).RequireAuthorization(ApplicationPermissions.AiUse);
 
 app.MapGet("/api/approvals", (string? status, int? take, ApprovalWorkflowService service) =>
 {
     ApprovalStatus? parsed = null;
     if (!string.IsNullOrWhiteSpace(status)) { if (!Enum.TryParse<ApprovalStatus>(status, true, out var value)) return Results.BadRequest(new { error = "Invalid approval status." }); parsed = value; }
     return Results.Ok(service.GetItems(parsed, take ?? 200));
-});
-app.MapGet("/api/approvals/{id:guid}", (Guid id, ApprovalWorkflowService service) => service.GetById(id) is { } item ? Results.Ok(item) : Results.NotFound());
-app.MapGet("/api/approvals/{id:guid}/audit", (Guid id, int? take, ApprovalWorkflowService service) => Results.Ok(service.GetAudit(id, take ?? 200)));
-app.MapPost("/api/approvals", (ApprovalSubmission request, ApprovalWorkflowService service) => { try { return Results.Ok(service.Submit(request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/approvals/{id:guid}/approve", (Guid id, ApprovalDecision request, ApprovalWorkflowService service) => { try { return Results.Ok(service.Approve(id, request.Reviewer, request.Notes, request.ExecuteImmediately)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/approvals/{id:guid}/reject", (Guid id, ApprovalDecision request, ApprovalWorkflowService service) => { try { return Results.Ok(service.Reject(id, request.Reviewer, request.Notes)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPut("/api/approvals/{id:guid}/proposal", (Guid id, ApprovalEditRequest request, ApprovalWorkflowService service) => { try { return Results.Ok(service.UpdateProposal(id, request.After, request.Actor, request.Notes)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
+}).RequireAuthorization(ApplicationPermissions.OperationsRead);
+app.MapGet("/api/approvals/{id:guid}", (Guid id, ApprovalWorkflowService service) => service.GetById(id) is { } item ? Results.Ok(item) : Results.NotFound())
+    .RequireAuthorization(ApplicationPermissions.OperationsRead);
+app.MapGet("/api/approvals/{id:guid}/audit", (Guid id, int? take, ApprovalWorkflowService service) => Results.Ok(service.GetAudit(id, take ?? 200)))
+    .RequireAuthorization(ApplicationPermissions.OperationsRead);
+app.MapPost("/api/approvals", (ApprovalSubmission request, ApprovalWorkflowService service) => { try { return Results.Ok(service.Submit(request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
+app.MapPost("/api/approvals/{id:guid}/approve", (Guid id, ApprovalDecision request, ApprovalWorkflowService service) => { try { return Results.Ok(service.Approve(id, request.Reviewer, request.Notes, request.ExecuteImmediately)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
+app.MapPost("/api/approvals/{id:guid}/reject", (Guid id, ApprovalDecision request, ApprovalWorkflowService service) => { try { return Results.Ok(service.Reject(id, request.Reviewer, request.Notes)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
+app.MapPut("/api/approvals/{id:guid}/proposal", (Guid id, ApprovalEditRequest request, ApprovalWorkflowService service) => { try { return Results.Ok(service.UpdateProposal(id, request.After, request.Actor, request.Notes)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
 
 app.MapGet("/api/planner", (Guid? siteId, string? status, DateTime? fromUtc, DateTime? toUtc, ContentPlannerService service) =>
 {
     PlannerItemStatus? parsed = null;
     if (!string.IsNullOrWhiteSpace(status)) { if (!Enum.TryParse<PlannerItemStatus>(status, true, out var value)) return Results.BadRequest(new { error = "Invalid planner status." }); parsed = value; }
     return Results.Ok(service.GetItems(siteId, parsed, fromUtc, toUtc));
-});
-app.MapPost("/api/planner", (CreatePlannerItem request, ContentPlannerService service) => { try { return Results.Ok(service.Create(request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPut("/api/planner/{id:guid}", (Guid id, UpdatePlannerItem request, ContentPlannerService service) => { try { return Results.Ok(service.Update(id, request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/planner/{id:guid}/generate-brief", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CurrentUserContext currentUser, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateBriefAsync(id, request.Culture ?? "en", currentUser.UserId.ToString("D"), cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/planner/{id:guid}/generate-draft", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CurrentUserContext currentUser, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateDraftAsync(id, request.Culture ?? "en", currentUser.UserId.ToString("D"), cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/planner/{id:guid}/queue", (Guid id, ContentPlannerService service) => { try { return Results.Ok(service.QueueForExecution(id)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
+}).RequireAuthorization(ApplicationPermissions.ContentRead);
+app.MapPost("/api/planner", (CreatePlannerItem request, ContentPlannerService service) => { try { return Results.Ok(service.Create(request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.ContentManage);
+app.MapPut("/api/planner/{id:guid}", (Guid id, UpdatePlannerItem request, ContentPlannerService service) => { try { return Results.Ok(service.Update(id, request)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.ContentManage);
+app.MapPost("/api/planner/{id:guid}/generate-brief", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CurrentUserContext currentUser, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateBriefAsync(id, request.Culture ?? "en", currentUser.UserId.ToString("D"), cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.ContentManage);
+app.MapPost("/api/planner/{id:guid}/generate-draft", async (Guid id, PlannerAIRequest request, ContentPlannerService service, CurrentUserContext currentUser, CancellationToken cancellationToken) => { try { return Results.Ok(await service.GenerateDraftAsync(id, request.Culture ?? "en", currentUser.UserId.ToString("D"), cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.ContentManage);
+app.MapPost("/api/planner/{id:guid}/queue", (Guid id, ContentPlannerService service) => { try { return Results.Ok(service.QueueForExecution(id)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
 
 app.MapGet("/api/notifications", (string? userId, bool? unreadOnly, int? take, NotificationInboxService service) => Results.Ok(service.Get(userId, unreadOnly ?? false, take ?? 100)));
 app.MapPost("/api/notifications/{id:guid}/read", (Guid id, NotificationInboxService service) => { service.MarkRead(id); return Results.NoContent(); });
 app.MapMediaApi();
-app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (Guid siteId, SeoAuditExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/sites/{siteId:guid}/content/trash", async (Guid siteId, BulkTrashRequest request, BulkTrashExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
-app.MapPost("/api/sites/{siteId:guid}/content/status", async (Guid siteId, BulkStatusRequest request, BulkStatusExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } });
+app.MapPost("/api/sites/{siteId:guid}/seo-audit/run", async (Guid siteId, SeoAuditExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
+app.MapPost("/api/sites/{siteId:guid}/content/trash", async (Guid siteId, BulkTrashRequest request, BulkTrashExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
+app.MapPost("/api/sites/{siteId:guid}/content/status", async (Guid siteId, BulkStatusRequest request, BulkStatusExecutionService service, CancellationToken cancellationToken) => { try { return Results.Ok(await service.RunAsync(siteId, request, cancellationToken)); } catch (InvalidOperationException ex) { return Results.BadRequest(new { error = ex.Message }); } })
+    .RequireAuthorization(ApplicationPermissions.OperationsExecute);
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
