@@ -1,6 +1,8 @@
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.AI;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Infrastructure.AI;
+using AIWordPressManager.Infrastructure.Billing;
 using AIWordPressManager.Infrastructure.Paths;
 using AIWordPressManager.Infrastructure.Jobs;
 using AIWordPressManager.Infrastructure.Security;
@@ -17,6 +19,7 @@ public static class DependencyInjection
         services.AddSingleton<ISecretProtectionService, DpapiSecretProtectionService>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IJobCancellationRegistry, JobCancellationRegistry>();
+        services.AddScoped<IPaymentGatewayRegistry, PaymentGatewayRegistry>();
 
         services.AddSingleton<VersionedAIPromptRegistry>();
         services.AddSingleton<IAIPromptRegistry>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
