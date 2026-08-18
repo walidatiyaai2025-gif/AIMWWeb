@@ -28,6 +28,9 @@ public sealed class ExecutionCenterUserCommandService(
             throw new ArgumentException("A valid execution job is required.", nameof(jobId));
 
         var ownerUserId = currentUser.RequirePermission(ApplicationPermissionCatalog.OperationsExecute);
+        if (executionCenter.GetJobs(ownerUserId).All(job => job.Id != jobId))
+            throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user.");
+
         command(jobId, ownerUserId);
     }
 }
