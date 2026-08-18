@@ -26,10 +26,18 @@ else
             <div class="editor-command-actions">
                 <a class="btn" href="@ExplorerUrl">← @L["BackToExplorer"]</a>
                 @if (!string.IsNullOrWhiteSpace(_model.Link)) { <a class="btn" href="@_model.Link" target="_blank">@L["ViewOnWordPress"] ↗</a> }
-                <button type="button" class="btn" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال للموافقة" : "Send for approval"))</button>
-                <button type="button" class="btn primary" disabled="@(_saving || _submittingApproval)" @onclick="SaveAsync">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                @if (CanEditContent)
+                {
+                    <button type="button" class="btn" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(_submittingApproval ? (L.IsArabic ? "جارٍ الإرسال..." : "Submitting...") : (L.IsArabic ? "إرسال للموافقة" : "Send for approval"))</button>
+                    <button type="button" class="btn primary" disabled="@(_saving || _submittingApproval)" @onclick="SaveAsync">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                }
             </div>
         </header>
+
+        @if (!CanEditContent)
+        {
+            <div class="alert" role="status"><strong>@(L.IsArabic ? "وضع القراءة فقط: تحتاج صلاحية Content.Edit لتعديل المحتوى أو إرساله للموافقة." : "Read-only mode: Content.Edit permission is required to change content or submit it for approval.")</strong></div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
@@ -37,76 +45,81 @@ else
         }
 
         <EditForm Model="_model" OnValidSubmit="SaveAsync">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+            <fieldset disabled="@(!CanEditContent)" style="border:0;margin:0;padding:0;min-width:0;">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-            <div class="editor-workspace-grid">
-                <main class="editor-canvas">
-                    <section class="panel editor-title-card">
-                        <span class="workspace-kicker">@(L.IsArabic ? "تحرير المحتوى" : "CONTENT EDITOR")</span>
-                        <InputText class="editor-title-input" @bind-Value="_model.Title" placeholder="@(L.IsArabic ? "اكتب عنوانًا واضحًا وجذابًا" : "Write a clear, compelling title")" />
-                        <div class="editor-slug-row"><span>@_site.SiteUrl.TrimEnd('/')/</span><InputText @bind-Value="_model.Slug" dir="ltr" /><button type="button" class="btn compact" @onclick="GenerateSlug">@(L.IsArabic ? "توليد" : "Generate")</button></div>
-                    </section>
+                <div class="editor-workspace-grid">
+                    <main class="editor-canvas">
+                        <section class="panel editor-title-card">
+                            <span class="workspace-kicker">@(L.IsArabic ? "تحرير المحتوى" : "CONTENT EDITOR")</span>
+                            <InputText class="editor-title-input" @bind-Value="_model.Title" placeholder="@(L.IsArabic ? "اكتب عنوانًا واضحًا وجذابًا" : "Write a clear, compelling title")" />
+                            <div class="editor-slug-row"><span>@_site.SiteUrl.TrimEnd('/')/</span><InputText @bind-Value="_model.Slug" dir="ltr" /><button type="button" class="btn compact" @onclick="GenerateSlug">@(L.IsArabic ? "توليد" : "Generate")</button></div>
+                        </section>
 
-                    <section class="panel editor-content-card">
-                        <div class="editor-card-head"><div><h2>@L["ContentHtml"]</h2><p>@(L.IsArabic ? "حرر محتوى WordPress بصيغة HTML مع معاينة مباشرة للنص." : "Edit WordPress HTML with a live text preview.")</p></div><div class="editor-view-toggle"><button type="button" class="@ViewClass("edit")" @onclick="ShowEdit">@(L.IsArabic ? "تحرير" : "Edit")</button><button type="button" class="@ViewClass("preview")" @onclick="ShowPreview">@(L.IsArabic ? "معاينة" : "Preview")</button></div></div>
-                        @if (_viewMode == "edit") { <InputTextArea class="content-editor-pro" @bind-Value="_model.Content" dir="ltr" /> }
-                        else { <article class="content-preview">@((MarkupString)_model.Content)</article> }
-                    </section>
+                        <section class="panel editor-content-card">
+                            <div class="editor-card-head"><div><h2>@L["ContentHtml"]</h2><p>@(L.IsArabic ? "حرر محتوى WordPress بصيغة HTML مع معاينة مباشرة للنص." : "Edit WordPress HTML with a live text preview.")</p></div><div class="editor-view-toggle"><button type="button" class="@ViewClass("edit")" @onclick="ShowEdit">@(L.IsArabic ? "تحرير" : "Edit")</button><button type="button" class="@ViewClass("preview")" @onclick="ShowPreview">@(L.IsArabic ? "معاينة" : "Preview")</button></div></div>
+                            @if (_viewMode == "edit") { <InputTextArea class="content-editor-pro" @bind-Value="_model.Content" dir="ltr" /> }
+                            else { <article class="content-preview">@((MarkupString)_model.Content)</article> }
+                        </section>
 
-                    <section class="panel editor-excerpt-card">
-                        <div class="editor-card-head"><div><h2>@L["Excerpt"]</h2><p>@(L.IsArabic ? "ملخص قصير يظهر في الأرشيف ونتائج البحث." : "A concise summary for archives and search results.")</p></div><span class="editor-counter">@ExcerptLength / 300</span></div>
-                        <InputTextArea class="excerpt-editor-pro" @bind-Value="_model.Excerpt" maxlength="300" />
-                    </section>
+                        <section class="panel editor-excerpt-card">
+                            <div class="editor-card-head"><div><h2>@L["Excerpt"]</h2><p>@(L.IsArabic ? "ملخص قصير يظهر في الأرشيف ونتائج البحث." : "A concise summary for archives and search results.")</p></div><span class="editor-counter">@ExcerptLength / 300</span></div>
+                            <InputTextArea class="excerpt-editor-pro" @bind-Value="_model.Excerpt" maxlength="300" />
+                        </section>
 
-                    <section class="panel editor-seo-card">
-                        <div class="editor-card-head"><div><h2>SEO</h2><p>@(L.IsArabic ? "معاينة مبدئية للعنوان والوصف والرابط." : "Preliminary title, description, and URL preview.")</p></div><span class="seo-score-chip @SeoClass">@SeoScore/100</span></div>
-                        <div class="search-preview-card"><small>@_site.SiteUrl</small><strong>@PlainText(_model.Title)</strong><p>@PlainText(_model.Excerpt)</p><code>@_site.SiteUrl.TrimEnd('/')/@_model.Slug</code></div>
-                        <div class="seo-check-grid"><span class="@CheckClass(TitleLength is >= 30 and <= 65)">@(L.IsArabic ? "طول العنوان" : "Title length") <b>@TitleLength</b></span><span class="@CheckClass(ExcerptLength is >= 80 and <= 160)">@(L.IsArabic ? "طول الوصف" : "Description length") <b>@ExcerptLength</b></span><span class="@CheckClass(!string.IsNullOrWhiteSpace(_model.Slug))">Slug</span><span class="@CheckClass(_model.FeaturedMediaId > 0)">@(L.IsArabic ? "صورة بارزة" : "Featured image")</span></div>
-                    </section>
-                </main>
+                        <section class="panel editor-seo-card">
+                            <div class="editor-card-head"><div><h2>SEO</h2><p>@(L.IsArabic ? "معاينة مبدئية للعنوان والوصف والرابط." : "Preliminary title, description, and URL preview.")</p></div><span class="seo-score-chip @SeoClass">@SeoScore/100</span></div>
+                            <div class="search-preview-card"><small>@_site.SiteUrl</small><strong>@PlainText(_model.Title)</strong><p>@PlainText(_model.Excerpt)</p><code>@_site.SiteUrl.TrimEnd('/')/@_model.Slug</code></div>
+                            <div class="seo-check-grid"><span class="@CheckClass(TitleLength is >= 30 and <= 65)">@(L.IsArabic ? "طول العنوان" : "Title length") <b>@TitleLength</b></span><span class="@CheckClass(ExcerptLength is >= 80 and <= 160)">@(L.IsArabic ? "طول الوصف" : "Description length") <b>@ExcerptLength</b></span><span class="@CheckClass(!string.IsNullOrWhiteSpace(_model.Slug))">Slug</span><span class="@CheckClass(_model.FeaturedMediaId > 0)">@(L.IsArabic ? "صورة بارزة" : "Featured image")</span></div>
+                        </section>
+                    </main>
 
-                <aside class="editor-inspector">
-                    <section class="panel inspector-card publish-card">
-                        <div class="inspector-head"><h3>@L["Publishing"]</h3><span class="badge @StatusBadgeClass">@TranslateStatus(_model.Status)</span></div>
-                        <div class="form-stack">
-                            <label><span>@L["Status"]</span><InputSelect @bind-Value="_model.Status"><option value="draft">@L["Draft"]</option><option value="pending">@L["PendingReview"]</option><option value="publish">@L["Published"]</option><option value="future">@L["Scheduled"]</option><option value="private">@L["Private"]</option></InputSelect></label>
-                            <label><span>@L["PublishDateUtc"]</span><InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_model.DateLocal" /></label>
-                            <label><span>@L["CommentStatus"]</span><InputSelect @bind-Value="_model.CommentStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
-                            <label><span>@L["PingStatus"]</span><InputSelect @bind-Value="_model.PingStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
-                            @if (_model.ContentType == "post") { <label class="check-row"><InputCheckbox @bind-Value="_model.Sticky" /> <span>@L["StickyPost"]</span></label> }
-                        </div>
-                        <button class="btn primary full" type="submit" disabled="@(_saving || _submittingApproval)">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
-                        <button class="btn full" type="button" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(L.IsArabic ? "حفظ كمقترح للموافقة" : "Submit change for approval")</button>
-                        <small>@(L.IsArabic ? "التنفيذ بعد الموافقة يتحقق من نسخة WordPress مرة أخرى ولن يكتب فوق تعديل أحدث." : "Approved execution rechecks the WordPress version and will not overwrite a newer remote edit.")</small>
-                    </section>
-
-                    <section class="panel inspector-card">
-                        <div class="inspector-head"><h3>@L["FeaturedImage"]</h3><a class="btn compact" href="@($"/sites/{SiteId}/media")">@L["ManageMedia"]</a></div>
-                        @if (_model.FeaturedMediaId > 0)
-                        {
-                            var selected = _media.FirstOrDefault(x => x.WordPressId == _model.FeaturedMediaId);
-                            <div class="featured-preview">@if (selected is not null && selected.MediaType == "image") { <img src="@selected.SourceUrl" alt="@selected.Title" /> }<div><strong>#@_model.FeaturedMediaId</strong><button type="button" class="btn compact" @onclick="ClearFeatured">@L["RemoveSelection"]</button></div></div>
-                        }
-                        <input class="search-input" placeholder="@L["SearchMedia"]" @bind="_mediaSearch" @bind:event="oninput" />
-                        <div class="media-picker-pro">@foreach (var media in FilteredMedia.Take(8)) { <button type="button" class="@(media.WordPressId == _model.FeaturedMediaId ? "selected" : string.Empty)" @onclick="() => SelectFeatured(media.WordPressId)" title="@media.Title">@if (media.MediaType == "image") { <img src="@media.SourceUrl" alt="@media.Title" loading="lazy" /> } else { <span>FILE</span> }<small>#@media.WordPressId</small></button> }</div>
-                    </section>
-
-                    <section class="panel inspector-card">
-                        <h3>@L["ContentSettings"]</h3>
-                        <div class="form-stack">
-                            <label><span>@L["FeaturedMediaId"]</span><InputNumber @bind-Value="_model.FeaturedMediaId" /></label>
-                            <label><span>@L["Template"]</span><InputText @bind-Value="_model.Template" dir="ltr" /></label>
-                            @if (_model.ContentType == "post")
+                    <aside class="editor-inspector">
+                        <section class="panel inspector-card publish-card">
+                            <div class="inspector-head"><h3>@L["Publishing"]</h3><span class="badge @StatusBadgeClass">@TranslateStatus(_model.Status)</span></div>
+                            <div class="form-stack">
+                                <label><span>@L["Status"]</span><InputSelect @bind-Value="_model.Status"><option value="draft">@L["Draft"]</option><option value="pending">@L["PendingReview"]</option><option value="publish">@L["Published"]</option><option value="future">@L["Scheduled"]</option><option value="private">@L["Private"]</option></InputSelect></label>
+                                <label><span>@L["PublishDateUtc"]</span><InputDate Type="InputDateType.DateTimeLocal" @bind-Value="_model.DateLocal" /></label>
+                                <label><span>@L["CommentStatus"]</span><InputSelect @bind-Value="_model.CommentStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
+                                <label><span>@L["PingStatus"]</span><InputSelect @bind-Value="_model.PingStatus"><option value="open">@L["OpenStatus"]</option><option value="closed">@L["ClosedStatus"]</option></InputSelect></label>
+                                @if (_model.ContentType == "post") { <label class="check-row"><InputCheckbox @bind-Value="_model.Sticky" /> <span>@L["StickyPost"]</span></label> }
+                            </div>
+                            @if (CanEditContent)
                             {
-                                <label><span>@L["CategoriesIds"]</span><InputText @bind-Value="_model.CategoryIdsText" dir="ltr" /><small>@L["CommaSeparatedIds"]</small></label>
-                                <label><span>@L["TagsIds"]</span><InputText @bind-Value="_model.TagIdsText" dir="ltr" /><small>@L["CommaSeparatedIds"]</small></label>
-                                <label><span>@L["Format"]</span><InputText @bind-Value="_model.Format" dir="ltr" /></label>
+                                <button class="btn primary full" type="submit" disabled="@(_saving || _submittingApproval)">@(_saving ? L["Saving"] : L["SaveToWordPress"])</button>
+                                <button class="btn full" type="button" disabled="@(_saving || _submittingApproval)" @onclick="SubmitForApprovalAsync">@(L.IsArabic ? "حفظ كمقترح للموافقة" : "Submit change for approval")</button>
+                                <small>@(L.IsArabic ? "التنفيذ بعد الموافقة يتحقق من نسخة WordPress مرة أخرى ولن يكتب فوق تعديل أحدث." : "Approved execution rechecks the WordPress version and will not overwrite a newer remote edit.")</small>
                             }
-                        </div>
-                    </section>
-                </aside>
-            </div>
+                        </section>
+
+                        <section class="panel inspector-card">
+                            <div class="inspector-head"><h3>@L["FeaturedImage"]</h3><a class="btn compact" href="@($"/sites/{SiteId}/media")">@L["ManageMedia"]</a></div>
+                            @if (_model.FeaturedMediaId > 0)
+                            {
+                                var selected = _media.FirstOrDefault(x => x.WordPressId == _model.FeaturedMediaId);
+                                <div class="featured-preview">@if (selected is not null && selected.MediaType == "image") { <img src="@selected.SourceUrl" alt="@selected.Title" /> }<div><strong>#@_model.FeaturedMediaId</strong><button type="button" class="btn compact" @onclick="ClearFeatured">@L["RemoveSelection"]</button></div></div>
+                            }
+                            <input class="search-input" placeholder="@L["SearchMedia"]" @bind="_mediaSearch" @bind:event="oninput" />
+                            <div class="media-picker-pro">@foreach (var media in FilteredMedia.Take(8)) { <button type="button" class="@(media.WordPressId == _model.FeaturedMediaId ? "selected" : string.Empty)" @onclick="() => SelectFeatured(media.WordPressId)" title="@media.Title">@if (media.MediaType == "image") { <img src="@media.SourceUrl" alt="@media.Title" loading="lazy" /> } else { <span>FILE</span> }<small>#@media.WordPressId</small></button> }</div>
+                        </section>
+
+                        <section class="panel inspector-card">
+                            <h3>@L["ContentSettings"]</h3>
+                            <div class="form-stack">
+                                <label><span>@L["FeaturedMediaId"]</span><InputNumber @bind-Value="_model.FeaturedMediaId" /></label>
+                                <label><span>@L["Template"]</span><InputText @bind-Value="_model.Template" dir="ltr" /></label>
+                                @if (_model.ContentType == "post")
+                                {
+                                    <label><span>@L["CategoriesIds"]</span><InputText @bind-Value="_model.CategoryIdsText" dir="ltr" /><small>@L["CommaSeparatedIds"]</small></label>
+                                    <label><span>@L["TagsIds"]</span><InputText @bind-Value="_model.TagIdsText" dir="ltr" /><small>@L["CommaSeparatedIds"]</small></label>
+                                    <label><span>@L["Format"]</span><InputText @bind-Value="_model.Format" dir="ltr" /></label>
+                                }
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </fieldset>
         </EditForm>
     </div>
 }
@@ -125,6 +138,7 @@ else
     private IReadOnlyList<MediaExplorerItem> _media = Array.Empty<MediaExplorerItem>();
     private string _mediaSearch = string.Empty;
     private string ExplorerUrl => $"/sites/{SiteId}/explorer";
+    private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private int TitleLength => PlainText(_model?.Title ?? string.Empty).Length;
     private int ExcerptLength => PlainText(_model?.Excerpt ?? string.Empty).Length;
     private int SeoScore => (_model is null ? 0 : 20 + (TitleLength is >= 30 and <= 65 ? 25 : 0) + (ExcerptLength is >= 80 and <= 160 ? 25 : 0) + (!string.IsNullOrWhiteSpace(_model.Slug) ? 15 : 0) + (_model.FeaturedMediaId > 0 ? 15 : 0));
@@ -158,6 +172,7 @@ else
         if (_model is null) return;
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _saving = true; _isError = false; _message = null;
             var expected = _baselineRequest?.ExpectedModifiedGmt;
             var result = await EditorService.UpdateAsync(SiteId, _model.ToRequest(expected));
@@ -176,8 +191,8 @@ else
         if (_model is null || _site is null || _baselineRequest is null) return Task.CompletedTask;
         try
         {
+            var ownerUserId = CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _submittingApproval = true; _isError = false; _message = null;
-            var ownerUserId = CurrentUser.RequireUserId();
             var after = _model.ToRequest(_baselineRequest.ExpectedModifiedGmt);
             var approval = ApprovalService.Submit(
                 ownerUserId,

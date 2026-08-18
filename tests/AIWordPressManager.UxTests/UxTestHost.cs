@@ -2,6 +2,11 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using AIWordPressManager.Domain.Entities;
+using AIWordPressManager.Persistence;
+using AIWordPressManager.Web.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
 using Xunit;
 
@@ -19,6 +24,7 @@ public sealed class UxTestHost : IAsyncLifetime
     private string _repositoryRoot = string.Empty;
     private string _runRoot = string.Empty;
     private string _storageStatePath = string.Empty;
+    private string _databasePath = string.Empty;
 
     public string BaseUrl { get; private set; } = string.Empty;
     public string ArtifactRoot => Path.Combine(_repositoryRoot, "artifacts", "ux-regression");
@@ -75,16 +81,98 @@ public sealed class UxTestHost : IAsyncLifetime
             ViewportSize = new ViewportSize { Width = viewport.Width, Height = viewport.Height },
             StorageStatePath = authenticated ? _storageStatePath : null
         });
-        context.SetDefaultTimeout(PlaywrightTimeoutMs);
-        context.SetDefaultNavigationTimeout(PlaywrightTimeoutMs);
-
-        await context.AddInitScriptAsync("""
-            try {
-              if (!localStorage.getItem('aiwp-language')) localStorage.setItem('aiwp-language', 'en');
-              if (!localStorage.getItem('aiwp-appearance')) localStorage.setItem('aiwp-appearance', 'light');
-            } catch (_) { }
-            """);
+        ConfigureContext(context);
+        await AddDefaultClientStateAsync(context);
         return context;
+    }
+
+    public async Task<(IBrowserContext Context, Guid SiteId)> CreateContentViewerContextAsync(UxViewport viewport)
+    {
+        const string roleName = "ContentViewerUx";
+        const string userName = "content.viewer.ux";
+        const string password = "Viewer@123";
+        var now = DateTime.UtcNow;
+        Guid siteId;
+
+        await using (var dbContext = CreateDbContext())
+        {
+            var roleStore = new ApplicationRoleStore(dbContext);
+            var roles = (await roleStore.GetAsync())
+                .Where(x => !string.Equals(x.Name, roleName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            roles.Add(new CustomApplicationRole(
+                roleName,
+                "Content Viewer UX",
+                "عارض المحتوى UX",
+                true,
+                [ApplicationPermissionCatalog.SitesView, ApplicationPermissionCatalog.ContentView]));
+            await roleStore.SaveAsync(roles);
+
+            var user = await dbContext.AuthUsers.SingleOrDefaultAsync(x => x.NormalizedUserName == userName.ToUpperInvariant());
+            if (user is null)
+            {
+                user = new AuthUser(userName, "temporary", now, roleName);
+                user.SetPasswordHash(new PasswordHasher<AuthUser>().HashPassword(user, password), now);
+                dbContext.AuthUsers.Add(user);
+                await dbContext.SaveChangesAsync();
+            }
+
+            var site = new Site("View-only UX site", new Uri("https://view-only.example.test"), now, user.Id);
+            dbContext.Sites.Add(site);
+
+            var content = new WordPressContentRecord(site.Id, 501, "post", now);
+            content.Update(
+                "View-only test post",
+                "view-only-test-post",
+                "draft",
+                "https://view-only.example.test/view-only-test-post",
+                "<p>Read-only content</p>",
+                "Read-only excerpt",
+                now,
+                now);
+            dbContext.WordPressContentRecords.Add(content);
+            await dbContext.SaveChangesAsync();
+            siteId = site.Id;
+        }
+
+        var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = viewport.Width, Height = viewport.Height }
+        });
+        ConfigureContext(context);
+        await AddDefaultClientStateAsync(context);
+
+        try
+        {
+            var page = await context.NewPageAsync();
+            var returnUrl = Uri.EscapeDataString($"/sites/{siteId}/explorer");
+            await page.GotoAsync(BaseUrl + $"/login?returnUrl={returnUrl}", new PageGotoOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = PlaywrightTimeoutMs
+            });
+            await page.Locator("input[name='userName']").FillAsync(userName);
+            await page.Locator("input[name='password']").FillAsync(password);
+            await page.Locator("button[type='submit']").ClickAsync(new LocatorClickOptions { Timeout = PlaywrightTimeoutMs });
+
+            var deadline = DateTime.UtcNow.AddSeconds(15);
+            while (DateTime.UtcNow < deadline && page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
+                await Task.Delay(100);
+
+            if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("UX regression fixture could not authenticate the Content.View-only user.");
+
+            var cookies = await context.CookiesAsync();
+            if (!cookies.Any(cookie => string.Equals(cookie.Name, "AIWM.Auth", StringComparison.Ordinal)))
+                throw new InvalidOperationException("Content.View-only UX login completed without receiving the AIWM.Auth cookie.");
+
+            return (context, siteId);
+        }
+        catch
+        {
+            await context.CloseAsync();
+            throw;
+        }
     }
 
     public string RepositoryPath(params string[] segments)
@@ -170,7 +258,7 @@ public sealed class UxTestHost : IAsyncLifetime
 
     private void StartApplication(int port)
     {
-        var databasePath = Path.Combine(_runRoot, "ux-regression.db");
+        _databasePath = Path.Combine(_runRoot, "ux-regression.db");
         var startInfo = new ProcessStartInfo("dotnet")
         {
             WorkingDirectory = _repositoryRoot,
@@ -192,7 +280,7 @@ public sealed class UxTestHost : IAsyncLifetime
         startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
         startInfo.Environment["Database__SetupComplete"] = "true";
         startInfo.Environment["Database__Provider"] = "SQLite";
-        startInfo.Environment["Database__ConnectionString"] = $"Data Source={databasePath};Foreign Keys=True;Pooling=False";
+        startInfo.Environment["Database__ConnectionString"] = $"Data Source={_databasePath};Foreign Keys=True;Pooling=False";
         startInfo.Environment["Application__PortableMode"] = "true";
         startInfo.Environment["HOME"] = _runRoot;
         startInfo.Environment["XDG_DATA_HOME"] = Path.Combine(_runRoot, ".local", "share");
@@ -207,6 +295,31 @@ public sealed class UxTestHost : IAsyncLifetime
         _appProcess.BeginOutputReadLine();
         _appProcess.BeginErrorReadLine();
     }
+
+    private AppDbContext CreateDbContext()
+    {
+        if (string.IsNullOrWhiteSpace(_databasePath))
+            throw new InvalidOperationException("UX database path is not initialized.");
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite($"Data Source={_databasePath};Foreign Keys=True;Pooling=False")
+            .Options;
+        return new AppDbContext(options);
+    }
+
+    private static void ConfigureContext(IBrowserContext context)
+    {
+        context.SetDefaultTimeout(PlaywrightTimeoutMs);
+        context.SetDefaultNavigationTimeout(PlaywrightTimeoutMs);
+    }
+
+    private static Task AddDefaultClientStateAsync(IBrowserContext context) =>
+        context.AddInitScriptAsync("""
+            try {
+              if (!localStorage.getItem('aiwp-language')) localStorage.setItem('aiwp-language', 'en');
+              if (!localStorage.getItem('aiwp-appearance')) localStorage.setItem('aiwp-appearance', 'light');
+            } catch (_) { }
+            """);
 
     private async Task WaitForHealthAsync()
     {
@@ -236,8 +349,7 @@ public sealed class UxTestHost : IAsyncLifetime
         {
             ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
         });
-        context.SetDefaultTimeout(PlaywrightTimeoutMs);
-        context.SetDefaultNavigationTimeout(PlaywrightTimeoutMs);
+        ConfigureContext(context);
         var page = await context.NewPageAsync();
 
         Checkpoint("authentication:login-navigation:start");

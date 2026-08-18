@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject SiteWebService SiteService
 @inject WordPressUsersWebService UsersService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@L["UsersManager"]</PageTitle>
@@ -28,9 +29,17 @@ else
             <Actions>
                 <AppButton Href="@($"/sites/{SiteId}/explorer")" Text="@L["BackToExplorer"]" />
                 <AppButton Icon="↻" Text="@L["Refresh"]" Busy="@_working" Disabled="@_working" OnClick="RefreshClickedAsync" />
-                <AppButton Variant="primary" Icon="＋" Text="@L["AddUser"]" Disabled="@_working" OnClick="StartCreateClicked" />
+                @if (CanEditContent)
+                {
+                    <AppButton Variant="primary" Icon="＋" Text="@L["AddUser"]" Disabled="@_working" OnClick="StartCreateClicked" />
+                }
             </Actions>
         </AppToolbar>
+
+        @if (!CanEditContent)
+        {
+            <div class="alert" role="status"><strong>@(L.IsArabic ? "وضع القراءة فقط: تحتاج صلاحية Content.Edit لإنشاء مستخدمي WordPress أو تعديلهم أو تعطيلهم أو حذفهم." : "Read-only mode: Content.Edit permission is required to create, edit, disable, or delete WordPress users.")</strong></div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
@@ -77,7 +86,7 @@ else
                                  CsvRowSelector="UserCsvRow"
                                  CsvFileName="@CsvFileName"
                                  PageSize="10"
-                                 Selectable="true"
+                                 Selectable="@CanEditContent"
                                  Loading="@_working"
                                  EmptyTitle="@L["NoUsers"]"
                                  EmptyDescription="@L["NoUsersHelp"]"
@@ -121,51 +130,61 @@ else
                             <td>@string.Join(", ", user.Roles.Select(TranslateRole))</td>
                             <td>@FormatDate(user.RegisteredAt)</td>
                             <td>
-                                <div class="table-actions">
-                                    <AppButton Size="small" Icon="✎" Text="@L["Edit"]" Disabled="@_working" OnClick="args => StartEdit(user)" />
-                                    <AppButton Size="small" Text="@L["Disable"]" Disabled="@_working" OnClick="args => DisableAsync(user)" />
-                                    <AppButton Size="small" Icon="⌫" Text="@L["Delete"]" Variant="danger" Disabled="@_working" OnClick="args => DeleteAsync(user)" />
-                                </div>
+                                @if (CanEditContent)
+                                {
+                                    <div class="table-actions">
+                                        <AppButton Size="small" Icon="✎" Text="@L["Edit"]" Disabled="@_working" OnClick="args => StartEdit(user)" />
+                                        <AppButton Size="small" Text="@L["Disable"]" Disabled="@_working" OnClick="args => DisableAsync(user)" />
+                                        <AppButton Size="small" Icon="⌫" Text="@L["Delete"]" Variant="danger" Disabled="@_working" OnClick="args => DeleteAsync(user)" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="block-muted">@(L.IsArabic ? "قراءة فقط" : "Read only")</span>
+                                }
                             </td>
                         </RowTemplate>
                     </AppDataGrid>
                 }
             </section>
 
-            <aside>
-                <AppSection Title="@(_editingId > 0 ? L["EditUser"] : L["CreateUser"])"
-                            Subtitle="@(L.IsArabic ? "عدّل بيانات الحساب والأدوار ثم احفظها في WordPress." : "Edit account details and roles, then save them to WordPress.")">
-                    <ChildContent>
-                        <EditForm Model="_model" OnValidSubmit="SaveAsync">
-                            <div class="form-grid one-column">
-                                @if (_editingId == 0)
-                                {
-                                    <label>@L["Username"]<InputText @bind-Value="_model.Username" /></label>
-                                }
-                                <label>@L["Email"]<InputText type="email" @bind-Value="_model.Email" /></label>
-                                <label>@(_editingId > 0 ? L["NewPasswordOptional"] : L["Password"])<InputText type="password" @bind-Value="_model.Password" /></label>
-                                <label>@L["DisplayName"]<InputText @bind-Value="_model.Name" /></label>
-                                <label>@L["FirstName"]<InputText @bind-Value="_model.FirstName" /></label>
-                                <label>@L["LastName"]<InputText @bind-Value="_model.LastName" /></label>
-                                <label>@L["Website"]<InputText @bind-Value="_model.Url" /></label>
-                                <label>@L["Description"]<InputTextArea rows="4" @bind-Value="_model.Description" /></label>
-                                <label>@L["Role"]
-                                    <select value="@SelectedRole" @onchange="RoleChanged">
-                                        @foreach (var role in Roles)
-                                        {
-                                            <option value="@role.Key">@L[role.Value]</option>
-                                        }
-                                    </select>
-                                </label>
-                            </div>
-                            <div class="actions form-actions">
-                                <AppButton Type="submit" Variant="primary" Text="@(_working ? L["Saving"] : L["Save"])" Busy="@_working" Disabled="@_working" />
-                                <AppButton Text="@L["Cancel"]" Disabled="@_working" OnClick="ResetFormClicked" />
-                            </div>
-                        </EditForm>
-                    </ChildContent>
-                </AppSection>
-            </aside>
+            @if (CanEditContent)
+            {
+                <aside>
+                    <AppSection Title="@(_editingId > 0 ? L["EditUser"] : L["CreateUser"])"
+                                Subtitle="@(L.IsArabic ? "عدّل بيانات الحساب والأدوار ثم احفظها في WordPress." : "Edit account details and roles, then save them to WordPress.")">
+                        <ChildContent>
+                            <EditForm Model="_model" OnValidSubmit="SaveAsync">
+                                <div class="form-grid one-column">
+                                    @if (_editingId == 0)
+                                    {
+                                        <label>@L["Username"]<InputText @bind-Value="_model.Username" /></label>
+                                    }
+                                    <label>@L["Email"]<InputText type="email" @bind-Value="_model.Email" /></label>
+                                    <label>@(_editingId > 0 ? L["NewPasswordOptional"] : L["Password"])<InputText type="password" @bind-Value="_model.Password" /></label>
+                                    <label>@L["DisplayName"]<InputText @bind-Value="_model.Name" /></label>
+                                    <label>@L["FirstName"]<InputText @bind-Value="_model.FirstName" /></label>
+                                    <label>@L["LastName"]<InputText @bind-Value="_model.LastName" /></label>
+                                    <label>@L["Website"]<InputText @bind-Value="_model.Url" /></label>
+                                    <label>@L["Description"]<InputTextArea rows="4" @bind-Value="_model.Description" /></label>
+                                    <label>@L["Role"]
+                                        <select value="@SelectedRole" @onchange="RoleChanged">
+                                            @foreach (var role in Roles)
+                                            {
+                                                <option value="@role.Key">@L[role.Value]</option>
+                                            }
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="actions form-actions">
+                                    <AppButton Type="submit" Variant="primary" Text="@(_working ? L["Saving"] : L["Save"])" Busy="@_working" Disabled="@_working" />
+                                    <AppButton Text="@L["Cancel"]" Disabled="@_working" OnClick="ResetFormClicked" />
+                                </div>
+                            </EditForm>
+                        </ChildContent>
+                    </AppSection>
+                </aside>
+            }
         </div>
     </div>
 }
@@ -187,6 +206,7 @@ else
         { "contributor", "RoleContributor" }, { "subscriber", "RoleSubscriber" }
     };
 
+    private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private string SelectedRole => _model.Roles.FirstOrDefault() ?? "subscriber";
     private string RoleFilterText => _role == "all" ? L["AllRoles"] : TranslateRole(_role);
     private IReadOnlyList<string> CsvHeaders => L.IsArabic
@@ -225,12 +245,13 @@ else
     private async Task SearchClickedAsync(MouseEventArgs _) { _page = 1; await LoadAsync(); }
     private async Task PreviousPageClickedAsync(MouseEventArgs _) { if (_page > 1) { _page--; await LoadAsync(); } }
     private async Task NextPageClickedAsync(MouseEventArgs _) { if (_page < _result.TotalPages) { _page++; await LoadAsync(); } }
-    private Task StartCreateClicked(MouseEventArgs _) { StartCreate(); return Task.CompletedTask; }
+    private Task StartCreateClicked(MouseEventArgs _) { CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit); StartCreate(); return Task.CompletedTask; }
     private Task ResetFormClicked(MouseEventArgs _) { ResetForm(); return Task.CompletedTask; }
 
     private void StartCreate() { _editingId = 0; _model = new(); _message = null; _isError = false; }
     private Task StartEdit(WordPressUserView user)
     {
+        CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
         _editingId = user.Id;
         _model = new()
         {
@@ -242,12 +263,13 @@ else
     }
 
     private void ResetForm() { _editingId = 0; _model = new(); }
-    private void RoleChanged(ChangeEventArgs e) => _model.Roles = [e.Value?.ToString() ?? "subscriber"];
+    private void RoleChanged(ChangeEventArgs e) { CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit); _model.Roles = [e.Value?.ToString() ?? "subscriber"]; }
 
     private async Task SaveAsync()
     {
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _working = true;
             var result = _editingId > 0
                 ? await UsersService.UpdateAsync(SiteId, _editingId, _model)
@@ -262,18 +284,32 @@ else
 
     private async Task DisableAsync(WordPressUserView user)
     {
-        var result = await UsersService.RemoveRolesAsync(SiteId, user.Id);
-        _isError = !result.Success;
-        _message = L.TranslateMessage(result.Message);
-        if (result.Success) await LoadAsync();
+        try
+        {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+            _working = true;
+            var result = await UsersService.RemoveRolesAsync(SiteId, user.Id);
+            _isError = !result.Success;
+            _message = L.TranslateMessage(result.Message);
+            if (result.Success) await LoadAsync();
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _working = false; }
     }
 
     private async Task DeleteAsync(WordPressUserView user)
     {
-        var result = await UsersService.DeleteAsync(SiteId, user.Id);
-        _isError = !result.Success;
-        _message = L.TranslateMessage(result.Message);
-        if (result.Success) await LoadAsync();
+        try
+        {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+            _working = true;
+            var result = await UsersService.DeleteAsync(SiteId, user.Id);
+            _isError = !result.Success;
+            _message = L.TranslateMessage(result.Message);
+            if (result.Success) await LoadAsync();
+        }
+        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
+        finally { _working = false; }
     }
 
     private string UserSearchKey(WordPressUserView user) => string.Join(' ', user.Name, user.Username, user.Email, string.Join(' ', user.Roles));

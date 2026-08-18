@@ -4,6 +4,7 @@
 @inject SiteWebService SiteService
 @inject WordPressSyncWebService SyncService
 @inject WordPressMediaWebService MediaService
+@inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
 
 <PageTitle>@L["MediaManager"]</PageTitle>
@@ -31,6 +32,11 @@ else
             </Actions>
         </AppToolbar>
 
+        @if (!CanEditContent)
+        {
+            <div class="alert" role="status"><strong>@(L.IsArabic ? "وضع القراءة فقط: تحتاج صلاحية Content.Edit لرفع الوسائط أو تعديل بياناتها أو حذفها." : "Read-only mode: Content.Edit permission is required to upload, optimize, or delete media.")</strong></div>
+        }
+
         @if (!string.IsNullOrWhiteSpace(_message))
         {
             <div class="alert @(_isError ? "error" : "success")"><strong>@_message</strong></div>
@@ -43,35 +49,38 @@ else
             <AppStatCard Icon="◷" Label="@(L.IsArabic ? "آخر تعديل" : "Last modified")" Value="@LatestModified" Description="@(L.IsArabic ? "بيانات المزامنة المحلية" : "Local synchronization data")" Tone="warning" ValueClass="summary-date" />
         </section>
 
-        <AppSection Eyebrow="@(L.IsArabic ? "رفع ملف" : "UPLOAD")"
-                    Title="@L["UploadMedia"]"
-                    Subtitle="@(L.IsArabic ? "ارفع صورًا ومستندات مسموحًا بها حتى 25 MB. يتم التحقق من الامتداد ونوع المحتوى قبل الإرسال." : "Upload approved images and documents up to 25 MB. Extension and content type are validated before WordPress receives the file.")">
-            <ChildContent>
-                <div class="form-grid">
-                    <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
-                    <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
-                    <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
-                    <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
-                </div>
-                @if (_selectedFile is not null)
-                {
-                    var validation = MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType);
-                    <div class="selected-file">
-                        <strong>@_selectedFile.Name</strong>
-                        <small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small>
-                        @if (!validation.IsValid)
-                        {
-                            <small style="display:block;color:var(--danger,#dc2626);margin-top:6px">@L.TranslateMessage(validation.Message)</small>
-                        }
+        @if (CanEditContent)
+        {
+            <AppSection Eyebrow="@(L.IsArabic ? "رفع ملف" : "UPLOAD")"
+                        Title="@L["UploadMedia"]"
+                        Subtitle="@(L.IsArabic ? "ارفع صورًا ومستندات مسموحًا بها حتى 25 MB. يتم التحقق من الامتداد ونوع المحتوى قبل الإرسال." : "Upload approved images and documents up to 25 MB. Extension and content type are validated before WordPress receives the file.")">
+                <ChildContent>
+                    <div class="form-grid">
+                        <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
+                        <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
+                        <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
+                        <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
                     </div>
-                }
-                <div class="actions">
-                    <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || !SelectedFileIsValid)" OnClick="UploadClickedAsync" />
-                </div>
-            </ChildContent>
-        </AppSection>
+                    @if (_selectedFile is not null)
+                    {
+                        var validation = MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType);
+                        <div class="selected-file">
+                            <strong>@_selectedFile.Name</strong>
+                            <small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small>
+                            @if (!validation.IsValid)
+                            {
+                                <small style="display:block;color:var(--danger,#dc2626);margin-top:6px">@L.TranslateMessage(validation.Message)</small>
+                            }
+                        </div>
+                    }
+                    <div class="actions">
+                        <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || !SelectedFileIsValid)" OnClick="UploadClickedAsync" />
+                    </div>
+                </ChildContent>
+            </AppSection>
+        }
 
-        @if (_editing is not null)
+        @if (_editing is not null && CanEditContent)
         {
             <AppSection Eyebrow="@(L.IsArabic ? "تحسين الوسائط" : "MEDIA OPTIMIZATION")"
                         Title="@(L.IsArabic ? $"تحسين #{_editing.MediaId}" : $"Optimize media #{_editing.MediaId}")"
@@ -151,7 +160,7 @@ else
                      CsvRowSelector="@(item => new[] { item.WordPressId.ToString(), DisplayTitle(item.Title), item.MediaType, item.MimeType, item.SourceUrl, FormatDate(item.ModifiedAtUtc) })"
                      CsvFileName="@CsvFileName"
                      PageSize="10"
-                     Selectable="true"
+                     Selectable="@CanEditContent"
                      Loading="@_busy"
                      LoadingTitle="@(L.IsArabic ? "جارٍ تحديث الوسائط" : "Updating media")"
                      EmptyTitle="@L["NoMedia"]"
@@ -196,23 +205,32 @@ else
                 <td>@FormatDate(item.ModifiedAtUtc)</td>
                 <td>
                     <div class="table-actions">
-                        <AppButton Variant="primary" Icon="✦" Text="@(L.IsArabic ? "تحسين" : "Optimize")" Size="small" Disabled="@_busy" OnClick="args => OpenOptimizationAsync(item)" />
+                        @if (CanEditContent)
+                        {
+                            <AppButton Variant="primary" Icon="✦" Text="@(L.IsArabic ? "تحسين" : "Optimize")" Size="small" Disabled="@_busy" OnClick="args => OpenOptimizationAsync(item)" />
+                        }
                         <AppButton Href="@item.SourceUrl" Text="@L["OpenFile"]" Size="small" />
-                        <AppButton Variant="danger" Icon="⌫" Text="@L["Delete"]" Size="small" Disabled="@_busy" OnClick="args => RequestDeleteAsync(item.WordPressId, item.Title)" />
+                        @if (CanEditContent)
+                        {
+                            <AppButton Variant="danger" Icon="⌫" Text="@L["Delete"]" Size="small" Disabled="@_busy" OnClick="args => RequestDeleteAsync(item.WordPressId, item.Title)" />
+                        }
                     </div>
                 </td>
             </RowTemplate>
         </AppDataGrid>
     </div>
 
-    <AppConfirmDialog @bind-Open="_deleteConfirmOpen"
-                      Title="@(L.IsArabic ? "حذف الوسيط نهائيًا؟" : "Permanently delete media?")"
-                      Message="@(L.IsArabic ? $"سيتم حذف «{DisplayTitle(_pendingDeleteTitle)}» من WordPress نهائيًا." : $"“{DisplayTitle(_pendingDeleteTitle)}” will be permanently deleted from WordPress.")"
-                      Details="@(L.IsArabic ? "هذه العملية تستخدم force=true ولا يمكن استعادتها من سلة مهملات WordPress. قد تتأثر الصفحات التي تستخدم هذا الملف." : "This operation uses force=true and cannot be restored from the WordPress trash. Pages that reference this file may be affected.")"
-                      ConfirmText="@(L.IsArabic ? "حذف نهائي" : "Delete permanently")"
-                      CancelText="@L["Cancel"]"
-                      Busy="@_busy"
-                      OnConfirm="ConfirmDeleteAsync" />
+    @if (CanEditContent)
+    {
+        <AppConfirmDialog @bind-Open="_deleteConfirmOpen"
+                          Title="@(L.IsArabic ? "حذف الوسيط نهائيًا؟" : "Permanently delete media?")"
+                          Message="@(L.IsArabic ? $"سيتم حذف «{DisplayTitle(_pendingDeleteTitle)}» من WordPress نهائيًا." : $"“{DisplayTitle(_pendingDeleteTitle)}” will be permanently deleted from WordPress.")"
+                          Details="@(L.IsArabic ? "هذه العملية تستخدم force=true ولا يمكن استعادتها من سلة مهملات WordPress. قد تتأثر الصفحات التي تستخدم هذا الملف." : "This operation uses force=true and cannot be restored from the WordPress trash. Pages that reference this file may be affected.")"
+                          ConfirmText="@(L.IsArabic ? "حذف نهائي" : "Delete permanently")"
+                          CancelText="@L["Cancel"]"
+                          Busy="@_busy"
+                          OnConfirm="ConfirmDeleteAsync" />
+    }
 }
 
 @code {
@@ -230,6 +248,7 @@ else
     private int _pendingDeleteId;
     private string _pendingDeleteTitle = string.Empty;
 
+    private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private IReadOnlyList<MediaExplorerItem> MediaItems => (_data?.Media ?? Array.Empty<MediaExplorerItem>()).ToList();
     private int ImageCount => MediaItems.Count(x => x.MediaType == "image");
     private int FileCount => MediaItems.Count - ImageCount;
@@ -259,6 +278,7 @@ else
 
     private void OnFileSelected(InputFileChangeEventArgs args)
     {
+        if (!CanEditContent) return;
         _selectedFile = args.File;
         if (string.IsNullOrWhiteSpace(_uploadTitle)) _uploadTitle = Path.GetFileNameWithoutExtension(args.File.Name);
         var validation = MediaUploadPolicy.Validate(args.File.Name, args.File.Size, args.File.ContentType);
@@ -277,6 +297,7 @@ else
         if (_selectedFile is null) return;
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _busy = true; _isError = false; _message = null;
             var result = await MediaService.UploadAsync(SiteId, _selectedFile, _uploadTitle, _altText, _caption);
             _isError = !result.IsSuccess;
@@ -295,6 +316,7 @@ else
     {
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _busy = true; _isError = false; _message = null;
             var result = await MediaService.GetDetailsAsync(SiteId, item.WordPressId);
             if (!result.IsSuccess || result.Details is null)
@@ -319,6 +341,7 @@ else
         if (_editing is null) return;
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _busy = true; _isError = false; _message = null;
             var request = new MediaMetadataUpdate(
                 _editTitle, _editAltText, _editCaption, _editDescription, _editSlug,
@@ -341,6 +364,7 @@ else
         if (_editing is null || !IsEditingImage || string.IsNullOrWhiteSpace(_aiContext)) return;
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _aiBusy = true; _isError = false; _message = null;
             _editAltText = await MediaService.SuggestAltTextAsync(
                 SiteId,
@@ -356,6 +380,7 @@ else
 
     private Task RequestDeleteAsync(int mediaId, string title)
     {
+        CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
         _pendingDeleteId = mediaId;
         _pendingDeleteTitle = title;
         _deleteConfirmOpen = true;
@@ -367,6 +392,7 @@ else
         if (_pendingDeleteId <= 0) { _deleteConfirmOpen = false; return; }
         try
         {
+            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
             _busy = true; _isError = false; _message = null;
             var deletedId = _pendingDeleteId;
             var result = await MediaService.DeleteAsync(SiteId, deletedId);
