@@ -19,7 +19,7 @@ public static class DependencyInjection
         services.AddSingleton<ISecretProtectionService, DpapiSecretProtectionService>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IJobCancellationRegistry, JobCancellationRegistry>();
-        services.AddSingleton<IPaymentGatewayRegistry, PaymentGatewayRegistry>();
+        services.AddScoped<IPaymentGatewayRegistry, PaymentGatewayRegistry>();
 
         services.AddSingleton<VersionedAIPromptRegistry>();
         services.AddSingleton<IAIPromptRegistry>(sp => sp.GetRequiredService<VersionedAIPromptRegistry>());
