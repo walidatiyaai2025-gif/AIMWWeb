@@ -51,33 +51,7 @@ else
 
         @if (CanEditContent)
         {
-            <AppSection Eyebrow="@(L.IsArabic ? "رفع ملف" : "UPLOAD")"
-                        Title="@L["UploadMedia"]"
-                        Subtitle="@(L.IsArabic ? "ارفع صورًا ومستندات مسموحًا بها حتى 25 MB. يتم التحقق من الامتداد ونوع المحتوى قبل الإرسال." : "Upload approved images and documents up to 25 MB. Extension and content type are validated before WordPress receives the file.")">
-                <ChildContent>
-                    <div class="form-grid">
-                        <label><span>@L["ChooseFile"]</span><InputFile OnChange="OnFileSelected" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.pdf,.doc,.docx,.xls,.xlsx,.zip" /></label>
-                        <label><span>@L["Title"]</span><InputText @bind-Value="_uploadTitle" /></label>
-                        <label><span>@L["AltText"]</span><InputText @bind-Value="_altText" /></label>
-                        <label><span>@L["Caption"]</span><InputText @bind-Value="_caption" /></label>
-                    </div>
-                    @if (_selectedFile is not null)
-                    {
-                        var validation = MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType);
-                        <div class="selected-file">
-                            <strong>@_selectedFile.Name</strong>
-                            <small>@FormatSize(_selectedFile.Size) — @_selectedFile.ContentType</small>
-                            @if (!validation.IsValid)
-                            {
-                                <small style="display:block;color:var(--danger,#dc2626);margin-top:6px">@L.TranslateMessage(validation.Message)</small>
-                            }
-                        </div>
-                    }
-                    <div class="actions">
-                        <AppButton Variant="primary" Icon="⇧" Text="@(_busy ? L["Uploading"] : L["UploadToWordPress"])" Busy="@_busy" Disabled="@(_busy || !SelectedFileIsValid)" OnClick="UploadClickedAsync" />
-                    </div>
-                </ChildContent>
-            </AppSection>
+            <MediaBatchUploadPanel SiteId="SiteId" OnBatchUploaded="RefreshLocalAsync" />
         }
 
         @if (_editing is not null && CanEditContent)
