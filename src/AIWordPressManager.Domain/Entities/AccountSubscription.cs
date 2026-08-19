@@ -136,6 +136,18 @@ public sealed class AccountSubscription : Entity
         MarkUpdated(utcNow);
     }
 
+    public bool ChangePlan(Guid targetPlanId, DateTime utcNow)
+    {
+        if (targetPlanId == Guid.Empty) throw new ArgumentException("Target plan ID is required.", nameof(targetPlanId));
+        RequireUtc(utcNow, nameof(utcNow));
+        if (Status == AccountSubscriptionStatus.Expired)
+            throw new InvalidOperationException("An expired subscription cannot change plans.");
+        if (PlanId == targetPlanId) return false;
+        PlanId = targetPlanId;
+        MarkUpdated(utcNow);
+        return true;
+    }
+
     public void BindProviderReference(string? providerKey, string? providerSubscriptionReference, DateTime utcNow)
     {
         RequireUtc(utcNow, nameof(utcNow));
