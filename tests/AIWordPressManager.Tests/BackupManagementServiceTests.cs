@@ -10,31 +10,39 @@ public sealed class BackupManagementServiceTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"aiwm-backup-tests-{Guid.NewGuid():N}");
 
     [Fact]
-    public void CreateBackup_IncludesManagedDataAndCryptographicallyVerifiesManifestV3()
+    public void CreateBackup_IncludesManagedDataAndCryptographicallyVerifiesManifestV4()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), CreatePayload(2048, 0x31));
+        var databasePath = Path.Combine(service.DataDirectory, "application.db");
+        File.WriteAllBytes(databasePath, CreatePayload(2048, 0x31));
         var settingsDirectory = Path.Combine(service.DataDirectory, "settings");
         Directory.CreateDirectory(settingsDirectory);
         File.WriteAllText(Path.Combine(settingsDirectory, "application-state.json"), "{\"mode\":\"safe\"}");
         File.WriteAllText(Path.Combine(settingsDirectory, "ignored.tmp"), "transient");
+        WriteSqliteConfiguration(service, databasePath);
 
         var backup = service.CreateBackup("before upgrade");
         var inspection = service.Inspect(backup.FileName);
 
         backup.IsValid.Should().BeTrue();
         inspection.IsValid.Should().BeTrue();
-        inspection.ManifestVersion.Should().Be(3);
+        inspection.ManifestVersion.Should().Be(4);
         inspection.DatabaseCount.Should().Be(1);
+        inspection.DatabaseProvider.Should().Be("SQLite");
+        inspection.SecretRecoveryMode.Should().Be("wrapped-key-required");
         inspection.Files.Should().Contain(x =>
-            x.RelativePath == "application.db" &&
+            x.RelativePath == "Data/application.db" &&
             x.Kind == nameof(BackupContentKind.Database) &&
             !string.IsNullOrWhiteSpace(x.Sha256));
         inspection.Files.Should().Contain(x =>
-            x.RelativePath == "settings/application-state.json" &&
+            x.RelativePath == "Data/settings/application-state.json" &&
             x.Kind == nameof(BackupContentKind.ManagedState) &&
             !string.IsNullOrWhiteSpace(x.Sha256));
-        inspection.Files.Should().NotContain(x => x.RelativePath == "settings/ignored.tmp");
+        inspection.Files.Should().Contain(x =>
+            x.RelativePath == "Config/setup.database.json" &&
+            x.Kind == nameof(BackupContentKind.Configuration) &&
+            !string.IsNullOrWhiteSpace(x.Sha256));
+        inspection.Files.Should().NotContain(x => x.RelativePath == "Data/settings/ignored.tmp");
         inspection.Message.Should().Contain("SHA-256");
     }
 
@@ -46,7 +54,7 @@ public sealed class BackupManagementServiceTests : IDisposable
         var backup = service.CreateBackup();
         var backupPath = Path.Combine(service.BackupDirectory, backup.FileName);
 
-        ReplaceEntryWithSameLengthMutation(backupPath, "data/application.db");
+        ReplaceEntryWithSameLengthMutation(backupPath, "payload/Data/application.db");
 
         var inspection = service.Inspect(backup.FileName);
 
@@ -64,7 +72,7 @@ public sealed class BackupManagementServiceTests : IDisposable
 
         using (var archive = ZipFile.Open(backupPath, ZipArchiveMode.Update))
         {
-            var rogue = archive.CreateEntry("data/rogue.json", CompressionLevel.NoCompression);
+            var rogue = archive.CreateEntry("payload/Data/rogue.json", CompressionLevel.NoCompression);
             using var writer = new StreamWriter(rogue.Open());
             writer.Write("{\"unexpected\":true}");
         }
@@ -72,7 +80,7 @@ public sealed class BackupManagementServiceTests : IDisposable
         var inspection = service.Inspect(backup.FileName);
 
         inspection.IsValid.Should().BeFalse();
-        inspection.Message.Should().Contain("Undeclared archive entry: rogue.json");
+        inspection.Message.Should().Contain("Undeclared archive entry: Data/rogue.json");
     }
 
     [Fact]
@@ -126,6 +134,22 @@ public sealed class BackupManagementServiceTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         return new BackupManagementService(_root);
+    }
+
+    private static void WriteSqliteConfiguration(BackupManagementService service, string databasePath)
+    {
+        var payload = new
+        {
+            Database = new
+            {
+                Provider = "SQLite",
+                SetupComplete = true,
+                ConnectionString = $"Data Source={databasePath};Foreign Keys=True;Pooling=True"
+            }
+        };
+        File.WriteAllText(
+            Path.Combine(service.ConfigurationDirectory, "setup.database.json"),
+            JsonSerializer.Serialize(payload));
     }
 
     private static byte[] CreatePayload(int length, byte seed)

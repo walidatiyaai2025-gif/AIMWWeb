@@ -1,32 +1,60 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Web.Services;
 
 public sealed class BackupManagementService
 {
-    private const int CurrentManifestVersion = 3;
-    private const string PayloadPrefix = "data/";
+    private const int CurrentManifestVersion = 4;
+    private const int CryptographicManifestVersion = 3;
+    private const int ScopedPayloadManifestVersion = 4;
+    private const string LegacyPayloadPrefix = "data/";
+    private const string ScopedPayloadPrefix = "payload/";
+    private const string SecretRecoveryBlocked = "wrapped-key-required";
+    private const string SecretRecoveryWrapped = "wrapped-key-v1";
     private readonly object _sync = new();
+    private readonly string _applicationRoot;
     private readonly string _dataDirectory;
+    private readonly string _configurationDirectory;
     private readonly string _backupDirectory;
     private readonly string _historyPath;
 
-    public BackupManagementService(string? rootDirectory = null)
+    public BackupManagementService(string? rootDirectory = null, string? environmentName = null)
     {
-        var root = string.IsNullOrWhiteSpace(rootDirectory)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager")
+        _applicationRoot = string.IsNullOrWhiteSpace(rootDirectory)
+            ? GetDefaultApplicationRoot(environmentName)
             : Path.GetFullPath(rootDirectory);
-        _dataDirectory = Path.Combine(root, "Data");
-        _backupDirectory = Path.Combine(root, "Backups");
+        _dataDirectory = Path.Combine(_applicationRoot, "Data");
+        _configurationDirectory = Path.Combine(_applicationRoot, "Config");
+        _backupDirectory = Path.Combine(_applicationRoot, "Backups");
         _historyPath = Path.Combine(_backupDirectory, "backup-history.jsonl");
         Directory.CreateDirectory(_dataDirectory);
+        Directory.CreateDirectory(_configurationDirectory);
         Directory.CreateDirectory(_backupDirectory);
     }
 
+    public string ApplicationRoot => _applicationRoot;
     public string BackupDirectory => _backupDirectory;
     public string DataDirectory => _dataDirectory;
+    public string ConfigurationDirectory => _configurationDirectory;
+
+    public static string GetDefaultApplicationRoot(string? environmentName = null, string? localApplicationData = null)
+    {
+        var localRoot = string.IsNullOrWhiteSpace(localApplicationData)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+            : Path.GetFullPath(localApplicationData);
+        if (string.IsNullOrWhiteSpace(localRoot)) localRoot = AppContext.BaseDirectory;
+
+        var applicationRoot = Path.Combine(localRoot, "AIWordPressManager");
+        var effectiveEnvironment = string.IsNullOrWhiteSpace(environmentName)
+            ? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            : environmentName;
+        return string.Equals(effectiveEnvironment, "Development", StringComparison.OrdinalIgnoreCase)
+            ? Path.Combine(applicationRoot, "Development")
+            : applicationRoot;
+    }
 
     public IReadOnlyList<BackupFileInfo> GetBackups()
     {
@@ -61,8 +89,16 @@ public sealed class BackupManagementService
             var now = DateTime.UtcNow;
             var fileName = $"AIWM-Backup-{now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.zip";
             var target = Path.Combine(_backupDirectory, fileName);
-            var sources = EnumerateManagedDataFiles().ToList();
-            if (sources.Count == 0 || !sources.Any(x => x.Kind == BackupContentKind.Database))
+            var databaseProvider = ReadConfiguredDatabaseProvider();
+            if (!string.IsNullOrWhiteSpace(databaseProvider) &&
+                !databaseProvider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Database provider '{databaseProvider}' requires a provider-native backup path. Backup creation is blocked rather than producing an incomplete archive.");
+            }
+
+            var sources = EnumerateManagedFiles().ToList();
+            if (!sources.Any(x => x.Kind == BackupContentKind.Database))
                 throw new InvalidOperationException("No application database was found to back up.");
 
             var manifestFiles = sources
@@ -78,7 +114,9 @@ public sealed class BackupManagementService
                 now,
                 NormalizeNote(note),
                 Environment.MachineName,
-                manifestFiles);
+                manifestFiles,
+                databaseProvider,
+                SecretRecoveryBlocked);
 
             try
             {
@@ -88,7 +126,7 @@ public sealed class BackupManagementService
                     {
                         archive.CreateEntryFromFile(
                             source.SourcePath,
-                            PayloadPrefix + source.RelativePath,
+                            ScopedPayloadPrefix + source.RelativePath,
                             CompressionLevel.Optimal);
                     }
 
@@ -105,7 +143,7 @@ public sealed class BackupManagementService
                     "Create",
                     info.FileName,
                     true,
-                    $"Created verified backup containing {manifestFiles.Count} managed file(s), including {info.DatabaseCount} database file(s).");
+                    $"Created verified backup containing {manifestFiles.Count} managed file(s), including {info.DatabaseCount} database file(s) and {manifestFiles.Count(x => x.Kind == nameof(BackupContentKind.Configuration))} configuration file(s).");
                 return info;
             }
             catch (Exception ex)
@@ -142,11 +180,20 @@ public sealed class BackupManagementService
         lock (_sync)
         {
             var inspection = InspectInternal(fileName);
+            var hasDatabaseConfiguration = inspection.Files.Any(x =>
+                string.Equals(x.Kind, nameof(BackupContentKind.Configuration), StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.RelativePath, "Config/setup.database.json", StringComparison.OrdinalIgnoreCase));
+            var secretRecoveryAvailable = string.Equals(
+                inspection.SecretRecoveryMode,
+                SecretRecoveryWrapped,
+                StringComparison.OrdinalIgnoreCase);
             var checks = new List<RestoreReadinessCheck>
             {
                 new("Archive integrity", "سلامة ملف النسخة", inspection.IsValid, inspection.Message),
                 new("Database content", "محتوى قواعد البيانات", inspection.DatabaseCount > 0, inspection.DatabaseCount > 0 ? $"{inspection.DatabaseCount} database file(s) found." : "No database files found."),
+                new("Configuration state", "حالة الإعدادات", hasDatabaseConfiguration, hasDatabaseConfiguration ? "Database setup configuration is included." : "The environment database setup configuration is not included in this archive."),
                 new("Managed data coverage", "تغطية بيانات التطبيق", inspection.Files.Count >= inspection.DatabaseCount && inspection.Files.Count > 0, $"{inspection.Files.Count} managed file(s) declared in the manifest."),
+                new("Protected secret recovery", "استعادة الأسرار المحمية", secretRecoveryAvailable, secretRecoveryAvailable ? "Protected secret recovery metadata is available." : "The live AES secret key is intentionally not stored in this unencrypted ZIP. Disaster recovery of protected secrets remains blocked until a wrapped-key export/import path is implemented."),
                 new("Manifest compatibility", "توافق ملف التعريف", inspection.ManifestVersion is >= 1 and <= CurrentManifestVersion, $"Manifest version: {inspection.ManifestVersion}"),
                 new("Free disk space", "المساحة الحرة", HasEnoughFreeSpace(inspection.UncompressedBytes), $"Required estimate: {FormatBytes(inspection.UncompressedBytes * 2)}"),
                 new("Application state", "حالة التطبيق", false, "Restore must run while the web application is stopped to avoid replacing open application data files.")
@@ -200,24 +247,25 @@ public sealed class BackupManagementService
             if (manifest is null || manifest.Version is < 1 or > CurrentManifestVersion || manifest.Files is null)
                 return BackupInspectionResult.Invalid(fileName, "The backup manifest is invalid or unsupported.");
 
+            var payloadPrefix = manifest.Version >= ScopedPayloadManifestVersion ? ScopedPayloadPrefix : LegacyPayloadPrefix;
             var issues = new List<string>();
             foreach (var entry in archive.Entries.Where(x => !string.IsNullOrEmpty(x.Name)))
             {
                 if (string.Equals(entry.FullName, "manifest.json", StringComparison.OrdinalIgnoreCase)) continue;
-                if (!entry.FullName.StartsWith(PayloadPrefix, StringComparison.OrdinalIgnoreCase))
+                if (!entry.FullName.StartsWith(payloadPrefix, StringComparison.OrdinalIgnoreCase))
                     issues.Add($"Unexpected archive entry: {entry.FullName}");
             }
 
             var payloadEntries = archive.Entries
-                .Where(x => !string.IsNullOrEmpty(x.Name) && x.FullName.StartsWith(PayloadPrefix, StringComparison.OrdinalIgnoreCase))
+                .Where(x => !string.IsNullOrEmpty(x.Name) && x.FullName.StartsWith(payloadPrefix, StringComparison.OrdinalIgnoreCase))
                 .ToList();
             if (payloadEntries.Count == 0)
-                return BackupInspectionResult.Invalid(fileName, "The archive does not contain managed data files.", manifest.Version, manifest.CreatedAtUtc);
+                return BackupInspectionResult.Invalid(fileName, "The archive does not contain managed application files.", manifest.Version, manifest.CreatedAtUtc);
 
             var payloadByPath = new Dictionary<string, ZipArchiveEntry>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in payloadEntries)
             {
-                if (!TryNormalizePayloadPath(entry.FullName, out var relativePath))
+                if (!TryNormalizePayloadPath(entry.FullName, payloadPrefix, out var relativePath))
                 {
                     issues.Add($"Unsafe archive entry path: {entry.FullName}");
                     continue;
@@ -251,10 +299,14 @@ public sealed class BackupManagementService
                 if (declared.SizeBytes < 0 || entry.Length != declared.SizeBytes)
                     issues.Add($"Size mismatch: {relativePath}");
 
-                if (manifest.Version >= CurrentManifestVersion)
+                if (manifest.Version >= CryptographicManifestVersion)
                 {
-                    if (!Enum.TryParse<BackupContentKind>(declared.Kind, true, out var declaredKind) || declaredKind != DetermineKind(relativePath))
+                    if (!TryDetermineExpectedKind(manifest.Version, relativePath, out var expectedKind) ||
+                        !Enum.TryParse<BackupContentKind>(declared.Kind, true, out var declaredKind) ||
+                        declaredKind != expectedKind)
+                    {
                         issues.Add($"Content kind mismatch: {relativePath}");
+                    }
 
                     if (string.IsNullOrWhiteSpace(declared.Sha256))
                     {
@@ -275,11 +327,24 @@ public sealed class BackupManagementService
                     issues.Add($"Undeclared archive entry: {payloadPath}");
             }
 
-            var databaseCount = payloadByPath.Keys.Count(x => x.EndsWith(".db", StringComparison.OrdinalIgnoreCase));
+            var databaseCount = manifest.Files.Count(declared =>
+            {
+                if (!TryGetDeclaredRelativePath(manifest.Version, declared, out var relativePath) ||
+                    !payloadByPath.ContainsKey(relativePath) ||
+                    !TryDetermineExpectedKind(manifest.Version, relativePath, out var expectedKind) ||
+                    expectedKind != BackupContentKind.Database)
+                {
+                    return false;
+                }
+
+                return manifest.Version < CryptographicManifestVersion ||
+                       (Enum.TryParse<BackupContentKind>(declared.Kind, true, out var declaredKind) &&
+                        declaredKind == BackupContentKind.Database);
+            });
             if (databaseCount == 0) issues.Add("The archive does not contain database files.");
 
             var valid = issues.Count == 0;
-            var verificationMode = manifest.Version >= CurrentManifestVersion
+            var verificationMode = manifest.Version >= CryptographicManifestVersion
                 ? "size and SHA-256 verification"
                 : "legacy size/path compatibility verification";
             return new BackupInspectionResult(
@@ -292,7 +357,9 @@ public sealed class BackupManagementService
                 manifest.MachineName,
                 databaseCount,
                 payloadEntries.Sum(x => x.Length),
-                manifest.Files);
+                manifest.Files,
+                manifest.DatabaseProvider,
+                manifest.SecretRecoveryMode);
         }
         catch (InvalidDataException ex)
         {
@@ -304,26 +371,37 @@ public sealed class BackupManagementService
         }
     }
 
-    private IEnumerable<ManagedBackupSource> EnumerateManagedDataFiles()
+    private IEnumerable<ManagedBackupSource> EnumerateManagedFiles()
     {
-        var dataRoot = Path.GetFullPath(_dataDirectory) + Path.DirectorySeparatorChar;
-        foreach (var path in Directory.EnumerateFiles(_dataDirectory, "*", SearchOption.AllDirectories))
+        foreach (var source in EnumerateScope(_dataDirectory, "Data", configurationScope: false)) yield return source;
+        foreach (var source in EnumerateScope(_configurationDirectory, "Config", configurationScope: true)) yield return source;
+    }
+
+    private static IEnumerable<ManagedBackupSource> EnumerateScope(string directory, string scope, bool configurationScope)
+    {
+        if (!Directory.Exists(directory)) yield break;
+        var scopeRoot = Path.GetFullPath(directory) + Path.DirectorySeparatorChar;
+        foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
         {
-            if (IsTransientDataFile(path)) continue;
+            if (IsTransientFile(path)) continue;
 
             var fullPath = Path.GetFullPath(path);
-            if (!fullPath.StartsWith(dataRoot, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Managed data path escaped the application Data directory.");
+            if (!fullPath.StartsWith(scopeRoot, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException($"Managed {scope} path escaped its application directory.");
 
-            var relativePath = NormalizeRelativePath(Path.GetRelativePath(_dataDirectory, fullPath));
-            if (!IsSafeRelativePath(relativePath))
-                throw new InvalidOperationException("Managed data contains an unsafe relative path.");
+            var childPath = NormalizeRelativePath(Path.GetRelativePath(directory, fullPath));
+            if (!IsSafeRelativePath(childPath))
+                throw new InvalidOperationException($"Managed {scope} data contains an unsafe relative path.");
 
-            yield return new ManagedBackupSource(fullPath, relativePath, DetermineKind(relativePath));
+            var relativePath = $"{scope}/{childPath}";
+            yield return new ManagedBackupSource(
+                fullPath,
+                relativePath,
+                configurationScope ? BackupContentKind.Configuration : DetermineDataKind(childPath));
         }
     }
 
-    private static bool IsTransientDataFile(string path)
+    private static bool IsTransientFile(string path)
     {
         var name = Path.GetFileName(path);
         return name.StartsWith('~') ||
@@ -333,12 +411,97 @@ public sealed class BackupManagementService
                string.Equals(name, ".DS_Store", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static BackupContentKind DetermineKind(string relativePath)
+    private static bool TryDetermineExpectedKind(int manifestVersion, string relativePath, out BackupContentKind kind)
+    {
+        if (manifestVersion >= ScopedPayloadManifestVersion)
+        {
+            if (relativePath.StartsWith("Config/", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = BackupContentKind.Configuration;
+                return true;
+            }
+
+            if (relativePath.StartsWith("Data/", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = DetermineDataKind(relativePath["Data/".Length..]);
+                return true;
+            }
+
+            kind = default;
+            return false;
+        }
+
+        kind = DetermineDataKind(relativePath);
+        return true;
+    }
+
+    private static BackupContentKind DetermineDataKind(string relativePath)
     {
         if (relativePath.EndsWith(".db", StringComparison.OrdinalIgnoreCase)) return BackupContentKind.Database;
         if (relativePath.EndsWith(".db-wal", StringComparison.OrdinalIgnoreCase) || relativePath.EndsWith(".db-shm", StringComparison.OrdinalIgnoreCase)) return BackupContentKind.DatabaseSidecar;
         if (relativePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase) || relativePath.EndsWith(".jsonl", StringComparison.OrdinalIgnoreCase)) return BackupContentKind.ManagedState;
         return BackupContentKind.ManagedFile;
+    }
+
+    private string? ReadConfiguredDatabaseProvider()
+    {
+        var path = Path.Combine(_configurationDirectory, "setup.database.json");
+        if (!File.Exists(path)) return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            if (!document.RootElement.TryGetProperty("Database", out var database) || database.ValueKind != JsonValueKind.Object)
+                throw new InvalidDataException("Database setup configuration is invalid. Backup creation is blocked until the configuration is repaired.");
+            if (!database.TryGetProperty("Provider", out var provider) || provider.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(provider.GetString()))
+                throw new InvalidDataException("Database setup configuration does not contain a valid provider. Backup creation is blocked until the configuration is repaired.");
+
+            var providerName = provider.GetString()!.Trim();
+            if (!providerName.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+                return providerName;
+
+            if (!database.TryGetProperty("ConnectionString", out var connectionStringElement) ||
+                connectionStringElement.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(connectionStringElement.GetString()))
+            {
+                throw new InvalidDataException("SQLite database setup configuration does not contain a connection string. Backup creation is blocked until the configuration is repaired.");
+            }
+
+            string configuredDatabasePath;
+            try
+            {
+                var builder = new SqliteConnectionStringBuilder(connectionStringElement.GetString());
+                if (string.IsNullOrWhiteSpace(builder.DataSource))
+                    throw new InvalidDataException("SQLite database setup configuration does not contain a database file path.");
+                configuredDatabasePath = Path.GetFullPath(builder.DataSource);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new InvalidDataException("SQLite database setup connection string is invalid. Backup creation is blocked until the configuration is repaired.", ex);
+            }
+
+            var dataRoot = Path.GetFullPath(_dataDirectory) + Path.DirectorySeparatorChar;
+            if (!configuredDatabasePath.StartsWith(dataRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "The configured SQLite database is outside the managed Data directory. Backup creation is blocked until an external-path SQLite snapshot strategy is available.");
+            }
+
+            if (!configuredDatabasePath.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "The configured SQLite database uses an unsupported file extension for the current backup strategy. Backup creation is blocked until the snapshot strategy supports it explicitly.");
+            }
+
+            if (!File.Exists(configuredDatabasePath))
+                throw new InvalidOperationException("The configured SQLite database file was not found. Backup creation is blocked rather than archiving a different local database.");
+
+            return providerName;
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException("Database setup configuration is invalid JSON. Backup creation is blocked until the configuration is repaired.", ex);
+        }
     }
 
     private BackupFileInfo CreateInfo(string path)
@@ -352,7 +515,7 @@ public sealed class BackupManagementService
     {
         try
         {
-            var root = Path.GetPathRoot(_dataDirectory);
+            var root = Path.GetPathRoot(_applicationRoot);
             if (string.IsNullOrWhiteSpace(root)) return false;
             var drive = new DriveInfo(root);
             return drive.AvailableFreeSpace > Math.Max(uncompressedBytes * 2, 100 * 1024 * 1024);
@@ -383,16 +546,16 @@ public sealed class BackupManagementService
         return full;
     }
 
-    private static bool TryNormalizePayloadPath(string fullName, out string relativePath)
+    private static bool TryNormalizePayloadPath(string fullName, string payloadPrefix, out string relativePath)
     {
         relativePath = string.Empty;
-        if (!fullName.StartsWith(PayloadPrefix, StringComparison.OrdinalIgnoreCase)) return false;
-        return TryNormalizeRelativePath(fullName[PayloadPrefix.Length..], out relativePath);
+        if (!fullName.StartsWith(payloadPrefix, StringComparison.OrdinalIgnoreCase)) return false;
+        return TryNormalizeRelativePath(fullName[payloadPrefix.Length..], out relativePath);
     }
 
     private static bool TryGetDeclaredRelativePath(int manifestVersion, BackupManifestFile file, out string relativePath)
     {
-        var candidate = manifestVersion >= CurrentManifestVersion && !string.IsNullOrWhiteSpace(file.RelativePath)
+        var candidate = manifestVersion >= CryptographicManifestVersion && !string.IsNullOrWhiteSpace(file.RelativePath)
             ? file.RelativePath
             : file.Name;
         return TryNormalizeRelativePath(candidate, out relativePath);
@@ -457,17 +620,37 @@ public enum BackupContentKind
     Database = 0,
     DatabaseSidecar = 1,
     ManagedState = 2,
-    ManagedFile = 3
+    ManagedFile = 3,
+    Configuration = 4
 }
 
 public sealed record BackupFileInfo(string FileName, long SizeBytes, DateTime CreatedAtUtc, DateTime ModifiedAtUtc, bool IsValid, int DatabaseCount, string Sha256, string? Note);
 public sealed record BackupVerificationResult(bool IsValid, string Message, int DatabaseCount, DateTime? CreatedAtUtc);
-public sealed record BackupManifest(int Version, DateTime CreatedAtUtc, string? Note, string MachineName, IReadOnlyList<BackupManifestFile> Files);
+public sealed record BackupManifest(
+    int Version,
+    DateTime CreatedAtUtc,
+    string? Note,
+    string MachineName,
+    IReadOnlyList<BackupManifestFile> Files,
+    string? DatabaseProvider = null,
+    string? SecretRecoveryMode = null);
 public sealed record BackupManifestFile(string Name, long SizeBytes, string? Sha256 = null, string? RelativePath = null, string Kind = "Database");
 public sealed record BackupAuditEntry(DateTime TimestampUtc, string Action, string FileName, bool Succeeded, string Message);
 public sealed record RestoreReadinessCheck(string Name, string NameAr, bool Passed, string Message);
 public sealed record RestoreReadinessResult(string FileName, bool IsReady, string Message, IReadOnlyList<RestoreReadinessCheck> Checks, BackupInspectionResult Inspection);
-public sealed record BackupInspectionResult(string FileName, bool IsValid, string Message, int ManifestVersion, DateTime? CreatedAtUtc, string? Note, string? MachineName, int DatabaseCount, long UncompressedBytes, IReadOnlyList<BackupManifestFile> Files)
+public sealed record BackupInspectionResult(
+    string FileName,
+    bool IsValid,
+    string Message,
+    int ManifestVersion,
+    DateTime? CreatedAtUtc,
+    string? Note,
+    string? MachineName,
+    int DatabaseCount,
+    long UncompressedBytes,
+    IReadOnlyList<BackupManifestFile> Files,
+    string? DatabaseProvider = null,
+    string? SecretRecoveryMode = null)
 {
     public static BackupInspectionResult Invalid(string fileName, string message, int manifestVersion = 0, DateTime? createdAtUtc = null) =>
         new(fileName, false, message, manifestVersion, createdAtUtc, null, null, 0, 0, Array.Empty<BackupManifestFile>());
