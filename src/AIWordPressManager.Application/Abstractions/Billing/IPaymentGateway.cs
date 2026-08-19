@@ -219,7 +219,8 @@ public sealed class GatewaySubscriptionSnapshot
         DateTime observedAtUtc,
         DateTime? currentPeriodStartUtc = null,
         DateTime? currentPeriodEndsAtUtc = null,
-        bool cancelAtPeriodEnd = false)
+        bool cancelAtPeriodEnd = false,
+        string? providerPlanReference = null)
     {
         ProviderSubscriptionReference = PaymentGatewayContract.RequireBounded(providerSubscriptionReference, 200, nameof(providerSubscriptionReference));
         State = state;
@@ -229,6 +230,7 @@ public sealed class GatewaySubscriptionSnapshot
         CurrentPeriodStartUtc = currentPeriodStartUtc;
         CurrentPeriodEndsAtUtc = currentPeriodEndsAtUtc;
         CancelAtPeriodEnd = cancelAtPeriodEnd;
+        ProviderPlanReference = PaymentGatewayContract.OptionalBounded(providerPlanReference, 200, nameof(providerPlanReference));
     }
 
     public string ProviderSubscriptionReference { get; }
@@ -237,6 +239,7 @@ public sealed class GatewaySubscriptionSnapshot
     public DateTime? CurrentPeriodStartUtc { get; }
     public DateTime? CurrentPeriodEndsAtUtc { get; }
     public bool CancelAtPeriodEnd { get; }
+    public string? ProviderPlanReference { get; }
     public GatewayEvidenceAuthority Authority => GatewayEvidenceAuthority.ProviderApiSnapshot;
 }
 
@@ -271,22 +274,29 @@ public sealed class GatewayPlanChangeRequest
 
 public sealed class GatewayCommandResult
 {
-    private GatewayCommandResult(bool accepted, string? providerOperationReference, string sanitizedSummary)
+    private GatewayCommandResult(bool accepted, string? providerOperationReference, string sanitizedSummary, Uri? approvalUri)
     {
         Accepted = accepted;
         ProviderOperationReference = providerOperationReference;
         SanitizedSummary = sanitizedSummary;
+        ApprovalUri = approvalUri;
     }
 
     public bool Accepted { get; }
     public string? ProviderOperationReference { get; }
     public string SanitizedSummary { get; }
+    public Uri? ApprovalUri { get; }
+    public bool RequiresUserApproval => ApprovalUri is not null;
 
-    public static GatewayCommandResult AcceptedResult(string? providerOperationReference, string summary) =>
-        new(true, PaymentGatewayContract.OptionalBounded(providerOperationReference, 200, nameof(providerOperationReference)), PaymentGatewayContract.RequireBounded(summary, 500, nameof(summary)));
+    public static GatewayCommandResult AcceptedResult(string? providerOperationReference, string summary, Uri? approvalUri = null) =>
+        new(
+            true,
+            PaymentGatewayContract.OptionalBounded(providerOperationReference, 200, nameof(providerOperationReference)),
+            PaymentGatewayContract.RequireBounded(summary, 500, nameof(summary)),
+            approvalUri is null ? null : PaymentGatewayContract.RequireNavigationUri(approvalUri, nameof(approvalUri)));
 
     public static GatewayCommandResult RejectedResult(string summary) =>
-        new(false, null, PaymentGatewayContract.RequireBounded(summary, 500, nameof(summary)));
+        new(false, null, PaymentGatewayContract.RequireBounded(summary, 500, nameof(summary)), null);
 }
 
 public static class PaymentGatewayContract
