@@ -35,7 +35,7 @@ internal static partial class RuntimeLogRedactor
     [GeneratedRegex("(?i)(\\\"(?:password|passwd|secret|token|api[_-]?key|authorization|cookie)\\\"\\s*:\\s*\\\")([^\\\"]*)(\\\")")]
     private static partial Regex JsonSecretRegex();
 
-    [GeneratedRegex("(?i)((?:Authorization|Cookie|Set-Cookie|X-Api-Key|Api-Key|ApiKey|Api_Key)\\s*[:=]\\s*)([^;\\r\\n,]+)")]
+    [GeneratedRegex("(?i)((?:Password|Pwd|Passwd|Token|AccessToken|RefreshToken|Secret|ClientSecret|Authorization|Cookie|Set-Cookie|X-Api-Key|Api-Key|ApiKey|Api_Key)\\s*[:=]\\s*)([^;\\r\\n,]+)")]
     private static partial Regex NamedSecretRegex();
 
     [GeneratedRegex("(?i)Bearer\\s+[A-Za-z0-9._~+\\-/=]+")]
