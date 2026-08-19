@@ -1,5 +1,6 @@
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.AI;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Settings;
 using AIWordPressManager.Infrastructure.AI;
 using AIWordPressManager.Persistence;
@@ -89,7 +90,8 @@ public sealed class AIProviderConfigurationTests
             new IAIProvider[] { second, first },
             new AIUsageLog(),
             new AIContentProtector(),
-            new AIProviderRuntimeSettingsResolver(fixture.Service, fixture.Configuration));
+            new AIProviderRuntimeSettingsResolver(fixture.Service, fixture.Configuration),
+            new AllowAllEntitlementEnforcementService());
 
         var result = await orchestrator.ExecuteAsync(new AIRequest("test", UserId: Guid.NewGuid().ToString()));
 
@@ -122,7 +124,8 @@ public sealed class AIProviderConfigurationTests
             new IAIProvider[] { second, first },
             new AIUsageLog(),
             new AIContentProtector(),
-            new AIProviderRuntimeSettingsResolver(fixture.Service, fixture.Configuration));
+            new AIProviderRuntimeSettingsResolver(fixture.Service, fixture.Configuration),
+            new AllowAllEntitlementEnforcementService());
 
         var result = await orchestrator.ExecuteAsync(new AIRequest("test", UserId: Guid.NewGuid().ToString()));
 
@@ -130,6 +133,12 @@ public sealed class AIProviderConfigurationTests
         result.Provider.Should().Be("OpenAI");
         first.Calls.Should().Be(2);
         second.Calls.Should().Be(1);
+    }
+
+    private sealed class AllowAllEntitlementEnforcementService : IAccountEntitlementEnforcementService
+    {
+        public Task RequireBooleanCapabilityAsync(Guid ownerUserId, string entitlementKey, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RequireAdditionalUsageAsync(Guid ownerUserId, string entitlementKey, long currentUsage, long requestedAdditional = 1, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class CountingProvider(string name, bool succeeds) : IAIProvider
