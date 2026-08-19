@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
 
@@ -23,10 +24,9 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     public void CreateBackup_IncludesConfigurationButNeverRawSecurityKey()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 3, 5, 7]);
-        File.WriteAllText(
-            Path.Combine(service.ConfigurationDirectory, "setup.database.json"),
-            "{\"Database\":{\"Provider\":\"SQLite\",\"SetupComplete\":true}}");
+        var databasePath = Path.Combine(service.DataDirectory, "application.db");
+        File.WriteAllBytes(databasePath, [1, 3, 5, 7]);
+        WriteSqliteConfiguration(service, databasePath);
 
         var securityDirectory = Path.Combine(service.ApplicationRoot, "Security");
         Directory.CreateDirectory(securityDirectory);
@@ -42,6 +42,7 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
             x.Kind == nameof(BackupContentKind.Configuration));
         inspection.Files.Should().NotContain(x =>
             (x.RelativePath ?? string.Empty).Contains("secret-key", StringComparison.OrdinalIgnoreCase));
+        readiness.Checks.Should().Contain(x => x.Name == "Configuration state" && x.Passed);
         readiness.IsReady.Should().BeFalse();
         readiness.Checks.Should().Contain(x =>
             x.Name == "Protected secret recovery" &&
@@ -66,10 +67,27 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     }
 
     [Fact]
-    public void RestoreReadiness_RequiresConfigurationCoverageForDataOnlyArchive()
+    public void CreateBackup_FailsClosedWhenConfiguredSqliteDatabaseIsOutsideManagedData()
+    {
+        var service = CreateService();
+        File.WriteAllBytes(Path.Combine(service.DataDirectory, "stale.db"), [8, 8, 8, 8]);
+        var externalDatabase = Path.Combine(service.ApplicationRoot, "external.db");
+        File.WriteAllBytes(externalDatabase, [1, 2, 3, 4]);
+        WriteSqliteConfiguration(service, externalDatabase);
+
+        var action = () => service.CreateBackup();
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*outside the managed Data directory*blocked*");
+        Directory.EnumerateFiles(service.BackupDirectory, "AIWM-Backup-*.zip").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RestoreReadiness_RequiresDatabaseSetupConfigurationRatherThanAnyConfigFile()
     {
         var service = CreateService();
         File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [2, 4, 6, 8]);
+        File.WriteAllText(Path.Combine(service.ConfigurationDirectory, "unrelated.json"), "{}");
         var backup = service.CreateBackup();
         var readiness = service.CheckRestoreReadiness(backup.FileName);
 
@@ -81,6 +99,22 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         return new BackupManagementService(_root);
+    }
+
+    private static void WriteSqliteConfiguration(BackupManagementService service, string databasePath)
+    {
+        var payload = new
+        {
+            Database = new
+            {
+                Provider = "SQLite",
+                SetupComplete = true,
+                ConnectionString = $"Data Source={databasePath};Foreign Keys=True;Pooling=True"
+            }
+        };
+        File.WriteAllText(
+            Path.Combine(service.ConfigurationDirectory, "setup.database.json"),
+            JsonSerializer.Serialize(payload));
     }
 
     public void Dispose()
