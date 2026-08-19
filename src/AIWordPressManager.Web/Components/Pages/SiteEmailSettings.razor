@@ -33,7 +33,7 @@
             </div>
             <div>
                 <label>@(L.IsArabic ? "العناوين المستخدمة" : "Configured recipients")</label>
-                <div><strong>@_recipients.Count / 3</strong></div>
+                <div><strong>@_recipients.Count</strong></div>
             </div>
         </div>
     </section>
@@ -85,11 +85,11 @@
         <section class="panel settings-section">
             <header><div><h2>@(L.IsArabic ? "إضافة عنوان" : "Add recipient")</h2></div></header>
             <div class="grid-2">
-                <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@(_busy || _recipients.Count >= 3)" /></div>
-                <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@(_busy || _recipients.Count >= 3)" /></div>
+                <div><label>@(L.IsArabic ? "البريد الإلكتروني" : "Email address")</label><input class="form-control" type="email" @bind="_newEmail" maxlength="320" disabled="@_busy" /></div>
+                <div><label>@(L.IsArabic ? "الاسم / الوصف" : "Display name / label")</label><input class="form-control" @bind="_newDisplayName" maxlength="120" disabled="@_busy" /></div>
             </div>
-            <button class="btn primary" @onclick="AddAsync" disabled="@(_busy || _recipients.Count >= 3 || string.IsNullOrWhiteSpace(_newEmail))">@(L.IsArabic ? "إضافة البريد" : "Add email")</button>
-            @if (_recipients.Count >= 3) { <p class="help">@(L.IsArabic ? "تم الوصول للحد الأقصى: ثلاثة عناوين لكل موقع." : "Maximum reached: three recipients per site.")</p> }
+            <button class="btn primary" @onclick="AddAsync" disabled="@(_busy || string.IsNullOrWhiteSpace(_newEmail))">@(L.IsArabic ? "إضافة البريد" : "Add email")</button>
+            <p class="help">@(L.IsArabic ? "يتم تطبيق حد العناوين الخاص بخطة اشتراك الحساب عند الحفظ." : "Your account plan's recipient limit is enforced when the address is saved.")</p>
         </section>
 
         <section class="panel settings-section">

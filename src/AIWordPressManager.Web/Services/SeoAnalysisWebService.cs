@@ -1,12 +1,26 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using AIWordPressManager.Application.Abstractions.Billing;
+using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
+using AIWordPressManager.Persistence.Billing;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class SeoAnalysisWebService(AppDbContext dbContext, CurrentUserContext currentUser)
+public sealed class SeoAnalysisWebService(
+    AppDbContext dbContext,
+    CurrentUserContext currentUser,
+    IAccountEntitlementEnforcementService entitlementEnforcement)
 {
+    public SeoAnalysisWebService(AppDbContext dbContext, CurrentUserContext currentUser)
+        : this(
+            dbContext,
+            currentUser,
+            new AccountEntitlementEnforcementService(dbContext, new PlanEntitlementService(dbContext)))
+    {
+    }
+
     public async Task<SeoAnalysisView?> AnalyzeAsync(Guid siteId, string? query = null, string type = "all", CancellationToken cancellationToken = default)
     {
         var ownerUserId = currentUser.RequireUserId();
@@ -14,6 +28,11 @@ public sealed class SeoAnalysisWebService(AppDbContext dbContext, CurrentUserCon
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == siteId && x.OwnerUserId == ownerUserId, cancellationToken);
         if (site is null) return null;
+
+        await entitlementEnforcement.RequireBooleanCapabilityAsync(
+            ownerUserId,
+            EntitlementDefinitionCatalog.PremiumSeo,
+            cancellationToken);
 
         var contentQuery = dbContext.WordPressContentRecords.AsNoTracking()
             .Where(x => x.SiteId == siteId && x.IsAvailable);

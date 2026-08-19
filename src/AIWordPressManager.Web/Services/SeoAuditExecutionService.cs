@@ -1,4 +1,6 @@
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.SeoAudit;
+using AIWordPressManager.Domain.Entities;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -7,13 +9,19 @@ public sealed class SeoAuditExecutionService(
     ISeoAuditService auditPersistence,
     ExecutionOperationTracker executionTracker,
     AppNotificationService notifications,
-    CurrentUserContext currentUser)
+    CurrentUserContext currentUser,
+    IAccountEntitlementEnforcementService entitlementEnforcement)
 {
     public async Task<SeoAuditExecutionResult> RunAsync(
         Guid siteId,
         CancellationToken cancellationToken = default)
     {
         var ownerUserId = currentUser.RequireUserId();
+        await entitlementEnforcement.RequireBooleanCapabilityAsync(
+            ownerUserId,
+            EntitlementDefinitionCatalog.PremiumSeo,
+            cancellationToken);
+
         var jobId = executionTracker.Start(
             ownerUserId,
             siteId,

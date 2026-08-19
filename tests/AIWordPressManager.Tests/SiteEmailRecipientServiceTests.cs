@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using AIWordPressManager.Web.Services;
@@ -12,7 +13,7 @@ namespace AIWordPressManager.Tests;
 public sealed class SiteEmailRecipientServiceTests
 {
     [Fact]
-    public async Task Site_Allows_At_Most_Three_Recipients()
+    public async Task Site_Respects_Configured_Three_Recipient_Plan_Limit()
     {
         await using var fixture = await Fixture.CreateAsync();
         var ownerId = Guid.NewGuid();
@@ -24,8 +25,9 @@ public sealed class SiteEmailRecipientServiceTests
         await service.AddAsync(site.Id, "three@example.com", "Three");
 
         var action = async () => await service.AddAsync(site.Id, "four@example.com", "Four");
-        await action.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*maximum of three*");
+        var error = await action.Should().ThrowAsync<AccountEntitlementDeniedException>();
+        error.Which.Code.Should().Be("subscription_usage_limit_reached");
+        error.Which.Limit.Should().Be(3);
 
         (await service.GetAsync(site.Id)).Should().HaveCount(3);
     }
@@ -123,13 +125,41 @@ public sealed class SiteEmailRecipientServiceTests
                     "Test"))
             };
             var accessor = new HttpContextAccessor { HttpContext = http };
-            return new SiteEmailRecipientService(Context, new CurrentUserContext(accessor));
+            return new SiteEmailRecipientService(
+                Context,
+                new CurrentUserContext(accessor),
+                new ThreeRecipientEntitlementEnforcementService());
         }
 
         public async ValueTask DisposeAsync()
         {
             await Context.DisposeAsync();
             await Connection.DisposeAsync();
+        }
+    }
+
+    private sealed class ThreeRecipientEntitlementEnforcementService : IAccountEntitlementEnforcementService
+    {
+        public Task RequireBooleanCapabilityAsync(Guid ownerUserId, string entitlementKey, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task RequireAdditionalUsageAsync(
+            Guid ownerUserId,
+            string entitlementKey,
+            long currentUsage,
+            long requestedAdditional = 1,
+            CancellationToken cancellationToken = default)
+        {
+            const long limit = 3;
+            if (currentUsage + requestedAdditional > limit)
+                throw new AccountEntitlementDeniedException(
+                    "subscription_usage_limit_reached",
+                    entitlementKey,
+                    "The configured plan allows a maximum of three email recipients for this site.",
+                    limit,
+                    currentUsage,
+                    requestedAdditional);
+            return Task.CompletedTask;
         }
     }
 }

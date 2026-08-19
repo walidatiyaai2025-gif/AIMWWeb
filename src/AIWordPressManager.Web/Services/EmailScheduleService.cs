@@ -1,3 +1,4 @@
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Abstractions.Email;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
@@ -5,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserContext currentUser)
+public sealed class EmailScheduleService(
+    AppDbContext dbContext,
+    CurrentUserContext currentUser,
+    IAccountEntitlementEnforcementService entitlementEnforcement)
 {
     public async Task<IReadOnlyList<EmailScheduleView>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await Query(currentUser.UserId).ToListAsync(cancellationToken);
@@ -45,6 +49,10 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
     {
         var ownerId = currentUser.UserId;
         ValidateInput(input, EmailSchedule.AccountScope);
+        await entitlementEnforcement.RequireBooleanCapabilityAsync(
+            ownerId,
+            EntitlementDefinitionCatalog.EmailDashboardDigest,
+            cancellationToken);
         return await CreateAsync(ownerId, null, EmailSchedule.AccountScope, input, cancellationToken);
     }
 
@@ -57,6 +65,8 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
         if (!string.Equals(schedule.ReportType, input.ReportType.Trim(), StringComparison.Ordinal) || !string.Equals(schedule.TemplateKey, input.TemplateKey.Trim(), StringComparison.Ordinal))
             throw new InvalidOperationException("Report type and template key cannot be changed after a schedule is created. Create a new schedule instead.");
         if (schedule.SiteId.HasValue) await EnsureOwnedSiteAsync(schedule.SiteId.Value, ownerId, cancellationToken);
+        if (schedule.Scope == EmailSchedule.AccountScope)
+            await entitlementEnforcement.RequireBooleanCapabilityAsync(ownerId, EntitlementDefinitionCatalog.EmailDashboardDigest, cancellationToken);
         var now = DateTime.UtcNow;
         var nextRun = CalculateNext(input, now);
         schedule.SetCulture(input.Culture, now);
@@ -76,6 +86,14 @@ public sealed class EmailScheduleService(AppDbContext dbContext, CurrentUserCont
 
     private async Task<EmailScheduleView> CreateAsync(Guid ownerId, Guid? siteId, string scope, EmailScheduleInput input, CancellationToken cancellationToken)
     {
+        var currentUsage = await dbContext.EmailSchedules.AsNoTracking().LongCountAsync(x => x.OwnerUserId == ownerId, cancellationToken);
+        await entitlementEnforcement.RequireAdditionalUsageAsync(
+            ownerId,
+            EntitlementDefinitionCatalog.EmailSchedulesMax,
+            currentUsage,
+            1,
+            cancellationToken);
+
         var now = DateTime.UtcNow;
         var nextRun = CalculateNext(input, now);
         var schedule = new EmailSchedule(ownerId, siteId, scope, input.ReportType, input.TemplateKey, input.TimezoneId, now);

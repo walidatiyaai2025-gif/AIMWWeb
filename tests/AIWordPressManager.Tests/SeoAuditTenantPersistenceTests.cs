@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.SeoAudit;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
@@ -21,7 +22,7 @@ public sealed class SeoAuditTenantPersistenceTests
         var owner = Guid.NewGuid();
         var otherUser = Guid.NewGuid();
         var site = await fixture.AddSiteWithContentAsync(owner);
-        var service = new SeoAnalysisWebService(fixture.Context, UserContext(otherUser));
+        var service = new SeoAnalysisWebService(fixture.Context, UserContext(otherUser), new AllowAllEntitlementEnforcementService());
 
         var result = await service.AnalyzeAsync(site.Id);
 
@@ -83,7 +84,7 @@ public sealed class SeoAuditTenantPersistenceTests
         await using var fixture = await SeoFixture.CreateAsync();
         var owner = Guid.NewGuid();
         var site = await fixture.AddSiteWithContentAsync(owner);
-        var analysisService = new SeoAnalysisWebService(fixture.Context, UserContext(owner));
+        var analysisService = new SeoAnalysisWebService(fixture.Context, UserContext(owner), new AllowAllEntitlementEnforcementService());
         var persistence = new SeoAuditService(fixture.Context);
 
         var analysis = await analysisService.AnalyzeAsync(site.Id);
@@ -138,6 +139,12 @@ public sealed class SeoAuditTenantPersistenceTests
             HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
         };
         return new CurrentUserContext(accessor);
+    }
+
+    private sealed class AllowAllEntitlementEnforcementService : IAccountEntitlementEnforcementService
+    {
+        public Task RequireBooleanCapabilityAsync(Guid ownerUserId, string entitlementKey, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RequireAdditionalUsageAsync(Guid ownerUserId, string entitlementKey, long currentUsage, long requestedAdditional = 1, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class SeoFixture : IAsyncDisposable

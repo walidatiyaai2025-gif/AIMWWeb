@@ -1,14 +1,25 @@
 using System.Net.Mail;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
+using AIWordPressManager.Persistence.Billing;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
 public sealed class SiteEmailRecipientService(
     AppDbContext dbContext,
-    CurrentUserContext currentUser)
+    CurrentUserContext currentUser,
+    IAccountEntitlementEnforcementService entitlementEnforcement)
 {
+    public SiteEmailRecipientService(AppDbContext dbContext, CurrentUserContext currentUser)
+        : this(
+            dbContext,
+            currentUser,
+            new AccountEntitlementEnforcementService(dbContext, new PlanEntitlementService(dbContext)))
+    {
+    }
+
     private Guid OwnerId => currentUser.UserId;
 
     public async Task<IReadOnlyList<SiteEmailRecipientView>> GetAsync(Guid siteId, CancellationToken cancellationToken = default)
@@ -26,15 +37,20 @@ public sealed class SiteEmailRecipientService(
         await RequireOwnedSiteAsync(siteId, cancellationToken);
         var normalized = ValidateAndNormalize(emailAddress);
 
-        var count = await dbContext.SiteEmailRecipients.CountAsync(
-            x => x.SiteId == siteId && x.OwnerUserId == OwnerId,
-            cancellationToken);
-        if (count >= 3) throw new InvalidOperationException("A site can have a maximum of three notification email addresses.");
-
         var duplicate = await dbContext.SiteEmailRecipients.AnyAsync(
             x => x.SiteId == siteId && x.OwnerUserId == OwnerId && x.NormalizedEmailAddress == normalized,
             cancellationToken);
         if (duplicate) throw new InvalidOperationException("This email address is already configured for the selected site.");
+
+        var currentUsage = await dbContext.SiteEmailRecipients.AsNoTracking().LongCountAsync(
+            x => x.SiteId == siteId && x.OwnerUserId == OwnerId,
+            cancellationToken);
+        await entitlementEnforcement.RequireAdditionalUsageAsync(
+            OwnerId,
+            EntitlementDefinitionCatalog.EmailSiteRecipientsMax,
+            currentUsage,
+            1,
+            cancellationToken);
 
         var recipient = new SiteEmailRecipient(siteId, OwnerId, emailAddress.Trim(), displayName, DateTime.UtcNow);
         dbContext.SiteEmailRecipients.Add(recipient);

@@ -2,7 +2,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AIWordPressManager.Application.Abstractions.AI;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Settings;
+using AIWordPressManager.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 
 namespace AIWordPressManager.Infrastructure.AI;
@@ -59,10 +61,52 @@ public sealed class SettingsAwareAIOrchestrator(
     IEnumerable<IAIProvider> providers,
     IAIUsageLog usageLog,
     IAIContentProtector protector,
-    AIProviderRuntimeSettingsResolver runtimeSettings) : IAIOrchestrator
+    AIProviderRuntimeSettingsResolver runtimeSettings,
+    IAccountEntitlementEnforcementService entitlementEnforcement) : IAIOrchestrator
 {
+    private const string MonthlyRequestUsageMarker = "__billing.ai.request";
+
     public async Task<AIResponse> ExecuteAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
+        if (!Guid.TryParse(request.UserId, out var ownerUserId) || ownerUserId == Guid.Empty)
+            return SubscriptionFailure(request, "subscription_account_required", "A signed-in account is required to use AI features.");
+
+        try
+        {
+            await entitlementEnforcement.RequireBooleanCapabilityAsync(
+                ownerUserId,
+                EntitlementDefinitionCatalog.AiEnabled,
+                cancellationToken);
+
+            var now = DateTime.UtcNow;
+            var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var currentUsage = usageLog.GetRecent(10_000, userId: ownerUserId.ToString("D"))
+                .LongCount(x => x.CreatedAtUtc >= monthStart && string.Equals(x.Operation, MonthlyRequestUsageMarker, StringComparison.Ordinal));
+            await entitlementEnforcement.RequireAdditionalUsageAsync(
+                ownerUserId,
+                EntitlementDefinitionCatalog.AiMonthlyRequestsMax,
+                currentUsage,
+                1,
+                cancellationToken);
+
+            usageLog.Record(new(
+                now,
+                "subscription",
+                request.Model,
+                MonthlyRequestUsageMarker,
+                request.SiteId,
+                ownerUserId.ToString("D"),
+                0,
+                0,
+                0,
+                true,
+                null));
+        }
+        catch (AccountEntitlementDeniedException ex)
+        {
+            return SubscriptionFailure(request, ex.Code, ex.Message);
+        }
+
         var identity = request.UserId ?? request.SiteId?.ToString() ?? "anonymous";
         if (!protector.TryConsume(identity, 1, out _))
             return new(false, string.Empty, "quota", request.Model, 0, 0, 0, "Daily AI quota exceeded.");
@@ -118,6 +162,9 @@ public sealed class SettingsAwareAIOrchestrator(
 
         return last ?? new(false, string.Empty, "none", request.Model, 0, 0, 0, "No AI provider is configured.");
     }
+
+    private static AIResponse SubscriptionFailure(AIRequest request, string code, string message) =>
+        new(false, string.Empty, "subscription", request.Model, 0, 0, 0, $"{code}: {message}");
 
     private void Record(AIRequest request, AIResponse response) => usageLog.Record(new(
         DateTime.UtcNow,

@@ -107,6 +107,7 @@ public static class DependencyInjection
         services.AddScoped<PlanEntitlementService>();
         services.AddScoped<IPlanEntitlementCatalog>(sp => sp.GetRequiredService<PlanEntitlementService>());
         services.AddScoped<IPlanEntitlementResolver>(sp => sp.GetRequiredService<PlanEntitlementService>());
+        services.AddScoped<IAccountEntitlementEnforcementService, AccountEntitlementEnforcementService>();
         services.AddScoped<AccountSubscriptionService>();
         services.AddScoped<IAccountSubscriptionService, ProviderBindingAccountSubscriptionService>();
         services.AddScoped<ISubscriptionLifecyclePolicyService, SubscriptionLifecyclePolicyService>();
