@@ -199,7 +199,8 @@
             await Automation.SaveAsync(_model);
             if (_disposed) return;
             Notifications.Success(L.IsArabic ? "تم حفظ المهمة." : "Job saved.");
-            NewJob();
+            _model = new AutomationJobEditModel();
+            _siteIdText = string.Empty;
             await RefreshAsync();
         }
         catch (Exception ex)
