@@ -101,8 +101,10 @@ public static class DependencyInjection
         services.AddScoped<OperationalEmailAlertService>();
         services.AddScoped<SiteSyncFailureAlertRelay>();
         services.AddScoped<ExecutionJobFailureAlertRelay>();
+        services.AddScoped<SubscriptionBillingEmailAlertRelay>();
         services.AddHostedService<SiteSyncFailureAlertWorker>();
         services.AddHostedService<ExecutionJobFailureAlertWorker>();
+        services.AddHostedService<SubscriptionBillingEmailAlertWorker>();
         services.AddScoped<ISubscriptionPlanCatalog, SubscriptionPlanCatalog>();
         services.AddScoped<PlanEntitlementService>();
         services.AddScoped<IPlanEntitlementCatalog>(sp => sp.GetRequiredService<PlanEntitlementService>());
