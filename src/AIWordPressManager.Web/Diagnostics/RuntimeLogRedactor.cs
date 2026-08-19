@@ -12,7 +12,7 @@ internal static partial class RuntimeLogRedactor
 
         var result = ConnectionStringSecretRegex().Replace(value, m => $"{m.Groups[1].Value}{Redacted}");
         result = JsonSecretRegex().Replace(result, m => $"{m.Groups[1].Value}{Redacted}{m.Groups[3].Value}");
-        result = HeaderSecretRegex().Replace(result, m => $"{m.Groups[1].Value}{Redacted}");
+        result = NamedSecretRegex().Replace(result, m => $"{m.Groups[1].Value}{Redacted}");
         result = BearerRegex().Replace(result, "Bearer [REDACTED]");
         return result;
     }
@@ -24,6 +24,7 @@ internal static partial class RuntimeLogRedactor
         key.Contains("token", StringComparison.OrdinalIgnoreCase) ||
         key.Contains("apikey", StringComparison.OrdinalIgnoreCase) ||
         key.Contains("api_key", StringComparison.OrdinalIgnoreCase) ||
+        key.Contains("api-key", StringComparison.OrdinalIgnoreCase) ||
         key.Contains("authorization", StringComparison.OrdinalIgnoreCase) ||
         key.Contains("cookie", StringComparison.OrdinalIgnoreCase) ||
         key.Contains("connectionstring", StringComparison.OrdinalIgnoreCase);
@@ -34,8 +35,8 @@ internal static partial class RuntimeLogRedactor
     [GeneratedRegex("(?i)(\\\"(?:password|passwd|secret|token|api[_-]?key|authorization|cookie)\\\"\\s*:\\s*\\\")([^\\\"]*)(\\\")")]
     private static partial Regex JsonSecretRegex();
 
-    [GeneratedRegex("(?im)^((?:Authorization|Cookie|Set-Cookie|X-Api-Key|Api-Key)\\s*:\\s*)(.+)$")]
-    private static partial Regex HeaderSecretRegex();
+    [GeneratedRegex("(?i)((?:Authorization|Cookie|Set-Cookie|X-Api-Key|Api-Key|ApiKey|Api_Key)\\s*[:=]\\s*)([^;\\r\\n,]+)")]
+    private static partial Regex NamedSecretRegex();
 
     [GeneratedRegex("(?i)Bearer\\s+[A-Za-z0-9._~+\\-/=]+")]
     private static partial Regex BearerRegex();
