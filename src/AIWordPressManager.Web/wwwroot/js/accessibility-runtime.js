@@ -6,8 +6,31 @@
 
     function isVisible(element) {
         if (!(element instanceof HTMLElement) || !element.isConnected) return false;
+        if (element.hidden || element.hasAttribute("inert") || element.getAttribute("aria-hidden") === "true") return false;
+
+        const hiddenAncestor = element.closest("[hidden], [inert], [aria-hidden='true']");
+        if (hiddenAncestor && hiddenAncestor !== element) return false;
+
         const style = window.getComputedStyle(element);
-        return style.display !== "none" && style.visibility !== "hidden" && element.getClientRects().length > 0;
+        if (style.display === "none" || style.visibility === "hidden" || style.visibility === "collapse") return false;
+        if (Number.parseFloat(style.opacity || "1") <= 0.01 || style.pointerEvents === "none") return false;
+        if (element.getClientRects().length === 0) return false;
+
+        const rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return false;
+
+        // A modal translated completely outside the viewport is not an active modal.
+        // Treating off-canvas panels as open would trap focus away from normal forms.
+        if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth) return false;
+
+        return true;
+    }
+
+    function isEditableTarget(element) {
+        return element instanceof HTMLInputElement ||
+            element instanceof HTMLTextAreaElement ||
+            element instanceof HTMLSelectElement ||
+            (element instanceof HTMLElement && element.isContentEditable);
     }
 
     function focusableElements(root) {
@@ -73,7 +96,13 @@
         }
 
         if (state?.opener instanceof HTMLElement && state.opener.isConnected && isVisible(state.opener)) {
-            window.requestAnimationFrame(() => state.opener.focus({ preventScroll: true }));
+            window.requestAnimationFrame(() => {
+                // Never overwrite focus the user already moved to a real control while
+                // the dialog was being removed by a Blazor render.
+                const active = document.activeElement;
+                if (active instanceof HTMLElement && active !== document.body && active !== document.documentElement) return;
+                state.opener.focus({ preventScroll: true });
+            });
         }
     }
 
@@ -118,7 +147,21 @@
         if (title === lastPageTitle) return;
 
         lastPageTitle = title;
-        window.requestAnimationFrame(() => focusMain("main-content", title));
+        const activeWhenScheduled = document.activeElement;
+        window.requestAnimationFrame(() => {
+            const activeNow = document.activeElement;
+
+            // Route focus is useful only while focus is still effectively idle. If a
+            // person has already focused a field/control, stealing it makes the UI look
+            // frozen and prevents physical keyboard input.
+            if (isEditableTarget(activeNow)) return;
+            if (activeNow instanceof HTMLElement &&
+                activeNow !== document.body &&
+                activeNow !== document.documentElement &&
+                activeNow !== activeWhenScheduled) return;
+
+            focusMain("main-content", title);
+        });
     }
 
     function syncDialogs() {
