@@ -9,7 +9,7 @@ namespace AIWordPressManager.Tests;
 public sealed class PayPalSubscriptionLookupTests
 {
     [Fact]
-    public async Task Lifecycle_Gateway_Uses_Authoritative_Subscription_Lookup_And_Maps_Billing_Period()
+    public async Task Lifecycle_Gateway_Uses_Authoritative_Subscription_Lookup_And_Maps_Billing_Period_And_Plan()
     {
         var lookupHandler = new RecordingSequenceHandler(
             Json(HttpStatusCode.OK, "{\"access_token\":\"lookup-token\"}"),
@@ -25,8 +25,12 @@ public sealed class PayPalSubscriptionLookupTests
         gateway.Descriptor.Supports(PaymentGatewayCapability.SubscriptionCheckout).Should().BeTrue();
         gateway.Descriptor.Supports(PaymentGatewayCapability.WebhookVerification).Should().BeTrue();
         gateway.Descriptor.Supports(PaymentGatewayCapability.SubscriptionLookup).Should().BeTrue();
+        gateway.Descriptor.Supports(PaymentGatewayCapability.ChangeSubscriptionPlan).Should().BeTrue();
+        gateway.Descriptor.Supports(PaymentGatewayCapability.CancelSubscription).Should().BeTrue();
+        gateway.Descriptor.Supports(PaymentGatewayCapability.ReactivateSubscription).Should().BeTrue();
         snapshot.Authority.Should().Be(GatewayEvidenceAuthority.ProviderApiSnapshot);
         snapshot.State.Should().Be(GatewaySubscriptionState.Active);
+        snapshot.ProviderPlanReference.Should().Be("P-PLAN-LOOKUP");
         snapshot.CurrentPeriodStartUtc.Should().Be(new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc));
         snapshot.CurrentPeriodEndsAtUtc.Should().Be(new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
         snapshot.ObservedAtUtc.Kind.Should().Be(DateTimeKind.Utc);
@@ -59,6 +63,7 @@ public sealed class PayPalSubscriptionLookupTests
         var snapshot = await gateway.GetSubscriptionAsync("I-STATUS");
 
         snapshot.State.Should().Be(expected);
+        snapshot.ProviderPlanReference.Should().Be("P-STATUS");
         handler.Requests[1].Uri.Should().Be(new Uri("https://api-m.paypal.com/v1/billing/subscriptions/I-STATUS"));
     }
 
@@ -102,13 +107,9 @@ public sealed class PayPalSubscriptionLookupTests
         Content = new StringContent(body, Encoding.UTF8, "application/json")
     };
 
-    private sealed class FakeRuntimeConfigurationProvider(
-        PayPalEnvironment environment,
-        string clientId,
-        string clientSecret) : IPayPalRuntimeConfigurationProvider
+    private sealed class FakeRuntimeConfigurationProvider(PayPalEnvironment environment, string clientId, string clientSecret) : IPayPalRuntimeConfigurationProvider
     {
-        public Task<PayPalRuntimeConfiguration> GetRequiredAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(new PayPalRuntimeConfiguration(environment, clientId, clientSecret));
+        public Task<PayPalRuntimeConfiguration> GetRequiredAsync(CancellationToken cancellationToken = default) => Task.FromResult(new PayPalRuntimeConfiguration(environment, clientId, clientSecret));
     }
 
     private sealed class RecordingSequenceHandler(params HttpResponseMessage[] responses) : HttpMessageHandler
@@ -118,11 +119,7 @@ public sealed class PayPalSubscriptionLookupTests
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Requests.Add(new(
-                request.Method,
-                request.RequestUri!,
-                request.Headers.Authorization?.Scheme,
-                request.Headers.Authorization?.Parameter));
+            Requests.Add(new(request.Method, request.RequestUri!, request.Headers.Authorization?.Scheme, request.Headers.Authorization?.Parameter));
             if (_responses.Count == 0) throw new InvalidOperationException("No fake response remains.");
             return Task.FromResult(_responses.Dequeue());
         }
@@ -130,13 +127,8 @@ public sealed class PayPalSubscriptionLookupTests
 
     private sealed class ThrowingHandler : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            throw new InvalidOperationException("Inner gateway network path should not be used by lookup tests.");
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => throw new InvalidOperationException("Inner gateway network path should not be used by lookup tests.");
     }
 
-    private sealed record RecordedRequest(
-        HttpMethod Method,
-        Uri Uri,
-        string? AuthorizationScheme,
-        string? AuthorizationParameter);
+    private sealed record RecordedRequest(HttpMethod Method, Uri Uri, string? AuthorizationScheme, string? AuthorizationParameter);
 }
