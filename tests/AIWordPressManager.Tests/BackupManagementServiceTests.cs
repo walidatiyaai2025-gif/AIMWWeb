@@ -13,14 +13,13 @@ public sealed class BackupManagementServiceTests : IDisposable
     public void CreateBackup_IncludesManagedDataAndCryptographicallyVerifiesManifestV4()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), CreatePayload(2048, 0x31));
+        var databasePath = Path.Combine(service.DataDirectory, "application.db");
+        File.WriteAllBytes(databasePath, CreatePayload(2048, 0x31));
         var settingsDirectory = Path.Combine(service.DataDirectory, "settings");
         Directory.CreateDirectory(settingsDirectory);
         File.WriteAllText(Path.Combine(settingsDirectory, "application-state.json"), "{\"mode\":\"safe\"}");
         File.WriteAllText(Path.Combine(settingsDirectory, "ignored.tmp"), "transient");
-        File.WriteAllText(
-            Path.Combine(service.ConfigurationDirectory, "setup.database.json"),
-            "{\"Database\":{\"Provider\":\"SQLite\",\"SetupComplete\":true}}");
+        WriteSqliteConfiguration(service, databasePath);
 
         var backup = service.CreateBackup("before upgrade");
         var inspection = service.Inspect(backup.FileName);
@@ -135,6 +134,22 @@ public sealed class BackupManagementServiceTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         return new BackupManagementService(_root);
+    }
+
+    private static void WriteSqliteConfiguration(BackupManagementService service, string databasePath)
+    {
+        var payload = new
+        {
+            Database = new
+            {
+                Provider = "SQLite",
+                SetupComplete = true,
+                ConnectionString = $"Data Source={databasePath};Foreign Keys=True;Pooling=True"
+            }
+        };
+        File.WriteAllText(
+            Path.Combine(service.ConfigurationDirectory, "setup.database.json"),
+            JsonSerializer.Serialize(payload));
     }
 
     private static byte[] CreatePayload(int length, byte seed)
