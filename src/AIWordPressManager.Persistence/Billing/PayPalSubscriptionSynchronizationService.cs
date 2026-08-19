@@ -192,6 +192,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
             .Select(x => new
             {
                 x.Id,
+                x.PlanId,
                 x.Status,
                 x.TrialStartedAtUtc,
                 x.TrialEndsAtUtc,
@@ -205,6 +206,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
         var localRows = rawLocalRows
             .Select(x => new LocalSubscription(
                 x.Id,
+                x.PlanId,
                 x.Status,
                 NormalizeNullableUtc(x.TrialStartedAtUtc),
                 NormalizeNullableUtc(x.TrialEndsAtUtc),
@@ -233,6 +235,10 @@ public sealed class PayPalSubscriptionSynchronizationService(
         if (local.LastProviderEventAtUtc.HasValue && providerObservationAt <= local.LastProviderEventAtUtc.Value)
             return SyncOutcome.Unchanged;
 
+        Guid? authoritativePlanId = null;
+        if (!string.IsNullOrWhiteSpace(snapshot.ProviderPlanReference))
+            authoritativePlanId = await ResolveProviderPlanIdAsync(snapshot.ProviderPlanReference, cancellationToken);
+
         var target = ResolveTargetStatus(local, snapshot, trigger);
         var targetStatus = target ?? local.Status;
         if (targetStatus != local.Status && !AccountSubscriptionStateMachine.CanTransition(local.Status, targetStatus))
@@ -242,6 +248,19 @@ public sealed class PayPalSubscriptionSynchronizationService(
             ? "PayPal subscription reconciled from authoritative provider snapshot."
             : $"Verified PayPal event '{trigger.EventType}' reconciled from authoritative provider snapshot.";
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var changed = false;
+        if (authoritativePlanId.HasValue && authoritativePlanId.Value != local.PlanId)
+        {
+            var planChange = await subscriptionService.ChangePlanAsync(local.Id, new(
+                authoritativePlanId.Value,
+                SubscriptionTransitionSource.Provider,
+                reason,
+                utcNow,
+                providerObservationAt), cancellationToken);
+            changed = planChange.PlanChanged;
+        }
+
         var transition = await subscriptionService.TransitionAsync(local.Id, new(
             targetStatus,
             SubscriptionTransitionSource.Provider,
@@ -249,7 +268,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
             utcNow,
             providerObservationAt), cancellationToken);
 
-        var changed = transition.StatusChanged;
+        changed |= transition.StatusChanged;
         if (snapshot.CurrentPeriodStartUtc.HasValue && snapshot.CurrentPeriodEndsAtUtc.HasValue)
         {
             var periodStart = snapshot.CurrentPeriodStartUtc.Value;
@@ -265,7 +284,24 @@ public sealed class PayPalSubscriptionSynchronizationService(
             }
         }
 
+        await transaction.CommitAsync(cancellationToken);
         return changed ? SyncOutcome.Changed : SyncOutcome.Unchanged;
+    }
+
+    private async Task<Guid> ResolveProviderPlanIdAsync(string providerPlanReference, CancellationToken cancellationToken)
+    {
+        var clean = providerPlanReference.Trim();
+        var planIds = await dbContext.SubscriptionPlans.AsNoTracking()
+            .Where(x => x.GatewayPlanId == clean)
+            .Select(x => x.Id)
+            .Take(2)
+            .ToListAsync(cancellationToken);
+
+        if (planIds.Count == 0)
+            throw new InvalidOperationException("PayPal subscription snapshot references a plan that is not mapped in the local plan catalog.");
+        if (planIds.Count > 1)
+            throw new InvalidOperationException("PayPal plan mapping is ambiguous in the local plan catalog.");
+        return planIds[0];
     }
 
     private static AccountSubscriptionStatus? ResolveTargetStatus(
@@ -419,6 +455,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
 
     private sealed record LocalSubscription(
         Guid Id,
+        Guid PlanId,
         AccountSubscriptionStatus Status,
         DateTime? TrialStartedAtUtc,
         DateTime? TrialEndsAtUtc,

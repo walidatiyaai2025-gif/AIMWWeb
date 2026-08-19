@@ -22,6 +22,12 @@ public sealed class ProviderBindingAccountSubscriptionService(
     public Task<AccountSubscriptionItem> SetCancelAtPeriodEndAsync(Guid subscriptionId, bool cancelAtPeriodEnd, CancellationToken cancellationToken = default) =>
         innerService.SetCancelAtPeriodEndAsync(subscriptionId, cancelAtPeriodEnd, cancellationToken);
 
+    public Task<AccountSubscriptionPlanChangeResult> ChangePlanAsync(
+        Guid subscriptionId,
+        AccountSubscriptionPlanChangeRequest request,
+        CancellationToken cancellationToken = default) =>
+        innerService.ChangePlanAsync(subscriptionId, request, cancellationToken);
+
     public async Task<AccountSubscriptionItem> BindProviderReferenceAsync(
         Guid subscriptionId,
         string? providerKey,
@@ -85,4 +91,7 @@ public sealed class ProviderBindingAccountSubscriptionService(
 
     public Task<IReadOnlyList<AccountSubscriptionTransitionItem>> ListTransitionsAsync(Guid subscriptionId, int take = 100, CancellationToken cancellationToken = default) =>
         innerService.ListTransitionsAsync(subscriptionId, take, cancellationToken);
+
+    public Task<IReadOnlyList<AccountSubscriptionPlanChangeItem>> ListPlanChangesAsync(Guid subscriptionId, int take = 100, CancellationToken cancellationToken = default) =>
+        innerService.ListPlanChangesAsync(subscriptionId, take, cancellationToken);
 }

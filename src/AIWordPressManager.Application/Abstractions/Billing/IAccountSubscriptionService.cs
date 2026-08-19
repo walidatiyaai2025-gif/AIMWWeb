@@ -9,8 +9,10 @@ public interface IAccountSubscriptionService
     Task<AccountSubscriptionTransitionResult> TransitionAsync(Guid subscriptionId, AccountSubscriptionTransitionRequest request, CancellationToken cancellationToken = default);
     Task<AccountSubscriptionItem> UpdatePeriodsAsync(Guid subscriptionId, SubscriptionPeriodUpdateRequest request, CancellationToken cancellationToken = default);
     Task<AccountSubscriptionItem> SetCancelAtPeriodEndAsync(Guid subscriptionId, bool cancelAtPeriodEnd, CancellationToken cancellationToken = default);
+    Task<AccountSubscriptionPlanChangeResult> ChangePlanAsync(Guid subscriptionId, AccountSubscriptionPlanChangeRequest request, CancellationToken cancellationToken = default);
     Task<AccountSubscriptionItem> BindProviderReferenceAsync(Guid subscriptionId, string? providerKey, string? providerSubscriptionReference, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AccountSubscriptionTransitionItem>> ListTransitionsAsync(Guid subscriptionId, int take = 100, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AccountSubscriptionPlanChangeItem>> ListPlanChangesAsync(Guid subscriptionId, int take = 100, CancellationToken cancellationToken = default);
 }
 
 public sealed record AccountSubscriptionItem(
@@ -56,10 +58,22 @@ public sealed record SubscriptionPeriodUpdateRequest(
     DateTime? CurrentPeriodStartUtc,
     DateTime? CurrentPeriodEndsAtUtc);
 
+public sealed record AccountSubscriptionPlanChangeRequest(
+    Guid TargetPlanId,
+    SubscriptionTransitionSource Source,
+    string Reason,
+    DateTime OccurredAtUtc,
+    DateTime? ProviderObservedAtUtc = null);
+
 public sealed record AccountSubscriptionTransitionResult(
     AccountSubscriptionItem Subscription,
     bool StatusChanged,
     AccountSubscriptionTransitionItem? Transition);
+
+public sealed record AccountSubscriptionPlanChangeResult(
+    AccountSubscriptionItem Subscription,
+    bool PlanChanged,
+    AccountSubscriptionPlanChangeItem? Change);
 
 public sealed record AccountSubscriptionTransitionItem(
     Guid Id,
@@ -70,4 +84,15 @@ public sealed record AccountSubscriptionTransitionItem(
     string Reason,
     DateTime OccurredAtUtc,
     DateTime? ProviderEventAtUtc,
+    DateTime CreatedAtUtc);
+
+public sealed record AccountSubscriptionPlanChangeItem(
+    Guid Id,
+    Guid SubscriptionId,
+    Guid FromPlanId,
+    Guid ToPlanId,
+    SubscriptionTransitionSource Source,
+    string Reason,
+    DateTime OccurredAtUtc,
+    DateTime? ProviderObservedAtUtc,
     DateTime CreatedAtUtc);

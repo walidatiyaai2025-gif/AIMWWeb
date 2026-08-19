@@ -17,21 +17,11 @@ public sealed class PayPalSubscriptionSynchronizationTests
         var source = await fixture.CreateBoundSubscriptionAsync("sync-owner", "sync-plan", AccountSubscriptionStatus.Trialing, "I-SYNC-1");
         var now = new DateTime(2026, 8, 18, 20, 50, 0, DateTimeKind.Utc);
         var eventAt = now.AddMinutes(-1);
-        await fixture.Inbox.AcceptVerifiedAsync(new GatewayVerifiedEvent(
-            "WH-SYNC-1",
-            "I-SYNC-1",
-            GatewaySubscriptionState.Active,
-            eventAt,
-            "BILLING.SUBSCRIPTION.ACTIVATED"), now);
+        await fixture.Inbox.AcceptVerifiedAsync(new GatewayVerifiedEvent("WH-SYNC-1", "I-SYNC-1", GatewaySubscriptionState.Active, eventAt, "BILLING.SUBSCRIPTION.ACTIVATED"), now);
 
         var periodStart = now.AddDays(-10);
         var periodEnd = now.AddDays(20);
-        var gateway = new SequenceLookupGateway(new GatewaySubscriptionSnapshot(
-            "I-SYNC-1",
-            GatewaySubscriptionState.Active,
-            now,
-            periodStart,
-            periodEnd));
+        var gateway = new SequenceLookupGateway(new GatewaySubscriptionSnapshot("I-SYNC-1", GatewaySubscriptionState.Active, now, periodStart, periodEnd, providerPlanReference: source.Plan.GatewayPlanId));
         var service = fixture.CreateSynchronizationService(gateway);
 
         var first = await service.ProcessVerifiedEventsAsync(now, 10);
@@ -46,6 +36,7 @@ public sealed class PayPalSubscriptionSynchronizationTests
         reloaded.CurrentPeriodStartUtc.Should().Be(periodStart);
         reloaded.CurrentPeriodEndsAtUtc.Should().Be(periodEnd);
         (await fixture.Context.AccountSubscriptionTransitions.CountAsync(x => x.SubscriptionId == source.Subscription.Id)).Should().Be(1);
+        (await fixture.Context.AccountSubscriptionPlanChanges.CountAsync(x => x.SubscriptionId == source.Subscription.Id)).Should().Be(0);
         var processing = await fixture.Context.Set<PayPalWebhookProcessingState>().AsNoTracking().SingleAsync();
         processing.Status.Should().Be(PayPalWebhookProcessingStatus.Processed);
         processing.AttemptCount.Should().Be(1);
@@ -62,34 +53,18 @@ public sealed class PayPalSubscriptionSynchronizationTests
         var source = await fixture.CreateBoundSubscriptionAsync("payment-owner", "payment-plan", AccountSubscriptionStatus.Active, "I-PAYMENT-1");
         var now = new DateTime(2026, 8, 18, 20, 50, 0, DateTimeKind.Utc);
         var eventAt = now.AddMinutes(-5);
-        await fixture.Inbox.AcceptVerifiedAsync(new GatewayVerifiedEvent(
-            "WH-FAILED-1",
-            "I-PAYMENT-1",
-            GatewaySubscriptionState.PastDue,
-            eventAt,
-            "BILLING.SUBSCRIPTION.PAYMENT.FAILED"), now);
+        await fixture.Inbox.AcceptVerifiedAsync(new GatewayVerifiedEvent("WH-FAILED-1", "I-PAYMENT-1", GatewaySubscriptionState.PastDue, eventAt, "BILLING.SUBSCRIPTION.PAYMENT.FAILED"), now);
 
         var oldPaymentStart = eventAt.AddDays(-20);
         var recoveredPaymentStart = eventAt.AddMinutes(5);
         var gateway = new SequenceLookupGateway(
-            new GatewaySubscriptionSnapshot(
-                "I-PAYMENT-1",
-                GatewaySubscriptionState.Active,
-                now,
-                oldPaymentStart,
-                oldPaymentStart.AddMonths(1)),
-            new GatewaySubscriptionSnapshot(
-                "I-PAYMENT-1",
-                GatewaySubscriptionState.Active,
-                now.AddMinutes(10),
-                recoveredPaymentStart,
-                recoveredPaymentStart.AddMonths(1)));
+            new GatewaySubscriptionSnapshot("I-PAYMENT-1", GatewaySubscriptionState.Active, now, oldPaymentStart, oldPaymentStart.AddMonths(1), providerPlanReference: source.Plan.GatewayPlanId),
+            new GatewaySubscriptionSnapshot("I-PAYMENT-1", GatewaySubscriptionState.Active, now.AddMinutes(10), recoveredPaymentStart, recoveredPaymentStart.AddMonths(1), providerPlanReference: source.Plan.GatewayPlanId));
         var service = fixture.CreateSynchronizationService(gateway);
 
         var failedPayment = await service.ProcessVerifiedEventsAsync(now, 10);
         failedPayment.Changed.Should().Be(1);
-        (await fixture.Context.AccountSubscriptions.AsNoTracking().SingleAsync(x => x.Id == source.Subscription.Id))
-            .Status.Should().Be(AccountSubscriptionStatus.PastDue);
+        (await fixture.Context.AccountSubscriptions.AsNoTracking().SingleAsync(x => x.Id == source.Subscription.Id)).Status.Should().Be(AccountSubscriptionStatus.PastDue);
 
         var recovery = await service.ReconcileBoundSubscriptionsAsync(now.AddMinutes(10), 10);
         recovery.Changed.Should().Be(1);
@@ -105,12 +80,7 @@ public sealed class PayPalSubscriptionSynchronizationTests
         await using var fixture = await Fixture.CreateAsync();
         var source = await fixture.CreateBoundSubscriptionAsync("known-owner", "known-plan", AccountSubscriptionStatus.Active, "I-KNOWN");
         var now = new DateTime(2026, 8, 18, 20, 50, 0, DateTimeKind.Utc);
-        await fixture.Inbox.AcceptVerifiedAsync(new GatewayVerifiedEvent(
-            "WH-UNKNOWN-1",
-            "I-UNKNOWN",
-            GatewaySubscriptionState.Cancelled,
-            now.AddMinutes(-1),
-            "BILLING.SUBSCRIPTION.CANCELLED"), now);
+        await fixture.Inbox.AcceptVerifiedAsync(new GatewayVerifiedEvent("WH-UNKNOWN-1", "I-UNKNOWN", GatewaySubscriptionState.Cancelled, now.AddMinutes(-1), "BILLING.SUBSCRIPTION.CANCELLED"), now);
         var gateway = new SequenceLookupGateway();
         var service = fixture.CreateSynchronizationService(gateway);
 
@@ -123,8 +93,7 @@ public sealed class PayPalSubscriptionSynchronizationTests
         reloaded.Status.Should().Be(AccountSubscriptionStatus.Active);
         reloaded.ProviderSubscriptionReference.Should().Be("I-KNOWN");
         (await fixture.Context.AccountSubscriptionTransitions.CountAsync(x => x.SubscriptionId == source.Subscription.Id)).Should().Be(0);
-        (await fixture.Context.Set<PayPalWebhookProcessingState>().AsNoTracking().SingleAsync()).Status
-            .Should().Be(PayPalWebhookProcessingStatus.Processed);
+        (await fixture.Context.Set<PayPalWebhookProcessingState>().AsNoTracking().SingleAsync()).Status.Should().Be(PayPalWebhookProcessingStatus.Processed);
     }
 
     [Fact]
@@ -133,10 +102,7 @@ public sealed class PayPalSubscriptionSynchronizationTests
         await using var fixture = await Fixture.CreateAsync();
         var source = await fixture.CreateBoundSubscriptionAsync("drift-owner", "drift-plan", AccountSubscriptionStatus.Active, "I-DRIFT");
         var now = new DateTime(2026, 8, 18, 20, 50, 0, DateTimeKind.Utc);
-        var gateway = new SequenceLookupGateway(new GatewaySubscriptionSnapshot(
-            "I-DRIFT",
-            GatewaySubscriptionState.Suspended,
-            now));
+        var gateway = new SequenceLookupGateway(new GatewaySubscriptionSnapshot("I-DRIFT", GatewaySubscriptionState.Suspended, now, providerPlanReference: source.Plan.GatewayPlanId));
         var service = fixture.CreateSynchronizationService(gateway);
 
         var result = await service.ReconcileBoundSubscriptionsAsync(now, 10);
@@ -149,7 +115,60 @@ public sealed class PayPalSubscriptionSynchronizationTests
     }
 
     [Fact]
-    public async Task Sqlite_Migration_Creates_Durable_Webhook_Processing_State()
+    public async Task Authoritative_Provider_Plan_Is_Mapped_And_Audited_Without_Using_Command_Acceptance()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var source = await fixture.CreateBoundSubscriptionAsync("plan-owner", "starter-plan", AccountSubscriptionStatus.Active, "I-PLAN-CHANGE", "P-STARTER");
+        var target = await fixture.CreatePlanAsync("premium-plan", "P-PREMIUM", sortOrder: 20);
+        var now = new DateTime(2026, 8, 19, 7, 30, 0, DateTimeKind.Utc);
+        var gateway = new SequenceLookupGateway(new GatewaySubscriptionSnapshot(
+            "I-PLAN-CHANGE",
+            GatewaySubscriptionState.Active,
+            now,
+            providerPlanReference: "P-PREMIUM"));
+        var service = fixture.CreateSynchronizationService(gateway);
+
+        var result = await service.ReconcileBoundSubscriptionsAsync(now, 10);
+
+        result.Changed.Should().Be(1);
+        result.Failed.Should().Be(0);
+        var reloaded = await fixture.Context.AccountSubscriptions.AsNoTracking().SingleAsync(x => x.Id == source.Subscription.Id);
+        reloaded.PlanId.Should().Be(target.Id);
+        reloaded.LastProviderEventAtUtc.Should().Be(now);
+        var audit = await fixture.Context.AccountSubscriptionPlanChanges.AsNoTracking().SingleAsync(x => x.SubscriptionId == source.Subscription.Id);
+        audit.FromPlanId.Should().Be(source.Plan.Id);
+        audit.ToPlanId.Should().Be(target.Id);
+        audit.Source.Should().Be(SubscriptionTransitionSource.Provider);
+        audit.ProviderObservedAtUtc.Should().Be(now);
+    }
+
+    [Fact]
+    public async Task Unmapped_Provider_Plan_Fails_Closed_Without_Status_Or_Plan_Mutation()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var source = await fixture.CreateBoundSubscriptionAsync("unmapped-owner", "mapped-plan", AccountSubscriptionStatus.Active, "I-UNMAPPED", "P-MAPPED");
+        var now = new DateTime(2026, 8, 19, 7, 35, 0, DateTimeKind.Utc);
+        var gateway = new SequenceLookupGateway(new GatewaySubscriptionSnapshot(
+            "I-UNMAPPED",
+            GatewaySubscriptionState.Suspended,
+            now,
+            providerPlanReference: "P-NOT-CONFIGURED"));
+        var service = fixture.CreateSynchronizationService(gateway);
+
+        var result = await service.ReconcileBoundSubscriptionsAsync(now, 10);
+
+        result.Failed.Should().Be(1);
+        result.Changed.Should().Be(0);
+        var reloaded = await fixture.Context.AccountSubscriptions.AsNoTracking().SingleAsync(x => x.Id == source.Subscription.Id);
+        reloaded.PlanId.Should().Be(source.Plan.Id);
+        reloaded.Status.Should().Be(AccountSubscriptionStatus.Active);
+        reloaded.LastProviderEventAtUtc.Should().BeNull();
+        (await fixture.Context.AccountSubscriptionPlanChanges.CountAsync()).Should().Be(0);
+        (await fixture.Context.AccountSubscriptionTransitions.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Sqlite_Migration_Creates_Durable_Webhook_And_Plan_Change_State()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:;Foreign Keys=True");
         await connection.OpenAsync();
@@ -158,8 +177,8 @@ public sealed class PayPalSubscriptionSynchronizationTests
         await context.Database.MigrateAsync();
 
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='PayPalWebhookProcessingStates';";
-        Convert.ToInt32(await command.ExecuteScalarAsync()).Should().Be(1);
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('PayPalWebhookProcessingStates','AccountSubscriptionPlanChanges');";
+        Convert.ToInt32(await command.ExecuteScalarAsync()).Should().Be(2);
     }
 
     private sealed class SequenceLookupGateway(params GatewaySubscriptionSnapshot[] snapshots) : IPaymentGateway
@@ -215,12 +234,20 @@ public sealed class PayPalSubscriptionSynchronizationTests
             string ownerName,
             string planCode,
             AccountSubscriptionStatus status,
-            string providerReference)
+            string providerReference,
+            string gatewayPlanId = "P-SYNC")
         {
             var owner = new AuthUser(ownerName, "test-password-hash", DateTime.UtcNow);
             Context.AuthUsers.Add(owner);
             await Context.SaveChangesAsync();
-            var plan = await Plans.CreateAsync(new SubscriptionPlanCreateRequest(
+            var plan = await CreatePlanAsync(planCode, gatewayPlanId, 10);
+            var subscription = await SafeSubscriptions.CreateAsync(new(owner.Id, plan.Id, status));
+            var bound = await SafeSubscriptions.BindProviderReferenceAsync(subscription.Id, "paypal", providerReference);
+            return (owner, plan, bound);
+        }
+
+        public Task<SubscriptionPlanItem> CreatePlanAsync(string planCode, string gatewayPlanId, int sortOrder) =>
+            Plans.CreateAsync(new SubscriptionPlanCreateRequest(
                 planCode,
                 planCode,
                 $"{planCode} عربي",
@@ -232,13 +259,9 @@ public sealed class PayPalSubscriptionSynchronizationTests
                 0,
                 0,
                 true,
-                10,
+                sortOrder,
                 GatewayProductId: null,
-                GatewayPlanId: "P-SYNC"));
-            var subscription = await SafeSubscriptions.CreateAsync(new(owner.Id, plan.Id, status));
-            var bound = await SafeSubscriptions.BindProviderReferenceAsync(subscription.Id, "paypal", providerReference);
-            return (owner, plan, bound);
-        }
+                GatewayPlanId: gatewayPlanId));
 
         public PayPalSubscriptionSynchronizationService CreateSynchronizationService(IPaymentGateway gateway) =>
             new(Context, new PaymentGatewayRegistry(new[] { gateway }), SafeSubscriptions);

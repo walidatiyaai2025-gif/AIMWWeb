@@ -54,7 +54,7 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
     public async Task<AccountSubscriptionTransitionResult> TransitionAsync(Guid subscriptionId, AccountSubscriptionTransitionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var reason = ValidateReason(request.Reason);
+        var reason = ValidateReason(request.Reason, nameof(request.Reason));
         var subscription = await RequireSubscriptionAsync(subscriptionId, cancellationToken);
         var from = subscription.Status;
         var changed = subscription.TransitionTo(
@@ -107,6 +107,40 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
         return ToItem(subscription);
     }
 
+    public async Task<AccountSubscriptionPlanChangeResult> ChangePlanAsync(
+        Guid subscriptionId,
+        AccountSubscriptionPlanChangeRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await RequirePlanAsync(request.TargetPlanId, cancellationToken);
+        ValidateSourceObservation(request.Source, request.ProviderObservedAtUtc);
+        var reason = ValidateReason(request.Reason, nameof(request.Reason));
+        var subscription = await RequireSubscriptionAsync(subscriptionId, cancellationToken);
+        var fromPlanId = subscription.PlanId;
+        var changed = subscription.ChangePlan(request.TargetPlanId, request.OccurredAtUtc);
+
+        AccountSubscriptionPlanChange? audit = null;
+        if (changed)
+        {
+            audit = new AccountSubscriptionPlanChange(
+                subscription.Id,
+                fromPlanId,
+                subscription.PlanId,
+                request.Source,
+                reason,
+                request.OccurredAtUtc,
+                request.ProviderObservedAtUtc);
+            dbContext.AccountSubscriptionPlanChanges.Add(audit);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return new AccountSubscriptionPlanChangeResult(
+            ToItem(subscription),
+            changed,
+            audit is null ? null : ToPlanChangeItem(audit));
+    }
+
     public async Task<AccountSubscriptionItem> BindProviderReferenceAsync(Guid subscriptionId, string? providerKey, string? providerSubscriptionReference, CancellationToken cancellationToken = default)
     {
         var subscription = await RequireSubscriptionAsync(subscriptionId, cancellationToken);
@@ -126,6 +160,21 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
             .Select(x => new AccountSubscriptionTransitionItem(
                 x.Id, x.SubscriptionId, x.FromStatus, x.ToStatus, x.Source, x.Reason,
                 x.OccurredAtUtc, x.ProviderEventAtUtc, x.CreatedAtUtc))
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AccountSubscriptionPlanChangeItem>> ListPlanChangesAsync(Guid subscriptionId, int take = 100, CancellationToken cancellationToken = default)
+    {
+        await RequireSubscriptionExistsAsync(subscriptionId, cancellationToken);
+        take = Math.Clamp(take, 1, 500);
+        return await dbContext.AccountSubscriptionPlanChanges.AsNoTracking()
+            .Where(x => x.SubscriptionId == subscriptionId)
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ThenByDescending(x => x.CreatedAtUtc)
+            .Select(x => new AccountSubscriptionPlanChangeItem(
+                x.Id, x.SubscriptionId, x.FromPlanId, x.ToPlanId, x.Source, x.Reason,
+                x.OccurredAtUtc, x.ProviderObservedAtUtc, x.CreatedAtUtc))
             .Take(take)
             .ToListAsync(cancellationToken);
     }
@@ -155,11 +204,26 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
             throw new KeyNotFoundException("Account subscription was not found.");
     }
 
-    private static string ValidateReason(string? reason)
+    private static void ValidateSourceObservation(SubscriptionTransitionSource source, DateTime? providerObservedAtUtc)
+    {
+        if (source == SubscriptionTransitionSource.Provider)
+        {
+            if (!providerObservedAtUtc.HasValue)
+                throw new ArgumentException("Provider plan change requires a provider observation timestamp.", nameof(providerObservedAtUtc));
+            if (providerObservedAtUtc.Value.Kind != DateTimeKind.Utc)
+                throw new ArgumentException("Provider observation timestamp must be UTC.", nameof(providerObservedAtUtc));
+            return;
+        }
+
+        if (providerObservedAtUtc.HasValue)
+            throw new ArgumentException("Only Provider plan changes can contain a provider observation timestamp.", nameof(providerObservedAtUtc));
+    }
+
+    private static string ValidateReason(string? reason, string parameterName)
     {
         var clean = (reason ?? string.Empty).Trim();
         if (clean.Length == 0 || clean.Length > 500)
-            throw new ArgumentException("Transition reason is required and must be at most 500 characters.", nameof(reason));
+            throw new ArgumentException("Reason is required and must be at most 500 characters.", parameterName);
         return clean;
     }
 
@@ -175,4 +239,8 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
     private static AccountSubscriptionTransitionItem ToTransitionItem(AccountSubscriptionTransition x) => new(
         x.Id, x.SubscriptionId, x.FromStatus, x.ToStatus, x.Source, x.Reason,
         x.OccurredAtUtc, x.ProviderEventAtUtc, x.CreatedAtUtc);
+
+    private static AccountSubscriptionPlanChangeItem ToPlanChangeItem(AccountSubscriptionPlanChange x) => new(
+        x.Id, x.SubscriptionId, x.FromPlanId, x.ToPlanId, x.Source, x.Reason,
+        x.OccurredAtUtc, x.ProviderObservedAtUtc, x.CreatedAtUtc);
 }
