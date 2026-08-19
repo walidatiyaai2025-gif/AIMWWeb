@@ -1,0 +1,400 @@
+@page "/account/billing"
+@rendermode InteractiveServer
+@using System.Globalization
+@using AIWordPressManager.Application.Abstractions.Billing
+@using AIWordPressManager.Domain.Entities
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceProvider Services
+@inject AppLanguageService L
+@inject NavigationManager Navigation
+
+<PageTitle>@(L.IsArabic ? "الاشتراك والفوترة" : "Subscription & Billing")</PageTitle>
+
+<AppPage PageKey="account-billing" Class="billing-page" Width="wide" AriaLabel="@(L.IsArabic ? "مساحة الاشتراك والفوترة" : "Subscription and billing workspace")">
+    <AppToolbar
+        Eyebrow="@(L.IsArabic ? "الحساب" : "ACCOUNT")"
+        Title="@(L.IsArabic ? "الاشتراك والفوترة" : "Subscription & Billing")"
+        Subtitle="@(L.IsArabic ? "راجع الخطة الحالية وحالة الاشتراك وحدودها وسجل دورة الحياة بدون منح صلاحية لعودة المتصفح لتغيير حالة الدفع." : "Review the current plan, subscription state, configured limits, and lifecycle history without treating browser returns as payment authority.")">
+        <Actions>
+            <AppButton Href="/account/profile" Icon="←" IconIntent="back" Text="@(L.IsArabic ? "حسابي" : "My Account")" />
+            <AppButton Href="/account/email-settings" Icon="✉" Text="@(L.IsArabic ? "إعدادات البريد" : "Email settings")" Variant="secondary" />
+        </Actions>
+    </AppToolbar>
+
+    @if (IsCheckoutReturned)
+    {
+        <div class="billing-notice billing-notice--info" role="status">
+            <strong>@(L.IsArabic ? "تم الرجوع من PayPal." : "Returned from PayPal.")</strong>
+            <span>@(L.IsArabic ? "هذه العودة للتنقل فقط. لن تتغير حالة الاشتراك إلا بعد تحقق webhook ومصالحة بيانات المزود." : "This browser return is navigation-only. Subscription state changes only after a verified webhook and provider reconciliation.")</span>
+        </div>
+    }
+    else if (IsCheckoutCancelled)
+    {
+        <div class="billing-notice billing-notice--neutral" role="status">
+            <strong>@(L.IsArabic ? "تم إلغاء مسار الدفع." : "Checkout was cancelled.")</strong>
+            <span>@(L.IsArabic ? "لم يتم تسجيل نجاح دفع ولم تتغير حالة الاشتراك من عودة المتصفح." : "No payment success was recorded and no subscription state was changed from the browser return.")</span>
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل بيانات الاشتراك" : "Loading subscription data")" />
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <AppCard Tone="danger">
+            <ChildContent>
+                <AppEmptyState Icon="!" Title="@(L.IsArabic ? "تعذر تحميل بيانات الفوترة" : "Billing data could not be loaded")" Description="@_error" />
+            </ChildContent>
+        </AppCard>
+    }
+    else if (_workspace is not null)
+    {
+        @if (_workspace.Subscription is null)
+        {
+            <AppCard>
+                <ChildContent>
+                    <AppEmptyState
+                        Icon="◇"
+                        Title="@(L.IsArabic ? "لا يوجد اشتراك حالي" : "No current subscription")"
+                        Description="@(L.IsArabic ? "لا توجد حاليًا حالة اشتراك مرتبطة بهذا الحساب. إنشاء أو تغيير الاشتراكات يظل ضمن تدفقات الفوترة المحكومة ولا يتم استنتاجه من الواجهة." : "There is currently no subscription state linked to this account. Subscription creation or changes remain governed billing flows and are not inferred by the UI.")" />
+                </ChildContent>
+            </AppCard>
+        }
+        else
+        {
+            var subscription = _workspace.Subscription;
+            var currentPlan = _workspace.CurrentPlan;
+
+            <section class="app-stat-grid" aria-label="@(L.IsArabic ? "ملخص الاشتراك" : "Subscription summary")">
+                <AppStatCard Icon="◇" Label="@(L.IsArabic ? "الخطة الحالية" : "Current plan")" Value="@(currentPlan is null ? "—" : LocalizedPlanName(currentPlan))" Description="@(currentPlan is null ? (L.IsArabic ? "الخطة غير متاحة في الكتالوج" : "Plan unavailable in catalog") : FormatPrice(currentPlan))" Tone="accent" />
+                <AppStatCard Icon="●" Label="@(L.IsArabic ? "الحالة" : "Status")" Value="@StatusLabel(subscription.Status)" Description="@StatusDescription(subscription)" Tone="@StatusTone(subscription.Status)" />
+                <AppStatCard Icon="◷" Label="@(L.IsArabic ? "التاريخ التالي" : "Next relevant date")" Value="@FormatDate(NextRelevantDate(subscription))" Description="@NextRelevantDateLabel(subscription)" Tone="info" />
+                <AppStatCard Icon="↗" Label="@(L.IsArabic ? "ربط المزود" : "Provider binding")" Value="@ProviderLabel(_workspace.Checkout)" Description="@ProviderReferenceLabel(_workspace.Checkout)" Tone="neutral" />
+            </section>
+
+            <div class="billing-two-column">
+                <AppCard Eyebrow="@(L.IsArabic ? "الخطة" : "PLAN")" Title="@(currentPlan is null ? (L.IsArabic ? "الخطة الحالية غير متاحة" : "Current plan unavailable") : LocalizedPlanName(currentPlan))" Subtitle="@(currentPlan is null ? (L.IsArabic ? "تعذر مطابقة الخطة الحالية بكتالوج الخطط." : "The current subscription could not be matched to the plan catalog.") : LocalizedPlanDescription(currentPlan))" HeadingLevel="3">
+                    <ChildContent>
+                        @if (currentPlan is not null)
+                        {
+                            <div class="billing-plan-summary">
+                                <div>
+                                    <span>@(L.IsArabic ? "السعر" : "Price")</span>
+                                    <strong dir="ltr">@FormatPrice(currentPlan)</strong>
+                                </div>
+                                <div>
+                                    <span>@(L.IsArabic ? "دورة الفوترة" : "Billing interval")</span>
+                                    <strong>@BillingIntervalLabel(currentPlan.BillingInterval)</strong>
+                                </div>
+                                <div>
+                                    <span>@(L.IsArabic ? "فترة السماح" : "Grace policy")</span>
+                                    <strong>@FormatDays(currentPlan.GracePeriodDays)</strong>
+                                </div>
+                            </div>
+                        }
+
+                        @if (subscription.CancelAtPeriodEnd)
+                        {
+                            <div class="billing-notice billing-notice--warning" role="status">
+                                <strong>@(L.IsArabic ? "الإلغاء مجدول لنهاية الفترة." : "Cancellation is scheduled for period end.")</strong>
+                                <span>@(L.IsArabic ? "تعديل الإلغاء أو إعادة التفعيل يتبع BIL-011 ولا يتم تنفيذه من هذه الصفحة." : "Changing cancellation or reactivation belongs to BIL-011 and is not performed by this page.")</span>
+                            </div>
+                        }
+
+                        @if (subscription.Status == AccountSubscriptionStatus.Grace && subscription.GraceUntilUtc.HasValue)
+                        {
+                            <div class="billing-notice billing-notice--warning" role="status">
+                                <strong>@(L.IsArabic ? "الحساب داخل فترة سماح." : "The account is in a grace period.")</strong>
+                                <span>@($"{(L.IsArabic ? "تنتهي في" : "Ends")}: {FormatDate(subscription.GraceUntilUtc)}")</span>
+                            </div>
+                        }
+
+                        <div class="billing-action-row">
+                            <AppButton
+                                Icon="↗"
+                                Text="@(L.IsArabic ? "متابعة الدفع عبر PayPal" : "Continue with PayPal")"
+                                Busy="@_startingCheckout"
+                                Disabled="@(_startingCheckout || !_workspace.Checkout.CanStart)"
+                                AriaLabel="@(L.IsArabic ? "إنشاء جلسة اشتراك PayPal على الخادم" : "Create a server-side PayPal subscription checkout")"
+                                OnClick="StartCheckoutAsync" />
+                            <span class="billing-action-help">@CheckoutHelp(_workspace.Checkout)</span>
+                        </div>
+                    </ChildContent>
+                </AppCard>
+
+                <AppCard Eyebrow="@(L.IsArabic ? "دورة الحياة" : "LIFECYCLE")" Title="@(L.IsArabic ? "تواريخ الاشتراك" : "Subscription dates")" Subtitle="@(L.IsArabic ? "تواريخ محفوظة من سلطة الاشتراك الداخلية ومصالحة المزود." : "Dates stored by the internal subscription authority and provider reconciliation.")" HeadingLevel="3">
+                    <ChildContent>
+                        <dl class="billing-definition-list">
+                            <div><dt>@(L.IsArabic ? "بداية التجربة" : "Trial starts")</dt><dd>@FormatDate(subscription.TrialStartedAtUtc)</dd></div>
+                            <div><dt>@(L.IsArabic ? "نهاية التجربة" : "Trial ends")</dt><dd>@FormatDate(subscription.TrialEndsAtUtc)</dd></div>
+                            <div><dt>@(L.IsArabic ? "بداية الفترة الحالية" : "Current period starts")</dt><dd>@FormatDate(subscription.CurrentPeriodStartUtc)</dd></div>
+                            <div><dt>@(L.IsArabic ? "نهاية الفترة الحالية" : "Current period ends")</dt><dd>@FormatDate(subscription.CurrentPeriodEndsAtUtc)</dd></div>
+                            <div><dt>@(L.IsArabic ? "آخر دليل من المزود" : "Last provider evidence")</dt><dd>@FormatDate(subscription.LastProviderEventAtUtc)</dd></div>
+                        </dl>
+                    </ChildContent>
+                </AppCard>
+            </div>
+
+            <AppCard Eyebrow="@(L.IsArabic ? "الاستحقاقات" : "ENTITLEMENTS")" Title="@(L.IsArabic ? "الحدود والقدرات المكوّنة" : "Configured limits & capabilities")" Subtitle="@(L.IsArabic ? "هذه القيم هي إعدادات الخطة المخزنة. لا يتم اختراع استخدام فعلي عندما لا توجد عدادات استخدام في BIL-002." : "These are stored plan settings. Actual usage is not invented when BIL-002 has no usage counters.")" HeadingLevel="3">
+                <ChildContent>
+                    @if (_workspace.Entitlements.Count == 0)
+                    {
+                        <AppEmptyState Icon="—" Title="@(L.IsArabic ? "لا توجد استحقاقات مكوّنة" : "No entitlements configured")" Description="@(L.IsArabic ? "لم يتم العثور على قيم استحقاق لهذه الخطة." : "No entitlement values were found for this plan.")" />
+                    }
+                    else
+                    {
+                        <div class="billing-entitlement-grid" aria-label="@(L.IsArabic ? "استحقاقات الخطة" : "Plan entitlements")">
+                            @foreach (var entitlement in _workspace.Entitlements)
+                            {
+                                <article class="billing-entitlement">
+                                    <span>@EntitlementLabel(entitlement.Key)</span>
+                                    <strong>@EntitlementValue(entitlement)</strong>
+                                    <small dir="ltr">@entitlement.Key</small>
+                                </article>
+                            }
+                        </div>
+                    }
+                    <p class="billing-footnote">@(L.IsArabic ? "استخدام الحساب الفعلي غير معروض لأن عدادات الاستخدام الشاملة ليست جزءًا من BIL-002 الحالي. تطبيق الحدود داخل الخدمات يتبع BIL-012." : "Actual account usage is not shown because comprehensive usage counters are not part of the current BIL-002 scope. Server-side limit enforcement belongs to BIL-012.")</p>
+                </ChildContent>
+            </AppCard>
+        }
+
+        <AppCard Eyebrow="@(L.IsArabic ? "الكتالوج" : "CATALOG")" Title="@(L.IsArabic ? "الخطط المتاحة" : "Available plans")" Subtitle="@(L.IsArabic ? "الخطط المفعلة في الكتالوج. تغيير الخطة نفسه يتبع BIL-011." : "Enabled catalog plans. The actual plan-change flow belongs to BIL-011.")" HeadingLevel="3">
+            <ChildContent>
+                @if (_workspace.AvailablePlans.Count == 0)
+                {
+                    <AppEmptyState Icon="◇" Title="@(L.IsArabic ? "لا توجد خطط مفعلة" : "No enabled plans")" Description="@(L.IsArabic ? "لم يتم تكوين خطط متاحة للحساب بعد." : "No plans are currently configured as available.")" />
+                }
+                else
+                {
+                    <div class="billing-plan-grid" aria-label="@(L.IsArabic ? "كتالوج الخطط المتاحة" : "Available plan catalog")">
+                        @foreach (var plan in _workspace.AvailablePlans)
+                        {
+                            var isCurrent = _workspace.Subscription?.PlanId == plan.Id;
+                            <article class="billing-plan-card @(isCurrent ? "billing-plan-card--current" : string.Empty)">
+                                <div class="billing-plan-card__heading">
+                                    <div>
+                                        <strong>@LocalizedPlanName(plan)</strong>
+                                        <span>@LocalizedPlanDescription(plan)</span>
+                                    </div>
+                                    <AppBadge Tone="@(isCurrent ? "success" : "neutral")" Text="@(isCurrent ? (L.IsArabic ? "الحالية" : "Current") : (L.IsArabic ? "تغيير الخطة: BIL-011" : "Plan change: BIL-011"))" />
+                                </div>
+                                <div class="billing-plan-card__price" dir="ltr">@FormatPrice(plan)</div>
+                                <small>@BillingIntervalLabel(plan.BillingInterval) · @($"{(L.IsArabic ? "سماح" : "Grace")}: {FormatDays(plan.GracePeriodDays)}")</small>
+                            </article>
+                        }
+                    </div>
+                }
+            </ChildContent>
+        </AppCard>
+
+        @if (_workspace.Subscription is not null)
+        {
+            <AppCard Eyebrow="@(L.IsArabic ? "التدقيق" : "AUDIT")" Title="@(L.IsArabic ? "سجل انتقالات الاشتراك" : "Subscription transition history")" Subtitle="@(L.IsArabic ? "هذا سجل BIL-003 فقط. سجل أحداث الفوترة وإشعارات العميل الأوسع يتبع BIL-013." : "This is BIL-003 transition history only. Broader billing events and customer notifications belong to BIL-013.")" HeadingLevel="3">
+                <ChildContent>
+                    @if (_workspace.Transitions.Count == 0)
+                    {
+                        <AppEmptyState Icon="◷" Title="@(L.IsArabic ? "لا توجد انتقالات مسجلة" : "No recorded transitions")" Description="@(L.IsArabic ? "لم تتغير حالة الاشتراك منذ إنشائه أو آخر تسوية للسجل." : "No subscription status transitions are recorded for this subscription.")" />
+                    }
+                    else
+                    {
+                        <div class="billing-history" role="list" aria-label="@(L.IsArabic ? "تاريخ حالات الاشتراك" : "Subscription status history")">
+                            @foreach (var transition in _workspace.Transitions)
+                            {
+                                <article class="billing-history__item" role="listitem">
+                                    <div class="billing-history__states">
+                                        <AppBadge Tone="neutral" Text="@StatusLabel(transition.FromStatus)" />
+                                        <span aria-hidden="true">→</span>
+                                        <AppBadge Tone="@StatusTone(transition.ToStatus)" Text="@StatusLabel(transition.ToStatus)" />
+                                    </div>
+                                    <div class="billing-history__meta">
+                                        <strong>@SourceLabel(transition.Source)</strong>
+                                        <time datetime="@transition.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture)">@FormatDate(transition.OccurredAtUtc)</time>
+                                    </div>
+                                    <p>@transition.Reason</p>
+                                </article>
+                            }
+                        </div>
+                    }
+                </ChildContent>
+            </AppCard>
+        }
+    }
+</AppPage>
+
+@code {
+    [SupplyParameterFromQuery(Name = "checkout")]
+    public string? CheckoutResult { get; set; }
+
+    private AccountBillingService Billing => ActivatorUtilities.CreateInstance<AccountBillingService>(Services);
+    private AccountBillingWorkspaceView? _workspace;
+    private bool _loading = true;
+    private bool _startingCheckout;
+    private string? _error;
+
+    private bool IsCheckoutReturned => string.Equals(CheckoutResult, "returned", StringComparison.OrdinalIgnoreCase);
+    private bool IsCheckoutCancelled => string.Equals(CheckoutResult, "cancelled", StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _workspace = await Billing.GetAsync();
+        }
+        catch
+        {
+            _workspace = null;
+            _error = L.IsArabic
+                ? "تعذر تحميل بيانات الاشتراك بأمان. أعد المحاولة أو راجع حالة النظام."
+                : "Subscription data could not be loaded safely. Try again or review system health.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task StartCheckoutAsync(MouseEventArgs _)
+    {
+        if (_workspace?.Checkout.CanStart != true || _startingCheckout) return;
+        _startingCheckout = true;
+        _error = null;
+        try
+        {
+            var returnUri = Navigation.ToAbsoluteUri("/account/billing?checkout=returned");
+            var cancelUri = Navigation.ToAbsoluteUri("/account/billing?checkout=cancelled");
+            var session = await Billing.CreatePayPalCheckoutAsync(returnUri, cancelUri);
+            Navigation.NavigateTo(session.CheckoutUri.ToString(), forceLoad: true);
+        }
+        catch
+        {
+            _error = L.IsArabic
+                ? "تعذر بدء جلسة PayPal. لم يتم تسجيل نجاح دفع ولم تتغير حالة الاشتراك."
+                : "PayPal checkout could not be started. No payment success was recorded and subscription state was not changed.";
+        }
+        finally
+        {
+            _startingCheckout = false;
+        }
+    }
+
+    private string LocalizedPlanName(SubscriptionPlanItem plan) => L.IsArabic ? plan.NameAr : plan.NameEn;
+    private string LocalizedPlanDescription(SubscriptionPlanItem plan) => L.IsArabic ? plan.DescriptionAr : plan.DescriptionEn;
+
+    private string FormatPrice(SubscriptionPlanItem plan) =>
+        $"{plan.Price.ToString("0.00", CultureInfo.InvariantCulture)} {plan.Currency}";
+
+    private string BillingIntervalLabel(string interval) => interval switch
+    {
+        SubscriptionPlan.YearlyInterval => L.IsArabic ? "سنوي" : "Yearly",
+        _ => L.IsArabic ? "شهري" : "Monthly"
+    };
+
+    private string FormatDays(int days) => L.IsArabic ? $"{days} يوم" : $"{days} day{(days == 1 ? string.Empty : "s")}";
+
+    private string FormatDate(DateTime? value) => value.HasValue
+        ? value.Value.ToLocalTime().ToString(L.IsArabic ? "dd/MM/yyyy HH:mm" : "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
+        : "—";
+
+    private DateTime? NextRelevantDate(AccountSubscriptionItem subscription) =>
+        subscription.Status == AccountSubscriptionStatus.Grace
+            ? subscription.GraceUntilUtc ?? subscription.CurrentPeriodEndsAtUtc
+            : subscription.Status == AccountSubscriptionStatus.Trialing
+                ? subscription.TrialEndsAtUtc ?? subscription.CurrentPeriodEndsAtUtc
+                : subscription.CurrentPeriodEndsAtUtc ?? subscription.TrialEndsAtUtc;
+
+    private string NextRelevantDateLabel(AccountSubscriptionItem subscription) => subscription.Status switch
+    {
+        AccountSubscriptionStatus.Trialing => L.IsArabic ? "نهاية التجربة أو الفترة" : "Trial or period end",
+        AccountSubscriptionStatus.Grace => L.IsArabic ? "نهاية فترة السماح" : "Grace period end",
+        _ when subscription.CancelAtPeriodEnd => L.IsArabic ? "موعد الإلغاء المجدول" : "Scheduled cancellation boundary",
+        _ => L.IsArabic ? "نهاية الفترة الحالية" : "Current period end"
+    };
+
+    private string StatusLabel(AccountSubscriptionStatus status) => status switch
+    {
+        AccountSubscriptionStatus.Trialing => L.IsArabic ? "تجريبي" : "Trialing",
+        AccountSubscriptionStatus.Active => L.IsArabic ? "نشط" : "Active",
+        AccountSubscriptionStatus.PastDue => L.IsArabic ? "متأخر الدفع" : "Past due",
+        AccountSubscriptionStatus.Grace => L.IsArabic ? "فترة سماح" : "Grace",
+        AccountSubscriptionStatus.Suspended => L.IsArabic ? "معلق" : "Suspended",
+        AccountSubscriptionStatus.Cancelled => L.IsArabic ? "ملغي" : "Cancelled",
+        AccountSubscriptionStatus.Expired => L.IsArabic ? "منتهي" : "Expired",
+        _ => status.ToString()
+    };
+
+    private string StatusTone(AccountSubscriptionStatus status) => status switch
+    {
+        AccountSubscriptionStatus.Active => "success",
+        AccountSubscriptionStatus.Trialing => "info",
+        AccountSubscriptionStatus.PastDue or AccountSubscriptionStatus.Grace => "warning",
+        AccountSubscriptionStatus.Suspended or AccountSubscriptionStatus.Cancelled or AccountSubscriptionStatus.Expired => "danger",
+        _ => "neutral"
+    };
+
+    private string StatusDescription(AccountSubscriptionItem subscription) => subscription.Status switch
+    {
+        AccountSubscriptionStatus.Active => L.IsArabic ? "الحالة الداخلية مفعلة" : "Internal subscription authority is active",
+        AccountSubscriptionStatus.Trialing => L.IsArabic ? "الاشتراك في فترة تجريبية" : "Subscription is in trial",
+        AccountSubscriptionStatus.PastDue => L.IsArabic ? "المصالحة تشير إلى دفع متأخر" : "Reconciliation indicates a payment problem",
+        AccountSubscriptionStatus.Grace => L.IsArabic ? "الوصول داخل سياسة السماح" : "Access is within grace policy",
+        _ => L.IsArabic ? "راجع سجل الانتقالات لمزيد من التفاصيل" : "Review transition history for details"
+    };
+
+    private string ProviderLabel(AccountBillingCheckoutAvailability checkout) => checkout.HasProviderBinding
+        ? string.IsNullOrWhiteSpace(checkout.ProviderKey) ? (L.IsArabic ? "مزود خارجي" : "External provider") : checkout.ProviderKey
+        : L.IsArabic ? "غير مربوط" : "Not bound";
+
+    private string ProviderReferenceLabel(AccountBillingCheckoutAvailability checkout) =>
+        string.IsNullOrWhiteSpace(checkout.ProviderReferenceDisplay)
+            ? (L.IsArabic ? "لا يوجد مرجع مزود مخزن" : "No stored provider reference")
+            : $"{(L.IsArabic ? "مرجع" : "Reference")}: {checkout.ProviderReferenceDisplay}";
+
+    private string CheckoutHelp(AccountBillingCheckoutAvailability checkout) => checkout.BlockReason switch
+    {
+        AccountBillingCheckoutBlockReason.None => L.IsArabic ? "سيتم إنشاء جلسة على الخادم؛ عودة المتصفح ليست دليل دفع." : "A server-side session will be created; the browser return is not payment evidence.",
+        AccountBillingCheckoutBlockReason.NoSubscription => L.IsArabic ? "لا يوجد اشتراك حالي لبدء checkout." : "There is no current subscription to check out.",
+        AccountBillingCheckoutBlockReason.SubscriptionExpired => L.IsArabic ? "الاشتراك المنتهي لا يعاد استخدام سجله لبدء checkout جديد." : "An expired subscription record is not reused for a new checkout.",
+        AccountBillingCheckoutBlockReason.CurrentPlanUnavailable => L.IsArabic ? "الخطة الحالية غير متاحة أو غير مفعلة." : "The current plan is unavailable or disabled.",
+        AccountBillingCheckoutBlockReason.ProviderPlanNotConfigured => L.IsArabic ? "الخطة غير مربوطة بخطة PayPal على الخادم." : "The plan has no server-side PayPal mapping.",
+        AccountBillingCheckoutBlockReason.ProviderAlreadyBound => L.IsArabic ? "الاشتراك مربوط بالفعل بمرجع مزود خارجي." : "The subscription is already bound to an external provider reference.",
+        _ => L.IsArabic ? "checkout غير متاح." : "Checkout is unavailable."
+    };
+
+    private string EntitlementLabel(string key) => key switch
+    {
+        EntitlementDefinitionCatalog.SitesMax => L.IsArabic ? "الحد الأقصى للمواقع" : "Maximum sites",
+        EntitlementDefinitionCatalog.EmailSiteRecipientsMax => L.IsArabic ? "مستلمو بريد الموقع" : "Site email recipients",
+        EntitlementDefinitionCatalog.EmailSchedulesMax => L.IsArabic ? "جداول البريد" : "Email schedules",
+        EntitlementDefinitionCatalog.EmailDashboardDigest => L.IsArabic ? "ملخص الداشبورد بالبريد" : "Dashboard email digest",
+        EntitlementDefinitionCatalog.AutomationSchedulesMax => L.IsArabic ? "جداول الأتمتة" : "Automation schedules",
+        EntitlementDefinitionCatalog.AiEnabled => L.IsArabic ? "الذكاء الاصطناعي" : "AI capability",
+        EntitlementDefinitionCatalog.AiMonthlyRequestsMax => L.IsArabic ? "طلبات AI الشهرية" : "Monthly AI requests",
+        EntitlementDefinitionCatalog.BackupRetentionDays => L.IsArabic ? "احتفاظ النسخ الاحتياطي" : "Backup retention",
+        EntitlementDefinitionCatalog.PremiumSeo => L.IsArabic ? "SEO المميز" : "Premium SEO",
+        _ => key
+    };
+
+    private string EntitlementValue(PlanEntitlementItem item)
+    {
+        if (item.ValueType == EntitlementValueType.Boolean && bool.TryParse(item.CanonicalValue, out var enabled))
+            return enabled ? (L.IsArabic ? "مفعّل" : "Enabled") : (L.IsArabic ? "غير مفعّل" : "Disabled");
+
+        if (item.Key == EntitlementDefinitionCatalog.BackupRetentionDays && long.TryParse(item.CanonicalValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var days))
+            return L.IsArabic ? $"{days} يوم" : $"{days} days";
+
+        return item.CanonicalValue;
+    }
+
+    private string SourceLabel(SubscriptionTransitionSource source) => source switch
+    {
+        SubscriptionTransitionSource.Provider => L.IsArabic ? "المزود" : "Provider",
+        SubscriptionTransitionSource.Administration => L.IsArabic ? "الإدارة" : "Administration",
+        _ => L.IsArabic ? "النظام" : "System"
+    };
+}

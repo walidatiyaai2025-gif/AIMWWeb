@@ -22,6 +22,7 @@ public static class UxRouteCatalog
         new("approvals", "/approvals", HighRisk: true),
         new("account-profile", "/account/profile", HighRisk: true),
         new("account-email", "/account/email-settings", HighRisk: true),
+        new("account-billing", "/account/billing", HighRisk: true),
         new("system-health", "/system-health"),
         new("build-release", "/about-build")
     ];
