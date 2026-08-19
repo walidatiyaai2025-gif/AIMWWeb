@@ -16,6 +16,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddSingleton<IApplicationPathService, ApplicationPathService>();
+        services.AddHostedService<SecretProtectionRuntimeLockHostedService>();
         services.AddSingleton<DpapiSecretProtectionService>();
         services.AddSingleton<ISecretProtectionService>(sp => sp.GetRequiredService<DpapiSecretProtectionService>());
         services.AddSingleton<ISecretRecoveryKeyService>(sp => sp.GetRequiredService<DpapiSecretProtectionService>());
