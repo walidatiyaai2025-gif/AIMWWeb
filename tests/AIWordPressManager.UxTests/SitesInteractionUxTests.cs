@@ -30,10 +30,11 @@ public sealed class SitesInteractionUxTests(UxTestHost host)
             });
 
             var addButton = page.GetByRole(AriaRole.Button, new() { Name = "Add Site", Exact = true }).First;
-            await addButton.ClickAsync();
+            var form = page.Locator(".site-create-grid");
+            await OpenInteractiveFormAsync(page, addButton, form);
 
-            var nameInput = page.Locator(".site-create-grid input").Nth(0);
-            var urlInput = page.Locator(".site-create-grid input").Nth(1);
+            var nameInput = form.Locator("input").Nth(0);
+            var urlInput = form.Locator("input").Nth(1);
             await nameInput.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
             (await nameInput.IsEditableAsync()).Should().BeTrue("the Add Site name field must not be disabled or readonly");
@@ -88,5 +89,32 @@ public sealed class SitesInteractionUxTests(UxTestHost host)
         {
             await context.CloseBoundedAsync("sites-input-interaction");
         }
+    }
+
+    private static async Task OpenInteractiveFormAsync(IPage page, ILocator addButton, ILocator form)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (DateTime.UtcNow < deadline)
+        {
+            await addButton.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+            try
+            {
+                await form.WaitForAsync(new LocatorWaitForOptions
+                {
+                    State = WaitForSelectorState.Visible,
+                    Timeout = 750
+                });
+                return;
+            }
+            catch (TimeoutException)
+            {
+                // Server-rendered markup can be visible just before the interactive
+                // Blazor circuit finishes attaching. Retry the user action until the
+                // circuit is ready, but still fail quickly if interactivity never arrives.
+                await page.WaitForTimeoutAsync(150);
+            }
+        }
+
+        throw new TimeoutException("The Add Site form did not become interactive within 8 seconds.");
     }
 }
