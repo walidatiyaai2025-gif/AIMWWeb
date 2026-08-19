@@ -1,7 +1,11 @@
 @page "/register"
 @rendermode InteractiveServer
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using AIWordPressManager.Application.Abstractions.Billing
+@using AIWordPressManager.Domain.Entities
 @inject LocalAuthenticationService Authentication
+@inject ISubscriptionPlanCatalog Plans
+@inject IAccountSubscriptionService Subscriptions
 @inject NavigationManager Navigation
 
 <PageTitle>Create account - AI WordPress Manager</PageTitle>
@@ -9,8 +13,9 @@
 <div class="auth-page">
     <section class="auth-card">
         <div class="auth-brand">AI WordPress Manager</div>
+        <div class="trial-chip">14-DAY FREE TRIAL · NO CARD REQUIRED</div>
         <h1>Create your account</h1>
-        <p class="auth-subtitle">Register first, then connect and manage your own WordPress sites.</p>
+        <p class="auth-subtitle">Start with one WordPress site, limited AI usage and core automation. Upgrade only when you need more capacity.</p>
 
         @if (!string.IsNullOrWhiteSpace(_message))
         {
@@ -31,9 +36,16 @@
             <InputText id="register-confirm" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
 
             <button class="auth-submit" type="submit" disabled="@_working">
-                @(_working ? "Creating account..." : "Create account")
+                @(_working ? "Creating your workspace..." : "Start free trial")
             </button>
         </EditForm>
+
+        <div class="trial-limits" aria-label="Free trial limits">
+            <span>✓ 1 WordPress site</span>
+            <span>✓ 50 AI requests / month</span>
+            <span>✓ 1 automation schedule</span>
+            <span>✓ 3-day backup retention</span>
+        </div>
 
         <div class="auth-footer">
             Already registered? <a href="/login">Sign in</a>
@@ -42,6 +54,7 @@
 </div>
 
 @code {
+    private const string FreeTrialPlanCode = "free-trial";
     private readonly RegisterModel _model = new();
     private bool _working;
     private bool _isError;
@@ -62,7 +75,26 @@
                 return;
             }
 
-            _message = "Account created successfully. Redirecting to sign in...";
+            if (!result.UserId.HasValue)
+                throw new InvalidOperationException("The account was created without a usable identity.");
+
+            var freeTrial = await Plans.GetByCodeAsync(FreeTrialPlanCode);
+            if (freeTrial is null || !freeTrial.IsEnabled)
+                throw new InvalidOperationException("The free trial plan is currently unavailable. The account was created; contact an administrator to assign a subscription.");
+
+            if (await Subscriptions.GetCurrentAsync(result.UserId.Value) is null)
+            {
+                var now = DateTime.UtcNow;
+                var trialDays = Math.Max(1, freeTrial.TrialDays);
+                await Subscriptions.CreateAsync(new AccountSubscriptionCreateRequest(
+                    result.UserId.Value,
+                    freeTrial.Id,
+                    AccountSubscriptionStatus.Trialing,
+                    now,
+                    now.AddDays(trialDays)));
+            }
+
+            _message = $"Account created. Your {Math.Max(1, freeTrial.TrialDays)}-day free trial is ready. Redirecting to sign in...";
             await Task.Delay(700);
             Navigation.NavigateTo("/login?registered=true", forceLoad: true);
         }
@@ -84,7 +116,3 @@
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }
-
-<style>
-.auth-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:#111827;color:#f9fafb;font-family:Segoe UI,Arial,sans-serif}.auth-card{width:min(440px,100%);background:#1f2937;padding:34px;border:1px solid #374151;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.42)}.auth-brand{color:#d4af37;font-weight:800;letter-spacing:.04em;margin-bottom:18px}.auth-card h1{margin:0 0 8px;font-size:1.9rem}.auth-subtitle{margin:0 0 22px;color:#9ca3af;line-height:1.55}.auth-card label{display:block;margin:15px 0 7px;font-weight:700}.auth-card input{width:100%;box-sizing:border-box;padding:12px 13px;border-radius:9px;border:1px solid #4b5563;background:#111827;color:#fff;outline:none}.auth-card input:focus{border-color:#d4af37;box-shadow:0 0 0 3px rgba(212,175,55,.15)}.auth-card small{display:block;margin-top:6px;color:#9ca3af}.auth-submit{width:100%;margin-top:22px;padding:13px;border:0;border-radius:9px;background:#d4af37;color:#111827;font-weight:800;cursor:pointer}.auth-submit:disabled{opacity:.65;cursor:wait}.auth-footer{text-align:center;margin-top:20px;color:#9ca3af}.auth-footer a{color:#d4af37;font-weight:700}.auth-alert{padding:11px 13px;border-radius:8px;margin:14px 0}.auth-alert.error{background:rgba(220,38,38,.16);border:1px solid rgba(248,113,113,.4)}.auth-alert.success{background:rgba(22,163,74,.16);border:1px solid rgba(74,222,128,.4)}
-</style>

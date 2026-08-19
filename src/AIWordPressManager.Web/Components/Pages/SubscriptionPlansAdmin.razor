@@ -1,0 +1,428 @@
+@page "/admin/subscription-plans"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
+@using AIWordPressManager.Application.Abstractions.Billing
+@using AIWordPressManager.Domain.Entities
+@inject ISubscriptionPlanCatalog Plans
+@inject IPlanEntitlementCatalog Entitlements
+@inject AIWordPressManager.Persistence.AppDbContext DbContext
+@inject CurrentUserContext CurrentUser
+@inject AppLanguageService L
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@(L.IsArabic ? "إدارة خطط الاشتراك" : "Subscription Plans")</PageTitle>
+
+<AppPage PageKey="subscription-plans-admin" Class="plan-admin-page" Width="wide" AriaLabel="@(L.IsArabic ? "إدارة خطط الاشتراك" : "Subscription plan management")">
+    <AppToolbar
+        Eyebrow="@(L.IsArabic ? "الإدارة والفوترة" : "ADMIN · BILLING")"
+        Title="@(L.IsArabic ? "خطط الاشتراك" : "Subscription plans")"
+        Subtitle="@(L.IsArabic ? "أنشئ الخطط وحدودها واربط الخطط المدفوعة بـ PayPal. لا يتم حذف خطة مستخدمة؛ عطّلها بدلًا من ذلك." : "Create plans, configure limits and bind paid tiers to PayPal. Used plans are retired by disabling them rather than destructive deletion.")">
+        <Actions>
+            <AppButton Href="/account/billing" Icon="◇" Text="@(L.IsArabic ? "صفحة العميل" : "Customer billing")" Variant="secondary" />
+            <AppButton Href="/admin/billing-support" Icon="↗" Text="@(L.IsArabic ? "دعم الفوترة" : "Billing support")" Variant="secondary" />
+            <AppButton Icon="+" Text="@(L.IsArabic ? "خطة جديدة" : "New plan")" OnClick="NewPlan" />
+        </Actions>
+    </AppToolbar>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <AppCard Tone="danger">
+            <ChildContent>
+                <div class="plan-alert" role="alert"><strong>@(L.IsArabic ? "تعذر تنفيذ العملية" : "Operation failed")</strong><span>@_error</span></div>
+            </ChildContent>
+        </AppCard>
+    }
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="plan-success" role="status">✓ @_message</div>
+    }
+
+    @if (_loading)
+    {
+        <AppLoading Title="@(L.IsArabic ? "جارٍ تحميل كتالوج الخطط" : "Loading subscription catalog")" />
+    }
+    else
+    {
+        <section class="plan-admin-grid">
+            <AppCard Eyebrow="@(L.IsArabic ? "الكتالوج" : "CATALOG")"
+                     Title="@(L.IsArabic ? "الخطط" : "Plans")"
+                     Subtitle="@(L.IsArabic ? "الخطط المفعلة فقط تظهر للعملاء وعلى صفحة الأسعار العامة." : "Only enabled plans are exposed to customers and the public pricing section.")"
+                     HeadingLevel="2">
+                <ChildContent>
+                    <div class="plan-list">
+                        @foreach (var plan in _plans)
+                        {
+                            <button type="button"
+                                    class="plan-list-item @(_editingId == plan.Id ? "active" : string.Empty)"
+                                    @onclick="() => EditPlanAsync(plan)">
+                                <span class="plan-list-main">
+                                    <strong>@(L.IsArabic ? plan.NameAr : plan.NameEn)</strong>
+                                    <small><code>@plan.Code</code> · @FormatPrice(plan)</small>
+                                </span>
+                                <span class="plan-state @(plan.IsEnabled ? "enabled" : "disabled")">
+                                    @(plan.IsEnabled ? (L.IsArabic ? "مفعلة" : "Enabled") : (L.IsArabic ? "معطلة" : "Disabled"))
+                                </span>
+                            </button>
+                        }
+                    </div>
+                    @if (_plans.Count == 0)
+                    {
+                        <AppEmptyState Icon="◇" Title="@(L.IsArabic ? "لا توجد خطط" : "No plans")" Description="@(L.IsArabic ? "أنشئ أول خطة للبدء." : "Create the first plan to get started.")" />
+                    }
+                </ChildContent>
+            </AppCard>
+
+            <div class="plan-editor-stack">
+                <AppCard Eyebrow="@(_editingId.HasValue ? (L.IsArabic ? "تعديل الخطة" : "EDIT PLAN") : (L.IsArabic ? "خطة جديدة" : "NEW PLAN"))"
+                         Title="@EditorTitle"
+                         Subtitle="@(L.IsArabic ? "السعر والمدة وربط بوابة الدفع محفوظة في كتالوج واحد يستخدمه التطبيق والصفحة العامة." : "Pricing, lifecycle policy and gateway binding live in one catalog shared by the product and public landing page.")"
+                         HeadingLevel="2">
+                    <ChildContent>
+                        <div class="plan-form-grid">
+                            <label>
+                                <span>@(L.IsArabic ? "كود الخطة" : "Plan code")</span>
+                                <input @bind="_form.Code" disabled="@(_editingId.HasValue || _busy)" placeholder="pro-monthly" />
+                                <small>@(L.IsArabic ? "ثابت بعد الإنشاء: حروف إنجليزية صغيرة وأرقام و . _ -" : "Immutable after creation: lowercase letters, numbers, . _ -")</small>
+                            </label>
+                            <label>
+                                <span>@(L.IsArabic ? "دورة الفوترة" : "Billing interval")</span>
+                                <select @bind="_form.BillingInterval" disabled="@_busy"><option value="Monthly">Monthly</option><option value="Yearly">Yearly</option></select>
+                            </label>
+                            <label><span>@(L.IsArabic ? "الاسم بالإنجليزية" : "English name")</span><input @bind="_form.NameEn" disabled="@_busy" /></label>
+                            <label><span>@(L.IsArabic ? "الاسم بالعربية" : "Arabic name")</span><input @bind="_form.NameAr" disabled="@_busy" dir="rtl" /></label>
+                            <label class="wide"><span>@(L.IsArabic ? "الوصف بالإنجليزية" : "English description")</span><textarea @bind="_form.DescriptionEn" rows="3" disabled="@_busy"></textarea></label>
+                            <label class="wide"><span>@(L.IsArabic ? "الوصف بالعربية" : "Arabic description")</span><textarea @bind="_form.DescriptionAr" rows="3" disabled="@_busy" dir="rtl"></textarea></label>
+                            <label><span>@(L.IsArabic ? "السعر" : "Price")</span><input type="number" min="0" step="0.01" @bind="_form.Price" disabled="@_busy" /></label>
+                            <label><span>@(L.IsArabic ? "العملة" : "Currency")</span><input @bind="_form.Currency" maxlength="3" disabled="@_busy" placeholder="USD" /></label>
+                            <label><span>@(L.IsArabic ? "أيام التجربة" : "Trial days")</span><input type="number" min="0" max="365" @bind="_form.TrialDays" disabled="@_busy" /></label>
+                            <label><span>@(L.IsArabic ? "أيام السماح" : "Grace days")</span><input type="number" min="0" max="90" @bind="_form.GracePeriodDays" disabled="@_busy" /></label>
+                            <label><span>@(L.IsArabic ? "ترتيب الظهور" : "Sort order")</span><input type="number" min="0" max="100000" @bind="_form.SortOrder" disabled="@_busy" /></label>
+                            <label class="toggle-label"><span>@(L.IsArabic ? "متاحة للعملاء" : "Customer visible")</span><input type="checkbox" @bind="_form.IsEnabled" disabled="@_busy" /></label>
+                            <label><span>PayPal Product ID</span><input @bind="_form.GatewayProductId" disabled="@_busy" placeholder="PROD-..." /></label>
+                            <label><span>PayPal Plan ID</span><input @bind="_form.GatewayPlanId" disabled="@_busy" placeholder="P-..." /></label>
+                        </div>
+
+                        <div class="plan-editor-actions">
+                            <AppButton Icon="✓" Text="@(L.IsArabic ? "حفظ الخطة" : "Save plan")" Busy="@_busy" Disabled="@_busy" OnClick="SaveAsync" />
+                            @if (_editingId.HasValue)
+                            {
+                                <AppButton Icon="⧉" Text="@(L.IsArabic ? "نسخ كخطة جديدة" : "Clone as new")" Variant="secondary" Disabled="@_busy" OnClick="CloneCurrent" />
+                                <AppButton Icon="@(_form.IsEnabled ? "×" : "✓")"
+                                           Text="@(_form.IsEnabled ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))"
+                                           Variant="secondary" Disabled="@_busy" OnClick="ToggleEnabledAsync" />
+                            }
+                        </div>
+
+                        <div class="provider-note">
+                            <strong>@(L.IsArabic ? "قاعدة الدفع:" : "Payment rule:")</strong>
+                            @(L.IsArabic ? "الخطة المجانية لا تحتاج PayPal Plan ID. الخطط المدفوعة تحتاج معرّف خطة PayPal صالح قبل بدء checkout أو تغيير الخطة." : "The free trial does not require a PayPal plan ID. Paid plans require a valid PayPal plan ID before checkout or plan changes can start.")
+                        </div>
+                    </ChildContent>
+                </AppCard>
+
+                @if (_editingId.HasValue)
+                {
+                    <AppCard Eyebrow="@(L.IsArabic ? "الحدود والمميزات" : "ENTITLEMENTS")"
+                             Title="@(L.IsArabic ? "قدرات الخطة" : "Plan capabilities & limits")"
+                             Subtitle="@(L.IsArabic ? "هذه القيم ليست للعرض فقط؛ خدمات التطبيق تستخدمها كحدود على الخادم." : "These values are not display-only; application services enforce them server-side.")"
+                             HeadingLevel="2">
+                        <ChildContent>
+                            <div class="entitlement-grid">
+                                @foreach (var definition in _definitions)
+                                {
+                                    <label>
+                                        <span>@EntitlementLabel(definition.Key)</span>
+                                        <small><code>@definition.Key</code> · @definition.ValueType</small>
+                                        @if (definition.ValueType == EntitlementValueType.Boolean)
+                                        {
+                                            <select value="@ValueFor(definition.Key)" @onchange="e => SetEntitlementValue(definition.Key, e.Value?.ToString())" disabled="@_busy">
+                                                <option value="false">@(L.IsArabic ? "غير متاح" : "Disabled")</option>
+                                                <option value="true">@(L.IsArabic ? "متاح" : "Enabled")</option>
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <input type="number" min="0" value="@ValueFor(definition.Key)" @oninput="e => SetEntitlementValue(definition.Key, e.Value?.ToString())" disabled="@_busy" />
+                                        }
+                                    </label>
+                                }
+                            </div>
+                            <div class="plan-editor-actions">
+                                <AppButton Icon="✓" Text="@(L.IsArabic ? "حفظ الحدود" : "Save limits")" Busy="@_busy" Disabled="@_busy" OnClick="SaveEntitlementsAsync" />
+                            </div>
+                        </ChildContent>
+                    </AppCard>
+                }
+            </div>
+        </section>
+    }
+</AppPage>
+
+@code {
+    private readonly List<SubscriptionPlanItem> _plans = new();
+    private readonly List<EntitlementDefinitionItem> _definitions = new();
+    private readonly Dictionary<string, string> _entitlementValues = new(StringComparer.OrdinalIgnoreCase);
+    private PlanForm _form = NewForm();
+    private Guid? _editingId;
+    private bool _loading = true;
+    private bool _busy;
+    private string _error = string.Empty;
+    private string _message = string.Empty;
+
+    private string EditorTitle => _editingId.HasValue
+        ? (L.IsArabic ? _form.NameAr : _form.NameEn)
+        : (L.IsArabic ? "إنشاء خطة اشتراك" : "Create subscription plan");
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
+        _definitions.AddRange(Entitlements.ListDefinitions());
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _plans.Clear();
+            _plans.AddRange(await Plans.ListAsync(includeDisabled: true));
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void NewPlan()
+    {
+        _editingId = null;
+        _form = NewForm();
+        _entitlementValues.Clear();
+        _error = _message = string.Empty;
+    }
+
+    private async Task EditPlanAsync(SubscriptionPlanItem plan)
+    {
+        _editingId = plan.Id;
+        _form = PlanForm.From(plan);
+        _error = _message = string.Empty;
+        _entitlementValues.Clear();
+        try
+        {
+            foreach (var item in await Entitlements.ListAsync(plan.Id))
+                _entitlementValues[item.Key] = item.CanonicalValue;
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+    }
+
+    private void CloneCurrent()
+    {
+        if (!_editingId.HasValue) return;
+        _editingId = null;
+        _form.Code = $"{_form.Code.Trim()}-copy";
+        _form.NameEn = $"{_form.NameEn} Copy";
+        _form.NameAr = $"نسخة {_form.NameAr}";
+        _form.GatewayProductId = string.Empty;
+        _form.GatewayPlanId = string.Empty;
+        _form.IsEnabled = false;
+        _message = L.IsArabic ? "تم تجهيز نسخة غير مفعلة. غيّر الكود والبيانات ثم احفظها." : "A disabled clone is ready. Adjust its code and details, then save it.";
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        _error = _message = string.Empty;
+        try
+        {
+            var creating = !_editingId.HasValue;
+            SubscriptionPlanItem saved;
+
+            if (creating)
+            {
+                saved = await Plans.CreateAsync(new SubscriptionPlanCreateRequest(
+                    _form.Code, _form.NameEn, _form.NameAr, _form.DescriptionEn, _form.DescriptionAr,
+                    _form.BillingInterval, _form.Price, _form.Currency, _form.TrialDays, _form.GracePeriodDays,
+                    _form.IsEnabled, _form.SortOrder, EmptyToNull(_form.GatewayProductId), EmptyToNull(_form.GatewayPlanId)));
+                _editingId = saved.Id;
+            }
+            else
+            {
+                saved = await Plans.UpdateAsync(_editingId!.Value, new SubscriptionPlanUpdateRequest(
+                    _form.NameEn, _form.NameAr, _form.DescriptionEn, _form.DescriptionAr,
+                    _form.BillingInterval, _form.Price, _form.Currency, _form.TrialDays, _form.GracePeriodDays,
+                    _form.IsEnabled, _form.SortOrder, EmptyToNull(_form.GatewayProductId), EmptyToNull(_form.GatewayPlanId)));
+            }
+
+            await AuditAsync(creating ? "Create" : "Update", saved);
+            _form = PlanForm.From(saved);
+            await ReloadAsync();
+            _message = L.IsArabic ? "تم حفظ الخطة." : "Plan saved.";
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ToggleEnabledAsync()
+    {
+        if (!_editingId.HasValue || _busy) return;
+        _busy = true;
+        _error = _message = string.Empty;
+        try
+        {
+            var saved = await Plans.SetEnabledAsync(_editingId.Value, !_form.IsEnabled);
+            _form = PlanForm.From(saved);
+            await AuditAsync(saved.IsEnabled ? "Enable" : "Disable", saved);
+            await ReloadAsync();
+            _message = saved.IsEnabled
+                ? (L.IsArabic ? "تم تفعيل الخطة." : "Plan enabled.")
+                : (L.IsArabic ? "تم تعطيل الخطة بدون حذف بيانات المشتركين." : "Plan disabled without deleting subscriber data.");
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveEntitlementsAsync()
+    {
+        if (!_editingId.HasValue || _busy) return;
+        _busy = true;
+        _error = _message = string.Empty;
+        try
+        {
+            foreach (var definition in _definitions)
+            {
+                var value = ValueFor(definition.Key);
+                if (string.IsNullOrWhiteSpace(value))
+                    value = definition.ValueType == EntitlementValueType.Boolean ? "false" : "0";
+                await Entitlements.SetAsync(_editingId.Value, definition.Key, value);
+            }
+
+            var selected = _plans.FirstOrDefault(x => x.Id == _editingId.Value);
+            if (selected is not null)
+                await AuditAsync("UpdateEntitlements", selected);
+
+            _message = L.IsArabic ? "تم حفظ حدود ومميزات الخطة." : "Plan limits and capabilities saved.";
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string ValueFor(string key) => _entitlementValues.TryGetValue(key, out var value) ? value : string.Empty;
+    private void SetEntitlementValue(string key, string? value) => _entitlementValues[key] = value ?? string.Empty;
+
+    private async Task AuditAsync(string action, SubscriptionPlanItem plan)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        var audit = new ApplicationSecurityAuditStore(DbContext);
+        await audit.AppendAsync(new SecurityAuditEvent(
+            "Billing",
+            $"SubscriptionPlan.{action}",
+            "Succeeded",
+            CurrentUser.UserId,
+            CurrentUser.UserName,
+            "SubscriptionPlan",
+            plan.Id.ToString("D"),
+            plan.Code,
+            http?.TraceIdentifier,
+            http?.Connection.RemoteIpAddress?.ToString(),
+            http?.Request.Headers.UserAgent.ToString(),
+            new Dictionary<string, string>
+            {
+                ["enabled"] = plan.IsEnabled.ToString(),
+                ["billingInterval"] = plan.BillingInterval,
+                ["currency"] = plan.Currency
+            }));
+    }
+
+    private string EntitlementLabel(string key) => key switch
+    {
+        EntitlementDefinitionCatalog.SitesMax => L.IsArabic ? "أقصى عدد مواقع" : "Maximum sites",
+        EntitlementDefinitionCatalog.EmailSiteRecipientsMax => L.IsArabic ? "مستلمو البريد لكل موقع" : "Email recipients per site",
+        EntitlementDefinitionCatalog.EmailSchedulesMax => L.IsArabic ? "جداول البريد" : "Email schedules",
+        EntitlementDefinitionCatalog.EmailDashboardDigest => L.IsArabic ? "ملخص لوحة التحكم بالبريد" : "Dashboard email digest",
+        EntitlementDefinitionCatalog.AutomationSchedulesMax => L.IsArabic ? "جداول الأتمتة" : "Automation schedules",
+        EntitlementDefinitionCatalog.AiEnabled => L.IsArabic ? "الذكاء الاصطناعي" : "AI access",
+        EntitlementDefinitionCatalog.AiMonthlyRequestsMax => L.IsArabic ? "طلبات AI الشهرية" : "Monthly AI requests",
+        EntitlementDefinitionCatalog.BackupRetentionDays => L.IsArabic ? "أيام الاحتفاظ بالنسخ" : "Backup retention days",
+        EntitlementDefinitionCatalog.PremiumSeo => L.IsArabic ? "SEO المتقدم" : "Premium SEO",
+        _ => key
+    };
+
+    private static string FormatPrice(SubscriptionPlanItem plan) => plan.Price == 0m
+        ? "Free"
+        : $"{plan.Price:0.##} {plan.Currency}/{(plan.BillingInterval == SubscriptionPlan.YearlyInterval ? "yr" : "mo")}";
+
+    private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string SafeError(Exception ex) => ex.GetBaseException().Message;
+
+    private static PlanForm NewForm() => new()
+    {
+        BillingInterval = SubscriptionPlan.MonthlyInterval,
+        Currency = "USD",
+        IsEnabled = true,
+        GracePeriodDays = 7,
+        SortOrder = 100
+    };
+
+    private sealed class PlanForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string NameEn { get; set; } = string.Empty;
+        public string NameAr { get; set; } = string.Empty;
+        public string DescriptionEn { get; set; } = string.Empty;
+        public string DescriptionAr { get; set; } = string.Empty;
+        public string BillingInterval { get; set; } = SubscriptionPlan.MonthlyInterval;
+        public decimal Price { get; set; }
+        public string Currency { get; set; } = "USD";
+        public int TrialDays { get; set; }
+        public int GracePeriodDays { get; set; }
+        public bool IsEnabled { get; set; }
+        public int SortOrder { get; set; }
+        public string GatewayProductId { get; set; } = string.Empty;
+        public string GatewayPlanId { get; set; } = string.Empty;
+
+        public static PlanForm From(SubscriptionPlanItem plan) => new()
+        {
+            Code = plan.Code,
+            NameEn = plan.NameEn,
+            NameAr = plan.NameAr,
+            DescriptionEn = plan.DescriptionEn,
+            DescriptionAr = plan.DescriptionAr,
+            BillingInterval = plan.BillingInterval,
+            Price = plan.Price,
+            Currency = plan.Currency,
+            TrialDays = plan.TrialDays,
+            GracePeriodDays = plan.GracePeriodDays,
+            IsEnabled = plan.IsEnabled,
+            SortOrder = plan.SortOrder,
+            GatewayProductId = plan.GatewayProductId ?? string.Empty,
+            GatewayPlanId = plan.GatewayPlanId ?? string.Empty
+        };
+    }
+}

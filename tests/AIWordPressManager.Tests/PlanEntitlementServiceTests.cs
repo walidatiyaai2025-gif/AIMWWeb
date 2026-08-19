@@ -108,7 +108,7 @@ public sealed class PlanEntitlementServiceTests
         resolved.IsConfigured.Should().BeTrue();
         resolved.ValueType.Should().Be(EntitlementValueType.Boolean);
         resolved.BooleanValue.Should().BeFalse();
-        (await fixture.Context.PlanEntitlements.CountAsync()).Should().Be(1);
+        (await fixture.Context.PlanEntitlements.CountAsync(x => x.PlanId == plan.Id)).Should().Be(1);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public sealed class PlanEntitlementServiceTests
         await wrongBoolean.Should().ThrowAsync<ArgumentException>();
         await negativeLimit.Should().ThrowAsync<ArgumentOutOfRangeException>();
         await wrongChecker.Should().ThrowAsync<ArgumentException>();
-        (await fixture.Context.PlanEntitlements.CountAsync()).Should().Be(0);
+        (await fixture.Context.PlanEntitlements.CountAsync(x => x.PlanId == plan.Id)).Should().Be(0);
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public sealed class PlanEntitlementServiceTests
         fixture.Context.SubscriptionPlans.Remove(trackedPlan);
         await fixture.Context.SaveChangesAsync();
 
-        (await fixture.Context.PlanEntitlements.CountAsync()).Should().Be(0);
+        (await fixture.Context.PlanEntitlements.CountAsync(x => x.PlanId == plan.Id)).Should().Be(0);
     }
 
     [Fact]

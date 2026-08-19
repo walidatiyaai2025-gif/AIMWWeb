@@ -1,4 +1,9 @@
+@using AIWordPressManager.Web.Diagnostics
+@using Microsoft.AspNetCore.Components.Authorization
 @inject AppLanguageService L
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject CurrentUserContext CurrentUser
 
 <TrackedErrorBoundary @ref="_errorBoundary">
     <ChildContent>
@@ -46,35 +51,64 @@
         </Router>
     </ChildContent>
     <ErrorContent Context="exception">
-        <LayoutView Layout="typeof(MainLayout)">
-            <div class="settings-page">
-                <section class="panel settings-hero">
-                    <div>
-                        <span class="workspace-kicker">ERROR CENTER</span>
-                        <h1>@(L.IsArabic ? "حدث خطأ غير متوقع" : "An unexpected error occurred")</h1>
-                        <p>@(L.IsArabic ? "تم تسجيل الخطأ تلقائيًا. انسخ رقم الخطأ ثم افتح شاشة السجلات للوصول إلى التفاصيل." : "The error was logged automatically. Copy the error ID and open Logs to inspect the details.")</p>
+        @* Do not render MainLayout here. A layout-level failure (for example the account/site
+           widget) would otherwise recursively throw while trying to display the error. *@
+        <div class="settings-page" style="min-height:100vh;padding:2rem;background:#0b0f17;color:#f9fafb" role="alert">
+            <section class="panel settings-hero">
+                <div>
+                    <span class="workspace-kicker">RUNTIME ERROR — DIAGNOSTIC MODE</span>
+                    <h1>@(L.IsArabic ? "حدث خطأ أثناء تشغيل الشاشة" : "A runtime error interrupted this screen")</h1>
+                    <p>@(L.IsArabic ? "الخطأ غير مخفي. التفاصيل الأساسية ظاهرة أدناه وتم تسجيل الـStack Trace كاملًا في ملف السجل." : "The failure is not hidden. Core details are shown below and the full stack trace was written to the log file.")</p>
+                </div>
+                <span class="settings-badge danger">ERROR</span>
+            </section>
+
+            <section class="panel settings-section" style="margin-top:1rem">
+                <div class="database-info-grid">
+                    <div><small>@(L.IsArabic ? "رقم الخطأ" : "Error ID")</small><strong>@(_errorBoundary?.ErrorId ?? "N/A")</strong></div>
+                    <div><small>@(L.IsArabic ? "رقم الارتباط" : "Correlation ID")</small><strong>@(_errorBoundary?.CorrelationId ?? "N/A")</strong></div>
+                    <div><small>@(L.IsArabic ? "نوع الخطأ" : "Exception type")</small><strong>@exception.GetType().FullName</strong></div>
+                    <div><small>@(L.IsArabic ? "الوقت" : "Time")</small><strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</strong></div>
+                </div>
+
+                <div style="margin-top:1rem;padding:1rem;border:1px solid #ef444466;border-radius:10px;background:#7f1d1d33;white-space:pre-wrap;word-break:break-word">
+                    <strong>@(L.IsArabic ? "رسالة الخطأ" : "Exception message")</strong>
+                    <div style="margin-top:.5rem">@RuntimeLogRedactor.Redact(exception.Message)</div>
+                </div>
+
+                @if (exception.InnerException is not null)
+                {
+                    <div style="margin-top:.75rem;padding:1rem;border:1px solid #f59e0b55;border-radius:10px;white-space:pre-wrap;word-break:break-word">
+                        <strong>@(L.IsArabic ? "الخطأ الداخلي" : "Inner exception")</strong>
+                        <div style="margin-top:.5rem">@exception.InnerException.GetType().FullName: @RuntimeLogRedactor.Redact(exception.InnerException.Message)</div>
                     </div>
-                    <span class="settings-badge danger">ERROR</span>
-                </section>
-                <section class="panel settings-section">
-                    <div class="database-info-grid">
-                        <div><small>@(L.IsArabic ? "رقم الخطأ" : "Error ID")</small><strong>@(_errorBoundary?.ErrorId ?? "N/A")</strong></div>
-                        <div><small>@(L.IsArabic ? "رقم الارتباط" : "Correlation ID")</small><strong>@(_errorBoundary?.CorrelationId ?? "N/A")</strong></div>
-                        <div><small>@(L.IsArabic ? "الوقت" : "Time")</small><strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</strong></div>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap" style="margin-top:1rem">
-                        <button class="btn primary" @onclick="Recover">@(L.IsArabic ? "إعادة تحميل الشاشة" : "Reload page")</button>
-                        <a class="btn" href="/logs">@(L.IsArabic ? "فتح السجلات" : "Open logs")</a>
-                        <a class="btn" href="/">@(L.IsArabic ? "العودة للرئيسية" : "Back to dashboard")</a>
-                    </div>
-                </section>
-            </div>
-        </LayoutView>
+                }
+
+                <p style="margin-top:1rem;opacity:.8">
+                    @(L.IsArabic
+                        ? "للتشخيص أرسل Error ID مع ملف aiwm/errors الخاص بنفس الوقت. الأسرار الحساسة يتم إخفاؤها تلقائيًا."
+                        : "For diagnosis, send the Error ID together with the aiwm/errors log from the same time. Sensitive secrets are automatically redacted.")
+                </p>
+
+                <div class="d-flex gap-2 flex-wrap" style="margin-top:1rem">
+                    <button class="btn primary" @onclick="Recover">@(L.IsArabic ? "محاولة استعادة الشاشة" : "Try to recover")</button>
+                    <a class="btn" href="@Navigation.Uri" data-enhance-nav="false">@(L.IsArabic ? "إعادة تحميل كاملة" : "Hard reload")</a>
+                    <a class="btn" href="/logs">@(L.IsArabic ? "فتح السجلات" : "Open logs")</a>
+                    <a class="btn" href="/">@(L.IsArabic ? "العودة للرئيسية" : "Back to dashboard")</a>
+                </div>
+            </section>
+        </div>
     </ErrorContent>
 </TrackedErrorBoundary>
 
 @code {
     private TrackedErrorBoundary? _errorBoundary;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        CurrentUser.SetCircuitPrincipal(authenticationState.User);
+    }
 
     private Task HandleNavigationAsync(NavigationContext context)
     {

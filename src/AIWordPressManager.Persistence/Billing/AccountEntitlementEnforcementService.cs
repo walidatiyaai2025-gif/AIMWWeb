@@ -13,6 +13,9 @@ public sealed class AccountEntitlementEnforcementService(
         string entitlementKey,
         CancellationToken cancellationToken = default)
     {
+        if (await IsPlatformAdministratorAsync(ownerUserId, cancellationToken))
+            return;
+
         var subscription = await RequireUsableSubscriptionAsync(ownerUserId, entitlementKey, cancellationToken);
         var check = await entitlementResolver.CheckBooleanCapabilityAsync(subscription.PlanId, entitlementKey, cancellationToken);
 
@@ -33,6 +36,9 @@ public sealed class AccountEntitlementEnforcementService(
             throw new ArgumentOutOfRangeException(nameof(currentUsage), "Current usage cannot be negative.");
         if (requestedAdditional <= 0)
             throw new ArgumentOutOfRangeException(nameof(requestedAdditional), "Requested additional usage must be greater than zero.");
+
+        if (await IsPlatformAdministratorAsync(ownerUserId, cancellationToken))
+            return;
 
         var subscription = await RequireUsableSubscriptionAsync(ownerUserId, entitlementKey, cancellationToken);
         var check = await entitlementResolver.CheckIntegerLimitAsync(
@@ -58,6 +64,21 @@ public sealed class AccountEntitlementEnforcementService(
                 check.Limit,
                 currentUsage,
                 requestedAdditional);
+    }
+
+    private Task<bool> IsPlatformAdministratorAsync(Guid ownerUserId, CancellationToken cancellationToken)
+    {
+        if (ownerUserId == Guid.Empty) return Task.FromResult(false);
+
+        // The built-in Administrator is a platform/operator identity: it manages the
+        // subscription catalog itself and must not be locked out by tenant billing
+        // limits during an upgrade. Customer accounts continue through the normal
+        // subscription/entitlement path below.
+        return dbContext.AuthUsers.AsNoTracking().AnyAsync(
+            x => x.Id == ownerUserId &&
+                 x.IsActive &&
+                 x.Role == "Administrator",
+            cancellationToken);
     }
 
     private async Task<SubscriptionSnapshot> RequireUsableSubscriptionAsync(
