@@ -1,19 +1,20 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
+using AIWordPressManager.Application.Abstractions;
 using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Web.Services;
 
 public sealed class BackupManagementService
 {
-    private const int CurrentManifestVersion = 4;
+    private const int CurrentManifestVersion = 5;
     private const int CryptographicManifestVersion = 3;
     private const int ScopedPayloadManifestVersion = 4;
+    private const int SecretRecoveryManifestVersion = 5;
     private const string LegacyPayloadPrefix = "data/";
     private const string ScopedPayloadPrefix = "payload/";
     private const string SecretRecoveryBlocked = "wrapped-key-required";
-    private const string SecretRecoveryWrapped = "wrapped-key-v1";
     private readonly object _sync = new();
     private readonly string _applicationRoot;
     private readonly string _dataDirectory;
@@ -82,10 +83,14 @@ public sealed class BackupManagementService
         }
     }
 
-    public BackupFileInfo CreateBackup(string? note = null)
+    public BackupFileInfo CreateBackup(string? note = null, string? wrappedSecretKeyEnvelope = null)
     {
         lock (_sync)
         {
+            var normalizedWrappedEnvelope = NormalizeWrappedEnvelope(wrappedSecretKeyEnvelope);
+            var secretRecoveryMode = normalizedWrappedEnvelope is null
+                ? SecretRecoveryBlocked
+                : SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Mode;
             var now = DateTime.UtcNow;
             var fileName = $"AIWM-Backup-{now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.zip";
             var target = Path.Combine(_backupDirectory, fileName);
@@ -116,7 +121,8 @@ public sealed class BackupManagementService
                 Environment.MachineName,
                 manifestFiles,
                 databaseProvider,
-                SecretRecoveryBlocked);
+                secretRecoveryMode,
+                normalizedWrappedEnvelope);
 
             try
             {
@@ -143,7 +149,7 @@ public sealed class BackupManagementService
                     "Create",
                     info.FileName,
                     true,
-                    $"Created verified backup containing {manifestFiles.Count} managed file(s), including {info.DatabaseCount} database file(s) and {manifestFiles.Count(x => x.Kind == nameof(BackupContentKind.Configuration))} configuration file(s).");
+                    $"Created verified backup containing {manifestFiles.Count} managed file(s), including {info.DatabaseCount} database file(s) and {manifestFiles.Count(x => x.Kind == nameof(BackupContentKind.Configuration))} configuration file(s). Secret recovery material: {(normalizedWrappedEnvelope is null ? "not included" : "wrapped envelope included")}.");
                 return info;
             }
             catch (Exception ex)
@@ -175,7 +181,7 @@ public sealed class BackupManagementService
         }
     }
 
-    public RestoreReadinessResult CheckRestoreReadiness(string fileName)
+    public RestoreReadinessResult CheckRestoreReadiness(string fileName, bool secretRecoveryValidated = false)
     {
         lock (_sync)
         {
@@ -183,17 +189,24 @@ public sealed class BackupManagementService
             var hasDatabaseConfiguration = inspection.Files.Any(x =>
                 string.Equals(x.Kind, nameof(BackupContentKind.Configuration), StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(x.RelativePath, "Config/setup.database.json", StringComparison.OrdinalIgnoreCase));
-            var secretRecoveryAvailable = string.Equals(
-                inspection.SecretRecoveryMode,
-                SecretRecoveryWrapped,
-                StringComparison.OrdinalIgnoreCase);
+            var hasWrappedRecoveryMaterial = string.Equals(
+                                                inspection.SecretRecoveryMode,
+                                                SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Mode,
+                                                StringComparison.OrdinalIgnoreCase) &&
+                                            IsStructurallyValidWrappedEnvelope(inspection.WrappedSecretKeyEnvelope);
+            var secretRecoveryAvailable = hasWrappedRecoveryMaterial && secretRecoveryValidated;
+            var secretRecoveryMessage = secretRecoveryAvailable
+                ? "The wrapped secret-protection key is present and the recovery secret was cryptographically validated for this preflight."
+                : hasWrappedRecoveryMaterial
+                    ? "Wrapped secret recovery material is present, but the recovery secret has not been cryptographically validated for this preflight."
+                    : "The live AES secret key is intentionally not stored in this unencrypted ZIP. Disaster recovery of protected secrets requires a wrapped-key envelope created with a separate recovery secret.";
             var checks = new List<RestoreReadinessCheck>
             {
                 new("Archive integrity", "سلامة ملف النسخة", inspection.IsValid, inspection.Message),
                 new("Database content", "محتوى قواعد البيانات", inspection.DatabaseCount > 0, inspection.DatabaseCount > 0 ? $"{inspection.DatabaseCount} database file(s) found." : "No database files found."),
                 new("Configuration state", "حالة الإعدادات", hasDatabaseConfiguration, hasDatabaseConfiguration ? "Database setup configuration is included." : "The environment database setup configuration is not included in this archive."),
                 new("Managed data coverage", "تغطية بيانات التطبيق", inspection.Files.Count >= inspection.DatabaseCount && inspection.Files.Count > 0, $"{inspection.Files.Count} managed file(s) declared in the manifest."),
-                new("Protected secret recovery", "استعادة الأسرار المحمية", secretRecoveryAvailable, secretRecoveryAvailable ? "Protected secret recovery metadata is available." : "The live AES secret key is intentionally not stored in this unencrypted ZIP. Disaster recovery of protected secrets remains blocked until a wrapped-key export/import path is implemented."),
+                new("Protected secret recovery", "استعادة الأسرار المحمية", secretRecoveryAvailable, secretRecoveryMessage),
                 new("Manifest compatibility", "توافق ملف التعريف", inspection.ManifestVersion is >= 1 and <= CurrentManifestVersion, $"Manifest version: {inspection.ManifestVersion}"),
                 new("Free disk space", "المساحة الحرة", HasEnoughFreeSpace(inspection.UncompressedBytes), $"Required estimate: {FormatBytes(inspection.UncompressedBytes * 2)}"),
                 new("Application state", "حالة التطبيق", false, "Restore must run while the web application is stopped to avoid replacing open application data files.")
@@ -249,6 +262,9 @@ public sealed class BackupManagementService
 
             var payloadPrefix = manifest.Version >= ScopedPayloadManifestVersion ? ScopedPayloadPrefix : LegacyPayloadPrefix;
             var issues = new List<string>();
+            if (manifest.Version >= SecretRecoveryManifestVersion)
+                ValidateSecretRecoveryManifest(manifest, issues);
+
             foreach (var entry in archive.Entries.Where(x => !string.IsNullOrEmpty(x.Name)))
             {
                 if (string.Equals(entry.FullName, "manifest.json", StringComparison.OrdinalIgnoreCase)) continue;
@@ -359,7 +375,8 @@ public sealed class BackupManagementService
                 payloadEntries.Sum(x => x.Length),
                 manifest.Files,
                 manifest.DatabaseProvider,
-                manifest.SecretRecoveryMode);
+                manifest.SecretRecoveryMode,
+                manifest.WrappedSecretKeyEnvelope);
         }
         catch (InvalidDataException ex)
         {
@@ -546,6 +563,61 @@ public sealed class BackupManagementService
         return full;
     }
 
+    private static void ValidateSecretRecoveryManifest(BackupManifest manifest, ICollection<string> issues)
+    {
+        if (string.Equals(manifest.SecretRecoveryMode, SecretRecoveryBlocked, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(manifest.WrappedSecretKeyEnvelope))
+                issues.Add("A blocked secret-recovery manifest cannot contain a wrapped key envelope.");
+            return;
+        }
+
+        if (string.Equals(manifest.SecretRecoveryMode, SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Mode, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!IsStructurallyValidWrappedEnvelope(manifest.WrappedSecretKeyEnvelope))
+                issues.Add("The wrapped secret-recovery envelope is missing or malformed.");
+            return;
+        }
+
+        issues.Add("The backup manifest contains an unsupported secret-recovery mode.");
+    }
+
+    private static string? NormalizeWrappedEnvelope(string? wrappedSecretKeyEnvelope)
+    {
+        if (string.IsNullOrWhiteSpace(wrappedSecretKeyEnvelope)) return null;
+        var candidate = wrappedSecretKeyEnvelope.Trim();
+        if (!IsStructurallyValidWrappedEnvelope(candidate))
+            throw new ArgumentException("The wrapped secret-recovery envelope is malformed or unsupported.", nameof(wrappedSecretKeyEnvelope));
+        return candidate;
+    }
+
+    private static bool IsStructurallyValidWrappedEnvelope(string? wrappedSecretKeyEnvelope)
+    {
+        if (string.IsNullOrWhiteSpace(wrappedSecretKeyEnvelope) ||
+            wrappedSecretKeyEnvelope.Length > SecretRecoveryKeyEnvelopeFormat.MaximumEnvelopeLength ||
+            !wrappedSecretKeyEnvelope.StartsWith(SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Prefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        try
+        {
+            var payload = Convert.FromBase64String(wrappedSecretKeyEnvelope[SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Prefix.Length..]);
+            try
+            {
+                return payload.Length == SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1PayloadBytes;
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(payload);
+            }
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     private static bool TryNormalizePayloadPath(string fullName, string payloadPrefix, out string relativePath)
     {
         relativePath = string.Empty;
@@ -633,7 +705,8 @@ public sealed record BackupManifest(
     string MachineName,
     IReadOnlyList<BackupManifestFile> Files,
     string? DatabaseProvider = null,
-    string? SecretRecoveryMode = null);
+    string? SecretRecoveryMode = null,
+    string? WrappedSecretKeyEnvelope = null);
 public sealed record BackupManifestFile(string Name, long SizeBytes, string? Sha256 = null, string? RelativePath = null, string Kind = "Database");
 public sealed record BackupAuditEntry(DateTime TimestampUtc, string Action, string FileName, bool Succeeded, string Message);
 public sealed record RestoreReadinessCheck(string Name, string NameAr, bool Passed, string Message);
@@ -650,7 +723,8 @@ public sealed record BackupInspectionResult(
     long UncompressedBytes,
     IReadOnlyList<BackupManifestFile> Files,
     string? DatabaseProvider = null,
-    string? SecretRecoveryMode = null)
+    string? SecretRecoveryMode = null,
+    string? WrappedSecretKeyEnvelope = null)
 {
     public static BackupInspectionResult Invalid(string fileName, string message, int manifestVersion = 0, DateTime? createdAtUtc = null) =>
         new(fileName, false, message, manifestVersion, createdAtUtc, null, null, 0, 0, Array.Empty<BackupManifestFile>());

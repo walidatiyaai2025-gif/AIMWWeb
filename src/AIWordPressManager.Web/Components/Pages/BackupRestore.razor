@@ -2,9 +2,11 @@
 @page "/module/backups"
 @rendermode InteractiveServer
 @implements IDisposable
+@using AIWordPressManager.Application.Abstractions
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
+@inject ISecretRecoveryKeyService SecretRecovery
 
 <PageTitle>@(L.IsArabic ? "النسخ الاحتياطي" : "Backup & Restore")</PageTitle>
 
@@ -13,7 +15,7 @@
         <div>
             <span class="workspace-kicker">DATA PROTECTION</span>
             <h1>@(L.IsArabic ? "مركز النسخ والاستعادة الآمنة" : "Backup & Restore Safety Center")</h1>
-            <p>@(L.IsArabic ? "أنشئ نسخة موثقة لبيانات التطبيق وإعداداته، افحص محتواها، وشغّل فحص الجاهزية قبل أي استعادة." : "Create a verified archive of application data and configuration, inspect its contents, and run restore readiness checks before any recovery operation.")</p>
+            <p>@(L.IsArabic ? "أنشئ نسخة موثقة لبيانات التطبيق وإعداداته، مع مفتاح استعادة مشفّر اختياري للأسرار المحمية." : "Create a verified archive of application data and configuration, with optional encrypted recovery material for protected secrets.")</p>
         </div>
         <button class="btn primary" disabled="@_working" @onclick="CreateAsync">＋ @(_working ? (L.IsArabic ? "جارٍ الإنشاء..." : "Creating...") : (L.IsArabic ? "إنشاء نسخة" : "Create backup"))</button>
     </section>
@@ -30,12 +32,25 @@
             <span>@(L.IsArabic ? "ملاحظة النسخة" : "Backup note")</span>
             <input @bind="_note" disabled="@_working" placeholder="@(L.IsArabic ? "مثال: قبل تحديث النظام" : "Example: before system update")" />
         </label>
+        <label>
+            <span>@(L.IsArabic ? "سر الاستعادة" : "Recovery secret")</span>
+            <input type="password" @bind="_recoverySecret" disabled="@_working" minlength="16" maxlength="1024" autocomplete="new-password" placeholder="@(L.IsArabic ? "16 حرفاً على الأقل" : "At least 16 characters")" />
+        </label>
+        <label>
+            <span>@(L.IsArabic ? "تأكيد سر الاستعادة" : "Confirm recovery secret")</span>
+            <input type="password" @bind="_recoverySecretConfirm" disabled="@_working" minlength="16" maxlength="1024" autocomplete="new-password" placeholder="@(L.IsArabic ? "أعد إدخال السر عند إنشاء نسخة" : "Re-enter when creating a backup")" />
+        </label>
         <div>
             <button class="btn" disabled="@_working" @onclick="Reload">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
             <button class="btn" disabled="@_working" @onclick="CopyPathAsync">@(L.IsArabic ? "نسخ المسار" : "Copy path")</button>
             <code>@_backups.BackupDirectory</code>
         </div>
     </section>
+
+    <div class="settings-note">
+        <span>🔐</span>
+        <p>@(L.IsArabic ? "سر الاستعادة لا يُحفظ داخل النسخة أو سجل العمليات. احتفظ به خارج النظام. اترك الحقلين فارغين لإنشاء نسخة بدون إمكانية استعادة بيانات الاعتماد المشفرة. لفحص الجاهزية أدخل السر في حقل «سر الاستعادة» فقط." : "The recovery secret is never stored in the archive or audit trail. Keep it outside the system. Leave both fields empty to create a backup without encrypted-credential recovery. For preflight validation, enter the secret in the Recovery secret field only.")</p>
+    </div>
 
     <section class="panel backup-list">
         <header><div><span class="workspace-kicker">ARCHIVES</span><h2>@(L.IsArabic ? "النسخ المتاحة" : "Available backups")</h2></div></header>
@@ -58,7 +73,7 @@
                     <span class="badge @(item.IsValid ? "success" : "danger")">@(item.IsValid ? (L.IsArabic ? "سليمة" : "Verified") : (L.IsArabic ? "غير سليمة" : "Invalid"))</span>
                     <div class="backup-actions">
                         <button class="btn compact" disabled="@_working" @onclick="() => Inspect(item)">⌕ @(L.IsArabic ? "فحص" : "Inspect")</button>
-                        <button class="btn compact" disabled="@_working" @onclick="() => Preflight(item)">✓ @(L.IsArabic ? "جاهزية" : "Preflight")</button>
+                        <button class="btn compact" disabled="@_working" @onclick="() => PreflightAsync(item)">✓ @(L.IsArabic ? "جاهزية" : "Preflight")</button>
                         <button class="btn compact danger" disabled="@_working" @onclick="() => Delete(item)">× @(L.IsArabic ? "حذف" : "Delete")</button>
                     </div>
                 </article>
@@ -77,7 +92,7 @@
                 <div><small>@(L.IsArabic ? "الحجم بعد الفك" : "Uncompressed size")</small><strong>@FormatBytes(_inspection.UncompressedBytes)</strong></div>
                 <div><small>@(L.IsArabic ? "قواعد البيانات" : "Databases")</small><strong>@_inspection.DatabaseCount</strong></div>
                 <div><small>@(L.IsArabic ? "الملفات المُدارة" : "Managed files")</small><strong>@_inspection.Files.Count</strong></div>
-                <div><small>@(L.IsArabic ? "استعادة الأسرار" : "Secret recovery")</small><strong>@SecretRecoveryLabel(_inspection.SecretRecoveryMode)</strong></div>
+                <div><small>@(L.IsArabic ? "استعادة الأسرار" : "Secret recovery")</small><strong>@SecretRecoveryLabel(_inspection.SecretRecoveryMode, _inspection.WrappedSecretKeyEnvelope)</strong></div>
             </div>
             <div class="settings-note"><span>ⓘ</span><p>@_inspection.Message</p></div>
             @foreach (var file in _inspection.Files)
@@ -96,7 +111,7 @@
             {
                 <article class="backup-row"><div class="backup-icon">@(check.Passed ? "✓" : "!")</div><div class="backup-main"><strong>@(L.IsArabic ? check.NameAr : check.Name)</strong><small>@check.Message</small></div><span class="badge @(check.Passed ? "success" : "danger")">@(check.Passed ? (L.IsArabic ? "اجتاز" : "Passed") : (L.IsArabic ? "موقوف" : "Blocked"))</span></article>
             }
-            <div class="settings-note"><span>⚠</span><p>@(L.IsArabic ? "الاستعادة داخل التطبيق تظل محظورة. يجب إيقاف التطبيق ثم تنفيذ الاستعادة دون اتصال، كما أن استعادة الأسرار المحمية تتطلب مسار تصدير مفتاح مشفّر قبل اعتبار النسخة صالحة للتعافي الكامل." : "In-process restore remains blocked. Stop the application and perform an offline restore; protected-secret recovery also requires an encrypted key-export path before the archive can be considered complete disaster recovery.")</p></div>
+            <div class="settings-note"><span>⚠</span><p>@(L.IsArabic ? "الاستعادة داخل التطبيق تظل محظورة. يجب إيقاف التطبيق وتنفيذ الاستعادة دون اتصال. وجود المفتاح المغلف لا يكفي وحده؛ فحص الجاهزية يتحقق أيضاً من سر الاستعادة قبل السماح باعتبار الأسرار قابلة للتعافي." : "In-process restore remains blocked. Stop the application and perform an offline restore. A wrapped key alone is not enough; preflight also validates the recovery secret before protected secrets are considered recoverable.")</p></div>
         </section>
     }
 
@@ -124,6 +139,8 @@
     private BackupInspectionResult? _inspection;
     private RestoreReadinessResult? _readiness;
     private string _note = string.Empty;
+    private string _recoverySecret = string.Empty;
+    private string _recoverySecretConfirm = string.Empty;
     private bool _working;
     private bool _disposed;
 
@@ -148,20 +165,36 @@
         }
     }
 
-    private Task CreateAsync()
+    private async Task CreateAsync()
     {
-        if (_working || _disposed) return Task.CompletedTask;
+        if (_working || _disposed) return;
 
         try
         {
             _working = true;
-            var item = _backups.CreateBackup(_note);
-            if (_disposed) return Task.CompletedTask;
+            string? wrappedEnvelope = null;
+            if (!string.IsNullOrWhiteSpace(_recoverySecret) || !string.IsNullOrWhiteSpace(_recoverySecretConfirm))
+            {
+                if (string.IsNullOrWhiteSpace(_recoverySecret) || string.IsNullOrWhiteSpace(_recoverySecretConfirm))
+                    throw new InvalidOperationException(L.IsArabic ? "أدخل سر الاستعادة وأكده قبل إنشاء النسخة." : "Enter and confirm the recovery secret before creating the backup.");
+                if (!string.Equals(_recoverySecret, _recoverySecretConfirm, StringComparison.Ordinal))
+                    throw new InvalidOperationException(L.IsArabic ? "سر الاستعادة وتأكيده غير متطابقين." : "The recovery secret and confirmation do not match.");
+
+                wrappedEnvelope = await SecretRecovery.ExportWrappedKeyAsync(_recoverySecret);
+                if (!await SecretRecovery.ValidateWrappedKeyAsync(wrappedEnvelope, _recoverySecret))
+                    throw new InvalidOperationException(L.IsArabic ? "تعذر التحقق من مفتاح الاستعادة المشفّر." : "The wrapped recovery key could not be verified.");
+            }
+
+            var item = _backups.CreateBackup(_note, wrappedEnvelope);
+            if (_disposed) return;
 
             _note = string.Empty;
             Reload();
             _selected = _items.FirstOrDefault(x => x.FileName == item.FileName);
-            Notifications.Success(L.IsArabic ? $"تم إنشاء النسخة {item.FileName}." : $"Backup {item.FileName} was created.");
+            Notifications.Success(
+                wrappedEnvelope is null
+                    ? (L.IsArabic ? $"تم إنشاء النسخة {item.FileName} بدون استعادة للأسرار المحمية." : $"Backup {item.FileName} was created without protected-secret recovery.")
+                    : (L.IsArabic ? $"تم إنشاء النسخة {item.FileName} مع مفتاح استعادة مغلف." : $"Backup {item.FileName} was created with wrapped secret recovery."));
         }
         catch (Exception ex)
         {
@@ -169,10 +202,9 @@
         }
         finally
         {
+            ClearRecoverySecretFields();
             if (!_disposed) _working = false;
         }
-
-        return Task.CompletedTask;
     }
 
     private void Inspect(BackupFileInfo item)
@@ -186,15 +218,45 @@
         }, L.IsArabic ? "فشل فحص النسخة" : "Backup inspection failed");
     }
 
-    private void Preflight(BackupFileInfo item)
+    private async Task PreflightAsync(BackupFileInfo item)
     {
-        RunOperation(() =>
+        if (_working || _disposed) return;
+
+        try
         {
+            _working = true;
             _selected = item;
             _inspection = _backups.Inspect(item.FileName);
-            _readiness = _backups.CheckRestoreReadiness(item.FileName);
+
+            var secretRecoveryValidated = false;
+            if (_inspection.IsValid &&
+                string.Equals(_inspection.SecretRecoveryMode, SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Mode, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(_inspection.WrappedSecretKeyEnvelope) &&
+                !string.IsNullOrWhiteSpace(_recoverySecret))
+            {
+                secretRecoveryValidated = await SecretRecovery.ValidateWrappedKeyAsync(
+                    _inspection.WrappedSecretKeyEnvelope,
+                    _recoverySecret);
+                if (!secretRecoveryValidated && !_disposed)
+                {
+                    Notifications.Error(
+                        L.IsArabic ? "سر الاستعادة لا يطابق المفتاح المغلف في هذه النسخة." : "The recovery secret does not match the wrapped key in this backup.",
+                        L.IsArabic ? "فشل التحقق من سر الاستعادة" : "Recovery secret validation failed");
+                }
+            }
+
+            _readiness = _backups.CheckRestoreReadiness(item.FileName, secretRecoveryValidated);
             Reload();
-        }, L.IsArabic ? "فشل فحص الجاهزية" : "Preflight check failed");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex, L.IsArabic ? "فشل فحص الجاهزية" : "Preflight check failed");
+        }
+        finally
+        {
+            ClearRecoverySecretFields();
+            if (!_disposed) _working = false;
+        }
     }
 
     private void Delete(BackupFileInfo item)
@@ -256,6 +318,12 @@
         Notifications.Error(L.TranslateMessage(ex.Message), title, ex.ToString());
     }
 
+    private void ClearRecoverySecretFields()
+    {
+        _recoverySecret = string.Empty;
+        _recoverySecretConfirm = string.Empty;
+    }
+
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private static string FormatBytes(long value) => value switch { >= 1073741824 => $"{value / 1073741824d:0.00} GB", >= 1048576 => $"{value / 1048576d:0.00} MB", >= 1024 => $"{value / 1024d:0.0} KB", _ => $"{value} B" };
 
@@ -286,9 +354,19 @@
         };
     }
 
-    private string SecretRecoveryLabel(string? mode) => string.Equals(mode, "wrapped-key-required", StringComparison.OrdinalIgnoreCase)
-        ? (L.IsArabic ? "موقوف — يتطلب مفتاحاً مشفراً" : "Blocked — wrapped key required")
-        : (L.IsArabic ? "غير معروف" : "Unknown");
+    private string SecretRecoveryLabel(string? mode, string? wrappedEnvelope)
+    {
+        if (string.Equals(mode, SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Mode, StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(wrappedEnvelope))
+        {
+            return L.IsArabic ? "مفتاح مغلف موجود — يحتاج تحقق السر" : "Wrapped key included — secret validation required";
+        }
+
+        if (string.Equals(mode, "wrapped-key-required", StringComparison.OrdinalIgnoreCase))
+            return L.IsArabic ? "موقوف — لا يوجد مفتاح مغلف" : "Blocked — no wrapped key";
+
+        return L.IsArabic ? "قديم أو غير معروف" : "Legacy or unknown";
+    }
 
     private void Changed()
     {
@@ -300,6 +378,7 @@
     {
         if (_disposed) return;
         _disposed = true;
+        ClearRecoverySecretFields();
         L.Changed -= Changed;
     }
 }

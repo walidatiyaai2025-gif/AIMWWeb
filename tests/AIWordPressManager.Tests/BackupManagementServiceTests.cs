@@ -10,7 +10,7 @@ public sealed class BackupManagementServiceTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"aiwm-backup-tests-{Guid.NewGuid():N}");
 
     [Fact]
-    public void CreateBackup_IncludesManagedDataAndCryptographicallyVerifiesManifestV4()
+    public void CreateBackup_IncludesManagedDataAndCryptographicallyVerifiesManifestV5()
     {
         var service = CreateService();
         var databasePath = Path.Combine(service.DataDirectory, "application.db");
@@ -26,10 +26,11 @@ public sealed class BackupManagementServiceTests : IDisposable
 
         backup.IsValid.Should().BeTrue();
         inspection.IsValid.Should().BeTrue();
-        inspection.ManifestVersion.Should().Be(4);
+        inspection.ManifestVersion.Should().Be(5);
         inspection.DatabaseCount.Should().Be(1);
         inspection.DatabaseProvider.Should().Be("SQLite");
         inspection.SecretRecoveryMode.Should().Be("wrapped-key-required");
+        inspection.WrappedSecretKeyEnvelope.Should().BeNull();
         inspection.Files.Should().Contain(x =>
             x.RelativePath == "Data/application.db" &&
             x.Kind == nameof(BackupContentKind.Database) &&
