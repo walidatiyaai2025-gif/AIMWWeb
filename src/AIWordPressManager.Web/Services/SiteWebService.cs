@@ -1,4 +1,5 @@
 using AIWordPressManager.Application.Abstractions;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Domain.Enums;
@@ -12,7 +13,8 @@ public sealed class SiteWebService(
     AppDbContext dbContext,
     IWordPressConnectionTester connectionTester,
     ISecretProtectionService secretProtectionService,
-    CurrentUserContext currentUser)
+    CurrentUserContext currentUser,
+    IAccountEntitlementEnforcementService entitlementEnforcement)
 {
     private Guid OwnerId => currentUser.UserId;
 
@@ -41,6 +43,13 @@ public sealed class SiteWebService(
         RequireManagePermission();
         ValidateName(name);
         var normalizedUri = NormalizeSiteUri(url);
+        var currentUsage = await dbContext.Sites.AsNoTracking().LongCountAsync(x => x.OwnerUserId == OwnerId, cancellationToken);
+        await entitlementEnforcement.RequireAdditionalUsageAsync(
+            OwnerId,
+            EntitlementDefinitionCatalog.SitesMax,
+            currentUsage,
+            1,
+            cancellationToken);
         var site = new Site(name.Trim(), normalizedUri, DateTime.UtcNow, OwnerId);
         dbContext.Sites.Add(site);
 
