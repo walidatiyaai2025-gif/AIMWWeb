@@ -66,11 +66,34 @@ public static class SecretRecoveryEnvelopeCodec
         ValidateMasterKey(expectedMasterKey);
         ValidateRecoverySecret(recoverySecret);
 
+        byte[]? recoveredKey = null;
+        try
+        {
+            recoveredKey = Unwrap(wrappedKeyEnvelope, recoverySecret);
+            return CryptographicOperations.FixedTimeEquals(recoveredKey, expectedMasterKey);
+        }
+        catch (CryptographicException)
+        {
+            return false;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+        finally
+        {
+            if (recoveredKey is not null) CryptographicOperations.ZeroMemory(recoveredKey);
+        }
+    }
+
+    internal static byte[] Unwrap(string wrappedKeyEnvelope, string recoverySecret)
+    {
+        ValidateRecoverySecret(recoverySecret);
         if (string.IsNullOrWhiteSpace(wrappedKeyEnvelope) ||
             wrappedKeyEnvelope.Length > SecretRecoveryKeyEnvelopeFormat.MaximumEnvelopeLength ||
             !wrappedKeyEnvelope.StartsWith(Prefix, StringComparison.Ordinal))
         {
-            return false;
+            throw new CryptographicException("The wrapped secret-recovery envelope is missing, malformed, or unsupported.");
         }
 
         byte[] payload;
@@ -78,15 +101,15 @@ public static class SecretRecoveryEnvelopeCodec
         {
             payload = Convert.FromBase64String(wrappedKeyEnvelope[Prefix.Length..]);
         }
-        catch (FormatException)
+        catch (FormatException ex)
         {
-            return false;
+            throw new CryptographicException("The wrapped secret-recovery envelope is not valid Base64 data.", ex);
         }
 
         if (payload.Length != SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1PayloadBytes || payload.Length != PayloadSize)
         {
             CryptographicOperations.ZeroMemory(payload);
-            return false;
+            throw new CryptographicException("The wrapped secret-recovery envelope has an invalid payload length.");
         }
 
         var recoverySecretBytes = Encoding.UTF8.GetBytes(recoverySecret);
@@ -111,20 +134,19 @@ public static class SecretRecoveryEnvelopeCodec
             {
                 using var aes = new AesGcm(wrappingKey, TagSize);
                 aes.Decrypt(nonce, cipherText, tag, recoveredKey, AssociatedData);
+                return recoveredKey;
             }
             catch (CryptographicException)
             {
-                return false;
+                CryptographicOperations.ZeroMemory(recoveredKey);
+                throw new CryptographicException("The recovery secret is incorrect or the wrapped key envelope was altered.");
             }
-
-            return CryptographicOperations.FixedTimeEquals(recoveredKey, expectedMasterKey);
         }
         finally
         {
             CryptographicOperations.ZeroMemory(payload);
             CryptographicOperations.ZeroMemory(recoverySecretBytes);
             CryptographicOperations.ZeroMemory(wrappingKey);
-            CryptographicOperations.ZeroMemory(recoveredKey);
         }
     }
 
