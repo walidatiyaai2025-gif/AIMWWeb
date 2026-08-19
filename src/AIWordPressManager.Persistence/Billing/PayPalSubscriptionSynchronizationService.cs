@@ -248,6 +248,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
             ? "PayPal subscription reconciled from authoritative provider snapshot."
             : $"Verified PayPal event '{trigger.EventType}' reconciled from authoritative provider snapshot.";
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var changed = false;
         if (authoritativePlanId.HasValue && authoritativePlanId.Value != local.PlanId)
         {
@@ -283,6 +284,7 @@ public sealed class PayPalSubscriptionSynchronizationService(
             }
         }
 
+        await transaction.CommitAsync(cancellationToken);
         return changed ? SyncOutcome.Changed : SyncOutcome.Unchanged;
     }
 
