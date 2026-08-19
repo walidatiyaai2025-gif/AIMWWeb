@@ -198,29 +198,49 @@
 
         @if (_workspace.Subscription is not null)
         {
-            <AppCard Eyebrow="@(L.IsArabic ? "التدقيق" : "AUDIT")" Title="@(L.IsArabic ? "سجل الاشتراك" : "Subscription audit")" Subtitle="@(L.IsArabic ? "انتقالات الحالة وتغييرات الخطة المؤكدة من السلطة الداخلية أو المزود." : "Status transitions and plan changes confirmed by the internal authority or provider reconciliation.")" HeadingLevel="3">
+            var history = _workspace.History ?? Array.Empty<AccountBillingHistoryItem>();
+            <AppCard Eyebrow="@(L.IsArabic ? "سجل الفوترة" : "BILLING HISTORY")" Title="@(L.IsArabic ? "سجل الفوترة والإشعارات" : "Billing & notification history")" Subtitle="@(L.IsArabic ? "يعرض فقط تغييرات الاشتراك والخطة الملتزمة بعد المصالحة، مع حالة إشعار البريد المرتبط بها. الرجوع من المتصفح أو قبول أمر PayPal ليس حدث نجاح هنا." : "Shows only committed subscription and plan changes after reconciliation, together with correlated email delivery state. Browser returns and accepted PayPal commands are not success events here.")" HeadingLevel="3">
                 <ChildContent>
-                    @if (_workspace.Transitions.Count == 0 && _workspace.PlanChanges.Count == 0)
+                    @if (history.Count == 0)
                     {
-                        <AppEmptyState Icon="◷" Title="@(L.IsArabic ? "لا توجد تغييرات مسجلة" : "No recorded changes")" Description="@(L.IsArabic ? "لم يتم تسجيل انتقال حالة أو تغيير خطة لهذا الاشتراك." : "No status transition or plan change has been recorded for this subscription.")" />
+                        <AppEmptyState Icon="◷" Title="@(L.IsArabic ? "لا توجد أحداث فوترة موثقة" : "No authoritative billing events")" Description="@(L.IsArabic ? "سيظهر السجل عندما يلتزم انتقال حالة أو تغيير خطة بواسطة سلطة الاشتراك أو مصالحة المزود." : "History appears after a status transition or plan change is committed by subscription authority or provider reconciliation.")" />
                     }
                     else
                     {
-                        <div class="billing-history" role="list" aria-label="@(L.IsArabic ? "تدقيق الاشتراك" : "Subscription audit history")">
-                            @foreach (var transition in _workspace.Transitions)
+                        <div class="billing-history" role="list" aria-label="@(L.IsArabic ? "سجل الفوترة الموثق" : "Authoritative billing history")">
+                            @foreach (var item in history)
                             {
                                 <article class="billing-history__item" role="listitem">
-                                    <div class="billing-history__states"><AppBadge Tone="neutral" Text="@StatusLabel(transition.FromStatus)" /><span aria-hidden="true">→</span><AppBadge Tone="@StatusTone(transition.ToStatus)" Text="@StatusLabel(transition.ToStatus)" /></div>
-                                    <div class="billing-history__meta"><strong>@SourceLabel(transition.Source)</strong><time datetime="@transition.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture)">@FormatDate(transition.OccurredAtUtc)</time></div>
-                                    <p>@transition.Reason</p>
-                                </article>
-                            }
-                            @foreach (var change in _workspace.PlanChanges)
-                            {
-                                <article class="billing-history__item" role="listitem">
-                                    <div class="billing-history__states"><AppBadge Tone="info" Text="@(L.IsArabic ? "تغيير خطة" : "Plan change")" /></div>
-                                    <div class="billing-history__meta"><strong>@SourceLabel(change.Source)</strong><time datetime="@change.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture)">@FormatDate(change.OccurredAtUtc)</time></div>
-                                    <p>@change.Reason</p>
+                                    <div class="billing-history__states">
+                                        @if (item.Kind == AccountBillingHistoryKind.StatusTransition && item.FromStatus.HasValue && item.ToStatus.HasValue)
+                                        {
+                                            <AppBadge Tone="neutral" Text="@StatusLabel(item.FromStatus.Value)" />
+                                            <span aria-hidden="true">→</span>
+                                            <AppBadge Tone="@StatusTone(item.ToStatus.Value)" Text="@StatusLabel(item.ToStatus.Value)" />
+                                        }
+                                        else
+                                        {
+                                            <AppBadge Tone="info" Text="@(L.IsArabic ? "تغيير خطة" : "Plan change")" />
+                                            <span>@HistoryPlanName(item, true)</span>
+                                            <span aria-hidden="true">→</span>
+                                            <strong>@HistoryPlanName(item, false)</strong>
+                                            @if (item.Amount.HasValue && !string.IsNullOrWhiteSpace(item.Currency))
+                                            {
+                                                <AppBadge Tone="neutral" Text="@HistoryAmount(item)" />
+                                            }
+                                        }
+                                        <AppBadge Tone="@NotificationTone(item.NotificationState)" Text="@NotificationLabel(item.NotificationState)" />
+                                    </div>
+                                    <div class="billing-history__meta">
+                                        <strong>@SourceLabel(item.Source)</strong>
+                                        <time datetime="@item.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture)">@FormatDate(item.OccurredAtUtc)</time>
+                                    </div>
+                                    <p>@item.Reason</p>
+                                    @if (item.ProviderEvidenceAtUtc.HasValue)
+                                    {
+                                        <small>@($"{(L.IsArabic ? "دليل المزود" : "Provider evidence")}: {FormatDate(item.ProviderEvidenceAtUtc)}")</small>
+                                    }
+                                    <small>@NotificationDescription(item)</small>
                                 </article>
                             }
                         </div>
@@ -365,4 +385,51 @@
     private string EntitlementLabel(string key) => key switch { EntitlementDefinitionCatalog.SitesMax => L.IsArabic ? "الحد الأقصى للمواقع" : "Maximum sites", EntitlementDefinitionCatalog.EmailSiteRecipientsMax => L.IsArabic ? "مستلمو بريد الموقع" : "Site email recipients", EntitlementDefinitionCatalog.EmailSchedulesMax => L.IsArabic ? "جداول البريد" : "Email schedules", EntitlementDefinitionCatalog.EmailDashboardDigest => L.IsArabic ? "ملخص الداشبورد بالبريد" : "Dashboard email digest", EntitlementDefinitionCatalog.AutomationSchedulesMax => L.IsArabic ? "جداول الأتمتة" : "Automation schedules", EntitlementDefinitionCatalog.AiEnabled => L.IsArabic ? "الذكاء الاصطناعي" : "AI capability", EntitlementDefinitionCatalog.AiMonthlyRequestsMax => L.IsArabic ? "طلبات AI الشهرية" : "Monthly AI requests", EntitlementDefinitionCatalog.BackupRetentionDays => L.IsArabic ? "احتفاظ النسخ الاحتياطي" : "Backup retention", EntitlementDefinitionCatalog.PremiumSeo => L.IsArabic ? "SEO المميز" : "Premium SEO", _ => key };
     private string EntitlementValue(PlanEntitlementItem item) { if (item.ValueType == EntitlementValueType.Boolean && bool.TryParse(item.CanonicalValue, out var enabled)) return enabled ? (L.IsArabic ? "مفعّل" : "Enabled") : (L.IsArabic ? "غير مفعّل" : "Disabled"); if (item.Key == EntitlementDefinitionCatalog.BackupRetentionDays && long.TryParse(item.CanonicalValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var days)) return L.IsArabic ? $"{days} يوم" : $"{days} days"; return item.CanonicalValue; }
     private string SourceLabel(SubscriptionTransitionSource source) => source switch { SubscriptionTransitionSource.Provider => L.IsArabic ? "المزود" : "Provider", SubscriptionTransitionSource.Administration => L.IsArabic ? "الإدارة" : "Administration", _ => L.IsArabic ? "النظام" : "System" };
+
+    private string HistoryPlanName(AccountBillingHistoryItem item, bool from)
+    {
+        var name = L.IsArabic
+            ? (from ? item.FromPlanNameAr : item.ToPlanNameAr)
+            : (from ? item.FromPlanNameEn : item.ToPlanNameEn);
+        return string.IsNullOrWhiteSpace(name) ? (L.IsArabic ? "خطة غير متاحة" : "Unavailable plan") : name;
+    }
+
+    private string HistoryAmount(AccountBillingHistoryItem item) =>
+        item.Amount.HasValue && !string.IsNullOrWhiteSpace(item.Currency)
+            ? $"{item.Amount.Value.ToString("0.00", CultureInfo.InvariantCulture)} {item.Currency}"
+            : "—";
+
+    private string NotificationLabel(AccountBillingNotificationState state) => state switch
+    {
+        AccountBillingNotificationState.NotConfigured => L.IsArabic ? "لا يوجد مستلم بريد" : "No email recipient",
+        AccountBillingNotificationState.NotQueued => L.IsArabic ? "بانتظار الترحيل" : "Awaiting relay",
+        AccountBillingNotificationState.Queued => L.IsArabic ? "البريد في الطابور" : "Email queued",
+        AccountBillingNotificationState.Sending => L.IsArabic ? "جارٍ الإرسال" : "Sending",
+        AccountBillingNotificationState.Sent => L.IsArabic ? "تم إرسال البريد" : "Email sent",
+        AccountBillingNotificationState.Retrying => L.IsArabic ? "إعادة محاولة" : "Retrying",
+        AccountBillingNotificationState.Failed => L.IsArabic ? "فشل البريد" : "Email failed",
+        AccountBillingNotificationState.Cancelled => L.IsArabic ? "ألغي البريد" : "Email cancelled",
+        _ => L.IsArabic ? "غير معروف" : "Unknown"
+    };
+
+    private static string NotificationTone(AccountBillingNotificationState state) => state switch
+    {
+        AccountBillingNotificationState.Sent => "success",
+        AccountBillingNotificationState.Queued or AccountBillingNotificationState.Sending => "info",
+        AccountBillingNotificationState.Retrying or AccountBillingNotificationState.NotQueued => "warning",
+        AccountBillingNotificationState.Failed or AccountBillingNotificationState.Cancelled => "danger",
+        _ => "neutral"
+    };
+
+    private string NotificationDescription(AccountBillingHistoryItem item) => item.NotificationState switch
+    {
+        AccountBillingNotificationState.NotConfigured => L.IsArabic ? "لم يكن هناك مستلم بريد فوترة مفعّل لهذا الحساب عند قراءة السجل." : "No enabled billing email recipient is currently configured for this account.",
+        AccountBillingNotificationState.NotQueued => L.IsArabic ? "الحدث موثق، لكن لم يتم العثور على رسالة outbox مرتبطة به حتى الآن." : "The event is committed, but no correlated outbox message exists yet.",
+        AccountBillingNotificationState.Sent => $"{(L.IsArabic ? "أرسل في" : "Sent")}: {FormatDate(item.NotificationSentAtUtc)}",
+        AccountBillingNotificationState.Retrying => $"{(L.IsArabic ? "المحاولة" : "Attempt")} {item.NotificationAttemptCount}/{item.NotificationMaxAttempts} · {(L.IsArabic ? "المحاولة التالية" : "Next retry")}: {FormatDate(item.NotificationNextAttemptAtUtc)}",
+        AccountBillingNotificationState.Queued or AccountBillingNotificationState.Sending => $"{(L.IsArabic ? "المحاولة" : "Attempt")} {item.NotificationAttemptCount}/{item.NotificationMaxAttempts}",
+        AccountBillingNotificationState.Failed => $"{(L.IsArabic ? "توقفت بعد" : "Stopped after")} {item.NotificationAttemptCount}/{item.NotificationMaxAttempts} {(L.IsArabic ? "محاولات" : "attempts")}",
+        AccountBillingNotificationState.Cancelled => L.IsArabic ? "تم إلغاء رسالة الإشعار المرتبطة بهذا الحدث." : "The notification message correlated with this event was cancelled.",
+        _ => string.Empty
+    };
 }
