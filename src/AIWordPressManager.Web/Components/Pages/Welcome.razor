@@ -1,322 +1,233 @@
 @page "/welcome"
 @layout LandingLayout
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using System.Globalization
+@using AIWordPressManager.Application.Abstractions.Billing
+@using AIWordPressManager.Domain.Entities
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
-@inject DashboardLiveService DashboardService
+@inject ISubscriptionPlanCatalog Plans
+@inject IPlanEntitlementCatalog Entitlements
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationState
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 
-<PageTitle>@(L.IsArabic ? "AI WordPress Manager | إدارة WordPress بذكاء" : "AI WordPress Manager | Intelligent WordPress Operations")</PageTitle>
+<PageTitle>@(L.IsArabic ? "AI WordPress Manager | منصة تشغيل WordPress بالذكاء الاصطناعي" : "AI WordPress Manager | AI WordPress Operations Platform")</PageTitle>
 
-<div class="product-landing" dir="@L.Direction">
-    <div class="ambient ambient-one" aria-hidden="true"></div>
-    <div class="ambient ambient-two" aria-hidden="true"></div>
-
-    <header class="site-header">
-        <div class="header-inner">
-            <a class="wordmark" href="/welcome" aria-label="AI WordPress Manager home">
-                <span class="wordmark-mark">AI</span>
-                <span class="wordmark-copy">
-                    <strong>AI WordPress Manager</strong>
-                    <small>@(L.IsArabic ? "منصة تشغيل WordPress" : "WordPress operating platform")</small>
-                </span>
-            </a>
-
-            <nav class="public-nav" aria-label="@(L.IsArabic ? "روابط الصفحة" : "Landing navigation")">
-                <a href="#platform">@(L.IsArabic ? "المنصة" : "Platform")</a>
-                <a href="#capabilities">@(L.IsArabic ? "الإمكانات" : "Capabilities")</a>
-                <a href="#workflow">@(L.IsArabic ? "طريقة العمل" : "Workflow")</a>
-                <a href="#control">@(L.IsArabic ? "التحكم والأمان" : "Control")</a>
-            </nav>
-
-            <div class="header-actions">
-                <button type="button" class="language-button" onclick="window.appLanguage.toggleAndReload(); return false;" aria-label="Switch language">
-                    @(L.IsArabic ? "EN" : "AR")
-                </button>
-                @if (_isAuthenticated)
-                {
-                    <a class="header-link" href="/">@(L.IsArabic ? "لوحة التحكم" : "Dashboard")</a>
-                }
-                else
-                {
-                    <a class="header-link" href="/login">@(L.IsArabic ? "تسجيل الدخول" : "Sign in")</a>
-                }
-                <a class="header-cta" href="@ProtectedHref("/sites/connect")">@(L.IsArabic ? "إضافة موقع" : "Connect site")</a>
-            </div>
+<div class="landing-v2" dir="@L.Direction">
+    <header class="public-header">
+        <a class="public-brand" href="/welcome" aria-label="AI WordPress Manager">
+            <span class="brand-symbol">AI</span>
+            <span><strong>AI WordPress Manager</strong><small>@(L.IsArabic ? "WordPress Operations OS" : "WordPress Operations OS")</small></span>
+        </a>
+        <nav aria-label="@(L.IsArabic ? "التنقل العام" : "Public navigation")">
+            <a href="#product">@(L.IsArabic ? "المنتج" : "Product")</a>
+            <a href="#workflow">@(L.IsArabic ? "طريقة العمل" : "Workflow")</a>
+            <a href="#pricing">@(L.IsArabic ? "الخطط" : "Pricing")</a>
+            <a href="#security">@(L.IsArabic ? "الأمان" : "Security")</a>
+        </nav>
+        <div class="header-actions">
+            <button type="button" class="language-button" onclick="window.appLanguage.toggleAndReload(); return false;" aria-label="Switch language">@(L.IsArabic ? "EN" : "AR")</button>
+            <a class="sign-in" href="@(_isAuthenticated ? "/" : "/login")">@(_isAuthenticated ? (L.IsArabic ? "لوحة التحكم" : "Dashboard") : (L.IsArabic ? "تسجيل الدخول" : "Sign in"))</a>
+            <a class="primary-link" href="@PrimaryCtaHref">@PrimaryCtaText</a>
         </div>
     </header>
 
     <main>
-        <section class="hero" id="platform">
-            <div class="hero-copy">
-                <div class="eyebrow-row">
-                    <span class="status-pill"><i></i>@(L.IsArabic ? "جاهز للتشغيل" : "READY FOR OPERATIONS")</span>
-                    <a class="version-pill" href="@ProtectedHref("/about-build")">v@Build.Version</a>
+        <section class="hero-v2" id="product">
+            <div class="hero-copy-v2">
+                <div class="hero-label"><span></span>@(L.IsArabic ? "من موقع واحد إلى محفظة WordPress كاملة" : "FROM ONE SITE TO A WORDPRESS PORTFOLIO")</div>
+                <h1>@(L.IsArabic ? "شغّل WordPress كمنظومة واحدة، لا كعشرين لوحة تحكم." : "Operate WordPress as one system, not twenty dashboards.")</h1>
+                <p>@(L.IsArabic ? "إدارة مواقع ومحتوى وSEO وأتمتة وذكاء اصطناعي من مساحة تشغيل موحدة، مع صلاحيات واضحة وسجل تنفيذ وتشخيص للأخطاء." : "Manage sites, content, SEO, automation and AI from one operating workspace—with clear permissions, auditable execution and actionable diagnostics.")</p>
+                <div class="hero-actions-v2">
+                    <a class="hero-primary" href="@PrimaryCtaHref">@PrimaryCtaText <span>→</span></a>
+                    <a class="hero-secondary" href="#workspace-preview">@(L.IsArabic ? "شاهد مساحة العمل" : "Explore the workspace")</a>
                 </div>
-
-                <h1>
-                    @(L.IsArabic ? "شغّل مواقع WordPress من مكان واحد، بوضوح وتحكم كامل." : "Run WordPress from one place, with clarity and control.")
-                </h1>
-                <p class="hero-lead">
-                    @(L.IsArabic
-                        ? "اربط مواقعك، راقب المحتوى وSEO، شغّل الأتمتة، وراجع كل عملية قبل وبعد التنفيذ — بدون التنقل بين أدوات متفرقة."
-                        : "Connect sites, manage content and SEO, run automations, and review every operation before and after execution — without stitching together separate tools.")
-                </p>
-
-                <div class="hero-actions">
-                    <a class="button button-primary" href="@ProtectedHref("/sites/connect")">
-                        @(L.IsArabic ? "ابدأ بإضافة أول موقع" : "Connect your first site")
-                        <span aria-hidden="true">→</span>
-                    </a>
-                    <a class="button button-secondary" href="#capabilities">
-                        @(L.IsArabic ? "شاهد ما الذي تديره" : "See what you can manage")
-                    </a>
-                </div>
-
-                <div class="trust-row" aria-label="Platform highlights">
-                    <span><b>✓</b>@(L.IsArabic ? "عدة مواقع" : "Multi-site")</span>
-                    <span><b>✓</b>@(L.IsArabic ? "عربي / English" : "Arabic / English")</span>
-                    <span><b>✓</b>@(L.IsArabic ? "سجل تنفيذ ومراجعة" : "Auditable execution")</span>
-                    <span><b>✓</b>@(L.IsArabic ? "بيانات محلية عند الانقطاع" : "Offline snapshots")</span>
+                <div class="hero-proof">
+                    <span><b>14</b><small>@(L.IsArabic ? "يوم تجربة مجانية" : "day free trial")</small></span>
+                    <span><b>0</b><small>@(L.IsArabic ? "بطاقة مطلوبة" : "card required")</small></span>
+                    <span><b>1</b><small>@(L.IsArabic ? "سجل تشغيل موحد" : "operating record")</small></span>
                 </div>
             </div>
 
-            <div class="hero-product" aria-label="AI WordPress Manager product preview">
-                <div class="product-window">
-                    <div class="window-bar">
-                        <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-                        <span class="window-address">AI WordPress Manager</span>
-                        <span class="window-state"><i></i>@(L.IsArabic ? "متصل" : "Online")</span>
+            <div class="workspace-stage" id="workspace-preview" aria-label="AI WordPress Manager interface preview">
+                <div class="stage-glow"></div>
+                <div class="app-window-v2">
+                    <div class="app-window-top">
+                        <div class="window-controls"><i></i><i></i><i></i></div>
+                        <div class="window-breadcrumb">portfolio / operations / overview</div>
+                        <div class="window-live"><i></i>@(L.IsArabic ? "مباشر" : "LIVE")</div>
                     </div>
-
-                    <div class="window-body">
-                        <aside class="preview-sidebar" aria-hidden="true">
-                            <span class="preview-logo">AI</span>
-                            <span class="side-item active">⌂</span>
-                            <span class="side-item">◎</span>
-                            <span class="side-item">▤</span>
-                            <span class="side-item">⌕</span>
-                            <span class="side-item">⚡</span>
-                            <span class="side-spacer"></span>
-                            <span class="side-item">⚙</span>
+                    <div class="app-window-body">
+                        <aside class="mini-sidebar">
+                            <div class="mini-logo">AI</div>
+                            <span class="active">⌂</span><span>◎</span><span>▤</span><span>⌕</span><span>✦</span><span>⚡</span><span class="bottom">⚙</span>
                         </aside>
-
-                        <div class="preview-main">
-                            <div class="preview-heading">
-                                <div>
-                                    <small>@(L.IsArabic ? "مساحة التشغيل" : "OPERATIONS WORKSPACE")</small>
-                                    <strong>@(L.IsArabic ? "نظرة عامة" : "Overview")</strong>
-                                </div>
-                                <span class="preview-chip">@(L.IsArabic ? "مباشر" : "LIVE")</span>
+                        <div class="mini-workspace">
+                            <div class="mini-heading"><div><small>OPERATIONS OVERVIEW</small><strong>@(L.IsArabic ? "مساحة التحكم" : "Command workspace")</strong></div><button>+ @(L.IsArabic ? "إجراء" : "Action")</button></div>
+                            <div class="metric-row">
+                                <article><span>◎</span><div><small>@(L.IsArabic ? "المواقع" : "Sites")</small><strong>12</strong></div><em>+2</em></article>
+                                <article><span>▤</span><div><small>@(L.IsArabic ? "المحتوى" : "Content")</small><strong>1,284</strong></div><em>99.8%</em></article>
+                                <article><span>⌕</span><div><small>SEO</small><strong>93</strong></div><em>↑ 8</em></article>
+                                <article><span>⚡</span><div><small>@(L.IsArabic ? "العمليات" : "Jobs")</small><strong>7</strong></div><em>@(L.IsArabic ? "نشطة" : "active")</em></article>
                             </div>
-
-                            <div class="preview-stats">
-                                <div class="preview-stat">
-                                    <span>◎</span>
-                                    <strong>@(_isAuthenticated ? Dashboard.Sites.TotalSites.ToString() : (L.IsArabic ? "المواقع" : "Sites"))</strong>
-                                    <small>@(_isAuthenticated ? (L.IsArabic ? $"{Dashboard.Sites.ConnectedSites} متصل" : $"{Dashboard.Sites.ConnectedSites} connected") : (L.IsArabic ? "كل ملفات الاتصال" : "All connections"))</small>
-                                </div>
-                                <div class="preview-stat">
-                                    <span>▤</span>
-                                    <strong>@(_isAuthenticated ? (Dashboard.Posts + Dashboard.Pages).ToString() : (L.IsArabic ? "المحتوى" : "Content"))</strong>
-                                    <small>@(_isAuthenticated ? (L.IsArabic ? "سجلات محلية" : "cached records") : (L.IsArabic ? "مقالات وصفحات" : "Posts & pages"))</small>
-                                </div>
-                                <div class="preview-stat">
-                                    <span>⚡</span>
-                                    <strong>@(_isAuthenticated ? Dashboard.ActiveJobs.ToString() : (L.IsArabic ? "الأتمتة" : "Automation"))</strong>
-                                    <small>@(_isAuthenticated ? (L.IsArabic ? "مهام نشطة" : "active jobs") : (L.IsArabic ? "جدولة وتنفيذ" : "Schedule & run"))</small>
-                                </div>
-                            </div>
-
-                            <div class="preview-grid">
-                                <div class="preview-panel activity-panel">
-                                    <div class="panel-title">
-                                        <strong>@(L.IsArabic ? "حالة التشغيل" : "Operational status")</strong>
-                                        <span>•••</span>
-                                    </div>
-                                    <div class="activity-row">
-                                        <span class="activity-icon success">✓</span>
-                                        <div><strong>@(L.IsArabic ? "اتصال WordPress" : "WordPress connection")</strong><small>@(L.IsArabic ? "اختبار وصلاحيات واضحة" : "Validated connection & permissions")</small></div>
-                                        <em>@(L.IsArabic ? "مراقب" : "Monitored")</em>
-                                    </div>
-                                    <div class="activity-row">
-                                        <span class="activity-icon violet">⌕</span>
-                                        <div><strong>SEO</strong><small>@(L.IsArabic ? "نتائج قابلة للمراجعة" : "Reviewable findings")</small></div>
-                                        <em>@(L.IsArabic ? "منظم" : "Prioritized")</em>
-                                    </div>
-                                    <div class="activity-row">
-                                        <span class="activity-icon blue">↻</span>
-                                        <div><strong>@(L.IsArabic ? "المزامنة" : "Synchronization")</strong><small>@(L.IsArabic ? "سجل كامل لكل محاولة" : "History for every run")</small></div>
-                                        <em>@(L.IsArabic ? "متتبع" : "Tracked")</em>
-                                    </div>
-                                </div>
-
-                                <div class="preview-panel ai-panel">
-                                    <span class="ai-kicker">AI</span>
-                                    <strong>@(L.IsArabic ? "اقتراح واضح قبل التنفيذ" : "Clear suggestion before execution")</strong>
-                                    <p>@(L.IsArabic ? "اعرف ما الذي سيتغير، ولماذا، ثم نفّذ من مسار واحد قابل للتتبع." : "See what will change and why, then execute through one traceable workflow.")</p>
-                                    <div class="ai-action"><span></span><span></span><b>→</b></div>
-                                </div>
+                            <div class="workspace-columns">
+                                <article class="ops-panel">
+                                    <header><div><small>@(L.IsArabic ? "المحفظة" : "PORTFOLIO")</small><strong>@(L.IsArabic ? "صحة المواقع" : "Site health")</strong></div><span>@(L.IsArabic ? "الآن" : "Now")</span></header>
+                                    <div class="site-line"><i class="good"></i><div><strong>Storefront</strong><small>Connected · 48ms</small></div><b>98</b></div>
+                                    <div class="site-line"><i class="good"></i><div><strong>Editorial Hub</strong><small>Synced · 2m ago</small></div><b>95</b></div>
+                                    <div class="site-line"><i class="warn"></i><div><strong>Campaign</strong><small>SEO review required</small></div><b>82</b></div>
+                                </article>
+                                <article class="ai-insight-panel">
+                                    <span class="spark">✦ AI INSIGHT</span>
+                                    <h3>@(L.IsArabic ? "3 إجراءات تستحق المراجعة" : "3 actions worth reviewing")</h3>
+                                    <p>@(L.IsArabic ? "مشاكل SEO ومحتوى قديم ومهمة مزامنة متأخرة — مرتبة حسب التأثير قبل التنفيذ." : "SEO findings, stale content and a delayed sync—prioritized by impact before execution.")</p>
+                                    <div class="insight-action"><span>@(L.IsArabic ? "مراجعة المقترحات" : "Review proposals")</span><b>→</b></div>
+                                </article>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="product-shadow" aria-hidden="true"></div>
             </div>
         </section>
 
-        @if (_isAuthenticated)
-        {
-            <section class="live-strip" aria-label="Live account metrics">
-                @foreach (var metric in LiveMetrics)
-                {
-                    <a href="@ProtectedHref(metric.Href)" class="live-metric">
-                        <span>@metric.Icon</span>
-                        <div><small>@metric.Label</small><strong>@metric.Value</strong></div>
-                        <em>@metric.Detail</em>
-                    </a>
-                }
-            </section>
-        }
-        else
-        {
-            <section class="logo-strip" aria-label="Core operating areas">
-                <span>@(L.IsArabic ? "اتصال المواقع" : "SITE CONNECTIONS")</span>
-                <span>@(L.IsArabic ? "إدارة المحتوى" : "CONTENT OPERATIONS")</span>
-                <span>SEO</span>
-                <span>@(L.IsArabic ? "الذكاء الاصطناعي" : "AI ASSISTANCE")</span>
-                <span>@(L.IsArabic ? "الأتمتة" : "AUTOMATION")</span>
-            </section>
-        }
+        <section class="credibility-strip" aria-label="Core platform capabilities">
+            <span>WORDPRESS REST</span><span>MULTI-SITE</span><span>AI PROVIDERS</span><span>SEO OPERATIONS</span><span>AUTOMATION</span><span>AUDIT TRAIL</span>
+        </section>
 
-        <section class="section capabilities" id="capabilities">
-            <div class="section-intro">
-                <span class="section-kicker">@(L.IsArabic ? "منصة واحدة" : "ONE OPERATING LAYER")</span>
-                <h2>@(L.IsArabic ? "كل ما تحتاجه لإدارة WordPress، بدون فوضى الأدوات." : "Everything you need to operate WordPress, without tool sprawl.")</h2>
-                <p>@(L.IsArabic ? "كل وحدة مرتبطة بنفس الموقع ونفس سجل التشغيل، بحيث تظل الصورة كاملة من الاتصال إلى التنفيذ." : "Every workspace stays tied to the same site profile and operational history, from connection through execution.")</p>
-            </div>
-
-            <div class="capability-grid">
-                @foreach (var item in CapabilityCards)
+        <section class="product-section">
+            <div class="section-heading-v2"><span>@(L.IsArabic ? "مساحة تشغيل واحدة" : "ONE OPERATING LAYER")</span><h2>@(L.IsArabic ? "كل شيء مهم أمامك. كل تغيير يمكن تتبعه." : "Everything important in view. Every change traceable.")</h2><p>@(L.IsArabic ? "صممنا المساحات حول العمل الحقيقي: اكتشف المشكلة، افهم أثرها، راجع الإجراء، ثم نفّذ وراقب النتيجة." : "Workspaces are organized around the real job: surface the issue, understand impact, review the action, execute and verify the result.")</p></div>
+            <div class="bento-grid">
+                @foreach (var feature in Features)
                 {
-                    <a class="capability-card" href="@ProtectedHref(item.Href)">
-                        <span class="capability-icon">@item.Icon</span>
-                        <h3>@(L.IsArabic ? item.ArTitle : item.EnTitle)</h3>
-                        <p>@(L.IsArabic ? item.ArDescription : item.EnDescription)</p>
-                        <span class="capability-link">@(L.IsArabic ? "فتح الوحدة" : "Open workspace") <b>→</b></span>
-                    </a>
+                    <article class="bento-card @feature.ClassName"><span class="bento-icon">@feature.Icon</span><div><small>@(L.IsArabic ? feature.ArKicker : feature.EnKicker)</small><h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3><p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p></div><div class="bento-visual" aria-hidden="true"><i></i><i></i><i></i></div></article>
                 }
             </div>
         </section>
 
-        <section class="section operating-model" id="workflow">
-            <div class="section-intro compact">
-                <span class="section-kicker">@(L.IsArabic ? "طريقة عمل واضحة" : "CONTROLLED WORKFLOW")</span>
-                <h2>@(L.IsArabic ? "من الإشارة إلى التنفيذ في ثلاث مراحل." : "From signal to execution in three clear stages.")</h2>
+        <section class="workflow-section" id="workflow">
+            <div class="section-heading-v2 compact"><span>@(L.IsArabic ? "من الإشارة إلى التنفيذ" : "SIGNAL → DECISION → EXECUTION")</span><h2>@(L.IsArabic ? "سرعة بدون فقدان السيطرة." : "Move faster without losing control.")</h2></div>
+            <div class="workflow-line">
+                <article><b>01</b><span>◎</span><h3>@(L.IsArabic ? "راقب" : "Observe")</h3><p>@(L.IsArabic ? "زامن حالة المواقع والمحتوى والصحة التشغيلية." : "Synchronize site, content and operational state.")</p></article>
+                <i>→</i>
+                <article><b>02</b><span>✦</span><h3>@(L.IsArabic ? "افهم" : "Understand")</h3><p>@(L.IsArabic ? "رتب إشارات SEO والذكاء الاصطناعي حسب التأثير." : "Prioritize SEO and AI signals by impact.")</p></article>
+                <i>→</i>
+                <article><b>03</b><span>✓</span><h3>@(L.IsArabic ? "راجع" : "Review")</h3><p>@(L.IsArabic ? "اعرف ماذا سيتغير قبل اعتماد الإجراء." : "Know exactly what changes before approval.")</p></article>
+                <i>→</i>
+                <article><b>04</b><span>⚡</span><h3>@(L.IsArabic ? "نفّذ" : "Execute")</h3><p>@(L.IsArabic ? "شغّل المهمة مع حالة وسجل وتشخيص واضح." : "Run with status, history and clear diagnostics.")</p></article>
             </div>
+        </section>
 
-            <div class="workflow-grid">
-                @for (var index = 0; index < WorkflowSteps.Length; index++)
+        <section class="pricing-section" id="pricing">
+            <div class="section-heading-v2 centered"><span>@(L.IsArabic ? "خطط من نفس كتالوج المنتج" : "PRICING FROM THE LIVE PRODUCT CATALOG")</span><h2>@(L.IsArabic ? "ابدأ مجانًا. وسّع الحدود عندما تحتاج." : "Start free. Expand capacity when you need it.")</h2><p>@(L.IsArabic ? "الأسعار والحدود أدناه تأتي من نفس كتالوج الاشتراكات المستخدم داخل الحساب، لذلك لا توجد صفحة أسعار منفصلة عن حقيقة المنتج." : "Plans and limits below come from the same catalog used inside account billing, so public pricing cannot drift away from product reality.")</p></div>
+
+            @if (_plansLoading)
+            {
+                <div class="pricing-loading">@(L.IsArabic ? "جارٍ تحميل الخطط..." : "Loading plans...")</div>
+            }
+            else if (_plans.Count == 0)
+            {
+                <div class="pricing-loading">@(L.IsArabic ? "كتالوج الخطط غير متاح مؤقتًا." : "The plan catalog is temporarily unavailable.")</div>
+            }
+            else
+            {
+                <div class="pricing-grid @(_plans.Count == 1 ? "single" : string.Empty)">
+                    @foreach (var plan in _plans)
+                    {
+                        var isFreeTrial = IsFreeTrial(plan);
+                        <article class="price-card @(isFreeTrial ? "featured" : string.Empty)">
+                            <div class="price-card-head">
+                                <div><span>@(isFreeTrial ? (L.IsArabic ? "ابدأ هنا" : "START HERE") : plan.Code.ToUpperInvariant())</span><h3>@(L.IsArabic ? plan.NameAr : plan.NameEn)</h3></div>
+                                @if (isFreeTrial)<b>@(L.IsArabic ? "بدون بطاقة" : "NO CARD")</b>
+                            </div>
+                            <p>@(L.IsArabic ? plan.DescriptionAr : plan.DescriptionEn)</p>
+                            <div class="price-value">
+                                @if (plan.Price == 0m)
+                                {
+                                    <strong>@(L.IsArabic ? "مجاني" : "Free")</strong><small>@(plan.TrialDays > 0 ? $"{plan.TrialDays} {(L.IsArabic ? "يومًا" : "days")}" : string.Empty)</small>
+                                }
+                                else
+                                {
+                                    <strong>@FormatMoney(plan)</strong><small>/ @(plan.BillingInterval == SubscriptionPlan.YearlyInterval ? (L.IsArabic ? "سنة" : "year") : (L.IsArabic ? "شهر" : "month"))</small>
+                                }
+                            </div>
+                            <ul>
+                                @foreach (var benefit in BenefitsFor(plan))
+                                {
+                                    <li><span>✓</span>@benefit</li>
+                                }
+                            </ul>
+                            <a href="@PlanCtaHref(plan)" class="price-cta">@(isFreeTrial ? (L.IsArabic ? "ابدأ التجربة المجانية" : "Start free trial") : (L.IsArabic ? "اختر الخطة" : "Choose plan")) <span>→</span></a>
+                            @if (plan.Price > 0m && string.IsNullOrWhiteSpace(plan.GatewayPlanId))
+                            {
+                                <small class="gateway-note">@(L.IsArabic ? "الدفع لهذه الخطة لم يتم ربطه ببوابة الدفع بعد." : "Payment gateway binding is not configured for this plan yet.")</small>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="security-section" id="security">
+            <div class="security-copy"><span>@(L.IsArabic ? "التحكم والأمان" : "CONTROL & SECURITY")</span><h2>@(L.IsArabic ? "الأتمتة مفيدة فقط عندما يمكن تفسيرها وإيقافها ومراجعتها." : "Automation is useful only when it can be explained, stopped and audited.")</h2><p>@(L.IsArabic ? "صلاحيات على الخادم، أسرار محمية، سجل أمني، تشخيص Runtime، وعمليات يمكن تتبعها من الطلب إلى النتيجة." : "Server-side permissions, protected secrets, security audit, runtime diagnostics and operations that remain traceable from request to outcome.")</p></div>
+            <div class="security-grid">
+                <article><span>◈</span><strong>@(L.IsArabic ? "صلاحيات دقيقة" : "Permission aware")</strong><small>@(L.IsArabic ? "القدرات الحساسة محمية بسياسات الخادم." : "Sensitive capabilities are protected by server policies.")</small></article>
+                <article><span>⌁</span><strong>@(L.IsArabic ? "أسرار معزولة" : "Protected secrets")</strong><small>@(L.IsArabic ? "بيانات الاعتماد لا تتحول إلى نصوص معروضة." : "Credentials do not become display data.")</small></article>
+                <article><span>◎</span><strong>@(L.IsArabic ? "تشخيص قابل للإرسال" : "Actionable diagnostics")</strong><small>@(L.IsArabic ? "Correlation IDs وRuntime logs لتحديد الخطأ." : "Correlation IDs and runtime logs localize failures.")</small></article>
+                <article><span>✓</span><strong>@(L.IsArabic ? "تنفيذ مدقق" : "Auditable execution")</strong><small>@(L.IsArabic ? "سجل يوضح ماذا حدث ومتى وبأي نتيجة." : "History records what happened, when and with what outcome.")</small></article>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <div class="section-heading-v2 compact"><span>FAQ</span><h2>@(L.IsArabic ? "أسئلة قبل أن تبدأ." : "Questions before you start.")</h2></div>
+            <div class="faq-grid">
+                @foreach (var faq in Faqs)
                 {
-                    var step = WorkflowSteps[index];
-                    <article class="workflow-step">
-                        <div class="step-number">0@(index + 1)</div>
-                        <span class="step-icon">@step.Icon</span>
-                        <h3>@(L.IsArabic ? step.ArTitle : step.EnTitle)</h3>
-                        <p>@(L.IsArabic ? step.ArDescription : step.EnDescription)</p>
-                    </article>
+                    <details><summary>@(L.IsArabic ? faq.ArQuestion : faq.EnQuestion)<span>+</span></summary><p>@(L.IsArabic ? faq.ArAnswer : faq.EnAnswer)</p></details>
                 }
             </div>
         </section>
 
-        <section class="control-section" id="control">
-            <div class="control-copy">
-                <span class="section-kicker">@(L.IsArabic ? "تحكم قبل السرعة" : "CONTROL BEFORE SPEED")</span>
-                <h2>@(L.IsArabic ? "الذكاء الاصطناعي يساعدك. أنت تظل صاحب القرار." : "AI assists. You remain in control.")</h2>
-                <p>@(L.IsArabic ? "المنصة مصممة لتجعل التغيير مفهومًا وقابلًا للمراجعة: ملفات مواقع مستقلة، بيانات اعتماد معزولة، سجل مزامنة، وتنفيذ يمكن تتبعه." : "The platform keeps change understandable and reviewable with independent site profiles, isolated credentials, synchronization history, and traceable execution.")</p>
-                <a class="text-link" href="@ProtectedHref("/system-health")">@(L.IsArabic ? "استعرض صحة النظام" : "Explore system health") <span>→</span></a>
-            </div>
-
-            <div class="control-card">
-                <div class="control-row"><span class="control-check">✓</span><div><strong>@(L.IsArabic ? "هوية مستقلة لكل ملف موقع" : "Independent site profile identity")</strong><small>@(L.IsArabic ? "حتى عند استخدام نفس رابط WordPress." : "Even when WordPress URLs are reused.")</small></div></div>
-                <div class="control-row"><span class="control-check">✓</span><div><strong>@(L.IsArabic ? "بيانات اعتماد لكل ملف" : "Per-profile credentials")</strong><small>@(L.IsArabic ? "لا يتم عرض الأسرار في واجهات الإدارة." : "Secrets stay out of management views.")</small></div></div>
-                <div class="control-row"><span class="control-check">✓</span><div><strong>@(L.IsArabic ? "سجل مزامنة دائم" : "Persistent synchronization history")</strong><small>@(L.IsArabic ? "Completed وSkipped وFailed لكل محاولة." : "Completed, skipped and failed outcomes per run.")</small></div></div>
-                <div class="control-row"><span class="control-check">✓</span><div><strong>@(L.IsArabic ? "تنفيذ قابل للتدقيق" : "Auditable execution")</strong><small>@(L.IsArabic ? "تقدم ونتائج وتشخيص عند الفشل." : "Progress, outcomes and failure diagnostics.")</small></div></div>
-            </div>
-        </section>
-
-        <section class="closing-cta">
-            <div class="closing-copy">
-                <span class="status-pill"><i></i>@(L.IsArabic ? "ابدأ من موقع واحد" : "START WITH ONE SITE")</span>
-                <h2>@(L.IsArabic ? "اربط WordPress. والباقي يصبح منظومة واحدة." : "Connect WordPress. Turn the rest into one operating system.")</h2>
-                <p>@(L.IsArabic ? "ابدأ بملف اتصال واحد، ثم أضف المواقع والأتمتة والتقارير تدريجيًا بدون تغيير طريقة العمل." : "Start with one connection profile, then add sites, automations and reporting without changing the operating model.")</p>
-            </div>
-            <div class="closing-actions">
-                <a class="button button-primary" href="@ProtectedHref("/sites/connect")">@(L.IsArabic ? "إضافة أول موقع" : "Connect first site") <span>→</span></a>
-                <a class="button button-ghost" href="@ProtectedHref("/")">@(L.IsArabic ? "فتح لوحة التحكم" : "Open dashboard")</a>
-            </div>
+        <section class="final-cta-v2">
+            <div><span>@(L.IsArabic ? "ابدأ صغيرًا. حافظ على نفس طريقة التشغيل عند التوسع." : "START SMALL. KEEP THE SAME OPERATING MODEL AS YOU SCALE.")</span><h2>@(L.IsArabic ? "أول موقع WordPress على بعد دقائق." : "Your first WordPress site is minutes away.")</h2><p>@(L.IsArabic ? "جرّب الأساسيات لمدة 14 يومًا بدون بطاقة، ثم وسّع الخطة فقط عندما تحتاج مواقع أو AI أو أتمتة أكثر." : "Explore the core platform for 14 days with no card, then upgrade only when you need more sites, AI or automation.")</p></div>
+            <a href="@PrimaryCtaHref">@PrimaryCtaText <b>→</b></a>
         </section>
     </main>
 
-    <footer class="site-footer">
-        <a class="footer-brand" href="/welcome"><span class="wordmark-mark small">AI</span><strong>AI WordPress Manager</strong></a>
-        <span class="footer-meta">v@Build.Version · @Build.Branch</span>
-        <div class="footer-links">
-            <a href="#capabilities">@(L.IsArabic ? "الإمكانات" : "Capabilities")</a>
-            <a href="@ProtectedHref("/about-build")">@(L.IsArabic ? "معلومات الإصدار" : "Build info")</a>
-        </div>
+    <footer class="public-footer">
+        <a class="public-brand" href="/welcome"><span class="brand-symbol small">AI</span><span><strong>AI WordPress Manager</strong><small>Operations OS</small></span></a>
+        <div><span>v@Build.Version</span><span>@Build.Branch</span></div>
+        <nav><a href="#product">Product</a><a href="#pricing">Pricing</a><a href="/login">Sign in</a></nav>
     </footer>
 </div>
 
 @code {
     private BuildInformation Build => BuildInfo.Current;
-    private DashboardLiveView? _dashboard;
-    private bool _dashboardLoadFailed;
+    private readonly List<SubscriptionPlanItem> _plans = new();
+    private readonly Dictionary<Guid, Dictionary<string, string>> _planEntitlements = new();
+    private bool _plansLoading = true;
     private bool _isAuthenticated;
 
-    private DashboardLiveView Dashboard => _dashboard ?? new DashboardLiveView(
-        new DashboardSummary(0, 0, 0, null), 0, 0, 0, 0, 0, 0, 100, null, Array.Empty<DashboardJobView>(), DateTime.UtcNow);
+    private string PrimaryCtaHref => _isAuthenticated ? "/" : "/register";
+    private string PrimaryCtaText => _isAuthenticated
+        ? (L.IsArabic ? "فتح مساحة العمل" : "Open workspace")
+        : (L.IsArabic ? "ابدأ مجانًا" : "Start free trial");
 
-    private IEnumerable<LiveMetric> LiveMetrics
-    {
-        get
-        {
-            var data = Dashboard;
-            var suffix = _dashboardLoadFailed
-                ? (L.IsArabic ? "البيانات الحية غير متاحة مؤقتًا" : "Live data temporarily unavailable")
-                : string.Empty;
-
-            return new[]
-            {
-                new LiveMetric("◎", L.IsArabic ? "المواقع" : "Sites", data.Sites.TotalSites.ToString(),
-                    string.IsNullOrWhiteSpace(suffix) ? (L.IsArabic ? $"{data.Sites.ConnectedSites} متصل" : $"{data.Sites.ConnectedSites} connected") : suffix, "/sites"),
-                new LiveMetric("▤", L.IsArabic ? "المحتوى المحلي" : "Cached content", (data.Posts + data.Pages).ToString(),
-                    L.IsArabic ? $"{data.Posts} مقالات · {data.Pages} صفحات" : $"{data.Posts} posts · {data.Pages} pages", "/content"),
-                new LiveMetric("⚡", L.IsArabic ? "المهام النشطة" : "Active jobs", data.ActiveJobs.ToString(),
-                    L.IsArabic ? $"{data.CompletedJobs} مكتمل" : $"{data.CompletedJobs} completed", "/module/execution"),
-                new LiveMetric("↻", L.IsArabic ? "آخر مزامنة" : "Last sync", FormatLastSync(data.LastSynchronizationAtUtc),
-                    L.IsArabic ? $"{data.Media} وسائط" : $"{data.Media} media", "/module/sync")
-            };
-        }
-    }
-
-    private static readonly CapabilityCard[] CapabilityCards =
+    private static readonly LandingFeature[] Features =
     [
-        new("◎", "Site management", "إدارة المواقع", "Connect independent site profiles, validate access and keep connection health visible.", "اربط ملفات مواقع مستقلة واختبر الوصول والصلاحيات وراقب صحة الاتصال.", "/sites"),
-        new("▤", "Content operations", "إدارة المحتوى", "Browse synchronized posts, pages, media and taxonomies from a consistent workspace.", "تصفح المقالات والصفحات والوسائط والتصنيفات المتزامنة من مساحة واحدة.", "/content"),
-        new("⌕", "SEO workspace", "مساحة SEO", "Turn technical and content findings into prioritized, reviewable work.", "حوّل مشاكل SEO التقنية والمحتوى إلى أعمال مرتبة وقابلة للمراجعة.", "/module/seo-audit"),
-        new("AI", "AI assistance", "مساعدة الذكاء الاصطناعي", "Generate and refine recommendations while keeping execution separate and controlled.", "أنشئ التوصيات وحسّنها مع فصل الاقتراح عن التنفيذ والحفاظ على التحكم.", "/module/ai-providers"),
-        new("⚡", "Automation", "الأتمتة", "Schedule recurring synchronization and operational jobs with retry and run history.", "جدول المزامنة والمهام المتكررة مع إعادة المحاولة وسجل التشغيل.", "/operations"),
-        new("◫", "Backup & diagnostics", "النسخ والتشخيص", "Keep backup, restore, health and support diagnostics close to daily operations.", "اجمع النسخ والاستعادة وصحة النظام وتشخيص الدعم قرب التشغيل اليومي.", "/module/backups")
+        new("◎", "PORTFOLIO", "المحفظة", "Multi-site operations", "تشغيل عدة مواقع", "Independent WordPress profiles with connection state, synchronization history and a single portfolio view.", "ملفات WordPress مستقلة مع حالة الاتصال وسجل المزامنة ونظرة موحدة على المحفظة.", "feature-wide"),
+        new("▤", "CONTENT", "المحتوى", "Content command center", "مركز قيادة المحتوى", "Work across posts, pages, media and taxonomies without jumping between WordPress dashboards.", "اعمل على المقالات والصفحات والوسائط والتصنيفات بدون التنقل بين لوحات WordPress.", ""),
+        new("⌕", "SEO", "SEO", "Prioritized SEO work", "SEO مرتب بالأولوية", "Turn technical and content findings into reviewable work instead of another disconnected report.", "حوّل المشاكل التقنية ومشاكل المحتوى إلى أعمال قابلة للمراجعة بدل تقرير منفصل جديد.", ""),
+        new("✦", "AI", "الذكاء الاصطناعي", "AI with a control layer", "AI داخل طبقة تحكم", "Generate proposals and assistance while keeping approval and execution as explicit product steps.", "أنشئ المقترحات والمساعدة مع إبقاء الاعتماد والتنفيذ خطوات واضحة داخل المنتج.", "feature-accent"),
+        new("⚡", "AUTOMATION", "الأتمتة", "Jobs you can trace", "مهام يمكنك تتبعها", "Schedule operations with progress, retry behavior, history and diagnostics when something fails.", "جدول العمليات مع تقدم وإعادة محاولة وسجل وتشخيص واضح عندما يفشل شيء.", "feature-wide")
     ];
 
-    private static readonly WorkflowStep[] WorkflowSteps =
+    private static readonly LandingFaq[] Faqs =
     [
-        new("01", "Observe", "راقب", "Connect, synchronize and surface the current state before changing anything.", "اربط الموقع وزامن البيانات واعرض الحالة الحالية قبل إجراء أي تغيير."),
-        new("02", "Review", "راجع", "Use SEO and AI signals to understand priorities, impact and the proposed action.", "استخدم إشارات SEO والذكاء الاصطناعي لفهم الأولوية والتأثير والتغيير المقترح."),
-        new("03", "Execute", "نفّذ", "Run approved actions through tracked jobs with status, history and failure diagnostics.", "نفّذ الإجراءات المعتمدة عبر مهام متتبعة بحالة وسجل وتشخيص واضح عند الفشل.")
+        new("Do I need a card for the free trial?", "هل أحتاج بطاقة للتجربة المجانية؟", "No. The built-in Free Trial is provisioned without a payment method and has deliberately limited product entitlements.", "لا. يتم إنشاء التجربة المجانية بدون وسيلة دفع وبحدود استخدام واضحة داخل المنتج."),
+        new("Are plan limits only visual?", "هل حدود الخطط مجرد عرض في الواجهة؟", "No. Entitlements are resolved and enforced by server-side application services where the capability is protected.", "لا. يتم حل الاستحقاقات وتطبيقها في خدمات الخادم للقدرات المحمية بالحدود."),
+        new("Does returning from PayPal activate a paid plan?", "هل الرجوع من PayPal يفعّل الخطة المدفوعة؟", "No. Browser navigation is never treated as payment evidence. Provider reconciliation remains authoritative for paid subscription state.", "لا. تنقل المتصفح لا يعتبر دليل دفع. تظل مصالحة بيانات مزود الدفع هي المرجع لحالة الاشتراك المدفوع."),
+        new("Can I manage more than one WordPress site?", "هل يمكنني إدارة أكثر من موقع WordPress؟", "Yes. Multi-site operation is a core platform capability; the number of sites available to an account is controlled by its plan entitlement.", "نعم. تشغيل عدة مواقع قدرة أساسية في المنصة، وعدد المواقع المتاح للحساب تحدده حدود خطته.")
     ];
 
     protected override async Task OnInitializedAsync()
@@ -324,40 +235,89 @@
         var preferredLanguage = HttpContextAccessor.HttpContext?.Request.Cookies["aiwp-language"];
         L.SetCulture(preferredLanguage == "ar" ? "ar" : "en");
 
-        var authenticationState = await AuthenticationState.GetAuthenticationStateAsync();
-        _isAuthenticated = authenticationState.User.Identity?.IsAuthenticated == true;
-        if (!_isAuthenticated) return;
+        try
+        {
+            var auth = await AuthenticationState.GetAuthenticationStateAsync();
+            _isAuthenticated = auth.User.Identity?.IsAuthenticated == true;
+        }
+        catch { _isAuthenticated = false; }
 
         try
         {
-            _dashboard = await DashboardService.GetAsync();
+            _plans.AddRange(await Plans.ListAsync(includeDisabled: false));
+            foreach (var plan in _plans)
+            {
+                var values = (await Entitlements.ListAsync(plan.Id))
+                    .ToDictionary(x => x.Key, x => x.CanonicalValue, StringComparer.OrdinalIgnoreCase);
+                _planEntitlements[plan.Id] = values;
+            }
         }
         catch
         {
-            _dashboardLoadFailed = true;
+            _plans.Clear();
+            _planEntitlements.Clear();
+        }
+        finally
+        {
+            _plansLoading = false;
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        var culture = await JS.InvokeAsync<string?>("appLanguage.get");
-        L.SetCulture(culture == "ar" ? "ar" : "en");
-        await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
-        StateHasChanged();
+        try
+        {
+            var culture = await JS.InvokeAsync<string?>("appLanguage.get");
+            L.SetCulture(culture == "ar" ? "ar" : "en");
+            await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
+            StateHasChanged();
+        }
+        catch (InvalidOperationException) { }
     }
 
-    private string ProtectedHref(string path) => _isAuthenticated
-        ? path
-        : $"/login?returnUrl={Uri.EscapeDataString(path)}";
+    private bool IsFreeTrial(SubscriptionPlanItem plan) =>
+        string.Equals(plan.Code, "free-trial", StringComparison.OrdinalIgnoreCase) || plan.Price == 0m;
 
-    private string FormatLastSync(DateTime? value)
+    private string PlanCtaHref(SubscriptionPlanItem plan)
     {
-        if (!value.HasValue) return L.IsArabic ? "لم تتم" : "Not yet";
-        return value.Value.ToLocalTime().ToString("dd MMM · HH:mm");
+        if (!_isAuthenticated) return "/register";
+        return IsFreeTrial(plan) ? "/" : "/account/billing";
     }
 
-    private sealed record LiveMetric(string Icon, string Label, string Value, string Detail, string Href);
-    private sealed record CapabilityCard(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string Href);
-    private sealed record WorkflowStep(string Icon, string EnTitle, string ArTitle, string EnDescription, string ArDescription);
+    private string FormatMoney(SubscriptionPlanItem plan) =>
+        $"{plan.Price.ToString("0.##", CultureInfo.InvariantCulture)} {plan.Currency}";
+
+    private IReadOnlyList<string> BenefitsFor(SubscriptionPlanItem plan)
+    {
+        if (!_planEntitlements.TryGetValue(plan.Id, out var values)) return Array.Empty<string>();
+        var benefits = new List<string>();
+
+        if (TryInteger(values, EntitlementDefinitionCatalog.SitesMax, out var sites))
+            benefits.Add(L.IsArabic ? $"حتى {sites} موقع WordPress" : $"Up to {sites} WordPress site{(sites == 1 ? string.Empty : "s")}");
+        if (TryBoolean(values, EntitlementDefinitionCatalog.AiEnabled, out var aiEnabled))
+        {
+            if (aiEnabled && TryInteger(values, EntitlementDefinitionCatalog.AiMonthlyRequestsMax, out var aiMax))
+                benefits.Add(L.IsArabic ? $"{aiMax} طلب AI شهريًا" : $"{aiMax} AI requests / month");
+            else if (!aiEnabled)
+                benefits.Add(L.IsArabic ? "بدون AI" : "AI not included");
+        }
+        if (TryInteger(values, EntitlementDefinitionCatalog.AutomationSchedulesMax, out var automations))
+            benefits.Add(L.IsArabic ? $"{automations} جدول أتمتة" : $"{automations} automation schedule{(automations == 1 ? string.Empty : "s")}");
+        if (TryInteger(values, EntitlementDefinitionCatalog.BackupRetentionDays, out var backupDays))
+            benefits.Add(L.IsArabic ? $"احتفاظ بالنسخ {backupDays} يوم" : $"{backupDays}-day backup retention");
+        if (TryBoolean(values, EntitlementDefinitionCatalog.PremiumSeo, out var premiumSeo))
+            benefits.Add(premiumSeo ? (L.IsArabic ? "SEO متقدم" : "Premium SEO") : (L.IsArabic ? "SEO الأساسي" : "Core SEO workspace"));
+
+        return benefits.Take(5).ToArray();
+    }
+
+    private static bool TryInteger(IReadOnlyDictionary<string, string> values, string key, out long value) =>
+        values.TryGetValue(key, out var raw) && long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+
+    private static bool TryBoolean(IReadOnlyDictionary<string, string> values, string key, out bool value) =>
+        values.TryGetValue(key, out var raw) && bool.TryParse(raw, out value);
+
+    private sealed record LandingFeature(string Icon, string EnKicker, string ArKicker, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string ClassName);
+    private sealed record LandingFaq(string EnQuestion, string ArQuestion, string EnAnswer, string ArAnswer);
 }
