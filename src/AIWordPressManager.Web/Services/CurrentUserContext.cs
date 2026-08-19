@@ -9,6 +9,14 @@ public sealed class CurrentUserContext(
 {
     private ClaimsPrincipal? _circuitPrincipal;
 
+    // Compatibility path for the small number of infrastructure adapters that create
+    // CurrentUserContext manually. DI uses the two-argument constructor above and gains
+    // Blazor circuit awareness; this overload intentionally remains HTTP-only.
+    public CurrentUserContext(IHttpContextAccessor accessor)
+        : this(accessor, new HttpContextAuthenticationStateProvider(accessor))
+    {
+    }
+
     public bool HasHttpContext => accessor.HttpContext is not null;
     public bool IsAuthenticated => ResolvePrincipal()?.Identity?.IsAuthenticated == true || BackgroundExecutionIdentity.TryGetOwnerUserId(out _);
 
@@ -126,5 +134,14 @@ public sealed class CurrentUserContext(
         }
 
         return null;
+    }
+
+    private sealed class HttpContextAuthenticationStateProvider(IHttpContextAccessor httpAccessor) : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync()
+        {
+            var principal = httpAccessor.HttpContext?.User ?? new ClaimsPrincipal(new ClaimsIdentity());
+            return Task.FromResult(new AuthenticationState(principal));
+        }
     }
 }
