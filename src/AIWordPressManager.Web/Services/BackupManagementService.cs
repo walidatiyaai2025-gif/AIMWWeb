@@ -327,7 +327,20 @@ public sealed class BackupManagementService
                     issues.Add($"Undeclared archive entry: {payloadPath}");
             }
 
-            var databaseCount = payloadByPath.Keys.Count(x => x.EndsWith(".db", StringComparison.OrdinalIgnoreCase));
+            var databaseCount = manifest.Files.Count(declared =>
+            {
+                if (!TryGetDeclaredRelativePath(manifest.Version, declared, out var relativePath) ||
+                    !payloadByPath.ContainsKey(relativePath) ||
+                    !TryDetermineExpectedKind(manifest.Version, relativePath, out var expectedKind) ||
+                    expectedKind != BackupContentKind.Database)
+                {
+                    return false;
+                }
+
+                return manifest.Version < CryptographicManifestVersion ||
+                       (Enum.TryParse<BackupContentKind>(declared.Kind, true, out var declaredKind) &&
+                        declaredKind == BackupContentKind.Database);
+            });
             if (databaseCount == 0) issues.Add("The archive does not contain database files.");
 
             var valid = issues.Count == 0;
