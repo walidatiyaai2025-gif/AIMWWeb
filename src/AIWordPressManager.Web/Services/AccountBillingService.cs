@@ -47,7 +47,8 @@ public sealed record AccountBillingWorkspaceView(
     IReadOnlyList<AccountSubscriptionPlanChangeItem> PlanChanges,
     AccountBillingCheckoutAvailability Checkout,
     AccountBillingMutationAvailability Mutations,
-    bool UsageTelemetryAvailable);
+    bool UsageTelemetryAvailable,
+    IReadOnlyList<AccountBillingHistoryItem>? History = null);
 
 public sealed class AccountBillingService(
     CurrentUserContext currentUser,
@@ -98,7 +99,8 @@ public sealed class AccountBillingService(
                 [],
                 new(false, AccountBillingCheckoutBlockReason.NoSubscription, false, null, null),
                 new(false, false, false, false, true, "No current subscription is available."),
-                UsageTelemetryAvailable: false);
+                UsageTelemetryAvailable: false,
+                History: []);
         }
 
         RequireOwner(subscription, ownerUserId);
@@ -109,6 +111,7 @@ public sealed class AccountBillingService(
             : await entitlementCatalog.ListAsync(currentPlan.Id, cancellationToken);
         var transitions = await subscriptionService.ListTransitionsAsync(subscription.Id, 50, cancellationToken);
         var planChanges = await subscriptionService.ListPlanChangesAsync(subscription.Id, 50, cancellationToken);
+        var history = await subscriptionService.ListBillingHistoryAsync(ownerUserId, subscription.Id, 100, cancellationToken);
         var checkout = EvaluateCheckout(subscription, currentPlan);
         var mutations = EvaluateMutations(subscription);
 
@@ -122,7 +125,8 @@ public sealed class AccountBillingService(
             planChanges.OrderByDescending(x => x.OccurredAtUtc).ThenByDescending(x => x.CreatedAtUtc).ToArray(),
             checkout,
             mutations,
-            UsageTelemetryAvailable: false);
+            UsageTelemetryAvailable: false,
+            History: history);
     }
 
     public async Task<GatewayCheckoutSession> CreatePayPalCheckoutAsync(

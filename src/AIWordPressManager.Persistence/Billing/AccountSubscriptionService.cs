@@ -1,5 +1,6 @@
 using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Domain.Entities;
+using AIWordPressManager.Persistence.Email;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Persistence.Billing;
@@ -179,6 +180,146 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AccountBillingHistoryItem>> ListBillingHistoryAsync(
+        Guid ownerUserId,
+        Guid subscriptionId,
+        int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        if (ownerUserId == Guid.Empty) throw new ArgumentException("Owner user ID is required.", nameof(ownerUserId));
+        if (subscriptionId == Guid.Empty) throw new ArgumentException("Subscription ID is required.", nameof(subscriptionId));
+
+        var owned = await dbContext.AccountSubscriptions.AsNoTracking()
+            .AnyAsync(x => x.Id == subscriptionId && x.OwnerUserId == ownerUserId, cancellationToken);
+        if (!owned)
+            throw new KeyNotFoundException("Account subscription was not found for the current owner.");
+
+        take = Math.Clamp(take, 1, 500);
+        var transitions = await dbContext.AccountSubscriptionTransitions.AsNoTracking()
+            .Where(x => x.SubscriptionId == subscriptionId)
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ThenByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .Select(x => new AccountSubscriptionTransitionItem(
+                x.Id, x.SubscriptionId, x.FromStatus, x.ToStatus, x.Source, x.Reason,
+                x.OccurredAtUtc, x.ProviderEventAtUtc, x.CreatedAtUtc))
+            .ToListAsync(cancellationToken);
+
+        var planChanges = await dbContext.AccountSubscriptionPlanChanges.AsNoTracking()
+            .Where(x => x.SubscriptionId == subscriptionId)
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ThenByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .Select(x => new AccountSubscriptionPlanChangeItem(
+                x.Id, x.SubscriptionId, x.FromPlanId, x.ToPlanId, x.Source, x.Reason,
+                x.OccurredAtUtc, x.ProviderObservedAtUtc, x.CreatedAtUtc))
+            .ToListAsync(cancellationToken);
+
+        var planIds = planChanges
+            .SelectMany(x => new[] { x.FromPlanId, x.ToPlanId })
+            .Distinct()
+            .ToArray();
+        List<BillingPlanSnapshot> plans = planIds.Length == 0
+            ? []
+            : await dbContext.SubscriptionPlans.AsNoTracking()
+                .Where(x => planIds.Contains(x.Id))
+                .Select(x => new BillingPlanSnapshot(x.Id, x.NameEn, x.NameAr, x.Price, x.Currency))
+                .ToListAsync(cancellationToken);
+        var plansById = plans.ToDictionary(x => x.Id);
+
+        var idempotencyKeys = transitions
+            .Select(x => SubscriptionBillingEmailAlertRelay.BuildIdempotencyKeyForStatusTransition(x.Id))
+            .Concat(planChanges.Select(x => SubscriptionBillingEmailAlertRelay.BuildIdempotencyKeyForPlanChange(x.Id)))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        List<BillingNotificationSnapshot> notifications = idempotencyKeys.Length == 0
+            ? []
+            : await dbContext.EmailOutboxMessages.AsNoTracking()
+                .Where(x => x.OwnerUserId == ownerUserId && idempotencyKeys.Contains(x.IdempotencyKey))
+                .Select(x => new BillingNotificationSnapshot(
+                    x.IdempotencyKey,
+                    x.Status,
+                    x.AttemptCount,
+                    x.MaxAttempts,
+                    x.SentAtUtc,
+                    x.NextAttemptAtUtc))
+                .ToListAsync(cancellationToken);
+        var notificationsByKey = notifications.ToDictionary(x => x.IdempotencyKey, StringComparer.Ordinal);
+        var hasEnabledRecipient = await dbContext.AccountEmailRecipients.AsNoTracking()
+            .AnyAsync(x => x.OwnerUserId == ownerUserId && x.IsEnabled, cancellationToken);
+
+        var history = new List<AccountBillingHistoryItem>(transitions.Count + planChanges.Count);
+        foreach (var transition in transitions)
+        {
+            var key = SubscriptionBillingEmailAlertRelay.BuildIdempotencyKeyForStatusTransition(transition.Id);
+            notificationsByKey.TryGetValue(key, out var notification);
+            history.Add(new AccountBillingHistoryItem(
+                transition.Id,
+                transition.SubscriptionId,
+                AccountBillingHistoryKind.StatusTransition,
+                transition.OccurredAtUtc,
+                transition.CreatedAtUtc,
+                transition.Source,
+                BuildTransitionHistoryReason(transition.FromStatus, transition.ToStatus, transition.Source),
+                transition.FromStatus,
+                transition.ToStatus,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                transition.ProviderEventAtUtc,
+                MapNotificationState(notification?.Status, hasEnabledRecipient),
+                notification?.AttemptCount ?? 0,
+                notification?.MaxAttempts ?? 0,
+                notification?.SentAtUtc,
+                notification?.NextAttemptAtUtc));
+        }
+
+        foreach (var change in planChanges)
+        {
+            var key = SubscriptionBillingEmailAlertRelay.BuildIdempotencyKeyForPlanChange(change.Id);
+            notificationsByKey.TryGetValue(key, out var notification);
+            plansById.TryGetValue(change.FromPlanId, out var fromPlan);
+            plansById.TryGetValue(change.ToPlanId, out var toPlan);
+            history.Add(new AccountBillingHistoryItem(
+                change.Id,
+                change.SubscriptionId,
+                AccountBillingHistoryKind.PlanChange,
+                change.OccurredAtUtc,
+                change.CreatedAtUtc,
+                change.Source,
+                BuildPlanChangeHistoryReason(change.Source),
+                null,
+                null,
+                change.FromPlanId,
+                change.ToPlanId,
+                fromPlan?.NameEn,
+                fromPlan?.NameAr,
+                toPlan?.NameEn,
+                toPlan?.NameAr,
+                toPlan?.Price,
+                toPlan?.Currency,
+                change.ProviderObservedAtUtc,
+                MapNotificationState(notification?.Status, hasEnabledRecipient),
+                notification?.AttemptCount ?? 0,
+                notification?.MaxAttempts ?? 0,
+                notification?.SentAtUtc,
+                notification?.NextAttemptAtUtc));
+        }
+
+        return history
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ThenByDescending(x => x.AuditCreatedAtUtc)
+            .ThenBy(x => x.Kind)
+            .ThenBy(x => x.EventId)
+            .Take(take)
+            .ToArray();
+    }
+
     private async Task RequireOwnerAsync(Guid ownerUserId, CancellationToken cancellationToken)
     {
         if (ownerUserId == Guid.Empty || !await dbContext.AuthUsers.AsNoTracking().AnyAsync(x => x.Id == ownerUserId, cancellationToken))
@@ -227,6 +368,31 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
         return clean;
     }
 
+    private static string BuildTransitionHistoryReason(
+        AccountSubscriptionStatus fromStatus,
+        AccountSubscriptionStatus toStatus,
+        SubscriptionTransitionSource source) =>
+        source == SubscriptionTransitionSource.Provider
+            ? $"Provider reconciliation confirmed the subscription status change from {fromStatus} to {toStatus}."
+            : $"The subscription authority recorded a status change from {fromStatus} to {toStatus}.";
+
+    private static string BuildPlanChangeHistoryReason(SubscriptionTransitionSource source) =>
+        source == SubscriptionTransitionSource.Provider
+            ? "Provider reconciliation confirmed a subscription plan change."
+            : "The subscription authority recorded a subscription plan change.";
+
+    private static AccountBillingNotificationState MapNotificationState(string? status, bool hasEnabledRecipient) => status switch
+    {
+        null => hasEnabledRecipient ? AccountBillingNotificationState.NotQueued : AccountBillingNotificationState.NotConfigured,
+        EmailOutboxMessage.QueuedStatus => AccountBillingNotificationState.Queued,
+        EmailOutboxMessage.SendingStatus => AccountBillingNotificationState.Sending,
+        EmailOutboxMessage.SentStatus => AccountBillingNotificationState.Sent,
+        EmailOutboxMessage.RetryWaitingStatus => AccountBillingNotificationState.Retrying,
+        EmailOutboxMessage.FailedStatus => AccountBillingNotificationState.Failed,
+        EmailOutboxMessage.CancelledStatus => AccountBillingNotificationState.Cancelled,
+        _ => AccountBillingNotificationState.NotQueued
+    };
+
     private static InvalidOperationException DuplicateOwner(Guid ownerUserId, Exception? inner = null) =>
         new($"Account '{ownerUserId:D}' already has a current subscription record.", inner);
 
@@ -243,4 +409,19 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
     private static AccountSubscriptionPlanChangeItem ToPlanChangeItem(AccountSubscriptionPlanChange x) => new(
         x.Id, x.SubscriptionId, x.FromPlanId, x.ToPlanId, x.Source, x.Reason,
         x.OccurredAtUtc, x.ProviderObservedAtUtc, x.CreatedAtUtc);
+
+    private sealed record BillingPlanSnapshot(
+        Guid Id,
+        string NameEn,
+        string NameAr,
+        decimal Price,
+        string Currency);
+
+    private sealed record BillingNotificationSnapshot(
+        string IdempotencyKey,
+        string Status,
+        int AttemptCount,
+        int MaxAttempts,
+        DateTime? SentAtUtc,
+        DateTime NextAttemptAtUtc);
 }
