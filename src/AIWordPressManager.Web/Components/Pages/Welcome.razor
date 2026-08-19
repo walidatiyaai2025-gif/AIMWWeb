@@ -18,7 +18,7 @@
     <header class="public-header">
         <a class="public-brand" href="/welcome" aria-label="AI WordPress Manager">
             <span class="brand-symbol">AI</span>
-            <span><strong>AI WordPress Manager</strong><small>@(L.IsArabic ? "WordPress Operations OS" : "WordPress Operations OS")</small></span>
+            <span><strong>AI WordPress Manager</strong><small>WordPress Operations OS</small></span>
         </a>
         <nav aria-label="@(L.IsArabic ? "التنقل العام" : "Public navigation")">
             <a href="#product">@(L.IsArabic ? "المنتج" : "Product")</a>
@@ -64,7 +64,10 @@
                             <span class="active">⌂</span><span>◎</span><span>▤</span><span>⌕</span><span>✦</span><span>⚡</span><span class="bottom">⚙</span>
                         </aside>
                         <div class="mini-workspace">
-                            <div class="mini-heading"><div><small>OPERATIONS OVERVIEW</small><strong>@(L.IsArabic ? "مساحة التحكم" : "Command workspace")</strong></div><button>+ @(L.IsArabic ? "إجراء" : "Action")</button></div>
+                            <div class="mini-heading">
+                                <div><small>OPERATIONS OVERVIEW</small><strong>@(L.IsArabic ? "مساحة التحكم" : "Command workspace")</strong></div>
+                                <button type="button">+ @(L.IsArabic ? "إجراء" : "Action")</button>
+                            </div>
                             <div class="metric-row">
                                 <article><span>◎</span><div><small>@(L.IsArabic ? "المواقع" : "Sites")</small><strong>12</strong></div><em>+2</em></article>
                                 <article><span>▤</span><div><small>@(L.IsArabic ? "المحتوى" : "Content")</small><strong>1,284</strong></div><em>99.8%</em></article>
@@ -96,11 +99,19 @@
         </section>
 
         <section class="product-section">
-            <div class="section-heading-v2"><span>@(L.IsArabic ? "مساحة تشغيل واحدة" : "ONE OPERATING LAYER")</span><h2>@(L.IsArabic ? "كل شيء مهم أمامك. كل تغيير يمكن تتبعه." : "Everything important in view. Every change traceable.")</h2><p>@(L.IsArabic ? "صممنا المساحات حول العمل الحقيقي: اكتشف المشكلة، افهم أثرها، راجع الإجراء، ثم نفّذ وراقب النتيجة." : "Workspaces are organized around the real job: surface the issue, understand impact, review the action, execute and verify the result.")</p></div>
+            <div class="section-heading-v2">
+                <span>@(L.IsArabic ? "مساحة تشغيل واحدة" : "ONE OPERATING LAYER")</span>
+                <h2>@(L.IsArabic ? "كل شيء مهم أمامك. كل تغيير يمكن تتبعه." : "Everything important in view. Every change traceable.")</h2>
+                <p>@(L.IsArabic ? "صممنا المساحات حول العمل الحقيقي: اكتشف المشكلة، افهم أثرها، راجع الإجراء، ثم نفّذ وراقب النتيجة." : "Workspaces are organized around the real job: surface the issue, understand impact, review the action, execute and verify the result.")</p>
+            </div>
             <div class="bento-grid">
                 @foreach (var feature in Features)
                 {
-                    <article class="bento-card @feature.ClassName"><span class="bento-icon">@feature.Icon</span><div><small>@(L.IsArabic ? feature.ArKicker : feature.EnKicker)</small><h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3><p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p></div><div class="bento-visual" aria-hidden="true"><i></i><i></i><i></i></div></article>
+                    <article class="bento-card @feature.ClassName">
+                        <span class="bento-icon">@feature.Icon</span>
+                        <div><small>@(L.IsArabic ? feature.ArKicker : feature.EnKicker)</small><h3>@(L.IsArabic ? feature.ArTitle : feature.EnTitle)</h3><p>@(L.IsArabic ? feature.ArDescription : feature.EnDescription)</p></div>
+                        <div class="bento-visual" aria-hidden="true"><i></i><i></i><i></i></div>
+                    </article>
                 }
             </div>
         </section>
@@ -119,7 +130,11 @@
         </section>
 
         <section class="pricing-section" id="pricing">
-            <div class="section-heading-v2 centered"><span>@(L.IsArabic ? "خطط من نفس كتالوج المنتج" : "PRICING FROM THE LIVE PRODUCT CATALOG")</span><h2>@(L.IsArabic ? "ابدأ مجانًا. وسّع الحدود عندما تحتاج." : "Start free. Expand capacity when you need it.")</h2><p>@(L.IsArabic ? "الأسعار والحدود أدناه تأتي من نفس كتالوج الاشتراكات المستخدم داخل الحساب، لذلك لا توجد صفحة أسعار منفصلة عن حقيقة المنتج." : "Plans and limits below come from the same catalog used inside account billing, so public pricing cannot drift away from product reality.")</p></div>
+            <div class="section-heading-v2 centered">
+                <span>@(L.IsArabic ? "خطط من نفس كتالوج المنتج" : "PRICING FROM THE LIVE PRODUCT CATALOG")</span>
+                <h2>@(L.IsArabic ? "ابدأ مجانًا. وسّع الحدود عندما تحتاج." : "Start free. Expand capacity when you need it.")</h2>
+                <p>@(L.IsArabic ? "الأسعار والحدود أدناه تأتي من نفس كتالوج الاشتراكات المستخدم داخل الحساب، لذلك لا توجد صفحة أسعار منفصلة عن حقيقة المنتج." : "Plans and limits below come from the same catalog used inside account billing, so public pricing cannot drift away from product reality.")</p>
+            </div>
 
             @if (_plansLoading)
             {
@@ -138,17 +153,22 @@
                         <article class="price-card @(isFreeTrial ? "featured" : string.Empty)">
                             <div class="price-card-head">
                                 <div><span>@(isFreeTrial ? (L.IsArabic ? "ابدأ هنا" : "START HERE") : plan.Code.ToUpperInvariant())</span><h3>@(L.IsArabic ? plan.NameAr : plan.NameEn)</h3></div>
-                                @if (isFreeTrial)<b>@(L.IsArabic ? "بدون بطاقة" : "NO CARD")</b>
+                                @if (isFreeTrial)
+                                {
+                                    <b>@(L.IsArabic ? "بدون بطاقة" : "NO CARD")</b>
+                                }
                             </div>
                             <p>@(L.IsArabic ? plan.DescriptionAr : plan.DescriptionEn)</p>
                             <div class="price-value">
                                 @if (plan.Price == 0m)
                                 {
-                                    <strong>@(L.IsArabic ? "مجاني" : "Free")</strong><small>@(plan.TrialDays > 0 ? $"{plan.TrialDays} {(L.IsArabic ? "يومًا" : "days")}" : string.Empty)</small>
+                                    <strong>@(L.IsArabic ? "مجاني" : "Free")</strong>
+                                    <small>@(plan.TrialDays > 0 ? $"{plan.TrialDays} {(L.IsArabic ? "يومًا" : "days")}" : string.Empty)</small>
                                 }
                                 else
                                 {
-                                    <strong>@FormatMoney(plan)</strong><small>/ @(plan.BillingInterval == SubscriptionPlan.YearlyInterval ? (L.IsArabic ? "سنة" : "year") : (L.IsArabic ? "شهر" : "month"))</small>
+                                    <strong>@FormatMoney(plan)</strong>
+                                    <small>/ @(plan.BillingInterval == SubscriptionPlan.YearlyInterval ? (L.IsArabic ? "سنة" : "year") : (L.IsArabic ? "شهر" : "month"))</small>
                                 }
                             </div>
                             <ul>
@@ -169,7 +189,11 @@
         </section>
 
         <section class="security-section" id="security">
-            <div class="security-copy"><span>@(L.IsArabic ? "التحكم والأمان" : "CONTROL & SECURITY")</span><h2>@(L.IsArabic ? "الأتمتة مفيدة فقط عندما يمكن تفسيرها وإيقافها ومراجعتها." : "Automation is useful only when it can be explained, stopped and audited.")</h2><p>@(L.IsArabic ? "صلاحيات على الخادم، أسرار محمية، سجل أمني، تشخيص Runtime، وعمليات يمكن تتبعها من الطلب إلى النتيجة." : "Server-side permissions, protected secrets, security audit, runtime diagnostics and operations that remain traceable from request to outcome.")</p></div>
+            <div class="security-copy">
+                <span>@(L.IsArabic ? "التحكم والأمان" : "CONTROL & SECURITY")</span>
+                <h2>@(L.IsArabic ? "الأتمتة مفيدة فقط عندما يمكن تفسيرها وإيقافها ومراجعتها." : "Automation is useful only when it can be explained, stopped and audited.")</h2>
+                <p>@(L.IsArabic ? "صلاحيات على الخادم، أسرار محمية، سجل أمني، تشخيص Runtime، وعمليات يمكن تتبعها من الطلب إلى النتيجة." : "Server-side permissions, protected secrets, security audit, runtime diagnostics and operations that remain traceable from request to outcome.")</p>
+            </div>
             <div class="security-grid">
                 <article><span>◈</span><strong>@(L.IsArabic ? "صلاحيات دقيقة" : "Permission aware")</strong><small>@(L.IsArabic ? "القدرات الحساسة محمية بسياسات الخادم." : "Sensitive capabilities are protected by server policies.")</small></article>
                 <article><span>⌁</span><strong>@(L.IsArabic ? "أسرار معزولة" : "Protected secrets")</strong><small>@(L.IsArabic ? "بيانات الاعتماد لا تتحول إلى نصوص معروضة." : "Credentials do not become display data.")</small></article>
@@ -189,7 +213,11 @@
         </section>
 
         <section class="final-cta-v2">
-            <div><span>@(L.IsArabic ? "ابدأ صغيرًا. حافظ على نفس طريقة التشغيل عند التوسع." : "START SMALL. KEEP THE SAME OPERATING MODEL AS YOU SCALE.")</span><h2>@(L.IsArabic ? "أول موقع WordPress على بعد دقائق." : "Your first WordPress site is minutes away.")</h2><p>@(L.IsArabic ? "جرّب الأساسيات لمدة 14 يومًا بدون بطاقة، ثم وسّع الخطة فقط عندما تحتاج مواقع أو AI أو أتمتة أكثر." : "Explore the core platform for 14 days with no card, then upgrade only when you need more sites, AI or automation.")</p></div>
+            <div>
+                <span>@(L.IsArabic ? "ابدأ صغيرًا. حافظ على نفس طريقة التشغيل عند التوسع." : "START SMALL. KEEP THE SAME OPERATING MODEL AS YOU SCALE.")</span>
+                <h2>@(L.IsArabic ? "أول موقع WordPress على بعد دقائق." : "Your first WordPress site is minutes away.")</h2>
+                <p>@(L.IsArabic ? "جرّب الأساسيات لمدة 14 يومًا بدون بطاقة، ثم وسّع الخطة فقط عندما تحتاج مواقع أو AI أو أتمتة أكثر." : "Explore the core platform for 14 days with no card, then upgrade only when you need more sites, AI or automation.")</p>
+            </div>
             <a href="@PrimaryCtaHref">@PrimaryCtaText <b>→</b></a>
         </section>
     </main>
@@ -240,7 +268,10 @@
             var auth = await AuthenticationState.GetAuthenticationStateAsync();
             _isAuthenticated = auth.User.Identity?.IsAuthenticated == true;
         }
-        catch { _isAuthenticated = false; }
+        catch
+        {
+            _isAuthenticated = false;
+        }
 
         try
         {
@@ -273,10 +304,12 @@
             await JS.InvokeVoidAsync("appLanguage.apply", L.Culture, L.Direction);
             StateHasChanged();
         }
-        catch (InvalidOperationException) { }
+        catch (InvalidOperationException)
+        {
+        }
     }
 
-    private bool IsFreeTrial(SubscriptionPlanItem plan) =>
+    private static bool IsFreeTrial(SubscriptionPlanItem plan) =>
         string.Equals(plan.Code, "free-trial", StringComparison.OrdinalIgnoreCase) || plan.Price == 0m;
 
     private string PlanCtaHref(SubscriptionPlanItem plan)
@@ -285,7 +318,7 @@
         return IsFreeTrial(plan) ? "/" : "/account/billing";
     }
 
-    private string FormatMoney(SubscriptionPlanItem plan) =>
+    private static string FormatMoney(SubscriptionPlanItem plan) =>
         $"{plan.Price.ToString("0.##", CultureInfo.InvariantCulture)} {plan.Currency}";
 
     private IReadOnlyList<string> BenefitsFor(SubscriptionPlanItem plan)
@@ -293,30 +326,48 @@
         if (!_planEntitlements.TryGetValue(plan.Id, out var values)) return Array.Empty<string>();
         var benefits = new List<string>();
 
-        if (TryInteger(values, EntitlementDefinitionCatalog.SitesMax, out var sites))
-            benefits.Add(L.IsArabic ? $"حتى {sites} موقع WordPress" : $"Up to {sites} WordPress site{(sites == 1 ? string.Empty : "s")}");
-        if (TryBoolean(values, EntitlementDefinitionCatalog.AiEnabled, out var aiEnabled))
+        var sites = IntegerValue(values, EntitlementDefinitionCatalog.SitesMax);
+        if (sites.HasValue)
+            benefits.Add(L.IsArabic ? $"حتى {sites.Value} موقع WordPress" : $"Up to {sites.Value} WordPress site{(sites.Value == 1 ? string.Empty : "s")}");
+
+        var aiEnabled = BooleanValue(values, EntitlementDefinitionCatalog.AiEnabled);
+        if (aiEnabled == true)
         {
-            if (aiEnabled && TryInteger(values, EntitlementDefinitionCatalog.AiMonthlyRequestsMax, out var aiMax))
-                benefits.Add(L.IsArabic ? $"{aiMax} طلب AI شهريًا" : $"{aiMax} AI requests / month");
-            else if (!aiEnabled)
-                benefits.Add(L.IsArabic ? "بدون AI" : "AI not included");
+            var aiMax = IntegerValue(values, EntitlementDefinitionCatalog.AiMonthlyRequestsMax);
+            if (aiMax.HasValue)
+                benefits.Add(L.IsArabic ? $"{aiMax.Value} طلب AI شهريًا" : $"{aiMax.Value} AI requests / month");
         }
-        if (TryInteger(values, EntitlementDefinitionCatalog.AutomationSchedulesMax, out var automations))
-            benefits.Add(L.IsArabic ? $"{automations} جدول أتمتة" : $"{automations} automation schedule{(automations == 1 ? string.Empty : "s")}");
-        if (TryInteger(values, EntitlementDefinitionCatalog.BackupRetentionDays, out var backupDays))
-            benefits.Add(L.IsArabic ? $"احتفاظ بالنسخ {backupDays} يوم" : $"{backupDays}-day backup retention");
-        if (TryBoolean(values, EntitlementDefinitionCatalog.PremiumSeo, out var premiumSeo))
-            benefits.Add(premiumSeo ? (L.IsArabic ? "SEO متقدم" : "Premium SEO") : (L.IsArabic ? "SEO الأساسي" : "Core SEO workspace"));
+        else if (aiEnabled == false)
+        {
+            benefits.Add(L.IsArabic ? "بدون AI" : "AI not included");
+        }
+
+        var automations = IntegerValue(values, EntitlementDefinitionCatalog.AutomationSchedulesMax);
+        if (automations.HasValue)
+            benefits.Add(L.IsArabic ? $"{automations.Value} جدول أتمتة" : $"{automations.Value} automation schedule{(automations.Value == 1 ? string.Empty : "s")}");
+
+        var backupDays = IntegerValue(values, EntitlementDefinitionCatalog.BackupRetentionDays);
+        if (backupDays.HasValue)
+            benefits.Add(L.IsArabic ? $"احتفاظ بالنسخ {backupDays.Value} يوم" : $"{backupDays.Value}-day backup retention");
+
+        var premiumSeo = BooleanValue(values, EntitlementDefinitionCatalog.PremiumSeo);
+        if (premiumSeo.HasValue)
+            benefits.Add(premiumSeo.Value ? (L.IsArabic ? "SEO متقدم" : "Premium SEO") : (L.IsArabic ? "SEO الأساسي" : "Core SEO workspace"));
 
         return benefits.Take(5).ToArray();
     }
 
-    private static bool TryInteger(IReadOnlyDictionary<string, string> values, string key, out long value) =>
-        values.TryGetValue(key, out var raw) && long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+    private static long? IntegerValue(IReadOnlyDictionary<string, string> values, string key)
+    {
+        if (!values.TryGetValue(key, out var raw)) return null;
+        return long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
+    }
 
-    private static bool TryBoolean(IReadOnlyDictionary<string, string> values, string key, out bool value) =>
-        values.TryGetValue(key, out var raw) && bool.TryParse(raw, out value);
+    private static bool? BooleanValue(IReadOnlyDictionary<string, string> values, string key)
+    {
+        if (!values.TryGetValue(key, out var raw)) return null;
+        return bool.TryParse(raw, out var parsed) ? parsed : null;
+    }
 
     private sealed record LandingFeature(string Icon, string EnKicker, string ArKicker, string EnTitle, string ArTitle, string EnDescription, string ArDescription, string ClassName);
     private sealed record LandingFaq(string EnQuestion, string ArQuestion, string EnAnswer, string ArAnswer);
