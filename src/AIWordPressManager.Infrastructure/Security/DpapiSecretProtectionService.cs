@@ -11,7 +11,6 @@ namespace AIWordPressManager.Infrastructure.Security;
 public sealed class DpapiSecretProtectionService : ISecretProtectionService, ISecretRecoveryKeyService
 {
     private const string Prefix = "aesgcm:v1:";
-    private const int KeySize = 32;
     private const int NonceSize = 12;
     private const int TagSize = 16;
     private static readonly object KeyLock = new();
@@ -103,64 +102,30 @@ public sealed class DpapiSecretProtectionService : ISecretProtectionService, ISe
 
     private static byte[] LoadOrCreateKey()
     {
-        var stableDirectory = GetStableSecurityDirectory();
-        var stableKeyPath = Path.Combine(stableDirectory, ".secret-key");
-        var legacyKeyPath = Path.Combine(AppContext.BaseDirectory, "Data", ".secret-key");
+        var stableDirectory = SecretProtectionStorage.GetSecurityDirectory();
+        var stableKeyPath = SecretProtectionStorage.GetKeyPath();
+        var legacyKeyPath = Path.Combine(AppContext.BaseDirectory, "Data", SecretProtectionStorage.KeyFileName);
 
         lock (KeyLock)
         {
             Directory.CreateDirectory(stableDirectory);
 
             if (File.Exists(stableKeyPath))
-                return ReadAndValidateKey(stableKeyPath);
+                return SecretProtectionStorage.ReadAndValidateKey(stableKeyPath);
 
             // Earlier builds stored the key under AppContext.BaseDirectory/Data. That folder
             // may live inside bin/Release or bin/Debug and can be removed by a clean build.
             // Preserve the old key when it still exists so previously encrypted secrets remain readable.
             if (File.Exists(legacyKeyPath))
             {
-                var legacyKey = ReadAndValidateKey(legacyKeyPath);
-                WriteKeyAtomically(stableKeyPath, legacyKey);
+                var legacyKey = SecretProtectionStorage.ReadAndValidateKey(legacyKeyPath);
+                SecretProtectionStorage.WriteKeyAtomically(stableKeyPath, legacyKey, replaceExisting: false);
                 return legacyKey;
             }
 
-            var newKey = RandomNumberGenerator.GetBytes(KeySize);
-            WriteKeyAtomically(stableKeyPath, newKey);
+            var newKey = RandomNumberGenerator.GetBytes(SecretProtectionStorage.MasterKeySize);
+            SecretProtectionStorage.WriteKeyAtomically(stableKeyPath, newKey, replaceExisting: false);
             return newKey;
         }
-    }
-
-    private static string GetStableSecurityDirectory()
-    {
-        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        if (!string.IsNullOrWhiteSpace(localApplicationData))
-            return Path.Combine(localApplicationData, "AIWordPressManager", "Security");
-
-        // Fallback for unusual service/container environments where LocalApplicationData is unavailable.
-        return Path.Combine(AppContext.BaseDirectory, "Data", "Security");
-    }
-
-    private static byte[] ReadAndValidateKey(string path)
-    {
-        try
-        {
-            var key = Convert.FromBase64String(File.ReadAllText(path).Trim());
-            if (key.Length != KeySize)
-                throw new CryptographicException("The application encryption key has an invalid length.");
-            return key;
-        }
-        catch (FormatException ex)
-        {
-            throw new CryptographicException("The application encryption key is not valid Base64 data.", ex);
-        }
-    }
-
-    private static void WriteKeyAtomically(string path, byte[] key)
-    {
-        var directory = Path.GetDirectoryName(path)!;
-        Directory.CreateDirectory(directory);
-        var temp = path + ".tmp";
-        File.WriteAllText(temp, Convert.ToBase64String(key));
-        File.Move(temp, path, true);
     }
 }
