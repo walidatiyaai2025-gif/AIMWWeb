@@ -1,0 +1,408 @@
+@page "/admin/billing-support"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
+@using System.Globalization
+@using AIWordPressManager.Application.Abstractions.Billing
+@using AIWordPressManager.Domain.Entities
+@using AIWordPressManager.Persistence
+@inject AppDbContext DbContext
+@inject CurrentUserContext CurrentUser
+@inject IAccountSubscriptionService SubscriptionService
+@inject IPaymentGatewayRegistry PaymentGateways
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AppLanguageService L
+
+<PageTitle>@(L.IsArabic ? "دعم الفوترة" : "Billing Support")</PageTitle>
+
+<div class="settings-page" dir="@(L.IsArabic ? "rtl" : "ltr")">
+    <section class="panel settings-hero">
+        <div>
+            <span class="workspace-kicker">BILLING SUPPORT</span>
+            <h2>@(L.IsArabic ? "دعم الاشتراكات والفوترة" : "Subscription & billing support")</h2>
+            <p>@(L.IsArabic
+                ? "ابحث عن اشتراك، راجع الأدلة الموثقة، ونفّذ تدخلات دعم محدودة ومدققة. لا توجد هنا أي عملية لتسجيل الدفع ناجحًا يدويًا؛ حالة PayPal وخطته لا تتغيران إلا من دليل المزود الموثوق."
+                : "Find a subscription, review committed evidence, and perform bounded audited support actions. There is no manual mark-paid operation here; PayPal status and plan corrections come only from authoritative provider evidence.")</p>
+        </div>
+        <a class="button secondary" href="/settings">@(L.IsArabic ? "العودة للإعدادات" : "Back to settings")</a>
+    </section>
+
+    <section class="panel settings-section">
+        <header>
+            <div>
+                <span class="workspace-kicker">SEARCH</span>
+                <h2>@(L.IsArabic ? "البحث عن اشتراك" : "Find a subscription")</h2>
+                <p>@(L.IsArabic ? "ابحث باسم المستخدم أو معرّف الحساب أو مرجع PayPal. النتائج تعرض المرجع بشكل مخفي." : "Search by username, account ID, or PayPal subscription reference. Results always mask the provider reference.")</p>
+            </div>
+            <span class="settings-badge">@_results.Count</span>
+        </header>
+
+        <div class="form-ux-grid">
+            <label>
+                <span>@(L.IsArabic ? "بحث الدعم" : "Support search")</span>
+                <input @bind="_query" @bind:event="oninput"
+                       placeholder="@(L.IsArabic ? "اسم المستخدم، GUID، أو مرجع PayPal..." : "Username, GUID, or PayPal reference...")"
+                       aria-label="@(L.IsArabic ? "البحث في اشتراكات الحسابات" : "Search account subscriptions")" />
+            </label>
+        </div>
+        <div class="sessions-actions">
+            <button type="button" class="button primary" disabled="@_busy" @onclick="SearchAsync">@(L.IsArabic ? "بحث" : "Search")</button>
+            <button type="button" class="button secondary" disabled="@_busy" @onclick="ClearSearchAsync">@(L.IsArabic ? "مسح" : "Clear")</button>
+        </div>
+
+        @if (_searching)
+        {
+            <p role="status">@(L.IsArabic ? "جارٍ البحث..." : "Searching...")</p>
+        }
+        else if (_results.Count == 0)
+        {
+            <p>@(L.IsArabic ? "لا توجد اشتراكات مطابقة." : "No matching subscriptions.")</p>
+        }
+        else
+        {
+            <div class="sessions-list">
+                @foreach (var item in _results)
+                {
+                    <article class="settings-subsection" @key="item.SubscriptionId">
+                        <div class="sessions-row">
+                            <div>
+                                <strong>@item.UserName</strong>
+                                <small>@LocalizedPlan(item) · @item.OwnerUserId.ToString("D")</small>
+                            </div>
+                            <span class="settings-badge @StatusTone(item.Status)">@StatusLabel(item.Status)</span>
+                        </div>
+                        <div class="sessions-meta">
+                            <span><b>@(L.IsArabic ? "المزود" : "Provider"):</b> @ProviderText(item)</span>
+                            <span><b>@(L.IsArabic ? "نهاية الفترة" : "Period end"):</b> @FormatWhen(item.CurrentPeriodEndsAtUtc)</span>
+                            <span><b>@(L.IsArabic ? "آخر دليل مزود" : "Provider watermark"):</b> @FormatWhen(item.LastProviderEventAtUtc)</span>
+                        </div>
+                        <div class="sessions-actions">
+                            <button type="button" class="button secondary" disabled="@_busy" @onclick="() => SelectAsync(item.SubscriptionId)">@(L.IsArabic ? "فتح الدعم" : "Open support")</button>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="settings-note" role="alert"><span>!</span><p>@_error</p></div>
+    }
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="settings-note" role="status"><span>✓</span><p>@_message</p></div>
+    }
+
+    @if (_detail is not null)
+    {
+        var selected = _detail.Subscription;
+        <section class="panel settings-section">
+            <header>
+                <div>
+                    <span class="workspace-kicker">SUPPORT CASE</span>
+                    <h2>@selected.UserName</h2>
+                    <p>@(L.IsArabic ? "كل تدخل أدناه يحتاج سبب دعم ويُسجل في Security.Audit.v1 بهوية المنفذ وسياق الطلب." : "Every intervention below requires a support reason and is recorded in Security.Audit.v1 with trusted actor and request context.")</p>
+                </div>
+                <span class="settings-badge @StatusTone(selected.Status)">@StatusLabel(selected.Status)</span>
+            </header>
+
+            <div class="database-info-grid">
+                <div><small>@(L.IsArabic ? "الخطة" : "Plan")</small><strong>@LocalizedPlan(selected)</strong></div>
+                <div><small>@(L.IsArabic ? "المزود" : "Provider")</small><strong>@ProviderText(selected)</strong></div>
+                <div><small>@(L.IsArabic ? "نهاية الفترة" : "Period end")</small><strong>@FormatWhen(_detail.CurrentPeriodEndsAtUtc)</strong></div>
+                <div><small>@(L.IsArabic ? "نهاية السماح" : "Grace end")</small><strong>@FormatWhen(selected.GraceUntilUtc)</strong></div>
+                <div><small>@(L.IsArabic ? "آخر دليل PayPal" : "Last PayPal evidence")</small><strong>@FormatWhen(selected.LastProviderEventAtUtc)</strong></div>
+                <div><small>@(L.IsArabic ? "معرّف الاشتراك" : "Subscription ID")</small><strong dir="ltr">@selected.SubscriptionId.ToString("D")</strong></div>
+            </div>
+
+            <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "إعادة المصالحة تقرأ snapshot جديدًا من PayPal. قبول أمر أو رجوع المتصفح لا يُستخدمان كدليل نجاح أو دفع." : "Reconciliation reads a fresh PayPal API snapshot. Accepted commands and browser returns are never treated as payment or success evidence.")</p></div>
+
+            <div class="settings-subsection">
+                <h3>@(L.IsArabic ? "سبب تدخل الدعم" : "Support intervention reason")</h3>
+                <label>
+                    <span>@(L.IsArabic ? "سبب واضح (5–500 حرف)" : "Clear reason (5–500 characters)")</span>
+                    <textarea @bind="_supportReason" rows="3" maxlength="500"
+                              placeholder="@(L.IsArabic ? "اكتب سبب التدخل ورقم الحالة إن وجد..." : "Describe why this intervention is required and include the case reference when available...")"></textarea>
+                </label>
+            </div>
+
+            <div class="settings-subsection">
+                <h3>@(L.IsArabic ? "إجراءات الدعم" : "Support actions")</h3>
+                <div class="form-ux-grid">
+                    <label>
+                        <span>@(L.IsArabic ? "أيام السماح الإضافية" : "Additional grace days")</span>
+                        <input type="number" min="1" max="90" @bind="_graceDays" />
+                    </label>
+                </div>
+                <div class="sessions-actions">
+                    @if (CanGrantGrace(selected))
+                    {
+                        <button type="button" class="button secondary" disabled="@_busy" @onclick="GrantGraceAsync">@(selected.Status == AccountSubscriptionStatus.Grace ? (L.IsArabic ? "تمديد السماح" : "Extend grace") : (L.IsArabic ? "منح فترة سماح" : "Grant grace"))</button>
+                    }
+                    @if (CanSuspend(selected))
+                    {
+                        <button type="button" class="button secondary" disabled="@_busy" @onclick="SuspendAsync">@(L.IsArabic ? "تعليق الوصول" : "Suspend access")</button>
+                    }
+                    @if (CanReactivate(selected))
+                    {
+                        <button type="button" class="button secondary" disabled="@_busy" @onclick="ReactivateAsync">@(L.IsArabic ? "استعادة الوصول" : "Restore access")</button>
+                    }
+                    @if (CanReconcile(selected))
+                    {
+                        <button type="button" class="button primary" disabled="@_busy" @onclick="ReconcileAsync">@(L.IsArabic ? "مصالحة الآن مع PayPal" : "Reconcile with PayPal now")</button>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section class="panel settings-section">
+            <header>
+                <div>
+                    <span class="workspace-kicker">AUTHORITATIVE HISTORY</span>
+                    <h2>@(L.IsArabic ? "سجل الاشتراك والفوترة" : "Subscription & billing history")</h2>
+                    <p>@(L.IsArabic ? "أحداث ملتزمة فقط؛ لا يتم إنشاء حدث نجاح من أمر PayPal أو تنقل المتصفح." : "Committed audit events only; no success event is created from a PayPal command or browser navigation.")</p>
+                </div>
+                <span class="settings-badge">@_detail.History.Count</span>
+            </header>
+
+            @if (_detail.History.Count == 0)
+            {
+                <p>@(L.IsArabic ? "لا توجد أحداث فوترة موثقة حتى الآن." : "No committed billing events yet.")</p>
+            }
+            else
+            {
+                <div class="sessions-list">
+                    @foreach (var item in _detail.History)
+                    {
+                        <article class="settings-subsection" @key="item.EventId">
+                            <div class="sessions-row">
+                                <div>
+                                    <strong>@HistoryTitle(item)</strong>
+                                    <small>@item.Source · @FormatWhen(item.OccurredAtUtc)</small>
+                                </div>
+                                <span class="settings-badge">@NotificationLabel(item.NotificationState)</span>
+                            </div>
+                            <p>@item.Reason</p>
+                            @if (item.ProviderEvidenceAtUtc.HasValue)
+                            {
+                                <small>@($"{(L.IsArabic ? "دليل المزود" : "Provider evidence")}: {FormatWhen(item.ProviderEvidenceAtUtc)}")</small>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private readonly List<AdminBillingSearchItem> _results = new();
+    private AdminBillingSupportDetail? _detail;
+    private string _query = string.Empty;
+    private string _supportReason = string.Empty;
+    private string _error = string.Empty;
+    private string _message = string.Empty;
+    private int _graceDays = 7;
+    private bool _searching;
+    private bool _acting;
+    private bool _busy => _searching || _acting;
+
+    private AdminBillingSupportService Service => new(
+        DbContext,
+        CurrentUser,
+        SubscriptionService,
+        PaymentGateways,
+        HttpContextAccessor);
+
+    protected override async Task OnInitializedAsync() => await SearchAsync();
+
+    private async Task SearchAsync()
+    {
+        _searching = true;
+        _error = string.Empty;
+        try
+        {
+            _results.Clear();
+            _results.AddRange(await Service.SearchAsync(_query, 50));
+            if (_detail is not null && _results.All(x => x.SubscriptionId != _detail.Subscription.SubscriptionId))
+                _detail = null;
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _searching = false;
+        }
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        _query = string.Empty;
+        _detail = null;
+        _message = string.Empty;
+        await SearchAsync();
+    }
+
+    private async Task SelectAsync(Guid subscriptionId)
+    {
+        _acting = true;
+        _error = _message = string.Empty;
+        try
+        {
+            _detail = await Service.GetAsync(subscriptionId);
+            _supportReason = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _acting = false;
+        }
+    }
+
+    private async Task GrantGraceAsync()
+    {
+        if (_detail is null || _busy) return;
+        var days = Math.Clamp(_graceDays, 1, 90);
+        var now = DateTime.UtcNow;
+        var baseDate = _detail.Subscription.GraceUntilUtc is { } current && current > now ? current : now;
+        await RunActionAsync(
+            () => Service.GrantOrExtendGraceAsync(_detail.Subscription.SubscriptionId, baseDate.AddDays(days), _supportReason),
+            L.IsArabic ? "تم تطبيق فترة السماح وتسجيل تدخل الدعم." : "Grace was applied and the support intervention was audited.");
+    }
+
+    private Task SuspendAsync() => _detail is null
+        ? Task.CompletedTask
+        : RunActionAsync(
+            () => Service.SuspendAsync(_detail.Subscription.SubscriptionId, _supportReason),
+            L.IsArabic ? "تم تعليق الوصول وتسجيل تدخل الدعم." : "Access was suspended and the support intervention was audited.");
+
+    private Task ReactivateAsync() => _detail is null
+        ? Task.CompletedTask
+        : RunActionAsync(
+            () => Service.ReactivateAsync(_detail.Subscription.SubscriptionId, _supportReason),
+            L.IsArabic ? "تمت استعادة الوصول وتسجيل تدخل الدعم. لم يتم تسجيل دفع ناجح." : "Access was restored and the support intervention was audited. No payment success was recorded.");
+
+    private async Task ReconcileAsync()
+    {
+        if (_detail is null || _busy) return;
+        _acting = true;
+        _error = _message = string.Empty;
+        var selectedId = _detail.Subscription.SubscriptionId;
+        try
+        {
+            var result = await Service.ReconcilePayPalAsync(selectedId, _supportReason);
+            _detail = await Service.GetAsync(selectedId);
+            await RefreshResultsAsync();
+            _message = L.IsArabic
+                ? (result.Changed ? "تم تطبيق دليل PayPal الموثوق وتحديث الحالة/الخطة عند الحاجة." : "أكد snapshot الموثوق الحالة الحالية ولم يتطلب تغييرًا محليًا.")
+                : (result.Changed ? "Authoritative PayPal evidence was applied and status/plan were updated where required." : "The authoritative snapshot confirmed the current local state; no change was required.");
+            _supportReason = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _acting = false;
+        }
+    }
+
+    private async Task RunActionAsync(Func<Task<AdminBillingSupportDetail>> action, string successMessage)
+    {
+        if (_detail is null || _busy) return;
+        _acting = true;
+        _error = _message = string.Empty;
+        try
+        {
+            _detail = await action();
+            await RefreshResultsAsync();
+            _message = successMessage;
+            _supportReason = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _error = SafeError(ex);
+        }
+        finally
+        {
+            _acting = false;
+        }
+    }
+
+    private async Task RefreshResultsAsync()
+    {
+        var refreshed = await Service.SearchAsync(_query, 50);
+        _results.Clear();
+        _results.AddRange(refreshed);
+    }
+
+    private bool CanGrantGrace(AdminBillingSearchItem item) =>
+        item.Status is not (AccountSubscriptionStatus.Cancelled or AccountSubscriptionStatus.Expired);
+
+    private bool CanSuspend(AdminBillingSearchItem item) =>
+        item.Status != AccountSubscriptionStatus.Suspended &&
+        AccountSubscriptionStateMachine.CanTransition(item.Status, AccountSubscriptionStatus.Suspended);
+
+    private static bool CanReactivate(AdminBillingSearchItem item) =>
+        item.Status == AccountSubscriptionStatus.Suspended && string.IsNullOrWhiteSpace(item.ProviderKey);
+
+    private static bool CanReconcile(AdminBillingSearchItem item) =>
+        item.Status != AccountSubscriptionStatus.Expired &&
+        string.Equals(item.ProviderKey, "paypal", StringComparison.OrdinalIgnoreCase) &&
+        !string.IsNullOrWhiteSpace(item.MaskedProviderSubscriptionReference);
+
+    private string LocalizedPlan(AdminBillingSearchItem item) => L.IsArabic ? item.PlanNameAr : item.PlanNameEn;
+    private string ProviderText(AdminBillingSearchItem item) => string.IsNullOrWhiteSpace(item.ProviderKey)
+        ? (L.IsArabic ? "غير مربوط" : "Not bound")
+        : $"{item.ProviderKey}: {item.MaskedProviderSubscriptionReference ?? "—"}";
+    private string FormatWhen(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString(L.IsArabic ? "dd/MM/yyyy HH:mm" : "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) : "—";
+    private string StatusLabel(AccountSubscriptionStatus status) => status switch
+    {
+        AccountSubscriptionStatus.Trialing => L.IsArabic ? "تجريبي" : "Trialing",
+        AccountSubscriptionStatus.Active => L.IsArabic ? "نشط" : "Active",
+        AccountSubscriptionStatus.PastDue => L.IsArabic ? "متأخر الدفع" : "Past due",
+        AccountSubscriptionStatus.Grace => L.IsArabic ? "فترة سماح" : "Grace",
+        AccountSubscriptionStatus.Suspended => L.IsArabic ? "معلق" : "Suspended",
+        AccountSubscriptionStatus.Cancelled => L.IsArabic ? "ملغي" : "Cancelled",
+        AccountSubscriptionStatus.Expired => L.IsArabic ? "منتهي" : "Expired",
+        _ => status.ToString()
+    };
+    private static string StatusTone(AccountSubscriptionStatus status) => status switch
+    {
+        AccountSubscriptionStatus.Active => "success",
+        AccountSubscriptionStatus.Trialing => "info",
+        AccountSubscriptionStatus.PastDue or AccountSubscriptionStatus.Grace => "warning",
+        AccountSubscriptionStatus.Suspended or AccountSubscriptionStatus.Cancelled or AccountSubscriptionStatus.Expired => "danger",
+        _ => string.Empty
+    };
+    private string HistoryTitle(AccountBillingHistoryItem item)
+    {
+        if (item.Kind == AccountBillingHistoryKind.PlanChange)
+        {
+            var from = L.IsArabic ? item.FromPlanNameAr : item.FromPlanNameEn;
+            var to = L.IsArabic ? item.ToPlanNameAr : item.ToPlanNameEn;
+            return $"{(L.IsArabic ? "تغيير خطة" : "Plan change")}: {from ?? "—"} → {to ?? "—"}";
+        }
+        return item.FromStatus.HasValue && item.ToStatus.HasValue
+            ? $"{StatusLabel(item.FromStatus.Value)} → {StatusLabel(item.ToStatus.Value)}"
+            : (L.IsArabic ? "تغيير حالة الاشتراك" : "Subscription status change");
+    }
+    private string NotificationLabel(AccountBillingNotificationState state) => state switch
+    {
+        AccountBillingNotificationState.Sent => L.IsArabic ? "تم إرسال التنبيه" : "Notification sent",
+        AccountBillingNotificationState.Queued => L.IsArabic ? "في طابور البريد" : "Email queued",
+        AccountBillingNotificationState.Sending => L.IsArabic ? "جارٍ الإرسال" : "Sending",
+        AccountBillingNotificationState.Retrying => L.IsArabic ? "إعادة محاولة" : "Retrying",
+        AccountBillingNotificationState.Failed => L.IsArabic ? "فشل الإرسال" : "Failed",
+        AccountBillingNotificationState.Cancelled => L.IsArabic ? "ألغي الإرسال" : "Cancelled",
+        AccountBillingNotificationState.NotConfigured => L.IsArabic ? "لا يوجد مستلم" : "No recipient",
+        _ => L.IsArabic ? "بانتظار الترحيل" : "Awaiting relay"
+    };
+    private string SafeError(Exception ex) => L.IsArabic ? $"تعذر تنفيذ عملية الدعم: {ex.Message}" : $"Support operation could not be completed: {ex.Message}";
+}
