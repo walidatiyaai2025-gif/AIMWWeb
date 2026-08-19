@@ -75,11 +75,13 @@
                 <div><small>@(L.IsArabic ? "الجهاز المصدر" : "Source machine")</small><strong>@(_inspection.MachineName ?? "—")</strong></div>
                 <div><small>@(L.IsArabic ? "الحجم بعد الفك" : "Uncompressed size")</small><strong>@FormatBytes(_inspection.UncompressedBytes)</strong></div>
                 <div><small>@(L.IsArabic ? "قواعد البيانات" : "Databases")</small><strong>@_inspection.DatabaseCount</strong></div>
+                <div><small>@(L.IsArabic ? "الملفات المُدارة" : "Managed files")</small><strong>@_inspection.Files.Count</strong></div>
             </div>
             <div class="settings-note"><span>ⓘ</span><p>@_inspection.Message</p></div>
             @foreach (var file in _inspection.Files)
             {
-                <div class="backup-row"><div class="backup-icon">DB</div><div class="backup-main"><strong>@file.Name</strong><small>@FormatBytes(file.SizeBytes)</small></div></div>
+                var displayPath = string.IsNullOrWhiteSpace(file.RelativePath) ? file.Name : file.RelativePath;
+                <div class="backup-row"><div class="backup-icon">@KindIcon(file.Kind)</div><div class="backup-main"><strong>@displayPath</strong><small>@KindLabel(file.Kind) · @FormatBytes(file.SizeBytes)</small></div></div>
             }
         </section>
     }
@@ -92,7 +94,7 @@
             {
                 <article class="backup-row"><div class="backup-icon">@(check.Passed ? "✓" : "!")</div><div class="backup-main"><strong>@(L.IsArabic ? check.NameAr : check.Name)</strong><small>@check.Message</small></div><span class="badge @(check.Passed ? "success" : "danger")">@(check.Passed ? (L.IsArabic ? "اجتاز" : "Passed") : (L.IsArabic ? "موقوف" : "Blocked"))</span></article>
             }
-            <div class="settings-note"><span>⚠</span><p>@(L.IsArabic ? "الاستعادة داخل التطبيق تظل محظورة. يجب إيقاف التطبيق ثم تنفيذ الاستعادة دون اتصال لتجنب استبدال ملفات SQLite المفتوحة." : "In-process restore remains blocked. Stop the application and perform an offline restore to avoid replacing open SQLite files.")</p></div>
+            <div class="settings-note"><span>⚠</span><p>@(L.IsArabic ? "الاستعادة داخل التطبيق تظل محظورة. يجب إيقاف التطبيق ثم تنفيذ الاستعادة دون اتصال لتجنب استبدال ملفات بيانات التطبيق المفتوحة." : "In-process restore remains blocked. Stop the application and perform an offline restore to avoid replacing open application data files.")</p></div>
         </section>
     }
 
@@ -254,6 +256,22 @@
 
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private static string FormatBytes(long value) => value switch { >= 1073741824 => $"{value / 1073741824d:0.00} GB", >= 1048576 => $"{value / 1048576d:0.00} MB", >= 1024 => $"{value / 1024d:0.0} KB", _ => $"{value} B" };
+
+    private static string KindIcon(string? kind) => Enum.TryParse<BackupContentKind>(kind, true, out var parsed) && parsed == BackupContentKind.Database ? "DB" : "FS";
+
+    private string KindLabel(string? kind)
+    {
+        if (!Enum.TryParse<BackupContentKind>(kind, true, out var parsed))
+            parsed = BackupContentKind.ManagedFile;
+
+        return parsed switch
+        {
+            BackupContentKind.Database => L.IsArabic ? "قاعدة بيانات" : "Database",
+            BackupContentKind.DatabaseSidecar => L.IsArabic ? "ملف مساعد لقاعدة البيانات" : "Database sidecar",
+            BackupContentKind.ManagedState => L.IsArabic ? "حالة تطبيق مُدارة" : "Managed application state",
+            _ => L.IsArabic ? "ملف مُدار" : "Managed file"
+        };
+    }
 
     private void Changed()
     {
