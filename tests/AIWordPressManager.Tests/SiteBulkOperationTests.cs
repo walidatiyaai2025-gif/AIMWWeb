@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AIWordPressManager.Application.Abstractions;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Domain.Enums;
@@ -162,7 +163,12 @@ public sealed class SiteBulkOperationOwnershipTests
                 HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
             };
             var currentUser = new CurrentUserContext(accessor);
-            var service = new SiteWebService(db, new UnusedConnectionTester(), new PassThroughSecretProtection(), currentUser);
+            var service = new SiteWebService(
+                db,
+                new UnusedConnectionTester(),
+                new PassThroughSecretProtection(),
+                currentUser,
+                new AllowAllEntitlementEnforcementService());
             return new SiteServiceFixture(connection, db, ownerId, service);
         }
 
@@ -178,6 +184,12 @@ public sealed class SiteBulkOperationOwnershipTests
             await Db.DisposeAsync();
             await _connection.DisposeAsync();
         }
+    }
+
+    private sealed class AllowAllEntitlementEnforcementService : IAccountEntitlementEnforcementService
+    {
+        public Task RequireBooleanCapabilityAsync(Guid ownerUserId, string entitlementKey, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RequireAdditionalUsageAsync(Guid ownerUserId, string entitlementKey, long currentUsage, long requestedAdditional = 1, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class FixedHttpContextAccessor : IHttpContextAccessor
