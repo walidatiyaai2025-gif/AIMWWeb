@@ -71,8 +71,24 @@ window.aiwmRecentPages = (() => {
         </div>`;
     }
 
+    function applyPanelState(shell, panel) {
+        if (!(shell instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
+        const opened = shell.classList.contains("open");
+
+        panel.setAttribute("role", "dialog");
+        panel.setAttribute("aria-modal", opened ? "true" : "false");
+        panel.setAttribute("aria-hidden", opened ? "false" : "true");
+
+        // A closed off-canvas panel must be removed from keyboard navigation and
+        // accessibility focus management. Otherwise the global focus trap can see it
+        // as a live modal and steal focus from ordinary form inputs.
+        if (opened) panel.removeAttribute("inert");
+        else panel.setAttribute("inert", "");
+    }
+
     function renderList() {
         const panel = document.querySelector(".recent-pages-panel");
+        const shell = document.querySelector(".recent-pages-shell");
         const trigger = document.querySelector(".recent-pages-trigger");
         if (!panel) return;
 
@@ -92,8 +108,6 @@ window.aiwmRecentPages = (() => {
             trigger.setAttribute("aria-label", triggerLabel);
         }
 
-        panel.setAttribute("role", "dialog");
-        panel.setAttribute("aria-modal", "true");
         panel.setAttribute("aria-label", panelTitle);
         panel.innerHTML = `<header>
             <div><strong>${panelTitle}</strong><small>${panelSubtitle}</small></div>
@@ -106,6 +120,7 @@ window.aiwmRecentPages = (() => {
             ${recent.length ? recent.map(path => item(path, favorites)).join("") : `<p>${emptyRecent}</p>`}
         </section>`;
 
+        applyPanelState(shell, panel);
         panel.querySelector("[data-close]")?.addEventListener("click", close);
         panel.querySelectorAll("[data-favorite]").forEach(button => button.addEventListener("click", event => {
             event.preventDefault();
@@ -116,16 +131,20 @@ window.aiwmRecentPages = (() => {
 
     function open() {
         const shell = document.querySelector(".recent-pages-shell");
+        const panel = shell?.querySelector(".recent-pages-panel");
         shell?.classList.add("open");
         shell?.querySelector(".recent-pages-trigger")?.setAttribute("aria-expanded", "true");
+        applyPanelState(shell, panel);
         renderList();
         setTimeout(() => shell?.querySelector("[data-close]")?.focus(), 0);
     }
 
     function close() {
         const shell = document.querySelector(".recent-pages-shell");
+        const panel = shell?.querySelector(".recent-pages-panel");
         shell?.classList.remove("open");
         shell?.querySelector(".recent-pages-trigger")?.setAttribute("aria-expanded", "false");
+        applyPanelState(shell, panel);
     }
 
     function setCatalog(items) {
@@ -150,7 +169,7 @@ window.aiwmRecentPages = (() => {
         if (document.querySelector(".recent-pages-shell")) return;
         const shell = document.createElement("div");
         shell.className = "recent-pages-shell";
-        shell.innerHTML = `<button type="button" class="recent-pages-trigger" aria-haspopup="dialog" aria-expanded="false">★</button><div class="recent-pages-backdrop"></div><aside class="recent-pages-panel"></aside>`;
+        shell.innerHTML = `<button type="button" class="recent-pages-trigger" aria-haspopup="dialog" aria-expanded="false">★</button><div class="recent-pages-backdrop"></div><aside class="recent-pages-panel" role="dialog" aria-modal="false" aria-hidden="true" inert></aside>`;
         document.body.appendChild(shell);
         shell.querySelector(".recent-pages-trigger")?.addEventListener("click", open);
         shell.querySelector(".recent-pages-backdrop")?.addEventListener("click", close);
