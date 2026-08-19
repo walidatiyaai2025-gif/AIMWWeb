@@ -7,6 +7,7 @@ using AIWordPressManager.Persistence;
 using AIWordPressManager.Web.Components;
 using AIWordPressManager.Web.Services;
 using AIWordPressManager.Web.Localization;
+using AIWordPressManager.Web.Diagnostics;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,13 @@ var builder = WebApplication.CreateBuilder(args);
 DatabaseSetupService.BootstrapLegacySqliteIfNeeded(builder.Environment.EnvironmentName);
 var databaseSetupConfigPath = DatabaseSetupService.GetConfigurationPath(builder.Environment.EnvironmentName);
 builder.Configuration.AddJsonFile(databaseSetupConfigPath, optional: true, reloadOnChange: true);
+
+var runtimeInspectorOptions = builder.Configuration
+    .GetSection(RuntimeInspectorOptions.SectionName)
+    .Get<RuntimeInspectorOptions>() ?? new RuntimeInspectorOptions();
+builder.Services.AddSingleton(runtimeInspectorOptions);
+if (runtimeInspectorOptions.Enabled)
+    builder.Logging.AddProvider(new RuntimeFileLoggerProvider(runtimeInspectorOptions));
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddHttpClient();
@@ -93,12 +101,22 @@ builder.Services.AddHostedService<SecurityAuditEmailAlertWorker>();
 
 var app = builder.Build();
 
+if (runtimeInspectorOptions.Enabled)
+{
+    RuntimeInspectorHooks.Attach(app.Logger);
+    app.Logger.LogInformation(
+        "AIMW Runtime Inspector enabled. Configured log directory: {LogDirectory}; retention: {RetainedDays} days.",
+        runtimeInspectorOptions.LogDirectory,
+        runtimeInspectorOptions.RetainedDays);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
 
+app.UseMiddleware<RuntimeInspectorMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
