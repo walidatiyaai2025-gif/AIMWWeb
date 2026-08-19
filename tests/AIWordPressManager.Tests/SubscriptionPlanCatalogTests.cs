@@ -76,7 +76,7 @@ public sealed class SubscriptionPlanCatalogTests
 
         var entitlements = await fixture.Context.PlanEntitlements.AsNoTracking()
             .Where(x => x.PlanId == trial.Id)
-            .ToDictionaryAsync(x => x.Key, x => x.CanonicalValue, StringComparer.OrdinalIgnoreCase);
+            .ToDictionaryAsync(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
 
         entitlements.Should().Contain(new Dictionary<string, string>
         {
