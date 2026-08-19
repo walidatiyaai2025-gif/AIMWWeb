@@ -278,7 +278,7 @@ public sealed class SettingsBackedGeminiProvider(
             cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
-            return new(false, string.Empty, Name, model, EstimateTokens(request.Prompt), 0, 0, 0, $"Gemini returned HTTP {(int)response.StatusCode}.");
+            return new(false, string.Empty, Name, model, EstimateTokens(request.Prompt), 0, 0, $"Gemini returned HTTP {(int)response.StatusCode}.");
 
         using var json = JsonDocument.Parse(body);
         var content = json.RootElement.GetProperty("candidates")[0]
@@ -322,7 +322,7 @@ public sealed class SettingsBackedPuterProvider(
         using var response = await HttpClient.SendAsync(message, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
-            return new(false, string.Empty, Name, model, EstimateTokens(request.Prompt), 0, 0, 0, $"Puter returned HTTP {(int)response.StatusCode}.");
+            return new(false, string.Empty, Name, model, EstimateTokens(request.Prompt), 0, 0, $"Puter returned HTTP {(int)response.StatusCode}.");
         return new(true, body, Name, model, EstimateTokens(request.Prompt), EstimateTokens(body), 0);
     }
 }
