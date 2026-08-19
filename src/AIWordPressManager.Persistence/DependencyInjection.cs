@@ -69,7 +69,7 @@ public static class DependencyInjection
             if (providerName.Equals("MariaDB", StringComparison.OrdinalIgnoreCase))
             {
                 EnsureConnectionString(configuredConnectionString, providerName);
-                options.UseMySql(sqliteConnectionString, new MariaDbServerVersion(new Version(10, 6, 0)));
+                options.UseMySql(configuredConnectionString, new MariaDbServerVersion(new Version(10, 6, 0)));
                 return;
             }
 
