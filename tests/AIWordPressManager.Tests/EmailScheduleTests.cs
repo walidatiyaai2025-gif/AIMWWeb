@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Abstractions.Email;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
@@ -64,6 +65,12 @@ public sealed class EmailScheduleTests
         await action.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
+    private sealed class AllowAllEntitlementEnforcementService : IAccountEntitlementEnforcementService
+    {
+        public Task RequireBooleanCapabilityAsync(Guid ownerUserId, string entitlementKey, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RequireAdditionalUsageAsync(Guid ownerUserId, string entitlementKey, long currentUsage, long requestedAdditional = 1, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private Fixture(SqliteConnection connection, AppDbContext context) { Connection = connection; Context = context; }
@@ -93,7 +100,10 @@ public sealed class EmailScheduleTests
             {
                 User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }, "Test"))
             };
-            return new EmailScheduleService(Context, new CurrentUserContext(new HttpContextAccessor { HttpContext = http }));
+            return new EmailScheduleService(
+                Context,
+                new CurrentUserContext(new HttpContextAccessor { HttpContext = http }),
+                new AllowAllEntitlementEnforcementService());
         }
 
         public async ValueTask DisposeAsync()
