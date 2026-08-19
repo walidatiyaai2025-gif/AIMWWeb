@@ -40,8 +40,37 @@ public sealed class SitesInteractionUxTests(UxTestHost host)
             (await urlInput.IsEditableAsync()).Should().BeTrue("the Add Site URL field must not be disabled or readonly");
 
             await nameInput.FocusAsync();
-            (await nameInput.EvaluateAsync<bool>("element => document.activeElement === element"))
-                .Should().BeTrue("focus must remain on the Site Name input so physical keyboard typing works");
+            var nameHasFocus = await nameInput.EvaluateAsync<bool>("element => document.activeElement === element");
+            var focusDiagnostics = await page.EvaluateAsync<string>("""
+                () => {
+                    const active = document.activeElement;
+                    const describe = element => element ? {
+                        tag: element.tagName,
+                        id: element.id || null,
+                        className: typeof element.className === 'string' ? element.className : null,
+                        role: element.getAttribute?.('role'),
+                        ariaModal: element.getAttribute?.('aria-modal'),
+                        ariaHidden: element.getAttribute?.('aria-hidden'),
+                        text: (element.textContent || '').trim().slice(0, 120)
+                    } : null;
+                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).map(dialog => {
+                        const style = getComputedStyle(dialog);
+                        const rect = dialog.getBoundingClientRect();
+                        return {
+                            ...describe(dialog),
+                            display: style.display,
+                            visibility: style.visibility,
+                            opacity: style.opacity,
+                            pointerEvents: style.pointerEvents,
+                            rect: [rect.x, rect.y, rect.width, rect.height],
+                            clientRects: dialog.getClientRects().length
+                        };
+                    });
+                    return JSON.stringify({ active: describe(active), dialogs });
+                }
+                """);
+
+            nameHasFocus.Should().BeTrue($"focus must remain on the Site Name input so physical keyboard typing works. DOM focus diagnostics: {focusDiagnostics}");
 
             await page.Keyboard.InsertTextAsync("Runtime Test Site");
             (await nameInput.InputValueAsync()).Should().Be("Runtime Test Site");
