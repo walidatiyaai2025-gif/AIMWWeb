@@ -2,6 +2,7 @@ using System.Net.Mail;
 using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
+using AIWordPressManager.Persistence.Billing;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
@@ -11,6 +12,14 @@ public sealed class SiteEmailRecipientService(
     CurrentUserContext currentUser,
     IAccountEntitlementEnforcementService entitlementEnforcement)
 {
+    public SiteEmailRecipientService(AppDbContext dbContext, CurrentUserContext currentUser)
+        : this(
+            dbContext,
+            currentUser,
+            new AccountEntitlementEnforcementService(dbContext, new PlanEntitlementService(dbContext)))
+    {
+    }
+
     private Guid OwnerId => currentUser.UserId;
 
     public async Task<IReadOnlyList<SiteEmailRecipientView>> GetAsync(Guid siteId, CancellationToken cancellationToken = default)
