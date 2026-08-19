@@ -260,7 +260,7 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
                 transition.OccurredAtUtc,
                 transition.CreatedAtUtc,
                 transition.Source,
-                NormalizeHistoryReason(transition.Reason),
+                BuildTransitionHistoryReason(transition.FromStatus, transition.ToStatus, transition.Source),
                 transition.FromStatus,
                 transition.ToStatus,
                 null,
@@ -292,7 +292,7 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
                 change.OccurredAtUtc,
                 change.CreatedAtUtc,
                 change.Source,
-                NormalizeHistoryReason(change.Reason),
+                BuildPlanChangeHistoryReason(change.Source),
                 null,
                 null,
                 change.FromPlanId,
@@ -368,12 +368,18 @@ public sealed class AccountSubscriptionService(AppDbContext dbContext) : IAccoun
         return clean;
     }
 
-    private static string NormalizeHistoryReason(string? reason)
-    {
-        var clean = string.Join(' ', (reason ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        if (clean.Length == 0) return "Subscription state reconciled.";
-        return clean.Length <= 500 ? clean : clean[..500];
-    }
+    private static string BuildTransitionHistoryReason(
+        AccountSubscriptionStatus fromStatus,
+        AccountSubscriptionStatus toStatus,
+        SubscriptionTransitionSource source) =>
+        source == SubscriptionTransitionSource.Provider
+            ? $"Provider reconciliation confirmed the subscription status change from {fromStatus} to {toStatus}."
+            : $"The subscription authority recorded a status change from {fromStatus} to {toStatus}.";
+
+    private static string BuildPlanChangeHistoryReason(SubscriptionTransitionSource source) =>
+        source == SubscriptionTransitionSource.Provider
+            ? "Provider reconciliation confirmed a subscription plan change."
+            : "The subscription authority recorded a subscription plan change.";
 
     private static AccountBillingNotificationState MapNotificationState(string? status, bool hasEnabledRecipient) => status switch
     {
