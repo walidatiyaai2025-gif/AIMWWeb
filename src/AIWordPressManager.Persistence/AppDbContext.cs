@@ -18,6 +18,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<PlanEntitlement> PlanEntitlements => Set<PlanEntitlement>();
     public DbSet<AccountSubscription> AccountSubscriptions => Set<AccountSubscription>();
     public DbSet<AccountSubscriptionTransition> AccountSubscriptionTransitions => Set<AccountSubscriptionTransition>();
+    public DbSet<AccountSubscriptionPlanChange> AccountSubscriptionPlanChanges => Set<AccountSubscriptionPlanChange>();
     public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
@@ -212,6 +213,19 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Source).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.Property(x => x.Reason).HasMaxLength(500).IsRequired();
             entity.HasOne<AccountSubscription>().WithMany().HasForeignKey(x => x.SubscriptionId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AccountSubscriptionPlanChange>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => new { x.SubscriptionId, x.OccurredAtUtc });
+            entity.HasIndex(x => x.FromPlanId);
+            entity.HasIndex(x => x.ToPlanId);
+            entity.Property(x => x.Source).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+            entity.HasOne<AccountSubscription>().WithMany().HasForeignKey(x => x.SubscriptionId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<SubscriptionPlan>().WithMany().HasForeignKey(x => x.FromPlanId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<SubscriptionPlan>().WithMany().HasForeignKey(x => x.ToPlanId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
