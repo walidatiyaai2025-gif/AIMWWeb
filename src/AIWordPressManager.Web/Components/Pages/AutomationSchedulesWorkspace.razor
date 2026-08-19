@@ -3,7 +3,10 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @using AIWordPressManager.Domain.Entities
-@inject AutomationCenterService Automation
+@inject AutomationCenterService RawAutomation
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject CurrentUserContext CurrentUser
+@inject AIWordPressManager.Application.Abstractions.Billing.IAccountEntitlementEnforcementService Entitlements
 @inject SiteWebService SiteService
 @inject AppNotificationService Notifications
 @inject AppLanguageService L
@@ -94,9 +97,9 @@
                                         <span>@(L.IsArabic ? "آخر تشغيل" : "Last run"): @FormatDate(job.LastRunUtc)</span>
                                         <div style="display:flex;gap:8px;flex-wrap:wrap">
                                             <AppButton Size="small" Text="@(L.IsArabic ? "تعديل" : "Edit")" Disabled="@(_saving || _refreshing)" OnClick="_ => Edit(job)" />
-                                            <AppButton Size="small" Text="@(L.IsArabic ? "تشغيل الآن" : "Run now")" Disabled="@(_saving || _refreshing)" OnClick="_ => QueueNow(job)" />
-                                            <AppButton Size="small" Text="@(job.Enabled ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))" Disabled="@(_saving || _refreshing)" OnClick="_ => Toggle(job)" />
-                                            <AppButton Size="small" Variant="danger" Text="@(L.IsArabic ? "حذف" : "Delete")" Disabled="@(_saving || _refreshing)" OnClick="_ => Delete(job)" />
+                                            <AppButton Size="small" Text="@(L.IsArabic ? "تشغيل الآن" : "Run now")" Disabled="@(_saving || _refreshing)" OnClick="_ => QueueNowAsync(job)" />
+                                            <AppButton Size="small" Text="@(job.Enabled ? (L.IsArabic ? "تعطيل" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))" Disabled="@(_saving || _refreshing)" OnClick="_ => ToggleAsync(job)" />
+                                            <AppButton Size="small" Variant="danger" Text="@(L.IsArabic ? "حذف" : "Delete")" Disabled="@(_saving || _refreshing)" OnClick="_ => DeleteAsync(job)" />
                                         </div>
                                     </div>
                                 </AppCard>
@@ -122,6 +125,8 @@
     [Parameter, SupplyParameterFromQuery(Name = "siteId")]
     public Guid? WorkspaceSiteId { get; set; }
 
+    private AccountAutomationCenterService Automation => new(RawAutomation, Db, CurrentUser, Entitlements);
+
     private IEnumerable<AutomationJob> FilteredJobs => WorkspaceSiteId.HasValue
         ? _jobs.Where(x => x.SiteId == WorkspaceSiteId.Value)
         : _jobs;
@@ -144,16 +149,12 @@
     {
         var version = Interlocked.Increment(ref _loadVersion);
         var sites = await SiteService.GetSitesAsync();
+        var jobs = (await Automation.GetJobsAsync())
+            .OrderBy(x => x.NextRunUtc)
+            .ToList();
         if (_disposed || version != _loadVersion) return;
 
         var allowedIds = sites.Select(x => x.Id).ToHashSet();
-        var jobs = Automation.GetJobs()
-            .Where(x => allowedIds.Contains(x.SiteId))
-            .OrderBy(x => x.NextRunUtc)
-            .ToList();
-
-        if (_disposed || version != _loadVersion) return;
-
         _sites = sites;
         _jobs = jobs;
         if (WorkspaceSiteId.HasValue && allowedIds.Contains(WorkspaceSiteId.Value) && _edit.Id == Guid.Empty)
@@ -171,7 +172,7 @@
             _edit.SiteName = site.Name;
             _edit.IntervalValue = Math.Clamp(_edit.IntervalValue, 1, 365);
             _edit.RetryCount = Math.Clamp(_edit.RetryCount, 0, 10);
-            Automation.Save(_edit);
+            await Automation.SaveAsync(_edit);
 
             if (_disposed) return;
 
@@ -197,21 +198,21 @@
         _edit = new AutomationJobEditModel { Id = job.Id, Name = job.Name, SiteId = job.SiteId, SiteName = job.SiteName, Type = job.Type, Frequency = job.Frequency, IntervalValue = job.IntervalValue, TimeOfDay = job.TimeOfDay, Enabled = job.Enabled, RetryCount = job.RetryCount };
     }
 
-    private void QueueNow(AutomationJob job) => RunOwned(job, () => Automation.QueueNow(job.Id), L.IsArabic ? "تمت جدولة التشغيل الفوري." : "The job was queued to run now.");
-    private void Toggle(AutomationJob job) => RunOwned(job, () => Automation.SetEnabled(job.Id, !job.Enabled), L.IsArabic ? "تم تحديث حالة الجدول." : "Schedule status updated.");
-    private void Delete(AutomationJob job) => RunOwned(job, () => Automation.Delete(job.Id), L.IsArabic ? "تم حذف الجدول." : "Schedule deleted.");
+    private Task QueueNowAsync(AutomationJob job) => RunOwnedAsync(job, () => Automation.QueueNowAsync(job.Id), L.IsArabic ? "تمت جدولة التشغيل الفوري." : "The job was queued to run now.");
+    private Task ToggleAsync(AutomationJob job) => RunOwnedAsync(job, () => Automation.SetEnabledAsync(job.Id, !job.Enabled), L.IsArabic ? "تم تحديث حالة الجدول." : "Schedule status updated.");
+    private Task DeleteAsync(AutomationJob job) => RunOwnedAsync(job, () => Automation.DeleteAsync(job.Id), L.IsArabic ? "تم حذف الجدول." : "Schedule deleted.");
 
-    private void RunOwned(AutomationJob job, Action action, string success)
+    private async Task RunOwnedAsync(AutomationJob job, Func<Task> action, string success)
     {
         if (_disposed || _refreshing) return;
 
         try
         {
             EnsureOwned(job);
-            action();
+            await action();
             if (_disposed) return;
             Notifications.Success(success);
-            _ = InvokeAsync(LoadAndRefreshAsync);
+            await LoadAndRefreshAsync();
         }
         catch (Exception ex)
         {
