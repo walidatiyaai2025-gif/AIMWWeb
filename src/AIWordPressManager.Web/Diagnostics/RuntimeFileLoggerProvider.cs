@@ -12,6 +12,7 @@ public sealed class RuntimeFileLoggerProvider : ILoggerProvider, ISupportExterna
     private IExternalScopeProvider _scopeProvider = new LoggerExternalScopeProvider();
     private DateOnly _lastCleanupDate;
     private readonly string _applicationVersion;
+    private string? _resolvedDirectory;
 
     public RuntimeFileLoggerProvider(RuntimeInspectorOptions options)
     {
@@ -95,7 +96,6 @@ public sealed class RuntimeFileLoggerProvider : ILoggerProvider, ISupportExterna
     private void WriteLine(DateTimeOffset now, string prefix, string line)
     {
         var directory = ResolveDirectory();
-        Directory.CreateDirectory(directory);
         var path = Path.Combine(directory, $"{prefix}-{now:yyyyMMdd}.log");
 
         lock (_writeLock)
@@ -109,10 +109,25 @@ public sealed class RuntimeFileLoggerProvider : ILoggerProvider, ISupportExterna
 
     private string ResolveDirectory()
     {
-        if (!string.IsNullOrWhiteSpace(_options.LogDirectory))
-            return Environment.ExpandEnvironmentVariables(_options.LogDirectory);
+        if (!string.IsNullOrWhiteSpace(_resolvedDirectory)) return _resolvedDirectory;
 
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "AIMWWeb", "Logs");
+        var configured = !string.IsNullOrWhiteSpace(_options.LogDirectory)
+            ? Environment.ExpandEnvironmentVariables(_options.LogDirectory)
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "AIMWWeb", "Logs");
+
+        try
+        {
+            Directory.CreateDirectory(configured);
+            _resolvedDirectory = configured;
+        }
+        catch
+        {
+            var fallback = Path.Combine(AppContext.BaseDirectory, "Logs");
+            Directory.CreateDirectory(fallback);
+            _resolvedDirectory = fallback;
+        }
+
+        return _resolvedDirectory;
     }
 
     private void CleanupOldLogsIfNeeded(DateTimeOffset now)
