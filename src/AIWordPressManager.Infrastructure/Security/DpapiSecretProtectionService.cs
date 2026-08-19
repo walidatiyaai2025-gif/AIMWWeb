@@ -8,7 +8,7 @@ namespace AIWordPressManager.Infrastructure.Security;
 /// Cross-platform secret protection for the web application.
 /// The historical class name is retained to avoid breaking dependency registration.
 /// </summary>
-public sealed class DpapiSecretProtectionService : ISecretProtectionService
+public sealed class DpapiSecretProtectionService : ISecretProtectionService, ISecretRecoveryKeyService
 {
     private const string Prefix = "aesgcm:v1:";
     private const int KeySize = 32;
@@ -82,6 +82,23 @@ public sealed class DpapiSecretProtectionService : ISecretProtectionService
         {
             CryptographicOperations.ZeroMemory(clearBytes);
         }
+    }
+
+    public Task<string> ExportWrappedKeyAsync(
+        string recoverySecret,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(SecretRecoveryEnvelopeCodec.Wrap(_key, recoverySecret));
+    }
+
+    public Task<bool> ValidateWrappedKeyAsync(
+        string wrappedKeyEnvelope,
+        string recoverySecret,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(SecretRecoveryEnvelopeCodec.Verify(wrappedKeyEnvelope, _key, recoverySecret));
     }
 
     private static byte[] LoadOrCreateKey()
