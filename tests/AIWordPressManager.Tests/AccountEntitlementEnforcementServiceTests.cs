@@ -24,6 +24,44 @@ public sealed class AccountEntitlementEnforcementServiceTests
     }
 
     [Fact]
+    public async Task Active_Platform_Administrator_Is_Not_Locked_Out_By_Tenant_Billing()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var admin = new AuthUser("Admin", "test-password-hash", DateTime.UtcNow, "Administrator");
+        fixture.Context.AuthUsers.Add(admin);
+        await fixture.Context.SaveChangesAsync();
+
+        var booleanAction = () => fixture.Enforcement.RequireBooleanCapabilityAsync(
+            admin.Id,
+            EntitlementDefinitionCatalog.PremiumSeo);
+        var limitAction = () => fixture.Enforcement.RequireAdditionalUsageAsync(
+            admin.Id,
+            EntitlementDefinitionCatalog.SitesMax,
+            currentUsage: 100,
+            requestedAdditional: 1);
+
+        await booleanAction.Should().NotThrowAsync();
+        await limitAction.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task Inactive_Administrator_Does_Not_Bypass_Subscription_Gate()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var admin = new AuthUser("DisabledAdmin", "test-password-hash", DateTime.UtcNow, "Administrator");
+        admin.SetActive(false, DateTime.UtcNow);
+        fixture.Context.AuthUsers.Add(admin);
+        await fixture.Context.SaveChangesAsync();
+
+        var action = () => fixture.Enforcement.RequireBooleanCapabilityAsync(
+            admin.Id,
+            EntitlementDefinitionCatalog.PremiumSeo);
+
+        var error = await action.Should().ThrowAsync<AccountEntitlementDeniedException>();
+        error.Which.Code.Should().Be("subscription_required");
+    }
+
+    [Fact]
     public async Task Missing_And_Disabled_Boolean_Entitlements_Are_Denied_Deterministically()
     {
         await using var fixture = await Fixture.CreateAsync();
