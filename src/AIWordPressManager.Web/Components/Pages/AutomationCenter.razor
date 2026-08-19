@@ -2,7 +2,10 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @using AIWordPressManager.Domain.Entities
-@inject AutomationCenterService Automation
+@inject AutomationCenterService RawAutomation
+@inject AIWordPressManager.Persistence.AppDbContext Db
+@inject CurrentUserContext CurrentUser
+@inject AIWordPressManager.Application.Abstractions.Billing.IAccountEntitlementEnforcementService Entitlements
 @inject SiteWebService SiteService
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
@@ -17,7 +20,7 @@
             <p>@(L.IsArabic ? "إدارة مهام المزامنة وتدقيق SEO وتشغيلها ومتابعة سجل التنفيذ." : "Manage synchronization and SEO audit jobs and review execution history.")</p>
         </div>
         <div class="automation-hero-actions">
-            <button class="btn" @onclick="Refresh" disabled="@_saving">@(L.IsArabic ? "تحديث" : "Refresh")</button>
+            <button class="btn" @onclick="RefreshAsync" disabled="@_saving">@(L.IsArabic ? "تحديث" : "Refresh")</button>
             <button class="btn primary" @onclick="NewJob" disabled="@_saving">@(L.IsArabic ? "مهمة جديدة" : "New job")</button>
         </div>
     </section>
@@ -55,9 +58,9 @@
                         </div>
                         <div class="automation-job-actions">
                             <button class="btn compact" disabled="@_saving" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button>
-                            <button class="btn compact" disabled="@_saving" @onclick="() => RunNow(job)">@(L.IsArabic ? "تشغيل" : "Run")</button>
-                            <button class="btn compact" disabled="@_saving" @onclick="() => Toggle(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
-                            <button class="btn danger compact" disabled="@_saving" @onclick="() => Delete(job)">@(L.IsArabic ? "حذف" : "Delete")</button>
+                            <button class="btn compact" disabled="@_saving" @onclick="() => RunNowAsync(job)">@(L.IsArabic ? "تشغيل" : "Run")</button>
+                            <button class="btn compact" disabled="@_saving" @onclick="() => ToggleAsync(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
+                            <button class="btn danger compact" disabled="@_saving" @onclick="() => DeleteAsync(job)">@(L.IsArabic ? "حذف" : "Delete")</button>
                         </div>
                     </article>
                 }
@@ -84,7 +87,7 @@
                 <label><span>@(L.IsArabic ? "وقت التشغيل UTC" : "Run time UTC")</span><input type="time" value="@TimeText" @onchange="TimeChanged" /></label>
                 <label><span>@(L.IsArabic ? "عدد الإعادات" : "Retries")</span><input type="number" min="0" max="10" @bind="_model.RetryCount" /></label>
                 <label><input type="checkbox" @bind="_model.Enabled" /> @(L.IsArabic ? "مفعلة" : "Enabled")</label>
-                <button class="btn primary full" disabled="@_saving" @onclick="Save">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))</button>
+                <button class="btn primary full" disabled="@_saving" @onclick="SaveAsync">@(_saving ? (L.IsArabic ? "جارٍ الحفظ..." : "Saving...") : (L.IsArabic ? "حفظ" : "Save"))</button>
             </div>
         </aside>
     </section>
@@ -111,6 +114,7 @@
     private bool _saving;
     private bool _disposed;
 
+    private AccountAutomationCenterService Automation => new(RawAutomation, Db, CurrentUser, Entitlements);
     private string TimeText => Convert.ToString(_model.TimeOfDay) ?? string.Empty;
 
     private IEnumerable<AutomationJob> FilteredJobs => _jobs.Where(x =>
@@ -124,16 +128,14 @@
         var sites = await SiteService.GetSitesAsync();
         if (_disposed) return;
         _sites = sites.ToList();
-        Refresh();
+        await RefreshAsync();
     }
 
-    private void Refresh()
+    private async Task RefreshAsync()
     {
         if (_disposed) return;
-        var allowedSiteIds = _sites.Select(x => x.Id).ToHashSet();
-        _jobs = Automation.GetJobs().Where(x => allowedSiteIds.Contains(x.SiteId)).ToList();
-        var allowedJobNames = _jobs.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        _history = Automation.GetHistory(100).Where(x => allowedJobNames.Contains(x.JobName)).ToList();
+        _jobs = (await Automation.GetJobsAsync()).ToList();
+        _history = (await Automation.GetHistoryAsync(100)).ToList();
     }
 
     private void NewJob()
@@ -185,7 +187,7 @@
         _model.TimeOfDay = e.Value?.ToString() ?? string.Empty;
     }
 
-    private void Save()
+    private async Task SaveAsync()
     {
         if (_disposed || _saving) return;
         try
@@ -194,11 +196,11 @@
             var site = _sites.FirstOrDefault(x => x.Id == _model.SiteId)
                 ?? throw new UnauthorizedAccessException("The selected site does not belong to the signed-in user.");
             _model.SiteName = site.Name;
-            Automation.Save(_model);
+            await Automation.SaveAsync(_model);
             if (_disposed) return;
             Notifications.Success(L.IsArabic ? "تم حفظ المهمة." : "Job saved.");
             NewJob();
-            Refresh();
+            await RefreshAsync();
         }
         catch (Exception ex)
         {
@@ -210,18 +212,18 @@
         }
     }
 
-    private void Toggle(AutomationJob job) => RunOwned(job, () => Automation.SetEnabled(job.Id, !job.Enabled));
-    private void RunNow(AutomationJob job) => RunOwned(job, () => Automation.QueueNow(job.Id));
-    private void Delete(AutomationJob job) => RunOwned(job, () => Automation.Delete(job.Id));
+    private Task ToggleAsync(AutomationJob job) => RunOwnedAsync(job, () => Automation.SetEnabledAsync(job.Id, !job.Enabled));
+    private Task RunNowAsync(AutomationJob job) => RunOwnedAsync(job, () => Automation.QueueNowAsync(job.Id));
+    private Task DeleteAsync(AutomationJob job) => RunOwnedAsync(job, () => Automation.DeleteAsync(job.Id));
 
-    private void RunOwned(AutomationJob job, Action action)
+    private async Task RunOwnedAsync(AutomationJob job, Func<Task> action)
     {
         if (_disposed || _saving) return;
         try
         {
             EnsureOwned(job);
-            action();
-            Refresh();
+            await action();
+            await RefreshAsync();
         }
         catch (Exception ex)
         {
