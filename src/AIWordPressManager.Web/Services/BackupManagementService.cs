@@ -12,6 +12,7 @@ public sealed class BackupManagementService
     private const string LegacyPayloadPrefix = "data/";
     private const string ScopedPayloadPrefix = "payload/";
     private const string SecretRecoveryBlocked = "wrapped-key-required";
+    private const string SecretRecoveryWrapped = "wrapped-key-v1";
     private readonly object _sync = new();
     private readonly string _applicationRoot;
     private readonly string _dataDirectory;
@@ -180,9 +181,9 @@ public sealed class BackupManagementService
             var inspection = InspectInternal(fileName);
             var configurationCount = inspection.Files.Count(x =>
                 string.Equals(x.Kind, nameof(BackupContentKind.Configuration), StringComparison.OrdinalIgnoreCase));
-            var secretRecoveryAvailable = !string.Equals(
+            var secretRecoveryAvailable = string.Equals(
                 inspection.SecretRecoveryMode,
-                SecretRecoveryBlocked,
+                SecretRecoveryWrapped,
                 StringComparison.OrdinalIgnoreCase);
             var checks = new List<RestoreReadinessCheck>
             {
@@ -436,14 +437,14 @@ public sealed class BackupManagementService
         {
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             if (!document.RootElement.TryGetProperty("Database", out var database) || database.ValueKind != JsonValueKind.Object)
-                return null;
-            if (!database.TryGetProperty("Provider", out var provider) || provider.ValueKind != JsonValueKind.String)
-                return null;
-            return provider.GetString()?.Trim();
+                throw new InvalidDataException("Database setup configuration is invalid. Backup creation is blocked until the configuration is repaired.");
+            if (!database.TryGetProperty("Provider", out var provider) || provider.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(provider.GetString()))
+                throw new InvalidDataException("Database setup configuration does not contain a valid provider. Backup creation is blocked until the configuration is repaired.");
+            return provider.GetString()!.Trim();
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            return null;
+            throw new InvalidDataException("Database setup configuration is invalid JSON. Backup creation is blocked until the configuration is repaired.", ex);
         }
     }
 
