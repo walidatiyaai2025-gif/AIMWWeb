@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -179,8 +180,9 @@ public sealed class BackupManagementService
         lock (_sync)
         {
             var inspection = InspectInternal(fileName);
-            var configurationCount = inspection.Files.Count(x =>
-                string.Equals(x.Kind, nameof(BackupContentKind.Configuration), StringComparison.OrdinalIgnoreCase));
+            var hasDatabaseConfiguration = inspection.Files.Any(x =>
+                string.Equals(x.Kind, nameof(BackupContentKind.Configuration), StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.RelativePath, "Config/setup.database.json", StringComparison.OrdinalIgnoreCase));
             var secretRecoveryAvailable = string.Equals(
                 inspection.SecretRecoveryMode,
                 SecretRecoveryWrapped,
@@ -189,7 +191,7 @@ public sealed class BackupManagementService
             {
                 new("Archive integrity", "سلامة ملف النسخة", inspection.IsValid, inspection.Message),
                 new("Database content", "محتوى قواعد البيانات", inspection.DatabaseCount > 0, inspection.DatabaseCount > 0 ? $"{inspection.DatabaseCount} database file(s) found." : "No database files found."),
-                new("Configuration state", "حالة الإعدادات", configurationCount > 0, configurationCount > 0 ? $"{configurationCount} configuration file(s) are included." : "No environment configuration files are included in this archive."),
+                new("Configuration state", "حالة الإعدادات", hasDatabaseConfiguration, hasDatabaseConfiguration ? "Database setup configuration is included." : "The environment database setup configuration is not included in this archive."),
                 new("Managed data coverage", "تغطية بيانات التطبيق", inspection.Files.Count >= inspection.DatabaseCount && inspection.Files.Count > 0, $"{inspection.Files.Count} managed file(s) declared in the manifest."),
                 new("Protected secret recovery", "استعادة الأسرار المحمية", secretRecoveryAvailable, secretRecoveryAvailable ? "Protected secret recovery metadata is available." : "The live AES secret key is intentionally not stored in this unencrypted ZIP. Disaster recovery of protected secrets remains blocked until a wrapped-key export/import path is implemented."),
                 new("Manifest compatibility", "توافق ملف التعريف", inspection.ManifestVersion is >= 1 and <= CurrentManifestVersion, $"Manifest version: {inspection.ManifestVersion}"),
@@ -440,7 +442,48 @@ public sealed class BackupManagementService
                 throw new InvalidDataException("Database setup configuration is invalid. Backup creation is blocked until the configuration is repaired.");
             if (!database.TryGetProperty("Provider", out var provider) || provider.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(provider.GetString()))
                 throw new InvalidDataException("Database setup configuration does not contain a valid provider. Backup creation is blocked until the configuration is repaired.");
-            return provider.GetString()!.Trim();
+
+            var providerName = provider.GetString()!.Trim();
+            if (!providerName.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+                return providerName;
+
+            if (!database.TryGetProperty("ConnectionString", out var connectionStringElement) ||
+                connectionStringElement.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(connectionStringElement.GetString()))
+            {
+                throw new InvalidDataException("SQLite database setup configuration does not contain a connection string. Backup creation is blocked until the configuration is repaired.");
+            }
+
+            string configuredDatabasePath;
+            try
+            {
+                var builder = new SqliteConnectionStringBuilder(connectionStringElement.GetString());
+                if (string.IsNullOrWhiteSpace(builder.DataSource))
+                    throw new InvalidDataException("SQLite database setup configuration does not contain a database file path.");
+                configuredDatabasePath = Path.GetFullPath(builder.DataSource);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new InvalidDataException("SQLite database setup connection string is invalid. Backup creation is blocked until the configuration is repaired.", ex);
+            }
+
+            var dataRoot = Path.GetFullPath(_dataDirectory) + Path.DirectorySeparatorChar;
+            if (!configuredDatabasePath.StartsWith(dataRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "The configured SQLite database is outside the managed Data directory. Backup creation is blocked until an external-path SQLite snapshot strategy is available.");
+            }
+
+            if (!configuredDatabasePath.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "The configured SQLite database uses an unsupported file extension for the current backup strategy. Backup creation is blocked until the snapshot strategy supports it explicitly.");
+            }
+
+            if (!File.Exists(configuredDatabasePath))
+                throw new InvalidOperationException("The configured SQLite database file was not found. Backup creation is blocked rather than archiving a different local database.");
+
+            return providerName;
         }
         catch (JsonException ex)
         {
