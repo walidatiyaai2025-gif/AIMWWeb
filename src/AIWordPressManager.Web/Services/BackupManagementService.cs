@@ -88,18 +88,16 @@ public sealed class BackupManagementService
             var fileName = $"AIWM-Backup-{now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.zip";
             var target = Path.Combine(_backupDirectory, fileName);
             var databaseProvider = ReadConfiguredDatabaseProvider();
+            if (!string.IsNullOrWhiteSpace(databaseProvider) &&
+                !databaseProvider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Database provider '{databaseProvider}' requires a provider-native backup path. Backup creation is blocked rather than producing an incomplete archive.");
+            }
+
             var sources = EnumerateManagedFiles().ToList();
             if (!sources.Any(x => x.Kind == BackupContentKind.Database))
-            {
-                if (!string.IsNullOrWhiteSpace(databaseProvider) &&
-                    !databaseProvider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidOperationException(
-                        $"Database provider '{databaseProvider}' requires a provider-native backup path. Backup creation is blocked rather than producing an incomplete archive.");
-                }
-
                 throw new InvalidOperationException("No application database was found to back up.");
-            }
 
             var manifestFiles = sources
                 .Select(x => new BackupManifestFile(
@@ -439,7 +437,8 @@ public sealed class BackupManagementService
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             if (!document.RootElement.TryGetProperty("Database", out var database) || database.ValueKind != JsonValueKind.Object)
                 return null;
-            if (!database.TryGetProperty("Provider", out var provider)) return null;
+            if (!database.TryGetProperty("Provider", out var provider) || provider.ValueKind != JsonValueKind.String)
+                return null;
             return provider.GetString()?.Trim();
         }
         catch (JsonException)
