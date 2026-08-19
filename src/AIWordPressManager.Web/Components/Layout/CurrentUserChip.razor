@@ -1,10 +1,13 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using AIWordPressManager.Domain.Entities
+@using AIWordPressManager.Web.Diagnostics
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject AppLanguageService L
 @inject BuildInformationService BuildInfo
 @inject SiteWebService SitesService
+@inject CurrentUserContext CurrentUser
+@inject ILogger<CurrentUserChip> Logger
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
@@ -18,7 +21,14 @@
             <strong>@UserName</strong>
             <small>@Role</small>
         </span>
-        <span class="account-chevron">⌄</span>
+        @if (!string.IsNullOrWhiteSpace(_siteLoadError))
+        {
+            <span class="account-chevron" style="color:#ef4444;font-weight:800" title="@_siteLoadError">!</span>
+        }
+        else
+        {
+            <span class="account-chevron">⌄</span>
+        }
     </summary>
 
     <section class="account-popover">
@@ -36,6 +46,14 @@
             @if (_loadingSites)
             {
                 <div class="workspace-loading">@(L.IsArabic ? "جارٍ تحميل المواقع..." : "Loading sites...")</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(_siteLoadError))
+            {
+                <div role="alert" style="padding:.65rem;border:1px solid #ef444466;border-radius:8px;background:#7f1d1d33;color:#fecaca;font-size:.78rem;word-break:break-word">
+                    <strong>@(L.IsArabic ? "خطأ Runtime:" : "Runtime error:")</strong>
+                    <div>@_siteLoadError</div>
+                    <a href="/logs" style="color:inherit;text-decoration:underline">@(L.IsArabic ? "فتح السجلات" : "Open logs")</a>
+                </div>
             }
             else if (_sites.Count == 0)
             {
@@ -89,6 +107,7 @@
     private Site? _activeSite;
     private bool _loadingSites = true;
     private bool _workspaceRestored;
+    private string? _siteLoadError;
     private string UserName { get; set; } = "User";
     private string Role { get; set; } = "User";
     private string Initials => string.Concat(UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => char.ToUpperInvariant(x[0])));
@@ -99,11 +118,23 @@
     {
         var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var principal = state.User;
+        CurrentUser.SetCircuitPrincipal(principal);
         UserName = principal.Identity?.Name ?? "User";
         Role = principal.FindFirstValue(ClaimTypes.Role) ?? "User";
 
-        _sites.AddRange(await SitesService.GetSitesAsync());
-        _loadingSites = false;
+        try
+        {
+            _sites.AddRange(await SitesService.GetSitesAsync());
+        }
+        catch (Exception ex)
+        {
+            _siteLoadError = $"{ex.GetType().Name}: {RuntimeLogRedactor.Redact(ex.Message)}";
+            Logger.LogError(ex, "Current user site workspace failed to load. The account widget remains available in diagnostic mode.");
+        }
+        finally
+        {
+            _loadingSites = false;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
