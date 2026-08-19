@@ -37,6 +37,7 @@
             </AuthorizeView>
             <AuthorizeView Policy="@AIWordPressManager.Web.Services.ApplicationPermissionCatalog.SettingsManage">
                 <a href="/admin/security-audit"><span>AUD</span><div><strong>@(L.IsArabic ? "سجل التدقيق الأمني" : "Security audit trail")</strong><small>@(L.IsArabic ? "الدخول والحسابات والأدوار والجلسات" : "Sign-in, accounts, roles, and sessions")</small></div></a>
+                <a href="/admin/billing-support"><span>PAY</span><div><strong>@(L.IsArabic ? "دعم الفوترة" : "Billing support")</strong><small>@(L.IsArabic ? "البحث والمصالحة والتدخلات المدققة" : "Search, reconciliation, and audited interventions")</small></div></a>
             </AuthorizeView>
             <AuthorizeView Roles="Administrator">
                 <a href="/settings/ai-providers"><span>AI</span><div><strong>@(L.IsArabic ? "مزودو الذكاء الاصطناعي" : "AI providers")</strong><small>@(L.IsArabic ? "المفاتيح والنماذج والأولوية" : "Keys, models, and priority")</small></div></a>
