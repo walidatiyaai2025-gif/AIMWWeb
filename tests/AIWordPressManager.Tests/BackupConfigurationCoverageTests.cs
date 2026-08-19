@@ -50,9 +50,10 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     }
 
     [Fact]
-    public void CreateBackup_FailsClosedForExternalProviderWithoutProviderNativeDatabaseBackup()
+    public void CreateBackup_FailsClosedForExternalProviderEvenWhenAStaleSqliteFileExists()
     {
         var service = CreateService();
+        File.WriteAllBytes(Path.Combine(service.DataDirectory, "stale.db"), [9, 9, 9, 9]);
         File.WriteAllText(
             Path.Combine(service.ConfigurationDirectory, "setup.database.json"),
             "{\"Database\":{\"Provider\":\"SqlServer\",\"SetupComplete\":true,\"ProtectedConnectionString\":\"aesgcm:v1:ciphertext\"}}");
@@ -65,7 +66,7 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     }
 
     [Fact]
-    public void RestoreReadiness_RequiresConfigurationCoverageForLegacyDataOnlyArchive()
+    public void RestoreReadiness_RequiresConfigurationCoverageForDataOnlyArchive()
     {
         var service = CreateService();
         File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [2, 4, 6, 8]);
