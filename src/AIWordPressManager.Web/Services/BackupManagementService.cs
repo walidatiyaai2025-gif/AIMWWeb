@@ -197,8 +197,16 @@ public sealed class BackupManagementService
 
             using var reader = new StreamReader(manifestEntries[0].Open());
             var manifest = JsonSerializer.Deserialize<BackupManifest>(reader.ReadToEnd(), JsonOptions);
-            if (manifest is null || manifest.Version is < 1 or > CurrentManifestVersion)
+            if (manifest is null || manifest.Version is < 1 or > CurrentManifestVersion || manifest.Files is null)
                 return BackupInspectionResult.Invalid(fileName, "The backup manifest is invalid or unsupported.");
+
+            var issues = new List<string>();
+            foreach (var entry in archive.Entries.Where(x => !string.IsNullOrEmpty(x.Name)))
+            {
+                if (string.Equals(entry.FullName, "manifest.json", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!entry.FullName.StartsWith(PayloadPrefix, StringComparison.OrdinalIgnoreCase))
+                    issues.Add($"Unexpected archive entry: {entry.FullName}");
+            }
 
             var payloadEntries = archive.Entries
                 .Where(x => !string.IsNullOrEmpty(x.Name) && x.FullName.StartsWith(PayloadPrefix, StringComparison.OrdinalIgnoreCase))
@@ -206,7 +214,6 @@ public sealed class BackupManagementService
             if (payloadEntries.Count == 0)
                 return BackupInspectionResult.Invalid(fileName, "The archive does not contain managed data files.", manifest.Version, manifest.CreatedAtUtc);
 
-            var issues = new List<string>();
             var payloadByPath = new Dictionary<string, ZipArchiveEntry>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in payloadEntries)
             {
@@ -246,6 +253,9 @@ public sealed class BackupManagementService
 
                 if (manifest.Version >= CurrentManifestVersion)
                 {
+                    if (!Enum.TryParse<BackupContentKind>(declared.Kind, true, out var declaredKind) || declaredKind != DetermineKind(relativePath))
+                        issues.Add($"Content kind mismatch: {relativePath}");
+
                     if (string.IsNullOrWhiteSpace(declared.Sha256))
                     {
                         issues.Add($"Missing SHA-256: {relativePath}");
@@ -265,9 +275,7 @@ public sealed class BackupManagementService
                     issues.Add($"Undeclared archive entry: {payloadPath}");
             }
 
-            var databaseCount = manifest.Version >= CurrentManifestVersion
-                ? manifest.Files.Count(x => ParseKind(x.Kind) == BackupContentKind.Database)
-                : payloadByPath.Keys.Count(x => x.EndsWith(".db", StringComparison.OrdinalIgnoreCase));
+            var databaseCount = payloadByPath.Keys.Count(x => x.EndsWith(".db", StringComparison.OrdinalIgnoreCase));
             if (databaseCount == 0) issues.Add("The archive does not contain database files.");
 
             var valid = issues.Count == 0;
@@ -396,12 +404,15 @@ public sealed class BackupManagementService
         return IsSafeRelativePath(relativePath);
     }
 
-    private static string NormalizeRelativePath(string value) => value.Replace('\\', '/').Trim('/');
+    private static string NormalizeRelativePath(string value) => value.Replace('\\', '/');
 
     private static bool IsSafeRelativePath(string value)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.StartsWith('/') || Path.IsPathRooted(value)) return false;
-        return value.Split('/', StringSplitOptions.RemoveEmptyEntries).All(x => x is not "." and not "..");
+        if (string.IsNullOrWhiteSpace(value) || value.StartsWith('/') || value.EndsWith('/') || value.Contains(':') || value.Contains('\0') || Path.IsPathRooted(value))
+            return false;
+
+        var segments = value.Split('/');
+        return segments.Length > 0 && segments.All(x => !string.IsNullOrWhiteSpace(x) && x is not "." and not "..");
     }
 
     private static string ComputeSha256(string path)
@@ -415,10 +426,6 @@ public sealed class BackupManagementService
         using var stream = entry.Open();
         return Convert.ToHexString(SHA256.HashData(stream));
     }
-
-    private static BackupContentKind ParseKind(string? value) => Enum.TryParse<BackupContentKind>(value, true, out var result)
-        ? result
-        : BackupContentKind.ManagedFile;
 
     private static string? NormalizeNote(string? note)
     {
