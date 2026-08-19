@@ -1,11 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
+using AIWordPressManager.Application.Abstractions;
 
 namespace AIWordPressManager.Infrastructure.Security;
 
 public static class SecretRecoveryEnvelopeCodec
 {
-    public const string Prefix = "aiwm-keywrap:v1:";
+    public const string Prefix = SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Prefix;
     public const int RecoverySecretMinimumLength = 16;
     public const int RecoverySecretMaximumLength = 1024;
     public const int IterationCount = 600_000;
@@ -66,7 +67,7 @@ public static class SecretRecoveryEnvelopeCodec
         ValidateRecoverySecret(recoverySecret);
 
         if (string.IsNullOrWhiteSpace(wrappedKeyEnvelope) ||
-            wrappedKeyEnvelope.Length > Prefix.Length + 256 ||
+            wrappedKeyEnvelope.Length > SecretRecoveryKeyEnvelopeFormat.MaximumEnvelopeLength ||
             !wrappedKeyEnvelope.StartsWith(Prefix, StringComparison.Ordinal))
         {
             return false;
@@ -82,7 +83,7 @@ public static class SecretRecoveryEnvelopeCodec
             return false;
         }
 
-        if (payload.Length != PayloadSize)
+        if (payload.Length != SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1PayloadBytes || payload.Length != PayloadSize)
         {
             CryptographicOperations.ZeroMemory(payload);
             return false;
