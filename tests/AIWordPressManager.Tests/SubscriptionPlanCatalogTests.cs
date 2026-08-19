@@ -59,7 +59,38 @@ public sealed class SubscriptionPlanCatalogTests
 
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*starter*already exists*");
-        (await fixture.Context.SubscriptionPlans.CountAsync()).Should().Be(1);
+        (await fixture.Context.SubscriptionPlans.CountAsync(x => x.NormalizedCode == "STARTER")).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Free_Trial_Is_Bootstrapped_With_Approved_Limits()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+
+        var trial = await fixture.Catalog.GetByCodeAsync(SubscriptionPlanCatalog.FreeTrialCode);
+        trial.Should().NotBeNull();
+        trial!.Price.Should().Be(0m);
+        trial.TrialDays.Should().Be(SubscriptionPlanCatalog.FreeTrialDays);
+        trial.IsEnabled.Should().BeTrue();
+        trial.SortOrder.Should().Be(0);
+
+        var entitlements = await fixture.Context.PlanEntitlements.AsNoTracking()
+            .Where(x => x.PlanId == trial.Id)
+            .ToDictionaryAsync(x => x.Key, x => x.CanonicalValue, StringComparer.OrdinalIgnoreCase);
+
+        entitlements.Should().Contain(new Dictionary<string, string>
+        {
+            [EntitlementDefinitionCatalog.SitesMax] = "1",
+            [EntitlementDefinitionCatalog.EmailSiteRecipientsMax] = "2",
+            [EntitlementDefinitionCatalog.EmailSchedulesMax] = "1",
+            [EntitlementDefinitionCatalog.EmailDashboardDigest] = "false",
+            [EntitlementDefinitionCatalog.AutomationSchedulesMax] = "1",
+            [EntitlementDefinitionCatalog.AiEnabled] = "true",
+            [EntitlementDefinitionCatalog.AiMonthlyRequestsMax] = "50",
+            [EntitlementDefinitionCatalog.BackupRetentionDays] = "3",
+            [EntitlementDefinitionCatalog.PremiumSeo] = "false"
+        });
+        entitlements.Should().HaveCount(9);
     }
 
     [Fact]
@@ -74,8 +105,8 @@ public sealed class SubscriptionPlanCatalogTests
         var enabled = await fixture.Catalog.ListAsync();
         var all = await fixture.Catalog.ListAsync(includeDisabled: true);
 
-        enabled.Select(x => x.Code).Should().Equal("alpha", "beta", "zeta");
-        all.Select(x => x.Code).Should().Equal("hidden", "alpha", "beta", "zeta");
+        enabled.Select(x => x.Code).Should().Equal("free-trial", "alpha", "beta", "zeta");
+        all.Select(x => x.Code).Should().Equal("free-trial", "hidden", "alpha", "beta", "zeta");
         (await fixture.Catalog.GetByCodeAsync("HIDDEN")).Should().BeNull();
         (await fixture.Catalog.GetByCodeAsync("HIDDEN", includeDisabled: true))!.Code.Should().Be("hidden");
     }
@@ -112,14 +143,14 @@ public sealed class SubscriptionPlanCatalogTests
     }
 
     [Fact]
-    public async Task Enable_Disable_Is_Durable_And_Empty_Catalog_Is_Safe()
+    public async Task Free_Trial_Bootstrap_And_Enable_Disable_Are_Durable()
     {
         await using var fixture = await Fixture.CreateAsync();
-        (await fixture.Catalog.ListAsync()).Should().BeEmpty();
+        (await fixture.Catalog.ListAsync()).Select(x => x.Code).Should().Equal("free-trial");
         var created = await fixture.Catalog.CreateAsync(CreateRequest("free"));
 
         await fixture.Catalog.SetEnabledAsync(created.Id, false);
-        (await fixture.Catalog.ListAsync()).Should().BeEmpty();
+        (await fixture.Catalog.ListAsync()).Select(x => x.Code).Should().Equal("free-trial");
         (await fixture.Catalog.GetByCodeAsync("free", includeDisabled: true))!.IsEnabled.Should().BeFalse();
 
         await fixture.Catalog.SetEnabledAsync(created.Id, true);
