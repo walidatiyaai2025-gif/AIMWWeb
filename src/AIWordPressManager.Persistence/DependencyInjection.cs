@@ -69,7 +69,7 @@ public static class DependencyInjection
             if (providerName.Equals("MariaDB", StringComparison.OrdinalIgnoreCase))
             {
                 EnsureConnectionString(configuredConnectionString, providerName);
-                options.UseMySql(configuredConnectionString, new MariaDbServerVersion(new Version(10, 6, 0)));
+                options.UseMySql(sqliteConnectionString, new MariaDbServerVersion(new Version(10, 6, 0)));
                 return;
             }
 
@@ -107,6 +107,7 @@ public static class DependencyInjection
         services.AddScoped<PlanEntitlementService>();
         services.AddScoped<IPlanEntitlementCatalog>(sp => sp.GetRequiredService<PlanEntitlementService>());
         services.AddScoped<IPlanEntitlementResolver>(sp => sp.GetRequiredService<PlanEntitlementService>());
+        services.AddScoped<IAccountEntitlementEnforcementService, AccountEntitlementEnforcementService>();
         services.AddScoped<AccountSubscriptionService>();
         services.AddScoped<IAccountSubscriptionService, ProviderBindingAccountSubscriptionService>();
         services.AddScoped<ISubscriptionLifecyclePolicyService, SubscriptionLifecyclePolicyService>();
