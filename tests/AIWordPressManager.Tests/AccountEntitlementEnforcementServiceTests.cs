@@ -163,10 +163,13 @@ public sealed class AccountEntitlementEnforcementServiceTests
                 true,
                 10));
 
-            var ownerUserId = Guid.NewGuid();
             var now = DateTime.UtcNow;
+            var user = new AuthUser($"billing-{Guid.NewGuid():N}", "test-password-hash", now);
+            Context.AuthUsers.Add(user);
+            await Context.SaveChangesAsync();
+
             Context.AccountSubscriptions.Add(new AccountSubscription(
-                ownerUserId,
+                user.Id,
                 plan.Id,
                 AccountSubscriptionStatus.Active,
                 null,
@@ -175,7 +178,7 @@ public sealed class AccountEntitlementEnforcementServiceTests
                 now.AddDays(30),
                 now));
             await Context.SaveChangesAsync();
-            return new AccountFixture(ownerUserId, plan.Id);
+            return new AccountFixture(user.Id, plan.Id);
         }
 
         public async ValueTask DisposeAsync()
