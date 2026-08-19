@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text.Json;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AIWordPressManager.Web.Diagnostics;
 
@@ -9,19 +9,24 @@ public sealed class RuntimeFileLoggerProvider : ILoggerProvider, ISupportExterna
     private readonly RuntimeInspectorOptions _options;
     private readonly ConcurrentDictionary<string, RuntimeFileLogger> _loggers = new(StringComparer.Ordinal);
     private readonly object _writeLock = new();
-    private IExternalScopeProvider _scopeProvider = NullExternalScopeProvider.Instance;
+    private IExternalScopeProvider _scopeProvider = new LoggerExternalScopeProvider();
     private DateOnly _lastCleanupDate;
+    private readonly string _applicationVersion;
 
     public RuntimeFileLoggerProvider(RuntimeInspectorOptions options)
     {
         _options = options;
+        _applicationVersion = Assembly.GetEntryAssembly()?
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+            ?? "unknown";
     }
 
     public ILogger CreateLogger(string categoryName) =>
         _loggers.GetOrAdd(categoryName, category => new RuntimeFileLogger(category, this));
 
     public void SetScopeProvider(IExternalScopeProvider scopeProvider) =>
-        _scopeProvider = scopeProvider ?? NullExternalScopeProvider.Instance;
+        _scopeProvider = scopeProvider ?? new LoggerExternalScopeProvider();
 
     internal IExternalScopeProvider ScopeProvider => _scopeProvider;
 
@@ -47,6 +52,7 @@ public sealed class RuntimeFileLoggerProvider : ILoggerProvider, ISupportExterna
                 ["eventId"] = eventId.Id,
                 ["eventName"] = eventId.Name,
                 ["message"] = RuntimeLogRedactor.Redact(message),
+                ["applicationVersion"] = _applicationVersion,
                 ["machine"] = Environment.MachineName,
                 ["processId"] = Environment.ProcessId,
                 ["threadId"] = Environment.CurrentManagedThreadId,
@@ -95,9 +101,7 @@ public sealed class RuntimeFileLoggerProvider : ILoggerProvider, ISupportExterna
         lock (_writeLock)
         {
             if (File.Exists(path) && new FileInfo(path).Length >= _options.MaxFileSizeBytes)
-            {
                 path = Path.Combine(directory, $"{prefix}-{now:yyyyMMdd}-{now:HHmmssfff}.log");
-            }
 
             File.AppendAllText(path, line + Environment.NewLine, System.Text.Encoding.UTF8);
         }
