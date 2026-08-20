@@ -26,14 +26,14 @@
             <DataAnnotationsValidator />
 
             <label for="register-user">Username</label>
-            <InputText id="register-user" @bind-Value="_model.UserName" autocomplete="username" disabled="@_working" />
+            <InputText id="register-user" name="UserName" @bind-Value="_model.UserName" autocomplete="username" disabled="@_working" />
 
             <label for="register-password">Password</label>
-            <InputText id="register-password" type="password" @bind-Value="_model.Password" autocomplete="new-password" disabled="@_working" />
+            <InputText id="register-password" name="Password" type="password" @bind-Value="_model.Password" autocomplete="new-password" disabled="@_working" />
             <small>At least 8 characters with uppercase, lowercase, and a number.</small>
 
             <label for="register-confirm">Confirm password</label>
-            <InputText id="register-confirm" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
+            <InputText id="register-confirm" name="ConfirmPassword" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
 
             <button class="auth-submit" type="submit" disabled="@_working">
                 @(_working ? "Creating your workspace..." : "Start free trial")
@@ -55,7 +55,10 @@
 
 @code {
     private const string FreeTrialPlanCode = "free-trial";
-    private readonly RegisterModel _model = new();
+
+    [SupplyParameterFromForm(FormName = "register-account")]
+    private RegisterModel _model { get; set; } = new();
+
     private bool _working;
     private bool _isError;
     private string? _message;
@@ -66,7 +69,13 @@
         {
             _working = true;
             _message = null;
-            var result = await Authentication.RegisterAsync(_model.UserName, _model.Password, _model.ConfirmPassword);
+
+            // Form mapping covers the prerender/static-submit window while normal
+            // component binding covers an already-connected InteractiveServer circuit.
+            // Normalize the username at the UI boundary so both paths submit the
+            // same value to the authentication service.
+            var userName = (_model.UserName ?? string.Empty).Trim();
+            var result = await Authentication.RegisterAsync(userName, _model.Password, _model.ConfirmPassword);
             _isError = !result.IsSuccess;
 
             if (!result.IsSuccess)
@@ -109,7 +118,7 @@
         }
     }
 
-    private sealed class RegisterModel
+    public sealed class RegisterModel
     {
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
