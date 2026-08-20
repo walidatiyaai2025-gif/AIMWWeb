@@ -1,5 +1,6 @@
 @page "/register"
 @rendermode InteractiveServer
+@layout LandingLayout
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using AIWordPressManager.Application.Abstractions.Billing
 @using AIWordPressManager.Domain.Entities
@@ -22,18 +23,18 @@
             <div class="auth-alert @(_isError ? "error" : "success")">@_message</div>
         }
 
-        <EditForm Model="_model" OnValidSubmit="RegisterAsync" FormName="register-account">
+        <EditForm Model="Model" OnValidSubmit="RegisterAsync" FormName="register-account">
             <DataAnnotationsValidator />
 
             <label for="register-user">Username</label>
-            <InputText id="register-user" @bind-Value="_model.UserName" autocomplete="username" disabled="@_working" />
+            <InputText id="register-user" @bind-Value="Model!.UserName" autocomplete="username" disabled="@_working" />
 
             <label for="register-password">Password</label>
-            <InputText id="register-password" type="password" @bind-Value="_model.Password" autocomplete="new-password" disabled="@_working" />
+            <InputText id="register-password" type="password" @bind-Value="Model!.Password" autocomplete="new-password" disabled="@_working" />
             <small>At least 8 characters with uppercase, lowercase, and a number.</small>
 
             <label for="register-confirm">Confirm password</label>
-            <InputText id="register-confirm" type="password" @bind-Value="_model.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
+            <InputText id="register-confirm" type="password" @bind-Value="Model!.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
 
             <button class="auth-submit" type="submit" disabled="@_working">
                 @(_working ? "Creating your workspace..." : "Start free trial")
@@ -55,10 +56,20 @@
 
 @code {
     private const string FreeTrialPlanCode = "free-trial";
-    private readonly RegisterModel _model = new();
+
+    // Canonical Blazor static-SSR form mapping: the same FormName scopes the
+    // posted values and the Input components generate field names from bindings.
+    [SupplyParameterFromForm(FormName = "register-account")]
+    private RegisterModel? Model { get; set; }
+
     private bool _working;
     private bool _isError;
     private string? _message;
+
+    protected override void OnInitialized()
+    {
+        Model ??= new RegisterModel();
+    }
 
     private async Task RegisterAsync()
     {
@@ -66,7 +77,10 @@
         {
             _working = true;
             _message = null;
-            var result = await Authentication.RegisterAsync(_model.UserName, _model.Password, _model.ConfirmPassword);
+
+            var model = Model ??= new RegisterModel();
+            var userName = (model.UserName ?? string.Empty).Trim();
+            var result = await Authentication.RegisterAsync(userName, model.Password, model.ConfirmPassword);
             _isError = !result.IsSuccess;
 
             if (!result.IsSuccess)
@@ -94,9 +108,13 @@
                     now.AddDays(trialDays)));
             }
 
-            _message = $"Account created. Your {Math.Max(1, freeTrial.TrialDays)}-day free trial is ready. Redirecting to sign in...";
-            await Task.Delay(700);
             Navigation.NavigateTo("/login?registered=true", forceLoad: true);
+        }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            // Static SSR uses NavigationException as the redirect control flow.
+            // It must escape to the framework instead of being rendered as an error.
+            throw;
         }
         catch (Exception ex)
         {
@@ -109,7 +127,7 @@
         }
     }
 
-    private sealed class RegisterModel
+    public sealed class RegisterModel
     {
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
