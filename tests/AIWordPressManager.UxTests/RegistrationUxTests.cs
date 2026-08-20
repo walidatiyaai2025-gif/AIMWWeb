@@ -25,6 +25,10 @@ public sealed class RegistrationUxTests(UxTestHost host)
             response.Should().NotBeNull();
             response!.Status.Should().BeLessThan(400);
 
+            (await page.Locator(".sidebar").CountAsync()).Should().Be(0, "anonymous registration must not render authenticated navigation");
+            (await page.Locator(".topbar").CountAsync()).Should().Be(0, "anonymous registration must not render the authenticated header");
+            (await page.Locator(".landing-layout").CountAsync()).Should().Be(1);
+
             await page.Locator("#register-user").FillAsync("lido825");
             await page.Locator("#register-password").FillAsync(SyntheticPassword);
             await page.Locator("#register-confirm").FillAsync(SyntheticPassword);
@@ -66,6 +70,8 @@ public sealed class RegistrationUxTests(UxTestHost host)
 
         response.Should().NotBeNull();
         response!.Status.Should().BeLessThan(400);
+        (await page.Locator(".sidebar").CountAsync()).Should().Be(0);
+        (await page.Locator(".topbar").CountAsync()).Should().Be(0);
 
         await page.Locator("#register-user").FillAsync("lido825-static");
         await page.Locator("#register-password").FillAsync(SyntheticPassword);
