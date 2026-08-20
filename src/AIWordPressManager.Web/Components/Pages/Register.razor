@@ -27,14 +27,14 @@
             <DataAnnotationsValidator />
 
             <label for="register-user">Username</label>
-            <InputText id="register-user" name="UserName" @bind-Value="Model.UserName" autocomplete="username" disabled="@_working" />
+            <InputText id="register-user" @bind-Value="Model!.UserName" autocomplete="username" disabled="@_working" />
 
             <label for="register-password">Password</label>
-            <InputText id="register-password" name="Password" type="password" @bind-Value="Model.Password" autocomplete="new-password" disabled="@_working" />
+            <InputText id="register-password" type="password" @bind-Value="Model!.Password" autocomplete="new-password" disabled="@_working" />
             <small>At least 8 characters with uppercase, lowercase, and a number.</small>
 
             <label for="register-confirm">Confirm password</label>
-            <InputText id="register-confirm" name="ConfirmPassword" type="password" @bind-Value="Model.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
+            <InputText id="register-confirm" type="password" @bind-Value="Model!.ConfirmPassword" autocomplete="new-password" disabled="@_working" />
 
             <button class="auth-submit" type="submit" disabled="@_working">
                 @(_working ? "Creating your workspace..." : "Start free trial")
@@ -57,12 +57,10 @@
 @code {
     private const string FreeTrialPlanCode = "free-trial";
 
-    // Static SSR form posts supply this parameter before component initialization.
-    // Keep it nullable for the form mapper, then expose a guaranteed model to EditForm.
-    [SupplyParameterFromForm]
-    private RegisterModel? _formModel { get; set; }
-
-    private RegisterModel Model => _formModel ??= new RegisterModel();
+    // Canonical Blazor static-SSR form mapping: the same FormName scopes the
+    // posted values and the Input components generate field names from bindings.
+    [SupplyParameterFromForm(FormName = "register-account")]
+    private RegisterModel? Model { get; set; }
 
     private bool _working;
     private bool _isError;
@@ -70,7 +68,7 @@
 
     protected override void OnInitialized()
     {
-        _formModel ??= new RegisterModel();
+        Model ??= new RegisterModel();
     }
 
     private async Task RegisterAsync()
@@ -80,9 +78,7 @@
             _working = true;
             _message = null;
 
-            // Form mapping covers the prerender/static-submit window while normal
-            // component binding covers an already-connected InteractiveServer circuit.
-            var model = Model;
+            var model = Model ??= new RegisterModel();
             var userName = (model.UserName ?? string.Empty).Trim();
             var result = await Authentication.RegisterAsync(userName, model.Password, model.ConfirmPassword);
             _isError = !result.IsSuccess;
@@ -112,7 +108,6 @@
                     now.AddDays(trialDays)));
             }
 
-            // Navigate immediately. A delayed redirect is fragile during static SSR POST handling.
             Navigation.NavigateTo("/login?registered=true", forceLoad: true);
         }
         catch (Exception ex)
