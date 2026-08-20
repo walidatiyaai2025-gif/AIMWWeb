@@ -66,10 +66,12 @@ public sealed class WelcomeCssBundleRegressionTests(UxTestHost host)
         }
     }
 
-    private sealed record WelcomeStyleMetrics(
-        string HeroDisplay,
-        int HeroColumnCount,
-        string HeaderDisplay,
-        double HeadingFontSize,
-        double HeaderWidth);
+    private sealed class WelcomeStyleMetrics
+    {
+        public string HeroDisplay { get; set; } = string.Empty;
+        public int HeroColumnCount { get; set; }
+        public string HeaderDisplay { get; set; } = string.Empty;
+        public double HeadingFontSize { get; set; }
+        public double HeaderWidth { get; set; }
+    }
 }
