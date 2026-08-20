@@ -110,6 +110,12 @@
 
             Navigation.NavigateTo("/login?registered=true", forceLoad: true);
         }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            // Static SSR uses NavigationException as the redirect control flow.
+            // It must escape to the framework instead of being rendered as an error.
+            throw;
+        }
         catch (Exception ex)
         {
             _isError = true;
