@@ -18,6 +18,7 @@ public sealed class UxRegressionWorkflowShardingTests
             "smoke-public",
             "authenticated-routes",
             "seo-audit",
+            "comments-moderation",
             "visual-breakpoints",
             "rtl"
         }) workflow.Should().Contain($"shard: {shard}");
@@ -29,6 +30,7 @@ public sealed class UxRegressionWorkflowShardingTests
             "Keyboard_focus_enters_the_authenticated_application",
             "Authenticated_routes_render_and_pass_accessibility_smoke",
             "SeoAuditUxTests",
+            "CommentsModerationUxTests",
             "High_risk_pages_hold_visual_contract_at_key_breakpoints",
             "Selected_high_risk_pages_preserve_material_contract_in_arabic_rtl"
         }) workflow.Should().Contain(test);
