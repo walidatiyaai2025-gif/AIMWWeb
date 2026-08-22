@@ -9,6 +9,12 @@ public sealed class BulkTrashExecutionService(
     ExecutionOperationTracker tracker,
     CurrentUserContext currentUser)
 {
+    // Bulk trash runs synchronously from the Interactive Server confirmation dialog. A WordPress
+    // endpoint that never completes must not leave the user's circuit in an infinite Busy state.
+    // This is an end-to-end deadline for the remote mutations for one site, not a per-item timeout.
+    internal static readonly TimeSpan OperationTimeout = TimeSpan.FromSeconds(45);
+    internal static readonly TimeSpan CacheRefreshTimeout = TimeSpan.FromSeconds(15);
+
     public async Task<BulkTrashResult> RunAsync(Guid siteId, BulkTrashRequest request, CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
@@ -30,42 +36,91 @@ public sealed class BulkTrashExecutionService(
         var succeeded = 0;
         var failures = new List<string>();
 
-        for (var index = 0; index < targets.Count; index++)
+        using var operationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        operationCts.CancelAfter(OperationTimeout);
+        var operationToken = operationCts.Token;
+
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var target = targets[index];
-            var endpoint = target.ContentType == "page"
-                ? $"/wp-json/wp/v2/pages/{target.WordPressId}"
-                : $"/wp-json/wp/v2/posts/{target.WordPressId}";
-
-            tracker.Report(jobId, index, targets.Count, $"Moving {target.ContentType} #{target.WordPressId} to trash.");
-
-            WordPressApiResponse<System.Text.Json.JsonDocument>? response = null;
-            for (var attempt = 1; attempt <= 3; attempt++)
+            for (var index = 0; index < targets.Count; index++)
             {
-                response = await apiClient.SendAsync(siteId, HttpMethod.Post, endpoint, new { status = "trash" }, cancellationToken);
-                if (response.IsSuccess) break;
-                if (attempt < 3) await Task.Delay(TimeSpan.FromSeconds(attempt), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                var target = targets[index];
+                var endpoint = target.ContentType == "page"
+                    ? $"/wp-json/wp/v2/pages/{target.WordPressId}"
+                    : $"/wp-json/wp/v2/posts/{target.WordPressId}";
+
+                tracker.Report(jobId, index, targets.Count, $"Moving {target.ContentType} #{target.WordPressId} to trash.");
+
+                WordPressApiResponse<System.Text.Json.JsonDocument>? response = null;
+                try
+                {
+                    // WordPressApiClient deliberately does not retry mutation requests. Repeating a
+                    // POST blindly can duplicate side effects and used to multiply its five-minute
+                    // HttpClient timeout by three for every selected item.
+                    response = await apiClient.SendAsync(
+                        siteId,
+                        HttpMethod.Post,
+                        endpoint,
+                        new { status = "trash" },
+                        operationToken);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && operationCts.IsCancellationRequested)
+                {
+                    failures.Add($"{target.ContentType} #{target.WordPressId}: انتهت مهلة تنفيذ العملية مع WordPress.");
+                    var remaining = targets.Count - index - 1;
+                    if (remaining > 0)
+                        failures.Add($"لم تتم معالجة {remaining} عنصر متبقٍ لأن مهلة العملية انتهت.");
+
+                    tracker.Report(jobId, index, targets.Count, "Bulk trash deadline reached; remaining items were not sent.");
+                    break;
+                }
+
+                if (response.IsSuccess)
+                    succeeded++;
+                else
+                    failures.Add($"{target.ContentType} #{target.WordPressId}: {response.ErrorMessage ?? "Unknown error"}");
+
+                response.Value?.Dispose();
+                tracker.Report(jobId, index + 1, targets.Count, $"Processed {index + 1}/{targets.Count}.");
             }
 
-            if (response?.IsSuccess == true) succeeded++;
-            else failures.Add($"{target.ContentType} #{target.WordPressId}: {response?.ErrorMessage ?? "Unknown error"}");
-
-            response?.Value?.Dispose();
-            tracker.Report(jobId, index + 1, targets.Count, $"Processed {index + 1}/{targets.Count}.");
+            if (succeeded > 0)
+            {
+                try
+                {
+                    tracker.Report(jobId, targets.Count, targets.Count, "Refreshing local WordPress cache.");
+                    using var refreshCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    refreshCts.CancelAfter(CacheRefreshTimeout);
+                    await syncService.SynchronizeAsync(siteId, refreshCts.Token);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Remote mutations are already committed. Never keep the confirmation dialog
+                    // blocked just because reconciliation is slow; the normal Sync workspace can retry.
+                    tracker.Report(jobId, targets.Count, targets.Count, "Remote changes completed; local cache refresh timed out.");
+                }
+                catch
+                {
+                    // Remote operation already completed; cache refresh can be retried separately.
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            tracker.Fail(jobId, "Bulk trash operation was cancelled.");
+            throw;
         }
 
-        try { await syncService.SynchronizeAsync(siteId, cancellationToken); }
-        catch { /* Remote operation already completed; cache refresh can be retried separately. */ }
-
-        var message = failures.Count == 0
+        var failedCount = targets.Count - succeeded;
+        var message = failedCount == 0
             ? $"تم نقل {succeeded} عنصر إلى سلة المهملات."
-            : $"تم نقل {succeeded} عنصر وفشل {failures.Count}. {string.Join(" | ", failures.Take(3))}";
+            : $"تم نقل {succeeded} عنصر وفشل {failedCount}. {string.Join(" | ", failures.Take(3))}";
 
         if (succeeded == 0) tracker.Fail(jobId, message);
         else tracker.Complete(jobId, targets.Count, targets.Count, message);
 
-        return new BulkTrashResult(jobId, succeeded, failures.Count, failures, message);
+        return new BulkTrashResult(jobId, succeeded, failedCount, failures, message);
     }
 }
 
