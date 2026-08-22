@@ -35,11 +35,13 @@ public sealed class SeoAuditUxTests(UxTestHost host)
             });
 
             (await page.GetByTestId("seo-results").InnerTextAsync()).Should().Contain("SEO Browser Article 01");
-            (await page.Locator(".seo-pagination").InnerTextAsync()).Should().Contain("Page 1 of 2");
+            var pagination = page.Locator(".seo-pagination");
+            await Assertions.Expect(pagination).ToContainTextAsync("Page 1 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
 
             await page.GetByRole(AriaRole.Button, new() { Name = "Next", Exact = true }).ClickAsync();
-            (await page.Locator(".seo-pagination").InnerTextAsync()).Should().Contain("Page 2 of 2");
+            await Assertions.Expect(pagination).ToContainTextAsync("Page 2 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
             await page.GetByRole(AriaRole.Button, new() { Name = "Previous", Exact = true }).ClickAsync();
+            await Assertions.Expect(pagination).ToContainTextAsync("Page 1 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
 
             var details = page.GetByRole(AriaRole.Button, new() { Name = "Details", Exact = true }).First;
             await details.ClickAsync();
@@ -72,6 +74,7 @@ public sealed class SeoAuditUxTests(UxTestHost host)
             await page.GetByText("SEO Browser Article 01", new() { Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
             (await page.GetByTestId("seo-results").InnerTextAsync()).Should().NotContain("SEO Browser Article 12");
             await page.GetByRole(AriaRole.Button, new() { Name = "Reset", Exact = true }).ClickAsync();
+            await page.GetByText("SEO Browser Article 12", new() { Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
             (await page.GetByTestId("seo-audit-history").InnerTextAsync()).Should().Contain("No saved audit history yet");
             var runAudit = page.GetByTestId("seo-run-full-audit");
