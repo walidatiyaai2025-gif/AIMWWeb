@@ -69,7 +69,8 @@ public sealed class TaxonomyMutationsUxTests(UxTestHost host)
 
             var createdRow = TermRow(page, CreatedName);
             await createdRow.Locator(".table-actions button").First.ClickAsync(new LocatorClickOptions { Timeout = 5000 });
-            await WaitUntilAsync(async () => (await editor.Locator("input").Nth(0).InputValueAsync()) == CreatedName,
+            await WaitUntilAsync(async () =>
+                    (await editor.Locator("input:not([type='hidden'])").Nth(0).InputValueAsync()) == CreatedName,
                 "Edit did not load the selected category into the editor.");
 
             await FillEditorAsync(editor, UpdatedName, UpdatedSlug, UpdatedDescription);
@@ -114,8 +115,9 @@ public sealed class TaxonomyMutationsUxTests(UxTestHost host)
 
     private static async Task FillEditorAsync(ILocator editor, string name, string slug, string description)
     {
-        await editor.Locator("input").Nth(0).FillAsync(name);
-        await editor.Locator("input").Nth(1).FillAsync(slug);
+        var visibleInputs = editor.Locator("input:not([type='hidden'])");
+        await visibleInputs.Nth(0).FillAsync(name);
+        await visibleInputs.Nth(1).FillAsync(slug);
         await editor.Locator("textarea").FillAsync(description);
     }
 
