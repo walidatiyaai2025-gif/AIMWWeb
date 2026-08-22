@@ -29,6 +29,8 @@ jobs:
             filter: FullyQualifiedName~Blazor_bootstrap_asset_is_available_before_authentication|FullyQualifiedName~Public_routes_render_without_server_or_browser_failure|FullyQualifiedName~Keyboard_focus_enters_the_authenticated_application|FullyQualifiedName~Content_view_only_role_can_read_owned_content_without_mutation_affordances|FullyQualifiedName~Add_site_form_accepts_keyboard_input|FullyQualifiedName~Welcome_page_loads_scoped_css_bundle_and_material_layout|FullyQualifiedName~RegistrationUxTests
           - shard: authenticated-routes
             filter: FullyQualifiedName~Authenticated_routes_render_and_pass_accessibility_smoke
+          - shard: seo-audit
+            filter: FullyQualifiedName~SeoAuditUxTests
           - shard: visual-breakpoints
             filter: FullyQualifiedName~High_risk_pages_hold_visual_contract_at_key_breakpoints
           - shard: rtl
