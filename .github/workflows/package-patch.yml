@@ -1,0 +1,113 @@
+name: Package AIMWWeb GitHub Patch
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Optional exact source commit to pin in the patch
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package-patch:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout patch templates
+        uses: actions/checkout@v4
+
+      - name: Resolve source metadata
+        id: meta
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content .\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj -Raw
+          $versions = @($project.Project.PropertyGroup.Version | Where-Object { $_ })
+          if ($versions.Count -eq 0) { throw 'Project Version was not found.' }
+          $version = [string]$versions[0]
+
+          $manual = '${{ inputs.source_commit }}'
+          if (-not [string]::IsNullOrWhiteSpace($manual)) {
+            $sourceCommit = $manual.Trim()
+          }
+          elseif ('${{ github.event_name }}' -eq 'pull_request') {
+            $sourceCommit = '${{ github.event.pull_request.base.sha }}'
+          }
+          else {
+            $sourceCommit = '${{ github.sha }}'
+          }
+
+          if ($sourceCommit.Length -lt 8) { throw 'Resolved source commit is invalid.' }
+          $shortCommit = $sourceCommit.Substring(0, 8)
+          $artifactName = "AIMWWeb-Patch-$version-$shortCommit"
+
+          "PatchVersion=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SourceCommit=$sourceCommit" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ShortCommit=$shortCommit" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ArtifactName=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build patch folder
+        shell: pwsh
+        run: |
+          $patch = Join-Path $PWD 'artifacts\patch'
+          New-Item -ItemType Directory -Path $patch -Force | Out-Null
+
+          $ps = Get-Content .\Build\Apply-GitHub-Patch.ps1 -Raw
+          $ps = $ps.Replace('__SOURCE_COMMIT__', $env:SourceCommit).Replace('__VERSION__', $env:PatchVersion)
+          Set-Content -LiteralPath (Join-Path $patch 'Apply-AIMWWeb-Patch.ps1') -Value $ps -Encoding UTF8
+
+          Copy-Item .\Build\Patch-From-GitHub.cmd (Join-Path $patch 'Patch.cmd') -Force
+
+          $readme = Get-Content .\Build\PATCH_README.txt -Raw
+          $readme = $readme.Replace('__SOURCE_COMMIT__', $env:SourceCommit).Replace('__VERSION__', $env:PatchVersion)
+          Set-Content -LiteralPath (Join-Path $patch 'README.txt') -Value $readme -Encoding UTF8
+
+          $manifest = [ordered]@{
+            package = 'AIMWWeb GitHub Patch'
+            repository = 'walidatiyaai2025-gif/AIMWWeb'
+            version = $env:PatchVersion
+            commit = $env:SourceCommit
+            generatedByWorkflow = 'Package AIMWWeb GitHub Patch'
+            generatedByRun = $env:GITHUB_RUN_ID
+            defaultSite = 'AIMWWeb'
+            defaultAppPool = 'AIMWWeb'
+            defaultPhysicalPath = 'C:\inetpub\AIMWWeb'
+            defaultPort = 8088
+          } | ConvertTo-Json -Depth 5
+          Set-Content -LiteralPath (Join-Path $patch 'manifest.json') -Value $manifest -Encoding UTF8
+
+          $sumFiles = @('Apply-AIMWWeb-Patch.ps1', 'Patch.cmd', 'README.txt', 'manifest.json')
+          $sumLines = foreach ($name in $sumFiles) {
+            $hash = (Get-FileHash -LiteralPath (Join-Path $patch $name) -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $name"
+          }
+          Set-Content -LiteralPath (Join-Path $patch 'SHA256SUMS.txt') -Value $sumLines -Encoding UTF8
+
+      - name: Verify patch shape and pin
+        shell: pwsh
+        run: |
+          $patch = Join-Path $PWD 'artifacts\patch'
+          $required = @('Apply-AIMWWeb-Patch.ps1', 'Patch.cmd', 'README.txt', 'manifest.json', 'SHA256SUMS.txt')
+          foreach ($name in $required) {
+            if (-not (Test-Path -LiteralPath (Join-Path $patch $name) -PathType Leaf)) { throw "Missing patch file: $name" }
+          }
+
+          $ps = Get-Content -LiteralPath (Join-Path $patch 'Apply-AIMWWeb-Patch.ps1') -Raw
+          if ($ps -notmatch [Regex]::Escape($env:SourceCommit)) { throw 'Patch PowerShell does not contain the exact source commit.' }
+
+          $manifest = Get-Content -LiteralPath (Join-Path $patch 'manifest.json') -Raw | ConvertFrom-Json
+          if ($manifest.commit -ne $env:SourceCommit) { throw 'manifest.json does not contain the exact source commit.' }
+
+      - name: Upload patch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ArtifactName }}
+          path: artifacts/patch
+          if-no-files-found: error
+          retention-days: 90
