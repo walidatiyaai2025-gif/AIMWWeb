@@ -47,10 +47,11 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
             var row = comment.Locator("xpath=ancestor::tr[1]");
             (await row.InnerTextAsync()).Should().Contain("Pending");
 
+            await EnsureCommentsInteractiveAsync(page, row);
+
             var approve = row.Locator(".comment-actions button").First;
-            await ClickUntilAsync(
-                () => approve.ClickAsync(new LocatorClickOptions { Timeout = 2000 }),
-                () => wordpress.PrimaryStatus == "approved",
+            await approve.ClickAsync(new LocatorClickOptions { Timeout = 5000 });
+            await WaitUntilAsync(() => wordpress.PrimaryStatus == "approved",
                 "Approve did not reach the WordPress REST endpoint.");
 
             await WaitUntilAsync(async () =>
@@ -69,13 +70,13 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
 
             var approved = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = CommentText });
             var approvedRow = approved.Locator("xpath=ancestor::tr[1]");
-            await approvedRow.Locator(".comment-actions button").Last.ClickAsync();
+            await approvedRow.Locator(".comment-actions button").Last.ClickAsync(new LocatorClickOptions { Timeout = 5000 });
 
             var replyBox = approvedRow.Locator(".reply-box");
+            await replyBox.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
             await replyBox.Locator("textarea").FillAsync(ReplyText);
-            await ClickUntilAsync(
-                () => replyBox.Locator(".actions button").First.ClickAsync(new LocatorClickOptions { Timeout = 2000 }),
-                () => wordpress.ReplyCount > 0,
+            await replyBox.Locator(".actions button").First.ClickAsync(new LocatorClickOptions { Timeout = 5000 });
+            await WaitUntilAsync(() => wordpress.ReplyCount > 0,
                 "Reply did not reach the WordPress REST endpoint.");
 
             wordpress.Requests.Should().Contain(request =>
@@ -109,13 +110,14 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
 
         var form = page.Locator(".site-details-form-grid");
         await form.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await EnsureSiteDetailsInteractiveAsync(page);
+
         await form.Locator("input").Nth(0).FillAsync(WordPressUser);
         await form.Locator("input").Nth(1).FillAsync(WordPressPassword);
 
         var submit = page.Locator(".site-details-form-actions button[type='submit']").First;
-        await ClickUntilAsync(
-            () => submit.ClickAsync(new LocatorClickOptions { Timeout = 2000 }),
-            () => wordpress.HasAuthenticatedConnectionTest,
+        await submit.ClickAsync(new LocatorClickOptions { Timeout = 5000 });
+        await WaitUntilAsync(() => wordpress.HasAuthenticatedConnectionTest,
             "Save/Test did not reach the WordPress connection tester.");
 
         await WaitUntilAsync(
@@ -127,6 +129,54 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
             request.Method == "GET" &&
             request.Target.StartsWith("/wp-json/wp/v2/users/me", StringComparison.Ordinal) &&
             request.Authorization.StartsWith("Basic ", StringComparison.Ordinal));
+    }
+
+    private static async Task EnsureSiteDetailsInteractiveAsync(IPage page)
+    {
+        var probe = page.Locator(".site-details-form-actions button[type='button']").First;
+        var alert = page.Locator(".site-details-alert");
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await probe.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+                await alert.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 750 });
+                return;
+            }
+            catch (TimeoutException)
+            {
+                await page.WaitForTimeoutAsync(150);
+            }
+        }
+
+        throw new TimeoutException("Site Details did not become InteractiveServer-ready within 8 seconds.");
+    }
+
+    private static async Task EnsureCommentsInteractiveAsync(IPage page, ILocator row)
+    {
+        var reply = row.Locator(".comment-actions button").Last;
+        var replyBox = row.Locator(".reply-box");
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await reply.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+                await replyBox.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 750 });
+                await replyBox.Locator(".actions button").Last.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+                await replyBox.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 2000 });
+                return;
+            }
+            catch (TimeoutException)
+            {
+                await page.WaitForTimeoutAsync(150);
+            }
+        }
+
+        throw new TimeoutException("Comments workspace did not become InteractiveServer-ready within 8 seconds.");
     }
 
     private async Task<Guid> SeedOwnedSiteAsync(Uri siteUri)
@@ -147,19 +197,15 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
             ?? throw new InvalidOperationException("UX fixture database context factory returned null."));
     }
 
-    private static async Task ClickUntilAsync(Func<Task> click, Func<bool> complete, string failure)
+    private static async Task WaitUntilAsync(Func<bool> condition, string failure)
     {
         var deadline = DateTime.UtcNow.AddSeconds(10);
-        Exception? lastError = null;
         while (DateTime.UtcNow < deadline)
         {
-            if (complete()) return;
-            try { await click(); }
-            catch (Exception ex) when (ex is TimeoutException or PlaywrightException) { lastError = ex; }
-            if (complete()) return;
-            await Task.Delay(150);
+            if (condition()) return;
+            await Task.Delay(100);
         }
-        throw new TimeoutException(failure, lastError);
+        throw new TimeoutException(failure);
     }
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, string failure)
