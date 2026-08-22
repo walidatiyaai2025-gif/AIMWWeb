@@ -19,10 +19,10 @@ public sealed partial class DeadUiContractTests
 
             foreach (Match match in ButtonRegex().Matches(source))
             {
-                var attrs = match.Groups["attrs"].Value;
-                if (HasMeaningfulButtonAction(attrs)) continue;
+                var buttonMarkup = match.Groups["button"].Value;
+                if (HasMeaningfulButtonAction(buttonMarkup)) continue;
 
-                violations.Add($"{relative}:{LineOf(source, match.Index)} button has no click/keyboard action, explicit submit behavior, or form action: {Compact(match.Value)}");
+                violations.Add($"{relative}:{LineOf(source, match.Index)} button has no click/keyboard action, explicit submit behavior, or form action: {Compact(buttonMarkup)[..Math.Min(Compact(buttonMarkup).Length, 220)]}");
             }
 
             foreach (Match match in AnchorRegex().Matches(source))
@@ -78,11 +78,11 @@ public sealed partial class DeadUiContractTests
         violations.Should().BeEmpty("production Razor must not present known fabricated runtime datasets.\n" + string.Join(Environment.NewLine, violations));
     }
 
-    private static bool HasMeaningfulButtonAction(string attrs)
+    private static bool HasMeaningfulButtonAction(string buttonMarkup)
     {
-        if (EventActionRegex().IsMatch(attrs)) return true;
-        if (SubmitTypeRegex().IsMatch(attrs)) return true;
-        if (FormActionRegex().IsMatch(attrs)) return true;
+        if (EventActionRegex().IsMatch(buttonMarkup)) return true;
+        if (SubmitTypeRegex().IsMatch(buttonMarkup)) return true;
+        if (FormActionRegex().IsMatch(buttonMarkup)) return true;
         return false;
     }
 
@@ -110,7 +110,10 @@ public sealed partial class DeadUiContractTests
         throw new DirectoryNotFoundException("Could not locate AIMWWeb repository root from the test output directory.");
     }
 
-    [GeneratedRegex(@"<button\b(?<attrs>[^>]*)>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    // Match the whole button element instead of stopping at the first `>` character.
+    // Razor expressions commonly contain `>` and `=>` inside attributes, which must not
+    // truncate the opening tag before a later @onclick attribute is seen.
+    [GeneratedRegex(@"(?<button><button\b.*?</button>)", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex ButtonRegex();
 
     [GeneratedRegex(@"<a\b(?<attrs>[^>]*)>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
@@ -119,7 +122,9 @@ public sealed partial class DeadUiContractTests
     [GeneratedRegex("href\\s*=\\s*(?:\\\"(?<value>[^\\\"]*)\\\"|'(?<value>[^']*)')", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex HrefRegex();
 
-    [GeneratedRegex(@"@on(?:click|mousedown|mouseup|pointerdown|pointerup|keydown|keyup)\s*=", RegexOptions.IgnoreCase)]
+    // Blazor event attributes and deliberate native DOM handlers both count as real actions.
+    // The latter is used for language toggles that must run before a full page reload.
+    [GeneratedRegex(@"(?:@on(?:click|mousedown|mouseup|pointerdown|pointerup|keydown|keyup)|on(?:click|mousedown|mouseup|pointerdown|pointerup|keydown|keyup))\s*=", RegexOptions.IgnoreCase)]
     private static partial Regex EventActionRegex();
 
     [GeneratedRegex("type\\s*=\\s*(?:\\\"submit\\\"|'submit')", RegexOptions.IgnoreCase)]
