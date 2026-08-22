@@ -1,0 +1,87 @@
+name: Package AIMWWeb Update
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    env:
+      GitBranch: main
+      PackageVersion: 155.152.0
+      SourceCommit: 516df59e5c9d9245655e2e78b1a4d0b7cb14bd6e
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            Directory.Packages.props
+
+      - name: Restore for win-x64
+        run: dotnet restore .\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj -r win-x64
+
+      - name: Publish update payload
+        shell: pwsh
+        run: |
+          $publish = Join-Path $PWD 'artifacts\package\app'
+          New-Item -ItemType Directory -Path $publish -Force | Out-Null
+          dotnet publish .\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained false `
+            --no-restore `
+            --output $publish `
+            /p:GitBranch=main
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Add safe installer and package metadata
+        shell: pwsh
+        run: |
+          $package = Join-Path $PWD 'artifacts\package'
+          Copy-Item .\Build\Install-Update.ps1 (Join-Path $package 'Install-Update.ps1') -Force
+          Copy-Item .\Build\UPDATE_PACKAGE_README_AR.txt (Join-Path $package 'README_AR.txt') -Force
+          @(
+            "AIMWWeb $env:PackageVersion",
+            "main commit: $env:SourceCommit",
+            "package workflow head: $env:GITHUB_SHA",
+            "runtime: win-x64",
+            "framework: net8.0",
+            "deployment: framework-dependent"
+          ) | Set-Content (Join-Path $package 'VERSION.txt') -Encoding UTF8
+
+      - name: Verify package contents
+        shell: pwsh
+        run: |
+          $package = Join-Path $PWD 'artifacts\package'
+          $required = @(
+            'Install-Update.ps1',
+            'README_AR.txt',
+            'VERSION.txt',
+            'app\AIWordPressManager.Web.dll',
+            'app\AIWordPressManager.Web.exe',
+            'app\web.config'
+          )
+          foreach ($relative in $required) {
+            $path = Join-Path $package $relative
+            if (-not (Test-Path $path)) { throw "Missing package file: $relative" }
+          }
+
+      - name: Upload installable update package
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIMWWeb-Update-155.152.0-516df59e-win-x64
+          path: artifacts/package
+          if-no-files-found: error
+          retention-days: 30
