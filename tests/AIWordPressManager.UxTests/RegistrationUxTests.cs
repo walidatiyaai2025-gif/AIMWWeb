@@ -35,13 +35,7 @@ public sealed class RegistrationUxTests(UxTestHost host)
 
             (await page.Locator("#register-user").InputValueAsync()).Should().Be("lido825");
 
-            await page.Locator("button.auth-submit").ClickAsync();
-            await page.WaitForURLAsync("**/login?registered=true", new PageWaitForURLOptions
-            {
-                Timeout = 15000,
-                WaitUntil = WaitUntilState.DOMContentLoaded
-            });
-
+            await SubmitUntilRedirectedAsync(page, page.Locator("button.auth-submit"), "/login?registered=true");
             page.Url.Should().Contain("/login?registered=true");
         }
         finally
@@ -85,5 +79,42 @@ public sealed class RegistrationUxTests(UxTestHost host)
         });
 
         page.Url.Should().Contain("/login?registered=true");
+    }
+
+    private static async Task SubmitUntilRedirectedAsync(IPage page, ILocator submit, string expectedPath)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (page.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            try
+            {
+                await submit.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+            }
+            catch (Exception ex) when (
+                ex is TimeoutException or PlaywrightException &&
+                page.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var observationDeadline = DateTime.UtcNow.AddMilliseconds(900);
+            while (DateTime.UtcNow < observationDeadline)
+            {
+                if (page.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                await page.WaitForTimeoutAsync(50);
+            }
+
+            // InteractiveServer can expose the prerendered form before the circuit
+            // has attached. Repeat the same browser submit only while the browser is
+            // still on registration; never retry a stale locator after navigation.
+        }
+
+        throw new TimeoutException(
+            $"Registration did not redirect to '{expectedPath}' within 8 seconds. Current URL: {page.Url}");
     }
 }
