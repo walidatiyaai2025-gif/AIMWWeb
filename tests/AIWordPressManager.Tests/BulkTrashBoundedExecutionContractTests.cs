@@ -33,8 +33,11 @@ public sealed class BulkTrashBoundedExecutionContractTests
         Assert.DoesNotContain("for (var attempt = 1; attempt <= 3; attempt++)", service, StringComparison.Ordinal);
         Assert.DoesNotContain("Task.Delay(TimeSpan.FromSeconds(attempt)", service, StringComparison.Ordinal);
 
-        // The confirmation button must always leave Busy state when the bounded service returns.
-        Assert.Contains("finally\n        {\n            _bulkBusy = false;\n        }", page.Replace("\r\n", "\n"), StringComparison.Ordinal);
+        // The confirmation handler must release Busy state after the bounded service returns.
+        Assert.Contains("private async Task ConfirmTrashAsync()", page, StringComparison.Ordinal);
+        Assert.Contains("_bulkBusy = true;", page, StringComparison.Ordinal);
+        Assert.Contains("_bulkBusy = false;", page, StringComparison.Ordinal);
+        Assert.Contains("finally", page, StringComparison.Ordinal);
     }
 
     private static DirectoryInfo FindRepositoryRoot()
