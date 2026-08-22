@@ -27,6 +27,24 @@ public sealed class ApplicationSessionAdministrationServiceTests
     }
 
     [Fact]
+    public async Task Self_service_uses_authenticated_Blazor_circuit_identity_after_HTTP_request_is_gone()
+    {
+        await using var fixture = await Fixture.CreateAsync(includeUsersManage: false);
+        var current = await fixture.Store.CreateAsync(fixture.ActorId, "self.user", "User", null, "Circuit device", false);
+        var otherMine = await fixture.Store.CreateAsync(fixture.ActorId, "self.user", "User", null, "Other device", false);
+        fixture.SetCurrentSession(current.SessionId);
+        fixture.MoveToInteractiveCircuit();
+
+        var listed = await fixture.Service.ListMineAsync();
+        var endOtherMine = await fixture.Service.EndMySessionAsync(otherMine.SessionId, "Ended from interactive circuit");
+
+        listed.Should().HaveCount(2);
+        listed.Should().ContainSingle(x => x.SessionId == current.SessionId && x.IsCurrent);
+        endOtherMine.IsSuccess.Should().BeTrue();
+        (await fixture.Store.ValidateAsync(otherMine.SessionId, fixture.ActorId)).IsValid.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task UsersManage_can_end_another_users_session_and_event_is_audited()
     {
         await using var fixture = await Fixture.CreateAsync(includeUsersManage: true);
@@ -107,6 +125,8 @@ public sealed class ApplicationSessionAdministrationServiceTests
     {
         private readonly SqliteConnection _connection;
         private readonly DefaultHttpContext _httpContext;
+        private readonly IsolatedHttpContextAccessor _accessor;
+        private readonly CurrentUserContext _currentUser;
         public AppDbContext Context { get; }
         public Guid ActorId { get; }
         public ApplicationSessionStore Store { get; }
@@ -117,6 +137,8 @@ public sealed class ApplicationSessionAdministrationServiceTests
             AppDbContext context,
             Guid actorId,
             DefaultHttpContext httpContext,
+            IsolatedHttpContextAccessor accessor,
+            CurrentUserContext currentUser,
             ApplicationSessionStore store,
             ApplicationSessionAdministrationService service)
         {
@@ -124,6 +146,8 @@ public sealed class ApplicationSessionAdministrationServiceTests
             Context = context;
             ActorId = actorId;
             _httpContext = httpContext;
+            _accessor = accessor;
+            _currentUser = currentUser;
             Store = store;
             Service = service;
         }
@@ -152,13 +176,19 @@ public sealed class ApplicationSessionAdministrationServiceTests
             var currentUser = new CurrentUserContext(accessor);
             var store = new ApplicationSessionStore(context);
             var service = new ApplicationSessionAdministrationService(store, currentUser, accessor, context);
-            return new Fixture(connection, context, actorId, httpContext, store, service);
+            return new Fixture(connection, context, actorId, httpContext, accessor, currentUser, store, service);
         }
 
         public void SetCurrentSession(Guid sessionId)
         {
             var identity = (ClaimsIdentity)_httpContext.User.Identity!;
             identity.AddClaim(new Claim(ApplicationSessionStore.SessionIdClaimType, sessionId.ToString("D")));
+        }
+
+        public void MoveToInteractiveCircuit()
+        {
+            _currentUser.SetCircuitPrincipal(_httpContext.User);
+            _accessor.HttpContext = null;
         }
 
         public async ValueTask DisposeAsync()

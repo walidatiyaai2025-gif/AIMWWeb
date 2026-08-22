@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AIWordPressManager.Persistence;
 
 namespace AIWordPressManager.Web.Services;
@@ -25,7 +24,7 @@ public sealed class ApplicationSessionAdministrationService(
         bool includeInactive = false,
         CancellationToken cancellationToken = default)
     {
-        var userId = RequireHttpUserId();
+        var userId = currentUser.RequireUserId();
         return Map(await sessionStore.ListAsync(userId, includeInactive, cancellationToken));
     }
 
@@ -95,7 +94,7 @@ public sealed class ApplicationSessionAdministrationService(
         string reason,
         CancellationToken cancellationToken = default)
     {
-        var userId = RequireHttpUserId();
+        var userId = currentUser.RequireUserId();
         var session = await sessionStore.TryGetAsync(sessionId, cancellationToken);
         if (session is null || session.UserId != userId)
             return SessionAdministrationResult.Failed("Session was not found for the current account.");
@@ -118,7 +117,10 @@ public sealed class ApplicationSessionAdministrationService(
 
     private IReadOnlyList<ApplicationSessionSummary> Map(IReadOnlyList<ApplicationSessionRecord> sessions)
     {
-        var currentSessionId = GetCurrentSessionId();
+        var currentSessionId = currentUser.TryGetSessionId(out var resolvedSessionId)
+            ? resolvedSessionId
+            : (Guid?)null;
+
         return sessions.Select(session => new ApplicationSessionSummary(
             session.SessionId,
             session.UserId,
@@ -133,21 +135,6 @@ public sealed class ApplicationSessionAdministrationService(
             session.UserAgent,
             session.Persistent,
             currentSessionId.HasValue && session.SessionId == currentSessionId.Value)).ToArray();
-    }
-
-    private Guid RequireHttpUserId()
-    {
-        var principal = httpContextAccessor.HttpContext?.User;
-        if (principal?.Identity?.IsAuthenticated != true ||
-            !Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
-            throw new UnauthorizedAccessException("Authenticated HTTP user identity is required.");
-        return userId;
-    }
-
-    private Guid? GetCurrentSessionId()
-    {
-        var value = httpContextAccessor.HttpContext?.User.FindFirstValue(ApplicationSessionStore.SessionIdClaimType);
-        return Guid.TryParse(value, out var sessionId) ? sessionId : null;
     }
 }
 
