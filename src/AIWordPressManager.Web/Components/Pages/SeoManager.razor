@@ -11,7 +11,7 @@
 
 @if (_loading)
 {
-    <div class="seo-loading">
+    <div class="seo-loading" data-testid="seo-loading" aria-busy="true">
         <div class="seo-skeleton hero"></div>
         <div class="seo-skeleton-grid">
             @for (var i = 0; i < 4; i++)
@@ -21,16 +21,27 @@
         </div>
     </div>
 }
+else if (!string.IsNullOrWhiteSpace(_loadErrorMessage))
+{
+    <section class="panel empty-state" role="alert" data-testid="seo-load-error">
+        <h1>@(L.IsArabic ? "تعذر فتح مساحة SEO" : "SEO workspace unavailable")</h1>
+        <p>@_loadErrorMessage</p>
+        <div class="seo-hero-actions">
+            <a class="btn primary" href="/account/billing">@(L.IsArabic ? "مراجعة الاشتراك" : "Review subscription")</a>
+            <a class="btn" href="/sites">@L["BackToSites"]</a>
+        </div>
+    </section>
+}
 else if (_view is null)
 {
-    <section class="panel empty-state">
+    <section class="panel empty-state" data-testid="seo-site-unavailable">
         <h1>@L["SiteNotFound"]</h1>
         <a class="btn" href="/sites">@L["BackToSites"]</a>
     </section>
 }
 else
 {
-    <div class="seo-page">
+    <div class="seo-page" data-testid="seo-workspace">
         <section class="panel seo-hero">
             <div>
                 <span class="workspace-kicker">@(L.IsArabic ? "تحسين الظهور" : "SEARCH OPTIMIZATION")</span>
@@ -38,12 +49,21 @@ else
                 <p><strong>@_view.SiteName</strong> · @L["SeoIntro"]</p>
             </div>
             <div class="seo-hero-actions">
-                <button class="btn primary" @onclick="RunFullAuditAsync" disabled="@_runningAudit">
+                <button class="btn primary" data-testid="seo-run-full-audit" @onclick="RunFullAuditAsync" disabled="@_runningAudit" aria-busy="@_runningAudit">
                     @(_runningAudit ? (L.IsArabic ? "جارٍ التدقيق..." : "Running audit...") : (L.IsArabic ? "تشغيل تدقيق كامل" : "Run full audit"))
                 </button>
-                <a class="btn" href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
+                <a class="btn" data-testid="seo-execution-center" href="/module/execution">@(L.IsArabic ? "مركز التنفيذ" : "Execution center")</a>
                 <a class="btn" href="@($"/sites/{Id}/explorer")">@L["BackToExplorer"]</a>
             </div>
+            @if (!string.IsNullOrWhiteSpace(_auditFeedbackMessage))
+            {
+                <div class="seo-audit-feedback @(_auditFeedbackIsError ? "error" : "success")"
+                     data-testid="seo-audit-feedback"
+                     role="@(_auditFeedbackIsError ? "alert" : "status")"
+                     aria-live="polite">
+                    @_auditFeedbackMessage
+                </div>
+            }
         </section>
 
         <section class="seo-summary-grid">
@@ -58,7 +78,7 @@ else
             <article class="panel seo-summary-card poor"><small>@L["SeoIssues"]</small><strong>@_view.Summary.TotalIssues</strong><span>@_view.Summary.Poor @L["PoorItems"]</span></article>
         </section>
 
-        <section class="panel seo-priority-panel">
+        <section class="panel seo-priority-panel" data-testid="seo-audit-history">
             <header>
                 <div>
                     <span class="workspace-kicker">@(L.IsArabic ? "الاتجاه" : "AUDIT TREND")</span>
@@ -75,7 +95,7 @@ else
                 <div class="seo-priority-grid">
                     @foreach (var point in _history)
                     {
-                        <article class="seo-priority-item @HistorySeverity(point)">
+                        <article class="seo-priority-item @HistorySeverity(point)" data-testid="seo-audit-history-point">
                             <span>@point.CapturedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
                             <strong>@point.Score<small>/100</small></strong>
                             <small>@(L.IsArabic ? $"{point.AuditedItems} عنصر · عالية {point.HighIssues} · متوسطة {point.MediumIssues} · منخفضة {point.LowIssues}" : $"{point.AuditedItems} items · High {point.HighIssues} · Medium {point.MediumIssues} · Low {point.LowIssues}")</small>
@@ -146,7 +166,7 @@ else
         }
         else
         {
-            <section class="panel seo-results">
+            <section class="panel seo-results" data-testid="seo-results">
                 <header>
                     <div><h2>@(L.IsArabic ? "نتائج التحليل" : "Analysis results")</h2><p>@(L.IsArabic ? $"عرض {PagedItems.Count()} من {FilteredItems.Count()}" : $"Showing {PagedItems.Count()} of {FilteredItems.Count()}")</p></div>
                 </header>
@@ -223,7 +243,8 @@ else
     private SeoAnalysisView? _view;
     private SeoAnalysisItem? _expanded;
     private IReadOnlyList<SeoAuditHistoryPoint> _history = Array.Empty<SeoAuditHistoryPoint>();
-    private bool _loading = true, _runningAudit;
+    private bool _loading = true, _runningAudit, _auditFeedbackIsError;
+    private string? _loadErrorMessage, _auditFeedbackMessage;
     private string _query = string.Empty, _type = "all", _quality = "all", _issue = "all";
     private int _page = 1, _pageSize = 10;
 
@@ -240,8 +261,17 @@ else
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
+        _loadErrorMessage = null;
         try { await LoadAsync(); }
-        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تحميل تحليل SEO." : "SEO analysis could not be loaded.", L.IsArabic ? "خطأ تحليل SEO" : "SEO analysis error", ex.ToString()); }
+        catch (Exception ex)
+        {
+            _view = null;
+            _history = Array.Empty<SeoAuditHistoryPoint>();
+            _loadErrorMessage = L.IsArabic
+                ? "تعذر تحميل مساحة SEO. تحقق من صلاحية الوصول واشتراك Premium SEO ثم حاول مرة أخرى."
+                : "The SEO workspace could not be loaded. Check site access and the Premium SEO subscription, then try again.";
+            Notifications.Error(L.IsArabic ? "تعذر تحميل تحليل SEO." : "SEO analysis could not be loaded.", L.IsArabic ? "خطأ تحليل SEO" : "SEO analysis error", ex.ToString());
+        }
         finally { _loading = false; }
     }
 
@@ -263,8 +293,22 @@ else
     private async Task RunFullAuditAsync()
     {
         if (_runningAudit) return;
-        try { _runningAudit = true; await AuditService.RunAsync(Id); await LoadAsync(); Notifications.Success(L.IsArabic ? "اكتمل تدقيق SEO وتم تحديث النتائج والسجل." : "SEO audit completed; results and history were refreshed.", "SEO"); }
-        catch (Exception ex) { Notifications.Error(L.IsArabic ? "فشل تدقيق SEO." : "SEO audit failed.", "SEO", ex.ToString()); }
+        _runningAudit = true;
+        _auditFeedbackIsError = false;
+        _auditFeedbackMessage = L.IsArabic ? "جارٍ تنفيذ تدقيق SEO الكامل..." : "Running the full SEO audit...";
+        try
+        {
+            await AuditService.RunAsync(Id);
+            await LoadAsync();
+            _auditFeedbackMessage = L.IsArabic ? "اكتمل تدقيق SEO وتم تحديث النتائج والسجل." : "SEO audit completed; results and history were refreshed.";
+            Notifications.Success(_auditFeedbackMessage, "SEO");
+        }
+        catch (Exception ex)
+        {
+            _auditFeedbackIsError = true;
+            _auditFeedbackMessage = L.IsArabic ? "فشل تدقيق SEO. راجع صلاحية الوصول والاشتراك ثم أعد المحاولة." : "SEO audit failed. Check access and subscription status, then try again.";
+            Notifications.Error(_auditFeedbackMessage, "SEO", ex.ToString());
+        }
         finally { _runningAudit = false; }
     }
 
