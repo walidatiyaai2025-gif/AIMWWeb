@@ -38,8 +38,11 @@ public sealed class SeoAuditUxTests(UxTestHost host)
             var pagination = page.Locator(".seo-pagination");
             await Assertions.Expect(pagination).ToContainTextAsync("Page 1 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
 
-            await page.GetByRole(AriaRole.Button, new() { Name = "Next", Exact = true }).ClickAsync();
-            await Assertions.Expect(pagination).ToContainTextAsync("Page 2 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
+            await ClickUntilTextChangesAsync(
+                page,
+                page.GetByRole(AriaRole.Button, new() { Name = "Next", Exact = true }),
+                pagination,
+                "Page 2 of 2");
             await page.GetByRole(AriaRole.Button, new() { Name = "Previous", Exact = true }).ClickAsync();
             await Assertions.Expect(pagination).ToContainTextAsync("Page 1 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
 
@@ -160,6 +163,30 @@ public sealed class SeoAuditUxTests(UxTestHost host)
 
         await dbContext.SaveChangesAsync();
         return site.Id;
+    }
+
+    private static async Task ClickUntilTextChangesAsync(IPage page, ILocator action, ILocator state, string expectedText)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (DateTime.UtcNow < deadline)
+        {
+            await action.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+            try
+            {
+                await Assertions.Expect(state).ToContainTextAsync(expectedText, new LocatorAssertionsToContainTextOptions { Timeout = 750 });
+                return;
+            }
+            catch (PlaywrightException)
+            {
+                // The first server-rendered frame can become visible before the
+                // InteractiveServer circuit has attached. Repeat the same browser
+                // action until its UI effect is observable, matching the repository's
+                // established interaction-test pattern without calling handlers directly.
+                await page.WaitForTimeoutAsync(150);
+            }
+        }
+
+        throw new TimeoutException($"The browser action did not produce the expected UI state '{expectedText}' within 8 seconds.");
     }
 
     private AppDbContext OpenFixtureDb()
