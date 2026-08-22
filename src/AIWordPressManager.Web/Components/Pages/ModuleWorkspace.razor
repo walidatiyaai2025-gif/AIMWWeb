@@ -1,132 +1,192 @@
 @page "/module/{Key}"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject SiteWebService SiteService
 @inject AppLanguageService L
 
 <PageTitle>@Title</PageTitle>
 
-<div class="module-page module-@Key">
-    <div class="module-hero panel">
+<div class="module-page module-@NormalizedKey" data-testid="module-workspace-fallback">
+    <section class="module-hero panel">
         <div>
             <span class="workspace-kicker">@Section</span>
             <h1>@Icon @Title</h1>
             <p>@Description</p>
         </div>
-        <div class="module-hero-actions">
-            <button class="btn btn-primary">@(L.IsArabic ? "إجراء جديد" : "New action")</button>
-            <button class="btn">@(L.IsArabic ? "تحديث" : "Refresh")</button>
-        </div>
-    </div>
+    </section>
 
-    @if (IsContentModule)
+    @if (IsSeoGateway)
     {
-        <div class="content-screen panel">
-            <div class="screen-toolbar"><input placeholder="@(L.IsArabic ? "ابحث في المحتوى..." : "Search content...")" /><select><option>@(L.IsArabic ? "كل الحالات" : "All statuses")</option></select><button class="btn">@(L.IsArabic ? "تصفية" : "Filter")</button></div>
-            <div class="data-table-head"><span>☐</span><span>@(L.IsArabic ? "العنوان" : "Title")</span><span>@(L.IsArabic ? "الحالة" : "Status")</span><span>@(L.IsArabic ? "التاريخ" : "Date")</span><span>@(L.IsArabic ? "إجراءات" : "Actions")</span></div>
-            @foreach (var row in SampleRows)
-            {
-                <div class="data-table-row"><span>□</span><strong>@row</strong><span class="badge success">@(L.IsArabic ? "منشور" : "Published")</span><span>@DateTime.Today.ToString("yyyy-MM-dd")</span><button class="icon-button">⋯</button></div>
-            }
-        </div>
-    }
-    else if (Key == "media")
-    {
-        <div class="media-screen">
-            <div class="media-toolbar panel"><button class="btn btn-primary">＋ @(L.IsArabic ? "رفع ملفات" : "Upload files")</button><input placeholder="@(L.IsArabic ? "بحث في الوسائط..." : "Search media...")" /></div>
-            <div class="media-gallery">
-                @for (var i = 1; i <= 8; i++)
+        @if (_loading)
+        {
+            <section class="panel" style="padding:24px" data-testid="seo-audit-site-picker-loading" aria-busy="true">
+                @(L.IsArabic ? "جارٍ تحميل مواقعك الحقيقية..." : "Loading your real sites...")
+            </section>
+        }
+        else if (!string.IsNullOrWhiteSpace(_loadError))
+        {
+            <section class="panel empty-state" style="padding:24px" data-testid="seo-audit-site-picker-error" role="alert">
+                <h2>@(L.IsArabic ? "تعذر تحميل المواقع" : "Unable to load sites")</h2>
+                <p>@_loadError</p>
+                <button class="btn primary" @onclick="LoadSitesAsync">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button>
+            </section>
+        }
+        else
+        {
+            <section class="panel" style="padding:24px" data-testid="seo-audit-site-picker">
+                <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px">
+                    <div>
+                        <span class="workspace-kicker">@(L.IsArabic ? "بيانات حقيقية فقط" : "REAL DATA ONLY")</span>
+                        <h2 style="margin:8px 0">@(L.IsArabic ? "اختر موقعًا لفتح تدقيق SEO الحقيقي" : "Choose a site to open the real SEO audit")</h2>
+                        <p style="margin:0;opacity:.74">@(L.IsArabic ? "لن تُعرض أي درجة أو مشكلة قبل تحليل بيانات الموقع الفعلية داخل مساحة SEO الخاصة به." : "No score or finding is shown until the site's real synchronized content is analyzed in its SEO workspace.")</p>
+                    </div>
+                    <button class="btn" @onclick="LoadSitesAsync" disabled="@_loading">↻ @(L.IsArabic ? "تحديث المواقع" : "Refresh sites")</button>
+                </header>
+
+                @if (_sites.Count == 0)
                 {
-                    <article class="media-tile panel"><div class="media-placeholder">▧</div><strong>@($"image-{i}.jpg")</strong><small>1200 × 800</small></article>
+                    <div class="empty-state" data-testid="seo-audit-no-sites">
+                        <h3>@(L.IsArabic ? "لا توجد مواقع متاحة" : "No sites available")</h3>
+                        <p>@(L.IsArabic ? "أضف موقع WordPress أو أكمل ربطه قبل تشغيل تدقيق SEO." : "Add or connect a WordPress site before running an SEO audit.")</p>
+                        <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
+                    </div>
                 }
-            </div>
-        </div>
-    }
-    else if (Key.StartsWith("seo"))
-    {
-        <div class="seo-screen">
-            <div class="seo-score-card panel"><div class="seo-ring">78</div><div><h2>@(L.IsArabic ? "درجة صحة SEO" : "SEO Health Score")</h2><p>@(L.IsArabic ? "الموقع جيد ويحتاج بعض التحسينات ذات الأولوية." : "The site is healthy with a few priority improvements.")</p></div></div>
-            <div class="seo-issues">@foreach(var issue in SeoIssues){<article class="panel seo-issue"><span class="seo-severity">!</span><div><strong>@issue</strong><small>@(L.IsArabic ? "اضغط للمراجعة والتطبيق" : "Open to review and apply")</small></div><button class="btn">@(L.IsArabic ? "مراجعة" : "Review")</button></article>}</div>
-        </div>
-    }
-    else if (Key == "ai-providers" || Key == "prompts")
-    {
-        <div class="ai-screen">
-            <div class="provider-grid">@foreach(var provider in Providers){<article class="provider-card panel"><div class="provider-logo">✦</div><h3>@provider</h3><p>@(L.IsArabic ? "إعداد الاتصال والنموذج وحدود الاستخدام." : "Configure connection, model, and usage limits.")</p><div class="provider-footer"><span class="badge warning">@(L.IsArabic ? "غير متصل" : "Not connected")</span><button class="btn">@(L.IsArabic ? "إعداد" : "Configure")</button></div></article>}</div>
-        </div>
-    }
-    else if (Key == "execution" || Key == "sync" || Key == "schedules")
-    {
-        <div class="operations-screen">
-            <div class="queue-columns">
-                @foreach(var column in QueueColumns){<section class="queue-column panel"><header><strong>@column</strong><span class="badge">2</span></header>@for(var i=1;i<=2;i++){<article class="queue-card"><strong>@(L.IsArabic ? "مهمة تشغيل" : "Execution job") #@i</strong><small>@(L.IsArabic ? "آخر تحديث منذ دقيقة" : "Updated one minute ago")</small><div class="progress-line"><span></span></div></article>}</section>}
-            </div>
-        </div>
-    }
-    else if (Key == "logs")
-    {
-        <div class="logs-screen panel">
-            <div class="logs-toolbar"><select><option>Information</option><option>Warning</option><option>Error</option></select><input placeholder="Correlation ID" /><button class="btn">@(L.IsArabic ? "تصدير" : "Export")</button></div>
-            <div class="log-console">@foreach(var log in Logs){<div><time>@DateTime.Now.ToString("HH:mm:ss")</time><span class="log-level">INFO</span><code>@log</code></div>}</div>
-        </div>
-    }
-    else if (Key == "backups")
-    {
-        <div class="backup-screen">
-            <div class="backup-create panel"><div class="backup-icon">⬡</div><div><h2>@(L.IsArabic ? "إنشاء نسخة احتياطية" : "Create backup")</h2><p>@(L.IsArabic ? "قاعدة البيانات والإعدادات والبيانات المحلية." : "Database, settings, and local data.")</p></div><button class="btn btn-primary">@(L.IsArabic ? "إنشاء الآن" : "Create now")</button></div>
-            <div class="backup-list panel">
-                @for (var i = 1; i <= 4; i++)
+                else
                 {
-                    <div class="backup-row"><span>●</span><div><strong>@($"backup-2026-08-0{i}.zip")</strong><small>24.8 MB</small></div><button class="btn">@(L.IsArabic ? "استعادة" : "Restore")</button></div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+                        @foreach (var site in _sites)
+                        {
+                            <article class="panel" style="padding:18px" data-testid="seo-audit-site-card">
+                                <small style="opacity:.65">WordPress</small>
+                                <h3 style="margin:8px 0 14px">@site.Name</h3>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                    <a class="btn primary" data-testid="seo-audit-site-link" href="@($"/sites/{site.Id}/seo")">
+                                        @(L.IsArabic ? "فتح تدقيق SEO" : "Open SEO audit")
+                                    </a>
+                                    <a class="btn" href="@($"/sites/{site.Id}/explorer")">
+                                        @(L.IsArabic ? "مستكشف المحتوى" : "Content explorer")
+                                    </a>
+                                </div>
+                            </article>
+                        }
+                    </div>
                 }
-            </div>
-        </div>
+            </section>
+        }
     }
-    else if (Key == "reports")
+    else if (TryGetCanonicalDestination(out var destination))
     {
-        <div class="reports-screen"><div class="report-kpis">@foreach(var s in Stats){<article class="panel report-kpi"><small>@s.Label</small><strong>@s.Value</strong><span>@s.Note</span></article>}</div><div class="report-chart panel"><div class="chart-bars">@for(var i=1;i<=12;i++){<span style="height:@(25 + (i*5)%65)%"></span>}</div></div></div>
+        <section class="panel empty-state" style="padding:24px" data-testid="module-canonical-destination">
+            <h2>@(L.IsArabic ? "هذه الوحدة لها مساحة تشغيل حقيقية" : "This module has a real workspace")</h2>
+            <p>@(L.IsArabic ? "تم إلغاء الشاشة التجريبية. استخدم مساحة التشغيل الفعلية المرتبطة بالخدمات والبيانات الحقيقية." : "The prototype screen has been removed. Use the real workspace connected to actual services and data.")</p>
+            <a class="btn primary" href="@destination">@(L.IsArabic ? "فتح مساحة التشغيل" : "Open real workspace")</a>
+        </section>
     }
     else
     {
-        <div class="module-layout"><section class="panel module-table-card"><div class="module-toolbar"><div><h2>@(L.IsArabic ? "مساحة العمل" : "Workspace")</h2><small>@(L.IsArabic ? "تم تجهيز تصميم مستقل لهذه الوحدة" : "A dedicated layout is ready for this module")</small></div></div><div class="module-stats">@foreach(var stat in Stats){<div class="panel module-stat"><small>@stat.Label</small><strong>@stat.Value</strong><span>@stat.Note</span></div>}</div></section></div>
+        <section class="panel empty-state" style="padding:24px" data-testid="module-unavailable">
+            <h2>@(L.IsArabic ? "هذه الوظيفة غير متاحة بعد" : "This capability is not available yet")</h2>
+            <p>@(L.IsArabic ? "تمت إزالة البيانات والأزرار التجريبية. لن يعرض AIMWWeb نتائج أو إجراءات وهمية إلى أن يتم توصيل هذه الوظيفة بخدمة حقيقية واختبارها من المتصفح." : "Mock data and inert controls have been removed. AIMWWeb will not present fake results or actions until this capability is connected to a real service and browser-verified.")</p>
+            <a class="btn" href="/">@(L.IsArabic ? "العودة للرئيسية" : "Back to home")</a>
+        </section>
     }
 </div>
 
 @code {
     [Parameter] public string Key { get; set; } = "overview";
-    private bool IsContentModule => Key is "posts" or "pages" or "taxonomy" or "comments" or "users" or "approvals";
-    private ModuleDefinition Module => Modules.TryGetValue(Key.ToLowerInvariant(), out var item) ? item : Modules["overview"];
-    private string Title => L.IsArabic ? Module.ArTitle : Module.EnTitle;
-    private string Description => L.IsArabic ? Module.ArDescription : Module.EnDescription;
-    private string Section => L.IsArabic ? Module.ArSection : Module.EnSection;
-    private string Icon => Module.Icon;
-    private IEnumerable<StatItem> Stats => L.IsArabic ? Module.ArStats : Module.EnStats;
-    private string[] SampleRows => L.IsArabic ? new[]{"دليل تحسين محركات البحث","إدارة محتوى WordPress","أفضل إعدادات الموقع","خطة المحتوى الشهرية"} : new[]{"SEO optimization guide","WordPress content management","Best site settings","Monthly content plan"};
-    private string[] SeoIssues => L.IsArabic ? new[]{"وصف ميتا مفقود في 12 صفحة","7 صور بدون نص بديل","روابط داخلية ضعيفة في 9 مقالات","عنوانان أطول من الحد الموصى"} : new[]{"Missing meta description on 12 pages","7 images without alt text","Weak internal links in 9 posts","2 titles exceed recommended length"};
-    private string[] Providers => new[]{"OpenAI","Google Gemini","Puter AI","Azure OpenAI"};
-    private string[] QueueColumns => L.IsArabic ? new[]{"قيد الانتظار","قيد التنفيذ","مكتمل"} : new[]{"Queued","Running","Completed"};
-    private string[] Logs => new[]{"Application started successfully","SQLite quick check completed","WordPress synchronization requested","Health endpoint returned 200"};
 
-    private static readonly Dictionary<string, ModuleDefinition> Modules = new()
+    private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
+    private bool _loading;
+    private string? _loadError;
+
+    private string NormalizedKey => (Key ?? string.Empty).Trim().ToLowerInvariant();
+    private bool IsSeoGateway => NormalizedKey is "seo-audit" or "seo-suggestions";
+
+    private string Title => NormalizedKey switch
     {
-        ["overview"] = M("⌂","الرئيسية","Overview","نظرة عامة على النظام","System overview","متابعة الأداء والأنشطة والحالة العامة.","Monitor performance, activity, and overall status."),
-        ["posts"] = M("▤","المحتوى","Content","المقالات","Posts","إدارة المقالات والمنشورات والتحرير الجماعي.","Manage posts, publishing, and bulk editing."),
-        ["pages"] = M("▧","المحتوى","Content","الصفحات","Pages","إدارة الصفحات الثابتة والقوالب والحالات.","Manage static pages, templates, and statuses."),
-        ["media"] = M("▣","المحتوى","Content","مكتبة الوسائط","Media Library","رفع وتنظيم وتحسين الصور والملفات.","Upload, organize, and optimize media files."),
-        ["taxonomy"] = M("#","المحتوى","Content","التصنيفات والوسوم","Categories & Tags","إدارة البنية التصنيفية وربطها بالمحتوى.","Manage taxonomy structure and content links."),
-        ["comments"] = M("◌","التفاعل","Engagement","التعليقات","Comments","مراجعة واعتماد والرد على التعليقات.","Review, moderate, and reply to comments."),
-        ["users"] = M("◎","الإدارة","Administration","المستخدمون والأدوار","Users & Roles","إدارة المستخدمين والصلاحيات والأدوار.","Manage users, permissions, and roles."),
-        ["seo-audit"] = M("◈","SEO","SEO","تدقيق SEO","SEO Audit","تحليل المشكلات وترتيب أولويات التحسين.","Analyze issues and prioritize improvements."),
-        ["seo-suggestions"] = M("✦","SEO","SEO","اقتراحات التحسين","SEO Suggestions","اقتراحات قابلة للمراجعة والتنفيذ.","Reviewable and actionable recommendations."),
-        ["approvals"] = M("✓","سير العمل","Workflow","قائمة الموافقات","Approval Queue","مراجعة واعتماد التغييرات قبل التنفيذ.","Review and approve changes before execution."),
-        ["ai-providers"] = M("✦","الذكاء الاصطناعي","AI","مزودو الذكاء الاصطناعي","AI Providers","إدارة المزودين والمفاتيح والنماذج.","Manage providers, keys, and models."),
-        ["prompts"] = M("⌘","الذكاء الاصطناعي","AI","قوالب الأوامر","Prompt Templates","إنشاء وتنظيم قوالب الأوامر الذكية.","Create and organize prompt templates."),
-        ["execution"] = M("▶","التشغيل","Operations","مركز التنفيذ","Execution Center","متابعة الطوابير والمهام والمحاولات.","Track queues, jobs, and retries."),
-        ["sync"] = M("↻","التشغيل","Operations","المزامنة","Synchronization","إدارة المزامنة والحالة والعمل دون اتصال.","Manage synchronization and offline state."),
-        ["schedules"] = M("◷","التشغيل","Operations","الجدولة","Schedules","إنشاء الجداول ومهام التشغيل التلقائي.","Create schedules and automated jobs."),
-        ["logs"] = M("≡","النظام","System","السجلات والأخطاء","Logs & Errors","عرض السجلات والأخطاء ومعرفات التتبع.","Inspect logs, errors, and correlation IDs."),
-        ["backups"] = M("⬡","النظام","System","النسخ الاحتياطي","Backup & Restore","إنشاء واستعادة وإدارة النسخ الاحتياطية.","Create, restore, and manage backups."),
-        ["reports"] = M("▥","التقارير","Reports","التقارير والتصدير","Reports & Exports","تقارير تشغيلية وتصدير PDF وExcel وCSV.","Operational reports and PDF, Excel, CSV exports."),
+        "seo-audit" => L.IsArabic ? "تدقيق SEO" : "SEO Audit",
+        "seo-suggestions" => L.IsArabic ? "اقتراحات SEO" : "SEO Suggestions",
+        "approvals" => L.IsArabic ? "قائمة الموافقات" : "Approval Queue",
+        "ai-providers" => L.IsArabic ? "مزودو الذكاء الاصطناعي" : "AI Providers",
+        "prompts" => L.IsArabic ? "قوالب الأوامر" : "Prompt Templates",
+        _ => L.IsArabic ? "مساحة الوحدة" : "Module workspace"
     };
 
-    private static ModuleDefinition M(string icon,string arSection,string enSection,string arTitle,string enTitle,string arDescription,string enDescription) => new(icon,arSection,enSection,arTitle,enTitle,arDescription,enDescription,new[]{new StatItem("الإجمالي","128","هذا الشهر"),new StatItem("نشط","24","قيد المتابعة"),new StatItem("يحتاج مراجعة","7","أولوية")},new[]{new StatItem("Total","128","This month"),new StatItem("Active","24","In progress"),new StatItem("Needs review","7","Priority")});
-    private sealed record ModuleDefinition(string Icon,string ArSection,string EnSection,string ArTitle,string EnTitle,string ArDescription,string EnDescription,IReadOnlyList<StatItem> ArStats,IReadOnlyList<StatItem> EnStats);
-    private sealed record StatItem(string Label,string Value,string Note);
+    private string Section => NormalizedKey switch
+    {
+        "seo-audit" or "seo-suggestions" => "SEO",
+        "approvals" => L.IsArabic ? "سير العمل" : "Workflow",
+        "ai-providers" or "prompts" => L.IsArabic ? "الذكاء الاصطناعي" : "AI",
+        _ => L.IsArabic ? "النظام" : "System"
+    };
+
+    private string Icon => NormalizedKey switch
+    {
+        "seo-audit" => "◈",
+        "seo-suggestions" => "✦",
+        "approvals" => "✓",
+        "ai-providers" => "✦",
+        "prompts" => "⌘",
+        _ => "◇"
+    };
+
+    private string Description => NormalizedKey switch
+    {
+        "seo-audit" => L.IsArabic ? "اختر موقعًا للوصول إلى التحليل الفعلي ونتائج التدقيق المحفوظة." : "Choose a site to access real analysis and persisted audit results.",
+        "seo-suggestions" => L.IsArabic ? "اقتراحات التحسين تُستمد من نتائج SEO الفعلية لكل موقع، وليس من بيانات ثابتة." : "Improvement suggestions come from each site's real SEO results, never static sample data.",
+        _ => L.IsArabic ? "يتم توجيه الوظائف المكتملة إلى مساحات التشغيل الحقيقية فقط." : "Completed capabilities are routed only to real operational workspaces."
+    };
+
+    protected override void OnInitialized() => L.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsSeoGateway)
+        {
+            await LoadSitesAsync();
+        }
+        else
+        {
+            _sites = [];
+            _loadError = null;
+            _loading = false;
+        }
+    }
+
+    private async Task LoadSitesAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        try
+        {
+            _sites = await SiteService.GetSitesAsync();
+        }
+        catch
+        {
+            _sites = [];
+            _loadError = L.IsArabic
+                ? "حدث خطأ أثناء تحميل المواقع المملوكة لهذا الحساب. حاول مرة أخرى أو راجع الاتصال والصلاحيات."
+                : "An error occurred while loading sites owned by this account. Retry or review connectivity and permissions.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool TryGetCanonicalDestination(out string destination)
+    {
+        destination = NormalizedKey switch
+        {
+            "approvals" => "/approvals",
+            "ai-providers" => "/settings/ai-providers",
+            "prompts" => "/settings/ai-prompts",
+            _ => string.Empty
+        };
+
+        return destination.Length > 0;
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnLanguageChanged;
 }
