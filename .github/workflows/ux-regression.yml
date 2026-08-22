@@ -33,6 +33,8 @@ jobs:
             filter: FullyQualifiedName~SeoAuditUxTests
           - shard: comments-moderation
             filter: FullyQualifiedName~CommentsModerationUxTests
+          - shard: taxonomy-mutations
+            filter: FullyQualifiedName~TaxonomyMutationsUxTests
           - shard: visual-breakpoints
             filter: FullyQualifiedName~High_risk_pages_hold_visual_contract_at_key_breakpoints
           - shard: rtl
