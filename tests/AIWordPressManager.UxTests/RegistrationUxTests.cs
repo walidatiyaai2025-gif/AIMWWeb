@@ -86,27 +86,35 @@ public sealed class RegistrationUxTests(UxTestHost host)
         var deadline = DateTime.UtcNow.AddSeconds(8);
         while (DateTime.UtcNow < deadline)
         {
-            await submit.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+            if (page.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+                return;
+
             try
             {
-                await page.WaitForURLAsync(
-                    url => url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase),
-                    new PageWaitForURLOptions
-                    {
-                        Timeout = 750,
-                        WaitUntil = WaitUntilState.Commit
-                    });
+                await submit.ClickAsync(new LocatorClickOptions { Timeout = 2000 });
+            }
+            catch (Exception ex) when (
+                ex is TimeoutException or PlaywrightException &&
+                page.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+            {
                 return;
             }
-            catch (TimeoutException)
+
+            var observationDeadline = DateTime.UtcNow.AddMilliseconds(900);
+            while (DateTime.UtcNow < observationDeadline)
             {
-                // InteractiveServer can expose the prerendered form before the circuit
-                // has attached. Repeat the same browser submit until the observable
-                // redirect occurs; do not call the component handler directly.
-                await page.WaitForTimeoutAsync(150);
+                if (page.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                await page.WaitForTimeoutAsync(50);
             }
+
+            // InteractiveServer can expose the prerendered form before the circuit
+            // has attached. Repeat the same browser submit only while the browser is
+            // still on registration; never retry a stale locator after navigation.
         }
 
-        throw new TimeoutException($"Registration did not redirect to '{expectedPath}' within 8 seconds.");
+        throw new TimeoutException(
+            $"Registration did not redirect to '{expectedPath}' within 8 seconds. Current URL: {page.Url}");
     }
 }
