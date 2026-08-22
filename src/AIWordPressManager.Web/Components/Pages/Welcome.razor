@@ -66,7 +66,7 @@
                         <div class="mini-workspace">
                             <div class="mini-heading">
                                 <div><small>OPERATIONS OVERVIEW</small><strong>@(L.IsArabic ? "مساحة التحكم" : "Command workspace")</strong></div>
-                                <button type="button">+ @(L.IsArabic ? "إجراء" : "Action")</button>
+                                <button type="button" onclick="window.location.href='@PrimaryCtaHref'; return false;" aria-label="@(L.IsArabic ? "فتح مساحة العمل" : "Open workspace")">+ @(L.IsArabic ? "إجراء" : "Action")</button>
                             </div>
                             <div class="metric-row">
                                 <article><span>◎</span><div><small>@(L.IsArabic ? "المواقع" : "Sites")</small><strong>12</strong></div><em>+2</em></article>
