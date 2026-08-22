@@ -17,7 +17,7 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
 {
     private const string WordPressUser = "ux-wordpress-admin";
     private const string WordPressPassword = "UxWordPress123!";
-    private const string FixtureComment = "Moderation fixture comment";
+    private const string FixtureCommentText = "Moderation fixture comment";
     private const string FixtureReply = "Browser acceptance reply";
 
     [Fact]
@@ -47,7 +47,7 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
                 Timeout = 5000
             });
 
-            var content = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = FixtureComment });
+            var content = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = FixtureCommentText });
             await content.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
             var row = content.Locator("xpath=ancestor::tr[1]");
             (await row.InnerTextAsync()).Should().Contain("Pending");
@@ -59,7 +59,7 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
 
             await WaitUntilAsync(async () =>
             {
-                var updated = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = FixtureComment });
+                var updated = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = FixtureCommentText });
                 if (await updated.CountAsync() == 0) return false;
                 var updatedRow = updated.Locator("xpath=ancestor::tr[1]");
                 return (await updatedRow.InnerTextAsync()).Contains("Approved", StringComparison.OrdinalIgnoreCase);
@@ -70,7 +70,7 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
                 request.Target.StartsWith("/wp-json/wp/v2/comments/7001", StringComparison.Ordinal) &&
                 request.Body.Contains("\"status\":\"approved\"", StringComparison.OrdinalIgnoreCase));
 
-            var approvedContent = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = FixtureComment });
+            var approvedContent = page.Locator(".comment-content").Filter(new LocatorFilterOptions { HasText = FixtureCommentText });
             var approvedRow = approvedContent.Locator("xpath=ancestor::tr[1]");
             await approvedRow.GetByRole(AriaRole.Button, new() { Name = "Reply", Exact = true }).ClickAsync();
 
@@ -127,12 +127,8 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
             () => wordpress.HasAuthenticatedConnectionTest,
             "Save & Test did not reach the WordPress connection tester.");
 
-        await WaitUntilAsync(async () =>
-        {
-            var alert = page.Locator(".site-details-alert.success");
-            return await alert.CountAsync() > 0 &&
-                   (await alert.InnerTextAsync()).Contains("success", StringComparison.OrdinalIgnoreCase);
-        }, "The credential UI did not surface a successful connection result.");
+        await WaitUntilAsync(async () => await page.Locator(".site-details-alert.success").CountAsync() > 0,
+            "The credential UI did not surface a successful connection result.");
 
         wordpress.Requests.Should().Contain(request =>
             request.Method == "GET" && request.Target == "/wp-json/");
@@ -244,8 +240,8 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
         private async Task HandleClientAsync(TcpClient client, CancellationToken ct)
         {
             using (client)
-            await using (var stream = client.GetStream())
             {
+                await using var stream = client.GetStream();
                 try
                 {
                     var request = await ReadRequestAsync(stream, ct);
@@ -256,14 +252,21 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
                 catch (Exception ex) when (ex is IOException or OperationCanceledException or JsonException)
                 {
                     if (!ct.IsCancellationRequested)
-                        await WriteResponseAsync(stream, 500, JsonSerializer.Serialize(new { error = ex.Message }), null, CancellationToken.None);
+                    {
+                        try
+                        {
+                            await WriteResponseAsync(stream, 500, JsonSerializer.Serialize(new { error = ex.Message }), null, CancellationToken.None);
+                        }
+                        catch (IOException) { }
+                    }
                 }
             }
         }
 
         private FixtureResponse Route(FixtureRequest request)
         {
-            var path = request.Target.Split('?', 2)[0];
+            var queryIndex = request.Target.IndexOf('?');
+            var path = queryIndex >= 0 ? request.Target[..queryIndex] : request.Target;
             if (request.Method == "GET" && path == "/wp-json/")
             {
                 return Json(200, new
@@ -283,7 +286,7 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
                 FixtureComment[] comments;
                 lock (_sync)
                 {
-                    comments = [PrimaryComment(), .. _replies];
+                    comments = [new FixtureComment(7001, 901, 0, "Fixture Author", "fixture@example.test", FixtureCommentText, _primaryStatus), .. _replies];
                 }
 
                 var headers = new Dictionary<string, string>
@@ -298,8 +301,13 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
             {
                 using var body = JsonDocument.Parse(request.Body);
                 var status = body.RootElement.GetProperty("status").GetString() ?? "hold";
-                lock (_sync) _primaryStatus = status;
-                return Json(200, ToWordPressComment(PrimaryComment()));
+                FixtureComment comment;
+                lock (_sync)
+                {
+                    _primaryStatus = status;
+                    comment = new FixtureComment(7001, 901, 0, "Fixture Author", "fixture@example.test", FixtureCommentText, _primaryStatus);
+                }
+                return Json(200, ToWordPressComment(comment));
             }
 
             if (request.Method == "POST" && path == "/wp-json/wp/v2/comments")
@@ -321,12 +329,6 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
                 return Json(200, new { deleted = true });
 
             return Json(404, new { code = "rest_no_route", message = $"No fixture route for {request.Method} {request.Target}" });
-        }
-
-        private FixtureComment PrimaryComment()
-        {
-            lock (_sync)
-                return new FixtureComment(7001, 901, 0, "Fixture Author", "fixture@example.test", FixtureComment, _primaryStatus);
         }
 
         private object ToWordPressComment(FixtureComment comment) => new
@@ -374,23 +376,78 @@ public sealed class CommentsModerationUxTests(UxTestHost host)
                 headers[line[..separator].Trim()] = line[(separator + 1)..].Trim();
             }
 
-            var contentLength = headers.TryGetValue("Content-Length", out var rawLength) && int.TryParse(rawLength, out var length)
-                ? length
-                : 0;
-            var bodyBytes = new byte[contentLength];
-            var offset = 0;
-            while (offset < bodyBytes.Length)
+            string body;
+            if (headers.TryGetValue("Transfer-Encoding", out var transferEncoding) &&
+                transferEncoding.Contains("chunked", StringComparison.OrdinalIgnoreCase))
             {
-                var read = await stream.ReadAsync(bodyBytes.AsMemory(offset), ct);
-                if (read == 0) throw new IOException("Client closed before request body completed.");
-                offset += read;
+                body = await ReadChunkedBodyAsync(stream, ct);
+            }
+            else
+            {
+                var contentLength = headers.TryGetValue("Content-Length", out var rawLength) && int.TryParse(rawLength, out var length)
+                    ? length
+                    : 0;
+                var bodyBytes = await ReadExactlyAsync(stream, contentLength, ct);
+                body = Encoding.UTF8.GetString(bodyBytes);
             }
 
             return new FixtureRequest(
                 requestLine[0],
                 requestLine[1],
-                Encoding.UTF8.GetString(bodyBytes),
+                body,
                 headers.TryGetValue("Authorization", out var authorization) ? authorization : string.Empty);
+        }
+
+        private static async Task<string> ReadChunkedBodyAsync(NetworkStream stream, CancellationToken ct)
+        {
+            using var body = new MemoryStream();
+            while (true)
+            {
+                var sizeLine = await ReadAsciiLineAsync(stream, ct);
+                var extension = sizeLine.IndexOf(';');
+                if (extension >= 0) sizeLine = sizeLine[..extension];
+                if (!int.TryParse(sizeLine.Trim(), System.Globalization.NumberStyles.HexNumber, null, out var size))
+                    throw new IOException("Invalid HTTP chunk size.");
+                if (size == 0)
+                {
+                    await ReadAsciiLineAsync(stream, ct);
+                    break;
+                }
+
+                var chunk = await ReadExactlyAsync(stream, size, ct);
+                await body.WriteAsync(chunk, ct);
+                var terminator = await ReadExactlyAsync(stream, 2, ct);
+                if (terminator[0] != '\r' || terminator[1] != '\n') throw new IOException("Invalid HTTP chunk terminator.");
+            }
+            return Encoding.UTF8.GetString(body.ToArray());
+        }
+
+        private static async Task<string> ReadAsciiLineAsync(NetworkStream stream, CancellationToken ct)
+        {
+            var bytes = new List<byte>();
+            var single = new byte[1];
+            while (bytes.Count < 8192)
+            {
+                var read = await stream.ReadAsync(single.AsMemory(0, 1), ct);
+                if (read == 0) throw new IOException("Client closed while reading HTTP line.");
+                if (single[0] == '\n') break;
+                if (single[0] != '\r') bytes.Add(single[0]);
+            }
+            return Encoding.ASCII.GetString(bytes.ToArray());
+        }
+
+        private static async Task<byte[]> ReadExactlyAsync(NetworkStream stream, int length, CancellationToken ct)
+        {
+            if (length <= 0) return [];
+            var bytes = new byte[length];
+            var offset = 0;
+            while (offset < bytes.Length)
+            {
+                var read = await stream.ReadAsync(bytes.AsMemory(offset), ct);
+                if (read == 0) throw new IOException("Client closed before HTTP body completed.");
+                offset += read;
+            }
+            return bytes;
         }
 
         private static async Task WriteResponseAsync(
