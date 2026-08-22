@@ -77,7 +77,8 @@ public sealed class SeoAuditUxTests(UxTestHost host)
             await page.GetByText("SEO Browser Article 01", new() { Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
             (await page.GetByTestId("seo-results").InnerTextAsync()).Should().NotContain("SEO Browser Article 12");
             await page.GetByRole(AriaRole.Button, new() { Name = "Reset", Exact = true }).ClickAsync();
-            await page.GetByText("SEO Browser Article 12", new() { Exact = true }).WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            await Assertions.Expect(page.GetByTestId("seo-results")).ToContainTextAsync("Showing 10 of 12", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
+            await Assertions.Expect(pagination).ToContainTextAsync("Page 1 of 2", new LocatorAssertionsToContainTextOptions { Timeout = 5000 });
 
             (await page.GetByTestId("seo-audit-history").InnerTextAsync()).Should().Contain("No saved audit history yet");
             var runAudit = page.GetByTestId("seo-run-full-audit");
