@@ -7,7 +7,7 @@
 
 <PageTitle>@Title</PageTitle>
 
-<div class="page-heading workspace-heading">
+<div class="page-heading workspace-heading" data-testid="workspace-hub">
     <div>
         <span class="workspace-kicker">@Kicker</span>
         <h1>@Title</h1>
@@ -16,19 +16,30 @@
     <NavLink class="btn primary" href="/sites">@(L.IsArabic ? "اختيار موقع" : "Select Site")</NavLink>
 </div>
 
+<section class="panel" style="padding:16px 18px;margin-bottom:16px" data-testid="workspace-real-data-notice">
+    <strong>@(L.IsArabic ? "مساحات تشغيل حقيقية فقط" : "Real workspaces only")</strong>
+    <p style="margin:6px 0 0;opacity:.74">
+        @(L.IsArabic
+            ? "كل بطاقة أدناه تفتح وظيفة فعلية موجودة في النظام. تمت إزالة مؤشرات الجاهزية والبطاقات الوصفية غير القابلة للتنفيذ."
+            : "Every card below opens an implemented workspace. Static readiness badges and non-actionable prototype cards have been removed.")
+    </p>
+</section>
+
 <div class="workspace-grid">
     @foreach (var item in Items)
     {
-        <article class="card workspace-card">
+        <a class="card workspace-card"
+           style="text-decoration:none;color:inherit"
+           href="@item.Href"
+           data-testid="workspace-link"
+           data-workspace-key="@item.Key">
             <div class="workspace-card-icon">@item.Icon</div>
             <div>
                 <h3>@(L.IsArabic ? item.Arabic : item.English)</h3>
                 <p>@(L.IsArabic ? item.ArabicDescription : item.EnglishDescription)</p>
             </div>
-            <span class="badge @(item.Ready ? "success" : "warning")">
-                @(item.Ready ? (L.IsArabic ? "متاح" : "Available") : (L.IsArabic ? "قيد التطوير" : "In Progress"))
-            </span>
-        </article>
+            <span class="badge success">@(L.IsArabic ? "فتح" : "Open") →</span>
+        </a>
     }
 </div>
 
@@ -53,46 +64,63 @@
 
     private string Description => Route switch
     {
-        "content-workspace" => L.IsArabic ? "إدارة المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين من مكان واحد." : "Manage posts, pages, media, taxonomies, comments, and users from one workspace.",
-        "seo-workspace" => L.IsArabic ? "فحص المحتوى، ترتيب الأولويات، مراجعة التحسينات، وتنفيذها بأمان." : "Audit content, prioritize issues, review recommendations, and execute improvements safely.",
-        "ai-workspace" => L.IsArabic ? "إدارة مزودي الذكاء الاصطناعي والقوالب والاقتراحات والموافقات." : "Manage AI providers, templates, suggestions, approvals, and automation controls.",
-        _ => L.IsArabic ? "متابعة المهام والمزامنة والتنفيذ والجدولة والمحاولات والأخطاء." : "Track jobs, synchronization, execution, scheduling, retries, and failures."
+        "content-workspace" => L.IsArabic ? "افتح مساحات المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين المتصلة بالخدمات الفعلية." : "Open the real posts, pages, media, taxonomy, comments, and users workspaces.",
+        "seo-workspace" => L.IsArabic ? "انتقل إلى التدقيق والاقتراحات والموافقات دون عرض نتائج SEO تجريبية." : "Open real audit, recommendation, and approval flows without prototype SEO results.",
+        "ai-workspace" => L.IsArabic ? "إدارة مركز الذكاء الاصطناعي والمزودين والقوالب من مساحات التشغيل الفعلية." : "Manage the AI center, providers, and prompt templates in their real workspaces.",
+        _ => L.IsArabic ? "افتح مركز التنفيذ والمزامنة والجدولة والسجلات والنسخ الاحتياطي والتقارير الفعلية." : "Open the real execution, synchronization, scheduling, logs, backup, and reporting workspaces."
     };
 
     private IReadOnlyList<WorkspaceItem> Items => Route switch
     {
-        "content-workspace" => new[]
-        {
-            new WorkspaceItem("▣", "المقالات والصفحات", "Posts & Pages", "إنشاء وتعديل وحذف ونشر المحتوى.", "Create, edit, delete, and publish content.", true),
-            new WorkspaceItem("▧", "مكتبة الوسائط", "Media Library", "رفع الصور والملفات وإدارة البيانات الوصفية.", "Upload media and manage metadata.", true),
-            new WorkspaceItem("⌘", "التصنيفات والوسوم", "Categories & Tags", "إدارة هيكل المحتوى والتصنيفات.", "Manage taxonomies and content structure.", true),
-            new WorkspaceItem("◫", "التعليقات", "Comments", "مراجعة واعتماد ورد وحذف التعليقات.", "Moderate, reply to, and delete comments.", true),
-            new WorkspaceItem("♟", "المستخدمون والأدوار", "Users & Roles", "إدارة حسابات WordPress والصلاحيات.", "Manage WordPress accounts and roles.", true),
-            new WorkspaceItem("⇄", "العمليات الجماعية", "Bulk Operations", "تحديد عناصر متعددة وتنفيذ إجراءات موحدة.", "Select multiple items and run common actions.", false)
-        },
-        "seo-workspace" => new[]
-        {
-            new WorkspaceItem("◎", "تدقيق SEO", "SEO Audit", "فحص العناوين والوصف والمحتوى والروابط والصور.", "Audit titles, descriptions, content, links, and images.", true),
-            new WorkspaceItem("★", "الاقتراحات ذات الأولوية", "Prioritized Recommendations", "ترتيب المشاكل حسب التأثير وسهولة التنفيذ.", "Rank issues by impact and implementation effort.", false),
-            new WorkspaceItem("✓", "قائمة الموافقات", "Approval Queue", "مراجعة التغييرات قبل تطبيقها على WordPress.", "Review changes before applying them to WordPress.", false),
-            new WorkspaceItem("↶", "السجل والتراجع", "History & Rollback", "حفظ قبل وبعد وإتاحة الرجوع للتغييرات.", "Store before-and-after states and support rollback.", false)
-        },
-        "ai-workspace" => new[]
-        {
-            new WorkspaceItem("✦", "مزودو الذكاء الاصطناعي", "AI Providers", "إعداد OpenAI وPuter ومزودين إضافيين.", "Configure OpenAI, Puter, and additional providers.", false),
-            new WorkspaceItem("▤", "قوالب الأوامر", "Prompt Templates", "إنشاء قوالب قابلة لإعادة الاستخدام لكل مهمة.", "Create reusable templates for every task.", false),
-            new WorkspaceItem("◈", "اقتراحات الذكاء الاصطناعي", "AI Suggestions", "إنشاء اقتراحات موثقة وقابلة للمراجعة.", "Generate evidence-backed, reviewable suggestions.", false),
-            new WorkspaceItem("⚙", "أوضاع التنفيذ", "Execution Modes", "يدوي، بعد الموافقة، أو تلقائي حسب السياسة.", "Manual, approval-based, or policy-driven automation.", false)
-        },
-        _ => new[]
-        {
-            new WorkspaceItem("▶", "مركز التنفيذ", "Execution Center", "متابعة المهام والتقدم والنتائج.", "Track jobs, progress, and results.", false),
-            new WorkspaceItem("⟳", "المزامنة", "Synchronization", "مزامنة مواقع WordPress مع SQLite.", "Synchronize WordPress sites with SQLite.", true),
-            new WorkspaceItem("◷", "الجدولة", "Scheduling", "تشغيل المهام في أوقات محددة.", "Run jobs on defined schedules.", false),
-            new WorkspaceItem("!", "الأخطاء والمحاولات", "Failures & Retries", "إدارة إعادة المحاولة والإلغاء وفترة التهدئة.", "Manage retries, cancellation, and cooldown.", false),
-            new WorkspaceItem("▥", "السجلات", "Logs", "عرض سجل العمليات والأخطاء التفصيلي.", "View detailed operational and error logs.", false)
-        }
+        "content-workspace" =>
+        [
+            W("posts", "▣", "المقالات", "Posts", "إدارة ونشر مقالات WordPress الفعلية.", "Manage and publish real WordPress posts.", "/module/posts"),
+            W("pages", "▧", "الصفحات", "Pages", "إدارة صفحات WordPress الفعلية.", "Manage real WordPress pages.", "/module/pages"),
+            W("media", "◫", "مكتبة الوسائط", "Media Library", "إدارة الوسائط المتزامنة وعمليات الرفع الحقيقية.", "Manage synchronized media and real upload operations.", "/module/media"),
+            W("taxonomy", "⌘", "التصنيفات والوسوم", "Categories & Tags", "إدارة التصنيفات عبر WordPress REST والمزامنة.", "Manage taxonomy through WordPress REST and synchronization.", "/module/taxonomy"),
+            W("comments", "◌", "التعليقات", "Comments", "مراجعة واعتماد والرد على التعليقات الحقيقية.", "Moderate and reply to real WordPress comments.", "/module/comments"),
+            W("users", "♟", "المستخدمون والأدوار", "Users & Roles", "إدارة مستخدمي WordPress والصلاحيات من مساحة المستخدمين.", "Manage WordPress users and roles in the users workspace.", "/module/users")
+        ],
+        "seo-workspace" =>
+        [
+            W("seo-audit", "◎", "تدقيق SEO", "SEO Audit", "اختر موقعًا وشغّل التحليل والتدقيق المحفوظ الفعلي.", "Choose a site and run real persisted SEO analysis and audits.", "/module/seo-audit"),
+            W("seo-suggestions", "★", "اقتراحات SEO", "SEO Suggestions", "انتقل إلى نتائج المواقع الفعلية بدل اقتراحات ثابتة.", "Use real site results instead of static recommendations.", "/module/seo-suggestions"),
+            W("approvals", "✓", "قائمة الموافقات", "Approval Queue", "مراجعة التغييرات الحقيقية قبل التنفيذ.", "Review real changes before execution.", "/approvals")
+        ],
+        "ai-workspace" =>
+        [
+            W("ai-center", "✦", "مركز الذكاء الاصطناعي", "AI Center", "افتح مساحة الذكاء الاصطناعي التشغيلية.", "Open the operational AI workspace.", "/ai-center"),
+            W("ai-providers", "◈", "مزودو الذكاء الاصطناعي", "AI Providers", "إدارة اتصالات المزودين والمفاتيح والنماذج.", "Manage provider connections, keys, and models.", "/settings/ai-providers"),
+            W("ai-prompts", "▤", "قوالب الأوامر", "Prompt Templates", "إدارة القوالب المحفوظة عبر مخزن القوالب الفعلي.", "Manage persisted templates through the real prompt store.", "/settings/ai-prompts"),
+            W("approvals", "✓", "الموافقات", "Approvals", "مراجعة طلبات التنفيذ التي تتطلب موافقة.", "Review execution requests that require approval.", "/approvals")
+        ],
+        _ =>
+        [
+            W("execution", "▶", "مركز التنفيذ", "Execution Center", "متابعة المهام والتقدم والنتائج الفعلية.", "Track real jobs, progress, and results.", "/module/execution"),
+            W("sync", "⟳", "المزامنة", "Synchronization", "تشغيل ومراجعة مزامنة WordPress مع SQLite.", "Run and inspect WordPress-to-SQLite synchronization.", "/module/sync"),
+            W("schedules", "◷", "الجدولة", "Scheduling", "إدارة جداول التشغيل المحفوظة.", "Manage persisted execution schedules.", "/module/schedules"),
+            W("logs", "!", "السجلات والأخطاء", "Logs & Errors", "عرض السجلات والأخطاء ومعرفات التتبع الفعلية.", "Inspect real logs, failures, and correlation IDs.", "/module/logs"),
+            W("backups", "⬡", "النسخ الاحتياطي", "Backup & Restore", "إنشاء واستعادة النسخ من مساحة النسخ الفعلية.", "Create and restore backups in the real backup workspace.", "/module/backups"),
+            W("reports", "▥", "التقارير والتصدير", "Reports & Exports", "فتح التقارير وعمليات التصدير الفعلية.", "Open real reports and export operations.", "/module/reports")
+        ]
     };
 
-    private sealed record WorkspaceItem(string Icon, string Arabic, string English, string ArabicDescription, string EnglishDescription, bool Ready);
+    private static WorkspaceItem W(
+        string key,
+        string icon,
+        string arabic,
+        string english,
+        string arabicDescription,
+        string englishDescription,
+        string href) =>
+        new(key, icon, arabic, english, arabicDescription, englishDescription, href);
+
+    private sealed record WorkspaceItem(
+        string Key,
+        string Icon,
+        string Arabic,
+        string English,
+        string ArabicDescription,
+        string EnglishDescription,
+        string Href);
 }
