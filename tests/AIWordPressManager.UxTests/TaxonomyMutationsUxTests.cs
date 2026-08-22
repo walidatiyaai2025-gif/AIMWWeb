@@ -79,7 +79,7 @@ public sealed class TaxonomyMutationsUxTests(UxTestHost host)
             await WaitUntilAsync(() => wordpress.Term?.Name == UpdatedName,
                 "Update did not reach the WordPress category REST endpoint.");
             await WaitForTermAsync(page, UpdatedName);
-            await WaitUntilAsync(async () => await page.GetByText(CreatedName, new PageGetByTextOptions { Exact = true }).CountAsync() == 0,
+            await WaitUntilAsync(async () => await TermName(page, CreatedName).CountAsync() == 0,
                 "The taxonomy UI retained the stale pre-update category name.");
 
             wordpress.Requests.Should().Contain(request =>
@@ -95,7 +95,7 @@ public sealed class TaxonomyMutationsUxTests(UxTestHost host)
 
             await WaitUntilAsync(() => wordpress.Term is null,
                 "Delete did not reach the WordPress category REST endpoint.");
-            await WaitUntilAsync(async () => await page.GetByText(UpdatedName, new PageGetByTextOptions { Exact = true }).CountAsync() == 0,
+            await WaitUntilAsync(async () => await TermName(page, UpdatedName).CountAsync() == 0,
                 "The deleted category remained visible after synchronization.");
 
             wordpress.Requests.Should().Contain(request =>
@@ -121,11 +121,15 @@ public sealed class TaxonomyMutationsUxTests(UxTestHost host)
         await editor.Locator("textarea").FillAsync(description);
     }
 
+    private static ILocator TermName(IPage page, string name) =>
+        page.Locator(".app-data-grid__viewport")
+            .GetByText(name, new LocatorGetByTextOptions { Exact = true });
+
     private static ILocator TermRow(IPage page, string name) =>
-        page.GetByText(name, new PageGetByTextOptions { Exact = true }).Locator("xpath=ancestor::tr[1]");
+        TermName(page, name).Locator("xpath=ancestor::tr[1]");
 
     private static async Task WaitForTermAsync(IPage page, string name) =>
-        await page.GetByText(name, new PageGetByTextOptions { Exact = true }).WaitForAsync(
+        await TermName(page, name).WaitForAsync(
             new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
 
     private static async Task EnsureTaxonomyInteractiveAsync(IPage page)
