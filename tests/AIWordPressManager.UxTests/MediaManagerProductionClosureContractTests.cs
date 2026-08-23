@@ -19,6 +19,10 @@ public sealed class MediaManagerProductionClosureContractTests
             "media mutations must retain the Content.Edit authorization boundary");
 
         source.Should().NotContain("<InputFile", "the page must not re-introduce a second inline upload workspace beside MediaBatchUploadPanel");
+        source.Should().NotContain("_selectedFile", "dead inline-upload state must not coexist with the canonical batch uploader");
+        source.Should().NotContain("OnFileSelected", "the removed prototype file-selection handler must not return");
+        source.Should().NotContain("UploadClickedAsync", "the removed prototype upload click handler must not return");
+        source.Should().NotContain("private async Task UploadAsync()", "the page must not retain an unreachable duplicate upload implementation");
         source.Should().NotContain("href=\"#\"", "media actions must not regress to placeholder navigation");
         source.Should().NotContain("javascript:", "media actions must not regress to javascript placeholders");
         source.Should().NotContain("NotImplementedException", "visible media capability must be real or explicitly unavailable");
