@@ -29,7 +29,7 @@ public sealed partial class DeadUiContractTests
             {
                 if (HasMeaningfulAppButtonAction(appButton.Markup)) continue;
 
-                violations.Add($"{relative}:{LineOf(source, appButton.Index)} AppButton has no Href, OnClick, submit behavior, or explicit static disabled state: {Compact(appButton.Markup)[..Math.Min(Compact(appButton.Markup).Length, 220)]}");
+                violations.Add($"{relative}:{LineOf(source, appButton.Index)} AppButton has no Href, OnClick, or submit behavior: {Compact(appButton.Markup)[..Math.Min(Compact(appButton.Markup).Length, 220)]}");
             }
 
             foreach (Match match in AnchorRegex().Matches(source))
@@ -97,7 +97,6 @@ public sealed partial class DeadUiContractTests
     {
         if (AppButtonOnClickRegex().IsMatch(markup)) return true;
         if (SubmitTypeRegex().IsMatch(markup)) return true;
-        if (StaticDisabledTrueRegex().IsMatch(markup)) return true;
 
         var href = HrefRegex().Match(markup);
         if (!href.Success) return false;
@@ -201,9 +200,6 @@ public sealed partial class DeadUiContractTests
 
     [GeneratedRegex("type\\s*=\\s*(?:\\\"submit\\\"|'submit')", RegexOptions.IgnoreCase)]
     private static partial Regex SubmitTypeRegex();
-
-    [GeneratedRegex("disabled\\s*=\\s*(?:\\\"@?true\\\"|'@?true')", RegexOptions.IgnoreCase)]
-    private static partial Regex StaticDisabledTrueRegex();
 
     [GeneratedRegex(@"formaction\s*=", RegexOptions.IgnoreCase)]
     private static partial Regex FormActionRegex();
