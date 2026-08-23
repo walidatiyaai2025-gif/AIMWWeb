@@ -39,6 +39,8 @@ jobs:
             filter: FullyQualifiedName~MediaUploadUxTests
           - shard: media-update-delete
             filter: FullyQualifiedName~MediaUpdateDeleteUxTests
+          - shard: content-editor-mutations
+            filter: FullyQualifiedName~ContentEditorMutationsUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
