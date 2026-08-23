@@ -23,7 +23,7 @@ public sealed class ApprovalWorkflowTests : IDisposable
     {
         _testDirectory = Path.Combine(Path.GetTempPath(), "AIWordPressManager.Tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_testDirectory);
-        _executionCenter = new ExecutionCenterService(Path.Combine(_testDirectory, "execution-center.db"), false, false);
+        _executionCenter = new ExecutionCenterService(Path.Combine(_testDirectory, "execution-center.db"));
         _approvals = new ApprovalWorkflowService(
             _executionCenter,
             Path.Combine(_testDirectory, "approval-workflow.db"),
