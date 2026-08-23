@@ -48,18 +48,30 @@
             <div class="automation-job-list">
                 @foreach (var job in FilteredJobs)
                 {
-                    <article class="automation-job-card @(job.Enabled ? "enabled" : "disabled")">
+                    var supported = AutomationCenterService.IsSupportedType(job.Type);
+                    <article class="automation-job-card @(job.Enabled ? "enabled" : "disabled")" data-automation-type="@job.Type">
                         <div class="automation-job-main">
                             <div>
                                 <strong>@job.Name</strong>
                                 <p>@job.SiteName · @job.Type</p>
                                 <small>@ScheduleText(job)</small>
+                                @if (!supported)
+                                {
+                                    <small data-runtime-unavailable="@job.Type">
+                                        @(L.IsArabic
+                                            ? "غير متاح: لا يوجد Worker إنتاجي لهذا النوع، ولن يتم تشغيله أو إظهار نجاح وهمي."
+                                            : "Unavailable: no production worker is installed for this type, so it cannot run or report synthetic success.")
+                                    </small>
+                                }
                             </div>
                         </div>
                         <div class="automation-job-actions">
-                            <button class="btn compact" disabled="@_saving" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button>
-                            <button class="btn compact" disabled="@_saving" @onclick="() => RunNowAsync(job)">@(L.IsArabic ? "تشغيل" : "Run")</button>
-                            <button class="btn compact" disabled="@_saving" @onclick="() => ToggleAsync(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
+                            @if (supported)
+                            {
+                                <button class="btn compact" disabled="@_saving" @onclick="() => Edit(job)">@(L.IsArabic ? "تعديل" : "Edit")</button>
+                                <button class="btn compact" disabled="@_saving" @onclick="() => RunNowAsync(job)">@(L.IsArabic ? "تشغيل" : "Run")</button>
+                                <button class="btn compact" disabled="@_saving" @onclick="() => ToggleAsync(job)">@(job.Enabled ? (L.IsArabic ? "إيقاف" : "Disable") : (L.IsArabic ? "تفعيل" : "Enable"))</button>
+                            }
                             <button class="btn danger compact" disabled="@_saving" @onclick="() => DeleteAsync(job)">@(L.IsArabic ? "حذف" : "Delete")</button>
                         </div>
                     </article>
@@ -81,7 +93,19 @@
                         }
                     </select>
                 </label>
-                <label><span>@(L.IsArabic ? "نوع المهمة" : "Job type")</span><select @bind="_model.Type"><option>Synchronization</option><option>SEO Audit</option><option>Content Operation</option></select></label>
+                <label>
+                    <span>@(L.IsArabic ? "نوع المهمة" : "Job type")</span>
+                    <select @bind="_model.Type">
+                        <option value="@AutomationCenterService.SynchronizationType">Synchronization</option>
+                        <option value="@AutomationCenterService.SeoAuditType">SEO Audit</option>
+                    </select>
+                </label>
+                <div class="settings-note" data-runtime-unavailable="Content Operation">
+                    <span>ⓘ</span>
+                    <p>@(L.IsArabic
+                        ? "Content Operation غير متاحة كأتمتة عامة حاليًا لأنها تحتاج أهدافًا وإجراءً محددًا قبل أن يستطيع Bulk Content Worker تنفيذها. استخدم أدوات المحتوى المخصصة حتى يتوفر عقد تشغيل كامل."
+                        : "Content Operation is unavailable as a generic automation because the real bulk worker requires explicit targets and a target action. Use the dedicated content tools until a complete runtime contract exists.")</p>
+                </div>
                 <label><span>@(L.IsArabic ? "التكرار" : "Frequency")</span><select @bind="_model.Frequency"><option value="hourly">Hourly</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
                 <label><span>@(L.IsArabic ? "كل" : "Every")</span><input type="number" min="1" max="365" @bind="_model.IntervalValue" /></label>
                 <label><span>@(L.IsArabic ? "وقت التشغيل UTC" : "Run time UTC")</span><input type="time" value="@TimeText" @onchange="TimeChanged" /></label>
@@ -149,6 +173,7 @@
     {
         if (_disposed || _saving) return;
         EnsureOwned(job);
+        AutomationCenterService.RequireSupportedType(job.Type);
         _model = new AutomationJobEditModel
         {
             Id = job.Id,

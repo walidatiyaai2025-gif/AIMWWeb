@@ -17,9 +17,7 @@ public sealed class ExecutionCenterUserCommandServiceTests : IDisposable
         _directory = Path.Combine(Path.GetTempPath(), "AIWordPressManager.Tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_directory);
         _executionCenter = new ExecutionCenterService(
-            Path.Combine(_directory, "execution-center-commands.db"),
-            enableBackgroundWorker: false,
-            enableSeedData: false);
+            Path.Combine(_directory, "execution-center-commands.db"));
     }
 
     [Fact]

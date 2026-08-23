@@ -19,9 +19,7 @@ public sealed class ApprovalWorkflowDiRegistrationTests : IDisposable
         Directory.CreateDirectory(_testDirectory);
 
         using var executionCenter = new ExecutionCenterService(
-            Path.Combine(_testDirectory, "execution-center.db"),
-            enableBackgroundWorker: false,
-            enableSeedData: false);
+            Path.Combine(_testDirectory, "execution-center.db"));
         var notifications = NotificationInboxService.ForDatabase(
             Path.Combine(_testDirectory, "notifications.db"));
 

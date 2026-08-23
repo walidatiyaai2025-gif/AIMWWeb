@@ -135,7 +135,7 @@ public sealed class WordPressMediaBatchUploadServiceTests
         var executionPath = Path.Combine(directory, "execution.db");
         var notificationPath = Path.Combine(directory, "notifications.db");
 
-        var execution = new ExecutionCenterService(executionPath, enableBackgroundWorker: false, enableSeedData: false);
+        var execution = new ExecutionCenterService(executionPath);
         var tracker = new ExecutionOperationTracker(execution, executionPath);
         var notifications = NotificationInboxService.ForDatabase(notificationPath);
         var api = new FakeWordPressApiClient();

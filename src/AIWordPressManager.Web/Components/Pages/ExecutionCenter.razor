@@ -15,7 +15,7 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "مراقبة العمليات" : "OPERATIONS CONTROL")</span>
             <h1>@(L.IsArabic ? "مركز التنفيذ" : "Execution Center")</h1>
-            <p>@(L.IsArabic ? "تابع عمليات مواقعك. العمليات الجماعية تدعم الإيقاف والإلغاء، أما التغييرات المعتمدة فتُدار كوحدة ذرية آمنة وتسمح بإعادة المحاولة بعد الفشل." : "Monitor operations for your own sites. Bulk jobs support pause and cancellation; approved external changes run as controlled atomic units and allow retry after failure.")</p>
+            <p>@(L.IsArabic ? "تابع نتائج العمليات الحقيقية لمواقعك. لا ينشئ مركز التنفيذ تقدّمًا أو نجاحًا من تلقاء نفسه؛ الحالة تتغير فقط عندما يبلغ Runtime الفعلي عنها." : "Monitor real operations for your sites. Execution Center never manufactures progress or success; state changes only when the actual runtime reports them.")</p>
         </div>
         <div class="execution-hero-actions">
             @if (_selectedSiteId != Guid.Empty)
@@ -66,7 +66,8 @@
                     @foreach (var job in FilteredJobs)
                     {
                         var external = string.Equals(job.ExecutionMode, ExecutionCenterService.ExternalExecutionMode, StringComparison.Ordinal);
-                        <article class="execution-job @StatusClass(job.Status)">
+                        var unavailable = string.Equals(job.ExecutionMode, ExecutionCenterService.UnavailableExecutionMode, StringComparison.Ordinal);
+                        <article class="execution-job @StatusClass(job.Status)" data-execution-mode="@job.ExecutionMode">
                             <div class="execution-job-head">
                                 <div><span class="job-type">@job.Type @if (external) { <text> · @(L.IsArabic ? "تغيير معتمد" : "Approved change")</text> }</span><h3>@job.Title</h3><p>@job.SiteName · @FormatDate(job.CreatedAtUtc)</p></div>
                                 <span class="job-status">@TranslateStatus(job.Status)</span>
@@ -75,18 +76,36 @@
                             <div class="job-progress"><span style="width:@job.Progress%"></span></div>
                             @if (!string.IsNullOrWhiteSpace(job.Error)) { <div class="job-error">@job.Error</div> }
                             <footer>
-                                @if (!CanExecute && IsUserMutable(job))
+                                @if (unavailable)
                                 {
-                                    <span class="job-controlled">@(L.IsArabic ? "صلاحية عرض فقط — التحكم في التنفيذ غير متاح" : "View-only access — execution controls are unavailable")</span>
+                                    <span class="job-controlled" data-runtime-unavailable="execution">
+                                        @(L.IsArabic ? "سجل قديم غير قابل للتنفيذ — تمت إزالة مسار المحاكاة ولا توجد عملية تعمل خلفه." : "Retired legacy record — the synthetic execution path was removed and no operation is running behind it.")
+                                    </span>
                                 }
                                 else if (external)
                                 {
-                                    @if (job.Status == "Failed") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة الآمنة" : "Safe retry")</button> }
-                                    else if (job.Status is "Waiting" or "Running") { <span class="job-controlled">@(L.IsArabic ? "تنفيذ معتمد مُدار — لا إيقاف أثناء الكتابة" : "Managed approved execution — not interruptible during mutation")</span> }
+                                    @if (job.Status == "Failed")
+                                    {
+                                        @if (CanExecute)
+                                        {
+                                            <button class="btn compact primary" @onclick="() => RetryExternal(job.Id)">@(L.IsArabic ? "إعادة المحاولة الآمنة" : "Safe retry")</button>
+                                        }
+                                        else
+                                        {
+                                            <span class="job-controlled">@(L.IsArabic ? "صلاحية عرض فقط — إعادة المحاولة غير متاحة" : "View-only access — retry is unavailable")</span>
+                                        }
+                                    }
+                                    else if (job.Status is "Waiting" or "Running")
+                                    {
+                                        <span class="job-controlled">@(L.IsArabic ? "تنفيذ معتمد مُدار بواسطة Worker حقيقي — لا إيقاف أثناء الكتابة" : "Managed by the real approved-change worker — not interruptible during mutation")</span>
+                                    }
                                 }
-                                else if (job.Status == "Running") { <button class="btn compact" @onclick="() => Pause(job.Id)">@(L.IsArabic ? "إيقاف مؤقت" : "Pause")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
-                                else if (job.Status == "Paused") { <button class="btn compact primary" @onclick="() => Resume(job.Id)">@(L.IsArabic ? "استكمال" : "Resume")</button><button class="btn compact danger" @onclick="() => Cancel(job.Id)">@(L.IsArabic ? "إلغاء" : "Cancel")</button> }
-                                else if (job.Status is "Failed" or "Cancelled") { <button class="btn compact primary" @onclick="() => Retry(job.Id)">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button> }
+                                else
+                                {
+                                    <span class="job-controlled" data-runtime-controlled="originating-runtime">
+                                        @(L.IsArabic ? "الحالة يتحكم بها Runtime الذي أنشأ العملية؛ مركز التنفيذ يعرض الدليل فقط." : "Lifecycle is controlled by the originating runtime; Execution Center is evidence-only for this job.")
+                                    </span>
+                                }
                                 <code>@job.Id.ToString()[..8]</code>
                             </footer>
                         </article>
@@ -167,23 +186,35 @@
         _activities = ExecutionService.GetActivities(_ownerUserId, 100);
     }
 
-    private void RefreshWithNotice() { Refresh(); Notifications.Success(L.IsArabic ? "تم تحديث مركز التنفيذ." : "Execution Center refreshed."); }
+    private void RefreshWithNotice()
+    {
+        Refresh();
+        Notifications.Success(L.IsArabic ? "تم تحديث مركز التنفيذ." : "Execution Center refreshed.");
+    }
+
     private int Count(string status) => SiteJobs.Count(x => x.Status == status);
-    private void Pause(Guid id) => RunOwnedAction(id, () => Commands.Pause(id), L.IsArabic ? "تم إيقاف المهمة مؤقتًا." : "Job paused.");
-    private void Resume(Guid id) => RunOwnedAction(id, () => Commands.Resume(id), L.IsArabic ? "تم استكمال المهمة." : "Job resumed.");
-    private void Retry(Guid id) => RunOwnedAction(id, () => Commands.Retry(id), L.IsArabic ? "تمت إعادة المهمة إلى قائمة التنفيذ." : "Job queued for retry.");
-    private void Cancel(Guid id) => RunOwnedAction(id, () => Commands.Cancel(id), L.IsArabic ? "تم إلغاء المهمة." : "Job cancelled.");
+    private void RetryExternal(Guid id) => RunOwnedAction(id, () => Commands.Retry(id), L.IsArabic ? "تمت إعادة التغيير المعتمد إلى Worker التنفيذ." : "Approved change queued for safe worker retry.");
 
     private void RunOwnedAction(Guid id, Action action, string successMessage)
     {
-        try { _ = _jobs.FirstOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user."); action(); Refresh(); Notifications.Success(successMessage); }
-        catch (Exception ex) { Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message); }
+        try
+        {
+            var job = _jobs.FirstOrDefault(x => x.Id == id)
+                ?? throw new UnauthorizedAccessException("The requested execution job does not belong to the signed-in user.");
+            if (!string.Equals(job.ExecutionMode, ExecutionCenterService.ExternalExecutionMode, StringComparison.Ordinal) || job.Status != "Failed")
+                throw new InvalidOperationException("Only failed approved external changes can be retried from Execution Center.");
+            action();
+            Refresh();
+            var refreshed = _jobs.FirstOrDefault(x => x.Id == id);
+            if (refreshed?.Status != "Waiting")
+                throw new InvalidOperationException("The approved change was not queued for retry.");
+            Notifications.Success(successMessage);
+        }
+        catch (Exception ex)
+        {
+            Notifications.Error(L.IsArabic ? "تعذر تنفيذ العملية." : "The operation could not be completed.", details: ex.Message);
+        }
     }
-
-    private static bool IsUserMutable(AIWordPressManager.Web.Services.ExecutionJob job) =>
-        string.Equals(job.ExecutionMode, ExecutionCenterService.ExternalExecutionMode, StringComparison.Ordinal)
-            ? job.Status == "Failed"
-            : job.Status is "Running" or "Paused" or "Failed" or "Cancelled";
 
     private static string StatusClass(string status) => status.ToLowerInvariant();
     private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة مؤقتًا", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status };

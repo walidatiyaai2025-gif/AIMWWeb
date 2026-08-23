@@ -186,9 +186,7 @@ public sealed class ApprovalPermissionBoundaryTests
             var accessor = new HttpContextAccessor();
 
             var executionCenter = new ExecutionCenterService(
-                Path.Combine(directory, "execution-center.db"),
-                false,
-                false);
+                Path.Combine(directory, "execution-center.db"));
             var notifications = NotificationInboxService.ForDatabase(
                 Path.Combine(directory, "notifications.db"));
             var service = new ApprovalWorkflowService(
