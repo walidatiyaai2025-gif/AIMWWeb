@@ -68,7 +68,10 @@ public sealed class ContentEditorMutationsUxTests(UxTestHost host)
 
         var updateBaseline = wordpress.UpdateCount;
         var syncBaseline = wordpress.FullSyncRequests;
-        await page.Locator(".editor-command-actions button.btn.primary").ClickAsync();
+        var saveButton = page.Locator(".publish-card button.btn.primary[type='submit']");
+        await saveButton.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        (await saveButton.IsEnabledAsync()).Should().BeTrue("Content.Edit must expose the real WordPress save action");
+        await saveButton.ClickAsync();
 
         await WaitUntilAsync(() => wordpress.UpdateCount == updateBaseline + 1, $"{contentType} save did not reach WordPress.");
         await WaitUntilAsync(() => wordpress.FullSyncRequests >= syncBaseline + 5, $"{contentType} save did not complete WordPress reconciliation.");
