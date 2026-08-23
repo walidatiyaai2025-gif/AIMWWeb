@@ -1,4 +1,5 @@
 using AIWordPressManager.Application.Settings;
+using AIWordPressManager.Infrastructure.AI;
 using AIWordPressManager.Persistence;
 
 namespace AIWordPressManager.Web.Services;
@@ -19,10 +20,11 @@ public sealed class AIProviderSettingsAdministrationService(
         ? null
         : new ApplicationSecurityAuditService(dbContext, currentUser, httpContextAccessor);
 
-    public Task<AiSettings> GetAiSettingsAsync(CancellationToken cancellationToken = default)
+    public async Task<AiSettings> GetAiSettingsAsync(CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        return settingsService.GetAiSettingsAsync(cancellationToken);
+        var settings = await settingsService.GetAiSettingsAsync(cancellationToken);
+        return EnforceRuntimeAvailability(settings);
     }
 
     public async Task SaveAiSettingsAsync(
@@ -31,7 +33,8 @@ public sealed class AIProviderSettingsAdministrationService(
         CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        await settingsService.SaveAiSettingsAsync(settings, plainApiKeys, cancellationToken);
+        var runtimeSafeSettings = EnforceRuntimeAvailability(settings);
+        await settingsService.SaveAiSettingsAsync(runtimeSafeSettings, plainApiKeys, cancellationToken);
         if (_securityAudit is null) return;
 
         var providersWithNewKey = plainApiKeys
@@ -48,9 +51,9 @@ public sealed class AIProviderSettingsAdministrationService(
             "AI provider runtime settings",
             new Dictionary<string, string>
             {
-                ["enabled"] = settings.Enabled.ToString(),
-                ["automaticFallback"] = settings.AutomaticFallback.ToString(),
-                ["providerCount"] = settings.Providers.Count.ToString(),
+                ["enabled"] = runtimeSafeSettings.Enabled.ToString(),
+                ["automaticFallback"] = runtimeSafeSettings.AutomaticFallback.ToString(),
+                ["providerCount"] = runtimeSafeSettings.Providers.Count.ToString(),
                 ["providersWithNewKey"] = string.Join(',', providersWithNewKey)
             },
             cancellationToken);
@@ -82,4 +85,13 @@ public sealed class AIProviderSettingsAdministrationService(
 
     public Task ClearApiKeyAsync(string provider, CancellationToken cancellationToken = default) =>
         ClearAiProviderApiKeyAsync(provider, cancellationToken);
+
+    private static AiSettings EnforceRuntimeAvailability(AiSettings settings) => settings with
+    {
+        Providers = settings.Providers
+            .Select(provider => AIProviderRuntimeCatalog.IsAvailable(provider.Provider)
+                ? provider
+                : provider with { Enabled = false })
+            .ToArray()
+    };
 }
