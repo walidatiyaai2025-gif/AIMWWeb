@@ -4,18 +4,16 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class ExecutionCenterService : IDisposable
 {
-    public const string SimulatedExecutionMode = "Simulated";
+    public const string TrackedExecutionMode = "Tracked";
     public const string ExternalExecutionMode = "External";
+    public const string UnavailableExecutionMode = "Unavailable";
 
+    private const string RetiredSimulationError = "Legacy synthetic execution was retired because it did not represent real production work.";
+    private const string InterruptedTrackedError = "Execution was interrupted by application restart and cannot be resumed automatically.";
     private readonly object _sync = new();
     private readonly string _connectionString;
-    private readonly Timer? _timer;
-    private bool _ticking;
 
-    public ExecutionCenterService(
-        string? databasePath = null,
-        bool enableBackgroundWorker = true,
-        bool enableSeedData = true)
+    public ExecutionCenterService(string? databasePath = null)
     {
         databasePath = ResolveDatabasePath(databasePath);
         var directory = Path.GetDirectoryName(databasePath);
@@ -30,9 +28,6 @@ public sealed class ExecutionCenterService : IDisposable
 
         InitializeDatabase();
         RecoverInterruptedJobs();
-        if (enableSeedData) SeedIfEmpty();
-        if (enableBackgroundWorker)
-            _timer = new Timer(_ => TickSafely(), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
     }
 
     public IReadOnlyList<ExecutionJob> GetJobs() => GetJobsCore(null);
@@ -51,6 +46,10 @@ public sealed class ExecutionCenterService : IDisposable
         return GetActivitiesCore(ownerUserId, take);
     }
 
+    /// <summary>
+    /// Creates an execution-ledger row for a real operation whose runtime reports progress through
+    /// <see cref="ExecutionOperationTracker"/>. Execution Center never advances this row on its own.
+    /// </summary>
     public ExecutionJob Enqueue(
         string title,
         string type,
@@ -58,8 +57,12 @@ public sealed class ExecutionCenterService : IDisposable
         int totalItems,
         string? idempotencyKey = null,
         string? correlationId = null) =>
-        EnqueueCore(null, null, title, type, siteName, totalItems, SimulatedExecutionMode, idempotencyKey, correlationId);
+        EnqueueCore(null, null, title, type, siteName, totalItems, TrackedExecutionMode, idempotencyKey, correlationId);
 
+    /// <summary>
+    /// Creates an owner/site-scoped execution-ledger row for a real operation. The originating
+    /// runtime remains authoritative for start, progress, completion, and failure.
+    /// </summary>
     public ExecutionJob Enqueue(
         Guid ownerUserId,
         Guid siteId,
@@ -72,7 +75,7 @@ public sealed class ExecutionCenterService : IDisposable
     {
         RequireIdentity(ownerUserId, nameof(ownerUserId));
         RequireIdentity(siteId, nameof(siteId));
-        return EnqueueCore(ownerUserId, siteId, title, type, siteName, totalItems, SimulatedExecutionMode, idempotencyKey, correlationId);
+        return EnqueueCore(ownerUserId, siteId, title, type, siteName, totalItems, TrackedExecutionMode, idempotencyKey, correlationId);
     }
 
     public ExecutionJob EnqueueExternal(
@@ -93,11 +96,8 @@ public sealed class ExecutionCenterService : IDisposable
         {
             using var connection = OpenConnection();
             using var existing = connection.CreateCommand();
-            existing.CommandText = """
-                SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
-                       CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId,
-                       ExecutionMode, IdempotencyKey, CorrelationId
-                FROM ExecutionCenterJobs
+            existing.CommandText = $"""
+                {SelectJobs}
                 WHERE OwnerUserId=$ownerUserId
                   AND ExecutionMode=$executionMode
                   AND IdempotencyKey=$idempotencyKey
@@ -129,11 +129,8 @@ public sealed class ExecutionCenterService : IDisposable
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
-            command.CommandText = """
-                SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
-                       CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId,
-                       ExecutionMode, IdempotencyKey, CorrelationId
-                FROM ExecutionCenterJobs
+            command.CommandText = $"""
+                {SelectJobs}
                 WHERE ExecutionMode=$executionMode AND Status='Waiting'
                   AND OwnerUserId IS NOT NULL AND SiteId IS NOT NULL
                 ORDER BY CreatedAtUtc
@@ -227,14 +224,16 @@ public sealed class ExecutionCenterService : IDisposable
         }
     }
 
-    public void Cancel(Guid id) => ChangeStatus(id, null, new[] { "Waiting", "Running", "Paused" }, "Cancelled", "Warning", "Job cancelled by user.", true);
-    public void Pause(Guid id) => ChangeStatus(id, null, new[] { "Running" }, "Paused", "Warning", "Job paused.", false);
-    public void Resume(Guid id) => ChangeStatus(id, null, new[] { "Paused" }, "Running", "Info", "Job resumed.", false);
+    // These low-level state controls are consumed by the real bulk-content worker while it is
+    // running. They do not start work or manufacture progress/completion by themselves.
+    public void Cancel(Guid id) => ChangeStatus(id, null, ["Waiting", "Running", "Paused"], "Cancelled", "Warning", "Job cancelled by user.", true);
+    public void Pause(Guid id) => ChangeStatus(id, null, ["Running"], "Paused", "Warning", "Job paused.", false);
+    public void Resume(Guid id) => ChangeStatus(id, null, ["Paused"], "Running", "Info", "Job resumed.", false);
     public void Retry(Guid id) => RetryCore(id, null);
 
-    public void Cancel(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, new[] { "Waiting", "Running", "Paused" }, "Cancelled", "Warning", "Job cancelled by user.", true);
-    public void Pause(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, new[] { "Running" }, "Paused", "Warning", "Job paused.", false);
-    public void Resume(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, new[] { "Paused" }, "Running", "Info", "Job resumed.", false);
+    public void Cancel(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, ["Waiting", "Running", "Paused"], "Cancelled", "Warning", "Job cancelled by user.", true);
+    public void Pause(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, ["Running"], "Paused", "Warning", "Job paused.", false);
+    public void Resume(Guid id, Guid ownerUserId) => ChangeStatus(id, ownerUserId, ["Paused"], "Running", "Info", "Job resumed.", false);
     public void Retry(Guid id, Guid ownerUserId)
     {
         RequireIdentity(ownerUserId, nameof(ownerUserId));
@@ -247,11 +246,8 @@ public sealed class ExecutionCenterService : IDisposable
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
-            command.CommandText = """
-                SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
-                       CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId,
-                       ExecutionMode, IdempotencyKey, CorrelationId
-                FROM ExecutionCenterJobs
+            command.CommandText = $"""
+                {SelectJobs}
                 WHERE ($ownerUserId IS NULL OR OwnerUserId=$ownerUserId)
                 ORDER BY CreatedAtUtc DESC;
                 """;
@@ -307,6 +303,9 @@ public sealed class ExecutionCenterService : IDisposable
     {
         if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("Job title is required.", nameof(title));
         if (string.IsNullOrWhiteSpace(type)) throw new ArgumentException("Job type is required.", nameof(type));
+        if (executionMode is not (TrackedExecutionMode or ExternalExecutionMode))
+            throw new ArgumentOutOfRangeException(nameof(executionMode), executionMode, "Unsupported execution mode.");
+
         var now = DateTime.UtcNow;
         var job = new ExecutionJob(
             Guid.NewGuid(),
@@ -332,7 +331,7 @@ public sealed class ExecutionCenterService : IDisposable
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
             InsertJob(connection, transaction, job);
-            InsertActivity(connection, transaction, job.Id, "Info", $"Queued {job.Type} for {job.SiteName}.");
+            InsertActivity(connection, transaction, job.Id, "Info", $"Registered {job.Type} execution for {job.SiteName}.");
             transaction.Commit();
         }
         return job;
@@ -351,75 +350,14 @@ public sealed class ExecutionCenterService : IDisposable
                 SET Status='Waiting', Progress=0, ProcessedItems=0,
                     StartedAtUtc=NULL, CompletedAtUtc=NULL, Error=NULL
                 WHERE Id=$id AND Status IN ('Failed','Cancelled')
+                  AND ExecutionMode=$externalMode
                   AND ($ownerUserId IS NULL OR OwnerUserId=$ownerUserId);
                 """;
             command.Parameters.AddWithValue("$id", id.ToString());
+            command.Parameters.AddWithValue("$externalMode", ExternalExecutionMode);
             command.Parameters.AddWithValue("$ownerUserId", ownerUserId.HasValue ? ownerUserId.Value.ToString() : DBNull.Value);
             if (command.ExecuteNonQuery() > 0)
-                InsertActivity(connection, transaction, id, "Info", "Job queued for retry.");
-            transaction.Commit();
-        }
-    }
-
-    private void TickSafely()
-    {
-        if (_ticking) return;
-        try
-        {
-            _ticking = true;
-            Tick();
-        }
-        catch
-        {
-            // The execution-center simulator must never terminate the process.
-        }
-        finally
-        {
-            _ticking = false;
-        }
-    }
-
-    private void Tick()
-    {
-        lock (_sync)
-        {
-            using var connection = OpenConnection();
-            using var transaction = connection.BeginTransaction();
-            var running = GetFirstSimulatedJob(connection, transaction, "Running");
-            if (running is null)
-            {
-                var waiting = GetFirstSimulatedJob(connection, transaction, "Waiting");
-                if (waiting is null) { transaction.Commit(); return; }
-
-                using var start = connection.CreateCommand();
-                start.Transaction = transaction;
-                start.CommandText = "UPDATE ExecutionCenterJobs SET Status='Running', StartedAtUtc=$started WHERE Id=$id AND ExecutionMode=$mode;";
-                start.Parameters.AddWithValue("$started", FormatDate(DateTime.UtcNow));
-                start.Parameters.AddWithValue("$id", waiting.Id.ToString());
-                start.Parameters.AddWithValue("$mode", SimulatedExecutionMode);
-                start.ExecuteNonQuery();
-                InsertActivity(connection, transaction, waiting.Id, "Info", "Job started.");
-                transaction.Commit();
-                return;
-            }
-
-            var increment = Math.Max(1, running.TotalItems / 20);
-            var processed = Math.Min(running.TotalItems, running.ProcessedItems + increment);
-            var progress = Math.Min(100, (int)Math.Round(processed * 100d / Math.Max(1, running.TotalItems)));
-            var completed = processed >= running.TotalItems;
-
-            using var update = connection.CreateCommand();
-            update.Transaction = transaction;
-            update.CommandText = completed
-                ? "UPDATE ExecutionCenterJobs SET ProcessedItems=$processed, Progress=100, Status='Completed', CompletedAtUtc=$completed WHERE Id=$id AND ExecutionMode=$mode;"
-                : "UPDATE ExecutionCenterJobs SET ProcessedItems=$processed, Progress=$progress WHERE Id=$id AND ExecutionMode=$mode;";
-            update.Parameters.AddWithValue("$processed", processed);
-            update.Parameters.AddWithValue("$progress", progress);
-            update.Parameters.AddWithValue("$completed", FormatDate(DateTime.UtcNow));
-            update.Parameters.AddWithValue("$id", running.Id.ToString());
-            update.Parameters.AddWithValue("$mode", SimulatedExecutionMode);
-            update.ExecuteNonQuery();
-            if (completed) InsertActivity(connection, transaction, running.Id, "Success", "Job completed successfully.");
+                InsertActivity(connection, transaction, id, "Info", "Approved change queued for safe retry.");
             transaction.Commit();
         }
     }
@@ -449,7 +387,7 @@ public sealed class ExecutionCenterService : IDisposable
                         Error TEXT NULL,
                         OwnerUserId TEXT NULL,
                         SiteId TEXT NULL,
-                        ExecutionMode TEXT NOT NULL DEFAULT 'Simulated',
+                        ExecutionMode TEXT NOT NULL DEFAULT 'Tracked',
                         IdempotencyKey TEXT NULL,
                         CorrelationId TEXT NULL
                     );
@@ -467,13 +405,42 @@ public sealed class ExecutionCenterService : IDisposable
 
             EnsureColumn(connection, "ExecutionCenterJobs", "OwnerUserId", "TEXT NULL");
             EnsureColumn(connection, "ExecutionCenterJobs", "SiteId", "TEXT NULL");
-            EnsureColumn(connection, "ExecutionCenterJobs", "ExecutionMode", "TEXT NOT NULL DEFAULT 'Simulated'");
+            var hadExecutionMode = ColumnExists(connection, "ExecutionCenterJobs", "ExecutionMode");
+            if (!hadExecutionMode) EnsureColumn(connection, "ExecutionCenterJobs", "ExecutionMode", "TEXT NULL");
             EnsureColumn(connection, "ExecutionCenterJobs", "IdempotencyKey", "TEXT NULL");
             EnsureColumn(connection, "ExecutionCenterJobs", "CorrelationId", "TEXT NULL");
 
-            using var normalize = connection.CreateCommand();
-            normalize.CommandText = "UPDATE ExecutionCenterJobs SET ExecutionMode='Simulated' WHERE ExecutionMode IS NULL OR ExecutionMode='';";
-            normalize.ExecuteNonQuery();
+            // Older builds labelled every tracker-backed job as synthetic. Preserve rows that have
+            // concrete runtime evidence (the tracker writes "Operation started.") and retire only
+            // records that were driven by the old timer/seed path or have no execution provenance.
+            using (var preserveTracked = connection.CreateCommand())
+            {
+                preserveTracked.CommandText = """
+                    UPDATE ExecutionCenterJobs
+                    SET ExecutionMode=$tracked
+                    WHERE ExecutionMode='Simulated'
+                      AND EXISTS (
+                        SELECT 1 FROM ExecutionCenterActivities a
+                        WHERE a.JobId=ExecutionCenterJobs.Id AND a.Message='Operation started.');
+                    """;
+                preserveTracked.Parameters.AddWithValue("$tracked", TrackedExecutionMode);
+                preserveTracked.ExecuteNonQuery();
+            }
+
+            using (var retire = connection.CreateCommand())
+            {
+                retire.CommandText = """
+                    UPDATE ExecutionCenterJobs
+                    SET ExecutionMode=$unavailable,
+                        Status='Failed', Progress=0, ProcessedItems=0,
+                        StartedAtUtc=NULL, CompletedAtUtc=$retiredAt, Error=$error
+                    WHERE ExecutionMode IS NULL OR ExecutionMode='' OR ExecutionMode='Simulated';
+                    """;
+                retire.Parameters.AddWithValue("$unavailable", UnavailableExecutionMode);
+                retire.Parameters.AddWithValue("$retiredAt", FormatDate(DateTime.UtcNow));
+                retire.Parameters.AddWithValue("$error", RetiredSimulationError);
+                retire.ExecuteNonQuery();
+            }
 
             using var indexes = connection.CreateCommand();
             indexes.CommandText = """
@@ -494,23 +461,19 @@ public sealed class ExecutionCenterService : IDisposable
         }
     }
 
-    private static void EnsureColumn(SqliteConnection connection, string table, string column, string definition)
+    private static bool ColumnExists(SqliteConnection connection, string table, string column)
     {
         using var info = connection.CreateCommand();
         info.CommandText = $"PRAGMA table_info({table});";
         using var reader = info.ExecuteReader();
-        var exists = false;
         while (reader.Read())
-        {
-            if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
-            {
-                exists = true;
-                break;
-            }
-        }
-        reader.Close();
-        if (exists) return;
+            if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
 
+    private static void EnsureColumn(SqliteConnection connection, string table, string column, string definition)
+    {
+        if (ColumnExists(connection, table, column)) return;
         using var alter = connection.CreateCommand();
         alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {definition};";
         alter.ExecuteNonQuery();
@@ -522,33 +485,56 @@ public sealed class ExecutionCenterService : IDisposable
         {
             using var connection = OpenConnection();
             using var transaction = connection.BeginTransaction();
-            using var select = connection.CreateCommand();
-            select.Transaction = transaction;
-            select.CommandText = "SELECT Id FROM ExecutionCenterJobs WHERE Status='Running';";
-            var ids = new List<Guid>();
-            using (var reader = select.ExecuteReader()) while (reader.Read()) ids.Add(Guid.Parse(reader.GetString(0)));
 
-            using var update = connection.CreateCommand();
-            update.Transaction = transaction;
-            update.CommandText = "UPDATE ExecutionCenterJobs SET Status='Waiting', StartedAtUtc=NULL WHERE Status='Running';";
-            update.ExecuteNonQuery();
-            foreach (var id in ids) InsertActivity(connection, transaction, id, "Warning", "Job recovered after application restart.");
+            var trackedIds = SelectIds(connection, transaction, "Status='Running' AND ExecutionMode=$mode", TrackedExecutionMode);
+            if (trackedIds.Count > 0)
+            {
+                using var fail = connection.CreateCommand();
+                fail.Transaction = transaction;
+                fail.CommandText = """
+                    UPDATE ExecutionCenterJobs
+                    SET Status='Failed', CompletedAtUtc=$completed, Error=$error
+                    WHERE Status='Running' AND ExecutionMode=$mode;
+                    """;
+                fail.Parameters.AddWithValue("$completed", FormatDate(DateTime.UtcNow));
+                fail.Parameters.AddWithValue("$error", InterruptedTrackedError);
+                fail.Parameters.AddWithValue("$mode", TrackedExecutionMode);
+                fail.ExecuteNonQuery();
+                foreach (var id in trackedIds)
+                    InsertActivity(connection, transaction, id, "Error", InterruptedTrackedError);
+            }
+
+            var externalIds = SelectIds(connection, transaction, "Status='Running' AND ExecutionMode=$mode", ExternalExecutionMode);
+            if (externalIds.Count > 0)
+            {
+                using var recover = connection.CreateCommand();
+                recover.Transaction = transaction;
+                recover.CommandText = """
+                    UPDATE ExecutionCenterJobs
+                    SET Status='Waiting', StartedAtUtc=NULL, CompletedAtUtc=NULL,
+                        Error='Approved change execution was interrupted and is queued for idempotent reconciliation.'
+                    WHERE Status='Running' AND ExecutionMode=$mode;
+                    """;
+                recover.Parameters.AddWithValue("$mode", ExternalExecutionMode);
+                recover.ExecuteNonQuery();
+                foreach (var id in externalIds)
+                    InsertActivity(connection, transaction, id, "Warning", "Approved change execution queued for idempotent recovery after application restart.");
+            }
+
             transaction.Commit();
         }
     }
 
-    private void SeedIfEmpty()
+    private static List<Guid> SelectIds(SqliteConnection connection, SqliteTransaction transaction, string predicate, string mode)
     {
-        lock (_sync)
-        {
-            using var connection = OpenConnection();
-            using var count = connection.CreateCommand();
-            count.CommandText = "SELECT COUNT(*) FROM ExecutionCenterJobs;";
-            if (Convert.ToInt32(count.ExecuteScalar()) > 0) return;
-        }
-
-        Enqueue("Publish selected posts", "Bulk Publish", "WALKA Store", 48);
-        Enqueue("Synchronize WordPress content", "Synchronization", "Corporate Site", 220);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"SELECT Id FROM ExecutionCenterJobs WHERE {predicate};";
+        command.Parameters.AddWithValue("$mode", mode);
+        var ids = new List<Guid>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read()) ids.Add(Guid.Parse(reader.GetString(0)));
+        return ids;
     }
 
     private void ChangeStatus(Guid id, Guid? ownerUserId, IReadOnlyCollection<string> allowedStatuses, string newStatus, string level, string message, bool complete)
@@ -561,34 +547,24 @@ public sealed class ExecutionCenterService : IDisposable
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
             var parameters = allowedStatuses.Select((_, index) => $"$status{index}").ToArray();
-            command.CommandText = $"UPDATE ExecutionCenterJobs SET Status=$newStatus{(complete ? ", CompletedAtUtc=$completed" : string.Empty)} WHERE Id=$id AND Status IN ({string.Join(',', parameters)}) AND ($ownerUserId IS NULL OR OwnerUserId=$ownerUserId);";
+            command.CommandText = $"""
+                UPDATE ExecutionCenterJobs
+                SET Status=$newStatus{(complete ? ", CompletedAtUtc=$completed" : string.Empty)}
+                WHERE Id=$id
+                  AND ExecutionMode=$trackedMode
+                  AND Status IN ({string.Join(',', parameters)})
+                  AND ($ownerUserId IS NULL OR OwnerUserId=$ownerUserId);
+                """;
             command.Parameters.AddWithValue("$newStatus", newStatus);
             command.Parameters.AddWithValue("$id", id.ToString());
+            command.Parameters.AddWithValue("$trackedMode", TrackedExecutionMode);
             command.Parameters.AddWithValue("$ownerUserId", ownerUserId.HasValue ? ownerUserId.Value.ToString() : DBNull.Value);
             if (complete) command.Parameters.AddWithValue("$completed", FormatDate(DateTime.UtcNow));
-            for (var index = 0; index < allowedStatuses.Count; index++) command.Parameters.AddWithValue(parameters[index], allowedStatuses.ElementAt(index));
+            for (var index = 0; index < allowedStatuses.Count; index++)
+                command.Parameters.AddWithValue(parameters[index], allowedStatuses.ElementAt(index));
             if (command.ExecuteNonQuery() > 0) InsertActivity(connection, transaction, id, level, message);
             transaction.Commit();
         }
-    }
-
-    private ExecutionJob? GetFirstSimulatedJob(SqliteConnection connection, SqliteTransaction transaction, string status)
-    {
-        using var command = connection.CreateCommand();
-        command.Transaction = transaction;
-        command.CommandText = """
-            SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
-                   CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId,
-                   ExecutionMode, IdempotencyKey, CorrelationId
-            FROM ExecutionCenterJobs
-            WHERE Status=$status AND ExecutionMode=$executionMode
-            ORDER BY CreatedAtUtc
-            LIMIT 1;
-            """;
-        command.Parameters.AddWithValue("$status", status);
-        command.Parameters.AddWithValue("$executionMode", SimulatedExecutionMode);
-        using var reader = command.ExecuteReader();
-        return reader.Read() ? ReadJob(reader) : null;
     }
 
     private static ExecutionJob ReadJob(SqliteDataReader reader) => new(
@@ -606,7 +582,7 @@ public sealed class ExecutionCenterService : IDisposable
         reader.IsDBNull(11) ? null : reader.GetString(11),
         ReadNullableGuid(reader, 12),
         ReadNullableGuid(reader, 13),
-        reader.IsDBNull(14) ? SimulatedExecutionMode : reader.GetString(14),
+        reader.IsDBNull(14) ? UnavailableExecutionMode : reader.GetString(14),
         reader.IsDBNull(15) ? null : reader.GetString(15),
         reader.IsDBNull(16) ? null : reader.GetString(16));
 
@@ -676,9 +652,16 @@ public sealed class ExecutionCenterService : IDisposable
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Data", "execution-center.db");
     }
 
+    private const string SelectJobs = """
+        SELECT Id, Title, Type, SiteName, Status, Progress, TotalItems, ProcessedItems,
+               CreatedAtUtc, StartedAtUtc, CompletedAtUtc, Error, OwnerUserId, SiteId,
+               ExecutionMode, IdempotencyKey, CorrelationId
+        FROM ExecutionCenterJobs
+        """;
+
     private static string FormatDate(DateTime value) => value.ToUniversalTime().ToString("O");
     private static DateTime ParseDate(string value) => DateTime.Parse(value, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
-    public void Dispose() => _timer?.Dispose();
+    public void Dispose() { }
 }
 
 public sealed record ExecutionJob(
@@ -696,7 +679,7 @@ public sealed record ExecutionJob(
     string? Error,
     Guid? OwnerUserId = null,
     Guid? SiteId = null,
-    string ExecutionMode = ExecutionCenterService.SimulatedExecutionMode,
+    string ExecutionMode = ExecutionCenterService.TrackedExecutionMode,
     string? IdempotencyKey = null,
     string? CorrelationId = null);
 
