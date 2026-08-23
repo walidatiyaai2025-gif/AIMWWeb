@@ -379,9 +379,47 @@ public sealed class ContentEditorMutationsUxTests(UxTestHost host)
                 if (colon > 0) headers[line[..colon].Trim()] = line[(colon + 1)..].Trim();
             }
 
-            var length = headers.TryGetValue("Content-Length", out var raw) && int.TryParse(raw, out var parsed) ? parsed : 0;
-            var body = Encoding.UTF8.GetString(await ReadExactlyAsync(stream, length, token));
+            var body = headers.TryGetValue("Transfer-Encoding", out var transfer) && transfer.Contains("chunked", StringComparison.OrdinalIgnoreCase)
+                ? await ReadChunkedAsync(stream, token)
+                : Encoding.UTF8.GetString(await ReadExactlyAsync(stream,
+                    headers.TryGetValue("Content-Length", out var raw) && int.TryParse(raw, out var length) ? length : 0,
+                    token));
             return new RecordedRequest(first[0], first[1], body, headers.TryGetValue("Authorization", out var auth) ? auth : string.Empty);
+        }
+
+        private static async Task<string> ReadChunkedAsync(NetworkStream stream, CancellationToken token)
+        {
+            using var output = new MemoryStream();
+            while (true)
+            {
+                var sizeLine = await ReadLineAsync(stream, token);
+                var semicolon = sizeLine.IndexOf(';');
+                if (semicolon >= 0) sizeLine = sizeLine[..semicolon];
+                var size = int.Parse(sizeLine, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                if (size == 0)
+                {
+                    await ReadLineAsync(stream, token);
+                    break;
+                }
+
+                var chunk = await ReadExactlyAsync(stream, size, token);
+                await output.WriteAsync(chunk, token);
+                await ReadExactlyAsync(stream, 2, token);
+            }
+            return Encoding.UTF8.GetString(output.ToArray());
+        }
+
+        private static async Task<string> ReadLineAsync(NetworkStream stream, CancellationToken token)
+        {
+            var bytes = new List<byte>();
+            var one = new byte[1];
+            while (true)
+            {
+                if (await stream.ReadAsync(one, token) == 0) throw new IOException("HTTP line ended early.");
+                if (one[0] == '\n') break;
+                if (one[0] != '\r') bytes.Add(one[0]);
+            }
+            return Encoding.ASCII.GetString(bytes.ToArray());
         }
 
         private static async Task<byte[]> ReadExactlyAsync(NetworkStream stream, int length, CancellationToken token)
