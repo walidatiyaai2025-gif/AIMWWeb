@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace AIWordPressManager.Web.Services;
 
 /// <summary>
-/// Account-scoped boundary around the legacy automation SQLite store. All interactive
-/// reads and mutations should flow through this service so ownership and plan limits
-/// are enforced server-side rather than relying on UI filtering.
+/// Account-scoped boundary around the automation store. All interactive reads and mutations
+/// flow through this service so ownership, plan limits, and executable-type contracts are
+/// enforced server-side rather than relying on UI filtering.
 /// </summary>
 public sealed class AccountAutomationCenterService(
     AutomationCenterService automation,
@@ -40,6 +40,7 @@ public sealed class AccountAutomationCenterService(
     public async Task<Guid> SaveAsync(AutomationJobEditModel model, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(model);
+        AutomationCenterService.RequireSupportedType(model.Type);
         var site = await RequireOwnedSiteAsync(model.SiteId, cancellationToken);
         var existing = model.Id == Guid.Empty
             ? null
@@ -58,7 +59,7 @@ public sealed class AccountAutomationCenterService(
                 cancellationToken);
         }
 
-        if (string.Equals(model.Type, "SEO Audit", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, AutomationCenterService.SeoAuditType, StringComparison.OrdinalIgnoreCase))
         {
             await entitlementEnforcement.RequireBooleanCapabilityAsync(
                 OwnerId,
@@ -73,15 +74,20 @@ public sealed class AccountAutomationCenterService(
     public async Task SetEnabledAsync(Guid id, bool enabled, CancellationToken cancellationToken = default)
     {
         var job = await RequireOwnedJobAsync(id, cancellationToken);
-        if (enabled && string.Equals(job.Type, "SEO Audit", StringComparison.OrdinalIgnoreCase))
-            await entitlementEnforcement.RequireBooleanCapabilityAsync(OwnerId, EntitlementDefinitionCatalog.PremiumSeo, cancellationToken);
+        if (enabled)
+        {
+            AutomationCenterService.RequireSupportedType(job.Type);
+            if (string.Equals(job.Type, AutomationCenterService.SeoAuditType, StringComparison.OrdinalIgnoreCase))
+                await entitlementEnforcement.RequireBooleanCapabilityAsync(OwnerId, EntitlementDefinitionCatalog.PremiumSeo, cancellationToken);
+        }
         automation.SetEnabled(id, enabled);
     }
 
     public async Task QueueNowAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var job = await RequireOwnedJobAsync(id, cancellationToken);
-        if (string.Equals(job.Type, "SEO Audit", StringComparison.OrdinalIgnoreCase))
+        AutomationCenterService.RequireSupportedType(job.Type);
+        if (string.Equals(job.Type, AutomationCenterService.SeoAuditType, StringComparison.OrdinalIgnoreCase))
             await entitlementEnforcement.RequireBooleanCapabilityAsync(OwnerId, EntitlementDefinitionCatalog.PremiumSeo, cancellationToken);
         automation.QueueNow(id);
     }
