@@ -121,7 +121,7 @@ public sealed class MediaUploadUxTests(UxTestHost host)
 
     private static async Task EnsureMediaManagerInteractiveAsync(IPage page, WordPressFixture wordpress)
     {
-        var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
+        var refresh = page.Locator(".media-manager-workspace button.app-button[aria-label='Refresh']").First;
         var baseline = wordpress.FullSyncRequests;
         var deadline = DateTime.UtcNow.AddSeconds(8);
         while (DateTime.UtcNow < deadline)
