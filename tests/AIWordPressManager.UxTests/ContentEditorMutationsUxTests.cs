@@ -60,6 +60,7 @@ public sealed class ContentEditorMutationsUxTests(UxTestHost host)
 
         var title = page.Locator(".editor-title-input");
         await title.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        await EnsureEditorInteractiveAsync(page);
         await title.FillAsync(updatedTitle);
         await page.Locator(".editor-slug-row input").FillAsync(updatedSlug);
         await page.Locator(".content-editor-pro").FillAsync($"<p>{updatedTitle} content persisted through WordPress.</p>");
@@ -88,6 +89,32 @@ public sealed class ContentEditorMutationsUxTests(UxTestHost host)
         await title.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
         (await title.InputValueAsync()).Should().Be(updatedTitle,
             "a fresh editor load must read the value returned by WordPress rather than preserve local-only success state");
+    }
+
+    private static async Task EnsureEditorInteractiveAsync(IPage page)
+    {
+        var preview = page.Locator(".editor-view-toggle button").Nth(1);
+        var edit = page.Locator(".editor-view-toggle button").Nth(0);
+        var previewSurface = page.Locator(".content-preview");
+        var editorSurface = page.Locator(".content-editor-pro");
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await preview.ClickAsync(new() { Timeout = 1500 });
+                await previewSurface.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 750 });
+                await edit.ClickAsync(new() { Timeout = 1500 });
+                await editorSurface.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 750 });
+                return;
+            }
+            catch (TimeoutException)
+            {
+                await page.WaitForTimeoutAsync(100);
+            }
+        }
+
+        throw new TimeoutException("Content Editor did not become interactive.");
     }
 
     private async Task SaveCredentialsAsync(IPage page, Guid siteId, WordPressFixture wordpress)
