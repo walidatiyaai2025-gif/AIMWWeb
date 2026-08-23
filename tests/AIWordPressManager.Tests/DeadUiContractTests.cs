@@ -25,6 +25,13 @@ public sealed partial class DeadUiContractTests
                 violations.Add($"{relative}:{LineOf(source, match.Index)} button has no click/keyboard action, explicit submit behavior, or form action: {Compact(buttonMarkup)[..Math.Min(Compact(buttonMarkup).Length, 220)]}");
             }
 
+            foreach (var appButton in EnumerateAppButtonOpeningTags(source))
+            {
+                if (HasMeaningfulAppButtonAction(appButton.Markup)) continue;
+
+                violations.Add($"{relative}:{LineOf(source, appButton.Index)} AppButton has no Href, OnClick, or submit behavior: {Compact(appButton.Markup)[..Math.Min(Compact(appButton.Markup).Length, 220)]}");
+            }
+
             foreach (Match match in AnchorRegex().Matches(source))
             {
                 var attrs = match.Groups["attrs"].Value;
@@ -86,6 +93,67 @@ public sealed partial class DeadUiContractTests
         return false;
     }
 
+    private static bool HasMeaningfulAppButtonAction(string markup)
+    {
+        if (AppButtonOnClickRegex().IsMatch(markup)) return true;
+        if (SubmitTypeRegex().IsMatch(markup)) return true;
+
+        var href = HrefRegex().Match(markup);
+        if (!href.Success) return false;
+
+        var value = href.Groups["value"].Value.Trim();
+        return value.Length > 0 &&
+               value != "#" &&
+               !value.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IEnumerable<(int Index, string Markup)> EnumerateAppButtonOpeningTags(string source)
+    {
+        const string token = "<AppButton";
+        var searchIndex = 0;
+
+        while (searchIndex < source.Length)
+        {
+            var start = source.IndexOf(token, searchIndex, StringComparison.Ordinal);
+            if (start < 0) yield break;
+
+            var afterName = start + token.Length;
+            if (afterName < source.Length && (char.IsLetterOrDigit(source[afterName]) || source[afterName] == '_'))
+            {
+                searchIndex = afterName;
+                continue;
+            }
+
+            char quote = '\0';
+            var end = -1;
+            for (var index = afterName; index < source.Length; index++)
+            {
+                var current = source[index];
+                if (quote != '\0')
+                {
+                    if (current == quote) quote = '\0';
+                    continue;
+                }
+
+                if (current is '\'' or '"')
+                {
+                    quote = current;
+                    continue;
+                }
+
+                if (current == '>')
+                {
+                    end = index;
+                    break;
+                }
+            }
+
+            if (end < 0) yield break;
+            yield return (start, source[start..(end + 1)]);
+            searchIndex = end + 1;
+        }
+    }
+
     private static int LineOf(string source, int index)
     {
         var line = 1;
@@ -126,6 +194,9 @@ public sealed partial class DeadUiContractTests
     // The latter is used for language toggles that must run before a full page reload.
     [GeneratedRegex(@"(?:@on(?:click|mousedown|mouseup|pointerdown|pointerup|keydown|keyup)|on(?:click|mousedown|mouseup|pointerdown|pointerup|keydown|keyup))\s*=", RegexOptions.IgnoreCase)]
     private static partial Regex EventActionRegex();
+
+    [GeneratedRegex(@"\bOnClick\s*=", RegexOptions.IgnoreCase)]
+    private static partial Regex AppButtonOnClickRegex();
 
     [GeneratedRegex("type\\s*=\\s*(?:\\\"submit\\\"|'submit')", RegexOptions.IgnoreCase)]
     private static partial Regex SubmitTypeRegex();
