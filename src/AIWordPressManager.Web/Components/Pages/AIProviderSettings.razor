@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
 @using AIWordPressManager.Application.Settings
+@using AIWordPressManager.Infrastructure.AI
 @using AIWordPressManager.Persistence
 @inject IApplicationSettingsService RuntimeSettingsService
 @inject AppDbContext DbContext
@@ -75,7 +76,7 @@
                         {
                             var providerId = ProviderId(provider);
                             var modelError = ProviderModelError(provider);
-                            <article class="settings-subsection" @key="provider.Name">
+                            <article class="settings-subsection" data-provider="@provider.Name" @key="provider.Name">
                                 <div class="settings-option-row">
                                     <div>
                                         <strong>@provider.Name</strong>
@@ -101,10 +102,23 @@
                                     </AppFormField>
                                 </div>
 
-                                <div class="settings-option-row">
-                                    <div><strong>@(L.IsArabic ? "تفعيل المزود" : "Enable provider")</strong><small id="@($"{providerId}-enabled-help")">@(L.IsArabic ? "المزود المعطل لا يدخل في ترتيب التنفيذ." : "Disabled providers are excluded from runtime ordering.")</small></div>
-                                    <input id="@($"{providerId}-enabled")" type="checkbox" @bind="provider.Enabled" disabled="@_saving" aria-describedby="@($"{providerId}-enabled-help")" />
-                                </div>
+                                @if (AIProviderRuntimeCatalog.IsAvailable(provider.Name))
+                                {
+                                    <div class="settings-option-row">
+                                        <div><strong>@(L.IsArabic ? "تفعيل المزود" : "Enable provider")</strong><small id="@($"{providerId}-enabled-help")">@(L.IsArabic ? "المزود المعطل لا يدخل في ترتيب التنفيذ." : "Disabled providers are excluded from runtime ordering.")</small></div>
+                                        <input id="@($"{providerId}-enabled")" type="checkbox" @bind="provider.Enabled" disabled="@_saving" aria-describedby="@($"{providerId}-enabled-help")" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="settings-option-row" data-runtime-unavailable="@provider.Name">
+                                        <div>
+                                            <strong>@(L.IsArabic ? "التشغيل غير متاح" : "Runtime unavailable")</strong>
+                                            <small>@(L.IsArabic ? "لا يمكن تفعيل هذا المزود حتى يتم تثبيت محول تشغيل حقيقي في إصدار الخادم." : "This provider cannot be enabled until a real runtime adapter is installed in the server build.")</small>
+                                        </div>
+                                        <span class="settings-badge">@(L.IsArabic ? "غير متاح" : "Unavailable")</span>
+                                    </div>
+                                }
 
                                 @if (provider.Name != "Ollama")
                                 {
@@ -122,9 +136,9 @@
                                     </div>
                                 }
 
-                                @if (!RuntimeAdapterAvailable(provider.Name))
+                                @if (!AIProviderRuntimeCatalog.IsAvailable(provider.Name))
                                 {
-                                    <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "يمكن حفظ إعدادات هذا المزود الآن، لكن محول التشغيل الخاص به ليس مفعلاً في إصدار الخادم الحالي." : "This provider configuration can be stored now, but its runtime adapter is not enabled in the current server build.")</p></div>
+                                    <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "يمكن حفظ إعدادات هذا المزود للمستقبل، لكن لا يمكن تشغيله أو إدخاله في ترتيب التنفيذ في إصدار الخادم الحالي." : "This provider configuration can be stored for future use, but it cannot execute or enter runtime ordering in the current server build.")</p></div>
                                 }
                                 else if (provider.Name == "Puter")
                                 {
@@ -337,15 +351,13 @@
     private string ProviderDescription(string provider) => provider switch
     {
         "OpenAI" => L.IsArabic ? "مزود OpenAI عبر Responses API." : "OpenAI via the Responses API.",
-        "Gemini" => L.IsArabic ? "Google Gemini عبر Generative Language API." : "Google Gemini via the Generative Language API.",
+        "Gemini" => L.IsArabic ? "Google Gemini عبر Generative Language API." : "Google Gemini via Generative Language API.",
         "Puter" => L.IsArabic ? "جسر Puter المعرّف على الخادم." : "Server-defined Puter bridge.",
         "Ollama" => L.IsArabic ? "مزود محلي ولا يحتاج مفتاح API." : "Local provider; no API key is required.",
         "Groq" => L.IsArabic ? "إعداد جاهز لمحول Groq القادم." : "Configuration ready for the upcoming Groq adapter.",
         "OpenRouter" => L.IsArabic ? "إعداد جاهز لمحول OpenRouter القادم." : "Configuration ready for the upcoming OpenRouter adapter.",
         _ => provider
     };
-
-    private static bool RuntimeAdapterAvailable(string provider) => provider is "OpenAI" or "Gemini" or "Puter";
 
     private sealed class ProviderEditModel
     {
