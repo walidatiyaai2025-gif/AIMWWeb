@@ -20,7 +20,6 @@ public sealed class RazorProductionAntiMockGuardTests
             "href='#'",
             "javascript:",
             "NotImplementedException",
-            "Task.Delay(",
             "Thread.Sleep(",
             "MockData",
             "FakeData",
@@ -40,6 +39,11 @@ public sealed class RazorProductionAntiMockGuardTests
                 {
                     findings.Add($"{Relative(root, file)} contains forbidden production Razor pattern '{pattern}'.");
                 }
+            }
+
+            foreach (Match match in Regex.Matches(source, @"Task\.Delay\s*\(\s*[^,\)]+\s*\)", RegexOptions.IgnoreCase))
+            {
+                findings.Add($"{Relative(root, file)} contains a non-cancellable delay '{match.Value}' that can simulate user-visible work. Cancellable debounce delays must pass a CancellationToken.");
             }
 
             foreach (Match match in Regex.Matches(source, @"(?im)^\s*(?:private|protected|public)?\s*(?:static\s+)?(?:readonly\s+)?(?:string\[\]|IReadOnlyList<[^>]+>|List<[^>]+>)\s+(?<name>(?:Mock|Fake|Sample|Demo)\w*)\b"))
