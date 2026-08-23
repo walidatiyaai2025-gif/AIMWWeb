@@ -65,7 +65,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
 
             var execute = card.Locator("input[type='checkbox']");
             (await execute.IsCheckedAsync()).Should().BeTrue("executable WordPress content approvals default to real execution");
-            await card.GetByRole(AriaRole.Button, new() { Name = "Approve", Exact = false }).ClickAsync();
+            await card.Locator("button.btn.primary").First.ClickAsync();
 
             await WaitUntilAsync(() => wordpress.UpdateCount == 1, "Approved worker did not reach the WordPress mutation endpoint.");
             var update = wordpress.Requests.Single(r => r.Method == "POST" && r.Target == "/wp-json/wp/v2/posts/9301");
@@ -115,7 +115,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
     private static async Task EnsureApprovalQueueInteractiveAsync(IPage page, ILocator card)
     {
         var toggle = card.Locator(".approval-card-title");
-        var approve = card.GetByRole(AriaRole.Button, new() { Name = "Approve", Exact = false });
+        var approve = card.Locator("button.btn.primary").First;
         var deadline = DateTime.UtcNow.AddSeconds(8);
         while (DateTime.UtcNow < deadline)
         {
