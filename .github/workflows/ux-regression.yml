@@ -35,6 +35,8 @@ jobs:
             filter: FullyQualifiedName~CommentsModerationUxTests
           - shard: taxonomy-mutations
             filter: FullyQualifiedName~TaxonomyMutationsUxTests
+          - shard: media-upload
+            filter: FullyQualifiedName~MediaUploadUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
