@@ -55,22 +55,42 @@ public sealed class ExecutionCenterExternalExecutionTests : IDisposable
     }
 
     [Fact]
-    public async Task Simulator_never_completes_external_jobs()
+    public void External_job_never_advances_without_the_real_worker_reporting_state()
     {
-        using var service = new ExecutionCenterService(_databasePath, enableBackgroundWorker: true, enableSeedData: false);
+        using var service = NewService();
         var owner = Guid.NewGuid();
         var job = service.EnqueueExternal(owner, Guid.NewGuid(), "Approved change", "WordPress.Content.Update", "Site", "idem-3", "corr-3");
-
-        await Task.Delay(TimeSpan.FromSeconds(2.6));
 
         var persisted = service.GetJobs(owner).Single(x => x.Id == job.Id);
         persisted.Status.Should().Be("Waiting");
         persisted.Progress.Should().Be(0);
+        persisted.ProcessedItems.Should().Be(0);
     }
 
     [Fact]
-    public void Existing_database_is_upgraded_with_external_execution_columns()
+    public void Interrupted_external_job_returns_only_to_real_idempotent_worker_queue()
     {
+        var owner = Guid.NewGuid();
+        Guid jobId;
+        using (var service = NewService())
+        {
+            var job = service.EnqueueExternal(owner, Guid.NewGuid(), "Approved change", "WordPress.Content.Update", "Site", "idem-recover", "corr-recover");
+            jobId = job.Id;
+            service.TryStartExternal(job.Id, owner).Should().BeTrue();
+        }
+        SqliteConnection.ClearAllPools();
+
+        using var restarted = NewService();
+        var recovered = restarted.GetJobs(owner).Single(x => x.Id == jobId);
+        recovered.Status.Should().Be("Waiting");
+        recovered.Error.Should().Contain("idempotent reconciliation");
+        restarted.GetPendingExternalJobs().Should().ContainSingle(x => x.Id == jobId);
+    }
+
+    [Fact]
+    public void Existing_database_is_upgraded_with_external_execution_columns_without_fabricating_legacy_success()
+    {
+        var legacyId = Guid.NewGuid();
         using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
         {
             connection.Open();
@@ -85,11 +105,21 @@ public sealed class ExecutionCenterExternalExecutionTests : IDisposable
                 CREATE TABLE ExecutionCenterActivities (
                     Id TEXT PRIMARY KEY, JobId TEXT NOT NULL, CreatedAtUtc TEXT NOT NULL, Level TEXT NOT NULL,
                     Message TEXT NOT NULL, FOREIGN KEY (JobId) REFERENCES ExecutionCenterJobs(Id) ON DELETE CASCADE);
+                INSERT INTO ExecutionCenterJobs
+                    (Id,Title,Type,SiteName,Status,Progress,TotalItems,ProcessedItems,CreatedAtUtc)
+                VALUES ($id,'Legacy synthetic','Bulk Publish','WALKA Store','Completed',100,48,48,$created);
                 """;
+            command.Parameters.AddWithValue("$id", legacyId.ToString());
+            command.Parameters.AddWithValue("$created", DateTime.UtcNow.ToString("O"));
             command.ExecuteNonQuery();
         }
 
         using var service = NewService();
+        var legacy = service.GetJobs().Single(x => x.Id == legacyId);
+        legacy.ExecutionMode.Should().Be(ExecutionCenterService.UnavailableExecutionMode);
+        legacy.Status.Should().Be("Failed");
+        legacy.Progress.Should().Be(0);
+
         using var verify = new SqliteConnection($"Data Source={_databasePath}");
         verify.Open();
         using var pragma = verify.CreateCommand();
@@ -101,7 +131,7 @@ public sealed class ExecutionCenterExternalExecutionTests : IDisposable
         columns.Should().Contain(["ExecutionMode", "IdempotencyKey", "CorrelationId"]);
     }
 
-    private ExecutionCenterService NewService() => new(_databasePath, enableBackgroundWorker: false, enableSeedData: false);
+    private ExecutionCenterService NewService() => new(_databasePath);
 
     public void Dispose()
     {
