@@ -63,7 +63,7 @@ public sealed class MediaUploadUxTests(UxTestHost host)
 
             await WaitUntilAsync(() => wordpress.Media is not null,
                 "Upload did not reach the WordPress media REST endpoint.");
-            await page.GetByText(Title, new LocatorGetByTextOptions { Exact = true }).WaitForAsync(
+            await page.GetByText(Title, new PageGetByTextOptions { Exact = true }).WaitForAsync(
                 new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 15000 });
 
             wordpress.Requests.Should().Contain(request =>
