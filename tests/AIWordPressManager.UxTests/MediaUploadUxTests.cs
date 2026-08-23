@@ -52,7 +52,7 @@ public sealed class MediaUploadUxTests(UxTestHost host)
                 Buffer = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2H0kAAAAASUVORK5CYII=")
             });
 
-            var uploadPanel = fileInput.Locator("xpath=ancestor::section[1]");
+            var uploadPanel = fileInput.Locator("xpath=ancestor::*[.//button[contains(normalize-space(.), 'Upload batch to WordPress')]][1]");
             var inputs = uploadPanel.Locator("input:not([type='file'])");
             await inputs.Nth(0).FillAsync(Title);
             await inputs.Nth(1).FillAsync(AltText);
