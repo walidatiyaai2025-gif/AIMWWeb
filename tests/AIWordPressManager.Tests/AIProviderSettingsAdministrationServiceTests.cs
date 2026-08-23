@@ -35,14 +35,14 @@ public sealed class AIProviderSettingsAdministrationServiceTests
         var settings = SampleSettings();
         var keys = new Dictionary<string, string?> { ["OpenAI"] = "secret" };
 
-        (await service.GetAsync()).Should().BeSameAs(runtime.Settings);
+        (await service.GetAsync()).Should().BeEquivalentTo(runtime.Settings);
         await service.SaveAsync(settings, keys);
         await service.ClearApiKeyAsync("OpenAI");
 
         runtime.GetAiSettingsCalls.Should().Be(1);
         runtime.SaveAiSettingsCalls.Should().Be(1);
         runtime.ClearAiProviderApiKeyCalls.Should().Be(1);
-        runtime.LastSavedSettings.Should().BeSameAs(settings);
+        runtime.LastSavedSettings.Should().BeEquivalentTo(settings);
         runtime.LastPlainApiKeys.Should().BeSameAs(keys);
         runtime.LastClearedProvider.Should().Be("OpenAI");
     }
