@@ -58,7 +58,7 @@
         </aside>
 
         <section class="panel ai-composer" aria-labelledby="ai-composer-title">
-            <header><div><span class="workspace-kicker">COMPOSER</span><h3 id="ai-composer-title">@(L.IsArabic ? "إنشاء اقتراح" : "Create suggestion")</h3></div><AppBadge Tone="@(_working ? "warning" : "success")" Text="@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "جاهز" : "Ready"))" /></header>
+            <header><div><span class="workspace-kicker">COMPOSER</span><h3 id="ai-composer-title">@(L.IsArabic ? "إنشاء اقتراح" : "Create suggestion")</h3></div><AppBadge Tone="@(_working ? "warning" : "info")" Text="@(_working ? (L.IsArabic ? "يعمل" : "Working") : (L.IsArabic ? "خامل" : "Idle"))" /></header>
             <div class="ai-options-grid">
                 <label><span>@(L.IsArabic ? "مفتاح القالب" : "Prompt key")</span><input @bind="_promptKey" placeholder="content.rewrite" data-bidi="technical" /></label>
                 <label><span>@(L.IsArabic ? "النموذج الاختياري" : "Optional model")</span><input @bind="_model" placeholder="Default provider model" data-bidi="technical" /></label>
@@ -297,7 +297,6 @@
         : confidence >= .85 ? "High" : confidence >= .65 ? "Medium" : "Low";
     private void Changed() => InvokeAsync(StateHasChanged);
     public void Dispose() => L.Changed -= Changed;
-
     private static string Preview(string value) => value.Length <= 180 ? value : value[..180] + "…";
     private static string PromptTitle(string key)
     {

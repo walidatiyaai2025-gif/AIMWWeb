@@ -21,6 +21,7 @@ public sealed class UxRegressionWorkflowShardingTests
             "comments-moderation",
             "taxonomy-mutations",
             "workspace-hub",
+            "ai-center",
             "visual-breakpoints",
             "rtl"
         }) workflow.Should().Contain($"shard: {shard}");
@@ -35,6 +36,7 @@ public sealed class UxRegressionWorkflowShardingTests
             "CommentsModerationUxTests",
             "TaxonomyMutationsUxTests",
             "WorkspaceHubNavigationUxTests",
+            "AICenterReadinessUxTests",
             "High_risk_pages_hold_visual_contract_at_key_breakpoints",
             "Selected_high_risk_pages_preserve_material_contract_in_arabic_rtl"
         }) workflow.Should().Contain(test);
