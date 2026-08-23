@@ -42,6 +42,7 @@ public sealed class MediaUploadUxTests(UxTestHost host)
                 new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
             response.Should().NotBeNull();
             response!.Status.Should().BeLessThan(400);
+            await EnsureMediaManagerInteractiveAsync(page, wordpress);
 
             var fileInput = page.Locator("input[type='file']");
             await fileInput.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 10000 });
@@ -73,8 +74,8 @@ public sealed class MediaUploadUxTests(UxTestHost host)
                 request.Body.Contains(Title, StringComparison.Ordinal) &&
                 request.Body.Contains(AltText, StringComparison.Ordinal) &&
                 request.Body.Contains(Caption, StringComparison.Ordinal));
-            wordpress.FullSyncRequests.Should().BeGreaterThanOrEqualTo(5,
-                "successful upload must reconcile through the production WordPress synchronization service");
+            wordpress.FullSyncRequests.Should().BeGreaterThanOrEqualTo(10,
+                "interactive refresh plus successful upload must reconcile through the production WordPress synchronization service");
             pageErrors.Should().BeEmpty("real media upload must not produce browser runtime errors");
         }
         finally
@@ -116,6 +117,31 @@ public sealed class MediaUploadUxTests(UxTestHost host)
             catch (TimeoutException) { await page.WaitForTimeoutAsync(150); }
         }
         throw new TimeoutException("Site Details did not become InteractiveServer-ready within 8 seconds.");
+    }
+
+    private static async Task EnsureMediaManagerInteractiveAsync(IPage page, WordPressFixture wordpress)
+    {
+        var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
+        var baseline = wordpress.FullSyncRequests;
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await refresh.ClickAsync(new LocatorClickOptions { Timeout = 1500 });
+                var sideEffectDeadline = DateTime.UtcNow.AddMilliseconds(1500);
+                while (DateTime.UtcNow < sideEffectDeadline)
+                {
+                    if (wordpress.FullSyncRequests >= baseline + 5) return;
+                    await page.WaitForTimeoutAsync(100);
+                }
+            }
+            catch (TimeoutException)
+            {
+                await page.WaitForTimeoutAsync(100);
+            }
+        }
+        throw new TimeoutException("Media Manager did not become InteractiveServer-ready within 8 seconds.");
     }
 
     private async Task<Guid> SeedOwnedSiteAsync(Uri siteUri)
