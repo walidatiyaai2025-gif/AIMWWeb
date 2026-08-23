@@ -178,7 +178,8 @@ public sealed class MediaUploadUxTests(UxTestHost host)
 
         public async ValueTask DisposeAsync()
         {
-            _stop.Cancel(); _listener.Stop();
+            _stop.Cancel();
+            _listener.Stop();
             try { await _loop.WaitAsync(TimeSpan.FromSeconds(5)); } catch { }
             _stop.Dispose();
         }
@@ -213,7 +214,8 @@ public sealed class MediaUploadUxTests(UxTestHost host)
                 {
                     if (!cancellationToken.IsCancellationRequested)
                     {
-                        try { await WriteResponseAsync(stream, 500, JsonSerializer.Serialize(new { error = ex.Message }), null, CancellationToken.None); } catch { }
+                        try { await WriteResponseAsync(stream, 500, JsonSerializer.Serialize(new { error = ex.Message }), null, CancellationToken.None); }
+                        catch (IOException) { }
                     }
                 }
             }
@@ -235,7 +237,8 @@ public sealed class MediaUploadUxTests(UxTestHost host)
             }
             if (request.Method == "GET" && path == "/wp-json/wp/v2/media")
             {
-                MediaState? media; lock (_sync) media = _media;
+                MediaState? media;
+                lock (_sync) media = _media;
                 return Paged(media is null ? Array.Empty<object>() : new[] { ToWordPressMedia(media) });
             }
             if (request.Method == "GET" && path is "/wp-json/wp/v2/posts" or "/wp-json/wp/v2/pages" or "/wp-json/wp/v2/categories" or "/wp-json/wp/v2/tags")
@@ -267,32 +270,89 @@ public sealed class MediaUploadUxTests(UxTestHost host)
 
         private static Response Paged(Array items) => Json(200, items, new Dictionary<string, string>
         {
-            ["X-WP-Total"] = items.Length.ToString(CultureInfo.InvariantCulture), ["X-WP-TotalPages"] = "1"
+            ["X-WP-Total"] = items.Length.ToString(CultureInfo.InvariantCulture),
+            ["X-WP-TotalPages"] = "1"
         });
+
         private static Response Json(int status, object value, IReadOnlyDictionary<string, string>? headers = null) =>
             new(status, JsonSerializer.Serialize(value), headers ?? new Dictionary<string, string>());
 
         private static async Task<RecordedRequest> ReadRequestAsync(NetworkStream stream, CancellationToken cancellationToken)
         {
-            var headerBytes = new List<byte>(); var one = new byte[1];
+            var headerBytes = new List<byte>();
+            var one = new byte[1];
             while (headerBytes.Count < 32768)
             {
                 if (await stream.ReadAsync(one, cancellationToken) == 0) throw new IOException("HTTP headers ended early.");
-                headerBytes.Add(one[0]); var n = headerBytes.Count;
+                headerBytes.Add(one[0]);
+                var n = headerBytes.Count;
                 if (n >= 4 && headerBytes[n - 4] == '\r' && headerBytes[n - 3] == '\n' && headerBytes[n - 2] == '\r' && headerBytes[n - 1] == '\n') break;
             }
+
             var lines = Encoding.ASCII.GetString(headerBytes.ToArray()).Split("\r\n", StringSplitOptions.None);
             var requestLine = lines[0].Split(' ', 3);
             var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var line in lines.Skip(1)) { var colon = line.IndexOf(':'); if (colon > 0) headers[line[..colon].Trim()] = line[(colon + 1)..].Trim(); }
-            var bytes = await ReadExactlyAsync(stream, headers.TryGetValue("Content-Length", out var raw) && int.TryParse(raw, out var length) ? length : 0, cancellationToken);
-            return new RecordedRequest(requestLine[0], requestLine[1], Encoding.UTF8.GetString(bytes), headers.TryGetValue("Authorization", out var authorization) ? authorization : string.Empty);
+            foreach (var line in lines.Skip(1))
+            {
+                var colon = line.IndexOf(':');
+                if (colon > 0) headers[line[..colon].Trim()] = line[(colon + 1)..].Trim();
+            }
+
+            var body = headers.TryGetValue("Transfer-Encoding", out var transfer) && transfer.Contains("chunked", StringComparison.OrdinalIgnoreCase)
+                ? await ReadChunkedAsync(stream, cancellationToken)
+                : Encoding.UTF8.GetString(await ReadExactlyAsync(stream,
+                    headers.TryGetValue("Content-Length", out var raw) && int.TryParse(raw, out var length) ? length : 0,
+                    cancellationToken));
+
+            return new RecordedRequest(requestLine[0], requestLine[1], body,
+                headers.TryGetValue("Authorization", out var authorization) ? authorization : string.Empty);
+        }
+
+        private static async Task<string> ReadChunkedAsync(NetworkStream stream, CancellationToken cancellationToken)
+        {
+            using var output = new MemoryStream();
+            while (true)
+            {
+                var sizeLine = await ReadLineAsync(stream, cancellationToken);
+                var semicolon = sizeLine.IndexOf(';');
+                if (semicolon >= 0) sizeLine = sizeLine[..semicolon];
+                var size = int.Parse(sizeLine, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                if (size == 0)
+                {
+                    await ReadLineAsync(stream, cancellationToken);
+                    break;
+                }
+
+                var chunk = await ReadExactlyAsync(stream, size, cancellationToken);
+                await output.WriteAsync(chunk, cancellationToken);
+                await ReadExactlyAsync(stream, 2, cancellationToken);
+            }
+            return Encoding.UTF8.GetString(output.ToArray());
+        }
+
+        private static async Task<string> ReadLineAsync(NetworkStream stream, CancellationToken cancellationToken)
+        {
+            var bytes = new List<byte>();
+            var one = new byte[1];
+            while (true)
+            {
+                if (await stream.ReadAsync(one, cancellationToken) == 0) throw new IOException("HTTP line ended early.");
+                if (one[0] == '\n') break;
+                if (one[0] != '\r') bytes.Add(one[0]);
+            }
+            return Encoding.ASCII.GetString(bytes.ToArray());
         }
 
         private static async Task<byte[]> ReadExactlyAsync(NetworkStream stream, int length, CancellationToken cancellationToken)
         {
-            var bytes = new byte[length]; var offset = 0;
-            while (offset < length) { var read = await stream.ReadAsync(bytes.AsMemory(offset, length - offset), cancellationToken); if (read == 0) throw new IOException("HTTP body ended early."); offset += read; }
+            var bytes = new byte[length];
+            var offset = 0;
+            while (offset < length)
+            {
+                var read = await stream.ReadAsync(bytes.AsMemory(offset, length - offset), cancellationToken);
+                if (read == 0) throw new IOException("HTTP body ended early.");
+                offset += read;
+            }
             return bytes;
         }
 
@@ -300,12 +360,17 @@ public sealed class MediaUploadUxTests(UxTestHost host)
         {
             var payload = Encoding.UTF8.GetBytes(body);
             var reason = status switch { 200 => "OK", 201 => "Created", 404 => "Not Found", _ => "Internal Server Error" };
-            var text = new StringBuilder().Append($"HTTP/1.1 {status} {reason}\r\n").Append("Content-Type: application/json; charset=utf-8\r\n")
-                .Append($"Content-Length: {payload.Length}\r\n").Append("Connection: close\r\n");
-            if (headers is not null) foreach (var header in headers) text.Append($"{header.Key}: {header.Value}\r\n");
+            var text = new StringBuilder()
+                .Append($"HTTP/1.1 {status} {reason}\r\n")
+                .Append("Content-Type: application/json; charset=utf-8\r\n")
+                .Append($"Content-Length: {payload.Length}\r\n")
+                .Append("Connection: close\r\n");
+            if (headers is not null)
+                foreach (var header in headers) text.Append($"{header.Key}: {header.Value}\r\n");
             text.Append("\r\n");
             await stream.WriteAsync(Encoding.ASCII.GetBytes(text.ToString()), cancellationToken);
-            await stream.WriteAsync(payload, cancellationToken); await stream.FlushAsync(cancellationToken);
+            await stream.WriteAsync(payload, cancellationToken);
+            await stream.FlushAsync(cancellationToken);
         }
 
         public sealed record RecordedRequest(string Method, string Target, string Body, string Authorization);
