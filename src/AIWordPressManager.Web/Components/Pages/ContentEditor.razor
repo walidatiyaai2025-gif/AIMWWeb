@@ -69,7 +69,7 @@ else
                         </section>
 
                         <section class="panel editor-seo-card">
-                            <div class="editor-card-head"><div><h2>SEO</h2><p>@(L.IsArabic ? "معاينة مبدئية للعنوان والوصف والرابط." : "Preliminary title, description, and URL preview.")</p></div><span class="seo-score-chip @SeoClass">@SeoScore/100</span></div>
+                            <div class="editor-card-head"><div><h2>@(L.IsArabic ? "معاينة البحث" : "SEARCH PREVIEW")</h2><p>@(L.IsArabic ? "معاينة تحريرية محلية للعنوان والوصف والرابط فقط. هذه ليست نتيجة تدقيق SEO؛ استخدم مساحة SEO للحصول على تحليل حقيقي." : "Local editorial preview of title, description, and URL only. This is not an SEO audit score; use the SEO workspace for real analysis.")</p></div><a class="btn compact" href="@($"/sites/{SiteId}/seo")">@(L.IsArabic ? "فتح تحليل SEO" : "Open SEO analysis")</a></div>
                             <div class="search-preview-card"><small>@_site.SiteUrl</small><strong>@PlainText(_model.Title)</strong><p>@PlainText(_model.Excerpt)</p><code>@_site.SiteUrl.TrimEnd('/')/@_model.Slug</code></div>
                             <div class="seo-check-grid"><span class="@CheckClass(TitleLength is >= 30 and <= 65)">@(L.IsArabic ? "طول العنوان" : "Title length") <b>@TitleLength</b></span><span class="@CheckClass(ExcerptLength is >= 80 and <= 160)">@(L.IsArabic ? "طول الوصف" : "Description length") <b>@ExcerptLength</b></span><span class="@CheckClass(!string.IsNullOrWhiteSpace(_model.Slug))">Slug</span><span class="@CheckClass(_model.FeaturedMediaId > 0)">@(L.IsArabic ? "صورة بارزة" : "Featured image")</span></div>
                         </section>
@@ -141,8 +141,6 @@ else
     private bool CanEditContent => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private int TitleLength => PlainText(_model?.Title ?? string.Empty).Length;
     private int ExcerptLength => PlainText(_model?.Excerpt ?? string.Empty).Length;
-    private int SeoScore => (_model is null ? 0 : 20 + (TitleLength is >= 30 and <= 65 ? 25 : 0) + (ExcerptLength is >= 80 and <= 160 ? 25 : 0) + (!string.IsNullOrWhiteSpace(_model.Slug) ? 15 : 0) + (_model.FeaturedMediaId > 0 ? 15 : 0));
-    private string SeoClass => SeoScore >= 80 ? "good" : SeoScore >= 50 ? "medium" : "poor";
     private string StatusBadgeClass => _model?.Status == "publish" ? "success" : _model?.Status == "draft" ? "warning" : string.Empty;
 
     protected override void OnInitialized() => L.Changed += Changed;

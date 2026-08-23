@@ -17,7 +17,8 @@ This ledger records user-visible capabilities inspected end-to-end for Issue #18
 | `/sites/{siteId}/media` | Upload media | `Content.Edit` → `MediaBatchUploadPanel` → authenticated `POST /wp-json/wp/v2/media` → production sync → UI | BROWSER VERIFIED | `MediaUploadUxTests`; `MediaManagerProductionClosureContractTests` | PR #196; merged exact-head green |
 | `/sites/{siteId}/media` | Update title/slug/alt/caption/description | `Content.Edit` → `WordPressMediaWebService.UpdateMetadataAsync` → authenticated `POST /wp-json/wp/v2/media/{id}` → reconciliation → UI | BROWSER VERIFIED | `MediaUpdateDeleteUxTests` | PR #197; merged exact-head green as `b1e3b6b143075ae8552e7720e898119ffb6ab9f7` |
 | `/sites/{siteId}/media` | Permanently delete media | confirmation + `Content.Edit` → `DELETE /wp-json/wp/v2/media/{id}?force=true` → SQLite `IsAvailable=false` reconciliation → item removed from UI | BROWSER VERIFIED | `MediaUpdateDeleteUxTests` | PR #197; none |
-| all production `.razor` surfaces | Prevent reintroduction of placeholder/simulated runtime constructs | repository-wide static anti-mock guard in normal unit-test CI | CONTRACT VERIFIED | `RazorProductionAntiMockGuardTests` | Current #183 global-guard slice; must be exact-head green before merge |
+| all production `.razor` surfaces | Prevent reintroduction of placeholder/simulated runtime constructs | repository-wide static anti-mock guard in normal unit-test CI | CONTRACT VERIFIED | `RazorProductionAntiMockGuardTests` | PR #198; merged exact-head green as `18ae9a3d8608f1b5b0dbc8573988bc46400c8fc1` |
+| `/sites/{siteId}/content/{post|page}/{id}/edit` | Inspect title/excerpt/URL before saving | local editorial search preview only; authoritative SEO analysis remains `/sites/{siteId}/seo` | CONTRACT VERIFIED | `ContentEditorSeoHonestyContractTests`; `RazorProductionAntiMockGuardTests` | Current #183 content-editor honesty slice; post/page mutation browser acceptance remains required separately |
 
 ## Closure evidence
 
@@ -28,15 +29,16 @@ This ledger records user-visible capabilities inspected end-to-end for Issue #18
 - Comment and taxonomy browser journeys begin from real WordPress credential save/test and verify authenticated REST mutations plus reconciled UI state.
 - Media upload is owned only by `MediaBatchUploadPanel`; the duplicate legacy inline uploader was removed in PR #195. PR #196 browser-verifies upload at the WordPress REST boundary.
 - PR #197 browser-verifies Media metadata update and permanent deletion. Deletion is accepted only after the real confirmation dialog, authenticated `force=true` WordPress mutation, local SQLite availability reconciliation, and disappearance from the rendered Media Manager UI.
+- PR #198 is merged on `main` with exact-head green CI and extends anti-regression from page-specific contracts to every production `.razor` file. It rejects placeholder navigation, `NotImplementedException`, simulated non-cancellable work delays in UI surfaces, and common Mock/Fake/Sample/Demo runtime dataset declarations.
+- The Content Editor no longer presents its local title/excerpt/slug/featured-image heuristics as a numeric SEO score. It labels the section as a local search preview, explicitly states that it is not an SEO audit score, and links to the real per-site SEO workspace for authoritative analysis. The real direct-save path remains `Content.Edit` → `IWordPressPostEditorService.UpdateAsync` → WordPress → synchronization, and approval submission remains bound to `ApprovalWorkflowService`.
 - The production tree currently has no known `href="#"`, `javascript:` placeholder navigation, or `NotImplementedException` occurrence from the Issue #183 scan.
-- `RazorProductionAntiMockGuardTests` extends anti-regression from page-specific contracts to every production `.razor` file. It rejects placeholder navigation, `NotImplementedException`, simulated delay primitives in UI surfaces, and common Mock/Fake/Sample/Demo runtime dataset declarations. This guard is intentionally static and does not replace browser acceptance for critical real mutations.
 
 ## Remaining closure work
 
 Issue #183 remains open. Before final closure:
 
 1. Continue the dedicated user-facing scan across Posts/Pages, Approvals, Users/RBAC/Sessions, Reports/Exports, Settings, synchronization/operations and other visible surfaces. Every suspicious action must be traced to a real service/runtime destination or made explicitly unavailable.
-2. Add browser acceptance for remaining critical real flows selected from the scan, prioritizing post/page mutations and approval execution/reconciliation. Session revocation remains a candidate.
+2. Add browser acceptance for remaining critical real flows selected from the scan, prioritizing post/page WordPress mutations and approval execution/reconciliation. Session revocation remains a candidate.
 3. Do not duplicate the active REL-003 Backup/Restore ownership stream; consume its merged production state when that dependency lands, then inspect the resulting visible Backup/Restore behavior under #183.
 4. Keep repository-wide anti-mock guards active in CI and add narrower regression contracts whenever a concrete false-success/no-op pattern is removed.
 5. Close #183 only after the full Razor/user-facing scan is complete, required exact-head CI is green, all closure work is present on latest `main`, and no unresolved blocker remains.
