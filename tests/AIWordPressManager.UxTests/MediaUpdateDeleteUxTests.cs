@@ -84,11 +84,12 @@ public sealed class MediaUpdateDeleteUxTests(UxTestHost host)
             await confirm.ClickAsync();
 
             await WaitUntilAsync(() => wordpress.DeleteCount == 1, "Permanent delete did not reach WordPress.");
-            await WaitUntilAsync(() => wordpress.FullSyncRequests >= 15, "Permanent delete did not complete WordPress reconciliation.");
+            await WaitForMediaUnavailableAsync(siteId, 8101);
             await ExactText(page, UpdatedTitle).Last.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 15000 });
             wordpress.Requests.Should().Contain(r => r.Method == "DELETE" &&
                 r.Target == "/wp-json/wp/v2/media/8101?force=true" && r.Authorization.StartsWith("Basic ", StringComparison.Ordinal));
-            wordpress.FullSyncRequests.Should().BeGreaterThanOrEqualTo(15);
+            wordpress.FullSyncRequests.Should().BeGreaterThanOrEqualTo(10,
+                "the initial refresh and metadata update must both complete the production five-endpoint synchronization sweep");
             errors.Should().BeEmpty("real media mutations must not produce browser runtime errors");
         }
         finally { await context.CloseBoundedAsync("media-update-delete"); }
@@ -148,6 +149,21 @@ public sealed class MediaUpdateDeleteUxTests(UxTestHost host)
             catch (TimeoutException) { await page.WaitForTimeoutAsync(100); }
         }
         throw new TimeoutException("Media Manager did not become interactive.");
+    }
+
+    private async Task WaitForMediaUnavailableAsync(Guid siteId, int wordPressId)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline)
+        {
+            await using var db = CreateDbContext();
+            var record = await db.WordPressMediaRecords
+                .AsNoTracking()
+                .SingleOrDefaultAsync(x => x.SiteId == siteId && x.WordPressId == wordPressId);
+            if (record is not null && !record.IsAvailable) return;
+            await Task.Delay(100);
+        }
+        throw new TimeoutException("Permanent delete did not reconcile the local WordPress media cache.");
     }
 
     private async Task<Guid> SeedSiteAsync(Uri siteUri)
