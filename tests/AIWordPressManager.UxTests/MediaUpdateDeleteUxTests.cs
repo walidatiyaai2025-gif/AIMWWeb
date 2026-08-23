@@ -63,6 +63,7 @@ public sealed class MediaUpdateDeleteUxTests(UxTestHost host)
             await save.ClickAsync();
 
             await WaitUntilAsync(() => wordpress.UpdateCount == 1, "Metadata save did not reach WordPress.");
+            await WaitUntilAsync(() => wordpress.FullSyncRequests >= 10, "Metadata save did not complete WordPress reconciliation.");
             await ExactText(page, UpdatedTitle).Last.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15000 });
             var update = wordpress.Requests.Single(r => r.Method == "POST" && r.Target == "/wp-json/wp/v2/media/8101");
             update.Authorization.Should().StartWith("Basic ");
@@ -83,6 +84,7 @@ public sealed class MediaUpdateDeleteUxTests(UxTestHost host)
             await confirm.ClickAsync();
 
             await WaitUntilAsync(() => wordpress.DeleteCount == 1, "Permanent delete did not reach WordPress.");
+            await WaitUntilAsync(() => wordpress.FullSyncRequests >= 15, "Permanent delete did not complete WordPress reconciliation.");
             await ExactText(page, UpdatedTitle).Last.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 15000 });
             wordpress.Requests.Should().Contain(r => r.Method == "DELETE" &&
                 r.Target == "/wp-json/wp/v2/media/8101?force=true" && r.Authorization.StartsWith("Basic ", StringComparison.Ordinal));
