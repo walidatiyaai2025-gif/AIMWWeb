@@ -18,20 +18,10 @@ public sealed class MediaManagerProductionClosureContractTests
         source.Should().Contain("CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit)",
             "media mutations must retain the Content.Edit authorization boundary");
 
+        source.Should().NotContain("<InputFile", "the page must not re-introduce a second inline upload workspace beside MediaBatchUploadPanel");
         source.Should().NotContain("href=\"#\"", "media actions must not regress to placeholder navigation");
         source.Should().NotContain("javascript:", "media actions must not regress to javascript placeholders");
         source.Should().NotContain("NotImplementedException", "visible media capability must be real or explicitly unavailable");
-    }
-
-    [Fact]
-    public void Media_manager_does_not_reintroduce_the_removed_inline_upload_prototype()
-    {
-        var source = File.ReadAllText(FindRepositoryFile("src/AIWordPressManager.Web/Components/Pages/MediaManager.razor"));
-
-        source.Should().NotContain("<InputFile", "MediaManager must delegate visible upload UI to MediaBatchUploadPanel");
-        source.Should().NotContain("UploadClickedAsync", "the obsolete inline upload click path must not return");
-        source.Should().NotContain("OnFileSelected", "the obsolete inline file-selection handler must not return");
-        source.Should().NotContain("SelectedFileIsValid", "the obsolete inline upload validation state must not return");
     }
 
     private static string FindRepositoryFile(string relativePath)
