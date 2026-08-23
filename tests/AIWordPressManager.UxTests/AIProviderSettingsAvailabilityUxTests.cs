@@ -49,14 +49,21 @@ public sealed class AIProviderSettingsAvailabilityUxTests(UxTestHost host)
                 text.Should().Contain("cannot be enabled until a real runtime adapter is installed");
             }
 
+            // The page is prerendered before its InteractiveServer circuit is attached. Prove the
+            // production save handler is interactive first, then mutate provider state. This avoids
+            // accepting a DOM-only checkbox change that Blazor never observed.
+            var save = page.Locator("button:has-text('Save AI settings')");
+            (await save.CountAsync()).Should().BeGreaterThan(0);
+            await save.First.ClickAsync();
+            await page.GetByText("AI provider settings were saved securely.", new PageGetByTextOptions { Exact = true })
+                .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+
+            openAiCard = page.Locator("article[data-provider='OpenAI']");
             var openAiToggle = openAiCard.Locator("#ai-provider-openai-enabled");
             var originalEnabled = await openAiToggle.IsCheckedAsync();
             await openAiToggle.SetCheckedAsync(!originalEnabled);
 
-            var save = page.Locator("button:has-text('Save AI settings')");
-            (await save.CountAsync()).Should().BeGreaterThan(0);
             await save.First.ClickAsync();
-
             await page.GetByText("AI provider settings were saved securely.", new PageGetByTextOptions { Exact = true })
                 .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
@@ -66,8 +73,15 @@ public sealed class AIProviderSettingsAvailabilityUxTests(UxTestHost host)
             openAiToggle = openAiCard.Locator("#ai-provider-openai-enabled");
             (await openAiToggle.IsCheckedAsync()).Should().Be(!originalEnabled, "the UI save must reach persisted application settings");
 
-            await openAiToggle.SetCheckedAsync(originalEnabled);
+            // Establish the new circuit after reload before restoring the fixture state.
             save = page.Locator("button:has-text('Save AI settings')");
+            await save.First.ClickAsync();
+            await page.GetByText("AI provider settings were saved securely.", new PageGetByTextOptions { Exact = true })
+                .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+
+            openAiCard = page.Locator("article[data-provider='OpenAI']");
+            openAiToggle = openAiCard.Locator("#ai-provider-openai-enabled");
+            await openAiToggle.SetCheckedAsync(originalEnabled);
             await save.First.ClickAsync();
             await page.GetByText("AI provider settings were saved securely.", new PageGetByTextOptions { Exact = true })
                 .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
