@@ -289,7 +289,7 @@ public sealed class MediaUpdateDeleteUxTests(UxTestHost host)
         };
 
         private static Response Paged(Array items) => Json(200, items, new() { ["X-WP-Total"] = items.Length.ToString(CultureInfo.InvariantCulture), ["X-WP-TotalPages"] = "1" });
-        private static Response Json(int status, object value, IReadOnlyDictionary<string, string>? headers = null) => new(status, JsonSerializer.Serialize(value), headers ?? new Dictionary<string, string>());
+        private static Response Json(int status, object value, Dictionary<string, string>? headers = null) => new(status, JsonSerializer.Serialize(value), headers ?? new Dictionary<string, string>());
 
         private static async Task<RecordedRequest> ReadRequestAsync(NetworkStream stream, CancellationToken token)
         {
