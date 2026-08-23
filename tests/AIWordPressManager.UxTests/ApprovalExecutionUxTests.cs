@@ -47,8 +47,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
             await page.Locator(".content-editor-pro").FillAsync("<p>Approved execution persisted through the hosted worker.</p>");
             await page.Locator(".excerpt-editor-pro").FillAsync("Approved execution browser acceptance excerpt.");
 
-            var submit = page.GetByRole(AriaRole.Button, new() { Name = "Send for approval", Exact = true });
-            await submit.ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Send for approval", Exact = true }).ClickAsync();
             await page.GetByText("Change submitted for approval.", new PageGetByTextOptions { Exact = false })
                 .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
             wordpress.UpdateCount.Should().Be(0, "submitting an approval must not mutate WordPress before approval");
@@ -61,12 +60,12 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
             var approvalTitle = $"Update post #9301 — {ApprovedTitle}";
             var cardTitle = page.GetByText(approvalTitle, new PageGetByTextOptions { Exact = true });
             await cardTitle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
-            await EnsureApprovalQueueInteractiveAsync(page, cardTitle);
-
             var card = cardTitle.Locator("xpath=ancestor::article[contains(@class,'approval-card')][1]");
+            await EnsureApprovalQueueInteractiveAsync(page, card);
+
             var execute = card.Locator("input[type='checkbox']");
             (await execute.IsCheckedAsync()).Should().BeTrue("executable WordPress content approvals default to real execution");
-            await card.GetByRole(AriaRole.Button, new() { Name = "Approve", Exact = true }).ClickAsync();
+            await card.GetByRole(AriaRole.Button, new() { Name = "Approve", Exact = false }).ClickAsync();
 
             await WaitUntilAsync(() => wordpress.UpdateCount == 1, "Approved worker did not reach the WordPress mutation endpoint.");
             var update = wordpress.Requests.Single(r => r.Method == "POST" && r.Target == "/wp-json/wp/v2/posts/9301");
@@ -80,13 +79,11 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
             }
 
             await WaitUntilAsync(() => wordpress.FullSyncRequests >= 5, "Approved worker did not reconcile WordPress after mutation.");
-            var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
-            await refresh.ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true }).ClickAsync();
             await card.GetByText("Executed", new LocatorGetByTextOptions { Exact = true })
                 .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
             await card.GetByText("Execution job", new LocatorGetByTextOptions { Exact = false })
                 .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
-
             errors.Should().BeEmpty("real approval execution must not produce browser runtime errors");
         }
         finally
@@ -115,20 +112,24 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
         throw new TimeoutException("Content Editor did not become interactive.");
     }
 
-    private static async Task EnsureApprovalQueueInteractiveAsync(IPage page, ILocator title)
+    private static async Task EnsureApprovalQueueInteractiveAsync(IPage page, ILocator card)
     {
+        var toggle = card.Locator(".approval-card-title");
+        var approve = card.GetByRole(AriaRole.Button, new() { Name = "Approve", Exact = false });
         var deadline = DateTime.UtcNow.AddSeconds(8);
         while (DateTime.UtcNow < deadline)
         {
             try
             {
-                await title.ClickAsync(new() { Timeout = 1500 });
-                var card = title.Locator("xpath=ancestor::article[contains(@class,'approval-card')][1]");
-                await card.GetByRole(AriaRole.Button, new() { Name = "Approve", Exact = true })
-                    .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 750 });
+                await toggle.ClickAsync(new() { Timeout = 1500 });
+                await approve.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 750 });
                 return;
             }
-            catch (TimeoutException) { await page.WaitForTimeoutAsync(100); }
+            catch (TimeoutException)
+            {
+                if (await approve.IsVisibleAsync()) return;
+                await page.WaitForTimeoutAsync(100);
+            }
         }
         throw new TimeoutException("Approval Queue did not become interactive.");
     }
@@ -252,8 +253,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
                 {
                     var request = await ReadRequestAsync(stream, token);
                     lock (_sync) _requests.Add(request);
-                    var response = Route(request);
-                    await WriteResponseAsync(stream, response, token);
+                    await WriteResponseAsync(stream, Route(request), token);
                 }
                 catch (Exception ex) when (ex is IOException or JsonException or OperationCanceledException)
                 {
