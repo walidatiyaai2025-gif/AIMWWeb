@@ -95,6 +95,7 @@ builder.Services.AddSingleton<BulkContentOperationQueue>();
 builder.Services.AddSingleton<SiteOperationHistoryService>();
 builder.Services.AddHostedService<AutomationSchedulerService>();
 builder.Services.AddHostedService<BulkContentOperationWorker>();
+builder.Services.AddHostedService<ApprovedChangeExecutionWorker>();
 builder.Services.AddHostedService<EmailOutboxWorker>();
 builder.Services.AddHostedService<EmailScheduleWorker>();
 builder.Services.AddHostedService<SecurityAuditEmailAlertWorker>();
