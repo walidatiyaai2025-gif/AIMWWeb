@@ -37,10 +37,7 @@ public sealed class AICenterReadinessUxTests(UxTestHost host)
             (composerText.Contains("Idle", StringComparison.Ordinal) || composerText.Contains("خامل", StringComparison.Ordinal))
                 .Should().BeTrue("an idle composer is not proof that the configured AI provider is ready");
 
-            var refresh = page.GetByText("Refresh data", new PageGetByTextOptions { Exact = true });
-            if (await refresh.CountAsync() == 0)
-                refresh = page.GetByText("تحديث البيانات", new PageGetByTextOptions { Exact = true });
-
+            var refresh = page.Locator("button:has-text('Refresh data'), button:has-text('تحديث البيانات')");
             (await refresh.CountAsync()).Should().BeGreaterThan(0);
             await refresh.First.ClickAsync();
 
