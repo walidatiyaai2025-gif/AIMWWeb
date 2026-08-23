@@ -211,8 +211,6 @@ else
     [Parameter] public Guid SiteId { get; set; }
     private AIWordPressManager.Domain.Entities.Site? _site;
     private ContentExplorerView? _data;
-    private IBrowserFile? _selectedFile;
-    private string _uploadTitle = string.Empty, _altText = string.Empty, _caption = string.Empty;
     private string? _message;
     private bool _loading = true, _busy, _aiBusy, _isError;
 
@@ -231,7 +229,6 @@ else
         ? new[] { "المعرف", "العنوان", "نوع الوسائط", "نوع MIME", "الرابط", "آخر تعديل" }
         : new[] { "Id", "Title", "Media type", "MIME type", "URL", "Modified" };
     private string CsvFileName => $"media-{SiteId:N}-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
-    private bool SelectedFileIsValid => _selectedFile is not null && MediaUploadPolicy.Validate(_selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType).IsValid;
     private bool IsEditingImage => _editing is not null && (_editing.MediaType.Equals("image", StringComparison.OrdinalIgnoreCase) || _editing.MimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
     private int OptimizationScore => _editing is null ? 0
         : (!string.IsNullOrWhiteSpace(_editTitle) ? 25 : 0)
@@ -250,41 +247,10 @@ else
         _loading = false;
     }
 
-    private void OnFileSelected(InputFileChangeEventArgs args)
-    {
-        if (!CanEditContent) return;
-        _selectedFile = args.File;
-        if (string.IsNullOrWhiteSpace(_uploadTitle)) _uploadTitle = Path.GetFileNameWithoutExtension(args.File.Name);
-        var validation = MediaUploadPolicy.Validate(args.File.Name, args.File.Size, args.File.ContentType);
-        _isError = !validation.IsValid;
-        _message = validation.IsValid ? null : L.TranslateMessage(validation.Message);
-    }
-
-    private Task UploadClickedAsync(MouseEventArgs _) => UploadAsync();
     private Task RefreshClickedAsync(MouseEventArgs _) => RefreshAsync();
     private Task SaveOptimizationClickedAsync(MouseEventArgs _) => SaveOptimizationAsync();
     private Task SuggestAltClickedAsync(MouseEventArgs _) => SuggestAltAsync();
     private Task CancelOptimizationClickedAsync(MouseEventArgs _) { ClearOptimization(); return Task.CompletedTask; }
-
-    private async Task UploadAsync()
-    {
-        if (_selectedFile is null) return;
-        try
-        {
-            CurrentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
-            _busy = true; _isError = false; _message = null;
-            var result = await MediaService.UploadAsync(SiteId, _selectedFile, _uploadTitle, _altText, _caption);
-            _isError = !result.IsSuccess;
-            _message = L.TranslateMessage(result.Message);
-            if (result.IsSuccess)
-            {
-                await RefreshLocalAsync();
-                _selectedFile = null; _uploadTitle = string.Empty; _altText = string.Empty; _caption = string.Empty;
-            }
-        }
-        catch (Exception ex) { _isError = true; _message = L.TranslateMessage(ex.Message); }
-        finally { _busy = false; }
-    }
 
     private async Task OpenOptimizationAsync(MediaExplorerItem item)
     {
