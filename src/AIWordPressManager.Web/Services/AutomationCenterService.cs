@@ -7,6 +7,11 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class AutomationCenterService
 {
+    public const string SynchronizationType = "Synchronization";
+    public const string SeoAuditType = "SEO Audit";
+    public const string UnavailableStatus = "Unavailable";
+
+    private static readonly string[] SupportedTypes = [SynchronizationType, SeoAuditType];
     private readonly object _sync = new();
     private readonly string _connectionString;
 
@@ -15,9 +20,6 @@ public sealed class AutomationCenterService
         var dataDirectory = paths.GetApplicationDataDirectory();
         var databasePath = Path.Combine(dataDirectory, "automation-center.db");
 
-        // Prior versions always stored this database in the production LocalAppData
-        // folder, even when the app was running in Development. Preserve those jobs
-        // when the corrected environment-specific path is used for the first time.
         var legacyPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AIWordPressManager",
@@ -34,12 +36,11 @@ public sealed class AutomationCenterService
             }
             catch (IOException)
             {
-                // Keep startup resilient if the legacy database is in use. A fresh
-                // environment-specific store can still be created safely below.
+                // The environment-specific store remains authoritative when legacy migration cannot acquire the old file.
             }
             catch (UnauthorizedAccessException)
             {
-                // A permissions issue in the legacy location must not block startup.
+                // Startup remains available; unsupported legacy storage is not presented as a successful migration.
             }
         }
 
@@ -50,7 +51,17 @@ public sealed class AutomationCenterService
             Cache = SqliteCacheMode.Shared
         }.ToString();
         Initialize();
+        RetireUnsupportedJobs();
         RecoverInterruptedJobs();
+    }
+
+    public static bool IsSupportedType(string? type) =>
+        SupportedTypes.Any(candidate => string.Equals(candidate, type?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    public static void RequireSupportedType(string? type)
+    {
+        if (!IsSupportedType(type))
+            throw new InvalidOperationException("This automation type is unavailable because no production runtime worker is installed.");
     }
 
     public IReadOnlyList<AutomationJob> GetJobs()
@@ -87,9 +98,11 @@ public sealed class AutomationCenterService
     {
         if (string.IsNullOrWhiteSpace(model.Name)) throw new InvalidOperationException("اسم المهمة مطلوب.");
         if (model.SiteId == Guid.Empty) throw new InvalidOperationException("اختر الموقع.");
+        RequireSupportedType(model.Type);
 
         var id = model.Id == Guid.Empty ? Guid.NewGuid() : model.Id;
         var now = DateTime.UtcNow;
+        var normalizedType = SupportedTypes.First(x => string.Equals(x, model.Type.Trim(), StringComparison.OrdinalIgnoreCase));
         var nextRun = CalculateNextRun(now, model.Frequency, model.IntervalValue, model.TimeOfDay);
 
         lock (_sync)
@@ -105,7 +118,7 @@ public sealed class AutomationCenterService
             command.Parameters.AddWithValue("$name", model.Name.Trim());
             command.Parameters.AddWithValue("$siteId", model.SiteId.ToString());
             command.Parameters.AddWithValue("$siteName", model.SiteName?.Trim() ?? string.Empty);
-            command.Parameters.AddWithValue("$type", model.Type);
+            command.Parameters.AddWithValue("$type", normalizedType);
             command.Parameters.AddWithValue("$frequency", NormalizeFrequency(model.Frequency));
             command.Parameters.AddWithValue("$interval", Math.Max(1, model.IntervalValue));
             command.Parameters.AddWithValue("$time", model.TimeOfDay ?? "00:00");
@@ -123,6 +136,9 @@ public sealed class AutomationCenterService
         lock (_sync)
         {
             using var connection = Open();
+            var job = GetJob(connection, id) ?? throw new KeyNotFoundException("Automation job was not found.");
+            if (enabled) RequireSupportedType(job.Type);
+
             using var command = connection.CreateCommand();
             command.CommandText = "UPDATE AutomationJobs SET Enabled=$enabled,LastStatus=$status,UpdatedAtUtc=$now WHERE Id=$id";
             command.Parameters.AddWithValue("$enabled", enabled ? 1 : 0);
@@ -138,6 +154,9 @@ public sealed class AutomationCenterService
         lock (_sync)
         {
             using var connection = Open();
+            var job = GetJob(connection, id) ?? throw new KeyNotFoundException("Automation job was not found.");
+            RequireSupportedType(job.Type);
+
             using var command = connection.CreateCommand();
             command.CommandText = "UPDATE AutomationJobs SET Enabled=1,NextRunUtc=$now,LastStatus='Scheduled',UpdatedAtUtc=$now WHERE Id=$id AND LastStatus <> 'Running'";
             command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
@@ -166,7 +185,13 @@ public sealed class AutomationCenterService
             using var transaction = connection.BeginTransaction();
             using var select = connection.CreateCommand();
             select.Transaction = transaction;
-            select.CommandText = "SELECT Id,Name,SiteId,SiteName,Type,Frequency,IntervalValue,TimeOfDay,Enabled,RetryCount,LastRunUtc,NextRunUtc,LastStatus,CreatedAtUtc FROM AutomationJobs WHERE Enabled=1 AND NextRunUtc <= $now AND LastStatus <> 'Running' ORDER BY NextRunUtc";
+            select.CommandText = """
+                SELECT Id,Name,SiteId,SiteName,Type,Frequency,IntervalValue,TimeOfDay,Enabled,RetryCount,LastRunUtc,NextRunUtc,LastStatus,CreatedAtUtc
+                FROM AutomationJobs
+                WHERE Enabled=1 AND NextRunUtc <= $now AND LastStatus <> 'Running'
+                  AND Type IN ('Synchronization','SEO Audit')
+                ORDER BY NextRunUtc;
+                """;
             select.Parameters.AddWithValue("$now", Format(utcNow));
             var due = new List<AutomationJob>();
             using (var reader = select.ExecuteReader()) while (reader.Read()) due.Add(ReadJob(reader));
@@ -187,7 +212,10 @@ public sealed class AutomationCenterService
 
     public void CompleteRun(AutomationJob job, string status, string message)
     {
-        var normalizedStatus = status is "Completed" or "Queued" or "Failed" ? status : "Completed";
+        var normalizedStatus = status is "Completed" or "Failed" ? status : "Failed";
+        var normalizedMessage = string.IsNullOrWhiteSpace(message)
+            ? (normalizedStatus == "Completed" ? "Automation completed with runtime evidence." : "Automation failed without a runtime result message.")
+            : message.Trim();
         var now = DateTime.UtcNow;
         var next = CalculateNextRun(now, job.Frequency, job.IntervalValue, job.TimeOfDay);
 
@@ -213,7 +241,7 @@ public sealed class AutomationCenterService
             history.Parameters.AddWithValue("$start", Format(job.LastRunUtc ?? now));
             history.Parameters.AddWithValue("$finish", Format(now));
             history.Parameters.AddWithValue("$status", normalizedStatus);
-            history.Parameters.AddWithValue("$message", message);
+            history.Parameters.AddWithValue("$message", normalizedMessage);
             history.ExecuteNonQuery();
             transaction.Commit();
         }
@@ -240,19 +268,55 @@ public sealed class AutomationCenterService
         command.ExecuteNonQuery();
     }
 
+    private void RetireUnsupportedJobs()
+    {
+        lock (_sync)
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                UPDATE AutomationJobs
+                SET Enabled=0, LastStatus=$unavailable, UpdatedAtUtc=$now
+                WHERE Type NOT IN ('Synchronization','SEO Audit');
+                """;
+            command.Parameters.AddWithValue("$unavailable", UnavailableStatus);
+            command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
+            command.ExecuteNonQuery();
+        }
+    }
+
     private void RecoverInterruptedJobs()
     {
         lock (_sync)
         {
             using var connection = Open();
             using var command = connection.CreateCommand();
-            command.CommandText = "UPDATE AutomationJobs SET LastStatus='Scheduled',NextRunUtc=$now,UpdatedAtUtc=$now WHERE LastStatus='Running'";
+            command.CommandText = """
+                UPDATE AutomationJobs
+                SET LastStatus='Scheduled',NextRunUtc=$now,UpdatedAtUtc=$now
+                WHERE LastStatus='Running' AND Type IN ('Synchronization','SEO Audit');
+                """;
             command.Parameters.AddWithValue("$now", Format(DateTime.UtcNow));
             command.ExecuteNonQuery();
         }
     }
 
-    private SqliteConnection Open() { var connection = new SqliteConnection(_connectionString); connection.Open(); return connection; }
+    private static AutomationJob? GetJob(SqliteConnection connection, Guid id)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id,Name,SiteId,SiteName,Type,Frequency,IntervalValue,TimeOfDay,Enabled,RetryCount,LastRunUtc,NextRunUtc,LastStatus,CreatedAtUtc FROM AutomationJobs WHERE Id=$id LIMIT 1";
+        command.Parameters.AddWithValue("$id", id.ToString());
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? ReadJob(reader) : null;
+    }
+
+    private SqliteConnection Open()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        return connection;
+    }
+
     private static AutomationJob ReadJob(SqliteDataReader r) => new(Guid.Parse(r.GetString(0)), r.GetString(1), Guid.Parse(r.GetString(2)), r.GetString(3), r.GetString(4), r.GetString(5), r.GetInt32(6), r.GetString(7), r.GetInt32(8) == 1, r.GetInt32(9), r.IsDBNull(10) ? null : Parse(r.GetString(10)), Parse(r.GetString(11)), r.GetString(12), Parse(r.GetString(13)));
     private static string NormalizeFrequency(string? value) => value?.ToLowerInvariant() is "hourly" or "weekly" or "monthly" ? value.ToLowerInvariant() : "daily";
 
@@ -275,7 +339,6 @@ public sealed class AutomationCenterService
 
 public sealed class AutomationSchedulerService(
     AutomationCenterService automation,
-    ExecutionCenterService execution,
     IServiceScopeFactory scopeFactory,
     IConfiguration configuration,
     ILogger<AutomationSchedulerService> logger) : BackgroundService
@@ -289,12 +352,18 @@ public sealed class AutomationSchedulerService(
 
     private async Task ProcessDueJobsAsync(CancellationToken cancellationToken)
     {
-        if (!configuration.GetValue<bool>("Database:SetupComplete"))
-            return;
+        if (!configuration.GetValue<bool>("Database:SetupComplete")) return;
 
         IReadOnlyList<AutomationJob> dueJobs;
-        try { dueJobs = automation.ClaimDueJobs(DateTime.UtcNow); }
-        catch (Exception ex) { logger.LogError(ex, "Failed to claim due automation jobs"); return; }
+        try
+        {
+            dueJobs = automation.ClaimDueJobs(DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to claim due automation jobs");
+            return;
+        }
 
         foreach (var job in dueJobs)
         {
@@ -304,7 +373,10 @@ public sealed class AutomationSchedulerService(
                 automation.CompleteRun(job, result.Status, result.Message);
                 logger.LogInformation("Automation {AutomationId} finished with {Status} for site {SiteId}", job.Id, result.Status, job.SiteId);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
             catch (Exception ex)
             {
                 automation.CompleteRun(job, "Failed", ex.Message);
@@ -326,7 +398,10 @@ public sealed class AutomationSchedulerService(
                     logger.LogWarning("Retrying automation {AutomationId}; attempt {Attempt}/{MaxAttempts}", job.Id, attempt, maxAttempts);
                 return await ExecuteJobAsync(job, cancellationToken);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 lastError = ex;
@@ -340,6 +415,8 @@ public sealed class AutomationSchedulerService(
 
     private async Task<AutomationExecutionResult> ExecuteJobAsync(AutomationJob job, CancellationToken cancellationToken)
     {
+        AutomationCenterService.RequireSupportedType(job.Type);
+
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var ownerUserId = await dbContext.Sites
@@ -353,22 +430,21 @@ public sealed class AutomationSchedulerService(
 
         using var executionIdentity = BackgroundExecutionIdentity.Push(ownerUserId.Value);
 
-        if (string.Equals(job.Type, "Synchronization", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(job.Type, AutomationCenterService.SynchronizationType, StringComparison.OrdinalIgnoreCase))
         {
             var synchronization = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
             var result = await synchronization.SynchronizeAsync(job.SiteId, cancellationToken);
             return new("Completed", result.Message);
         }
 
-        if (string.Equals(job.Type, "SEO Audit", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(job.Type, AutomationCenterService.SeoAuditType, StringComparison.OrdinalIgnoreCase))
         {
             var seoAudit = scope.ServiceProvider.GetRequiredService<SeoAuditExecutionService>();
             var result = await seoAudit.RunAsync(job.SiteId, cancellationToken);
             return new("Completed", result.Message);
         }
 
-        execution.Enqueue(job.Name, job.Type, job.SiteName, 1);
-        return new("Queued", "تمت إضافة المهمة إلى مركز التنفيذ. تنفيذ هذا النوع سيتم عبر الـWorker المختص.");
+        throw new InvalidOperationException("This automation type is unavailable because no production runtime worker is installed.");
     }
 
     private sealed record AutomationExecutionResult(string Status, string Message);
@@ -383,7 +459,7 @@ public sealed class AutomationJobEditModel
     public string Name { get; set; } = string.Empty;
     public Guid SiteId { get; set; }
     public string SiteName { get; set; } = string.Empty;
-    public string Type { get; set; } = "Synchronization";
+    public string Type { get; set; } = AutomationCenterService.SynchronizationType;
     public string Frequency { get; set; } = "daily";
     public int IntervalValue { get; set; } = 1;
     public string TimeOfDay { get; set; } = "08:00";
