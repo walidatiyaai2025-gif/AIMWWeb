@@ -8,7 +8,7 @@
 <AppPage PageKey="system-health" Class="system-health-page" Width="wide">
     <AppToolbar Eyebrow="@(L.IsArabic ? "التشخيص المباشر" : "LIVE DIAGNOSTICS")"
                 Title="@(L.IsArabic ? "صحة النظام والتشخيص" : "System Health & Diagnostics")"
-                Subtitle="@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة SQLite والسجلات من مصدر النظام الحقيقي." : "Real application, local storage, SQLite, and logging diagnostics.")">
+                Subtitle="@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة البيانات المهيأة والسجلات من مصدر النظام الحقيقي." : "Real application, local storage, configured database, and logging diagnostics.")">
         <Actions>
             @if (snapshot is not null)
             {
@@ -24,7 +24,7 @@
     @if (snapshot is null)
     {
         <AppLoading Title="@(L.IsArabic ? "جارٍ فحص صحة النظام" : "Checking system health")"
-                    Message="@(L.IsArabic ? "يتم فحص التطبيق والتخزين وSQLite والسجلات." : "Checking the application, storage, SQLite, and logs.")" />
+                    Message="@(L.IsArabic ? "يتم فحص التطبيق والتخزين وقاعدة البيانات المهيأة والسجلات." : "Checking the application, storage, configured database, and logs.")" />
     }
     else
     {
@@ -47,7 +47,7 @@
                              Items="@snapshot.Checks"
                              KeySelector="@(check => check.Key)"
                              SearchKeySelector="@HealthSearchText"
-                             SortKeySelector="@(check => CheckTitle(check.Key))"
+                             SortKeySelector="@CheckTitle"
                              CsvHeaders="@CsvHeaders"
                              CsvRowSelector="@HealthCsvRow"
                              CsvFileName="@CsvFileName"
@@ -77,7 +77,7 @@
                         <th>@(L.IsArabic ? "التفاصيل" : "Details")</th>
                     </Header>
                     <RowTemplate Context="check">
-                        <td><strong>@CheckTitle(check.Key)</strong></td>
+                        <td><strong>@CheckTitle(check)</strong></td>
                         <td><AppBadge Tone="@(check.IsHealthy ? "success" : "danger")" Text="@CheckStatus(check)" /></td>
                         <td><code>@check.Target</code></td>
                         <td>@check.Details</td>
@@ -140,13 +140,14 @@
         finally { isLoading = false; }
     }
 
-    private string CheckTitle(string key) => key switch
+    private string CheckTitle(SystemHealthCheck check) => check.Key switch
     {
         "application" => L.IsArabic ? "التطبيق وبيئة التشغيل" : "Application runtime",
         "storage" => L.IsArabic ? "التخزين المحلي" : "Local storage",
+        "database" => L.IsArabic ? $"قاعدة بيانات {check.Target}" : $"{check.Target} database",
         "sqlite" => L.IsArabic ? "قاعدة بيانات SQLite" : "SQLite database",
         "logs" => L.IsArabic ? "مجلد السجلات" : "Logs directory",
-        _ => key
+        _ => check.Key
     };
 
     private string CheckStatus(SystemHealthCheck check) => check.IsHealthy
@@ -155,14 +156,14 @@
 
     private string HealthSearchText(SystemHealthCheck check) => string.Join(' ',
         check.Key,
-        CheckTitle(check.Key),
+        CheckTitle(check),
         CheckStatus(check),
         check.Target,
         check.Details);
 
     private IReadOnlyList<string> HealthCsvRow(SystemHealthCheck check) => new[]
     {
-        CheckTitle(check.Key),
+        CheckTitle(check),
         CheckStatus(check),
         check.Target,
         check.Details,
