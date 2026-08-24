@@ -27,7 +27,7 @@ public sealed class CurrentUserContext
     public CurrentUserContext(
         IHttpContextAccessor accessor,
         AuthenticationStateProvider authenticationStateProvider)
-        : this(accessor, authenticationStateProvider, null)
+        : this(accessor, authenticationStateProvider, (ApplicationSessionRequestValidator?)null)
     {
     }
 
@@ -35,7 +35,7 @@ public sealed class CurrentUserContext
     // CurrentUserContext manually. DI uses the three-argument constructor above and gains
     // live Blazor circuit authorization revalidation; this overload intentionally remains HTTP-only.
     public CurrentUserContext(IHttpContextAccessor accessor)
-        : this(accessor, new HttpContextAuthenticationStateProvider(accessor), null)
+        : this(accessor, new HttpContextAuthenticationStateProvider(accessor), (ApplicationSessionRequestValidator?)null)
     {
     }
 
