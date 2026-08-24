@@ -53,7 +53,7 @@ public sealed class ReportsExportsUxTests(UxTestHost host)
             var content = Encoding.UTF8.GetString(bytes.AsSpan(Encoding.UTF8.GetPreamble().Length));
             content.Should().StartWith("\"Name\",\"Url\",\"Status\"");
             content.Should().Contain($"\"{SiteName}\"");
-            content.Should().Contain($"\"{SiteUri}\"");
+            content.Should().Contain($"\"{SiteUri.ToString().TrimEnd('/')}\"");
 
             errors.Should().BeEmpty("real reports and CSV download must not produce browser runtime errors");
         }
