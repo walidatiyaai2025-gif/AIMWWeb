@@ -34,6 +34,41 @@ public sealed class PersistentAIUsageLogTests : IDisposable
     }
 
     [Fact]
+    public void Tenant_Filtering_Is_Applied_Before_The_Per_Request_Limit()
+    {
+        var ownerA = Guid.NewGuid();
+        var ownerB = Guid.NewGuid();
+        var paths = new TestPaths(_root);
+        var log = Create(paths);
+        var start = DateTime.UtcNow.AddMinutes(-5);
+
+        log.Record(new AIUsageEntry(start, "OpenAI", "a", "owner-a-older", null, ownerA.ToString("D"), 1, 1, 0, true, null));
+        for (var index = 0; index < 25; index++)
+        {
+            log.Record(new AIUsageEntry(
+                start.AddSeconds(index + 1),
+                "Gemini",
+                "b",
+                $"owner-b-{index}",
+                null,
+                ownerB.ToString("D"),
+                1,
+                1,
+                0,
+                true,
+                null));
+        }
+        log.Record(new AIUsageEntry(start.AddMinutes(1), "OpenAI", "a", "owner-a-newer", null, ownerA.ToString("D"), 1, 1, 0, true, null));
+
+        var ownerAEntries = log.GetRecent(2, null, ownerA.ToString("D"));
+
+        Assert.Equal(2, ownerAEntries.Count);
+        Assert.Equal("owner-a-newer", ownerAEntries[0].Operation);
+        Assert.Equal("owner-a-older", ownerAEntries[1].Operation);
+        Assert.DoesNotContain(ownerAEntries, x => string.Equals(x.UserId, ownerB.ToString("D"), StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Retention_Is_Bounded_To_The_Most_Recent_Entries()
     {
         var owner = Guid.NewGuid();
