@@ -40,8 +40,27 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
     {
         query ??= new SecurityAuditQuery();
         var records = await ReadAsync(cancellationToken);
-        var filtered = records.AsEnumerable();
+        var filtered = ApplyQuery(records, query);
+        var take = Math.Clamp(query.Take, 1, 500);
+        return Order(filtered).Take(take).ToArray();
+    }
 
+    internal async Task<IReadOnlyList<SecurityAuditRecord>> ListRetainedAsync(
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default)
+    {
+        fromUtc = fromUtc.Kind == DateTimeKind.Utc ? fromUtc : fromUtc.ToUniversalTime();
+        var records = await ReadAsync(cancellationToken);
+        return Order(records.Where(record => record.OccurredAtUtc >= fromUtc))
+            .Take(MaxRetainedRecords)
+            .ToArray();
+    }
+
+    private static IEnumerable<SecurityAuditRecord> ApplyQuery(
+        IEnumerable<SecurityAuditRecord> records,
+        SecurityAuditQuery query)
+    {
+        var filtered = records;
         if (!string.IsNullOrWhiteSpace(query.Category))
             filtered = filtered.Where(x => string.Equals(x.Category, query.Category.Trim(), StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(query.Action))
@@ -64,14 +83,11 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
             filtered = filtered.Where(x => x.OccurredAtUtc >= query.FromUtc.Value);
         if (query.ToUtc.HasValue)
             filtered = filtered.Where(x => x.OccurredAtUtc <= query.ToUtc.Value);
-
-        var take = Math.Clamp(query.Take, 1, MaxRetainedRecords);
-        return filtered
-            .OrderByDescending(x => x.OccurredAtUtc)
-            .ThenByDescending(x => x.EventId)
-            .Take(take)
-            .ToArray();
+        return filtered;
     }
+
+    private static IOrderedEnumerable<SecurityAuditRecord> Order(IEnumerable<SecurityAuditRecord> records) =>
+        records.OrderByDescending(x => x.OccurredAtUtc).ThenByDescending(x => x.EventId);
 
     private async Task<IReadOnlyList<SecurityAuditRecord>> ReadAsync(CancellationToken cancellationToken)
     {
