@@ -75,6 +75,25 @@ public sealed class BulkResultReconciliationTests : IDisposable
     }
 
     [Fact]
+    public void Retry_after_partial_remote_success_preserves_unapplied_intent_as_warning()
+    {
+        var owner = Guid.NewGuid();
+        var site = Guid.NewGuid();
+        var jobId = _tracker.Start(owner, site, "Partial trash", "Bulk Trash", "Site", 3);
+
+        _tracker.NeedsReconciliation(jobId, 1, 3,
+            "One remote mutation was confirmed before interruption.");
+        _tracker.CompleteWithWarnings(jobId, 1, 3,
+            "Local state reconciled; two requested mutations were not replayed.");
+
+        var recovered = _executionCenter.GetJobs(owner).Single(x => x.Id == jobId);
+        recovered.Status.Should().Be("CompletedWithWarnings");
+        recovered.ProcessedItems.Should().Be(1);
+        recovered.TotalItems.Should().Be(3);
+        recovered.Error.Should().Contain("not replayed");
+    }
+
+    [Fact]
     public void Production_recovery_is_sync_only_and_status_retry_skips_already_applied_remote_state()
     {
         var root = FindRepositoryRoot();
@@ -89,11 +108,17 @@ public sealed class BulkResultReconciliationTests : IDisposable
         policy.Should().NotContain("SendAsync(");
         policy.Should().Contain("RequirePermission(ApplicationPermissionCatalog.ContentEdit)");
         policy.Should().Contain("GetJobs(ownerUserId)");
+        policy.Should().Contain("wasPartialMutation");
+        policy.Should().Contain("tracker.CompleteWithWarnings");
+        policy.Should().Contain("[\"replayedMutations\"] = \"0\"");
 
         worker.Should().Contain("already has status {request.TargetStatus}; duplicate mutation skipped");
         directStatus.Should().Contain("already has status {status}; duplicate mutation skipped");
-        worker.Should().Contain("tracker.NeedsReconciliation");
+        worker.Should().Contain("tracker.NeedsReconciliation(request.JobId, succeeded, total");
+        worker.Should().Contain("before execution was interrupted");
         worker.Should().NotContain("Bulk operation {JobId} completed but local cache refresh failed.");
+        directStatus.Should().Contain("tracker.NeedsReconciliation(jobId, succeeded, targets.Count");
+        trash.Should().Contain("tracker.NeedsReconciliation(jobId, succeeded, targets.Count");
         trash.Should().Contain("throw new BulkReconciliationRequiredException");
 
         executionPage.Should().Contain("NeedsReconciliation");
