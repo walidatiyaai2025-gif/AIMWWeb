@@ -19,15 +19,15 @@ public sealed class InteractiveServerLiveAuthorizationTests
         var context = fixture.CreateCurrentUserContext();
 
         context.RequirePermission(ApplicationPermissionCatalog.SettingsManage).Should().Be(fixture.User.Id);
-        context.IsAuthenticated.Should().BeTrue();
+        context.RequireUserId().Should().Be(fixture.User.Id);
 
         await fixture.Sessions.RevokeAsync(fixture.Session.SessionId, "Security test revocation.");
 
-        context.HasPermission(ApplicationPermissionCatalog.SettingsManage).Should().BeFalse();
-        context.IsAuthenticated.Should().BeFalse();
         context.TryGetUserId(out _).Should().BeFalse();
-        var action = () => context.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
-        action.Should().Throw<UnauthorizedAccessException>();
+        var permissionAction = () => context.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
+        permissionAction.Should().Throw<UnauthorizedAccessException>();
+        var identityAction = () => context.RequireUserId();
+        identityAction.Should().Throw<UnauthorizedAccessException>();
     }
 
     [Fact]
@@ -37,13 +37,11 @@ public sealed class InteractiveServerLiveAuthorizationTests
         var context = fixture.CreateCurrentUserContext();
 
         context.RequireAdministrator().Should().Be(fixture.User.Id);
-        context.HasPermission(ApplicationPermissionCatalog.SettingsManage).Should().BeTrue();
+        context.RequirePermission(ApplicationPermissionCatalog.SettingsManage).Should().Be(fixture.User.Id);
 
         fixture.User.SetRole("User", DateTime.UtcNow);
         await fixture.Db.SaveChangesAsync();
 
-        context.IsInRole("Administrator").Should().BeFalse();
-        context.HasPermission(ApplicationPermissionCatalog.SettingsManage).Should().BeFalse();
         var adminAction = () => context.RequireAdministrator();
         adminAction.Should().Throw<UnauthorizedAccessException>();
         var permissionAction = () => context.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
@@ -57,14 +55,16 @@ public sealed class InteractiveServerLiveAuthorizationTests
         var context = fixture.CreateCurrentUserContext();
 
         context.RequirePermission(ApplicationPermissionCatalog.ContentEdit).Should().Be(fixture.User.Id);
+        context.RequireUserId().Should().Be(fixture.User.Id);
 
         fixture.User.SetActive(false, DateTime.UtcNow);
         await fixture.Db.SaveChangesAsync();
 
-        context.HasPermission(ApplicationPermissionCatalog.ContentEdit).Should().BeFalse();
         context.TryGetUserId(out _).Should().BeFalse();
-        var action = () => context.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
-        action.Should().Throw<UnauthorizedAccessException>();
+        var permissionAction = () => context.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        permissionAction.Should().Throw<UnauthorizedAccessException>();
+        var identityAction = () => context.RequireUserId();
+        identityAction.Should().Throw<UnauthorizedAccessException>();
     }
 
     private sealed class AuthorizationFixture : IAsyncDisposable
