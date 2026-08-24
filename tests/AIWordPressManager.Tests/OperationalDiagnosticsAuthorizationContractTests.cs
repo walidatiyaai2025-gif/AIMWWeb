@@ -1,3 +1,4 @@
+using AIWordPressManager.Web.Services;
 using Xunit;
 
 namespace AIWordPressManager.Tests;
@@ -13,7 +14,8 @@ public sealed class OperationalDiagnosticsAuthorizationContractTests
 
         Assert.Contains("@page \"/logs\"", page, StringComparison.Ordinal);
         Assert.Contains("@page \"/module/logs\"", page, StringComparison.Ordinal);
-        Assert.Contains("Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)", page, StringComparison.Ordinal);
+        Assert.Equal(ApplicationPermissionCatalog.SettingsManage, ApplicationRoutePermissionCatalog.All["LogsAndErrors"]);
+        Assert.DoesNotContain("Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)", page, StringComparison.Ordinal);
         Assert.Contains("LogReaderService _reader = new()", page, StringComparison.Ordinal);
         Assert.Contains("_reader.GetFiles()", page, StringComparison.Ordinal);
         Assert.Contains("_reader.Read(_selectedPath, _take)", page, StringComparison.Ordinal);

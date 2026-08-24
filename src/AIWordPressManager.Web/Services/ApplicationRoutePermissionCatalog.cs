@@ -18,7 +18,8 @@ public static class ApplicationRoutePermissionCatalog
             ["SiteOperationsOverview"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteReliability"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteOperationDetails"] = ApplicationPermissionCatalog.OperationsView,
-            ["SiteOperationsMaintenance"] = ApplicationPermissionCatalog.OperationsExecute
+            ["SiteOperationsMaintenance"] = ApplicationPermissionCatalog.OperationsExecute,
+            ["LogsAndErrors"] = ApplicationPermissionCatalog.SettingsManage
         };
 
     public static string? For(Type? pageType)
