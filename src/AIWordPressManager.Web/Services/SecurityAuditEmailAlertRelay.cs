@@ -187,9 +187,7 @@ public sealed class SecurityAuditEmailAlertRelay(
         CancellationToken cancellationToken)
     {
         var store = new ApplicationSecurityAuditStore(dbContext);
-        var retained = await store.ListAsync(
-            new SecurityAuditQuery(FromUtc: sinceUtc, Take: ApplicationSecurityAuditStore.MaxRetainedRecords),
-            cancellationToken);
+        var retained = await store.ListRetainedAsync(sinceUtc, cancellationToken);
 
         return retained
             .Where(IsHighSignal)
