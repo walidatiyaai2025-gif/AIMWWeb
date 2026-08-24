@@ -13,7 +13,7 @@ namespace AIWordPressManager.UxTests;
 public sealed class SiteOperationsBrowserAcceptanceUxTestsFailures(UxTestHost host)
 {
     private const string SiteName = "UX Operations Failure Site";
-    private const string OperationName = "Clipboard denial operation";
+    private const string OperationName = "Synchronization clipboard denial operation";
     private const string Marker = "UX-OPERATIONS-FAILURE-MARKER";
 
     [Fact]
