@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject AppLanguageService L
 @inject IJSRuntime JS
+@inject IConfiguration Config
 
 <PageTitle>@L["Settings"]</PageTitle>
 
@@ -11,11 +12,11 @@
         <div>
             <span class="workspace-kicker">@(L.IsArabic ? "تخصيص النظام" : "SYSTEM PREFERENCES")</span>
             <h1>@L["Settings"]</h1>
-            <p>@(L.IsArabic ? "تحكم في اللغة والمظهر وسلوك الواجهة والتخزين المحلي من مكان واحد." : "Control language, appearance, interface behavior, and local storage from one place.")</p>
+            <p>@(L.IsArabic ? "تحكم في اللغة والمظهر وسلوك الواجهة والتخزين من مكان واحد." : "Control language, appearance, interface behavior, and storage from one place.")</p>
         </div>
         <div class="settings-status">
             <span>✓</span>
-            <div><strong>@(L.IsArabic ? "الإعدادات محفوظة محليًا" : "Settings are stored locally")</strong><small>@(L.IsArabic ? "يتم تطبيق التغييرات فورًا" : "Changes apply immediately")</small></div>
+            <div><strong>@(L.IsArabic ? "تفضيلات الواجهة محفوظة محليًا" : "Interface preferences are stored locally")</strong><small>@(L.IsArabic ? "يتم تطبيق تغييرات العرض فورًا" : "Display changes apply immediately")</small></div>
         </div>
     </section>
 
@@ -23,7 +24,7 @@
         <article class="panel settings-summary-card"><span>文</span><div><small>@(L.IsArabic ? "اللغة الحالية" : "Current language")</small><strong>@(L.IsArabic ? "العربية" : "English")</strong></div></article>
         <article class="panel settings-summary-card"><span>◐</span><div><small>@(L.IsArabic ? "وضع العرض" : "Appearance")</small><strong>@ModeText</strong></div></article>
         <article class="panel settings-summary-card"><span>◈</span><div><small>@(L.IsArabic ? "لون النظام" : "Accent color")</small><strong>@ThemeText</strong></div></article>
-        <article class="panel settings-summary-card"><span>DB</span><div><small>@L["Database"]</small><strong>SQLite</strong></div></article>
+        <article class="panel settings-summary-card"><span>DB</span><div><small>@L["Database"]</small><strong>@DatabaseProviderText</strong></div></article>
     </section>
 
     <div class="settings-layout">
@@ -43,7 +44,7 @@
                 <a href="/settings/ai-providers"><span>AI</span><div><strong>@(L.IsArabic ? "مزودو الذكاء الاصطناعي" : "AI providers")</strong><small>@(L.IsArabic ? "المفاتيح والنماذج والأولوية" : "Keys, models, and priority")</small></div></a>
                 <a href="/settings/ai-prompts"><span>✦</span><div><strong>@(L.IsArabic ? "قوالب أوامر الذكاء الاصطناعي" : "AI prompt templates")</strong><small>@(L.IsArabic ? "الإصدارات والاستعادة" : "Versions and restore")</small></div></a>
             </AuthorizeView>
-            <a href="#database"><span>DB</span><div><strong>@L["Database"]</strong><small>@(L.IsArabic ? "التخزين المحلي" : "Local storage")</small></div></a>
+            <a href="#database"><span>DB</span><div><strong>@L["Database"]</strong><small>@(L.IsArabic ? "موفر قاعدة بيانات التطبيق" : "Application database provider")</small></div></a>
         </nav>
 
         <main class="settings-content">
@@ -88,13 +89,16 @@
             </section>
 
             <section id="database" class="panel settings-section">
-                <header><div><span class="workspace-kicker">DATABASE</span><h2>@L["Database"]</h2><p>@L["PortableDb"]</p></div><span class="settings-badge success">SQLite</span></header>
+                <header>
+                    <div><span class="workspace-kicker">DATABASE</span><h2>@L["Database"]</h2><p>@DatabaseConfigurationDescription</p></div>
+                    <span class="settings-badge @(DatabaseSetupComplete ? "success" : "warning")">@DatabaseConfigurationState</span>
+                </header>
                 <div class="database-info-grid">
-                    <div><small>@(L.IsArabic ? "نوع قاعدة البيانات" : "Database engine")</small><strong>SQLite</strong></div>
-                    <div><small>@(L.IsArabic ? "نمط التخزين" : "Storage mode")</small><strong>@(L.IsArabic ? "محلي ومحمول" : "Local and portable")</strong></div>
-                    <div><small>@(L.IsArabic ? "الاستخدام" : "Purpose")</small><strong>@(L.IsArabic ? "الكاش والمزامنة" : "Cache and synchronization")</strong></div>
+                    <div><small>@(L.IsArabic ? "موفر قاعدة البيانات" : "Database provider")</small><strong>@DatabaseProviderText</strong></div>
+                    <div><small>@(L.IsArabic ? "حالة الإعداد" : "Setup state")</small><strong>@DatabaseConfigurationState</strong></div>
+                    <div><small>@(L.IsArabic ? "الاستخدام" : "Purpose")</small><strong>@(L.IsArabic ? "بيانات التطبيق ولقطات WordPress المتزامنة" : "Application data and synchronized WordPress snapshots")</strong></div>
                 </div>
-                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "بيانات WordPress المتزامنة تحفظ محليًا لتسريع فتح الشاشات واستمرار عرض آخر بيانات متاحة عند تعذر الاتصال." : "Synchronized WordPress data is stored locally for faster screens and continued access to the latest available data when connectivity is unavailable.")</p></div>
+                <div class="settings-note"><span>ⓘ</span><p>@(L.IsArabic ? "هذه الصفحة تعرض موفر قاعدة البيانات وحالة الإعداد من التهيئة الفعلية للتطبيق. لا يتم عرض بيانات اتصال أو أسرار هنا." : "This page reports the database provider and setup state from the application's actual configuration. Connection details and secrets are not displayed here.")</p></div>
             </section>
         </main>
     </div>
@@ -105,6 +109,17 @@
     private string _mode = "dark";
     private string ThemeText => L.IsArabic ? _theme switch { "gold" => "ذهبي", "ocean" => "أزرق", "emerald" => "زمردي", "violet" => "بنفسجي", "rose" => "وردي", "amber" => "كهرماني", "cyan" => "سماوي", "slate" => "رمادي", _ => _theme } : _theme;
     private string ModeText => L.IsArabic ? (_mode == "light" ? "فاتح" : "داكن") : (_mode == "light" ? "Light" : "Dark");
+    private bool DatabaseSetupComplete => Config.GetValue<bool>("Database:SetupComplete");
+    private string? ConfiguredDatabaseProvider => Config["Database:Provider"];
+    private string DatabaseProviderText => string.IsNullOrWhiteSpace(ConfiguredDatabaseProvider)
+        ? (L.IsArabic ? "غير مهيأ" : "Not configured")
+        : ConfiguredDatabaseProvider;
+    private string DatabaseConfigurationState => DatabaseSetupComplete
+        ? (L.IsArabic ? "مهيأ" : "Configured")
+        : (L.IsArabic ? "الإعداد غير مكتمل" : "Setup incomplete");
+    private string DatabaseConfigurationDescription => DatabaseSetupComplete
+        ? (L.IsArabic ? "موفر قاعدة البيانات المهيأ حاليًا في تشغيل التطبيق." : "The database provider configured for the current application runtime.")
+        : (L.IsArabic ? "إعداد قاعدة البيانات غير مكتمل؛ لا تفترض هذه الصفحة وجود موفر نشط." : "Database setup is incomplete; this page does not claim an active provider.");
 
     protected override void OnInitialized() => L.Changed += Changed;
     protected override async Task OnAfterRenderAsync(bool firstRender)

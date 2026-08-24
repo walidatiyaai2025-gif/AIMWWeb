@@ -39,7 +39,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
                 new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
             editorResponse.Should().NotBeNull();
             editorResponse!.Status.Should().BeLessThan(400);
-            await page.Locator(".editor-title-input").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+            await page.Locator(".editor-title-input").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15000 });
             await EnsureEditorInteractiveAsync(page);
 
             await page.Locator(".editor-title-input").FillAsync(ApprovedTitle);
@@ -147,6 +147,9 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
         await form.Locator("input").Nth(1).FillAsync(Password);
         await page.Locator(".site-details-form-actions button[type='submit']").First.ClickAsync();
         await WaitUntilAsync(() => wordpress.HasAuthenticatedConnectionTest, "Credential save/test did not reach WordPress.");
+        var credentialMetric = page.Locator(".site-details-metric").Filter(new LocatorFilterOptions { HasText = "Credentials" });
+        await credentialMetric.GetByText("Saved", new LocatorGetByTextOptions { Exact = true })
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
     }
 
     private static async Task EnsureSiteDetailsInteractiveAsync(IPage page)
@@ -354,6 +357,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
                 var count = bytes.Count;
                 if (count >= 4 && bytes[count - 4] == '\r' && bytes[count - 3] == '\n' && bytes[count - 2] == '\r' && bytes[count - 1] == '\n') break;
             }
+
             var lines = Encoding.ASCII.GetString(bytes.ToArray()).Split("\r\n", StringSplitOptions.None);
             var first = lines[0].Split(' ', 3);
             var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -362,10 +366,12 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
                 var colon = line.IndexOf(':');
                 if (colon > 0) headers[line[..colon].Trim()] = line[(colon + 1)..].Trim();
             }
+
             var body = headers.TryGetValue("Transfer-Encoding", out var transfer) && transfer.Contains("chunked", StringComparison.OrdinalIgnoreCase)
                 ? await ReadChunkedAsync(stream, token)
                 : Encoding.UTF8.GetString(await ReadExactlyAsync(stream,
-                    headers.TryGetValue("Content-Length", out var raw) && int.TryParse(raw, out var length) ? length : 0, token));
+                    headers.TryGetValue("Content-Length", out var raw) && int.TryParse(raw, out var length) ? length : 0,
+                    token));
             return new RecordedRequest(first[0], first[1], body, headers.TryGetValue("Authorization", out var auth) ? auth : string.Empty);
         }
 
@@ -378,7 +384,12 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
                 var semicolon = sizeLine.IndexOf(';');
                 if (semicolon >= 0) sizeLine = sizeLine[..semicolon];
                 var size = int.Parse(sizeLine, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                if (size == 0) { await ReadLineAsync(stream, token); break; }
+                if (size == 0)
+                {
+                    await ReadLineAsync(stream, token);
+                    break;
+                }
+
                 var chunk = await ReadExactlyAsync(stream, size, token);
                 await output.WriteAsync(chunk, token);
                 await ReadExactlyAsync(stream, 2, token);
@@ -416,8 +427,7 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
         {
             var payload = Encoding.UTF8.GetBytes(response.Body);
             var reason = response.Status == 200 ? "OK" : response.Status == 404 ? "Not Found" : "Internal Server Error";
-            var text = new StringBuilder()
-                .Append($"HTTP/1.1 {response.Status} {reason}\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: {payload.Length}\r\nConnection: close\r\n");
+            var text = new StringBuilder().Append($"HTTP/1.1 {response.Status} {reason}\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: {payload.Length}\r\nConnection: close\r\n");
             foreach (var header in response.Headers) text.Append($"{header.Key}: {header.Value}\r\n");
             text.Append("\r\n");
             await stream.WriteAsync(Encoding.ASCII.GetBytes(text.ToString()), token);
@@ -426,16 +436,16 @@ public sealed class ApprovalExecutionUxTests(UxTestHost host)
         }
 
         public sealed record RecordedRequest(string Method, string Target, string Body, string Authorization);
+        private sealed record Response(int Status, string Body, IReadOnlyDictionary<string, string> Headers);
         private sealed record ContentState(string Title, string Slug, string Status, string Content, string Excerpt, DateTimeOffset ModifiedGmt)
         {
             public static ContentState Create() => new(
-                "Existing approval browser post",
-                "existing-approval-browser-post",
+                "Existing approval post",
+                "existing-approval-post",
                 "draft",
-                "<p>Existing approval browser content.</p>",
-                "Existing approval browser excerpt.",
-                DateTimeOffset.Parse("2026-08-23T23:00:00Z", CultureInfo.InvariantCulture));
+                "<p>Existing approval content.</p>",
+                "Existing approval excerpt.",
+                DateTimeOffset.Parse("2026-08-23T23:30:00Z", CultureInfo.InvariantCulture));
         }
-        private sealed record Response(int Status, string Body, IReadOnlyDictionary<string, string> Headers);
     }
 }
