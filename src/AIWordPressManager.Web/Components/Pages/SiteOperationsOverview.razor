@@ -6,6 +6,8 @@
 @inject SiteOperationHistoryService History
 @inject CurrentUserContext CurrentUser
 @inject AppLanguageService L
+@inject IJSRuntime JS
+@inject ILogger<SiteOperationsOverview> Logger
 
 <PageTitle>@(L.IsArabic ? "عمليات المواقع" : "Site Operations")</PageTitle>
 
@@ -13,18 +15,47 @@
 {
     <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ التحميل..." : "Loading operation history...")</div>
 }
+else if (!string.IsNullOrWhiteSpace(_loadError))
+{
+    <section class="panel" style="padding:28px">
+        <h1>@(L.IsArabic ? "تعذر تحميل سجل العمليات" : "Operation history could not be loaded")</h1>
+        <p>@_loadError</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn primary" @onclick="ReloadAsync">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button>
+            <a class="btn" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
+        </div>
+    </section>
+}
 else
 {
     <div class="site-operations-page">
         <section class="panel" style="padding:24px;margin-bottom:18px">
             <h1>@(L.IsArabic ? "عمليات مواقع WordPress" : "WordPress Site Operations")</h1>
-            <p>@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة التابعة لحسابك." : "A unified view of connection tests and synchronization activity owned by your account.")</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn" @onclick="ReloadAsync">@(L.IsArabic ? "تحديث" : "Refresh")</button>
-                <a class="btn" href="@CsvDownloadHref" download="@CsvFileName">@(L.IsArabic ? "تصدير CSV" : "Export CSV")</a>
+            <p>@(L.IsArabic ? "عرض موحد لسجل عمليات المواقع المحتفَظ به والتابع لحسابك." : "A unified view of retained site-operation history owned by your account.")</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn" @onclick="ReloadAsync">@(L.IsArabic ? "تحديث" : "Refresh")</button>
+                <button type="button" class="btn" disabled="@(!CanExportCsv)" title="@ExportAvailabilityMessage" @onclick="ExportCsvAsync">
+                    @(_exporting ? (L.IsArabic ? "جارٍ التصدير..." : "Exporting...") : (L.IsArabic ? "تصدير CSV" : "Export CSV"))
+                </button>
                 <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
             </div>
+            @if (!string.IsNullOrWhiteSpace(_exportError))
+            {
+                <div class="alert error" role="alert" style="margin-top:12px">@_exportError</div>
+            }
         </section>
+
+        @if (_historyMayBeTruncated)
+        {
+            <section class="panel" style="padding:14px 18px;margin-bottom:18px">
+                <strong>@(L.IsArabic ? "تنبيه نطاق السجل:" : "History scope notice:")</strong>
+                <span>
+                    @(L.IsArabic
+                        ? $" وصل سجل العمليات إلى حد الاحتفاظ ({RetainedHistoryLimit:N0} من أحدث السجلات). البحث والملخص وملف CSV أدناه يغطون السجلات المحتفَظ بها فقط، وقد لا تشمل الفترات الأقدم كل العمليات التي حدثت سابقًا."
+                        : $" Operation history has reached its {RetainedHistoryLimit:N0}-record retention limit. Search, summary, and CSV export below cover retained records only; older date ranges may not include every operation that originally occurred.")
+                </span>
+            </section>
+        }
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
             @Stat(L.IsArabic ? "الإجمالي" : "Total", FilteredSummary.Total.ToString())
@@ -49,10 +80,16 @@ else
                     <option value="success">@(L.IsArabic ? "ناجحة" : "Successful")</option>
                     <option value="failed">@(L.IsArabic ? "فاشلة" : "Failed")</option>
                 </select>
-                <input type="date" class="form-control" @bind="_fromDate" />
-                <input type="date" class="form-control" @bind="_toDate" />
+                <input type="date" class="form-control" aria-label="@(L.IsArabic ? "من تاريخ" : "From date")" @bind="_fromDate" />
+                <input type="date" class="form-control" aria-label="@(L.IsArabic ? "إلى تاريخ" : "To date")" @bind="_toDate" />
             </div>
             <button type="button" class="btn" style="margin-top:12px" @onclick="ResetFilters">@(L.IsArabic ? "إعادة الضبط" : "Reset filters")</button>
+            @if (!HasValidDateRange)
+            {
+                <div class="alert error" role="alert" style="margin-top:12px">
+                    @(L.IsArabic ? "تاريخ البداية يجب ألا يكون بعد تاريخ النهاية. عدّل النطاق قبل عرض النتائج أو تصدير CSV." : "The start date cannot be after the end date. Correct the range before reviewing results or exporting CSV.")
+                </div>
+            }
         </section>
 
         <section class="panel" style="overflow:auto">
@@ -61,9 +98,13 @@ else
                     <th>Time</th><th>Site</th><th>Operation</th><th>Result</th><th>Duration</th><th>Records</th><th>Message</th><th></th>
                 </tr></thead>
                 <tbody>
-                    @if (FilteredItems.Count == 0)
+                    @if (!HasValidDateRange)
                     {
-                        <tr><td colspan="8" style="padding:28px;text-align:center">@(L.IsArabic ? "لا توجد نتائج." : "No matching operations.")</td></tr>
+                        <tr><td colspan="8" style="padding:28px;text-align:center">@(L.IsArabic ? "نطاق التاريخ غير صالح." : "The selected date range is invalid.")</td></tr>
+                    }
+                    else if (FilteredItems.Count == 0)
+                    {
+                        <tr><td colspan="8" style="padding:28px;text-align:center">@(L.IsArabic ? "لا توجد عمليات تطابق عوامل التصفية الحالية." : "No operations match the current filters.")</td></tr>
                     }
                     else
                     {
@@ -88,7 +129,14 @@ else
 }
 
 @code {
+    private const int RetainedHistoryLimit = 2000;
+    private static readonly string[] CsvHeaders = ["Time", "Site", "SiteId", "ExecutionJobId", "Operation", "Result", "DurationMs", "Records", "Message", "Details"];
+
     private bool _loading = true;
+    private bool _historyMayBeTruncated;
+    private bool _exporting;
+    private string? _loadError;
+    private string? _exportError;
     private string _query = string.Empty;
     private string _siteFilter = string.Empty;
     private string _statusFilter = "all";
@@ -103,17 +151,36 @@ else
     private async Task ReloadAsync()
     {
         _loading = true;
+        _loadError = null;
+        _exportError = null;
         try
         {
             var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
-            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), 2000);
+            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), RetainedHistoryLimit);
+            _historyMayBeTruncated = _items.Count >= RetainedHistoryLimit;
         }
-        finally { _loading = false; }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load Site Operations history.");
+            _sites = [];
+            _items = [];
+            _historyMayBeTruncated = false;
+            _loadError = L.IsArabic
+                ? "تعذر قراءة مصدر سجل العمليات. لم يتم تحويل خطأ التخزين إلى سجل فارغ أو مقاييس صفرية. أعد المحاولة بعد توفر الخدمة."
+                : "The retained operation-history source could not be read. The storage failure has not been presented as an empty history or zero-valued metrics. Retry after the service is available.";
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
+
+    private bool HasValidDateRange => _fromDate.Date <= _toDate.Date;
 
     private IReadOnlyList<SiteOperationHistoryItem> FilteredItems => _items.Where(item =>
     {
+        if (!HasValidDateRange) return false;
         var date = item.StartedAtUtc.ToLocalTime().Date;
         if (date < _fromDate.Date || date > _toDate.Date) return false;
         if (!string.IsNullOrWhiteSpace(_siteFilter) && Guid.TryParse(_siteFilter, out var siteId) && item.SiteId != siteId) return false;
@@ -138,32 +205,53 @@ else
         }
     }
 
-    private string CsvFileName => "site-operations-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv";
-    private string CsvDownloadHref => "data:text/csv;charset=utf-8,%EF%BB%BF" + Uri.EscapeDataString(BuildCsv());
+    private bool CanExportCsv => !_exporting && HasValidDateRange && FilteredItems.Count > 0;
 
-    private string BuildCsv()
+    private string ExportAvailabilityMessage => CanExportCsv
+        ? (L.IsArabic ? "تنزيل العمليات المطابقة حاليًا كملف CSV." : "Download the currently matching operations as CSV.")
+        : !HasValidDateRange
+            ? (L.IsArabic ? "صحح نطاق التاريخ قبل التصدير." : "Correct the date range before exporting.")
+            : FilteredItems.Count == 0
+                ? (L.IsArabic ? "لا توجد عمليات مطابقة لتصديرها." : "There are no matching operations to export.")
+                : (L.IsArabic ? "التصدير قيد التنفيذ." : "An export is already in progress.");
+
+    private string CsvFileName => "site-operations-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".csv";
+
+    private async Task ExportCsvAsync()
     {
-        var builder = new System.Text.StringBuilder();
-        builder.AppendLine("Time,Site,SiteId,ExecutionJobId,Operation,Result,DurationMs,Records,Message,Details");
-        foreach (var item in FilteredItems)
+        if (!CanExportCsv) return;
+
+        _exporting = true;
+        _exportError = null;
+        try
         {
-            var cells = new[]
+            var rows = FilteredItems.Select(item => new[]
             {
                 item.StartedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
-                SiteName(item.SiteId), item.SiteId.ToString(), item.ExecutionJobId?.ToString() ?? string.Empty,
-                item.Operation, item.Succeeded ? "Success" : "Failed",
+                SiteName(item.SiteId),
+                item.SiteId.ToString(),
+                item.ExecutionJobId?.ToString() ?? string.Empty,
+                item.Operation,
+                item.Succeeded ? "Success" : "Failed",
                 item.Duration.TotalMilliseconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture),
-                item.AffectedRecords?.ToString() ?? string.Empty, item.Message, item.Details ?? string.Empty
-            };
-            builder.AppendLine(string.Join(",", cells.Select(EscapeCsv)));
-        }
-        return builder.ToString();
-    }
+                item.AffectedRecords?.ToString() ?? string.Empty,
+                item.Message,
+                item.Details ?? string.Empty
+            }).ToArray();
 
-    private static string EscapeCsv(string value)
-    {
-        var cleaned = (value ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Replace("\"", "\"\"");
-        return "\"" + cleaned + "\"";
+            await JS.InvokeVoidAsync("appCsv.download", CsvFileName, CsvHeaders, rows);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Site Operations CSV export could not be started.");
+            _exportError = L.IsArabic
+                ? "تعذر بدء تنزيل ملف CSV. لم يتم عرض رسالة نجاح؛ أعد المحاولة بعد التأكد من أن المتصفح يسمح بالتنزيل."
+                : "The CSV download could not be started. No success was reported; retry after confirming that browser downloads are available.";
+        }
+        finally
+        {
+            _exporting = false;
+        }
     }
 
     private void ResetFilters()
@@ -173,6 +261,7 @@ else
         _statusFilter = "all";
         _fromDate = DateTime.Today.AddDays(-30);
         _toDate = DateTime.Today;
+        _exportError = null;
     }
 
     private RenderFragment Stat(string label, string value) => builder =>
