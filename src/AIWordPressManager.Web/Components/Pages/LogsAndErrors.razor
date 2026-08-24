@@ -1,6 +1,7 @@
 @page "/logs"
 @page "/module/logs"
 @rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
@@ -28,122 +29,43 @@
     </section>
 
     <section class="panel logs-filters">
-        <label>
-            <span>@(L.IsArabic ? "البحث" : "Search")</span>
-            <input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "رسالة، استثناء، رقم خطأ..." : "Message, exception, error code...")" />
-        </label>
-        <label>
-            <span>@(L.IsArabic ? "المستوى" : "Level")</span>
-            <select @bind="_level">
-                <option value="">@(L.IsArabic ? "كل المستويات" : "All levels")</option>
-                @foreach (var level in new[] { "Critical", "Error", "Warning", "Information", "Debug" })
-                {
-                    <option value="@level">@level</option>
-                }
-            </select>
-        </label>
-        <label>
-            <span>@(L.IsArabic ? "عدد السطور" : "Lines")</span>
-            <select @bind="_take" @bind:after="LoadLines">
-                <option value="200">200</option>
-                <option value="500">500</option>
-                <option value="1000">1000</option>
-                <option value="5000">5000</option>
-            </select>
-        </label>
-        <label>
-            <span>@(L.IsArabic ? "من تاريخ الملف" : "File date from")</span>
-            <input type="date" @bind="_fromDate" />
-        </label>
-        <label>
-            <span>@(L.IsArabic ? "إلى تاريخ الملف" : "File date to")</span>
-            <input type="date" @bind="_toDate" />
-        </label>
+        <label><span>@(L.IsArabic ? "البحث" : "Search")</span><input class="search-input" @bind="_search" @bind:event="oninput" placeholder="@(L.IsArabic ? "رسالة، استثناء، رقم خطأ..." : "Message, exception, error code...")" /></label>
+        <label><span>@(L.IsArabic ? "المستوى" : "Level")</span><select @bind="_level"><option value="">@(L.IsArabic ? "كل المستويات" : "All levels")</option>@foreach (var level in new[] { "Critical", "Error", "Warning", "Information", "Debug" }) { <option value="@level">@level</option> }</select></label>
+        <label><span>@(L.IsArabic ? "عدد السطور" : "Lines")</span><select @bind="_take" @bind:after="LoadLines"><option value="200">200</option><option value="500">500</option><option value="1000">1000</option><option value="5000">5000</option></select></label>
+        <label><span>@(L.IsArabic ? "من تاريخ الملف" : "File date from")</span><input type="date" @bind="_fromDate" /></label>
+        <label><span>@(L.IsArabic ? "إلى تاريخ الملف" : "File date to")</span><input type="date" @bind="_toDate" /></label>
         <button class="btn" @onclick="ClearFilters">@(L.IsArabic ? "مسح الفلاتر" : "Clear filters")</button>
     </section>
 
     <section class="logs-layout">
         <aside class="panel logs-files">
-            <header>
-                <h2>@(L.IsArabic ? "ملفات السجل" : "Log files")</h2>
-                <small>@FilteredFiles.Count() @(L.IsArabic ? "ملف" : "files")</small>
-            </header>
+            <header><h2>@(L.IsArabic ? "ملفات السجل" : "Log files")</h2><small>@FilteredFiles.Count() @(L.IsArabic ? "ملف" : "files")</small></header>
             @if (!FilteredFiles.Any())
-            {
-                <div class="empty-state"><p>@(L.IsArabic ? "لا توجد ملفات مطابقة." : "No matching log files were found.")</p></div>
-            }
+            { <div class="empty-state"><p>@(L.IsArabic ? "لا توجد ملفات مطابقة." : "No matching log files were found.")</p></div> }
             else
             {
                 @foreach (var file in FilteredFiles)
                 {
-                    <button class="@(_selectedPath == file.Path ? "active" : string.Empty)" @onclick="() => SelectFile(file)">
-                        <strong>@file.Name</strong>
-                        <small>@FormatSize(file.Size) · @file.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small>
-                    </button>
+                    <button class="@(_selectedPath == file.Path ? "active" : string.Empty)" @onclick="() => SelectFile(file)"><strong>@file.Name</strong><small>@FormatSize(file.Size) · @file.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small></button>
                 }
             }
         </aside>
 
         <main class="panel logs-console-card">
-            <div class="logs-toolbar">
-                <div>
-                    <strong>@(_selectedFile?.Name ?? (L.IsArabic ? "لم يتم اختيار ملف" : "No file selected"))</strong>
-                    @if (_selectedFile is not null)
-                    {
-                        <small>@FormatSize(_selectedFile.Size) · @_selectedFile.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</small>
-                    }
-                </div>
-                <button class="btn" disabled="@(_selectedLine is null)" @onclick="CopySelectedAsync">@(L.IsArabic ? "نسخ التفاصيل" : "Copy details")</button>
-            </div>
-
-            @if (!string.IsNullOrWhiteSpace(_error))
-            {
-                <div class="alert error">@_error</div>
-            }
-            else if (string.IsNullOrWhiteSpace(_selectedPath))
-            {
-                <div class="empty-state logs-empty"><p>@(L.IsArabic ? "اختر ملف سجل لعرض محتواه." : "Select a log file to inspect its contents.")</p></div>
-            }
-            else if (!FilteredLines.Any())
-            {
-                <div class="empty-state logs-empty"><p>@(L.IsArabic ? "لا توجد سطور مطابقة للفلاتر الحالية." : "No log lines match the current filters.")</p></div>
-            }
+            <div class="logs-toolbar"><div><strong>@(_selectedFile?.Name ?? (L.IsArabic ? "لم يتم اختيار ملف" : "No file selected"))</strong>@if (_selectedFile is not null) { <small>@FormatSize(_selectedFile.Size) · @_selectedFile.LastWriteUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</small> }</div><button class="btn" disabled="@(_selectedLine is null)" @onclick="CopySelectedAsync">@(L.IsArabic ? "نسخ التفاصيل" : "Copy details")</button></div>
+            @if (!string.IsNullOrWhiteSpace(_error)) { <div class="alert error">@_error</div> }
+            else if (string.IsNullOrWhiteSpace(_selectedPath)) { <div class="empty-state logs-empty"><p>@(L.IsArabic ? "اختر ملف سجل لعرض محتواه." : "Select a log file to inspect its contents.")</p></div> }
+            else if (!FilteredLines.Any()) { <div class="empty-state logs-empty"><p>@(L.IsArabic ? "لا توجد سطور مطابقة للفلاتر الحالية." : "No log lines match the current filters.")</p></div> }
             else
             {
-                <div class="logs-console">
-                    @foreach (var line in FilteredLines)
-                    {
-                        <button class="log-line level-@line.Level.ToLowerInvariant() @(_selectedLine == line ? "selected" : string.Empty)" @onclick="() => SelectLine(line)">
-                            <span>@line.Number</span>
-                            <b>@line.Level</b>
-                            <code>@line.Text</code>
-                        </button>
-                    }
-                </div>
+                <div class="logs-console">@foreach (var line in FilteredLines) { <button class="log-line level-@line.Level.ToLowerInvariant() @(_selectedLine == line ? "selected" : string.Empty)" @onclick="() => SelectLine(line)"><span>@line.Number</span><b>@line.Level</b><code>@line.Text</code></button> }</div>
             }
         </main>
     </section>
 
     @if (_selectedLine is not null)
     {
-        <section class="panel log-details">
-            <header>
-                <div>
-                    <span class="status-pill level-@_selectedLine.Level.ToLowerInvariant()">@_selectedLine.Level</span>
-                    <h2>@(L.IsArabic ? "تفاصيل السطر" : "Line details") #@_selectedLine.Number</h2>
-                </div>
-                <button class="btn" @onclick="CloseDetails">×</button>
-            </header>
-            <dl>
-                <div><dt>@(L.IsArabic ? "الملف" : "File")</dt><dd>@(_selectedFile?.Name ?? "-")</dd></div>
-                <div><dt>@(L.IsArabic ? "المستوى" : "Level")</dt><dd>@_selectedLine.Level</dd></div>
-                <div><dt>@(L.IsArabic ? "رقم الخطأ" : "Error code")</dt><dd>@ExtractErrorCode(_selectedLine.Text)</dd></div>
-            </dl>
-            <pre>@_selectedLine.Text</pre>
-            <div class="log-details-actions">
-                <button class="btn primary" @onclick="CopySelectedAsync">@(L.IsArabic ? "نسخ التفاصيل كاملة" : "Copy full details")</button>
-            </div>
-        </section>
+        <section class="panel log-details"><header><div><span class="status-pill level-@_selectedLine.Level.ToLowerInvariant()">@_selectedLine.Level</span><h2>@(L.IsArabic ? "تفاصيل السطر" : "Line details") #@_selectedLine.Number</h2></div><button class="btn" @onclick="CloseDetails">×</button></header><dl><div><dt>@(L.IsArabic ? "الملف" : "File")</dt><dd>@(_selectedFile?.Name ?? "-")</dd></div><div><dt>@(L.IsArabic ? "المستوى" : "Level")</dt><dd>@_selectedLine.Level</dd></div><div><dt>@(L.IsArabic ? "رقم الخطأ" : "Error code")</dt><dd>@ExtractErrorCode(_selectedLine.Text)</dd></div></dl><pre>@_selectedLine.Text</pre><div class="log-details-actions"><button class="btn primary" @onclick="CopySelectedAsync">@(L.IsArabic ? "نسخ التفاصيل كاملة" : "Copy full details")</button></div></section>
     }
 </div>
 
@@ -161,13 +83,8 @@
     private DateTime? _toDate;
     private int _take = 500;
 
-    private IEnumerable<LogFileInfo> FilteredFiles => _files.Where(file =>
-        (!_fromDate.HasValue || file.LastWriteUtc.ToLocalTime().Date >= _fromDate.Value.Date) &&
-        (!_toDate.HasValue || file.LastWriteUtc.ToLocalTime().Date <= _toDate.Value.Date));
-
-    private IEnumerable<LogLine> FilteredLines => _lines.Where(line =>
-        (string.IsNullOrWhiteSpace(_level) || line.Level == _level) &&
-        (string.IsNullOrWhiteSpace(_search) || line.Text.Contains(_search, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<LogFileInfo> FilteredFiles => _files.Where(file => (!_fromDate.HasValue || file.LastWriteUtc.ToLocalTime().Date >= _fromDate.Value.Date) && (!_toDate.HasValue || file.LastWriteUtc.ToLocalTime().Date <= _toDate.Value.Date));
+    private IEnumerable<LogLine> FilteredLines => _lines.Where(line => (string.IsNullOrWhiteSpace(_level) || line.Level == _level) && (string.IsNullOrWhiteSpace(_search) || line.Text.Contains(_search, StringComparison.OrdinalIgnoreCase)));
 
     protected override void OnInitialized() => Reload();
 
@@ -177,88 +94,25 @@
         {
             _error = string.Empty;
             _files = _reader.GetFiles().ToList();
-            if (!string.IsNullOrWhiteSpace(_selectedPath) && _files.Any(x => x.Path == _selectedPath))
-            {
-                _selectedFile = _files.First(x => x.Path == _selectedPath);
-                LoadLines();
-            }
-            else if (_files.Count > 0)
-            {
-                SelectFile(_files[0]);
-            }
-            else
-            {
-                _selectedPath = string.Empty;
-                _selectedFile = null;
-                _selectedLine = null;
-                _lines = [];
-            }
+            if (!string.IsNullOrWhiteSpace(_selectedPath) && _files.Any(x => x.Path == _selectedPath)) { _selectedFile = _files.First(x => x.Path == _selectedPath); LoadLines(); }
+            else if (_files.Count > 0) SelectFile(_files[0]);
+            else { _selectedPath = string.Empty; _selectedFile = null; _selectedLine = null; _lines = []; }
         }
-        catch (Exception ex)
-        {
-            _error = L.TranslateMessage(ex.Message);
-        }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); }
     }
 
-    private void SelectFile(LogFileInfo file)
-    {
-        _selectedFile = file;
-        _selectedPath = file.Path;
-        _selectedLine = null;
-        LoadLines();
-    }
-
+    private void SelectFile(LogFileInfo file) { _selectedFile = file; _selectedPath = file.Path; _selectedLine = null; LoadLines(); }
     private void LoadLines()
     {
         if (string.IsNullOrWhiteSpace(_selectedPath)) return;
-        try
-        {
-            _lines = _reader.Read(_selectedPath, _take).ToList();
-            _error = string.Empty;
-            _selectedLine = null;
-        }
-        catch (Exception ex)
-        {
-            _error = L.TranslateMessage(ex.Message);
-            _lines = [];
-        }
+        try { _lines = _reader.Read(_selectedPath, _take).ToList(); _error = string.Empty; _selectedLine = null; }
+        catch (Exception ex) { _error = L.TranslateMessage(ex.Message); _lines = []; }
     }
-
     private void SelectLine(LogLine line) => _selectedLine = line;
     private void CloseDetails() => _selectedLine = null;
-
-    private void ClearFilters()
-    {
-        _search = string.Empty;
-        _level = string.Empty;
-        _fromDate = null;
-        _toDate = null;
-    }
-
-    private async Task CopyVisibleAsync()
-    {
-        var text = string.Join(Environment.NewLine, FilteredLines.Select(x => $"[{x.Level}] {x.Text}"));
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
-        Notifications.Success(L.IsArabic ? "تم نسخ النتائج الظاهرة." : "Visible results copied.");
-    }
-
-    private async Task CopySelectedAsync()
-    {
-        if (_selectedLine is null) return;
-        var text = $"File: {_selectedFile?.Name}{Environment.NewLine}Line: {_selectedLine.Number}{Environment.NewLine}Level: {_selectedLine.Level}{Environment.NewLine}Error code: {ExtractErrorCode(_selectedLine.Text)}{Environment.NewLine}{Environment.NewLine}{_selectedLine.Text}";
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
-        Notifications.Success(L.IsArabic ? "تم نسخ تفاصيل الخطأ." : "Error details copied.");
-    }
-
-    private static string ExtractErrorCode(string text)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(text, @"\b(?:ERR[-_: ]?)?[A-Z0-9]{4,}(?:[-_][A-Z0-9]+)*\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        return match.Success ? match.Value : "-";
-    }
-
-    private static string FormatSize(long bytes) => bytes < 1024
-        ? $"{bytes} B"
-        : bytes < 1024 * 1024
-            ? $"{bytes / 1024d:0.0} KB"
-            : $"{bytes / 1024d / 1024d:0.0} MB";
+    private void ClearFilters() { _search = string.Empty; _level = string.Empty; _fromDate = null; _toDate = null; }
+    private async Task CopyVisibleAsync() { var text = string.Join(Environment.NewLine, FilteredLines.Select(x => $"[{x.Level}] {x.Text}")); await JS.InvokeVoidAsync("navigator.clipboard.writeText", text); Notifications.Success(L.IsArabic ? "تم نسخ النتائج الظاهرة." : "Visible results copied."); }
+    private async Task CopySelectedAsync() { if (_selectedLine is null) return; var text = $"File: {_selectedFile?.Name}{Environment.NewLine}Line: {_selectedLine.Number}{Environment.NewLine}Level: {_selectedLine.Level}{Environment.NewLine}Error code: {ExtractErrorCode(_selectedLine.Text)}{Environment.NewLine}{Environment.NewLine}{_selectedLine.Text}"; await JS.InvokeVoidAsync("navigator.clipboard.writeText", text); Notifications.Success(L.IsArabic ? "تم نسخ تفاصيل الخطأ." : "Error details copied."); }
+    private static string ExtractErrorCode(string text) { var match = System.Text.RegularExpressions.Regex.Match(text, @"\b(?:ERR[-_: ]?)?[A-Z0-9]{4,}(?:[-_][A-Z0-9]+)*\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase); return match.Success ? match.Value : "-"; }
+    private static string FormatSize(long bytes) => bytes < 1024 ? $"{bytes} B" : bytes < 1024 * 1024 ? $"{bytes / 1024d:0.0} KB" : $"{bytes / 1024d / 1024d:0.0} MB";
 }
