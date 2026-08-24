@@ -85,10 +85,115 @@
     private string LatestText => _items.OrderByDescending(x => x.CreatedAtUtc).Select(x => FormatDate(x.CreatedAtUtc)).FirstOrDefault() ?? "—";
 
     protected override void OnInitialized(){L.Changed += Changed; Reload();}
-    private void Reload(){try{_items=Inbox.Get(CurrentUser.UserId, false, 300).ToList();}catch(Exception ex){Toasts.Error(L.TranslateMessage(ex.Message), L.IsArabic?"فشل تحميل الإشعارات":"Failed to load notifications",ex.ToString());}}
-    private void MarkRead(NotificationItem item){Inbox.MarkRead(CurrentUser.UserId, item.Id); Reload();}
-    private void MarkAllRead(){Inbox.MarkAllRead(CurrentUser.UserId); Reload(); Toasts.Success(L.IsArabic?"تم تعليم كل الإشعارات كمقروءة.":"All notifications marked as read.");}
-    private void Dismiss(NotificationItem item){Inbox.Dismiss(CurrentUser.UserId, item.Id); Reload();}
+
+    private bool Reload(bool notifyFailure = true)
+    {
+        try
+        {
+            _items = Inbox.Get(CurrentUser.UserId, false, 300).ToList();
+            return true;
+        }
+        catch (Exception)
+        {
+            if (notifyFailure)
+            {
+                Toasts.Error(
+                    L.IsArabic ? "تعذر تحديث صندوق الإشعارات. حاول مرة أخرى." : "The notification inbox could not be refreshed. Try again.",
+                    L.IsArabic ? "فشل تحميل الإشعارات" : "Failed to load notifications");
+            }
+
+            return false;
+        }
+    }
+
+    private void MarkRead(NotificationItem item)
+    {
+        try
+        {
+            if (!Inbox.MarkRead(CurrentUser.UserId, item.Id))
+            {
+                Toasts.Warning(
+                    L.IsArabic ? "لم يتم تغيير الإشعار. حدّث الصندوق للحصول على أحدث حالة." : "The notification was not changed. Refresh the inbox for the latest state.",
+                    L.IsArabic ? "لم يتم إجراء تغيير" : "No change was made");
+                return;
+            }
+
+            if (!Reload(notifyFailure: false))
+            {
+                ShowMutationNeedsRefresh(
+                    L.IsArabic ? "تم تعليم الإشعار كمقروء، لكن تعذر تحديث الصندوق." : "The notification was marked as read, but the inbox could not be refreshed.");
+            }
+        }
+        catch (Exception)
+        {
+            Toasts.Error(
+                L.IsArabic ? "تعذر تعليم الإشعار كمقروء. لم يتم تأكيد أي تغيير." : "The notification could not be marked as read. No change was confirmed.",
+                L.IsArabic ? "فشل تحديث الإشعار" : "Notification update failed");
+        }
+    }
+
+    private void MarkAllRead()
+    {
+        try
+        {
+            var changed = Inbox.MarkAllRead(CurrentUser.UserId);
+            if (changed == 0)
+            {
+                Toasts.Warning(
+                    L.IsArabic ? "لم يتم تغيير أي إشعار. حدّث الصندوق للحصول على أحدث حالة." : "No notifications were changed. Refresh the inbox for the latest state.",
+                    L.IsArabic ? "لم يتم إجراء تغيير" : "No change was made");
+                return;
+            }
+
+            if (Reload(notifyFailure: false))
+            {
+                Toasts.Success(L.IsArabic ? "تم تعليم كل الإشعارات كمقروءة." : "All notifications marked as read.");
+            }
+            else
+            {
+                ShowMutationNeedsRefresh(
+                    L.IsArabic ? "تم تعليم الإشعارات كمقروءة، لكن تعذر تحديث الصندوق." : "Notifications were marked as read, but the inbox could not be refreshed.");
+            }
+        }
+        catch (Exception)
+        {
+            Toasts.Error(
+                L.IsArabic ? "تعذر تعليم الإشعارات كمقروءة. لم يتم تأكيد أي تغيير." : "Notifications could not be marked as read. No change was confirmed.",
+                L.IsArabic ? "فشل تحديث الإشعارات" : "Notification update failed");
+        }
+    }
+
+    private void Dismiss(NotificationItem item)
+    {
+        try
+        {
+            if (!Inbox.Dismiss(CurrentUser.UserId, item.Id))
+            {
+                Toasts.Warning(
+                    L.IsArabic ? "لم يتم إخفاء الإشعار. حدّث الصندوق للحصول على أحدث حالة." : "The notification was not dismissed. Refresh the inbox for the latest state.",
+                    L.IsArabic ? "لم يتم إجراء تغيير" : "No change was made");
+                return;
+            }
+
+            if (!Reload(notifyFailure: false))
+            {
+                ShowMutationNeedsRefresh(
+                    L.IsArabic ? "تم إخفاء الإشعار، لكن تعذر تحديث الصندوق." : "The notification was dismissed, but the inbox could not be refreshed.");
+            }
+        }
+        catch (Exception)
+        {
+            Toasts.Error(
+                L.IsArabic ? "تعذر إخفاء الإشعار. لم يتم تأكيد أي تغيير." : "The notification could not be dismissed. No change was confirmed.",
+                L.IsArabic ? "فشل تحديث الإشعار" : "Notification update failed");
+        }
+    }
+
+    private void ShowMutationNeedsRefresh(string message) =>
+        Toasts.Warning(
+            $"{message} {(L.IsArabic ? "استخدم تحديث لمطابقة الحالة المحفوظة." : "Use Refresh to reconcile the saved state.")}",
+            L.IsArabic ? "تم الحفظ؛ يلزم التحديث" : "Saved; refresh required");
+
     private string? RelatedUrl(NotificationItem item) => item.ExecutionJobId.HasValue ? "/module/execution" : item.Title.Contains("planner",StringComparison.OrdinalIgnoreCase) || item.Title.Contains("content",StringComparison.OrdinalIgnoreCase) ? "/content-planner" : item.Title.Contains("execution",StringComparison.OrdinalIgnoreCase) ? "/module/execution" : item.RelatedId.HasValue ? "/content-planner" : null;
     private string SeverityClass(NotificationSeverity value)=>value.ToString().ToLowerInvariant();
     private string SeverityIcon(NotificationSeverity value)=>value switch{NotificationSeverity.Success=>"✓",NotificationSeverity.Warning=>"!",NotificationSeverity.Error=>"×",_=>"i"};
