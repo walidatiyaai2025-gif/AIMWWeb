@@ -30,6 +30,7 @@ This ledger records user-visible capabilities inspected end-to-end for Issue #18
 | all production `.razor` surfaces | Prevent placeholder/simulated runtime constructs | repository-wide static anti-mock guard in normal unit-test CI | CONTRACT VERIFIED | `RazorProductionAntiMockGuardTests` | PR #198; none |
 | `/sites/{siteId}/content/{post|page}/{id}/edit` | Save edited post/page | `Content.Edit` → remote-version conflict check → authenticated WordPress mutation → synchronization → fresh editor load | BROWSER VERIFIED | `ContentEditorMutationsUxTests` | PR #200; none |
 | `/approvals` | Approve and execute supported WordPress content proposal | owner + `Approvals.Decide` → external execution job → `ApprovedChangeExecutionWorker` → explicit background authorization → WordPress editor → forced sync → execution + approval reconciliation | BROWSER VERIFIED | `ApprovedChangeExecutionWorkerContractTests`; `ApprovalExecutionUxTests` | PR #201 + PR #202; none |
+| background Security Audit email relay | Deliver retained high-signal security alerts without starvation or silent outage loss | `ApplicationSecurityAuditStore` retained window → high-signal filter → owner + enabled recipients → durable `EmailOutboxService` with event-derived idempotency → email dispatcher | IN REVIEW | `SecurityAuditEmailAlertTests`; `SecurityAuditEmailAlertDurabilityTests` | PR #234; filters handled IDs before the 500/pass cap and replays the authoritative 365-day retained window; exact-head CI required before integration-ready |
 
 ## Closure evidence
 
@@ -49,6 +50,7 @@ This ledger records user-visible capabilities inspected end-to-end for Issue #18
 - PR #218 adds fail-closed Site Operations route/service permissions, server-owned tenant scope, audited destructive cleanup, cross-process mutation serialization, durable result reconciliation, and explicit corrupt-storage failure semantics.
 - PR #217 is intentionally limited to Site Operations Hub/Overview/Details read-surface truthfulness. A history load failure is not rendered as zero metrics, empty history, or not-found; CSV uses the existing browser Blob helper and is unavailable for invalid/empty filtered sets; clipboard success is shown only after the browser clipboard write returns successfully.
 - PR #230 independently browser-verifies Site Operations read/reliability/maintenance against the real InteractiveServer host and production history/audit/storage boundaries, including real CSV/clipboard paths and fail-closed storage/clipboard failure recovery.
+- PR #234 keeps Security Audit alert delivery bounded at 500 events per pass without allowing a handled first batch to starve later retained events, and aligns restart recovery with the audit store's authoritative retention window while preserving durable outbox idempotency.
 - The production tree currently has no known `href="#"`, `javascript:` placeholder navigation, or `NotImplementedException` occurrence from the Issue #183 scan.
 
 ## Remaining closure work
