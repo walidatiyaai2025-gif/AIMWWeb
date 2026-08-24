@@ -136,7 +136,7 @@ public sealed class BulkTrashExecutionService(
         {
             case BulkExecutionDisposition.NeedsReconciliation:
                 message = $"WordPress moved {succeeded} item(s) to trash, but the local cache is not reconciled. The remote mutation will not be replayed during recovery. {reconciliationError}";
-                tracker.NeedsReconciliation(jobId, targets.Count, targets.Count, message);
+                tracker.NeedsReconciliation(jobId, succeeded, targets.Count, message);
                 throw new BulkReconciliationRequiredException(jobId, message);
             case BulkExecutionDisposition.CompletedWithWarnings:
                 message = $"تم نقل {succeeded} عنصر إلى سلة المهملات وفشل {remoteFailedCount}. {string.Join(" | ", failures.Take(3))}";
