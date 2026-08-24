@@ -86,7 +86,9 @@
 
     protected override void OnInitialized(){L.Changed += Changed; Reload();}
 
-    private bool Reload(bool notifyFailure = true)
+    private void Reload() => TryReload();
+
+    private bool TryReload(bool notifyFailure = true)
     {
         try
         {
@@ -118,7 +120,7 @@
                 return;
             }
 
-            if (!Reload(notifyFailure: false))
+            if (!TryReload(notifyFailure: false))
             {
                 ShowMutationNeedsRefresh(
                     L.IsArabic ? "تم تعليم الإشعار كمقروء، لكن تعذر تحديث الصندوق." : "The notification was marked as read, but the inbox could not be refreshed.");
@@ -145,7 +147,7 @@
                 return;
             }
 
-            if (Reload(notifyFailure: false))
+            if (TryReload(notifyFailure: false))
             {
                 Toasts.Success(L.IsArabic ? "تم تعليم كل الإشعارات كمقروءة." : "All notifications marked as read.");
             }
@@ -175,7 +177,7 @@
                 return;
             }
 
-            if (!Reload(notifyFailure: false))
+            if (!TryReload(notifyFailure: false))
             {
                 ShowMutationNeedsRefresh(
                     L.IsArabic ? "تم إخفاء الإشعار، لكن تعذر تحديث الصندوق." : "The notification was dismissed, but the inbox could not be refreshed.");
