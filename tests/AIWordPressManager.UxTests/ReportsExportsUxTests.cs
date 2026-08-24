@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
 using FluentAssertions;
@@ -47,8 +48,10 @@ public sealed class ReportsExportsUxTests(UxTestHost host)
             download.SuggestedFilename.Should().Be("sites-report.csv");
             var path = await download.PathAsync();
             path.Should().NotBeNullOrWhiteSpace();
-            var content = await File.ReadAllTextAsync(path!);
-            content.Should().StartWith("\uFEFF\"Name\",\"Url\",\"Status\"");
+            var bytes = await File.ReadAllBytesAsync(path!);
+            bytes.Should().StartWith(Encoding.UTF8.GetPreamble(), "report CSVs are emitted with the UTF-8 BOM for spreadsheet compatibility");
+            var content = Encoding.UTF8.GetString(bytes.AsSpan(Encoding.UTF8.GetPreamble().Length));
+            content.Should().StartWith("\"Name\",\"Url\",\"Status\"");
             content.Should().Contain($"\"{SiteName}\"");
             content.Should().Contain($"\"{SiteUri}\"");
 
