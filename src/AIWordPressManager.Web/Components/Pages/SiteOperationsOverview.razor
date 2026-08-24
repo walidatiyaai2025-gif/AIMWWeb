@@ -18,13 +18,25 @@ else
     <div class="site-operations-page">
         <section class="panel" style="padding:24px;margin-bottom:18px">
             <h1>@(L.IsArabic ? "عمليات مواقع WordPress" : "WordPress Site Operations")</h1>
-            <p>@(L.IsArabic ? "عرض موحد لاختبارات الاتصال والمزامنة التابعة لحسابك." : "A unified view of connection tests and synchronization activity owned by your account.")</p>
+            <p>@(L.IsArabic ? "عرض موحد لسجل عمليات المواقع المحتفَظ به والتابع لحسابك." : "A unified view of retained site-operation history owned by your account.")</p>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn" @onclick="ReloadAsync">@(L.IsArabic ? "تحديث" : "Refresh")</button>
                 <a class="btn" href="@CsvDownloadHref" download="@CsvFileName">@(L.IsArabic ? "تصدير CSV" : "Export CSV")</a>
                 <a class="btn primary" href="/sites">@(L.IsArabic ? "إدارة المواقع" : "Manage sites")</a>
             </div>
         </section>
+
+        @if (_historyMayBeTruncated)
+        {
+            <section class="panel" style="padding:14px 18px;margin-bottom:18px">
+                <strong>@(L.IsArabic ? "تنبيه نطاق السجل:" : "History scope notice:")</strong>
+                <span>
+                    @(L.IsArabic
+                        ? $" وصل سجل العمليات إلى حد الاحتفاظ ({RetainedHistoryLimit:N0} من أحدث السجلات). البحث والملخص وملف CSV أدناه يغطون السجلات المحتفَظ بها فقط، وقد لا تشمل الفترات الأقدم كل العمليات التي حدثت سابقًا."
+                        : $" Operation history has reached its {RetainedHistoryLimit:N0}-record retention limit. Search, summary, and CSV export below cover retained records only; older date ranges may not include every operation that originally occurred.")
+                </span>
+            </section>
+        }
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px">
             @Stat(L.IsArabic ? "الإجمالي" : "Total", FilteredSummary.Total.ToString())
@@ -88,7 +100,9 @@ else
 }
 
 @code {
+    private const int RetainedHistoryLimit = 2000;
     private bool _loading = true;
+    private bool _historyMayBeTruncated;
     private string _query = string.Empty;
     private string _siteFilter = string.Empty;
     private string _statusFilter = "all";
@@ -107,7 +121,8 @@ else
         {
             var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
-            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), 2000);
+            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), RetainedHistoryLimit);
+            _historyMayBeTruncated = _items.Count >= RetainedHistoryLimit;
         }
         finally { _loading = false; }
     }
