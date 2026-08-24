@@ -39,7 +39,10 @@ public sealed class ReportsExportsUxTests(UxTestHost host)
             var card = page.Locator("article.report-card")
                 .Filter(new LocatorFilterOptions { HasText = "Sites report" });
             var csvButton = card.GetByRole(AriaRole.Button, new() { Name = "CSV", Exact = true });
-            var download = await DownloadInteractivelyAsync(page, csvButton);
+            await WaitUntilEnabledAsync(page, csvButton);
+            var download = await page.RunAndWaitForDownloadAsync(
+                () => csvButton.ClickAsync(new LocatorClickOptions { Timeout = 5000 }),
+                new PageRunAndWaitForDownloadOptions { Timeout = 10000 });
 
             download.SuggestedFilename.Should().Be("sites-report.csv");
             var path = await download.PathAsync();
@@ -57,24 +60,17 @@ public sealed class ReportsExportsUxTests(UxTestHost host)
         }
     }
 
-    private static async Task<IDownload> DownloadInteractivelyAsync(IPage page, ILocator button)
+    private static async Task WaitUntilEnabledAsync(IPage page, ILocator button)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(12);
+        await button.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        var deadline = DateTime.UtcNow.AddSeconds(15);
         while (DateTime.UtcNow < deadline)
         {
-            try
-            {
-                return await page.RunAndWaitForDownloadAsync(
-                    () => button.ClickAsync(new LocatorClickOptions { Timeout = 1500 }),
-                    new PageRunAndWaitForDownloadOptions { Timeout = 2500 });
-            }
-            catch (PlaywrightException)
-            {
-                await page.WaitForTimeoutAsync(100);
-            }
+            if (await button.IsEnabledAsync()) return;
+            await page.WaitForTimeoutAsync(100);
         }
 
-        throw new TimeoutException("Reports export did not produce a browser download.");
+        throw new TimeoutException("Reports export did not become interactive.");
     }
 
     private async Task SeedOwnedSiteAsync()
