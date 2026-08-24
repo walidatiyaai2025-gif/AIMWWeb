@@ -98,6 +98,35 @@ public sealed class ExecutionOperationTracker
             });
     }
 
+    public void CompleteWithWarnings(Guid jobId, int processedItems, int totalItems, string warning)
+    {
+        var safeTotal = Math.Max(1, totalItems);
+        Update(jobId,
+            "UPDATE ExecutionCenterJobs SET Status='CompletedWithWarnings', ProcessedItems=$processed, TotalItems=$total, Progress=100, CompletedAtUtc=$now, Error=$warning WHERE Id=$id;",
+            "Warning", warning,
+            (command, now) =>
+            {
+                command.Parameters.AddWithValue("$processed", Math.Clamp(processedItems, 0, safeTotal));
+                command.Parameters.AddWithValue("$total", safeTotal);
+                command.Parameters.AddWithValue("$now", now);
+                command.Parameters.AddWithValue("$warning", warning);
+            });
+    }
+
+    public void NeedsReconciliation(Guid jobId, int processedItems, int totalItems, string error)
+    {
+        var safeTotal = Math.Max(1, totalItems);
+        Update(jobId,
+            "UPDATE ExecutionCenterJobs SET Status='NeedsReconciliation', ProcessedItems=$processed, TotalItems=$total, Progress=100, CompletedAtUtc=NULL, Error=$error WHERE Id=$id;",
+            "Warning", error,
+            (command, _) =>
+            {
+                command.Parameters.AddWithValue("$processed", Math.Clamp(processedItems, 0, safeTotal));
+                command.Parameters.AddWithValue("$total", safeTotal);
+                command.Parameters.AddWithValue("$error", error);
+            });
+    }
+
     public void Fail(Guid jobId, string error)
     {
         Update(jobId,
