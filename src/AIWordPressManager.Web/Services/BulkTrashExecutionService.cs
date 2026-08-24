@@ -81,7 +81,7 @@ public sealed class BulkTrashExecutionService(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            tracker.Fail(jobId, "Bulk trash operation was cancelled.");
+            tracker.Fail(jobId, "Bulk trash operation was cancelled before the remote mutation phase completed.");
             throw;
         }
 
@@ -99,7 +99,11 @@ public sealed class BulkTrashExecutionService(
                 await syncService.SynchronizeAsync(siteId, refreshCts.Token, forceFullRefresh: true);
                 reconciliationSucceeded = true;
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                reconciliationError = "Local reconciliation was cancelled after WordPress changes were already applied.";
+            }
+            catch (OperationCanceledException)
             {
                 reconciliationError = "Local reconciliation timed out after WordPress changes were already applied.";
             }
@@ -116,7 +120,7 @@ public sealed class BulkTrashExecutionService(
             case BulkExecutionDisposition.NeedsReconciliation:
                 message = $"WordPress moved {succeeded} item(s) to trash, but the local cache is not reconciled. The remote mutation will not be replayed during recovery. {reconciliationError}";
                 tracker.NeedsReconciliation(jobId, targets.Count, targets.Count, message);
-                break;
+                throw new BulkReconciliationRequiredException(jobId, message);
             case BulkExecutionDisposition.CompletedWithWarnings:
                 message = $"تم نقل {succeeded} عنصر إلى سلة المهملات وفشل {remoteFailedCount}. {string.Join(" | ", failures.Take(3))}";
                 tracker.CompleteWithWarnings(jobId, targets.Count, targets.Count, message);
@@ -131,14 +135,13 @@ public sealed class BulkTrashExecutionService(
                 break;
         }
 
-        return new BulkTrashResult(
-            jobId,
-            succeeded,
-            remoteFailedCount,
-            failures,
-            message,
-            disposition == BulkExecutionDisposition.NeedsReconciliation);
+        return new BulkTrashResult(jobId, succeeded, remoteFailedCount, failures, message);
     }
+}
+
+public sealed class BulkReconciliationRequiredException(Guid jobId, string message) : InvalidOperationException(message)
+{
+    public Guid JobId { get; } = jobId;
 }
 
 public sealed record BulkTrashTarget(string ContentType, int WordPressId);
@@ -148,5 +151,4 @@ public sealed record BulkTrashResult(
     int Succeeded,
     int Failed,
     IReadOnlyList<string> Errors,
-    string Message,
-    bool RequiresReconciliation = false);
+    string Message);
