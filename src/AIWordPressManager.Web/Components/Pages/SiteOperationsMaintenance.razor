@@ -2,9 +2,7 @@
 @page "/site-operations/maintenance"
 @rendermode InteractiveServer
 @implements IDisposable
-@inject SiteOperationHistoryService History
-@inject SiteWebService SiteService
-@inject CurrentUserContext CurrentUser
+@inject SiteOperationMaintenanceService Maintenance
 @inject AppLanguageService L
 
 <PageTitle>@(L.IsArabic ? "صيانة سجل العمليات" : "Operation History Maintenance")</PageTitle>
@@ -18,7 +16,7 @@
                 <p style="margin:0;opacity:.75">@(L.IsArabic ? "عاين ونظّف فقط سجلات المواقع التابعة لحسابك، مع حماية أحدث العمليات تلقائيًا." : "Preview and clean only records for sites owned by your account, while automatically protecting the newest operations.")</p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button type="button" class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
+                <button type="button" class="btn" disabled="@_busy" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
                 <a class="btn" href="/site-operations">@(L.IsArabic ? "سجل العمليات" : "Operation history")</a>
                 <a class="btn primary" href="/operations">@(L.IsArabic ? "مركز العمليات" : "Operations hub")</a>
             </div>
@@ -27,7 +25,7 @@
 
     @if (!string.IsNullOrWhiteSpace(_message))
     {
-        <section class="panel" style="padding:14px 18px;margin-bottom:18px">@_message</section>
+        <section class="panel" role="status" style="padding:14px 18px;margin-bottom:18px">@_message</section>
     }
 
     <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
@@ -43,7 +41,7 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end">
             <label>
                 <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "حذف العمليات الأقدم من" : "Delete operations older than")</span>
-                <select class="form-control" @bind="_olderThanDays" @bind:after="RefreshPreview">
+                <select class="form-control" disabled="@_busy" @bind="_olderThanDays" @bind:after="RefreshPreviewAsync">
                     <option value="30">30 @(L.IsArabic ? "يومًا" : "days")</option>
                     <option value="60">60 @(L.IsArabic ? "يومًا" : "days")</option>
                     <option value="90">90 @(L.IsArabic ? "يومًا" : "days")</option>
@@ -53,14 +51,14 @@
             </label>
             <label>
                 <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "الاحتفاظ دائمًا بأحدث" : "Always keep the newest")</span>
-                <select class="form-control" @bind="_keepLatest" @bind:after="RefreshPreview">
+                <select class="form-control" disabled="@_busy" @bind="_keepLatest" @bind:after="RefreshPreviewAsync">
                     <option value="50">50</option>
                     <option value="100">100</option>
                     <option value="250">250</option>
                     <option value="500">500</option>
                 </select>
             </label>
-            <button type="button" class="btn" @onclick="RefreshPreview">@(L.IsArabic ? "تحديث المعاينة" : "Refresh preview")</button>
+            <button type="button" class="btn" disabled="@_busy" @onclick="RefreshPreviewAsync">@(L.IsArabic ? "تحديث المعاينة" : "Refresh preview")</button>
         </div>
     </section>
 
@@ -77,13 +75,20 @@
         <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
             <label style="min-width:260px;flex:1">
                 <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "اكتب CLEANUP للتأكيد" : "Type CLEANUP to confirm")</span>
-                <input class="form-control" @bind="_confirmation" autocomplete="off" />
+                <input class="form-control" @bind="_confirmation" disabled="@_busy" autocomplete="off" />
             </label>
-            <button type="button" class="btn danger" disabled="@(!CanCleanup)" @onclick="RunCleanup">
-                @(L.IsArabic ? $"حذف {_preview.RemovableCount} سجل" : $"Delete {_preview.RemovableCount} records")
+            <button type="button" class="btn danger" disabled="@(!CanCleanup)" @onclick="RunCleanupAsync">
+                @if (_busy)
+                {
+                    <span>@(L.IsArabic ? "جارٍ التنفيذ…" : "Working…")</span>
+                }
+                else
+                {
+                    <span>@(L.IsArabic ? $"حذف {_preview.RemovableCount} سجل" : $"Delete {_preview.RemovableCount} records")</span>
+                }
             </button>
         </div>
-        <small style="display:block;margin-top:14px;opacity:.65;word-break:break-all">@_storage.FilePath</small>
+        <small style="display:block;margin-top:14px;opacity:.65">@(L.IsArabic ? "التخزين: بيانات التطبيق المُدارة على الخادم" : "Storage: managed server application data")</small>
     </section>
 </div>
 
@@ -92,8 +97,7 @@
     private int _keepLatest = 100;
     private string _confirmation = string.Empty;
     private string? _message;
-    private Guid _ownerUserId;
-    private Guid[] _ownedSiteIds = [];
+    private bool _busy;
     private SiteOperationHistoryStorageInfo _storage = new(string.Empty, 0, 0, null, null, 0);
     private SiteOperationCleanupPreview _preview = new(0, 0, 0, DateTime.UtcNow, 100, null, null);
 
@@ -102,32 +106,77 @@
 
     private async Task ReloadAsync()
     {
-        _ownerUserId = CurrentUser.RequireUserId();
-        var sites = await SiteService.GetSitesAsync();
-        _ownedSiteIds = sites.Select(x => x.Id).ToArray();
-        _storage = History.GetStorageInfo(_ownerUserId, _ownedSiteIds);
-        RefreshPreview();
-    }
-
-    private void RefreshPreview()
-    {
-        if (_ownerUserId == Guid.Empty) return;
-        _preview = History.PreviewCleanup(_ownerUserId, _ownedSiteIds, _olderThanDays, _keepLatest);
+        if (_busy) return;
+        _busy = true;
         _message = null;
+        try
+        {
+            ApplySnapshot(await Maintenance.GetSnapshotAsync(_olderThanDays, _keepLatest));
+        }
+        catch (Exception ex)
+        {
+            _message = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
-    private bool CanCleanup => _preview.RemovableCount > 0 && string.Equals(_confirmation.Trim(), "CLEANUP", StringComparison.Ordinal);
+    private Task RefreshPreviewAsync() => ReloadAsync();
 
-    private void RunCleanup()
+    private bool CanCleanup =>
+        !_busy &&
+        _preview.RemovableCount > 0 &&
+        string.Equals(_confirmation.Trim(), "CLEANUP", StringComparison.Ordinal);
+
+    private async Task RunCleanupAsync()
     {
-        if (!CanCleanup || _ownerUserId == Guid.Empty) return;
-        var result = History.Cleanup(_ownerUserId, _ownedSiteIds, _olderThanDays, _keepLatest);
-        _confirmation = string.Empty;
-        _message = L.IsArabic
-            ? $"تم حذف {result.RemovedCount} سجل من نطاق حسابك، والمتبقي {result.RemainingCount} سجل."
-            : $"Removed {result.RemovedCount} records from your account scope; {result.RemainingCount} records remain.";
-        _storage = History.GetStorageInfo(_ownerUserId, _ownedSiteIds);
-        _preview = History.PreviewCleanup(_ownerUserId, _ownedSiteIds, _olderThanDays, _keepLatest);
+        if (!CanCleanup) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            var execution = await Maintenance.CleanupAsync(_olderThanDays, _keepLatest);
+            _confirmation = string.Empty;
+
+            // Re-read the durable store after mutation before claiming the visible final state.
+            ApplySnapshot(await Maintenance.GetSnapshotAsync(_olderThanDays, _keepLatest));
+            var success = L.IsArabic
+                ? $"تم حذف {execution.Cleanup.RemovedCount} سجل من نطاق حسابك، والمتبقي {execution.Cleanup.RemainingCount} سجل."
+                : $"Removed {execution.Cleanup.RemovedCount} records from your account scope; {execution.Cleanup.RemainingCount} records remain.";
+            _message = string.IsNullOrWhiteSpace(execution.Warning)
+                ? success
+                : L.IsArabic
+                    ? success + " اكتمل الحذف، لكن تعذر تسجيل حالة التدقيق النهائية؛ تم الاحتفاظ بسجل طلب العملية."
+                    : success + " Cleanup completed, but the terminal audit could not be finalized; the request audit remains recorded.";
+        }
+        catch (Exception ex)
+        {
+            _message = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ApplySnapshot(SiteOperationMaintenanceSnapshot snapshot)
+    {
+        _storage = snapshot.Storage;
+        _preview = snapshot.Preview;
+    }
+
+    private string FailureMessage(Exception exception)
+    {
+        if (exception is UnauthorizedAccessException)
+            return L.IsArabic ? "ليست لديك صلاحية تنفيذ صيانة سجل العمليات." : "You do not have permission to maintain operation history.";
+        if (exception is InvalidDataException)
+            return L.IsArabic ? "تعذر قراءة سجل العمليات بأمان. لم يتم اعتبار البيانات التالفة سجلاً فارغًا ولم يتم تسجيل نجاح." : "Operation history could not be read safely. Corrupt data was not treated as empty and no success was recorded.";
+
+        return L.IsArabic
+            ? "تعذر تنفيذ طلب صيانة سجل العمليات. لم يتم تسجيل نجاح؛ أعد المحاولة أو راجع مسؤول النظام."
+            : "The operation-history maintenance request failed. No success was recorded; retry or contact an administrator.";
     }
 
     private RenderFragment Stat(string label, string value) => builder =>
