@@ -47,6 +47,8 @@ jobs:
             filter: FullyQualifiedName~SessionRevocationUxTests
           - shard: application-user-admin
             filter: FullyQualifiedName~ApplicationUserAdministrationUxTests
+          - shard: roles-permissions
+            filter: FullyQualifiedName~RolesPermissionsUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
