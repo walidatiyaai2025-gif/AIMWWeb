@@ -12,6 +12,7 @@ public static class ApplicationRoutePermissionCatalog
         {
             ["Sites"] = ApplicationPermissionCatalog.SitesView,
             ["GlobalContentHub"] = ApplicationPermissionCatalog.ContentView,
+            ["ContentPlanner"] = ApplicationPermissionCatalog.ContentView,
             ["ExecutionCenter"] = ApplicationPermissionCatalog.OperationsView,
             ["ApprovalQueue"] = ApplicationPermissionCatalog.ApprovalsView,
             ["SystemHealth"] = ApplicationPermissionCatalog.OperationsView,
