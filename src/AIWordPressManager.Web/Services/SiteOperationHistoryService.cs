@@ -423,20 +423,23 @@ public sealed class SiteOperationHistoryService
     private void Save(List<SiteOperationHistoryItem> items)
     {
         var temp = _path + ".tmp";
-        try
-        {
-            File.WriteAllText(temp, JsonSerializer.Serialize(items, _json));
-            File.Move(temp, _path, true);
-        }
-        finally
+        File.WriteAllText(temp, JsonSerializer.Serialize(items, _json));
+        for (var attempt = 0; ; attempt++)
         {
             try
             {
-                if (File.Exists(temp)) File.Delete(temp);
+                File.Move(temp, _path, true);
+                return;
             }
-            catch
+            catch (IOException) when (attempt < 4)
             {
-                // Best-effort cleanup only. The authoritative history file has already either moved or failed.
+                Thread.Sleep(MutationLockRetryDelay);
+            }
+            catch (IOException ex)
+            {
+                throw new IOException(
+                    "Site operation history could not commit its durable update after bounded retries.",
+                    ex);
             }
         }
     }
