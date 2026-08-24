@@ -1,8 +1,8 @@
+using System.Data;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.AI;
 using AIWordPressManager.Application.Abstractions.WordPress;
 using AIWordPressManager.Persistence;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
@@ -42,30 +42,7 @@ public sealed class SystemHealthWebService(
             checks.Add(new("storage", false, dataDirectory, ex.Message));
         }
 
-        var databasePath = paths.GetDatabasePath();
-        try
-        {
-            var builder = new SqliteConnectionStringBuilder
-            {
-                DataSource = databasePath,
-                Mode = SqliteOpenMode.ReadWriteCreate,
-                Cache = SqliteCacheMode.Shared
-            };
-
-            await using var connection = new SqliteConnection(builder.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
-            await using var command = connection.CreateCommand();
-            command.CommandText = "PRAGMA quick_check;";
-            var result = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
-            var healthy = string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase);
-            var size = File.Exists(databasePath) ? new FileInfo(databasePath).Length : 0;
-            checks.Add(new("sqlite", healthy, databasePath, $"quick_check: {result}; size: {size:N0} bytes"));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "SQLite health check failed for {DatabasePath}", databasePath);
-            checks.Add(new("sqlite", false, databasePath, ex.Message));
-        }
+        checks.Add(await CheckDatabaseAsync(cancellationToken));
 
         var logsDirectory = paths.GetLogsDirectory();
         checks.Add(new("logs", Directory.Exists(logsDirectory), logsDirectory,
@@ -79,6 +56,78 @@ public sealed class SystemHealthWebService(
             DateTimeOffset.UtcNow,
             typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown",
             checks);
+    }
+
+    private async Task<SystemHealthCheck> CheckDatabaseAsync(CancellationToken cancellationToken)
+    {
+        var provider = ResolveDatabaseProvider();
+        if (!configuration.GetValue<bool>("Database:SetupComplete"))
+            return new("database", false, provider, "Database setup is incomplete.");
+
+        try
+        {
+            if (provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+                return await CheckSqliteAsync(provider, cancellationToken);
+
+            var healthy = await dbContext.Database.CanConnectAsync(cancellationToken);
+            return new(
+                "database",
+                healthy,
+                provider,
+                healthy
+                    ? $"Connection check succeeded for the configured {provider} provider."
+                    : $"Connection check failed for the configured {provider} provider.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Configured database health check failed for provider {Provider}", provider);
+            return new("database", false, provider, ex.Message);
+        }
+    }
+
+    private async Task<SystemHealthCheck> CheckSqliteAsync(string provider, CancellationToken cancellationToken)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        var openedHere = connection.State != ConnectionState.Open;
+        try
+        {
+            if (openedHere)
+                await dbContext.Database.OpenConnectionAsync(cancellationToken);
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = "PRAGMA quick_check;";
+            var result = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
+            var healthy = string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase);
+            var dataSource = connection.DataSource;
+            var size = !string.IsNullOrWhiteSpace(dataSource) && File.Exists(dataSource)
+                ? new FileInfo(dataSource).Length
+                : 0;
+
+            return new("database", healthy, provider, $"quick_check: {result}; size: {size:N0} bytes");
+        }
+        finally
+        {
+            if (openedHere)
+                await dbContext.Database.CloseConnectionAsync();
+        }
+    }
+
+    private string ResolveDatabaseProvider()
+    {
+        var configured = configuration["Database:Provider"]?.Trim();
+        if (!string.IsNullOrWhiteSpace(configured))
+            return configured;
+
+        var efProvider = dbContext.Database.ProviderName ?? string.Empty;
+        if (efProvider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase)) return "SQLite";
+        if (efProvider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase)) return "SqlServer";
+        if (efProvider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase)) return "PostgreSQL";
+        if (efProvider.Contains("MySql", StringComparison.OrdinalIgnoreCase)) return "MySQL/MariaDB";
+        return "Unknown";
     }
 
     private async Task AddWordPressChecksAsync(List<SystemHealthCheck> checks, CancellationToken cancellationToken)
