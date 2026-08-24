@@ -193,68 +193,85 @@ public sealed class BulkContentOperationWorker(
         var failures = new List<string>();
         var total = Math.Max(1, request.Targets.Count);
 
-        for (var index = 0; index < request.Targets.Count; index++)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            for (var index = 0; index < request.Targets.Count; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
+                var target = request.Targets[index];
+                var outcome = await ProcessTargetWithRetryAsync(editor, request, target, index, total, cancellationToken);
+                if (outcome.Success) succeeded++; else failures.Add($"{target.Title}: {outcome.Error}");
+                tracker.Report(request.JobId, index + 1, total,
+                    outcome.Success ? $"Processed {index + 1}/{total}: {target.Title}" : $"Failed after {outcome.Attempts} attempt(s): {target.Title}");
+            }
+
             if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
-            var target = request.Targets[index];
-            var outcome = await ProcessTargetWithRetryAsync(editor, request, target, index, total, cancellationToken);
-            if (outcome.Success) succeeded++; else failures.Add($"{target.Title}: {outcome.Error}");
-            tracker.Report(request.JobId, index + 1, total,
-                outcome.Success ? $"Processed {index + 1}/{total}: {target.Title}" : $"Failed after {outcome.Attempts} attempt(s): {target.Title}");
-        }
 
-        if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
-
-        var reconciliationSucceeded = succeeded == 0;
-        string? reconciliationError = null;
-        if (succeeded > 0)
-        {
-            tracker.Report(request.JobId, total, total, "Refreshing local WordPress cache.");
-            try
+            var reconciliationSucceeded = succeeded == 0;
+            string? reconciliationError = null;
+            if (succeeded > 0)
             {
-                await syncService.SynchronizeAsync(request.SiteId, cancellationToken, forceFullRefresh: true);
-                reconciliationSucceeded = true;
+                tracker.Report(request.JobId, total, total, "Refreshing local WordPress cache.");
+                try
+                {
+                    await syncService.SynchronizeAsync(request.SiteId, cancellationToken, forceFullRefresh: true);
+                    reconciliationSucceeded = true;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    reconciliationError = $"Remote WordPress changes were applied, but local reconciliation failed: {ex.Message}";
+                    logger.LogWarning(ex, "Bulk operation {JobId} requires local reconciliation recovery.", request.JobId);
+                }
             }
-            catch (Exception ex)
+
+            var disposition = BulkExecutionOutcomePolicy.Resolve(succeeded, failures.Count, reconciliationSucceeded);
+            switch (disposition)
             {
-                reconciliationError = $"Remote WordPress changes were applied, but local reconciliation failed: {ex.Message}";
-                logger.LogWarning(ex, "Bulk operation {JobId} requires local reconciliation recovery.", request.JobId);
+                case BulkExecutionDisposition.NeedsReconciliation:
+                {
+                    var message = $"WordPress updated {succeeded} item(s), but the local cache is not reconciled. Recovery will synchronize only and will not replay mutations. {reconciliationError}";
+                    if (failures.Count > 0) message += $" Mutation failures: {string.Join(" | ", failures.Take(3))}";
+                    tracker.NeedsReconciliation(request.JobId, succeeded, total, message);
+                    Notify(request.OwnerUserId, request, "Bulk operation needs reconciliation", message, NotificationSeverity.Warning);
+                    break;
+                }
+                case BulkExecutionDisposition.CompletedWithWarnings:
+                {
+                    var message = $"Bulk operation reconciled with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
+                    tracker.CompleteWithWarnings(request.JobId, total, total, message);
+                    Notify(request.OwnerUserId, request, "Bulk operation completed with warnings", message, NotificationSeverity.Warning);
+                    break;
+                }
+                case BulkExecutionDisposition.Completed:
+                {
+                    var message = $"Bulk operation completed and reconciled. {succeeded} item(s) updated.";
+                    tracker.Complete(request.JobId, total, total, message);
+                    Notify(request.OwnerUserId, request, "Bulk operation completed", message, NotificationSeverity.Success);
+                    break;
+                }
+                default:
+                {
+                    var message = $"All items failed. {string.Join(" | ", failures.Take(3))}";
+                    tracker.Fail(request.JobId, message);
+                    Notify(request.OwnerUserId, request, "Bulk operation failed", message, NotificationSeverity.Error);
+                    break;
+                }
             }
         }
-
-        var disposition = BulkExecutionOutcomePolicy.Resolve(succeeded, failures.Count, reconciliationSucceeded);
-        switch (disposition)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            case BulkExecutionDisposition.NeedsReconciliation:
+            if (succeeded > 0)
             {
-                var message = $"WordPress updated {succeeded} item(s), but the local cache is not reconciled. Recovery will synchronize only and will not replay mutations. {reconciliationError}";
-                if (failures.Count > 0) message += $" Mutation failures: {string.Join(" | ", failures.Take(3))}";
-                tracker.NeedsReconciliation(request.JobId, total, total, message);
+                var message = $"WordPress confirmed {succeeded} requested status change(s) before execution was interrupted. Local reconciliation is required; no mutation will be replayed by recovery.";
+                tracker.NeedsReconciliation(request.JobId, succeeded, total, message);
                 Notify(request.OwnerUserId, request, "Bulk operation needs reconciliation", message, NotificationSeverity.Warning);
-                break;
             }
-            case BulkExecutionDisposition.CompletedWithWarnings:
-            {
-                var message = $"Bulk operation reconciled with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
-                tracker.CompleteWithWarnings(request.JobId, total, total, message);
-                Notify(request.OwnerUserId, request, "Bulk operation completed with warnings", message, NotificationSeverity.Warning);
-                break;
-            }
-            case BulkExecutionDisposition.Completed:
-            {
-                var message = $"Bulk operation completed and reconciled. {succeeded} item(s) updated.";
-                tracker.Complete(request.JobId, total, total, message);
-                Notify(request.OwnerUserId, request, "Bulk operation completed", message, NotificationSeverity.Success);
-                break;
-            }
-            default:
-            {
-                var message = $"All items failed. {string.Join(" | ", failures.Take(3))}";
-                tracker.Fail(request.JobId, message);
-                Notify(request.OwnerUserId, request, "Bulk operation failed", message, NotificationSeverity.Error);
-                break;
-            }
+            throw;
         }
     }
 
