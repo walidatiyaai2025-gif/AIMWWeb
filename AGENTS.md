@@ -5,6 +5,30 @@
 - `main`, merged pull requests, current CI, and the actual implementation are authoritative.
 - Do not claim a capability is complete unless the relevant UI/service/runtime path and required automated evidence are complete.
 
+## Constitutional 100% production-closure contract
+
+`docs/PRODUCTION_CLOSURE_100_PLAN.md` is mandatory execution policy for Issue #183 and for any future claim that AIMWWeb is fully wired or production complete.
+
+Every agent working on user-facing production closure MUST read, in this order:
+1. latest `main` and current CI;
+2. Issue #183 and Issue #3;
+3. this `AGENTS.md`;
+4. `docs/PRODUCTION_CLOSURE_100_PLAN.md`;
+5. `docs/UI_SERVICE_CLOSURE.md`;
+6. all active PRs that overlap the intended surface.
+
+The permanent team model for driving closure is **one Lead + three Agents**:
+- **Lead — Integration / Acceptance Captain:** owns source-of-truth reconstruction, slice assignment, conflict/ownership arbitration, exact-head CI, integration, final inventory, and the only authority to declare 100% closure.
+- **Agent 1 — UI / Interaction Census & Dead-Control Closer:** owns route/control inventory, Razor/UI tracing, dead/no-op/placeholder/fabricated controls and honest unavailable states.
+- **Agent 2 — Runtime / Service / Persistence Closure Engineer:** owns authorization/ownership/entitlements, service/runtime/persistence/WordPress/AI/job wiring, real mutations, reconciliation and failure semantics.
+- **Agent 3 — Browser Acceptance / Failure-State / Release Evidence Engineer:** independently proves critical visible flows end-to-end in the browser and owns the required regression/CI evidence.
+
+No worker may claim 100% based on Issue count, PR count, handler presence, unit tests alone, or source search alone. The denominator is the complete visible-capability inventory defined by `docs/PRODUCTION_CLOSURE_100_PLAN.md`.
+
+Issue #183 may close only when the inventory is **100.00% terminal** with every row either `BROWSER VERIFIED REAL` or `VERIFIED UNAVAILABLE`; there are zero `UNKNOWN`, unresolved `BLOCKED`, `IN REVIEW`, or browser-required `CONTRACT VERIFIED` rows; final exact-head CI is green; the closure ledger matches latest `main`; and no known fake/mock/sample/placeholder/no-op/toast-only/simulated/misleading production behavior remains.
+
+This rule is permanent after #183: any future feature that adds an actionable user-facing control without a real production destination or an explicit unavailable state plus appropriate automated evidence is a release blocker.
+
 ## Permanent update-package delivery contract
 When the user asks for any wording equivalent to **"نسخة"**, **"آخر نسخة"**, **"update package"**, **"installable package"**, **"package update"**, or asks for a build to install, the default deliverable is an **installable Windows/IIS ZIP produced by GitHub Actions**, not a source-code archive and not an unverified local build.
 
