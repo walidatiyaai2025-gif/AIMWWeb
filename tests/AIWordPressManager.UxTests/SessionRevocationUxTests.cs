@@ -77,19 +77,18 @@ public sealed class SessionRevocationUxTests(UxTestHost host)
             response.Should().NotBeNull();
             response!.Status.Should().BeLessThan(400);
 
-            var accountCard = page.GetByText(BulkUserName, new PageGetByTextOptions { Exact = true }).First
-                .Locator("xpath=ancestor::article[1]");
+            var accountName = page.GetByText(BulkUserName, new PageGetByTextOptions { Exact = true }).First;
+            var accountCard = accountName.Locator("xpath=ancestor::article[1]");
             await accountCard.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
-            await page.GetByText(BulkUserAgentOne, new PageGetByTextOptions { Exact = true }).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
-            await page.GetByText(BulkUserAgentTwo, new PageGetByTextOptions { Exact = true }).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+            await accountCard.GetByText("2 active session(s)", new LocatorGetByTextOptions { Exact = true })
+                .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
             var endAll = accountCard.GetByRole(AriaRole.Button, new() { Name = "End all sessions", Exact = true });
             await ClickUntilPersistedAsync(endAll,
                 () => AreAllRevokedAsync(fixture.SessionIds),
                 "Session Management did not persist the account-wide revocation.");
 
-            await page.GetByText(BulkUserAgentOne, new PageGetByTextOptions { Exact = true }).WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 10000 });
-            await page.GetByText(BulkUserAgentTwo, new PageGetByTextOptions { Exact = true }).WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 10000 });
+            await accountName.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 10000 });
 
             await using var db = CreateDbContext();
             var store = new ApplicationSessionStore(db);
