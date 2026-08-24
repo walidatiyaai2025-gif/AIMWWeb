@@ -52,7 +52,7 @@ public sealed class SiteOperationsRuntimeClosureTests
         var action = () => fixture.Service.GetAll(owner, [site], 100);
 
         action.Should().Throw<InvalidDataException>()
-            .WithMessage("*not treated as empty*");
+            .WithMessage("*No records were treated as empty*");
     }
 
     [Fact]
