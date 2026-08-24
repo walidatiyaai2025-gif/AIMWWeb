@@ -190,6 +190,7 @@ public sealed class BulkContentOperationWorker(
         var editor = scope.ServiceProvider.GetRequiredService<IWordPressPostEditorService>();
         var syncService = scope.ServiceProvider.GetRequiredService<WordPressSyncWebService>();
         var succeeded = 0;
+        var confirmedRemoteMutations = 0;
         var failures = new List<string>();
         var total = Math.Max(1, request.Targets.Count);
 
@@ -201,16 +202,24 @@ public sealed class BulkContentOperationWorker(
                 if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
                 var target = request.Targets[index];
                 var outcome = await ProcessTargetWithRetryAsync(editor, request, target, index, total, cancellationToken);
-                if (outcome.Success) succeeded++; else failures.Add($"{target.Title}: {outcome.Error}");
+                if (outcome.Success)
+                {
+                    succeeded++;
+                    if (outcome.RemotelyMutated) confirmedRemoteMutations++;
+                }
+                else
+                {
+                    failures.Add($"{target.Title}: {outcome.Error}");
+                }
                 tracker.Report(request.JobId, index + 1, total,
                     outcome.Success ? $"Processed {index + 1}/{total}: {target.Title}" : $"Failed after {outcome.Attempts} attempt(s): {target.Title}");
             }
 
             if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return;
 
-            var reconciliationSucceeded = succeeded == 0;
+            var reconciliationSucceeded = confirmedRemoteMutations == 0;
             string? reconciliationError = null;
-            if (succeeded > 0)
+            if (confirmedRemoteMutations > 0)
             {
                 tracker.Report(request.JobId, total, total, "Refreshing local WordPress cache.");
                 try
@@ -234,22 +243,22 @@ public sealed class BulkContentOperationWorker(
             {
                 case BulkExecutionDisposition.NeedsReconciliation:
                 {
-                    var message = $"WordPress updated {succeeded} item(s), but the local cache is not reconciled. Recovery will synchronize only and will not replay mutations. {reconciliationError}";
+                    var message = $"{succeeded} target(s) now satisfy the requested status; {confirmedRemoteMutations} required a WordPress mutation, but the local cache is not reconciled. Recovery will synchronize only and will not replay mutations. {reconciliationError}";
                     if (failures.Count > 0) message += $" Mutation failures: {string.Join(" | ", failures.Take(3))}";
-                    tracker.NeedsReconciliation(request.JobId, succeeded, total, message);
+                    tracker.NeedsReconciliation(request.JobId, confirmedRemoteMutations, total, message);
                     Notify(request.OwnerUserId, request, "Bulk operation needs reconciliation", message, NotificationSeverity.Warning);
                     break;
                 }
                 case BulkExecutionDisposition.CompletedWithWarnings:
                 {
-                    var message = $"Bulk operation reconciled with warnings. {succeeded} succeeded, {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
+                    var message = $"Bulk operation reconciled with warnings. {succeeded} target(s) satisfy the requested status; {confirmedRemoteMutations} required a WordPress mutation and {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
                     tracker.CompleteWithWarnings(request.JobId, total, total, message);
                     Notify(request.OwnerUserId, request, "Bulk operation completed with warnings", message, NotificationSeverity.Warning);
                     break;
                 }
                 case BulkExecutionDisposition.Completed:
                 {
-                    var message = $"Bulk operation completed and reconciled. {succeeded} item(s) updated.";
+                    var message = $"Bulk operation completed. {succeeded} target(s) satisfy the requested status; {confirmedRemoteMutations} required a WordPress mutation. Already-satisfied targets were not mutated again.";
                     tracker.Complete(request.JobId, total, total, message);
                     Notify(request.OwnerUserId, request, "Bulk operation completed", message, NotificationSeverity.Success);
                     break;
@@ -265,11 +274,16 @@ public sealed class BulkContentOperationWorker(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            if (succeeded > 0)
+            if (confirmedRemoteMutations > 0)
             {
-                var message = $"WordPress confirmed {succeeded} requested status change(s) before execution was interrupted. Local reconciliation is required; no mutation will be replayed by recovery.";
-                tracker.NeedsReconciliation(request.JobId, succeeded, total, message);
+                var message = $"WordPress confirmed {confirmedRemoteMutations} actual status mutation(s) before execution was interrupted. Local reconciliation is required; no mutation will be replayed by recovery.";
+                tracker.NeedsReconciliation(request.JobId, confirmedRemoteMutations, total, message);
                 Notify(request.OwnerUserId, request, "Bulk operation needs reconciliation", message, NotificationSeverity.Warning);
+            }
+            else
+            {
+                tracker.Fail(request.JobId,
+                    $"Bulk operation was interrupted with zero confirmed remote mutations; {succeeded} target(s) were already satisfied or otherwise required no WordPress mutation.");
             }
             throw;
         }
@@ -288,12 +302,16 @@ public sealed class BulkContentOperationWorker(
         for (var attempt = 1; attempt <= maximumAttempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken)) return new BulkTargetOutcome(false, attempt, "Cancelled by user.");
+            if (!await WaitUntilRunnableAsync(request.JobId, cancellationToken))
+                return new BulkTargetOutcome(false, false, attempt, "Cancelled by user.");
             tracker.Report(request.JobId, index, total, $"Attempt {attempt}/{maximumAttempts}: {target.ContentType} #{target.WordPressId} - {target.Title}");
             try
             {
                 var current = await editor.GetAsync(request.SiteId, target.ContentType, target.WordPressId, cancellationToken);
-                if (current.IsFailure) lastError = current.Error.Message;
+                if (current.IsFailure)
+                {
+                    lastError = current.Error.Message;
+                }
                 else
                 {
                     var value = current.Value;
@@ -301,7 +319,7 @@ public sealed class BulkContentOperationWorker(
                     {
                         tracker.Report(request.JobId, index, total,
                             $"{target.ContentType} #{target.WordPressId} already has status {request.TargetStatus}; duplicate mutation skipped.");
-                        return new BulkTargetOutcome(true, attempt, null);
+                        return new BulkTargetOutcome(true, false, attempt, null);
                     }
 
                     var update = new WordPressContentUpdateRequest(
@@ -310,7 +328,8 @@ public sealed class BulkContentOperationWorker(
                         value.CategoryIds, value.TagIds, value.Template, value.CommentStatus,
                         value.PingStatus, value.Format, value.Sticky);
                     var result = await editor.UpdateAsync(request.SiteId, update, cancellationToken);
-                    if (result.IsSuccess) return new BulkTargetOutcome(true, attempt, null);
+                    if (result.IsSuccess)
+                        return new BulkTargetOutcome(true, true, attempt, null);
                     lastError = result.Error.Message;
                 }
             }
@@ -328,7 +347,7 @@ public sealed class BulkContentOperationWorker(
                 await Task.Delay(delay, cancellationToken);
             }
         }
-        return new BulkTargetOutcome(false, maximumAttempts, lastError ?? "Unknown error.");
+        return new BulkTargetOutcome(false, false, maximumAttempts, lastError ?? "Unknown error.");
     }
 
     private async Task<bool> WaitUntilRunnableAsync(Guid jobId, CancellationToken cancellationToken)
@@ -360,5 +379,5 @@ public sealed class BulkContentOperationWorker(
         catch (Exception ex) { logger.LogWarning(ex, "Failed to persist notification for bulk job {JobId}.", request.JobId); }
     }
 
-    private sealed record BulkTargetOutcome(bool Success, int Attempts, string? Error);
+    private sealed record BulkTargetOutcome(bool Success, bool RemotelyMutated, int Attempts, string? Error);
 }
