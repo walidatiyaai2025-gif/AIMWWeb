@@ -3,8 +3,11 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ExecutionCenterService ExecutionService
+@inject ExecutionOperationTracker OperationTracker
+@inject WordPressSyncWebService SyncService
 @inject SiteWebService SiteService
 @inject CurrentUserContext CurrentUser
+@inject ApplicationSecurityAuditService SecurityAudit
 @inject AppNotificationService Notifications
 @inject AppLanguageService L
 
@@ -35,6 +38,8 @@
         <section class="execution-summary-grid">
             <article class="panel execution-summary-card"><small>@(L.IsArabic ? "في الانتظار" : "Waiting")</small><strong>@Count("Waiting")</strong><span>◷</span></article>
             <article class="panel execution-summary-card"><small>@(L.IsArabic ? "قيد التنفيذ" : "Running")</small><strong>@Count("Running")</strong><span>▶</span></article>
+            <article class="panel execution-summary-card"><small>@(L.IsArabic ? "تحتاج مطابقة" : "Needs reconciliation")</small><strong>@Count("NeedsReconciliation")</strong><span>↻</span></article>
+            <article class="panel execution-summary-card"><small>@(L.IsArabic ? "مكتملة بتحذيرات" : "With warnings")</small><strong>@Count("CompletedWithWarnings")</strong><span>△</span></article>
             <article class="panel execution-summary-card"><small>@(L.IsArabic ? "مكتملة" : "Completed")</small><strong>@Count("Completed")</strong><span>✓</span></article>
             <article class="panel execution-summary-card"><small>@(L.IsArabic ? "فاشلة" : "Failed")</small><strong>@Count("Failed")</strong><span>!</span></article>
         </section>
@@ -45,7 +50,12 @@
                 <option value="@Guid.Empty">@(L.IsArabic ? "كل مواقعي" : "All my sites")</option>
                 @foreach (var site in _ownedSites) { <option value="@site.Id">@site.Name</option> }
             </select>
-            <select @bind="_status"><option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option><option value="Waiting">Waiting</option><option value="Running">Running</option><option value="Paused">Paused</option><option value="Completed">Completed</option><option value="Failed">Failed</option><option value="Cancelled">Cancelled</option></select>
+            <select @bind="_status">
+                <option value="all">@(L.IsArabic ? "كل الحالات" : "All statuses")</option>
+                <option value="Waiting">Waiting</option><option value="Running">Running</option><option value="Paused">Paused</option>
+                <option value="NeedsReconciliation">Needs reconciliation</option><option value="CompletedWithWarnings">Completed with warnings</option>
+                <option value="Completed">Completed</option><option value="Failed">Failed</option><option value="Cancelled">Cancelled</option>
+            </select>
         </section>
 
         <div class="execution-layout">
@@ -100,6 +110,18 @@
                                         <span class="job-controlled">@(L.IsArabic ? "تنفيذ معتمد مُدار بواسطة Worker حقيقي — لا إيقاف أثناء الكتابة" : "Managed by the real approved-change worker — not interruptible during mutation")</span>
                                     }
                                 }
+                                else if (job.Status == "NeedsReconciliation" && BulkContentReconciliationRecoveryService.IsSupportedBulkJob(job))
+                                {
+                                    @if (CanReconcileBulk)
+                                    {
+                                        <button class="btn compact primary" @onclick="() => RetryBulkReconciliationAsync(job.Id)">@(L.IsArabic ? "إعادة مطابقة البيانات فقط" : "Retry reconciliation only")</button>
+                                        <span class="job-controlled">@(L.IsArabic ? "لن تتم إعادة تغيير WordPress؛ سيتم فقط إعادة مزامنة الحالة المحلية." : "WordPress mutations will not be replayed; only local synchronization is retried.")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="job-controlled">@(L.IsArabic ? "صلاحية عرض فقط — إعادة المطابقة غير متاحة" : "View-only access — reconciliation retry is unavailable")</span>
+                                    }
+                                }
                                 else
                                 {
                                     <span class="job-controlled" data-runtime-controlled="originating-runtime">
@@ -143,7 +165,9 @@
     public Guid? WorkspaceSiteId { get; set; }
 
     private ExecutionCenterUserCommandService Commands => new(ExecutionService, CurrentUser);
+    private BulkContentReconciliationRecoveryService BulkRecovery => new(ExecutionService, OperationTracker, SyncService, SiteService, CurrentUser, SecurityAudit);
     private bool CanExecute => CurrentUser.HasPermission(ApplicationPermissionCatalog.OperationsExecute);
+    private bool CanReconcileBulk => CurrentUser.HasPermission(ApplicationPermissionCatalog.ContentEdit);
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> SiteJobs => _selectedSiteId == Guid.Empty ? _jobs : _jobs.Where(x => x.SiteId == _selectedSiteId);
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionJob> FilteredJobs => SiteJobs.Where(x => (_status == "all" || x.Status == _status) && (string.IsNullOrWhiteSpace(_query) || x.Title.Contains(_query, StringComparison.OrdinalIgnoreCase) || x.Type.Contains(_query, StringComparison.OrdinalIgnoreCase)));
     private IEnumerable<AIWordPressManager.Web.Services.ExecutionActivity> VisibleActivities { get { var ids = SiteJobs.Select(x => x.Id).ToHashSet(); return _activities.Where(x => ids.Contains(x.JobId)).Take(40); } }
@@ -195,6 +219,22 @@
     private int Count(string status) => SiteJobs.Count(x => x.Status == status);
     private void RetryExternal(Guid id) => RunOwnedAction(id, () => Commands.Retry(id), L.IsArabic ? "تمت إعادة التغيير المعتمد إلى Worker التنفيذ." : "Approved change queued for safe worker retry.");
 
+    private async Task RetryBulkReconciliationAsync(Guid id)
+    {
+        try
+        {
+            await BulkRecovery.RetryAsync(id, _cts.Token);
+            Refresh();
+            Notifications.Success(L.IsArabic ? "تمت مطابقة البيانات المحلية مع حالة WordPress الحالية بدون إعادة التغيير." : "Local data reconciled with the current WordPress state without replaying the mutation.");
+        }
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested) { }
+        catch (Exception ex)
+        {
+            Refresh();
+            Notifications.Error(L.IsArabic ? "تعذرت إعادة مطابقة البيانات؛ تغييرات WordPress لن تتم إعادتها." : "Reconciliation retry failed; WordPress mutations will not be replayed.", details: ex.Message);
+        }
+    }
+
     private void RunOwnedAction(Guid id, Action action, string successMessage)
     {
         try
@@ -217,7 +257,18 @@
     }
 
     private static string StatusClass(string status) => status.ToLowerInvariant();
-    private string TranslateStatus(string status) => !L.IsArabic ? status : status switch { "Waiting" => "في الانتظار", "Running" => "قيد التنفيذ", "Paused" => "متوقفة مؤقتًا", "Completed" => "مكتملة", "Failed" => "فاشلة", "Cancelled" => "ملغاة", _ => status };
+    private string TranslateStatus(string status) => !L.IsArabic ? status : status switch
+    {
+        "Waiting" => "في الانتظار",
+        "Running" => "قيد التنفيذ",
+        "Paused" => "متوقفة مؤقتًا",
+        "NeedsReconciliation" => "تحتاج مطابقة محلية",
+        "CompletedWithWarnings" => "مكتملة بتحذيرات",
+        "Completed" => "مكتملة",
+        "Failed" => "فاشلة",
+        "Cancelled" => "ملغاة",
+        _ => status
+    };
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private void Changed() { if (!_disposed) _ = InvokeAsync(StateHasChanged); }
 
