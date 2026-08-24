@@ -48,6 +48,7 @@ public sealed class BulkStatusExecutionService(
 
         var jobId = tracker.Start(ownerUserId, siteId, title, $"Bulk Status: {status}", site.Name, targets.Count);
         var succeeded = 0;
+        var confirmedRemoteMutations = 0;
         var failures = new List<string>();
 
         try
@@ -57,7 +58,8 @@ public sealed class BulkStatusExecutionService(
                 cancellationToken.ThrowIfCancellationRequested();
                 var target = targets[index];
                 string? lastError = null;
-                var updated = false;
+                var satisfied = false;
+                var remotelyMutated = false;
 
                 for (var attempt = 1; attempt <= attempts; attempt++)
                 {
@@ -75,7 +77,7 @@ public sealed class BulkStatusExecutionService(
                             var value = current.Value;
                             if (string.Equals(value.Status, status, StringComparison.OrdinalIgnoreCase))
                             {
-                                updated = true;
+                                satisfied = true;
                                 tracker.Report(jobId, index, targets.Count,
                                     $"{target.ContentType} #{target.WordPressId} already has status {status}; duplicate mutation skipped.");
                                 break;
@@ -89,7 +91,8 @@ public sealed class BulkStatusExecutionService(
                             var result = await editor.UpdateAsync(siteId, update, cancellationToken);
                             if (result.IsSuccess)
                             {
-                                updated = true;
+                                satisfied = true;
+                                remotelyMutated = true;
                                 break;
                             }
                             lastError = result.Error.Message;
@@ -108,24 +111,37 @@ public sealed class BulkStatusExecutionService(
                         await Task.Delay(TimeSpan.FromSeconds(attempt), cancellationToken);
                 }
 
-                if (updated) succeeded++;
-                else failures.Add($"{target.ContentType} #{target.WordPressId}: {lastError ?? "Unknown error"}");
+                if (satisfied)
+                {
+                    succeeded++;
+                    if (remotelyMutated) confirmedRemoteMutations++;
+                }
+                else
+                {
+                    failures.Add($"{target.ContentType} #{target.WordPressId}: {lastError ?? "Unknown error"}");
+                }
+
                 tracker.Report(jobId, index + 1, targets.Count, $"Processed {index + 1}/{targets.Count}.");
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            if (succeeded > 0)
-                tracker.NeedsReconciliation(jobId, succeeded, targets.Count,
-                    $"WordPress updated {succeeded} item(s) to {status} before cancellation. Local reconciliation is required and mutations will not be replayed.");
+            if (confirmedRemoteMutations > 0)
+            {
+                tracker.NeedsReconciliation(jobId, confirmedRemoteMutations, targets.Count,
+                    $"WordPress applied {confirmedRemoteMutations} status mutation(s) to {status} before cancellation. Local reconciliation is required and mutations will not be replayed.");
+            }
             else
-                tracker.Fail(jobId, "Bulk status operation was cancelled before any confirmed remote mutation completed.");
+            {
+                tracker.Fail(jobId,
+                    $"Bulk status operation was cancelled with zero confirmed remote mutations; {succeeded} target(s) were already satisfied or processed without a WordPress mutation.");
+            }
             throw;
         }
 
-        var reconciliationSucceeded = succeeded == 0;
+        var reconciliationSucceeded = confirmedRemoteMutations == 0;
         string? reconciliationError = null;
-        if (succeeded > 0)
+        if (confirmedRemoteMutations > 0)
         {
             try
             {
@@ -148,15 +164,15 @@ public sealed class BulkStatusExecutionService(
         switch (disposition)
         {
             case BulkExecutionDisposition.NeedsReconciliation:
-                message = $"WordPress updated {succeeded} item(s) to {status}, but the local cache is not reconciled. The remote mutation will not be replayed during recovery. {reconciliationError}";
-                tracker.NeedsReconciliation(jobId, succeeded, targets.Count, message);
+                message = $"{succeeded} target(s) now satisfy status {status}; WordPress was actually mutated for {confirmedRemoteMutations}. The local cache is not reconciled, and recovery will not replay those mutations. {reconciliationError}";
+                tracker.NeedsReconciliation(jobId, confirmedRemoteMutations, targets.Count, message);
                 break;
             case BulkExecutionDisposition.CompletedWithWarnings:
-                message = $"تم تحديث {succeeded} عنصر وفشل {failures.Count}. {string.Join(" | ", failures.Take(3))}";
+                message = $"{succeeded} target(s) now satisfy status {status}; {confirmedRemoteMutations} required a WordPress mutation and {failures.Count} failed. {string.Join(" | ", failures.Take(3))}";
                 tracker.CompleteWithWarnings(jobId, targets.Count, targets.Count, message);
                 break;
             case BulkExecutionDisposition.Completed:
-                message = $"تم تحديث حالة {succeeded} عنصر إلى {status} وتمت مطابقة البيانات المحلية مع WordPress.";
+                message = $"{succeeded} target(s) now satisfy status {status}; {confirmedRemoteMutations} required a WordPress mutation. No duplicate mutation was sent for targets already in the requested status.";
                 tracker.Complete(jobId, targets.Count, targets.Count, message);
                 break;
             default:
@@ -168,8 +184,15 @@ public sealed class BulkStatusExecutionService(
         if (cancellationToken.IsCancellationRequested && disposition == BulkExecutionDisposition.NeedsReconciliation)
             cancellationToken.ThrowIfCancellationRequested();
 
-        return new BulkStatusResult(jobId, status, succeeded, failures.Count, failures, message,
-            disposition == BulkExecutionDisposition.NeedsReconciliation);
+        return new BulkStatusResult(
+            jobId,
+            status,
+            succeeded,
+            failures.Count,
+            failures,
+            message,
+            disposition == BulkExecutionDisposition.NeedsReconciliation,
+            confirmedRemoteMutations);
     }
 }
 
@@ -182,4 +205,5 @@ public sealed record BulkStatusResult(
     int Failed,
     IReadOnlyList<string> Errors,
     string Message,
-    bool RequiresReconciliation = false);
+    bool RequiresReconciliation = false,
+    int ConfirmedRemoteMutations = 0);
