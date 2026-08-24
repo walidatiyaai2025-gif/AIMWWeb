@@ -61,6 +61,8 @@ jobs:
             filter: FullyQualifiedName~AICenterReadinessUxTests
           - shard: ai-provider-settings
             filter: FullyQualifiedName~AIProviderSettingsAvailabilityUxTests
+          - shard: ai-prompt-templates
+            filter: FullyQualifiedName~AIPromptTemplatesUxTests
           - shard: execution-authenticity
             filter: FullyQualifiedName~ExecutionAuthenticityUxTests
           - shard: visual-breakpoints
