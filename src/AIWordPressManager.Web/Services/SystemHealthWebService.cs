@@ -15,10 +15,15 @@ public sealed class SystemHealthWebService(
     ISecretProtectionService secretProtectionService,
     IWordPressConnectionTester connectionTester,
     IEnumerable<IAIProvider> aiProviders,
+    CurrentUserContext currentUser,
     ILogger<SystemHealthWebService> logger)
 {
+    private const string ManagedStorageTarget = "managed-application-data";
+    private const string ManagedLogsTarget = "managed-application-logs";
+
     public async Task<SystemHealthSnapshot> CheckAsync(CancellationToken cancellationToken = default)
     {
+        var ownerUserId = currentUser.RequirePermission(ApplicationPermissionCatalog.OperationsView);
         var checks = new List<SystemHealthCheck>();
 
         checks.Add(new(
@@ -34,21 +39,29 @@ public sealed class SystemHealthWebService(
             var probe = Path.Combine(dataDirectory, $"health-{Guid.NewGuid():N}.tmp");
             await File.WriteAllTextAsync(probe, "ok", cancellationToken);
             File.Delete(probe);
-            checks.Add(new("storage", true, dataDirectory, "Read/write access is available."));
+            checks.Add(new("storage", true, ManagedStorageTarget, "Managed application storage read/write access is available."));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Application storage health check failed for {Directory}", dataDirectory);
-            checks.Add(new("storage", false, dataDirectory, ex.Message));
+            checks.Add(new("storage", false, ManagedStorageTarget, SanitizedFailure("Application storage", ex)));
         }
 
         checks.Add(await CheckDatabaseAsync(cancellationToken));
 
         var logsDirectory = paths.GetLogsDirectory();
-        checks.Add(new("logs", Directory.Exists(logsDirectory), logsDirectory,
-            Directory.Exists(logsDirectory) ? "Logs directory is available." : "Logs directory has not been created yet."));
+        var logsAvailable = Directory.Exists(logsDirectory);
+        checks.Add(new(
+            "logs",
+            logsAvailable,
+            ManagedLogsTarget,
+            logsAvailable ? "Managed application logging storage is available." : "Managed application logging storage is not available yet."));
 
-        await AddWordPressChecksAsync(checks, cancellationToken);
+        await AddWordPressChecksAsync(checks, ownerUserId, cancellationToken);
         AddAIProviderChecks(checks);
 
         return new SystemHealthSnapshot(
@@ -85,7 +98,7 @@ public sealed class SystemHealthWebService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Configured database health check failed for provider {Provider}", provider);
-            return new("database", false, provider, ex.Message);
+            return new("database", false, provider, SanitizedFailure($"Configured {provider} database", ex));
         }
     }
 
@@ -130,30 +143,35 @@ public sealed class SystemHealthWebService(
         return "Unknown";
     }
 
-    private async Task AddWordPressChecksAsync(List<SystemHealthCheck> checks, CancellationToken cancellationToken)
+    private async Task AddWordPressChecksAsync(
+        List<SystemHealthCheck> checks,
+        Guid ownerUserId,
+        CancellationToken cancellationToken)
     {
         List<AIWordPressManager.Domain.Entities.Site> sites;
         try
         {
             sites = await dbContext.Sites.AsNoTracking()
-                .Where(x => !x.IsDeleted)
+                .Where(x => x.OwnerUserId == ownerUserId && !x.IsDeleted)
                 .OrderBy(x => x.Name)
                 .ToListAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unable to load WordPress sites for health checks.");
-            checks.Add(new("wordpress", false, "configured-sites", $"Unable to load configured sites: {ex.Message}"));
+            logger.LogError(ex, "Unable to load owner-scoped WordPress sites for health checks for user {OwnerUserId}.", ownerUserId);
+            checks.Add(new("wordpress", false, "owned-sites", SanitizedFailure("Owned WordPress site inventory", ex)));
             return;
         }
 
         if (sites.Count == 0)
         {
-            checks.Add(new("wordpress", true, "configured-sites", "No WordPress sites are configured yet."));
+            checks.Add(new("wordpress", true, "owned-sites", "No WordPress sites are configured for this account."));
             return;
         }
 
+        var siteIds = sites.Select(x => x.Id).ToArray();
         var credentials = await dbContext.SiteCredentials.AsNoTracking()
+            .Where(x => siteIds.Contains(x.SiteId))
             .ToDictionaryAsync(x => x.SiteId, cancellationToken);
 
         foreach (var site in sites)
@@ -183,8 +201,8 @@ public sealed class SystemHealthWebService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "WordPress health check failed for site {SiteId} ({SiteName}).", site.Id, site.Name);
-                checks.Add(new($"wordpress:{site.Id:N}", false, site.SiteUrl, $"{site.Name}: {ex.Message}"));
+                logger.LogWarning(ex, "WordPress health check failed for owned site {SiteId} ({SiteName}).", site.Id, site.Name);
+                checks.Add(new($"wordpress:{site.Id:N}", false, site.SiteUrl, $"{site.Name}: {SanitizedFailure("WordPress connection", ex)}"));
             }
         }
     }
@@ -212,6 +230,9 @@ public sealed class SystemHealthWebService(
     }
 
     private bool HasValue(string key) => !string.IsNullOrWhiteSpace(configuration[key]);
+
+    private static string SanitizedFailure(string component, Exception exception) =>
+        $"{component} check failed ({exception.GetType().Name}).";
 }
 
 public sealed record SystemHealthSnapshot(

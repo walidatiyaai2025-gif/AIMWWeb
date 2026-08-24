@@ -2,18 +2,22 @@
 @rendermode InteractiveServer
 @inject SystemHealthWebService HealthService
 @inject AppLanguageService L
+@inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "صحة النظام" : "System Health")</PageTitle>
 
 <AppPage PageKey="system-health" Class="system-health-page" Width="wide">
     <AppToolbar Eyebrow="@(L.IsArabic ? "التشخيص المباشر" : "LIVE DIAGNOSTICS")"
                 Title="@(L.IsArabic ? "صحة النظام والتشخيص" : "System Health & Diagnostics")"
-                Subtitle="@(L.IsArabic ? "فحص التطبيق والتخزين المحلي وقاعدة البيانات المهيأة والسجلات من مصدر النظام الحقيقي." : "Real application, local storage, configured database, and logging diagnostics.")">
+                Subtitle="@(L.IsArabic ? "فحص التطبيق والتخزين المُدار وقاعدة البيانات والمواقع التابعة لحسابك من مصادر النظام الحقيقية." : "Real application, managed storage, configured database, and account-owned WordPress diagnostics.")">
         <Actions>
             @if (snapshot is not null)
             {
                 <AppBadge Tone="@(snapshot.IsHealthy ? "success" : "danger")" Icon="●"
                           Text="@(snapshot.IsHealthy ? (L.IsArabic ? "النظام سليم" : "System healthy") : (L.IsArabic ? "يحتاج مراجعة" : "Attention required"))" />
+                <button type="button" class="btn" disabled="@isLoading" @onclick="CopySummaryAsync">
+                    @(L.IsArabic ? "نسخ الملخص" : "Copy summary")
+                </button>
             }
             <AppButton Variant="primary" Icon="↻" Busy="@isLoading" Disabled="@isLoading"
                        Text="@(isLoading ? (L.IsArabic ? "جارٍ الفحص..." : "Checking...") : (L.IsArabic ? "إعادة الفحص" : "Run checks"))"
@@ -21,12 +25,21 @@
         </Actions>
     </AppToolbar>
 
-    @if (snapshot is null)
+    @if (!string.IsNullOrWhiteSpace(actionMessage))
+    {
+        <div class="panel" role="status" style="padding:12px 16px;margin-bottom:16px">@actionMessage</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert danger" role="alert" style="margin-bottom:16px">@errorMessage</div>
+    }
+
+    @if (snapshot is null && string.IsNullOrWhiteSpace(errorMessage))
     {
         <AppLoading Title="@(L.IsArabic ? "جارٍ فحص صحة النظام" : "Checking system health")"
-                    Message="@(L.IsArabic ? "يتم فحص التطبيق والتخزين وقاعدة البيانات المهيأة والسجلات." : "Checking the application, storage, configured database, and logs.")" />
+                    Message="@(L.IsArabic ? "يتم فحص التطبيق والتخزين المُدار وقاعدة البيانات والمواقع التابعة لحسابك." : "Checking the application, managed storage, configured database, and account-owned WordPress sites.")" />
     }
-    else
+    else if (snapshot is not null)
     {
         <section class="app-stat-grid" aria-label="@(L.IsArabic ? "ملخص صحة النظام" : "System health summary")">
             <AppStatCard Icon="♥" Label="@(L.IsArabic ? "الحالة العامة" : "Overall status")"
@@ -53,7 +66,7 @@
                              CsvFileName="@CsvFileName"
                              PageSize="10"
                              Selectable="true"
-                             SearchPlaceholder="@(L.IsArabic ? "ابحث في المكوّن أو الحالة أو المسار أو التفاصيل..." : "Search component, status, target, or details...")"
+                             SearchPlaceholder="@(L.IsArabic ? "ابحث في المكوّن أو الحالة أو الهدف أو التفاصيل..." : "Search component, status, target, or details...")"
                              SearchAriaLabel="@(L.IsArabic ? "بحث نتائج صحة النظام" : "Search system health results")"
                              SortText="@(L.IsArabic ? "ترتيب" : "Sort")"
                              ExportText="@(L.IsArabic ? "تصدير CSV" : "Export CSV")"
@@ -122,6 +135,8 @@
 @code {
     private SystemHealthSnapshot? snapshot;
     private bool isLoading;
+    private string? actionMessage;
+    private string? errorMessage;
     private int HealthyCount => snapshot?.Checks.Count(x => x.IsHealthy) ?? 0;
     private int FailedCount => snapshot?.Checks.Count(x => !x.IsHealthy) ?? 0;
     private int HealthPercent => snapshot is null || snapshot.Checks.Count == 0 ? 0 : (int)Math.Round(HealthyCount * 100d / snapshot.Checks.Count);
@@ -135,18 +150,72 @@
 
     private async Task RefreshAsync()
     {
+        if (isLoading) return;
         isLoading = true;
-        try { snapshot = await HealthService.CheckAsync(); }
-        finally { isLoading = false; }
+        actionMessage = null;
+        errorMessage = null;
+        try
+        {
+            snapshot = await HealthService.CheckAsync();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            snapshot = null;
+            errorMessage = L.IsArabic ? "ليست لديك صلاحية عرض تشخيص صحة النظام." : "You do not have permission to view system-health diagnostics.";
+        }
+        catch (Exception ex)
+        {
+            snapshot = null;
+            errorMessage = L.IsArabic
+                ? $"تعذر إكمال فحص صحة النظام ({ex.GetType().Name}). لم يتم عرض نتيجة نجاح قديمة أو وهمية."
+                : $"System-health checks could not complete ({ex.GetType().Name}). No stale or synthetic success result is being shown.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CopySummaryAsync()
+    {
+        if (snapshot is null || isLoading) return;
+        actionMessage = null;
+        errorMessage = null;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", BuildCopySummary());
+            actionMessage = L.IsArabic ? "تم نسخ ملخص صحة النظام." : "System-health summary copied.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.IsArabic
+                ? $"تعذر نسخ الملخص ({ex.GetType().Name})."
+                : $"The system-health summary could not be copied ({ex.GetType().Name}).";
+        }
+    }
+
+    private string BuildCopySummary()
+    {
+        if (snapshot is null) return string.Empty;
+        var lines = new List<string>
+        {
+            "AI WordPress Manager - System Health Summary",
+            "Overall: " + (snapshot.IsHealthy ? "Healthy" : "Attention required"),
+            "Checked at: " + snapshot.CheckedAtUtc.ToString("O"),
+            "Version: " + snapshot.Version
+        };
+        lines.AddRange(snapshot.Checks.Select(check =>
+            $"{CheckTitle(check)} | {CheckStatus(check)} | {check.Target} | {check.Details}"));
+        return string.Join(Environment.NewLine, lines);
     }
 
     private string CheckTitle(SystemHealthCheck check) => check.Key switch
     {
         "application" => L.IsArabic ? "التطبيق وبيئة التشغيل" : "Application runtime",
-        "storage" => L.IsArabic ? "التخزين المحلي" : "Local storage",
+        "storage" => L.IsArabic ? "التخزين المُدار" : "Managed storage",
         "database" => L.IsArabic ? $"قاعدة بيانات {check.Target}" : $"{check.Target} database",
         "sqlite" => L.IsArabic ? "قاعدة بيانات SQLite" : "SQLite database",
-        "logs" => L.IsArabic ? "مجلد السجلات" : "Logs directory",
+        "logs" => L.IsArabic ? "تخزين السجلات المُدار" : "Managed log storage",
         _ => check.Key
     };
 
