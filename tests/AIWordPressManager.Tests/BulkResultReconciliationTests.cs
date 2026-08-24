@@ -93,7 +93,7 @@ public sealed class BulkResultReconciliationTests : IDisposable
         worker.Should().Contain("already has status {request.TargetStatus}; duplicate mutation skipped");
         directStatus.Should().Contain("already has status {status}; duplicate mutation skipped");
         worker.Should().Contain("tracker.NeedsReconciliation");
-        worker.Should().NotContain("completed but local cache refresh failed");
+        worker.Should().NotContain("Bulk operation {JobId} completed but local cache refresh failed.");
         trash.Should().Contain("throw new BulkReconciliationRequiredException");
 
         executionPage.Should().Contain("NeedsReconciliation");
