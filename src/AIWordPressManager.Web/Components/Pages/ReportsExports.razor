@@ -20,7 +20,7 @@
             <h1>@(L.IsArabic ? "التقارير والتصدير" : "Reports & Exports")</h1>
             <p>@(L.IsArabic ? "تقارير مباشرة من بيانات النظام الفعلية." : "Live reports from real application data.")</p>
         </div>
-        <button class="btn" disabled="@_loading" @onclick="LoadAsync">
+        <button class="btn" disabled="@(!_interactive || _loading)" @onclick="LoadAsync">
             @(_loading ? (L.IsArabic ? "جارٍ التحميل..." : "Loading...") : (L.IsArabic ? "تحديث" : "Refresh"))
         </button>
     </section>
@@ -41,7 +41,7 @@
         <article class="panel report-card">
             <header>
                 <h2>@(L.IsArabic ? "تقرير المواقع" : "Sites report")</h2>
-                <button class="btn compact" @onclick="ExportSitesAsync">CSV</button>
+                <button class="btn compact" disabled="@(!_interactive || _loading)" @onclick="ExportSitesAsync">CSV</button>
             </header>
             <div class="report-table-wrap">
                 <table>
@@ -59,7 +59,7 @@
         <article class="panel report-card">
             <header>
                 <h2>@(L.IsArabic ? "تقرير الموافقات" : "Approvals report")</h2>
-                <button class="btn compact" @onclick="ExportApprovalsAsync">CSV</button>
+                <button class="btn compact" disabled="@(!_interactive || _loading)" @onclick="ExportApprovalsAsync">CSV</button>
             </header>
             <div class="report-table-wrap">
                 <table>
@@ -77,7 +77,7 @@
         <article class="panel report-card">
             <header>
                 <h2>@(L.IsArabic ? "تقرير الأتمتة" : "Automation report")</h2>
-                <button class="btn compact" @onclick="ExportAutomationAsync">CSV</button>
+                <button class="btn compact" disabled="@(!_interactive || _loading)" @onclick="ExportAutomationAsync">CSV</button>
             </header>
             <div class="report-table-wrap">
                 <table>
@@ -95,7 +95,7 @@
         <article class="panel report-card">
             <header>
                 <h2>@(L.IsArabic ? "تقرير خطة المحتوى" : "Content planner report")</h2>
-                <button class="btn compact" @onclick="ExportPlannerAsync">CSV</button>
+                <button class="btn compact" disabled="@(!_interactive || _loading)" @onclick="ExportPlannerAsync">CSV</button>
             </header>
             <div class="report-table-wrap">
                 <table>
@@ -118,11 +118,23 @@
     private List<AutomationJob> _jobs = new List<AutomationJob>();
     private List<PlannerItem> _planner = new List<PlannerItem>();
     private bool _loading;
+    private bool _interactive;
     private string _error = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_interactive)
+        {
+            _interactive = true;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
     }
 
     private async Task LoadAsync()
