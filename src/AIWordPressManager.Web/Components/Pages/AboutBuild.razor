@@ -20,9 +20,31 @@
         </Meta>
         <Actions>
             <AppButton Href="/api/build" Target="_blank" Variant="primary" Icon="↗" Text="@(L.IsArabic ? "فتح بيانات API" : "Open build API")" />
-            <AppButton Icon="⧉" Text="@(L.IsArabic ? "نسخ تقرير البناء" : "Copy build report")" OnClick="CopyBuildReportClickedAsync" />
+            <AppButton Icon="⧉"
+                       Text="@(L.IsArabic ? "نسخ تقرير البناء" : "Copy build report")"
+                       Busy="@_copying"
+                       Disabled="@_copying"
+                       OnClick="CopyBuildReportClickedAsync" />
         </Actions>
     </AppToolbar>
+
+    @if (_copySucceeded)
+    {
+        <AppStateBanner Kind="success"
+                        Title="@(L.IsArabic ? "تم نسخ تقرير البناء" : "Build report copied")"
+                        Description="@(L.IsArabic ? "أكد المتصفح نجاح الكتابة إلى الحافظة." : "The browser confirmed that the report was written to the clipboard.")" />
+    }
+    else if (!string.IsNullOrWhiteSpace(_copyError))
+    {
+        <AppStateBanner Kind="error"
+                        Title="@(L.IsArabic ? "تعذر نسخ تقرير البناء" : "Build report could not be copied")"
+                        Description="@_copyError"
+                        Busy="@_copying"
+                        RetryText="@(L.IsArabic ? "إعادة محاولة النسخ" : "Retry copy")"
+                        RetryingText="@(L.IsArabic ? "جارٍ إعادة المحاولة..." : "Retrying copy...")"
+                        RetryAriaLabel="@(L.IsArabic ? "إعادة محاولة نسخ تقرير البناء إلى الحافظة" : "Retry copying the build report to the clipboard")"
+                        RetryRequested="CopyBuildReportAsync" />
+    }
 
     <section class="build-info-grid" aria-label="@(L.IsArabic ? "بيانات البناء" : "Build metadata")">
         <AppCard Class="build-info-card" Density="compact"><ChildContent><small>@(L.IsArabic ? "رقم الإصدار" : "Version")</small><strong><AppBidiText Mode="version">@Build.Version</AppBidiText></strong></ChildContent></AppCard>
@@ -96,6 +118,9 @@
     private BuildInformation Build => BuildInfo.Current;
     private IReadOnlyList<ReleaseNote> Releases { get; set; } = Array.Empty<ReleaseNote>();
     private ReleaseNote? CurrentRelease => Releases.FirstOrDefault(x => x.Version == Build.Version);
+    private bool _copying;
+    private bool _copySucceeded;
+    private string? _copyError;
 
     protected override void OnInitialized()
     {
@@ -106,22 +131,44 @@
 
     private async Task CopyBuildReportAsync()
     {
-        var lines = new List<string>
+        if (_copying)
+            return;
+
+        _copying = true;
+        _copySucceeded = false;
+        _copyError = null;
+
+        try
         {
-            "AI WordPress Manager - Build Report",
-            $"Version: {Build.Version}",
-            $"Informational version: {Build.InformationalVersion}",
-            $"Branch: {Build.Branch}",
-            $"Commit: {Build.Commit}",
-            $"Build time UTC: {Build.BuildTimeUtc:O}",
-            $"Assembly: {Build.AssemblyName}"
-        };
-        if (CurrentRelease is not null)
-        {
-            lines.Add(string.Empty);
-            lines.Add(CurrentRelease.Title);
-            lines.AddRange(CurrentRelease.Changes.Select(x => $"- {x}"));
+            var lines = new List<string>
+            {
+                "AI WordPress Manager - Build Report",
+                $"Version: {Build.Version}",
+                $"Informational version: {Build.InformationalVersion}",
+                $"Branch: {Build.Branch}",
+                $"Commit: {Build.Commit}",
+                $"Build time UTC: {Build.BuildTimeUtc:O}",
+                $"Assembly: {Build.AssemblyName}"
+            };
+            if (CurrentRelease is not null)
+            {
+                lines.Add(string.Empty);
+                lines.Add(CurrentRelease.Title);
+                lines.AddRange(CurrentRelease.Changes.Select(x => $"- {x}"));
+            }
+
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(System.Environment.NewLine, lines));
+            _copySucceeded = true;
         }
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(System.Environment.NewLine, lines));
+        catch (Exception)
+        {
+            _copyError = L.IsArabic
+                ? "لم يؤكد المتصفح نجاح الكتابة إلى الحافظة. لم يتم الإبلاغ عن نجاح النسخ؛ يمكنك إعادة المحاولة."
+                : "The browser did not confirm a clipboard write. No copy success was reported; you can retry.";
+        }
+        finally
+        {
+            _copying = false;
+        }
     }
 }

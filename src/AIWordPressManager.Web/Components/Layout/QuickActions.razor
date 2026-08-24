@@ -1,3 +1,6 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject AppLanguageService L
 @inject NavigationManager Navigation
 
@@ -19,13 +22,13 @@
             <header>
                 <div>
                     <strong>@(L.IsArabic ? "إجراءات سريعة" : "Quick actions")</strong>
-                    <small>@(L.IsArabic ? "ابدأ أهم مسارات العمل مباشرة" : "Start the most common workflows instantly")</small>
+                    <small>@(L.IsArabic ? "افتح مسارات العمل المتاحة مباشرة" : "Open available application workflows directly")</small>
                 </div>
                 <button type="button" @onclick="Close" aria-label="@(L.IsArabic ? "إغلاق الإجراءات السريعة" : "Close quick actions")">×</button>
             </header>
 
             <div class="quick-actions-grid">
-                @foreach (var action in Actions)
+                @foreach (var action in VisibleActions)
                 {
                     <button type="button"
                             class="quick-action-item @action.ClassName"
@@ -54,11 +57,12 @@
 
 @code {
     private bool _open;
+    private ClaimsPrincipal _principal = new();
 
     private static readonly QuickAction[] Actions =
     [
         new("＋", "Add site", "إضافة موقع", "Connect another WordPress website", "ربط موقع WordPress جديد", "/sites/connect", "primary"),
-        new("▤", "Create content", "إنشاء محتوى", "Open posts and start publishing work", "فتح المقالات وبدء عمل النشر", "/module/posts", "content"),
+        new("▤", "Posts explorer", "مستكشف المقالات", "Open the synchronized posts explorer", "فتح مستكشف المقالات المتزامنة", "/module/posts", "content"),
         new("✦", "AI Center", "مركز الذكاء", "Generate reviewable AI suggestions", "إنشاء اقتراحات ذكاء قابلة للمراجعة", "/ai-center", "primary"),
         new("◫", "Content planner", "مخطط المحتوى", "Move ideas into briefs and drafts", "تحويل الأفكار إلى ملخصات ومسودات", "/content-planner", "content"),
         new("⚡", "Automation center", "مركز الأتمتة", "Manage controlled automation workflows", "إدارة تدفقات الأتمتة المحكومة", "/automation-center", "execution"),
@@ -69,11 +73,23 @@
         new("▥", "Reports", "التقارير", "Review and export operational evidence", "مراجعة وتصدير الأدلة التشغيلية", "/module/reports", "seo")
     ];
 
+    private IEnumerable<QuickAction> VisibleActions =>
+        Actions.Where(action => ApplicationNavigationPermissionCatalog.CanAccess(_principal, action.Path));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _principal = state.User;
+    }
+
     private void Toggle() => _open = !_open;
     private void Close() => _open = false;
 
     private void Run(QuickAction action)
     {
+        if (!ApplicationNavigationPermissionCatalog.CanAccess(_principal, action.Path))
+            return;
+
         _open = false;
         Navigation.NavigateTo(action.Path);
     }

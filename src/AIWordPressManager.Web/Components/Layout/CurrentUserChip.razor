@@ -37,7 +37,9 @@
             <div>
                 <strong>@UserName</strong>
                 <small>@Role</small>
-                <em>@(L.IsArabic ? "جلسة محلية آمنة" : "Secure local session")</em>
+                <em>@(_isAuthenticated
+                    ? (L.IsArabic ? "جلسة تطبيق مصادق عليها" : "Authenticated application session")
+                    : (L.IsArabic ? "جلسة تطبيق غير مصادق عليها" : "Unauthenticated application session"))</em>
             </div>
         </header>
 
@@ -84,7 +86,7 @@
         </div>
 
         <div class="account-meta">
-            <div><span>◉</span><div><small>@(L.IsArabic ? "الحالة" : "Status")</small><strong>@(L.IsArabic ? "متصل" : "Online")</strong></div></div>
+            <div><span>◉</span><div><small>@(L.IsArabic ? "الجلسة" : "Session")</small><strong>@(_isAuthenticated ? (L.IsArabic ? "تم تسجيل الدخول" : "Signed in") : (L.IsArabic ? "غير مصادق" : "Not authenticated"))</strong></div></div>
             <div><span>ⓘ</span><div><small>@(L.IsArabic ? "الإصدار" : "Version")</small><strong>@BuildInfo.Current.Version</strong></div></div>
         </div>
 
@@ -92,7 +94,6 @@
             <a href="/account/profile"><span>◎</span><div><strong>@(L.IsArabic ? "حسابي" : "My account")</strong><small>@(L.IsArabic ? "الملف الشخصي وكلمة المرور" : "Profile and password")</small></div><b>›</b></a>
             <a href="/settings"><span>⚙</span><div><strong>@(L.IsArabic ? "الإعدادات" : "Settings")</strong><small>@(L.IsArabic ? "اللغة والمظهر والتفضيلات" : "Language, appearance and preferences")</small></div><b>›</b></a>
             <a href="/about-build"><span>ⓘ</span><div><strong>@(L.IsArabic ? "معلومات الإصدار" : "Build information")</strong><small>@(L.IsArabic ? "الفرع والنسخة وتفاصيل البناء" : "Branch, version and build details")</small></div><b>›</b></a>
-            <a href="/development-status.html"><span>▥</span><div><strong>@(L.IsArabic ? "حالة التطوير" : "Development status")</strong><small>@(L.IsArabic ? "المراحل والوظائف ونسب الإنجاز" : "Phases, features and completion progress")</small></div><b>›</b></a>
             <a href="/system-health"><span>♥</span><div><strong>@(L.IsArabic ? "صحة النظام" : "System health")</strong><small>@(L.IsArabic ? "فحص الخدمات وقاعدة البيانات" : "Services and database status")</small></div><b>›</b></a>
         </nav>
 
@@ -107,6 +108,7 @@
     private Site? _activeSite;
     private bool _loadingSites = true;
     private bool _workspaceRestored;
+    private bool _isAuthenticated;
     private string? _siteLoadError;
     private string UserName { get; set; } = "User";
     private string Role { get; set; } = "User";
@@ -119,6 +121,7 @@
         var state = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var principal = state.User;
         CurrentUser.SetCircuitPrincipal(principal);
+        _isAuthenticated = principal.Identity?.IsAuthenticated == true;
         UserName = principal.Identity?.Name ?? "User";
         Role = principal.FindFirstValue(ClaimTypes.Role) ?? "User";
 
