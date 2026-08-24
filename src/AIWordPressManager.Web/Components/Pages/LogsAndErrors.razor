@@ -1,6 +1,7 @@
 @page "/logs"
 @page "/module/logs"
 @rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
 @inject IJSRuntime JS
