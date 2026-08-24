@@ -67,7 +67,9 @@ public sealed class BulkContentReconciliationRecoveryService(
             new Dictionary<string, string>
             {
                 ["siteId"] = site.Id.ToString("D"),
-                ["executionType"] = job.Type
+                ["executionType"] = job.Type,
+                ["confirmedRemoteMutations"] = job.ProcessedItems.ToString(),
+                ["requestedMutations"] = job.TotalItems.ToString()
             },
             cancellationToken);
 
@@ -76,23 +78,56 @@ public sealed class BulkContentReconciliationRecoveryService(
             tracker.Report(job.Id, job.ProcessedItems, job.TotalItems,
                 "Retrying local reconciliation only; the WordPress mutation will not be replayed.");
             await syncService.SynchronizeAsync(site.Id, cancellationToken, forceFullRefresh: true);
-            tracker.Complete(job.Id, job.TotalItems, job.TotalItems,
-                "Local cache reconciled with the WordPress state that was already applied remotely.");
+
+            var wasPartialMutation = job.ProcessedItems < job.TotalItems;
+            if (wasPartialMutation)
+            {
+                tracker.CompleteWithWarnings(
+                    job.Id,
+                    job.ProcessedItems,
+                    job.TotalItems,
+                    $"Local cache reconciled with the {job.ProcessedItems} confirmed remote mutation(s). " +
+                    $"{job.TotalItems - job.ProcessedItems} originally requested mutation(s) were not replayed after interruption.");
+            }
+            else
+            {
+                tracker.Complete(job.Id, job.ProcessedItems, job.TotalItems,
+                    "Local cache reconciled with the WordPress state that was already applied remotely.");
+            }
 
             await audit.RecordCurrentAsync(
                 "Content",
                 "BulkReconciliationRetry",
-                "Succeeded",
+                wasPartialMutation ? "SucceededWithWarnings" : "Succeeded",
                 "ExecutionJob",
                 job.Id.ToString("D"),
                 job.Title,
-                new Dictionary<string, string> { ["siteId"] = site.Id.ToString("D") },
+                new Dictionary<string, string>
+                {
+                    ["siteId"] = site.Id.ToString("D"),
+                    ["confirmedRemoteMutations"] = job.ProcessedItems.ToString(),
+                    ["requestedMutations"] = job.TotalItems.ToString(),
+                    ["replayedMutations"] = "0"
+                },
                 cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            tracker.NeedsReconciliation(job.Id, job.ProcessedItems, job.TotalItems,
-                "Remote WordPress changes remain applied; local reconciliation retry was cancelled before completion.");
+            const string message = "Remote WordPress changes remain applied; local reconciliation retry was cancelled before completion.";
+            tracker.NeedsReconciliation(job.Id, job.ProcessedItems, job.TotalItems, message);
+            await audit.RecordCurrentAsync(
+                "Content",
+                "BulkReconciliationRetry",
+                "Cancelled",
+                "ExecutionJob",
+                job.Id.ToString("D"),
+                job.Title,
+                new Dictionary<string, string>
+                {
+                    ["siteId"] = site.Id.ToString("D"),
+                    ["replayedMutations"] = "0"
+                },
+                CancellationToken.None);
             throw;
         }
         catch (Exception ex)
@@ -109,9 +144,10 @@ public sealed class BulkContentReconciliationRecoveryService(
                 new Dictionary<string, string>
                 {
                     ["siteId"] = site.Id.ToString("D"),
-                    ["reason"] = ex.Message
+                    ["reason"] = ex.Message,
+                    ["replayedMutations"] = "0"
                 },
-                cancellationToken);
+                CancellationToken.None);
             throw new InvalidOperationException(message, ex);
         }
     }
