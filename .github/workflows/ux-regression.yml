@@ -49,6 +49,8 @@ jobs:
             filter: FullyQualifiedName~ApplicationUserAdministrationUxTests
           - shard: roles-permissions
             filter: FullyQualifiedName~RolesPermissionsUxTests
+          - shard: reports-exports
+            filter: FullyQualifiedName~ReportsExportsUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
