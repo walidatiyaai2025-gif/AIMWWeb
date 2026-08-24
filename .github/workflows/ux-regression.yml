@@ -53,6 +53,8 @@ jobs:
             filter: FullyQualifiedName~ReportsExportsUxTests
           - shard: settings-database-provider
             filter: FullyQualifiedName~SettingsDatabaseProviderUxTests
+          - shard: logs-diagnostics
+            filter: FullyQualifiedName~LogsBrowserAcceptanceUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
