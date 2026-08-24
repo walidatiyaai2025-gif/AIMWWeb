@@ -5,6 +5,8 @@ namespace AIWordPressManager.Web.Services;
 
 public sealed class SiteOperationHistoryService
 {
+    private static readonly TimeSpan MutationLockTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan MutationLockRetryDelay = TimeSpan.FromMilliseconds(25);
     private readonly object _sync = new();
     private readonly string _path;
     private readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
@@ -168,6 +170,7 @@ public sealed class SiteOperationHistoryService
     {
         lock (_sync)
         {
+            using var mutationLease = AcquireMutationLease();
             var items = Load().OrderByDescending(x => x.StartedAtUtc).ToList();
             var preview = BuildCleanupPreview(items, olderThanDays, keepLatest);
             if (preview.RemovableCount == 0)
@@ -192,6 +195,7 @@ public sealed class SiteOperationHistoryService
         var owned = NormalizeOwnedSites(ownedSiteIds);
         lock (_sync)
         {
+            using var mutationLease = AcquireMutationLease();
             var all = Load().OrderByDescending(x => x.StartedAtUtc).ToList();
             var visible = all.Where(x => IsVisibleTo(x, ownerUserId, owned)).ToList();
             var preview = BuildCleanupPreview(visible, olderThanDays, keepLatest);
@@ -245,6 +249,7 @@ public sealed class SiteOperationHistoryService
     {
         lock (_sync)
         {
+            using var mutationLease = AcquireMutationLease();
             Save(Load().Where(x => x.SiteId != siteId).ToList());
         }
     }
@@ -254,6 +259,7 @@ public sealed class SiteOperationHistoryService
         RequireOwner(ownerUserId);
         lock (_sync)
         {
+            using var mutationLease = AcquireMutationLease();
             Save(Load().Where(x =>
                 x.SiteId != siteId ||
                 (x.OwnerUserId.HasValue && x.OwnerUserId.Value != ownerUserId)).ToList());
@@ -274,6 +280,7 @@ public sealed class SiteOperationHistoryService
     {
         lock (_sync)
         {
+            using var mutationLease = AcquireMutationLease();
             var items = Load();
             items.Add(new SiteOperationHistoryItem(
                 Guid.NewGuid(),
@@ -367,19 +374,71 @@ public sealed class SiteOperationHistoryService
         if (!File.Exists(_path)) return [];
         try
         {
-            return JsonSerializer.Deserialize<List<SiteOperationHistoryItem>>(File.ReadAllText(_path), _json) ?? [];
+            return JsonSerializer.Deserialize<List<SiteOperationHistoryItem>>(File.ReadAllText(_path), _json)
+                ?? throw new JsonException("The site operation history document cannot be null.");
         }
-        catch
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
         {
-            return [];
+            throw new InvalidDataException(
+                "Site operation history storage is unreadable. No records were treated as empty.",
+                ex);
+        }
+    }
+
+    private FileStream AcquireMutationLease()
+    {
+        var lockPath = _path + ".lock";
+        var deadline = DateTime.UtcNow + MutationLockTimeout;
+        while (true)
+        {
+            try
+            {
+                return new FileStream(
+                    lockPath,
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    bufferSize: 1,
+                    FileOptions.None);
+            }
+            catch (IOException) when (DateTime.UtcNow < deadline)
+            {
+                Thread.Sleep(MutationLockRetryDelay);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new InvalidOperationException(
+                    "Site operation history storage cannot acquire its mutation lock.",
+                    ex);
+            }
+            catch (IOException ex)
+            {
+                throw new IOException(
+                    "Site operation history storage is busy. Retry the operation.",
+                    ex);
+            }
         }
     }
 
     private void Save(List<SiteOperationHistoryItem> items)
     {
         var temp = _path + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(items, _json));
-        File.Move(temp, _path, true);
+        try
+        {
+            File.WriteAllText(temp, JsonSerializer.Serialize(items, _json));
+            File.Move(temp, _path, true);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(temp)) File.Delete(temp);
+            }
+            catch
+            {
+                // Best-effort cleanup only. The authoritative history file has already either moved or failed.
+            }
+        }
     }
 }
 
