@@ -11,7 +11,15 @@
 
 @if (_loading)
 {
-    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ حساب مؤشرات الموثوقية..." : "Calculating reliability metrics...")</div>
+    <div class="panel" style="padding:24px">@(L.IsArabic ? "جارٍ حساب مؤشرات السجل..." : "Calculating retained-history signals...")</div>
+}
+else if (!string.IsNullOrWhiteSpace(_loadError))
+{
+    <section class="panel" style="padding:28px">
+        <h1>@(L.IsArabic ? "تعذر تحميل بيانات الموثوقية" : "Reliability history could not be loaded")</h1>
+        <p>@_loadError</p>
+        <button type="button" class="btn primary" @onclick="ReloadAsync">@(L.IsArabic ? "إعادة المحاولة" : "Retry")</button>
+    </section>
 }
 else
 {
@@ -19,9 +27,9 @@ else
         <section class="panel" style="padding:24px;margin-bottom:18px">
             <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap">
                 <div>
-                    <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "مراقبة الاعتمادية" : "RELIABILITY MONITORING")</small>
+                    <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "إشارة السجل المحتفَظ به" : "RETAINED HISTORY SIGNAL")</small>
                     <h1 style="margin:8px 0">@(L.IsArabic ? "موثوقية مواقع WordPress" : "WordPress Site Reliability")</h1>
-                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "مقارنة نجاح الاتصال والمزامنة لمواقع حسابك خلال الفترة المحددة." : "Compare connection and synchronization success across sites owned by your account for the selected period.")</p>
+                    <p style="margin:0;opacity:.75">@(L.IsArabic ? "مقارنة نتائج اختبارات الاتصال والمزامنة المسجلة لمواقع حسابك خلال الفترة المحددة. هذه ليست مراقبة صحة حية." : "Compare recorded connection-test and synchronization outcomes for sites owned by your account during the selected period. This is not a live-health monitor.")</p>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <button class="btn" @onclick="ReloadAsync">↻ @(L.IsArabic ? "تحديث" : "Refresh")</button>
@@ -29,6 +37,18 @@ else
                 </div>
             </div>
         </section>
+
+        @if (_historyMayBeTruncated)
+        {
+            <section class="panel" style="padding:14px 18px;margin-bottom:18px">
+                <strong>@(L.IsArabic ? "تنبيه نطاق السجل:" : "Retained-history notice:")</strong>
+                <span>
+                    @(L.IsArabic
+                        ? $" وصل سجل العمليات إلى حد الاحتفاظ ({RetainedHistoryLimit:N0} من أحدث السجلات). مؤشرات الاتصال والمزامنة أدناه تستخدم السجلات المحتفَظ بها فقط وقد تستبعد نتائج أقدم."
+                        : $" Operation history has reached its {RetainedHistoryLimit:N0}-record retention limit. Connection/synchronization signals below use retained records only and may omit older outcomes.")
+                </span>
+            </section>
+        }
 
         <section class="panel" style="padding:18px;margin-bottom:18px">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end">
@@ -41,17 +61,17 @@ else
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
             @Stat(L.IsArabic ? "المواقع المقاسة" : "Measured sites", ReliabilityRows.Count.ToString())
             @Stat(L.IsArabic ? "إجمالي العمليات" : "Total operations", ReliabilityRows.Sum(x => x.Total).ToString())
-            @Stat(L.IsArabic ? "معدل النجاح العام" : "Overall success rate", $"{OverallSuccessRate:0.0}%")
-            @Stat(L.IsArabic ? "مواقع تحتاج متابعة" : "Sites needing attention", ReliabilityRows.Count(x => x.SuccessRate < 90).ToString())
+            @Stat(L.IsArabic ? "معدل النجاح المسجل" : "Recorded success rate", $"{OverallSuccessRate:0.0}%")
+            @Stat(L.IsArabic ? "مواقع دون 90% مسجل" : "Sites below 90% recorded", ReliabilityRows.Count(x => x.SuccessRate < 90).ToString())
         </section>
 
         <section class="panel" style="overflow:auto">
             <table style="width:100%;border-collapse:collapse;min-width:880px">
-                <thead><tr><th style="text-align:start;padding:14px">@(L.IsArabic ? "الموقع" : "Site")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "العمليات" : "Operations")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الناجحة" : "Successful")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الفاشلة" : "Failed")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "معدل النجاح" : "Success rate")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "آخر فشل" : "Last failure")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الحالة" : "Status")</th><th style="padding:14px"></th></tr></thead>
+                <thead><tr><th style="text-align:start;padding:14px">@(L.IsArabic ? "الموقع" : "Site")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "العمليات" : "Operations")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الناجحة" : "Successful")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "الفاشلة" : "Failed")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "معدل النجاح المسجل" : "Recorded success rate")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "آخر فشل مسجل" : "Last recorded failure")</th><th style="text-align:start;padding:14px">@(L.IsArabic ? "نطاق النتيجة" : "Recorded outcome band")</th><th style="padding:14px"></th></tr></thead>
                 <tbody>
                     @if (!ReliabilityRows.Any())
                     {
-                        <tr><td colspan="8" style="padding:28px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد بيانات كافية للفترة المحددة." : "There is not enough data for the selected period.")</td></tr>
+                        <tr><td colspan="8" style="padding:28px;text-align:center;opacity:.7">@(L.IsArabic ? "لا توجد نتائج اتصال أو مزامنة مسجلة كافية للفترة المحددة." : "There are not enough retained connection-test or synchronization records for the selected period.")</td></tr>
                     }
                     else
                     {
@@ -62,7 +82,7 @@ else
                                 <td style="padding:14px">@row.Total</td><td style="padding:14px">@row.Successful</td><td style="padding:14px">@row.Failed</td>
                                 <td style="padding:14px"><strong>@row.SuccessRate.ToString("0.0")%</strong></td>
                                 <td style="padding:14px">@(row.LastFailureUtc is null ? "—" : FormatDate(row.LastFailureUtc.Value))</td>
-                                <td style="padding:14px"><span class="badge @Tone(row.SuccessRate)">@StatusLabel(row.SuccessRate)</span></td>
+                                <td style="padding:14px"><span class="badge @Tone(row.SuccessRate)">@RecordedBand(row.SuccessRate)</span></td>
                                 <td style="padding:14px"><a class="btn" href="@($"/sites/{row.SiteId}/connection")">@(L.IsArabic ? "فتح" : "Open")</a></td>
                             </tr>
                         }
@@ -74,7 +94,10 @@ else
 }
 
 @code {
+    private const int RetainedHistoryLimit = 2000;
     private bool _loading = true;
+    private bool _historyMayBeTruncated;
+    private string? _loadError;
     private int _periodDays = 30;
     private int _minimumOperations = 1;
     private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
@@ -87,12 +110,24 @@ else
     private async Task ReloadAsync()
     {
         _loading = true;
+        _loadError = null;
         try
         {
             var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
-            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), 5000);
+            _items = History.GetAll(ownerUserId, _sites.Select(x => x.Id).ToArray(), RetainedHistoryLimit);
+            _historyMayBeTruncated = _items.Count >= RetainedHistoryLimit;
             BuildRows();
+        }
+        catch (Exception)
+        {
+            _sites = [];
+            _items = [];
+            ReliabilityRows = [];
+            _historyMayBeTruncated = false;
+            _loadError = L.IsArabic
+                ? "تعذر قراءة سجل العمليات المحتفَظ به. لم يتم عرض بيانات فارغة أو حالة صحة حية بديلة؛ أعد المحاولة بعد توفر التخزين."
+                : "The retained operation-history source could not be read. No empty dataset or substitute live-health claim is being shown; retry after storage is available.";
         }
         finally { _loading = false; }
     }
@@ -102,7 +137,10 @@ else
     private void BuildRows()
     {
         var fromUtc = DateTime.UtcNow.AddDays(-Math.Clamp(_periodDays, 1, 365));
-        var scoped = _items.Where(x => x.StartedAtUtc >= fromUtc).ToList();
+        var scoped = _items
+            .Where(IsReliabilityRecord)
+            .Where(x => x.StartedAtUtc >= fromUtc)
+            .ToList();
         ReliabilityRows = scoped.GroupBy(x => x.SiteId)
             .Select(group =>
             {
@@ -118,9 +156,17 @@ else
             .ToList();
     }
 
+    private static bool IsReliabilityRecord(SiteOperationHistoryItem item)
+    {
+        var operation = item.Operation ?? string.Empty;
+        return operation.Contains("connection", StringComparison.OrdinalIgnoreCase)
+            || operation.Contains("synchron", StringComparison.OrdinalIgnoreCase)
+            || operation.Contains("sync", StringComparison.OrdinalIgnoreCase);
+    }
+
     private double OverallSuccessRate => ReliabilityRows.Sum(x => x.Total) == 0 ? 0 : ReliabilityRows.Sum(x => x.Successful) * 100d / ReliabilityRows.Sum(x => x.Total);
     private string SiteName(Guid siteId) => _sites.FirstOrDefault(x => x.Id == siteId)?.Name ?? siteId.ToString("N")[..8];
-    private string StatusLabel(double rate) => rate >= 98 ? (L.IsArabic ? "ممتازة" : "Excellent") : rate >= 90 ? (L.IsArabic ? "مستقرة" : "Stable") : rate >= 75 ? (L.IsArabic ? "تحتاج متابعة" : "Review") : (L.IsArabic ? "حرجة" : "Critical");
+    private string RecordedBand(double rate) => rate >= 98 ? (L.IsArabic ? "≥98% مسجل" : "≥98% recorded") : rate >= 90 ? (L.IsArabic ? "90–97.9% مسجل" : "90–97.9% recorded") : rate >= 75 ? (L.IsArabic ? "75–89.9% مسجل" : "75–89.9% recorded") : (L.IsArabic ? "<75% مسجل" : "<75% recorded");
     private static string Tone(double rate) => rate >= 98 ? "success" : rate >= 90 ? "info" : rate >= 75 ? "warning" : "danger";
     private string FormatDate(DateTime value) => value.ToLocalTime().ToString(L.IsArabic ? "yyyy-MM-dd HH:mm" : "MMM d, yyyy HH:mm");
     private RenderFragment Stat(string label, string value) => builder => { builder.OpenElement(0, "article"); builder.AddAttribute(1, "class", "panel"); builder.AddAttribute(2, "style", "padding:18px"); builder.OpenElement(3, "small"); builder.AddContent(4, label); builder.CloseElement(); builder.OpenElement(5, "strong"); builder.AddAttribute(6, "style", "display:block;font-size:1.65rem;margin-top:8px"); builder.AddContent(7, value); builder.CloseElement(); builder.CloseElement(); };
