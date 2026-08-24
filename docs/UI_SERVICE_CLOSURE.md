@@ -30,6 +30,7 @@ This ledger records user-visible capabilities inspected end-to-end for Issue #18
 | all production `.razor` surfaces | Prevent placeholder/simulated runtime constructs | repository-wide static anti-mock guard in normal unit-test CI | CONTRACT VERIFIED | `RazorProductionAntiMockGuardTests` | PR #198; none |
 | `/sites/{siteId}/content/{post|page}/{id}/edit` | Save edited post/page | `Content.Edit` → remote-version conflict check → authenticated WordPress mutation → synchronization → fresh editor load | BROWSER VERIFIED | `ContentEditorMutationsUxTests` | PR #200; none |
 | `/approvals` | Approve and execute supported WordPress content proposal | owner + `Approvals.Decide` → external execution job → `ApprovedChangeExecutionWorker` → explicit background authorization → WordPress editor → forced sync → execution + approval reconciliation | BROWSER VERIFIED | `ApprovedChangeExecutionWorkerContractTests`; `ApprovalExecutionUxTests` | PR #201 + PR #202; none |
+| `/notifications` | Refresh, mark all read, mark one read, dismiss | authenticated owner → `NotificationInboxService` → owner-scoped SQLite notification state → explicit reload/reconciliation before any success claim | IN REVIEW | `NotificationInboxTruthfulnessContractTests` | #183 focused reconciliation slice: mutation no-op is surfaced, committed mutation + reload failure reports saved/refresh-required instead of contradictory success, reload errors are bounded; page/API permission-policy alignment remains a separate explicit contract decision and browser acceptance is still required |
 
 ## Closure evidence
 
@@ -55,9 +56,10 @@ This ledger records user-visible capabilities inspected end-to-end for Issue #18
 
 Issue #183 remains open. Before final closure:
 
-1. Add independent browser acceptance for live logs and other remaining nonterminal visible surfaces.
+1. Add independent browser acceptance for live logs and other remaining nonterminal visible surfaces, including Notification Inbox reconciliation/failure behavior.
 2. Add browser failure/retry/history evidence for synchronization; `CONTRACT VERIFIED` is not terminal where browser proof is required.
 3. Every suspicious action must be traced to a real service/runtime destination or made explicitly unavailable; add narrower regression contracts whenever a concrete false-success/no-op pattern is removed.
-4. Do not duplicate the active REL-003 Backup/Restore ownership stream; consume its merged production state when that dependency lands, then inspect resulting visible Backup/Restore behavior under #183.
-5. Keep repository-wide anti-mock guards active in CI and complete the full Razor/control census defined by `docs/PRODUCTION_CLOSURE_100_PLAN.md`.
-6. Close #183 only after the full visible-capability inventory is terminal, required exact-head CI is green, all closure work is present on latest `main`, and no unresolved blocker remains.
+4. Resolve the explicit `/notifications` page-vs-API permission-policy contract without guessing or weakening owner isolation.
+5. Do not duplicate the active REL-003 Backup/Restore ownership stream; consume its merged production state when that dependency lands, then inspect resulting visible Backup/Restore behavior under #183.
+6. Keep repository-wide anti-mock guards active in CI and complete the full Razor/control census defined by `docs/PRODUCTION_CLOSURE_100_PLAN.md`.
+7. Close #183 only after the full visible-capability inventory is terminal, required exact-head CI is green, all closure work is present on latest `main`, and no unresolved blocker remains.
