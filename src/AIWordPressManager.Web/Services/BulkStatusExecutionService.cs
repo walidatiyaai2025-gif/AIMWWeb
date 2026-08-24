@@ -72,6 +72,14 @@ public sealed class BulkStatusExecutionService(
                 else
                 {
                     var value = current.Value;
+                    if (string.Equals(value.Status, status, StringComparison.OrdinalIgnoreCase))
+                    {
+                        updated = true;
+                        tracker.Report(jobId, index, targets.Count,
+                            $"{target.ContentType} #{target.WordPressId} already has status {status}; duplicate mutation skipped.");
+                        break;
+                    }
+
                     var update = new WordPressContentUpdateRequest(
                         value.ContentType,
                         value.Id,
@@ -110,24 +118,59 @@ public sealed class BulkStatusExecutionService(
             tracker.Report(jobId, index + 1, targets.Count, $"Processed {index + 1}/{targets.Count}.");
         }
 
-        try
+        var reconciliationSucceeded = succeeded == 0;
+        string? reconciliationError = null;
+        if (succeeded > 0)
         {
-            tracker.Report(jobId, targets.Count, targets.Count, "Refreshing local WordPress cache.");
-            await syncService.SynchronizeAsync(siteId, cancellationToken);
+            try
+            {
+                tracker.Report(jobId, targets.Count, targets.Count, "Refreshing local WordPress cache.");
+                await syncService.SynchronizeAsync(siteId, cancellationToken, forceFullRefresh: true);
+                reconciliationSucceeded = true;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                reconciliationError = "Local reconciliation was cancelled after WordPress changes were already applied.";
+            }
+            catch (Exception ex)
+            {
+                reconciliationError = $"Local reconciliation failed after WordPress changes were already applied: {ex.Message}";
+            }
         }
-        catch
+
+        var disposition = BulkExecutionOutcomePolicy.Resolve(succeeded, failures.Count, reconciliationSucceeded);
+        string message;
+        switch (disposition)
         {
-            // The remote updates are already committed. Cache refresh can be retried separately.
+            case BulkExecutionDisposition.NeedsReconciliation:
+                message = $"WordPress updated {succeeded} item(s) to {status}, but the local cache is not reconciled. The remote mutation will not be replayed during recovery. {reconciliationError}";
+                tracker.NeedsReconciliation(jobId, targets.Count, targets.Count, message);
+                break;
+            case BulkExecutionDisposition.CompletedWithWarnings:
+                message = $"تم تحديث {succeeded} عنصر وفشل {failures.Count}. {string.Join(" | ", failures.Take(3))}";
+                tracker.CompleteWithWarnings(jobId, targets.Count, targets.Count, message);
+                break;
+            case BulkExecutionDisposition.Completed:
+                message = $"تم تحديث حالة {succeeded} عنصر إلى {status} وتمت مطابقة البيانات المحلية مع WordPress.";
+                tracker.Complete(jobId, targets.Count, targets.Count, message);
+                break;
+            default:
+                message = $"فشل تحديث العناصر إلى {status}. {string.Join(" | ", failures.Take(3))}";
+                tracker.Fail(jobId, message);
+                break;
         }
 
-        var message = failures.Count == 0
-            ? $"تم تحديث حالة {succeeded} عنصر إلى {status}."
-            : $"تم تحديث {succeeded} عنصر وفشل {failures.Count}. {string.Join(" | ", failures.Take(3))}";
+        if (cancellationToken.IsCancellationRequested && disposition == BulkExecutionDisposition.NeedsReconciliation)
+            cancellationToken.ThrowIfCancellationRequested();
 
-        if (succeeded == 0) tracker.Fail(jobId, message);
-        else tracker.Complete(jobId, targets.Count, targets.Count, message);
-
-        return new BulkStatusResult(jobId, status, succeeded, failures.Count, failures, message);
+        return new BulkStatusResult(
+            jobId,
+            status,
+            succeeded,
+            failures.Count,
+            failures,
+            message,
+            disposition == BulkExecutionDisposition.NeedsReconciliation);
     }
 }
 
@@ -139,4 +182,5 @@ public sealed record BulkStatusResult(
     int Succeeded,
     int Failed,
     IReadOnlyList<string> Errors,
-    string Message);
+    string Message,
+    bool RequiresReconciliation = false);
