@@ -12,19 +12,24 @@ public sealed class ConfigurationValidationService
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _environment;
     private readonly IApplicationPathService _paths;
+    private readonly CurrentUserContext _currentUser;
 
     public ConfigurationValidationService(
         IConfiguration configuration,
         IWebHostEnvironment environment,
-        IApplicationPathService paths)
+        IApplicationPathService paths,
+        CurrentUserContext currentUser)
     {
         _configuration = configuration;
         _environment = environment;
         _paths = paths;
+        _currentUser = currentUser;
     }
 
     public ConfigurationValidationReport Validate()
     {
+        _currentUser.RequirePermission(ApplicationPermissionCatalog.SettingsManage);
+
         var checks = new List<ConfigurationValidationItem>();
 
         var dataPath = _paths.GetApplicationDataDirectory();
