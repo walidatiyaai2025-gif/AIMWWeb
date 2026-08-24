@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject SiteOperationMaintenanceService Maintenance
 @inject AppLanguageService L
+@inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "صيانة سجل العمليات" : "Operation History Maintenance")</PageTitle>
 
@@ -71,11 +72,11 @@
 
     <section class="panel" style="padding:22px">
         <h2 style="margin-top:0">@(L.IsArabic ? "تأكيد التنظيف" : "Confirm cleanup")</h2>
-        <p style="opacity:.75">@(L.IsArabic ? "لن يتم حذف أي سجل خارج مواقع حسابك. اكتب CLEANUP للتأكيد؛ لا يمكن التراجع عن العملية." : "No record outside sites owned by your account will be removed. Type CLEANUP to confirm; this action cannot be undone.")</p>
+        <p style="opacity:.75">@(L.IsArabic ? "لن يتم حذف أي سجل خارج مواقع حسابك. اكتب CLEANUP ثم وافق على نافذة التأكيد؛ يمكن إلغاء النافذة قبل أي حذف." : "No record outside sites owned by your account will be removed. Type CLEANUP and then accept the confirmation dialog; canceling the dialog performs no deletion.")</p>
         <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
             <label style="min-width:260px;flex:1">
                 <span style="display:block;margin-bottom:6px">@(L.IsArabic ? "اكتب CLEANUP للتأكيد" : "Type CLEANUP to confirm")</span>
-                <input class="form-control" @bind="_confirmation" disabled="@_busy" autocomplete="off" />
+                <input class="form-control" @bind="_confirmation" @bind:event="oninput" disabled="@_busy" autocomplete="off" />
             </label>
             <button type="button" class="btn danger" disabled="@(!CanCleanup)" @onclick="RunCleanupAsync">
                 @if (_busy)
@@ -133,6 +134,32 @@
     private async Task RunCleanupAsync()
     {
         if (!CanCleanup) return;
+
+        bool confirmed;
+        try
+        {
+            confirmed = await JS.InvokeAsync<bool>(
+                "confirm",
+                L.IsArabic
+                    ? $"سيتم حذف {_preview.RemovableCount} سجل عمليات قديم من نطاق حسابك نهائيًا. هل تريد المتابعة؟"
+                    : $"Permanently remove {_preview.RemovableCount} old operation-history records from your account scope?");
+        }
+        catch
+        {
+            _message = L.IsArabic
+                ? "تعذر فتح نافذة التأكيد. لم يتم حذف أي سجل."
+                : "The cleanup confirmation could not be opened. No records were removed.";
+            return;
+        }
+
+        if (!confirmed)
+        {
+            _message = L.IsArabic
+                ? "تم إلغاء التنظيف. لم يتم حذف أي سجل."
+                : "Cleanup cancelled. No records were removed.";
+            return;
+        }
+
         _busy = true;
         _message = null;
         try
