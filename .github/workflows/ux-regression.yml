@@ -41,6 +41,8 @@ jobs:
             filter: FullyQualifiedName~MediaUpdateDeleteUxTests
           - shard: content-editor-mutations
             filter: FullyQualifiedName~ContentEditorMutationsUxTests
+          - shard: approval-execution
+            filter: FullyQualifiedName~ApprovalExecutionUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
