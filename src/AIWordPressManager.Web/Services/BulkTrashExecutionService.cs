@@ -65,9 +65,18 @@ public sealed class BulkTrashExecutionService(
                     var remaining = targets.Count - index - 1;
                     if (remaining > 0)
                         failures.Add($"لم تتم معالجة {remaining} عنصر متبقٍ لأن مهلة العملية انتهت.");
-
                     tracker.Report(jobId, index, targets.Count, "Bulk trash deadline reached; remaining items were not sent.");
                     break;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    failures.Add($"{target.ContentType} #{target.WordPressId}: WordPress mutation failed: {ex.Message}");
+                    tracker.Report(jobId, index + 1, targets.Count, $"WordPress mutation failed for {target.ContentType} #{target.WordPressId}.");
+                    continue;
                 }
 
                 if (response.IsSuccess)
@@ -81,7 +90,15 @@ public sealed class BulkTrashExecutionService(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            tracker.Fail(jobId, "Bulk trash operation was cancelled before the remote mutation phase completed.");
+            if (succeeded > 0)
+            {
+                var partialMessage = $"WordPress moved {succeeded} item(s) to trash before cancellation. Local reconciliation is required and the remote mutation will not be replayed.";
+                tracker.NeedsReconciliation(jobId, succeeded, targets.Count, partialMessage);
+            }
+            else
+            {
+                tracker.Fail(jobId, "Bulk trash operation was cancelled before any confirmed remote mutation completed.");
+            }
             throw;
         }
 
