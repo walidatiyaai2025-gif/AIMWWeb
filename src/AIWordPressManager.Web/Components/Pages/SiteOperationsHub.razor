@@ -18,28 +18,40 @@ else
         <section class="panel" style="padding:24px;margin-bottom:18px">
             <small style="font-weight:700;letter-spacing:.08em">@(L.IsArabic ? "التشغيل والمراقبة" : "OPERATIONS & MONITORING")</small>
             <h1 style="margin:8px 0">@(L.IsArabic ? "مركز عمليات مواقع WordPress" : "WordPress Site Operations Hub")</h1>
-            <p style="margin:0;opacity:.75">@(L.IsArabic ? "نقطة وصول موحدة لسجل العمليات، الموثوقية، الاتصال والمزامنة." : "A single entry point for operation history, reliability, connection, and synchronization workflows.")</p>
+            <p style="margin:0;opacity:.75">@(L.IsArabic ? "نقطة وصول موحدة لسجل العمليات المحتفَظ به، ومؤشر نجاح الاتصال والمزامنة، ومسارات التشغيل الفعلية." : "A single entry point for retained operation history, recorded connection/sync success signals, and real operating workflows.")</p>
         </section>
 
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
             @Stat(L.IsArabic ? "إجمالي المواقع" : "Total sites", _sites.Count.ToString())
-            @Stat(L.IsArabic ? "عمليات 30 يومًا" : "30-day operations", _summary.Total.ToString())
-            @Stat(L.IsArabic ? "نسبة النجاح" : "Success rate", SuccessRate)
-            @Stat(L.IsArabic ? "عمليات فاشلة" : "Failed operations", _summary.Failed.ToString())
-            @Stat(L.IsArabic ? "متوسط المدة" : "Average duration", FormatDuration(_summary.AverageDuration))
+            @Stat(L.IsArabic ? "عمليات مسجلة خلال 30 يومًا" : "Recorded 30-day operations", _summary.Total.ToString())
+            @Stat(L.IsArabic ? "نسبة نجاح العمليات المسجلة" : "Recorded success rate", SuccessRate)
+            @Stat(L.IsArabic ? "عمليات فاشلة مسجلة" : "Recorded failed operations", _summary.Failed.ToString())
+            @Stat(L.IsArabic ? "متوسط المدة المسجلة" : "Recorded average duration", FormatDuration(_summary.AverageDuration))
         </section>
 
+        @if (_historyMayBeTruncated)
+        {
+            <section class="panel" style="padding:14px 18px;margin-bottom:18px">
+                <strong>@(L.IsArabic ? "تنبيه نطاق السجل:" : "History scope notice:")</strong>
+                <span>
+                    @(L.IsArabic
+                        ? $" وصل سجل العمليات إلى حد الاحتفاظ ({RetainedHistoryLimit:N0} من أحدث السجلات). قد لا تتضمن مؤشرات آخر 30 يومًا عمليات أقدم تم استبعادها من التخزين."
+                        : $" Operation history has reached its {RetainedHistoryLimit:N0}-record retention limit. The 30-day metrics may omit older operations that have already been evicted from retained history.")
+                </span>
+            </section>
+        }
+
         <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px">
-            @HubCard("≡", L.IsArabic ? "سجل عمليات المواقع" : "Site operation history", L.IsArabic ? "ابحث وفلتر وصدّر اختبارات الاتصال وعمليات المزامنة." : "Search, filter, and export connection tests and synchronization activity.", "/site-operations", L.IsArabic ? "فتح السجل" : "Open history")
-            @HubCard("◈", L.IsArabic ? "موثوقية المواقع" : "Site reliability", L.IsArabic ? "قارن معدل النجاح وحدد المواقع التي تحتاج متابعة." : "Compare success rates and identify sites requiring attention.", "/site-reliability", L.IsArabic ? "عرض الموثوقية" : "View reliability")
-            @HubCard("⌫", L.IsArabic ? "صيانة سجل العمليات" : "Operation history maintenance", L.IsArabic ? "راجع حجم ملف السجل ونظّف العمليات القديمة بعد معاينة آمنة." : "Review history storage and safely clean old operation records after preview.", "/operations/maintenance", L.IsArabic ? "فتح الصيانة" : "Open maintenance")
+            @HubCard("≡", L.IsArabic ? "سجل عمليات المواقع" : "Site operation history", L.IsArabic ? "ابحث وفلتر وصدّر سجل العمليات المحتفَظ به." : "Search, filter, and export retained site-operation history.", "/site-operations", L.IsArabic ? "فتح السجل" : "Open history")
+            @HubCard("◈", L.IsArabic ? "مؤشر نجاح الاتصال والمزامنة" : "Connection & sync success signal", L.IsArabic ? "قارن معدلات النجاح المسجلة ضمن سجل العمليات المحتفَظ به." : "Compare recorded connection/sync success bands within retained operation history.", "/site-reliability", L.IsArabic ? "عرض المؤشر" : "View signal")
+            @HubCard("⌫", L.IsArabic ? "صيانة سجل العمليات" : "Operation history maintenance", L.IsArabic ? "راجع حجم سجل حسابك ونظّف العمليات القديمة بعد معاينة آمنة." : "Review your account-scoped history size and safely clean old operation records after preview.", "/operations/maintenance", L.IsArabic ? "فتح الصيانة" : "Open maintenance")
             @HubCard("↻", L.IsArabic ? "مزامنة المحتوى" : "Content synchronization", L.IsArabic ? "شغّل المزامنة وراجع البيانات المحلية المخزنة." : "Run synchronization and review locally cached data.", "/module/sync", L.IsArabic ? "فتح المزامنة" : "Open synchronization")
             @HubCard("◉", L.IsArabic ? "إدارة المواقع" : "Site management", L.IsArabic ? "أضف المواقع وعدّل الاتصال وبيانات الاعتماد." : "Add sites and manage connection profiles and credentials.", "/sites", L.IsArabic ? "إدارة المواقع" : "Manage sites")
         </section>
 
         <section class="panel" style="padding:20px">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
-                <div><strong>@(L.IsArabic ? "آخر العمليات" : "Recent operations")</strong><div style="opacity:.7;font-size:.9rem">@(L.IsArabic ? "أحدث اختبارات الاتصال والمزامنة عبر كل المواقع التابعة لحسابك." : "Latest connection and synchronization activity across sites owned by your account.")</div></div>
+                <div><strong>@(L.IsArabic ? "آخر العمليات المسجلة" : "Recent recorded operations")</strong><div style="opacity:.7;font-size:.9rem">@(L.IsArabic ? "أحدث نشاط موجود في سجل العمليات المحتفَظ به لمواقع حسابك." : "Latest activity present in retained operation history for sites owned by your account.")</div></div>
                 <a class="btn" href="/site-operations">@(L.IsArabic ? "عرض الكل" : "View all")</a>
             </div>
             @if (_recent.Count == 0)
@@ -65,7 +77,9 @@ else
 }
 
 @code {
+    private const int RetainedHistoryLimit = 2000;
     private bool _loading = true;
+    private bool _historyMayBeTruncated;
     private IReadOnlyList<AIWordPressManager.Domain.Entities.Site> _sites = [];
     private IReadOnlyList<SiteOperationHistoryItem> _recent = [];
     private SiteOperationHistorySummary _summary = new(0, 0, 0, TimeSpan.Zero, 0, null);
@@ -77,13 +91,30 @@ else
             var ownerUserId = CurrentUser.RequireUserId();
             _sites = await SiteService.GetSitesAsync();
             var ownedSiteIds = _sites.Select(x => x.Id).ToArray();
-            _recent = History.GetAll(ownerUserId, ownedSiteIds, 8);
-            _summary = History.GetSummary(ownerUserId, ownedSiteIds, DateTime.UtcNow.AddDays(-30));
+            var retained = History.GetAll(ownerUserId, ownedSiteIds, RetainedHistoryLimit);
+            _historyMayBeTruncated = retained.Count >= RetainedHistoryLimit;
+            _recent = retained.Take(8).ToList();
+            _summary = BuildSummary(retained.Where(x => x.StartedAtUtc >= DateTime.UtcNow.AddDays(-30)));
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    private static SiteOperationHistorySummary BuildSummary(IEnumerable<SiteOperationHistoryItem> source)
+    {
+        var items = source.ToList();
+        var successful = items.Count(x => x.Succeeded);
+        var failed = items.Count - successful;
+        var averageMilliseconds = items.Count == 0 ? 0 : items.Average(x => Math.Max(0, x.Duration.TotalMilliseconds));
+        return new SiteOperationHistorySummary(
+            items.Count,
+            successful,
+            failed,
+            TimeSpan.FromMilliseconds(averageMilliseconds),
+            items.Select(x => x.SiteId).Distinct().Count(),
+            items.OrderByDescending(x => x.StartedAtUtc).FirstOrDefault()?.StartedAtUtc);
     }
 
     private string SuccessRate => _summary.Total == 0 ? "—" : $"{(_summary.Successful * 100.0 / _summary.Total):0.#}%";
