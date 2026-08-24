@@ -14,6 +14,7 @@ public static class ApplicationRoutePermissionCatalog
             ["GlobalContentHub"] = ApplicationPermissionCatalog.ContentView,
             ["ExecutionCenter"] = ApplicationPermissionCatalog.OperationsView,
             ["ApprovalQueue"] = ApplicationPermissionCatalog.ApprovalsView,
+            ["SystemHealth"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteOperationsHub"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteOperationsOverview"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteReliability"] = ApplicationPermissionCatalog.OperationsView,
