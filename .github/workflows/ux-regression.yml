@@ -63,6 +63,8 @@ jobs:
             filter: FullyQualifiedName~AIProviderSettingsAvailabilityUxTests
           - shard: execution-authenticity
             filter: FullyQualifiedName~ExecutionAuthenticityUxTests
+          - shard: synchronization
+            filter: FullyQualifiedName~SynchronizationWorkspaceUxTests
           - shard: visual-breakpoints
             filter: FullyQualifiedName~High_risk_pages_hold_visual_contract_at_key_breakpoints
           - shard: rtl
