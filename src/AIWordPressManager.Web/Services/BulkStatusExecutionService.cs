@@ -149,7 +149,7 @@ public sealed class BulkStatusExecutionService(
         {
             case BulkExecutionDisposition.NeedsReconciliation:
                 message = $"WordPress updated {succeeded} item(s) to {status}, but the local cache is not reconciled. The remote mutation will not be replayed during recovery. {reconciliationError}";
-                tracker.NeedsReconciliation(jobId, targets.Count, targets.Count, message);
+                tracker.NeedsReconciliation(jobId, succeeded, targets.Count, message);
                 break;
             case BulkExecutionDisposition.CompletedWithWarnings:
                 message = $"تم تحديث {succeeded} عنصر وفشل {failures.Count}. {string.Join(" | ", failures.Take(3))}";
