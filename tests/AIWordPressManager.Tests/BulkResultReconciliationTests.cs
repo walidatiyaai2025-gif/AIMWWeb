@@ -94,6 +94,71 @@ public sealed class BulkResultReconciliationTests : IDisposable
     }
 
     [Fact]
+    public void Mixed_skipped_and_mutated_targets_persist_only_real_remote_mutation_count_for_recovery()
+    {
+        var owner = Guid.NewGuid();
+        var site = Guid.NewGuid();
+        var jobId = _tracker.Start(owner, site, "Mixed status", "Bulk Status: draft", "Site", 2);
+
+        // Both targets satisfy the requested status, but only one required a WordPress mutation.
+        BulkExecutionOutcomePolicy.Resolve(succeeded: 2, failed: 0, reconciliationSucceeded: false)
+            .Should().Be(BulkExecutionDisposition.NeedsReconciliation);
+        _tracker.NeedsReconciliation(jobId, processedItems: 1, totalItems: 2,
+            "One actual remote mutation needs local reconciliation; one target was already satisfied.");
+
+        var pending = _executionCenter.GetJobs(owner).Single(x => x.Id == jobId);
+        pending.Status.Should().Be("NeedsReconciliation");
+        pending.ProcessedItems.Should().Be(1, "ProcessedItems is the recovery/audit confirmedRemoteMutations count");
+        pending.TotalItems.Should().Be(2);
+        pending.Progress.Should().Be(50);
+    }
+
+    [Fact]
+    public void Already_satisfied_status_targets_are_not_counted_as_remote_mutations_or_replayed()
+    {
+        var root = FindRepositoryRoot();
+        var worker = File.ReadAllText(Path.Combine(root.FullName, "src", "AIWordPressManager.Web", "Services", "BulkContentOperationWorker.cs"));
+        var directStatus = File.ReadAllText(Path.Combine(root.FullName, "src", "AIWordPressManager.Web", "Services", "BulkStatusExecutionService.cs"));
+
+        worker.Should().Contain("return new BulkTargetOutcome(true, false, attempt, null)",
+            "an already-satisfied remote target is successful but not a mutation");
+        worker.Should().Contain("return new BulkTargetOutcome(true, true, attempt, null)",
+            "only a successful WordPress UpdateAsync is a confirmed remote mutation");
+        worker.Should().Contain("if (outcome.RemotelyMutated) confirmedRemoteMutations++");
+        worker.Should().Contain("tracker.NeedsReconciliation(request.JobId, confirmedRemoteMutations, total");
+        worker.Should().NotContain("tracker.NeedsReconciliation(request.JobId, succeeded, total");
+
+        directStatus.Should().Contain("var remotelyMutated = false;");
+        directStatus.Should().Contain("remotelyMutated = true;");
+        directStatus.Should().Contain("if (remotelyMutated) confirmedRemoteMutations++");
+        directStatus.Should().Contain("tracker.NeedsReconciliation(jobId, confirmedRemoteMutations, targets.Count");
+        directStatus.Should().NotContain("tracker.NeedsReconciliation(jobId, succeeded, targets.Count");
+    }
+
+    [Fact]
+    public void Interruption_with_only_already_satisfied_targets_cannot_create_needs_reconciliation()
+    {
+        var root = FindRepositoryRoot();
+        var worker = File.ReadAllText(Path.Combine(root.FullName, "src", "AIWordPressManager.Web", "Services", "BulkContentOperationWorker.cs"));
+        var directStatus = File.ReadAllText(Path.Combine(root.FullName, "src", "AIWordPressManager.Web", "Services", "BulkStatusExecutionService.cs"));
+
+        worker.Should().Contain("if (confirmedRemoteMutations > 0)");
+        worker.Should().Contain("zero confirmed remote mutations");
+        directStatus.Should().Contain("if (confirmedRemoteMutations > 0)");
+        directStatus.Should().Contain("zero confirmed remote mutations");
+
+        var owner = Guid.NewGuid();
+        var site = Guid.NewGuid();
+        var jobId = _tracker.Start(owner, site, "All already satisfied", "Bulk Status: publish", "Site", 2);
+        _tracker.Fail(jobId, "Interrupted with zero confirmed remote mutations.");
+
+        var stopped = _executionCenter.GetJobs(owner).Single(x => x.Id == jobId);
+        stopped.Status.Should().Be("Failed");
+        stopped.Status.Should().NotBe("NeedsReconciliation");
+        stopped.ProcessedItems.Should().Be(0);
+    }
+
+    [Fact]
     public void Production_recovery_is_sync_only_and_status_retry_skips_already_applied_remote_state()
     {
         var root = FindRepositoryRoot();
@@ -110,14 +175,15 @@ public sealed class BulkResultReconciliationTests : IDisposable
         policy.Should().Contain("GetJobs(ownerUserId)");
         policy.Should().Contain("wasPartialMutation");
         policy.Should().Contain("tracker.CompleteWithWarnings");
+        policy.Should().Contain("[\"confirmedRemoteMutations\"] = job.ProcessedItems.ToString()");
         policy.Should().Contain("[\"replayedMutations\"] = \"0\"");
 
         worker.Should().Contain("already has status {request.TargetStatus}; duplicate mutation skipped");
         directStatus.Should().Contain("already has status {status}; duplicate mutation skipped");
-        worker.Should().Contain("tracker.NeedsReconciliation(request.JobId, succeeded, total");
-        worker.Should().Contain("before execution was interrupted");
+        worker.Should().Contain("tracker.NeedsReconciliation(request.JobId, confirmedRemoteMutations, total");
+        worker.Should().Contain("actual status mutation(s) before execution was interrupted");
         worker.Should().NotContain("Bulk operation {JobId} completed but local cache refresh failed.");
-        directStatus.Should().Contain("tracker.NeedsReconciliation(jobId, succeeded, targets.Count");
+        directStatus.Should().Contain("tracker.NeedsReconciliation(jobId, confirmedRemoteMutations, targets.Count");
         trash.Should().Contain("tracker.NeedsReconciliation(jobId, succeeded, targets.Count");
         trash.Should().Contain("throw new BulkReconciliationRequiredException");
 
