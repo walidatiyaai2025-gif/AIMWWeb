@@ -72,7 +72,7 @@ public sealed class ExecutionOperationTracker
     {
         var safeTotal = Math.Max(1, totalItems);
         var safeProcessed = Math.Clamp(processedItems, 0, safeTotal);
-        var progress = (int)Math.Round(safeProcessed * 100d / safeTotal);
+        var progress = CalculateProgress(safeProcessed, safeTotal);
         Update(jobId,
             "UPDATE ExecutionCenterJobs SET ProcessedItems=$processed, TotalItems=$total, Progress=$progress WHERE Id=$id;",
             "Info", message,
@@ -101,13 +101,16 @@ public sealed class ExecutionOperationTracker
     public void CompleteWithWarnings(Guid jobId, int processedItems, int totalItems, string warning)
     {
         var safeTotal = Math.Max(1, totalItems);
+        var safeProcessed = Math.Clamp(processedItems, 0, safeTotal);
+        var progress = CalculateProgress(safeProcessed, safeTotal);
         Update(jobId,
-            "UPDATE ExecutionCenterJobs SET Status='CompletedWithWarnings', ProcessedItems=$processed, TotalItems=$total, Progress=100, CompletedAtUtc=$now, Error=$warning WHERE Id=$id;",
+            "UPDATE ExecutionCenterJobs SET Status='CompletedWithWarnings', ProcessedItems=$processed, TotalItems=$total, Progress=$progress, CompletedAtUtc=$now, Error=$warning WHERE Id=$id;",
             "Warning", warning,
             (command, now) =>
             {
-                command.Parameters.AddWithValue("$processed", Math.Clamp(processedItems, 0, safeTotal));
+                command.Parameters.AddWithValue("$processed", safeProcessed);
                 command.Parameters.AddWithValue("$total", safeTotal);
+                command.Parameters.AddWithValue("$progress", progress);
                 command.Parameters.AddWithValue("$now", now);
                 command.Parameters.AddWithValue("$warning", warning);
             });
@@ -116,13 +119,16 @@ public sealed class ExecutionOperationTracker
     public void NeedsReconciliation(Guid jobId, int processedItems, int totalItems, string error)
     {
         var safeTotal = Math.Max(1, totalItems);
+        var safeProcessed = Math.Clamp(processedItems, 0, safeTotal);
+        var progress = CalculateProgress(safeProcessed, safeTotal);
         Update(jobId,
-            "UPDATE ExecutionCenterJobs SET Status='NeedsReconciliation', ProcessedItems=$processed, TotalItems=$total, Progress=100, CompletedAtUtc=NULL, Error=$error WHERE Id=$id;",
+            "UPDATE ExecutionCenterJobs SET Status='NeedsReconciliation', ProcessedItems=$processed, TotalItems=$total, Progress=$progress, CompletedAtUtc=NULL, Error=$error WHERE Id=$id;",
             "Warning", error,
             (command, _) =>
             {
-                command.Parameters.AddWithValue("$processed", Math.Clamp(processedItems, 0, safeTotal));
+                command.Parameters.AddWithValue("$processed", safeProcessed);
                 command.Parameters.AddWithValue("$total", safeTotal);
+                command.Parameters.AddWithValue("$progress", progress);
                 command.Parameters.AddWithValue("$error", error);
             });
     }
@@ -147,6 +153,9 @@ public sealed class ExecutionOperationTracker
             (command, now) => command.Parameters.AddWithValue("$now", now));
         return job.Id;
     }
+
+    private static int CalculateProgress(int processedItems, int totalItems) =>
+        (int)Math.Round(processedItems * 100d / Math.Max(1, totalItems));
 
     private void Update(Guid jobId, string sql, string level, string activityMessage, Action<SqliteCommand, string> addParameters)
     {
