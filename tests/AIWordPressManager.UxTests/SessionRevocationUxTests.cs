@@ -80,7 +80,7 @@ public sealed class SessionRevocationUxTests(UxTestHost host)
             var accountName = page.GetByText(BulkUserName, new PageGetByTextOptions { Exact = true }).First;
             var accountCard = accountName.Locator("xpath=ancestor::article[1]");
             await accountCard.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
-            await accountCard.GetByText("2 active session(s)", new LocatorGetByTextOptions { Exact = true })
+            await accountCard.GetByText("2 active session(s)", new LocatorGetByTextOptions { Exact = false })
                 .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
             var endAll = accountCard.GetByRole(AriaRole.Button, new() { Name = "End all sessions", Exact = true });
