@@ -30,9 +30,9 @@ public sealed class ReportsExportsUxTests(UxTestHost host)
             response.Should().NotBeNull();
             response!.Status.Should().BeLessThan(400);
 
-            await page.GetByText(SiteName, new PageGetByTextOptions { Exact = true })
+            await page.GetByRole(AriaRole.Cell, new() { Name = SiteName, Exact = true })
                 .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
-            await page.GetByText(SiteUri.ToString(), new PageGetByTextOptions { Exact = true })
+            await page.GetByRole(AriaRole.Cell, new() { Name = SiteUri.ToString(), Exact = true })
                 .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
             var card = page.Locator("article.report-card")
