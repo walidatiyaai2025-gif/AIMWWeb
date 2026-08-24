@@ -20,7 +20,6 @@ public sealed class BulkStatusExecutionService(
         CancellationToken cancellationToken = default)
     {
         currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
-
         var site = await sites.GetSiteAsync(siteId, cancellationToken)
             ?? throw new InvalidOperationException("الموقع غير موجود.");
         var ownerUserId = site.OwnerUserId
@@ -34,7 +33,6 @@ public sealed class BulkStatusExecutionService(
             .Where(x => x.WordPressId > 0 && x.ContentType is "post" or "page")
             .DistinctBy(x => (x.ContentType, x.WordPressId))
             .ToList();
-
         if (targets.Count == 0)
             throw new InvalidOperationException("لم يتم تحديد مقالات أو صفحات صالحة.");
 
@@ -52,70 +50,77 @@ public sealed class BulkStatusExecutionService(
         var succeeded = 0;
         var failures = new List<string>();
 
-        for (var index = 0; index < targets.Count; index++)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var target = targets[index];
-            string? lastError = null;
-            var updated = false;
-
-            for (var attempt = 1; attempt <= attempts; attempt++)
+            for (var index = 0; index < targets.Count; index++)
             {
-                tracker.Report(jobId, index, targets.Count,
-                    $"Processing {target.ContentType} #{target.WordPressId}; attempt {attempt}/{attempts}.");
+                cancellationToken.ThrowIfCancellationRequested();
+                var target = targets[index];
+                string? lastError = null;
+                var updated = false;
 
-                var current = await editor.GetAsync(siteId, target.ContentType, target.WordPressId, cancellationToken);
-                if (current.IsFailure)
+                for (var attempt = 1; attempt <= attempts; attempt++)
                 {
-                    lastError = current.Error.Message;
-                }
-                else
-                {
-                    var value = current.Value;
-                    if (string.Equals(value.Status, status, StringComparison.OrdinalIgnoreCase))
+                    tracker.Report(jobId, index, targets.Count,
+                        $"Processing {target.ContentType} #{target.WordPressId}; attempt {attempt}/{attempts}.");
+                    try
                     {
-                        updated = true;
-                        tracker.Report(jobId, index, targets.Count,
-                            $"{target.ContentType} #{target.WordPressId} already has status {status}; duplicate mutation skipped.");
-                        break;
+                        var current = await editor.GetAsync(siteId, target.ContentType, target.WordPressId, cancellationToken);
+                        if (current.IsFailure)
+                        {
+                            lastError = current.Error.Message;
+                        }
+                        else
+                        {
+                            var value = current.Value;
+                            if (string.Equals(value.Status, status, StringComparison.OrdinalIgnoreCase))
+                            {
+                                updated = true;
+                                tracker.Report(jobId, index, targets.Count,
+                                    $"{target.ContentType} #{target.WordPressId} already has status {status}; duplicate mutation skipped.");
+                                break;
+                            }
+
+                            var update = new WordPressContentUpdateRequest(
+                                value.ContentType, value.Id, value.Title, value.Slug, status,
+                                value.Content, value.Excerpt, value.DateGmt, value.FeaturedMediaId,
+                                value.CategoryIds, value.TagIds, value.Template, value.CommentStatus,
+                                value.PingStatus, value.Format, value.Sticky);
+                            var result = await editor.UpdateAsync(siteId, update, cancellationToken);
+                            if (result.IsSuccess)
+                            {
+                                updated = true;
+                                break;
+                            }
+                            lastError = result.Error.Message;
+                        }
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        lastError = ex.Message;
                     }
 
-                    var update = new WordPressContentUpdateRequest(
-                        value.ContentType,
-                        value.Id,
-                        value.Title,
-                        value.Slug,
-                        status,
-                        value.Content,
-                        value.Excerpt,
-                        value.DateGmt,
-                        value.FeaturedMediaId,
-                        value.CategoryIds,
-                        value.TagIds,
-                        value.Template,
-                        value.CommentStatus,
-                        value.PingStatus,
-                        value.Format,
-                        value.Sticky);
-
-                    var result = await editor.UpdateAsync(siteId, update, cancellationToken);
-                    if (result.IsSuccess)
-                    {
-                        updated = true;
-                        break;
-                    }
-
-                    lastError = result.Error.Message;
+                    if (attempt < attempts)
+                        await Task.Delay(TimeSpan.FromSeconds(attempt), cancellationToken);
                 }
 
-                if (attempt < attempts)
-                    await Task.Delay(TimeSpan.FromSeconds(attempt), cancellationToken);
+                if (updated) succeeded++;
+                else failures.Add($"{target.ContentType} #{target.WordPressId}: {lastError ?? "Unknown error"}");
+                tracker.Report(jobId, index + 1, targets.Count, $"Processed {index + 1}/{targets.Count}.");
             }
-
-            if (updated) succeeded++;
-            else failures.Add($"{target.ContentType} #{target.WordPressId}: {lastError ?? "Unknown error"}");
-
-            tracker.Report(jobId, index + 1, targets.Count, $"Processed {index + 1}/{targets.Count}.");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (succeeded > 0)
+                tracker.NeedsReconciliation(jobId, succeeded, targets.Count,
+                    $"WordPress updated {succeeded} item(s) to {status} before cancellation. Local reconciliation is required and mutations will not be replayed.");
+            else
+                tracker.Fail(jobId, "Bulk status operation was cancelled before any confirmed remote mutation completed.");
+            throw;
         }
 
         var reconciliationSucceeded = succeeded == 0;
@@ -163,13 +168,7 @@ public sealed class BulkStatusExecutionService(
         if (cancellationToken.IsCancellationRequested && disposition == BulkExecutionDisposition.NeedsReconciliation)
             cancellationToken.ThrowIfCancellationRequested();
 
-        return new BulkStatusResult(
-            jobId,
-            status,
-            succeeded,
-            failures.Count,
-            failures,
-            message,
+        return new BulkStatusResult(jobId, status, succeeded, failures.Count, failures, message,
             disposition == BulkExecutionDisposition.NeedsReconciliation);
     }
 }
