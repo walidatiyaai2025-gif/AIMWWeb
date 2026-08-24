@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AIWordPressManager.Domain.Entities;
 using AIWordPressManager.Persistence;
+using AIWordPressManager.Web.Components.Pages;
 using AIWordPressManager.Web.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -92,8 +93,10 @@ public sealed class SiteOperationsRuntimeClosureTests
     }
 
     [Fact]
-    public void Web_host_registers_site_operations_maintenance_and_audit_services()
+    public void Web_host_registration_source_keeps_maintenance_and_audit_services_declared()
     {
+        // This is a narrow regression guard only. Runtime/browser acceptance remains required
+        // before the ledger can move to a terminal browser-verified status.
         var program = ReadRepositoryFile("src/AIWordPressManager.Web/Program.cs");
 
         program.Should().Contain("builder.Services.AddScoped<ApplicationSecurityAuditStore>();");
@@ -265,10 +268,4 @@ public sealed class SiteOperationsRuntimeClosureTests
     {
         public HttpContext? HttpContext { get; set; } = context;
     }
-
-    private sealed class SiteOperationsHub;
-    private sealed class SiteOperationsOverview;
-    private sealed class SiteReliability;
-    private sealed class SiteOperationDetails;
-    private sealed class SiteOperationsMaintenance;
 }
