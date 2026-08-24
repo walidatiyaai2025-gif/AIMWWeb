@@ -24,6 +24,20 @@ public sealed class SiteWebService(
     public Task<Site?> GetSiteAsync(Guid id, CancellationToken cancellationToken = default) =>
         dbContext.Sites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.OwnerUserId == OwnerId, cancellationToken);
 
+    public async Task<SiteSettingsSnapshot?> GetSiteSettingsAsync(Guid siteId, CancellationToken cancellationToken = default)
+    {
+        currentUser.RequirePermission(ApplicationPermissionCatalog.SitesView);
+        var site = await dbContext.Sites.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == siteId && x.OwnerUserId == OwnerId, cancellationToken);
+        if (site is null)
+            return null;
+
+        var credential = await dbContext.SiteCredentials.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
+        var summary = credential is null ? null : new SiteCredentialSummary(credential.UserName, true);
+        return new SiteSettingsSnapshot(site, summary);
+    }
+
     public async Task<SiteCredentialSummary?> GetCredentialSummaryAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
         await RequireOwnedSiteAsync(siteId, false, cancellationToken);
@@ -105,6 +119,15 @@ public sealed class SiteWebService(
 
     public async Task<ConnectionTestViewResult> SaveCredentialAndTestAsync(Guid siteId, string userName, string applicationPassword, CancellationToken cancellationToken = default)
     {
+        var detailed = await SaveCredentialAndTestDetailedAsync(siteId, userName, applicationPassword, cancellationToken);
+        return new ConnectionTestViewResult(
+            detailed.ConnectionStatus == SiteConnectionStatus.Connected,
+            detailed.Message,
+            detailed.Diagnostics);
+    }
+
+    public async Task<SiteCredentialSaveResult> SaveCredentialAndTestDetailedAsync(Guid siteId, string userName, string applicationPassword, CancellationToken cancellationToken = default)
+    {
         RequireManagePermission();
         if (string.IsNullOrWhiteSpace(userName)) throw new InvalidOperationException("WordPress username is required.");
         if (string.IsNullOrWhiteSpace(applicationPassword)) throw new InvalidOperationException("Application Password is required.");
@@ -118,7 +141,8 @@ public sealed class SiteWebService(
         var status = ClassifyConnectionStatus(result);
         ApplyConnectionResult(site, result, status);
 
-        if (status is SiteConnectionStatus.Connected or SiteConnectionStatus.LimitedPermissions)
+        var credentialSaved = status is SiteConnectionStatus.Connected or SiteConnectionStatus.LimitedPermissions;
+        if (credentialSaved)
         {
             var protectedPassword = await secretProtectionService.ProtectAsync(cleanPassword, cancellationToken);
             var credential = await dbContext.SiteCredentials.FirstOrDefaultAsync(x => x.SiteId == siteId, cancellationToken);
@@ -131,7 +155,7 @@ public sealed class SiteWebService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return new ConnectionTestViewResult(result.IsSuccess, result.Message, result.Diagnostics);
+        return new SiteCredentialSaveResult(credentialSaved, status, result.Message, result.Diagnostics);
     }
 
     public async Task<ConnectionTestViewResult> RetestAsync(Guid siteId, CancellationToken cancellationToken = default)
@@ -290,6 +314,8 @@ public sealed class SiteWebService(
 
 public sealed record DashboardSummary(int TotalSites, int ConnectedSites, int ProblemSites, DateTime? LastConnectionTestAtUtc);
 public sealed record SiteCredentialSummary(string UserName, bool HasSavedPassword);
+public sealed record SiteSettingsSnapshot(Site Site, SiteCredentialSummary? Credential);
+public sealed record SiteCredentialSaveResult(bool CredentialSaved, SiteConnectionStatus ConnectionStatus, string Message, string? Diagnostics);
 public sealed record ConnectionTestViewResult(bool IsSuccess, string Message, string? Diagnostics);
 public sealed record SiteBulkRetestResult(int Requested, int Succeeded, int Failed, IReadOnlyList<SiteBulkRetestItem> Items);
 public sealed record SiteBulkRetestItem(Guid SiteId, string SiteName, bool IsSuccess, string Message);
