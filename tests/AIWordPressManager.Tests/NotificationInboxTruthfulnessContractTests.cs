@@ -10,12 +10,12 @@ public sealed class NotificationInboxTruthfulnessContractTests
     {
         var page = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/NotificationInbox.razor");
 
-        page.Should().Contain("if (Reload(notifyFailure: false))");
+        page.Should().Contain("if (TryReload(notifyFailure: false))");
         page.Should().Contain("All notifications marked as read.");
         page.Should().Contain("Saved; refresh required");
         page.Should().Contain("Use Refresh to reconcile the saved state.");
 
-        var reloadCheck = page.IndexOf("if (Reload(notifyFailure: false))", StringComparison.Ordinal);
+        var reloadCheck = page.IndexOf("if (TryReload(notifyFailure: false))", StringComparison.Ordinal);
         var success = page.IndexOf("All notifications marked as read.", StringComparison.Ordinal);
         success.Should().BeGreaterThan(reloadCheck);
     }
@@ -27,7 +27,7 @@ public sealed class NotificationInboxTruthfulnessContractTests
 
         page.Should().Contain("if (!Inbox.MarkRead(CurrentUser.UserId, item.Id))");
         page.Should().Contain("if (!Inbox.Dismiss(CurrentUser.UserId, item.Id))");
-        page.Should().Contain("if (!Reload(notifyFailure: false))");
+        page.Should().Contain("if (!TryReload(notifyFailure: false))");
         page.Should().Contain("No change was made");
         page.Should().Contain("The notification was marked as read, but the inbox could not be refreshed.");
         page.Should().Contain("The notification was dismissed, but the inbox could not be refreshed.");
@@ -38,7 +38,8 @@ public sealed class NotificationInboxTruthfulnessContractTests
     {
         var page = ReadRepositoryFile("src/AIWordPressManager.Web/Components/Pages/NotificationInbox.razor");
 
-        page.Should().Contain("private bool Reload(bool notifyFailure = true)");
+        page.Should().Contain("private void Reload() => TryReload();");
+        page.Should().Contain("private bool TryReload(bool notifyFailure = true)");
         page.Should().Contain("catch (Exception)");
         page.Should().NotContain("L.TranslateMessage(ex.Message)");
         page.Should().NotContain("ex.ToString()");
