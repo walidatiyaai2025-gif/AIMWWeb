@@ -23,7 +23,9 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
 
             response.Should().NotBeNull();
             response!.Status.Should().BeLessThan(400);
-            await page.GetByRole(AriaRole.Heading, new() { Name = "AI Usage & Cost" }).WaitForAsync();
+            var pageTitle = page.Locator("#page-title");
+            await pageTitle.WaitForAsync();
+            (await pageTitle.InnerTextAsync()).Should().Be("AI Usage & Cost");
 
             var body = await page.Locator("body").InnerTextAsync();
             body.Should().Contain("Account-scoped observability");
@@ -61,7 +63,9 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
 
             response.Should().NotBeNull();
             response!.Status.Should().BeLessThan(400);
-            await page.GetByRole(AriaRole.Heading, new() { Name = "My Account" }).WaitForAsync();
+            var pageTitle = page.Locator("#page-title");
+            await pageTitle.WaitForAsync();
+            (await pageTitle.InnerTextAsync()).Should().Be("My Account");
 
             var summary = page.GetByLabel("Account summary");
             await summary.WaitForAsync();
