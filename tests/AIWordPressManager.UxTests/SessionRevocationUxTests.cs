@@ -106,8 +106,9 @@ public sealed class SessionRevocationUxTests(UxTestHost host)
             audits.Should().ContainSingle(audit =>
                 audit.Outcome == "Succeeded" &&
                 audit.TargetType == "ApplicationUser" &&
-                audit.TargetId == fixture.UserId.ToString("D") &&
-                audit.Metadata.TryGetValue("sessionCount", out var count) && count == "2");
+                audit.TargetId == fixture.UserId.ToString("D"));
+            var bulkAudit = audits.Single();
+            bulkAudit.Metadata.Should().ContainKey("sessionCount").WhoseValue.Should().Be("2");
             errors.Should().BeEmpty("bulk session revocation must not produce browser runtime errors");
         }
         finally
