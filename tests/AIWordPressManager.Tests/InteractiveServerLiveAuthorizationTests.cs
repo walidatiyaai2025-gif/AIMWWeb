@@ -49,6 +49,30 @@ public sealed class InteractiveServerLiveAuthorizationTests
     }
 
     [Fact]
+    public async Task Custom_permission_removal_stops_same_cached_circuit_without_reconnect()
+    {
+        const string roleName = "Content Publisher";
+        await using var fixture = await AuthorizationFixture.CreateAsync(
+            roleName,
+            [ApplicationPermissionCatalog.ContentView, ApplicationPermissionCatalog.ContentEdit]);
+        var context = fixture.CreateCurrentUserContext();
+
+        context.RequirePermission(ApplicationPermissionCatalog.ContentEdit).Should().Be(fixture.User.Id);
+
+        await fixture.Roles.SaveAsync([
+            new CustomApplicationRole(
+                roleName,
+                roleName,
+                roleName,
+                true,
+                [ApplicationPermissionCatalog.ContentView])
+        ]);
+
+        var action = () => context.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        action.Should().Throw<UnauthorizedAccessException>();
+    }
+
+    [Fact]
     public async Task Disabled_account_stops_same_cached_circuit_without_reconnect()
     {
         await using var fixture = await AuthorizationFixture.CreateAsync("User");
@@ -84,6 +108,7 @@ public sealed class InteractiveServerLiveAuthorizationTests
             Session = session;
             Principal = principal;
             Sessions = new ApplicationSessionStore(db);
+            Roles = new ApplicationRoleStore(db);
         }
 
         public AppDbContext Db { get; }
@@ -91,8 +116,11 @@ public sealed class InteractiveServerLiveAuthorizationTests
         public ApplicationSessionRecord Session { get; }
         public ClaimsPrincipal Principal { get; }
         public ApplicationSessionStore Sessions { get; }
+        public ApplicationRoleStore Roles { get; }
 
-        public static async Task<AuthorizationFixture> CreateAsync(string role)
+        public static async Task<AuthorizationFixture> CreateAsync(
+            string role,
+            IReadOnlyList<string>? customPermissions = null)
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
@@ -101,6 +129,14 @@ public sealed class InteractiveServerLiveAuthorizationTests
                 .Options;
             var db = new AppDbContext(options);
             await db.Database.EnsureCreatedAsync();
+
+            if (customPermissions is not null)
+            {
+                var roleStore = new ApplicationRoleStore(db);
+                await roleStore.SaveAsync([
+                    new CustomApplicationRole(role, role, role, true, customPermissions)
+                ]);
+            }
 
             var user = new AuthUser($"circuit-{Guid.NewGuid():N}", "test-password-hash", DateTime.UtcNow, role);
             db.AuthUsers.Add(user);
@@ -114,7 +150,8 @@ public sealed class InteractiveServerLiveAuthorizationTests
                 "127.0.0.1",
                 "InteractiveServerLiveAuthorizationTests",
                 persistent: false);
-            var principal = CreatePrincipal(user, session, role);
+            var permissions = customPermissions ?? ApplicationPermissionCatalog.ForRole(role);
+            var principal = CreatePrincipal(user, session, role, permissions);
             return new AuthorizationFixture(connection, db, user, session, principal);
         }
 
@@ -133,7 +170,11 @@ public sealed class InteractiveServerLiveAuthorizationTests
             await _connection.DisposeAsync();
         }
 
-        private static ClaimsPrincipal CreatePrincipal(AuthUser user, ApplicationSessionRecord session, string role)
+        private static ClaimsPrincipal CreatePrincipal(
+            AuthUser user,
+            ApplicationSessionRecord session,
+            string role,
+            IReadOnlyList<string> permissions)
         {
             var claims = new List<Claim>
             {
@@ -142,7 +183,7 @@ public sealed class InteractiveServerLiveAuthorizationTests
                 new(ClaimTypes.Role, role),
                 new(ApplicationSessionStore.SessionIdClaimType, session.SessionId.ToString())
             };
-            claims.AddRange(ApplicationPermissionCatalog.ForRole(role)
+            claims.AddRange(permissions
                 .Select(permission => new Claim(ApplicationPermissionCatalog.ClaimType, permission)));
             return new ClaimsPrincipal(new ClaimsIdentity(claims, "test", ClaimTypes.Name, ClaimTypes.Role));
         }
