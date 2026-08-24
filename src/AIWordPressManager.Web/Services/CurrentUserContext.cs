@@ -12,7 +12,7 @@ public sealed class CurrentUserContext
     private ClaimsPrincipal? _circuitPrincipal;
 
     // Production DI uses this constructor. Long-lived Interactive Server principals are
-    // revalidated against durable session/account/role truth on every authorization decision.
+    // revalidated against durable session/account/role truth at security-sensitive boundaries.
     public CurrentUserContext(
         IHttpContextAccessor accessor,
         AuthenticationStateProvider authenticationStateProvider,
@@ -50,7 +50,11 @@ public sealed class CurrentUserContext
     }
 
     public bool HasHttpContext => _accessor.HttpContext is not null;
-    public bool IsAuthenticated => ResolveLivePrincipal()?.Identity?.IsAuthenticated == true || BackgroundExecutionIdentity.TryGetOwnerUserId(out _);
+
+    // Display/auth-state helpers intentionally read the circuit principal without touching
+    // durable persistence on every Razor render. Operations that authorize or owner-scope
+    // production work use Require*/TryGetUserId below and are live-revalidated fail closed.
+    public bool IsAuthenticated => ResolvePrincipal()?.Identity?.IsAuthenticated == true || BackgroundExecutionIdentity.TryGetOwnerUserId(out _);
 
     public Guid UserId => RequireUserId();
 
@@ -66,7 +70,7 @@ public sealed class CurrentUserContext
 
     public Guid RequireUserId()
     {
-        if (TryGetLivePrincipalUserId(out var userId))
+        if (TryGetAuthorizedPrincipalUserId(out var userId))
             return userId;
 
         if (BackgroundExecutionIdentity.TryGetOwnerUserId(out userId))
@@ -77,7 +81,7 @@ public sealed class CurrentUserContext
 
     public bool TryGetUserId(out Guid userId)
     {
-        if (TryGetLivePrincipalUserId(out userId))
+        if (TryGetAuthorizedPrincipalUserId(out userId))
             return true;
 
         return BackgroundExecutionIdentity.TryGetOwnerUserId(out userId);
@@ -85,21 +89,21 @@ public sealed class CurrentUserContext
 
     public bool TryGetSessionId(out Guid sessionId)
     {
-        var value = ResolveLivePrincipal()?.FindFirstValue(ApplicationSessionStore.SessionIdClaimType);
+        var value = ResolvePrincipal()?.FindFirstValue(ApplicationSessionStore.SessionIdClaimType);
         return Guid.TryParse(value, out sessionId);
     }
 
-    public bool IsInRole(string role) => ResolveLivePrincipal()?.IsInRole(role) == true;
+    public bool IsInRole(string role) => ResolvePrincipal()?.IsInRole(role) == true;
 
     public bool HasPermission(string permission) =>
-        ApplicationPermissionCatalog.PrincipalHasPermission(ResolveLivePrincipal(), permission);
+        ApplicationPermissionCatalog.PrincipalHasPermission(ResolvePrincipal(), permission);
 
     public Guid RequirePermission(string permission)
     {
         // Elevated permissions require a currently-valid tracked application principal.
         // A cached circuit principal is revalidated against durable session, account, role
-        // and permission truth before its claims can authorize an operation.
-        var principal = ResolveLivePrincipal();
+        // and permission truth immediately before it can authorize production work.
+        var principal = ResolveAuthorizedPrincipal();
         if (principal?.Identity?.IsAuthenticated != true ||
             !ApplicationPermissionCatalog.PrincipalHasPermission(principal, permission) ||
             !TryGetPrincipalUserId(principal, out var userId))
@@ -112,7 +116,7 @@ public sealed class CurrentUserContext
 
     public Guid RequireAdministrator()
     {
-        var principal = ResolveLivePrincipal();
+        var principal = ResolveAuthorizedPrincipal();
         if (principal?.Identity?.IsAuthenticated != true ||
             principal.IsInRole("Administrator") != true ||
             !TryGetPrincipalUserId(principal, out var userId))
@@ -123,10 +127,10 @@ public sealed class CurrentUserContext
         return userId;
     }
 
-    public string UserName => ResolveLivePrincipal()?.Identity?.Name ?? string.Empty;
+    public string UserName => ResolvePrincipal()?.Identity?.Name ?? string.Empty;
 
-    private bool TryGetLivePrincipalUserId(out Guid userId) =>
-        TryGetPrincipalUserId(ResolveLivePrincipal(), out userId);
+    private bool TryGetAuthorizedPrincipalUserId(out Guid userId) =>
+        TryGetPrincipalUserId(ResolveAuthorizedPrincipal(), out userId);
 
     private static bool TryGetPrincipalUserId(ClaimsPrincipal? principal, out Guid userId)
     {
@@ -134,7 +138,7 @@ public sealed class CurrentUserContext
         return Guid.TryParse(value, out userId);
     }
 
-    private ClaimsPrincipal? ResolveLivePrincipal()
+    private ClaimsPrincipal? ResolveAuthorizedPrincipal()
     {
         var principal = ResolvePrincipal();
         if (principal?.Identity?.IsAuthenticated != true || _sessionRequestValidator is null)
