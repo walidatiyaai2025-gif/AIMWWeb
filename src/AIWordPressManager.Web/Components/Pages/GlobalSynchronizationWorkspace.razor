@@ -364,8 +364,18 @@ else
         {
             _isError = true;
             _message = L.TranslateMessage(ex.Message);
-            try { _history = await SyncService.GetHistoryAsync(_selectedSiteId, 15); }
-            catch { }
+            try
+            {
+                _history = await SyncService.GetHistoryAsync(_selectedSiteId, 15);
+            }
+            catch (Exception historyEx)
+            {
+                _history = [];
+                var historyMessage = L.TranslateMessage(historyEx.Message);
+                _message = L.IsArabic
+                    ? $"{_message} تعذر أيضًا تحديث سجل المزامنة: {historyMessage}"
+                    : $"{_message} Synchronization history could not be refreshed: {historyMessage}";
+            }
         }
         finally { _working = false; }
     }
