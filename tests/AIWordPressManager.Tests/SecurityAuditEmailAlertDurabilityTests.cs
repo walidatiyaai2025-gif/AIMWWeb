@@ -54,9 +54,8 @@ public sealed class SecurityAuditEmailAlertDurabilityTests
                 "tests"));
         }
 
-        var retained = await store.ListAsync(new SecurityAuditQuery(
-            FromUtc: DateTime.UtcNow.Subtract(ApplicationSecurityAuditStore.RetentionWindow),
-            Take: ApplicationSecurityAuditStore.MaxRetainedRecords));
+        var retained = await store.ListRetainedAsync(
+            DateTime.UtcNow.Subtract(ApplicationSecurityAuditStore.RetentionWindow));
         retained.Should().HaveCount(501);
 
         var oldest = retained.OrderBy(record => record.OccurredAtUtc).ThenBy(record => record.EventId).First();
