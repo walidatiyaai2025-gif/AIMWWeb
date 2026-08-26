@@ -1,23 +1,59 @@
 using System.Security.Claims;
+using AIWordPressManager.Persistence;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace AIWordPressManager.Web.Services;
 
-public sealed class CurrentUserContext(
-    IHttpContextAccessor accessor,
-    AuthenticationStateProvider authenticationStateProvider)
+public sealed class CurrentUserContext
 {
+    private readonly IHttpContextAccessor _accessor;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly ApplicationSessionRequestValidator? _sessionRequestValidator;
     private ClaimsPrincipal? _circuitPrincipal;
 
-    // Compatibility path for the small number of infrastructure adapters that create
-    // CurrentUserContext manually. DI uses the two-argument constructor above and gains
-    // Blazor circuit awareness; this overload intentionally remains HTTP-only.
-    public CurrentUserContext(IHttpContextAccessor accessor)
-        : this(accessor, new HttpContextAuthenticationStateProvider(accessor))
+    // Production DI uses this constructor. Long-lived Interactive Server principals are
+    // revalidated against durable session/account/role truth at security-sensitive boundaries.
+    public CurrentUserContext(
+        IHttpContextAccessor accessor,
+        AuthenticationStateProvider authenticationStateProvider,
+        AppDbContext dbContext)
+        : this(accessor, authenticationStateProvider, new ApplicationSessionRequestValidator(dbContext))
     {
     }
 
-    public bool HasHttpContext => accessor.HttpContext is not null;
+    // Compatibility path for focused tests/adapters that provide an authentication-state
+    // provider but do not own an application DbContext. This path intentionally has no live
+    // session validator and should not be used by production DI.
+    public CurrentUserContext(
+        IHttpContextAccessor accessor,
+        AuthenticationStateProvider authenticationStateProvider)
+        : this(accessor, authenticationStateProvider, (ApplicationSessionRequestValidator?)null)
+    {
+    }
+
+    // Compatibility path for the small number of infrastructure adapters that create
+    // CurrentUserContext manually. DI uses the three-argument constructor above and gains
+    // live Blazor circuit authorization revalidation; this overload intentionally remains HTTP-only.
+    public CurrentUserContext(IHttpContextAccessor accessor)
+        : this(accessor, new HttpContextAuthenticationStateProvider(accessor), (ApplicationSessionRequestValidator?)null)
+    {
+    }
+
+    private CurrentUserContext(
+        IHttpContextAccessor accessor,
+        AuthenticationStateProvider authenticationStateProvider,
+        ApplicationSessionRequestValidator? sessionRequestValidator)
+    {
+        _accessor = accessor;
+        _authenticationStateProvider = authenticationStateProvider;
+        _sessionRequestValidator = sessionRequestValidator;
+    }
+
+    public bool HasHttpContext => _accessor.HttpContext is not null;
+
+    // Display/auth-state helpers intentionally read the circuit principal without touching
+    // durable persistence on every Razor render. Operations that authorize or owner-scope
+    // production work use Require*/TryGetUserId below and are live-revalidated fail closed.
     public bool IsAuthenticated => ResolvePrincipal()?.Identity?.IsAuthenticated == true || BackgroundExecutionIdentity.TryGetOwnerUserId(out _);
 
     public Guid UserId => RequireUserId();
@@ -34,18 +70,18 @@ public sealed class CurrentUserContext(
 
     public Guid RequireUserId()
     {
-        if (TryGetPrincipalUserId(out var userId))
+        if (TryGetAuthorizedPrincipalUserId(out var userId))
             return userId;
 
         if (BackgroundExecutionIdentity.TryGetOwnerUserId(out userId))
             return userId;
 
-        throw new UnauthorizedAccessException("Authenticated user identity is unavailable in the current HTTP request or Blazor circuit.");
+        throw new UnauthorizedAccessException("Authenticated user identity is unavailable or no longer valid in the current HTTP request or Blazor circuit.");
     }
 
     public bool TryGetUserId(out Guid userId)
     {
-        if (TryGetPrincipalUserId(out userId))
+        if (TryGetAuthorizedPrincipalUserId(out userId))
             return true;
 
         return BackgroundExecutionIdentity.TryGetOwnerUserId(out userId);
@@ -64,10 +100,10 @@ public sealed class CurrentUserContext(
 
     public Guid RequirePermission(string permission)
     {
-        // Elevated permissions still require an authenticated application principal.
-        // The principal may come from the initial HTTP request or the authenticated
-        // Blazor circuit. Background owner identity alone is never sufficient here.
-        var principal = ResolvePrincipal();
+        // Elevated permissions require a currently-valid tracked application principal.
+        // A cached circuit principal is revalidated against durable session, account, role
+        // and permission truth immediately before it can authorize production work.
+        var principal = ResolveAuthorizedPrincipal();
         if (principal?.Identity?.IsAuthenticated != true ||
             !ApplicationPermissionCatalog.PrincipalHasPermission(principal, permission) ||
             !TryGetPrincipalUserId(principal, out var userId))
@@ -80,7 +116,7 @@ public sealed class CurrentUserContext(
 
     public Guid RequireAdministrator()
     {
-        var principal = ResolvePrincipal();
+        var principal = ResolveAuthorizedPrincipal();
         if (principal?.Identity?.IsAuthenticated != true ||
             principal.IsInRole("Administrator") != true ||
             !TryGetPrincipalUserId(principal, out var userId))
@@ -93,8 +129,8 @@ public sealed class CurrentUserContext(
 
     public string UserName => ResolvePrincipal()?.Identity?.Name ?? string.Empty;
 
-    private bool TryGetPrincipalUserId(out Guid userId) =>
-        TryGetPrincipalUserId(ResolvePrincipal(), out userId);
+    private bool TryGetAuthorizedPrincipalUserId(out Guid userId) =>
+        TryGetPrincipalUserId(ResolveAuthorizedPrincipal(), out userId);
 
     private static bool TryGetPrincipalUserId(ClaimsPrincipal? principal, out Guid userId)
     {
@@ -102,9 +138,35 @@ public sealed class CurrentUserContext(
         return Guid.TryParse(value, out userId);
     }
 
+    private ClaimsPrincipal? ResolveAuthorizedPrincipal()
+    {
+        var principal = ResolvePrincipal();
+        if (principal?.Identity?.IsAuthenticated != true || _sessionRequestValidator is null)
+            return principal;
+
+        SessionRequestValidationResult validation;
+        try
+        {
+            validation = _sessionRequestValidator.ValidateForAuthorization(principal);
+        }
+        catch (InvalidOperationException)
+        {
+            // Security state that cannot be read consistently is not a reason to continue using
+            // a cached authorization decision. Fail closed and require a fresh authenticated flow.
+            validation = SessionRequestValidationResult.Invalid(null, "Authorization state is unavailable.");
+        }
+
+        if (validation.IsValid)
+            return principal;
+
+        if (_circuitPrincipal?.Identity?.IsAuthenticated == true)
+            _circuitPrincipal = null;
+        return null;
+    }
+
     private ClaimsPrincipal? ResolvePrincipal()
     {
-        var httpPrincipal = accessor.HttpContext?.User;
+        var httpPrincipal = _accessor.HttpContext?.User;
         if (httpPrincipal?.Identity?.IsAuthenticated == true)
         {
             _circuitPrincipal = httpPrincipal;
@@ -119,7 +181,7 @@ public sealed class CurrentUserContext(
         // Interactive Server component. Fail closed if no circuit auth state is available.
         try
         {
-            var state = authenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult();
+            var state = _authenticationStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult();
             if (state.User.Identity?.IsAuthenticated == true)
             {
                 _circuitPrincipal = state.User;
