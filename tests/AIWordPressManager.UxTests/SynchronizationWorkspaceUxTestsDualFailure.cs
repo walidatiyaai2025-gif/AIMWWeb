@@ -107,8 +107,7 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
 
         var form = page.Locator(".site-details-form-grid");
         await form.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
-        var probe = page.Locator(".site-details-form-actions button[type='button']").First;
-        await ClickWhenInteractiveAsync(probe);
+        await EnsureSiteDetailsInteractiveAsync(page);
 
         await form.Locator("input").Nth(0).FillAsync(WordPressUser);
         await form.Locator("input").Nth(1).FillAsync(WordPressPassword);
@@ -170,15 +169,18 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
         throw new TimeoutException("Synchronization control never reached the held WordPress failure boundary.", lastError);
     }
 
-    private static async Task ClickWhenInteractiveAsync(ILocator locator)
+    private static async Task EnsureSiteDetailsInteractiveAsync(IPage page)
     {
+        var probe = page.Locator(".site-details-form-actions button[type='button']").First;
+        var alert = page.Locator(".site-details-alert");
         var deadline = DateTime.UtcNow.AddSeconds(10);
         Exception? lastError = null;
         while (DateTime.UtcNow < deadline)
         {
             try
             {
-                await locator.ClickAsync(new LocatorClickOptions { Timeout = 1500 });
+                await probe.ClickAsync(new LocatorClickOptions { Timeout = 1500 });
+                await alert.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 750 });
                 return;
             }
             catch (Exception ex) when (ex is TimeoutException or PlaywrightException)
@@ -187,7 +189,7 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
                 await Task.Delay(100);
             }
         }
-        throw new TimeoutException("InteractiveServer control did not become clickable.", lastError);
+        throw new TimeoutException("Site Details did not become InteractiveServer-ready before credential entry.", lastError);
     }
 
     private AppDbContext CreateDbContext()

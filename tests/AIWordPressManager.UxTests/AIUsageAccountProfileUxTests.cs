@@ -76,18 +76,19 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
             var currentPassword = page.Locator("#current-password");
             var newPassword = page.Locator("#new-password");
             var confirmation = page.Locator("#confirm-password");
-            await currentPassword.FillAsync("DefinitelyWrong@123");
-            await currentPassword.DispatchEventAsync("change");
-            await newPassword.FillAsync("Temporary9Password");
-            await newPassword.DispatchEventAsync("change");
-            await confirmation.FillAsync("Temporary9Password");
-            await confirmation.DispatchEventAsync("change");
-
             var save = page.GetByRole(AriaRole.Button, new() { Name = "Save new password", Exact = true });
-            var deadline = DateTime.UtcNow.AddSeconds(10);
+            var deadline = DateTime.UtcNow.AddSeconds(12);
             while (DateTime.UtcNow < deadline && !await save.IsEnabledAsync())
+            {
+                await currentPassword.FillAsync("DefinitelyWrong@123");
+                await currentPassword.PressAsync("Tab");
+                await newPassword.FillAsync("Temporary9Password");
+                await newPassword.PressAsync("Tab");
+                await confirmation.FillAsync("Temporary9Password");
+                await confirmation.PressAsync("Tab");
                 await Task.Delay(100);
-            (await save.IsEnabledAsync()).Should().BeTrue("all three password fields are populated with a matching new password");
+            }
+            (await save.IsEnabledAsync()).Should().BeTrue("InteractiveServer must receive all three populated password fields before the real password service is invoked");
             await save.ClickAsync();
 
             var failure = page.GetByText("The current password is incorrect.", new() { Exact = true });

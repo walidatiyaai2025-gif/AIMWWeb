@@ -231,8 +231,15 @@ public sealed class SynchronizationWorkspaceUxTests(UxTestHost host)
             (await page.Locator("select.form-control").InputValueAsync()).Should().Be(Guid.Empty.ToString(), "an unowned siteId query must not become the selected execution target");
             (await page.GetByRole(AriaRole.Button, new() { Name = "Start synchronization" }).IsDisabledAsync()).Should().BeTrue();
 
-            await page.Locator("select.form-control").SelectOptionAsync(viewerSiteId.ToString());
-            (await page.Locator("select.form-control").InputValueAsync()).Should().Be(viewerSiteId.ToString());
+            var siteSelect = page.Locator("select.form-control");
+            var selectionDeadline = DateTime.UtcNow.AddSeconds(10);
+            while (DateTime.UtcNow < selectionDeadline &&
+                   !string.Equals(await siteSelect.InputValueAsync(), viewerSiteId.ToString(), StringComparison.Ordinal))
+            {
+                await siteSelect.SelectOptionAsync(viewerSiteId.ToString());
+                await Task.Delay(100);
+            }
+            (await siteSelect.InputValueAsync()).Should().Be(viewerSiteId.ToString(), "the owned site selection must survive InteractiveServer hydration and become the execution target");
         }
         finally
         {
