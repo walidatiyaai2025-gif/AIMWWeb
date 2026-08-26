@@ -1,0 +1,142 @@
+name: Final QA Closure Patcher
+
+on:
+  push:
+    branches: [ lead/final-qa-acceptance-convergence ]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lead/final-qa-acceptance-convergence
+          fetch-depth: 0
+
+      - name: Apply deterministic QA closure fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Expected block not found in {path}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_exact(
+              'src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor',
+              '<AppBidiText Mode="version">r@version.Revision</AppBidiText>',
+              '<AppBidiText Mode="version" Text="@($\"r{version.Revision}\")" />')
+
+          replace_exact(
+              'tests/AIWordPressManager.UxTests/AIUsageAccountProfileUxTests.cs',
+              '''            await currentPassword.FillAsync("DefinitelyWrong@123");
+            await currentPassword.DispatchEventAsync("change");
+            await newPassword.FillAsync("Temporary9Password");
+            await newPassword.DispatchEventAsync("change");
+            await confirmation.FillAsync("Temporary9Password");
+            await confirmation.DispatchEventAsync("change");
+
+            var save = page.GetByRole(AriaRole.Button, new() { Name = "Save new password", Exact = true });
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (DateTime.UtcNow < deadline && !await save.IsEnabledAsync())
+                await Task.Delay(100);
+            (await save.IsEnabledAsync()).Should().BeTrue("all three password fields are populated with a matching new password");''',
+              '''            var save = page.GetByRole(AriaRole.Button, new() { Name = "Save new password", Exact = true });
+            var deadline = DateTime.UtcNow.AddSeconds(12);
+            while (DateTime.UtcNow < deadline && !await save.IsEnabledAsync())
+            {
+                await currentPassword.FillAsync("DefinitelyWrong@123");
+                await currentPassword.PressAsync("Tab");
+                await newPassword.FillAsync("Temporary9Password");
+                await newPassword.PressAsync("Tab");
+                await confirmation.FillAsync("Temporary9Password");
+                await confirmation.PressAsync("Tab");
+                await Task.Delay(100);
+            }
+            (await save.IsEnabledAsync()).Should().BeTrue("InteractiveServer must receive all three populated password fields before the real password service is invoked");''')
+
+          replace_exact(
+              'tests/AIWordPressManager.UxTests/SynchronizationWorkspaceUxTests.cs',
+              '''            await page.Locator("select.form-control").SelectOptionAsync(viewerSiteId.ToString());
+            (await page.Locator("select.form-control").InputValueAsync()).Should().Be(viewerSiteId.ToString());''',
+              '''            var siteSelect = page.Locator("select.form-control");
+            var selectionDeadline = DateTime.UtcNow.AddSeconds(10);
+            while (DateTime.UtcNow < selectionDeadline &&
+                   !string.Equals(await siteSelect.InputValueAsync(), viewerSiteId.ToString(), StringComparison.Ordinal))
+            {
+                await siteSelect.SelectOptionAsync(viewerSiteId.ToString());
+                await Task.Delay(100);
+            }
+            (await siteSelect.InputValueAsync()).Should().Be(viewerSiteId.ToString(), "the owned site selection must survive InteractiveServer hydration and become the execution target");''')
+
+          replace_exact(
+              'tests/AIWordPressManager.UxTests/SynchronizationWorkspaceUxTestsDualFailure.cs',
+              '''        var probe = page.Locator(".site-details-form-actions button[type='button']").First;
+        await ClickWhenInteractiveAsync(probe);''',
+              '''        await EnsureSiteDetailsInteractiveAsync(page);''')
+
+          replace_exact(
+              'tests/AIWordPressManager.UxTests/SynchronizationWorkspaceUxTestsDualFailure.cs',
+              '''    private static async Task ClickWhenInteractiveAsync(ILocator locator)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        Exception? lastError = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await locator.ClickAsync(new LocatorClickOptions { Timeout = 1500 });
+                return;
+            }
+            catch (Exception ex) when (ex is TimeoutException or PlaywrightException)
+            {
+                lastError = ex;
+                await Task.Delay(100);
+            }
+        }
+        throw new TimeoutException("InteractiveServer control did not become clickable.", lastError);
+    }''',
+              '''    private static async Task EnsureSiteDetailsInteractiveAsync(IPage page)
+    {
+        var probe = page.Locator(".site-details-form-actions button[type='button']").First;
+        var alert = page.Locator(".site-details-alert");
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        Exception? lastError = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await probe.ClickAsync(new LocatorClickOptions { Timeout = 1500 });
+                await alert.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 750 });
+                return;
+            }
+            catch (Exception ex) when (ex is TimeoutException or PlaywrightException)
+            {
+                lastError = ex;
+                await Task.Delay(100);
+            }
+        }
+        throw new TimeoutException("Site Details did not become InteractiveServer-ready before credential entry.", lastError);
+    }''')
+          PY
+
+      - name: Commit closure fixes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor \
+                  tests/AIWordPressManager.UxTests/AIUsageAccountProfileUxTests.cs \
+                  tests/AIWordPressManager.UxTests/SynchronizationWorkspaceUxTests.cs \
+                  tests/AIWordPressManager.UxTests/SynchronizationWorkspaceUxTestsDualFailure.cs
+          git diff --cached --check
+          git commit -m "fix: close final historical acceptance interactions"
+          git push origin HEAD:lead/final-qa-acceptance-convergence
