@@ -9,8 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  apply-validate-commit:
-    if: ${{ github.event.head_commit.message != 'feat: apply transactional backup and admin recovery boundary' }}
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,19 +18,13 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
-      - name: Apply deterministic REL-003 patch
-        run: python3 Build/rel003-apply-and-validate.py
-      - name: Validate diff
-        run: git diff --check
-      - name: Restore
-        run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
-      - name: Build
-        run: dotnet build AIWordPressManager.Web.sln --configuration Release --no-restore
-      - name: Test
-        run: dotnet test tests/AIWordPressManager.Tests/AIWordPressManager.Tests.csproj --configuration Release --no-build
-      - name: Commit clean production change
-        run: |
+          dotnet-version: '8.0.x'
+      - run: python3 Build/rel003-apply-and-validate.py
+      - run: git diff --check
+      - run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
+      - run: dotnet build AIWordPressManager.Web.sln --configuration Release --no-restore
+      - run: dotnet test tests/AIWordPressManager.Tests/AIWordPressManager.Tests.csproj --configuration Release --no-build
+      - run: |
           rm -f Build/rel003-apply-and-validate.py .github/workflows/rel003-one-shot-validation.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
