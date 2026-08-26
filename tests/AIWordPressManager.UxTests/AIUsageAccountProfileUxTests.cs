@@ -34,7 +34,8 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
             body.Should().NotContain("Demo provider");
             body.Should().NotContain("Ready to spend");
 
-            var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh" });
+            var refresh = page.Locator(".usage-actions")
+                .GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
             await refresh.ClickAsync();
             await page.WaitForFunctionAsync("() => !document.body.innerText.includes('Refreshing usage data')");
 
@@ -74,8 +75,13 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
 
             await page.Locator("#current-password").FillAsync("DefinitelyWrong@123");
             await page.Locator("#new-password").FillAsync("Temporary9Password");
-            await page.Locator("#confirm-password").FillAsync("Temporary9Password");
-            await page.GetByRole(AriaRole.Button, new() { Name = "Save new password" }).ClickAsync();
+            var confirmation = page.Locator("#confirm-password");
+            await confirmation.FillAsync("Temporary9Password");
+            await confirmation.PressAsync("Tab");
+
+            var save = page.GetByRole(AriaRole.Button, new() { Name = "Save new password", Exact = true });
+            await save.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+            await save.ClickAsync();
 
             var failure = page.GetByText("The current password is incorrect.", new() { Exact = true });
             await failure.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
