@@ -34,8 +34,8 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
             body.Should().NotContain("Demo provider");
             body.Should().NotContain("Ready to spend");
 
-            var refresh = page.Locator(".usage-actions")
-                .GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
+            var refresh = page.Locator(".usage-actions button");
+            await refresh.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
             await refresh.ClickAsync();
             await page.WaitForFunctionAsync("() => !document.body.innerText.includes('Refreshing usage data')");
 
@@ -73,14 +73,18 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
             (await summary.InnerTextAsync()).Should().Contain("Admin");
             (await summary.InnerTextAsync()).Should().Contain("Administrator");
 
-            await page.Locator("#current-password").FillAsync("DefinitelyWrong@123");
-            await page.Locator("#new-password").FillAsync("Temporary9Password");
+            var currentPassword = page.Locator("#current-password");
+            var newPassword = page.Locator("#new-password");
             var confirmation = page.Locator("#confirm-password");
+            await currentPassword.FillAsync("DefinitelyWrong@123");
+            await currentPassword.DispatchEventAsync("change");
+            await newPassword.FillAsync("Temporary9Password");
+            await newPassword.DispatchEventAsync("change");
             await confirmation.FillAsync("Temporary9Password");
-            await confirmation.PressAsync("Tab");
+            await confirmation.DispatchEventAsync("change");
 
             var save = page.GetByRole(AriaRole.Button, new() { Name = "Save new password", Exact = true });
-            await save.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+            await page.WaitForFunctionAsync("() => { const button = document.querySelector('button[aria-label=\"Save new password\"]'); return !!button && !button.disabled; }");
             await save.ClickAsync();
 
             var failure = page.GetByText("The current password is incorrect.", new() { Exact = true });
