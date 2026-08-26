@@ -13,6 +13,7 @@ public static class ApplicationRoutePermissionCatalog
             ["Sites"] = ApplicationPermissionCatalog.SitesView,
             ["SiteSettings"] = ApplicationPermissionCatalog.SitesView,
             ["GlobalContentHub"] = ApplicationPermissionCatalog.ContentView,
+            ["ContentPlanner"] = ApplicationPermissionCatalog.ContentView,
             ["ExecutionCenter"] = ApplicationPermissionCatalog.OperationsView,
             ["ApprovalQueue"] = ApplicationPermissionCatalog.ApprovalsView,
             ["SystemHealth"] = ApplicationPermissionCatalog.OperationsView,
@@ -21,7 +22,8 @@ public static class ApplicationRoutePermissionCatalog
             ["SiteReliability"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteOperationDetails"] = ApplicationPermissionCatalog.OperationsView,
             ["SiteOperationsMaintenance"] = ApplicationPermissionCatalog.OperationsExecute,
-            ["LogsAndErrors"] = ApplicationPermissionCatalog.SettingsManage
+            ["LogsAndErrors"] = ApplicationPermissionCatalog.SettingsManage,
+            ["ConfigurationValidation"] = ApplicationPermissionCatalog.SettingsManage
         };
 
     public static string? For(Type? pageType)

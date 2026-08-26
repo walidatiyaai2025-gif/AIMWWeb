@@ -146,12 +146,11 @@
         try
         {
             var siteId = Guid.TryParse(_selectedSiteId, out var parsed) ? parsed : (Guid?)null;
-            var siteName = siteId.HasValue ? _sites.FirstOrDefault(x => x.Id == siteId.Value)?.Name : null;
             var scheduledUtc = ParseLocalDate(_scheduledLocal);
             if (_editingId.HasValue)
-                Planner.Update(_editingId.Value, new UpdatePlannerItem(_title, null, _idea, null, null, scheduledUtc, null));
+                await Planner.UpdateAsync(_editingId.Value, new UpdatePlannerItem(_title, null, _idea, null, null, scheduledUtc, null));
             else
-                Planner.Create(new CreatePlannerItem(siteId, siteName, _title, _idea, scheduledUtc, "Content Planner"));
+                await Planner.CreateAsync(new CreatePlannerItem(siteId, null, _title, _idea, scheduledUtc, null));
             Notifications.Success(L.IsArabic ? "تم حفظ عنصر التخطيط." : "Planner item saved.");
             NewItem();
             await ReloadAsync();
@@ -162,17 +161,17 @@
 
     private async Task GenerateBriefAsync(PlannerItem item)
     {
-        await RunItemActionAsync(item.Id, async () => await Planner.GenerateBriefAsync(item.Id, L.Culture, "Content Planner", CancellationToken.None), L.IsArabic ? "تم توليد الملخص." : "Brief generated.");
+        await RunItemActionAsync(item.Id, () => Planner.GenerateBriefAsync(item.Id, L.Culture), L.IsArabic ? "تم توليد الملخص." : "Brief generated.");
     }
 
     private async Task GenerateDraftAsync(PlannerItem item)
     {
-        await RunItemActionAsync(item.Id, async () => await Planner.GenerateDraftAsync(item.Id, L.Culture, "Content Planner", CancellationToken.None), L.IsArabic ? "تم توليد المسودة." : "Draft generated.");
+        await RunItemActionAsync(item.Id, () => Planner.GenerateDraftAsync(item.Id, L.Culture), L.IsArabic ? "تم توليد المسودة." : "Draft generated.");
     }
 
     private async Task QueueAsync(PlannerItem item)
     {
-        await RunItemActionAsync(item.Id, () => Task.FromResult(Planner.QueueForExecution(item.Id)), L.IsArabic ? "تم إرسال المسودة إلى مركز التنفيذ." : "Draft queued for execution.");
+        await RunItemActionAsync(item.Id, () => Planner.QueueForExecutionAsync(item.Id), L.IsArabic ? "تم إرسال المسودة إلى مركز التنفيذ." : "Draft queued for execution.");
     }
 
     private async Task RunItemActionAsync(Guid id, Func<Task<PlannerItem>> action, string success)

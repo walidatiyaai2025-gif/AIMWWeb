@@ -5,7 +5,7 @@
 @using AIWordPressManager.Domain.Entities
 @inject SiteWebService SiteService
 @inject ApprovalWorkflowService ApprovalService
-@inject AutomationCenterService AutomationService
+@inject AccountAutomationCenterService AutomationService
 @inject ContentPlannerService PlannerService
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
@@ -145,10 +145,11 @@
         try
         {
             var sitesTask = SiteService.GetSitesAsync();
+            var automationTask = AutomationService.GetJobsAsync();
             _approvals = ApprovalService.GetItems(null, 1000).ToList();
-            _jobs = AutomationService.GetJobs().ToList();
             _planner = PlannerService.GetItems().ToList();
             _sites = await sitesTask;
+            _jobs = (await automationTask).ToList();
         }
         catch (Exception ex)
         {
