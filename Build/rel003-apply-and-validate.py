@@ -1,7 +1,5 @@
 from pathlib import Path
 
-BRANCH = "lead/rel003-final-offline-recovery-closure"
-
 backup_path = Path("src/AIWordPressManager.Web/Services/BackupManagementService.cs")
 text = backup_path.read_text(encoding="utf-8")
 start = text.index("    public BackupFileInfo CreateBackup(")
@@ -197,3 +195,62 @@ if attribute not in page:
         raise SystemExit("BackupRestore render-mode marker missing")
     page = page.replace(needle, needle + attribute, 1)
 page_path.write_text(page, encoding="utf-8")
+
+helper_path = Path("tests/AIWordPressManager.Tests/SqliteTestDatabase.cs")
+helper_path.write_text(r'''using Microsoft.Data.Sqlite;
+
+namespace AIWordPressManager.Tests;
+
+internal static class SqliteTestDatabase
+{
+    public static void Create(string path)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        if (File.Exists(path)) File.Delete(path);
+
+        var builder = new SqliteConnectionStringBuilder
+        {
+            DataSource = Path.GetFullPath(path),
+            Mode = SqliteOpenMode.ReadWriteCreate
+        };
+        using var connection = new SqliteConnection(builder.ToString());
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "CREATE TABLE IF NOT EXISTS restore_fixture (id INTEGER PRIMARY KEY, value TEXT NOT NULL); INSERT INTO restore_fixture(value) VALUES ('verified');";
+        command.ExecuteNonQuery();
+    }
+}
+''', encoding="utf-8")
+
+def replace_all(path: str, replacements: list[tuple[str, str]]) -> None:
+    target = Path(path)
+    content = target.read_text(encoding="utf-8")
+    for old, new in replacements:
+        if old not in content:
+            raise SystemExit(f"Expected fixture block missing in {path}: {old}")
+        content = content.replace(old, new)
+    target.write_text(content, encoding="utf-8")
+
+replace_all("tests/AIWordPressManager.Tests/BackupManagementServiceTests.cs", [
+    ('File.WriteAllBytes(databasePath, CreatePayload(2048, 0x31));', 'SqliteTestDatabase.Create(databasePath);'),
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), CreatePayload(4096, 0x52));', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), CreatePayload(1024, 0x21));', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+])
+
+replace_all("tests/AIWordPressManager.Tests/BackupSecretRecoveryManifestTests.cs", [
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 2, 3, 4]);', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [4, 3, 2, 1]);', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+])
+
+replace_all("tests/AIWordPressManager.Tests/BackupSecretRecoveryCryptographicTests.cs", [
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 3, 3, 7]);', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+])
+
+replace_all("tests/AIWordPressManager.Tests/BackupArchivePathSafetyTests.cs", [
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 2, 3, 4]);', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+])
+
+replace_all("tests/AIWordPressManager.Tests/BackupConfigurationCoverageTests.cs", [
+    ('File.WriteAllBytes(databasePath, [1, 3, 5, 7]);', 'SqliteTestDatabase.Create(databasePath);'),
+    ('File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [2, 4, 6, 8]);', 'SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));'),
+])
