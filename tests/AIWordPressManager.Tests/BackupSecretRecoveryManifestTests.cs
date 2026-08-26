@@ -14,7 +14,7 @@ public sealed class BackupSecretRecoveryManifestTests : IDisposable
     public void CreateBackup_PersistsWrappedEnvelopeButPreflightRequiresCryptographicValidation()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 2, 3, 4]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var envelope = CreateStructurallyValidEnvelope(0x41);
 
         var backup = service.CreateBackup("recoverable", envelope);
@@ -37,7 +37,7 @@ public sealed class BackupSecretRecoveryManifestTests : IDisposable
     public void CreateBackup_RejectsMalformedWrappedEnvelopeBeforeWritingArchive()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 2, 3, 4]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
 
         var action = () => service.CreateBackup(
             wrappedSecretKeyEnvelope: SecretRecoveryKeyEnvelopeFormat.WrappedKeyV1Prefix + "not-base64!");
@@ -51,7 +51,7 @@ public sealed class BackupSecretRecoveryManifestTests : IDisposable
     public void Inspect_RejectsWrappedModeWithoutEnvelope()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [4, 3, 2, 1]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var backup = service.CreateBackup();
         RewriteManifest(service, backup.FileName, manifest => manifest with
         {
@@ -69,7 +69,7 @@ public sealed class BackupSecretRecoveryManifestTests : IDisposable
     public void Inspect_RejectsBlockedModeThatCarriesEnvelope()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [4, 3, 2, 1]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var backup = service.CreateBackup();
         RewriteManifest(service, backup.FileName, manifest => manifest with
         {

@@ -1,6 +1,7 @@
 @page "/backups"
 @page "/module/backups"
 @rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrator")]
 @implements IDisposable
 @using AIWordPressManager.Application.Abstractions
 @inject AppLanguageService L

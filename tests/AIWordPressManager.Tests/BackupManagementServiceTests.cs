@@ -14,7 +14,7 @@ public sealed class BackupManagementServiceTests : IDisposable
     {
         var service = CreateService();
         var databasePath = Path.Combine(service.DataDirectory, "application.db");
-        File.WriteAllBytes(databasePath, CreatePayload(2048, 0x31));
+        SqliteTestDatabase.Create(databasePath);
         var settingsDirectory = Path.Combine(service.DataDirectory, "settings");
         Directory.CreateDirectory(settingsDirectory);
         File.WriteAllText(Path.Combine(settingsDirectory, "application-state.json"), "{\"mode\":\"safe\"}");
@@ -51,7 +51,7 @@ public sealed class BackupManagementServiceTests : IDisposable
     public void Inspect_RejectsSameSizePayloadTampering()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), CreatePayload(4096, 0x52));
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var backup = service.CreateBackup();
         var backupPath = Path.Combine(service.BackupDirectory, backup.FileName);
 
@@ -67,7 +67,7 @@ public sealed class BackupManagementServiceTests : IDisposable
     public void Inspect_RejectsUndeclaredManagedPayload()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), CreatePayload(1024, 0x21));
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var backup = service.CreateBackup();
         var backupPath = Path.Combine(service.BackupDirectory, backup.FileName);
 
