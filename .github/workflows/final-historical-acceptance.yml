@@ -1,0 +1,79 @@
+name: Final Historical Acceptance
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: final-historical-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    name: acceptance (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright/dotnet:v1.49.0-noble
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: ai-usage-account-profile
+            filter: FullyQualifiedName~AIUsageAccountProfileUxTests
+          - shard: ai-prompt-templates
+            filter: FullyQualifiedName~AIPromptTemplatesUxTests
+          - shard: synchronization
+            filter: FullyQualifiedName~SynchronizationWorkspaceUxTests
+    env:
+      DOTNET_NOLOGO: 1
+      UX_REGRESSION_MODE: verify
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify container .NET SDK
+        run: dotnet --info
+
+      - name: Restore application solution
+        run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
+
+      - name: Build application for browser host
+        run: dotnet build AIWordPressManager.Web.sln --configuration Release --no-restore
+
+      - name: Restore UX regression project
+        run: dotnet restore tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --disable-parallel
+
+      - name: Build UX regression project
+        run: dotnet build tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj --configuration Release --no-restore
+
+      - name: Run ${{ matrix.shard }} acceptance
+        shell: bash
+        run: |
+          dotnet test tests/AIWordPressManager.UxTests/AIWordPressManager.UxTests.csproj \
+            --configuration Release \
+            --no-build \
+            --filter '${{ matrix.filter }}' \
+            --blame-hang \
+            --blame-hang-timeout 3m \
+            --blame-hang-dump-type mini \
+            --logger "console;verbosity=detailed" \
+            --logger "trx;LogFileName=final-acceptance-${{ matrix.shard }}.trx"
+
+      - name: Upload ${{ matrix.shard }} evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-${{ matrix.shard }}
+          path: |
+            artifacts/ux-regression/**
+            tests/AIWordPressManager.UxTests/TestResults/**
+          if-no-files-found: warn
+          retention-days: 30

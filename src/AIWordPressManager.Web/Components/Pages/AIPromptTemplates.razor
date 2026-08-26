@@ -122,7 +122,7 @@
                                 @foreach (var version in _history)
                                 {
                                     <article>
-                                        <div><strong><AppBidiText Mode="version">r@version.Revision</AppBidiText> · @version.ChangeType</strong><small><AppBidiText Mode="date">@version.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText> · @version.CreatedBy</small></div>
+                                        <div><strong><AppBidiText Mode="version" Text="@($"r{version.Revision}")" /> · @version.ChangeType</strong><small><AppBidiText Mode="date">@version.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</AppBidiText> · @version.CreatedBy</small></div>
                                         <p>@Preview(L.IsArabic ? version.PromptAr : version.PromptEn)</p>
                                         <div class="ai-history-actions"><AppButton Size="small" Icon="↺" Disabled="@(version.Revision == _selected.Revision)" Text="@(L.IsArabic ? "استعادة" : "Restore")" OnClick="_ => Restore(version.Revision)" /></div>
                                     </article>
