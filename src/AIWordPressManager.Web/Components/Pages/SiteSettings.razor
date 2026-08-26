@@ -21,7 +21,7 @@ else
             <Actions><AppButton Href="@($"/sites/{Id}")" Text="@(L.IsArabic ? "لوحة الموقع" : "Site dashboard")" /><AppButton Href="@($"/sites/{Id}/connection")" Text="@(L.IsArabic ? "مركز الاتصال" : "Connection center")" /></Actions>
         </AppToolbar>
 
-        @if (!string.IsNullOrWhiteSpace(_message)) { <div class="alert @(_error ? "error" : "success")">@_message</div> }
+        @if (!string.IsNullOrWhiteSpace(_message)) { <div class="alert @(_error ? "error" : _warning ? "warning" : "success")">@_message</div> }
 
         <section class="settings-grid">
             <AppCard Title="@(L.IsArabic ? "الملف الأساسي" : "Site profile")" Subtitle="@(L.IsArabic ? "غيّر الاسم أو رابط WordPress الأساسي." : "Change the display name or primary WordPress URL.")">
@@ -67,7 +67,7 @@ else
 
 @code {
     [Parameter] public Guid Id { get; set; }
-    private bool _loading = true, _busy, _error;
+    private bool _loading = true, _busy, _error, _warning;
     private string? _message;
     private string _deleteConfirmation = string.Empty;
     private AIWordPressManager.Domain.Entities.Site? _site;
@@ -82,19 +82,23 @@ else
         try
         {
             _loading = true;
-            _site = await SiteService.GetSiteAsync(Id);
-            _credential = await SiteService.GetCredentialSummaryAsync(Id);
+            var snapshot = await SiteService.GetSiteSettingsAsync(Id);
+            _site = snapshot?.Site;
+            _credential = snapshot?.Credential;
             if (_site is not null) _profile = new() { Name = _site.Name, Url = _site.SiteUrl };
             if (_credential is not null) _credentialInput.UserName = _credential.UserName;
         }
-        catch (Exception ex) { Fail(ex.Message); }
+        catch (UnauthorizedAccessException) { Fail(L.IsArabic ? "غير مصرح لك بعرض إعدادات هذا الموقع." : "You are not authorized to view these site settings."); }
+        catch { Fail(L.IsArabic ? "تعذر تحميل إعدادات الموقع. حاول مرة أخرى." : "Site settings could not be loaded. Try again."); }
         finally { _loading = false; }
     }
 
     private async Task SaveProfileAsync()
     {
         try { _busy = true; await SiteService.UpdateSiteAsync(Id, _profile.Name, _profile.Url); Success(L.IsArabic ? "تم تحديث بيانات الموقع." : "Site profile updated."); await LoadAsync(); }
-        catch (Exception ex) { Fail(ex.Message); }
+        catch (InvalidOperationException ex) { Fail(ex.Message); }
+        catch (UnauthorizedAccessException) { Fail(L.IsArabic ? "ليس لديك صلاحية تعديل هذا الموقع." : "You are not authorized to modify this site."); }
+        catch { Fail(L.IsArabic ? "تعذر تحديث بيانات الموقع. حاول مرة أخرى." : "The site profile could not be updated. Try again."); }
         finally { _busy = false; }
     }
 
@@ -103,19 +107,37 @@ else
         try
         {
             _busy = true;
-            var result = await SiteService.SaveCredentialAndTestAsync(Id, _credentialInput.UserName, _credentialInput.Password);
+            var result = await SiteService.SaveCredentialAndTestDetailedAsync(Id, _credentialInput.UserName, _credentialInput.Password);
             _credentialInput.Password = string.Empty;
-            if (result.IsSuccess) Success(L.IsArabic ? "تم حفظ الاعتماد واختبار الاتصال بنجاح." : "Credential saved and connection tested successfully."); else Fail(result.Message);
+
+            if (result.CredentialSaved && result.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.Connected)
+            {
+                Success(L.IsArabic ? "تم حفظ الاعتماد واختبار الاتصال بنجاح." : "Credential saved and connection tested successfully.");
+            }
+            else if (result.CredentialSaved && result.ConnectionStatus == AIWordPressManager.Domain.Enums.SiteConnectionStatus.LimitedPermissions)
+            {
+                Warn(L.IsArabic
+                    ? "تم حفظ الاعتماد، لكن WordPress أبلغ عن صلاحيات محدودة. راجع صلاحيات Application Password قبل تنفيذ عمليات التعديل."
+                    : "Credential saved, but WordPress reported limited permissions. Review the Application Password capabilities before running write operations.");
+            }
+            else
+            {
+                Fail(L.IsArabic ? "فشل اختبار الاتصال ولم يتم حفظ الاعتماد الجديد." : "Connection test failed and the new credential was not saved.");
+            }
+
             await LoadAsync();
         }
-        catch (Exception ex) { Fail(ex.Message); }
+        catch (InvalidOperationException ex) { Fail(ex.Message); }
+        catch (UnauthorizedAccessException) { Fail(L.IsArabic ? "ليس لديك صلاحية تحديث اعتماد هذا الموقع." : "You are not authorized to update this site's credential."); }
+        catch { Fail(L.IsArabic ? "تعذر حفظ الاعتماد أو اختبار الاتصال. حاول مرة أخرى." : "The credential could not be saved or tested. Try again."); }
         finally { _busy = false; }
     }
 
     private async Task RemoveCredentialClicked(MouseEventArgs _)
     {
         try { _busy = true; await SiteService.RemoveCredentialAsync(Id); Success(L.IsArabic ? "تم مسح الاعتماد المشفر." : "Encrypted credential removed."); await LoadAsync(); }
-        catch (Exception ex) { Fail(ex.Message); }
+        catch (UnauthorizedAccessException) { Fail(L.IsArabic ? "ليس لديك صلاحية مسح اعتماد هذا الموقع." : "You are not authorized to remove this site's credential."); }
+        catch { Fail(L.IsArabic ? "تعذر مسح الاعتماد. حاول مرة أخرى." : "The credential could not be removed. Try again."); }
         finally { _busy = false; }
     }
 
@@ -123,19 +145,22 @@ else
     {
         if (_site is null) return;
         try { _busy = true; var disable = _site.ConnectionStatus != AIWordPressManager.Domain.Enums.SiteConnectionStatus.Disabled; await SiteService.SetDisabledAsync(Id, disable); Success(disable ? (L.IsArabic ? "تم تعطيل الموقع." : "Site disabled.") : (L.IsArabic ? "تمت إعادة تفعيل الموقع." : "Site enabled.")); await LoadAsync(); }
-        catch (Exception ex) { Fail(ex.Message); }
+        catch (UnauthorizedAccessException) { Fail(L.IsArabic ? "ليس لديك صلاحية تغيير حالة هذا الموقع." : "You are not authorized to change this site's state."); }
+        catch { Fail(L.IsArabic ? "تعذر تغيير حالة الموقع. حاول مرة أخرى." : "The site state could not be changed. Try again."); }
         finally { _busy = false; }
     }
 
     private async Task DeleteClicked(MouseEventArgs _)
     {
         try { _busy = true; await SiteService.DeleteSiteAsync(Id); Navigation.NavigateTo("/sites", true); }
-        catch (Exception ex) { Fail(ex.Message); _busy = false; }
+        catch (UnauthorizedAccessException) { Fail(L.IsArabic ? "ليس لديك صلاحية حذف هذا الموقع." : "You are not authorized to delete this site."); _busy = false; }
+        catch { Fail(L.IsArabic ? "تعذر حذف الموقع. حاول مرة أخرى." : "The site could not be deleted. Try again."); _busy = false; }
     }
 
     private string StatusText() => _site?.ConnectionStatus.ToString() ?? "—";
-    private void Success(string message) { _error = false; _message = message; }
-    private void Fail(string message) { _error = true; _message = L.TranslateMessage(message); }
+    private void Success(string message) { _error = false; _warning = false; _message = message; }
+    private void Warn(string message) { _error = false; _warning = true; _message = message; }
+    private void Fail(string message) { _error = true; _warning = false; _message = L.TranslateMessage(message); }
     private sealed class ProfileInput { public string Name { get; set; } = string.Empty; public string Url { get; set; } = string.Empty; }
     private sealed class CredentialInput { public string UserName { get; set; } = string.Empty; public string Password { get; set; } = string.Empty; }
 }
