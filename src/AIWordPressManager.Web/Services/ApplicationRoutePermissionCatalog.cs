@@ -11,6 +11,7 @@ public static class ApplicationRoutePermissionCatalog
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["Sites"] = ApplicationPermissionCatalog.SitesView,
+            ["SiteSettings"] = ApplicationPermissionCatalog.SitesView,
             ["GlobalContentHub"] = ApplicationPermissionCatalog.ContentView,
             ["ContentPlanner"] = ApplicationPermissionCatalog.ContentView,
             ["ExecutionCenter"] = ApplicationPermissionCatalog.OperationsView,
