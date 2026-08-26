@@ -12,10 +12,10 @@ namespace AIWordPressManager.Web.Services;
 public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
 {
     public const string SettingsKey = "Security.Audit.v1";
+    internal const int MaxRetainedRecords = 10_000;
+    internal static readonly TimeSpan RetentionWindow = TimeSpan.FromDays(365);
     private const int CurrentVersion = 1;
-    private const int MaxRecords = 10_000;
     private const int MaxMetadataEntries = 24;
-    private static readonly TimeSpan Retention = TimeSpan.FromDays(365);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly SemaphoreSlim MutationGate = new(1, 1);
     private static readonly string[] SensitiveMetadataFragments =
@@ -40,8 +40,27 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
     {
         query ??= new SecurityAuditQuery();
         var records = await ReadAsync(cancellationToken);
-        var filtered = records.AsEnumerable();
+        var filtered = ApplyQuery(records, query);
+        var take = Math.Clamp(query.Take, 1, 500);
+        return Order(filtered).Take(take).ToArray();
+    }
 
+    internal async Task<IReadOnlyList<SecurityAuditRecord>> ListRetainedAsync(
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default)
+    {
+        fromUtc = fromUtc.Kind == DateTimeKind.Utc ? fromUtc : fromUtc.ToUniversalTime();
+        var records = await ReadAsync(cancellationToken);
+        return Order(records.Where(record => record.OccurredAtUtc >= fromUtc))
+            .Take(MaxRetainedRecords)
+            .ToArray();
+    }
+
+    private static IEnumerable<SecurityAuditRecord> ApplyQuery(
+        IEnumerable<SecurityAuditRecord> records,
+        SecurityAuditQuery query)
+    {
+        var filtered = records;
         if (!string.IsNullOrWhiteSpace(query.Category))
             filtered = filtered.Where(x => string.Equals(x.Category, query.Category.Trim(), StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(query.Action))
@@ -64,14 +83,11 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
             filtered = filtered.Where(x => x.OccurredAtUtc >= query.FromUtc.Value);
         if (query.ToUtc.HasValue)
             filtered = filtered.Where(x => x.OccurredAtUtc <= query.ToUtc.Value);
-
-        var take = Math.Clamp(query.Take, 1, 500);
-        return filtered
-            .OrderByDescending(x => x.OccurredAtUtc)
-            .ThenByDescending(x => x.EventId)
-            .Take(take)
-            .ToArray();
+        return filtered;
     }
+
+    private static IOrderedEnumerable<SecurityAuditRecord> Order(IEnumerable<SecurityAuditRecord> records) =>
+        records.OrderByDescending(x => x.OccurredAtUtc).ThenByDescending(x => x.EventId);
 
     private async Task<IReadOnlyList<SecurityAuditRecord>> ReadAsync(CancellationToken cancellationToken)
     {
@@ -214,13 +230,13 @@ public sealed class ApplicationSecurityAuditStore(AppDbContext dbContext)
 
     private static void Prune(List<SecurityAuditRecord> records, DateTime utcNow)
     {
-        records.RemoveAll(record => utcNow - record.OccurredAtUtc > Retention);
-        if (records.Count <= MaxRecords) return;
+        records.RemoveAll(record => utcNow - record.OccurredAtUtc > RetentionWindow);
+        if (records.Count <= MaxRetainedRecords) return;
 
         var keep = records
             .OrderByDescending(record => record.OccurredAtUtc)
             .ThenByDescending(record => record.EventId)
-            .Take(MaxRecords)
+            .Take(MaxRetainedRecords)
             .Select(record => record.EventId)
             .ToHashSet();
         records.RemoveAll(record => !keep.Contains(record.EventId));
