@@ -79,10 +79,7 @@ public sealed class AIPromptTemplatesUxTests(UxTestHost host)
         await page.GetByText($"Saved {key} as revision r2.", new() { Exact = true }).WaitForAsync(
             new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
-        var revisionOneMarker = page.Locator(".ai-history-list bdi[data-bidi-mode='numeric']")
-            .GetByText("r1", new() { Exact = true });
-        await revisionOneMarker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
-        var revisionOne = revisionOneMarker.Locator("xpath=ancestor::article[1]");
+        var revisionOne = await WaitForRevisionArticleAsync(page, "r1");
 
         page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
         await revisionOne.GetByRole(AriaRole.Button, new() { Name = "Restore" }).ClickAsync();
@@ -100,6 +97,27 @@ public sealed class AIPromptTemplatesUxTests(UxTestHost host)
         (await prompts.Nth(0).InputValueAsync()).Should().Be(promptV1, "restore must create a new revision from the selected historical content");
         (await page.Locator(".ai-history-list article").CountAsync()).Should().BeGreaterThanOrEqualTo(3);
         pageErrors.Should().BeEmpty("prompt create/update/restore must complete through the real InteractiveServer store without browser runtime errors");
+    }
+
+    private static async Task<ILocator> WaitForRevisionArticleAsync(IPage page, string revision)
+    {
+        var articles = page.Locator(".ai-history-list article");
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        IReadOnlyList<string> lastTexts = Array.Empty<string>();
+        while (DateTime.UtcNow < deadline)
+        {
+            lastTexts = await articles.AllInnerTextsAsync();
+            for (var index = 0; index < lastTexts.Count; index++)
+            {
+                var tokens = lastTexts[index]
+                    .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (tokens.Any(token => string.Equals(token.Trim('·', ':', ';', ',', '.', '(', ')'), revision, StringComparison.Ordinal)))
+                    return articles.Nth(index);
+            }
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException($"Revision {revision} was not rendered. Visible history: {string.Join(" || ", lastTexts)}");
     }
 
     private static async Task ClickUntilAsync(ILocator control, Func<Task<bool>> condition, string failure)
