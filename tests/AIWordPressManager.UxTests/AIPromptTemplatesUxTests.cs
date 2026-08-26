@@ -79,8 +79,10 @@ public sealed class AIPromptTemplatesUxTests(UxTestHost host)
         await page.GetByText($"Saved {key} as revision r2.", new() { Exact = true }).WaitForAsync(
             new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
 
-        var revisionOne = page.Locator(".ai-history-list article").Filter(new LocatorFilterOptions { HasTextString = "r1" });
-        await revisionOne.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        var revisionOneMarker = page.Locator(".ai-history-list bdi[data-bidi-mode='numeric']")
+            .GetByText("r1", new() { Exact = true });
+        await revisionOneMarker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
+        var revisionOne = revisionOneMarker.Locator("xpath=ancestor::article[1]");
 
         page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
         await revisionOne.GetByRole(AriaRole.Button, new() { Name = "Restore" }).ClickAsync();
