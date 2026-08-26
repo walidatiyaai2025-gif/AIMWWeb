@@ -91,7 +91,8 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
             (await save.IsEnabledAsync()).Should().BeTrue("InteractiveServer must receive all three populated password fields before the real password service is invoked");
             await save.ClickAsync();
 
-            var failure = page.GetByText("The current password is incorrect.", new() { Exact = true });
+            var passwordForm = page.GetByLabel("Change password");
+            var failure = passwordForm.GetByText("The current password is incorrect.", new() { Exact = true });
             await failure.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10000 });
             (await page.Locator("body").InnerTextAsync()).Should().NotContain("Password changed successfully.");
             pageErrors.Should().BeEmpty("Account password validation must reach the real account service and surface failure without client-only success");
