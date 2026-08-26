@@ -33,9 +33,7 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
             await SaveCredentialsThroughUiAsync(page, siteId, wordpress);
             await NavigateToSynchronizationAsync(page, siteId);
 
-            var start = page.GetByRole(AriaRole.Button, new() { Name = "Start synchronization" });
-            await ClickWhenInteractiveAsync(start);
-            await wordpress.WaitForHeldFailureRequestAsync();
+            await StartSynchronizationAndWaitForBoundaryAsync(page, wordpress);
 
             await using (var db = CreateDbContext())
             {
@@ -142,6 +140,36 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
         });
     }
 
+    private static async Task StartSynchronizationAndWaitForBoundaryAsync(IPage page, HeldFailureWordPressFixture wordpress)
+    {
+        var start = page.GetByRole(AriaRole.Button, new() { Name = "Start synchronization" });
+        var deadline = DateTime.UtcNow.AddSeconds(12);
+        Exception? lastError = null;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                await start.ClickAsync(new LocatorClickOptions { Timeout = 1500 });
+                var briefDeadline = DateTime.UtcNow.AddMilliseconds(750);
+                while (DateTime.UtcNow < briefDeadline)
+                {
+                    if (wordpress.HasHeldFailureRequest) return;
+                    await Task.Delay(50);
+                }
+                if (wordpress.HasHeldFailureRequest) return;
+            }
+            catch (Exception ex) when (ex is TimeoutException or PlaywrightException)
+            {
+                lastError = ex;
+            }
+
+            await Task.Delay(150);
+        }
+
+        throw new TimeoutException("Synchronization control never reached the held WordPress failure boundary.", lastError);
+    }
+
     private static async Task ClickWhenInteractiveAsync(ILocator locator)
     {
         var deadline = DateTime.UtcNow.AddSeconds(10);
@@ -203,6 +231,7 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
         }
 
         public Uri BaseUri { get; }
+        public bool HasHeldFailureRequest => _postsFailureObserved.Task.IsCompleted;
         public bool HasAuthenticatedConnectionTest
         {
             get
@@ -213,7 +242,6 @@ public sealed class SynchronizationWorkspaceUxTestsDualFailure(UxTestHost host)
             }
         }
 
-        public Task WaitForHeldFailureRequestAsync() => _postsFailureObserved.Task.WaitAsync(TimeSpan.FromSeconds(10));
         public void ReleaseFailureResponse() => _releaseFailure.TrySetResult();
 
         public async ValueTask DisposeAsync()
