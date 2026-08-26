@@ -84,7 +84,10 @@ public sealed class AIUsageAccountProfileUxTests(UxTestHost host)
             await confirmation.DispatchEventAsync("change");
 
             var save = page.GetByRole(AriaRole.Button, new() { Name = "Save new password", Exact = true });
-            await page.WaitForFunctionAsync("() => { const button = document.querySelector('button[aria-label=\"Save new password\"]'); return !!button && !button.disabled; }");
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (DateTime.UtcNow < deadline && !await save.IsEnabledAsync())
+                await Task.Delay(100);
+            (await save.IsEnabledAsync()).Should().BeTrue("all three password fields are populated with a matching new password");
             await save.ClickAsync();
 
             var failure = page.GetByText("The current password is incorrect.", new() { Exact = true });
