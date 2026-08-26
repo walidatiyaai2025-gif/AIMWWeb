@@ -64,8 +64,6 @@ public sealed class ContentPlannerTenantIsolationTests
         fixture.Execution.GetJobs(fixture.OwnerA).Should().BeEmpty("guessed IDs must not create execution metadata");
         fixture.Execution.GetJobs(fixture.OwnerB).Should().BeEmpty();
 
-        // ReportsExports consumes PlannerService.GetItems(); the account-scoped projection therefore
-        // drives its planner counts and CSV rows without a separate global planner read path.
         var reportProjection = ownerA.GetItems();
         reportProjection.Should().HaveCount(1);
         reportProjection.Select(x => x.Title).Should().Contain("Owner A plan").And.NotContain("Owner B secret plan");
@@ -254,6 +252,7 @@ public sealed class ContentPlannerTenantIsolationTests
             TestPaths paths,
             RecordingAi ai,
             ExecutionCenterService execution,
+            ExecutionOperationTracker executionTracker,
             NotificationInboxService notifications,
             Guid ownerA,
             Guid ownerB,
@@ -266,6 +265,7 @@ public sealed class ContentPlannerTenantIsolationTests
             Paths = paths;
             Ai = ai;
             Execution = execution;
+            ExecutionTracker = executionTracker;
             Notifications = notifications;
             OwnerA = ownerA;
             OwnerB = ownerB;
@@ -277,6 +277,7 @@ public sealed class ContentPlannerTenantIsolationTests
         public TestPaths Paths { get; }
         public RecordingAi Ai { get; }
         public ExecutionCenterService Execution { get; }
+        public ExecutionOperationTracker ExecutionTracker { get; }
         public NotificationInboxService Notifications { get; }
         public Guid OwnerA { get; }
         public Guid OwnerB { get; }
@@ -308,9 +309,11 @@ public sealed class ContentPlannerTenantIsolationTests
             await db.SaveChangesAsync();
 
             var ai = new RecordingAi();
-            var execution = new ExecutionCenterService(Path.Combine(root, "execution.db"));
+            var executionPath = Path.Combine(root, "execution.db");
+            var execution = new ExecutionCenterService(executionPath);
+            var executionTracker = new ExecutionOperationTracker(execution, executionPath);
             var notifications = NotificationInboxService.ForDatabase(Path.Combine(root, "notifications.db"));
-            return new PlannerFixture(root, connection, db, paths, ai, execution, notifications, ownerA, ownerB, siteA, siteB);
+            return new PlannerFixture(root, connection, db, paths, ai, execution, executionTracker, notifications, ownerA, ownerB, siteA, siteB);
         }
 
         public ContentPlannerService ServiceFor(Guid ownerId, string userName, params string[] permissions)
@@ -321,6 +324,7 @@ public sealed class ContentPlannerTenantIsolationTests
                 Ai,
                 new TestPromptRegistry(),
                 Execution,
+                ExecutionTracker,
                 Notifications,
                 currentUser,
                 Paths,
@@ -335,6 +339,7 @@ public sealed class ContentPlannerTenantIsolationTests
                 Ai,
                 new TestPromptRegistry(),
                 Execution,
+                ExecutionTracker,
                 Notifications,
                 currentUser,
                 Paths,

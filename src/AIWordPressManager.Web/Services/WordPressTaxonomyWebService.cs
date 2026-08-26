@@ -43,7 +43,7 @@ public sealed class WordPressTaxonomyWebService(
 
         using var json = response.Value;
         var id = json.RootElement.TryGetProperty("id", out var idNode) && idNode.TryGetInt32(out var value) ? value : 0;
-        await syncService.SynchronizeAsync(siteId, ct);
+        await syncService.SynchronizeAsync(siteId, ct, forceFullRefresh: true);
         return new(true, "تم إنشاء العنصر في WordPress بنجاح.", id);
     }
 
@@ -60,7 +60,7 @@ public sealed class WordPressTaxonomyWebService(
         if (!response.IsSuccess)
             return new(false, response.ErrorMessage, id);
 
-        await syncService.SynchronizeAsync(siteId, ct);
+        await syncService.SynchronizeAsync(siteId, ct, forceFullRefresh: true);
         return new(true, "تم تعديل العنصر في WordPress بنجاح.", id);
     }
 
@@ -76,7 +76,7 @@ public sealed class WordPressTaxonomyWebService(
         if (!response.IsSuccess)
             return new(false, response.ErrorMessage, id);
 
-        await syncService.SynchronizeAsync(siteId, ct);
+        await syncService.SynchronizeAsync(siteId, ct, forceFullRefresh: true);
         return new(true, "تم حذف العنصر من WordPress بنجاح.", id);
     }
 

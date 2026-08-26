@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.AI;
 using AIWordPressManager.Persistence;
@@ -15,6 +17,7 @@ public sealed class ContentPlannerService
     private readonly IAIOrchestrator _ai;
     private readonly IAIPromptRegistry _prompts;
     private readonly ExecutionCenterService _execution;
+    private readonly ExecutionOperationTracker _executionTracker;
     private readonly NotificationInboxService _notifications;
     private readonly CurrentUserContext _currentUser;
     private readonly AppDbContext _dbContext;
@@ -24,6 +27,7 @@ public sealed class ContentPlannerService
         IAIOrchestrator ai,
         IAIPromptRegistry prompts,
         ExecutionCenterService execution,
+        ExecutionOperationTracker executionTracker,
         NotificationInboxService notifications,
         CurrentUserContext currentUser,
         IApplicationPathService applicationPaths,
@@ -33,6 +37,7 @@ public sealed class ContentPlannerService
         _ai = ai;
         _prompts = prompts;
         _execution = execution;
+        _executionTracker = executionTracker;
         _notifications = notifications;
         _currentUser = currentUser;
         _dbContext = dbContext;
@@ -210,17 +215,57 @@ public sealed class ContentPlannerService
 
         var site = await ResolveOwnedSiteAsync(item.SiteId, ownerUserId, cancellationToken)
             ?? throw new InvalidOperationException("Site is unavailable.");
-        var executionJob = _execution.Enqueue(
-            ownerUserId,
-            site.Id,
-            $"Publish planned content: {item.Title}",
-            "Planner Publish",
-            site.Name,
-            1);
+        var idempotencyKey = CreatePublishIdempotencyKey(item);
+        var existingJob = _execution.GetJobs(ownerUserId)
+            .FirstOrDefault(x =>
+                string.Equals(x.Type, PlannerPublishWorker.JobType, StringComparison.Ordinal) &&
+                string.Equals(x.IdempotencyKey, idempotencyKey, StringComparison.Ordinal));
+
+        ExecutionJob executionJob;
+        var retried = false;
+        if (existingJob is not null)
+        {
+            if (existingJob.SiteId != site.Id ||
+                !string.Equals(existingJob.CorrelationId, item.Id.ToString("D"), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("The existing planner execution identity does not match the current owned item/site.");
+            }
+
+            if (existingJob.Status == "Failed")
+            {
+                if (!_executionTracker.RetryTracked(existingJob.Id, ownerUserId, PlannerPublishWorker.JobType))
+                    throw new InvalidOperationException("The failed planner publish job could not be queued for safe retry.");
+                retried = true;
+            }
+            else if (existingJob.Status == "Completed")
+            {
+                if (item.Status is PlannerItemStatus.Published or PlannerItemStatus.Scheduled)
+                    return item;
+                throw new InvalidOperationException("The planner execution completed but the planner item is not reconciled. Review the execution history before queueing again.");
+            }
+            else if (existingJob.Status is not ("Waiting" or "Running"))
+            {
+                throw new InvalidOperationException($"Planner publish job is in unsupported state '{existingJob.Status}'.");
+            }
+
+            executionJob = existingJob;
+        }
+        else
+        {
+            executionJob = _execution.Enqueue(
+                ownerUserId,
+                site.Id,
+                $"Publish planned content: {item.Title}",
+                PlannerPublishWorker.JobType,
+                site.Name,
+                PlannerPublishWorker.TotalSteps,
+                idempotencyKey,
+                item.Id.ToString("D"));
+        }
 
         _notifications.Create(
             ownerUserId,
-            "Execution queued",
+            retried ? "Execution retry queued" : "Execution queued",
             item.Title,
             NotificationSeverity.Information,
             relatedId: item.Id,
@@ -231,11 +276,82 @@ public sealed class ContentPlannerService
         var updated = ApplyUpdate(item, new UpdatePlannerItem(null, PlannerItemStatus.Review, null, null, null, null, null));
         Save(updated, ownerUserId);
         await AuditSucceededAsync(
-            "QueueForExecution",
+            retried ? "RetryPublishExecution" : "QueueForExecution",
             updated,
             cancellationToken,
-            new Dictionary<string, string> { ["executionJobId"] = executionJob.Id.ToString("D") });
+            new Dictionary<string, string>
+            {
+                ["executionJobId"] = executionJob.Id.ToString("D"),
+                ["publishRevision"] = idempotencyKey
+            });
         return updated;
+    }
+
+    public async Task<PlannerItem> GetForExecutionAsync(
+        Guid ownerUserId,
+        Guid itemId,
+        Guid siteId,
+        string expectedIdempotencyKey,
+        CancellationToken cancellationToken = default)
+    {
+        RequireBackgroundContinuation(ownerUserId);
+        var item = RequireOwned(itemId, ownerUserId);
+        if (item.SiteId != siteId)
+            throw new UnauthorizedAccessException("Planner execution site does not match the queued owned item.");
+        await EnsureItemSiteOwnershipAsync(item, ownerUserId, cancellationToken);
+        if (!string.Equals(CreatePublishIdempotencyKey(item), expectedIdempotencyKey, StringComparison.Ordinal))
+            throw new InvalidOperationException("Planner content changed after this publish job was queued. Queue the current revision as a new execution.");
+        if (string.IsNullOrWhiteSpace(item.DraftContent))
+            throw new InvalidOperationException("The queued planner item no longer contains a publishable draft.");
+        return item;
+    }
+
+    public async Task<PlannerItem> ReconcilePublishAsync(
+        Guid ownerUserId,
+        Guid itemId,
+        Guid siteId,
+        int wordPressPostId,
+        PlannerItemStatus terminalStatus,
+        CancellationToken cancellationToken = default)
+    {
+        RequireBackgroundContinuation(ownerUserId);
+        if (wordPressPostId <= 0) throw new ArgumentOutOfRangeException(nameof(wordPressPostId));
+        if (terminalStatus is not (PlannerItemStatus.Published or PlannerItemStatus.Scheduled))
+            throw new ArgumentOutOfRangeException(nameof(terminalStatus), terminalStatus, "Planner publish reconciliation requires a terminal published/scheduled state.");
+
+        var item = RequireOwned(itemId, ownerUserId);
+        if (item.SiteId != siteId)
+            throw new UnauthorizedAccessException("Planner execution site does not match the owned planner item.");
+        await EnsureItemSiteOwnershipAsync(item, ownerUserId, cancellationToken);
+        var updated = ApplyUpdate(
+            item,
+            new UpdatePlannerItem(null, terminalStatus, null, null, null, null, wordPressPostId));
+        Save(updated, ownerUserId);
+        return updated;
+    }
+
+    public static string CreatePublishIdempotencyKey(PlannerItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var payload = string.Join(
+            "\n",
+            item.Id.ToString("D"),
+            item.Title.Trim(),
+            item.DraftContent ?? string.Empty,
+            item.ScheduledAtUtc?.ToUniversalTime().ToString("O") ?? string.Empty);
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+        return $"planner-publish:{item.Id:N}:{hash[..24]}";
+    }
+
+    private static void RequireBackgroundContinuation(Guid ownerUserId)
+    {
+        if (ownerUserId == Guid.Empty ||
+            !BackgroundContentMutationAuthorization.IsGranted ||
+            !BackgroundExecutionIdentity.TryGetOwnerUserId(out var backgroundOwnerUserId) ||
+            backgroundOwnerUserId != ownerUserId)
+        {
+            throw new UnauthorizedAccessException("Authorized planner background execution identity is required.");
+        }
     }
 
     private PlannerItem RequireOwned(Guid id, Guid ownerUserId) =>
