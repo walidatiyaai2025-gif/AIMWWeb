@@ -17,7 +17,6 @@ public sealed class SecurityAuditEmailAlertRelay(
     IEmailOutbox emailOutbox,
     ILogger<SecurityAuditEmailAlertRelay> logger)
 {
-    private const int MaxCandidatesPerCategory = 500;
     private const int MaxCandidatesPerPass = 500;
     private const int MaxDetailsLength = 1000;
     private const int MaxLabelLength = 160;
@@ -44,7 +43,7 @@ public sealed class SecurityAuditEmailAlertRelay(
         CancellationToken cancellationToken = default)
     {
         sinceUtc = sinceUtc.Kind == DateTimeKind.Utc ? sinceUtc : sinceUtc.ToUniversalTime();
-        var candidates = await LoadCandidatesAsync(sinceUtc, cancellationToken);
+        var candidates = await LoadCandidatesAsync(sinceUtc, alreadyHandled, cancellationToken);
         var handled = new List<Guid>(candidates.Count);
         var enqueued = 0;
         var skipped = 0;
@@ -52,9 +51,6 @@ public sealed class SecurityAuditEmailAlertRelay(
 
         foreach (var record in candidates)
         {
-            if (alreadyHandled?.Contains(record.EventId) == true)
-                continue;
-
             try
             {
                 var owner = await ResolveOwnerAsync(record, cancellationToken);
@@ -187,28 +183,17 @@ public sealed class SecurityAuditEmailAlertRelay(
 
     private async Task<IReadOnlyList<SecurityAuditRecord>> LoadCandidatesAsync(
         DateTime sinceUtc,
+        IReadOnlySet<Guid>? alreadyHandled,
         CancellationToken cancellationToken)
     {
         var store = new ApplicationSecurityAuditStore(dbContext);
-        var records = new List<SecurityAuditRecord>(MaxCandidatesPerCategory * 5);
+        var retained = await store.ListRetainedAsync(sinceUtc, cancellationToken);
 
-        records.AddRange(await store.ListAsync(
-            new SecurityAuditQuery(Category: "Authentication", Outcome: "Blocked", FromUtc: sinceUtc, Take: MaxCandidatesPerCategory),
-            cancellationToken));
-
-        foreach (var category in new[] { "Account", "Authorization", "Session", "Configuration" })
-        {
-            records.AddRange(await store.ListAsync(
-                new SecurityAuditQuery(Category: category, FromUtc: sinceUtc, Take: MaxCandidatesPerCategory),
-                cancellationToken));
-        }
-
-        return records
-            .GroupBy(x => x.EventId)
-            .Select(group => group.First())
+        return retained
             .Where(IsHighSignal)
-            .OrderBy(x => x.OccurredAtUtc)
-            .ThenBy(x => x.EventId)
+            .Where(record => alreadyHandled?.Contains(record.EventId) != true)
+            .OrderBy(record => record.OccurredAtUtc)
+            .ThenBy(record => record.EventId)
             .Take(MaxCandidatesPerPass)
             .ToArray();
     }

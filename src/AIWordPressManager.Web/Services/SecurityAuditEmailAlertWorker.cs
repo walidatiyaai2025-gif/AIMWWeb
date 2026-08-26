@@ -9,7 +9,7 @@ public sealed class SecurityAuditEmailAlertWorker(
     ILogger<SecurityAuditEmailAlertWorker> logger) : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
-    private static readonly TimeSpan RecoveryWindow = TimeSpan.FromHours(24);
+    internal static readonly TimeSpan RecoveryWindow = ApplicationSecurityAuditStore.RetentionWindow;
     private const int MaxHandledEventIds = 5_000;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
