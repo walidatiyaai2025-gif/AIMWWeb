@@ -2,10 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @using AIWordPressManager.Domain.Entities
-@inject AutomationCenterService RawAutomation
-@inject AIWordPressManager.Persistence.AppDbContext Db
-@inject CurrentUserContext CurrentUser
-@inject AIWordPressManager.Application.Abstractions.Billing.IAccountEntitlementEnforcementService Entitlements
+@inject AccountAutomationCenterService Automation
 @inject SiteWebService SiteService
 @inject AppLanguageService L
 @inject AppNotificationService Notifications
@@ -138,7 +135,6 @@
     private bool _saving;
     private bool _disposed;
 
-    private AccountAutomationCenterService Automation => new(RawAutomation, Db, CurrentUser, Entitlements);
     private string TimeText => Convert.ToString(_model.TimeOfDay) ?? string.Empty;
 
     private IEnumerable<AutomationJob> FilteredJobs => _jobs.Where(x =>

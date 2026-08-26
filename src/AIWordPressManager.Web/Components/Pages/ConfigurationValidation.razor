@@ -1,11 +1,12 @@
 @page "/configuration-validation"
 @page "/module/configuration"
 @rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = ApplicationPermissionCatalog.SettingsManage)]
 @inject AppLanguageService L
-@inject AppNotificationService Notifications
 @inject IConfiguration Configuration
 @inject IWebHostEnvironment Environment
 @inject AIWordPressManager.Application.Abstractions.IApplicationPathService Paths
+@inject CurrentUserContext CurrentUser
 @inject IJSRuntime JS
 
 <PageTitle>@(L.IsArabic ? "التحقق من الإعدادات" : "Configuration Validation")</PageTitle>
@@ -15,13 +16,41 @@
         <div>
             <span class="workspace-kicker">CONFIGURATION</span>
             <h1>@(L.IsArabic ? "مركز التحقق من الإعدادات" : "Configuration Validation Center")</h1>
-            <p>@(L.IsArabic ? "فحص إعدادات التشغيل والتخزين والأمان قبل الاعتماد أو النشر." : "Validate runtime, storage, and security settings before approval or deployment.")</p>
+            <p>@(L.IsArabic ? "فحص مجموعة محددة من إعدادات التشغيل والتخزين والأمان، دون اعتبارها دليلاً على جاهزية النظام بالكامل." : "Check a bounded set of runtime, storage, and security settings without treating them as proof of whole-system readiness.")</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn" @onclick="CopyReportAsync" disabled="@(_report is null)">@(L.IsArabic ? "نسخ التقرير" : "Copy report")</button>
-            <button class="btn primary" @onclick="RunValidation">↻ @(L.IsArabic ? "إعادة الفحص" : "Run validation")</button>
+            <button class="btn" @onclick="CopyReportAsync" disabled="@(_report is null || _copying)">
+                @(_copying
+                    ? (L.IsArabic ? "جارٍ النسخ..." : "Copying...")
+                    : !string.IsNullOrWhiteSpace(_copyError)
+                        ? (L.IsArabic ? "إعادة محاولة النسخ" : "Retry copy")
+                        : (L.IsArabic ? "نسخ التقرير" : "Copy report"))
+            </button>
+            <button class="btn primary" @onclick="RunValidation">
+                ↻ @(!string.IsNullOrWhiteSpace(_error)
+                    ? (L.IsArabic ? "إعادة محاولة الفحص" : "Retry validation")
+                    : (L.IsArabic ? "إعادة الفحص" : "Run validation"))
+            </button>
         </div>
     </section>
+
+    @if (_copySucceeded)
+    {
+        <AppStateBanner Kind="success"
+                        Title="@(L.IsArabic ? "تم نسخ تقرير التحقق" : "Validation report copied")"
+                        Description="@(L.IsArabic ? "أكد المتصفح نجاح الكتابة إلى الحافظة." : "The browser confirmed that the sanitized report was written to the clipboard.")" />
+    }
+    else if (!string.IsNullOrWhiteSpace(_copyError))
+    {
+        <AppStateBanner Kind="error"
+                        Title="@(L.IsArabic ? "تعذر نسخ تقرير التحقق" : "Validation report could not be copied")"
+                        Description="@_copyError"
+                        Busy="@_copying"
+                        RetryText="@(L.IsArabic ? "إعادة محاولة النسخ" : "Retry copy")"
+                        RetryingText="@(L.IsArabic ? "جارٍ إعادة المحاولة..." : "Retrying copy...")"
+                        RetryAriaLabel="@(L.IsArabic ? "إعادة محاولة نسخ تقرير التحقق إلى الحافظة" : "Retry copying the validation report to the clipboard")"
+                        RetryRequested="CopyReportAsync" />
+    }
 
     @if (!string.IsNullOrWhiteSpace(_error))
     {
@@ -47,11 +76,11 @@
         <section class="panel settings-section">
             <header>
                 <div>
-                    <span class="workspace-kicker">READINESS</span>
-                    <h2>@(_report.IsHealthy ? (L.IsArabic ? "الإعدادات جاهزة" : "Configuration is ready") : (L.IsArabic ? "توجد أخطاء تمنع الاعتماد" : "Blocking configuration errors found"))</h2>
-                    <p>@(L.IsArabic ? "راجع البنود التالية ونفّذ الإجراء المقترح لكل تحذير أو خطأ." : "Review each item and apply the recommended action for warnings or errors.")</p>
+                    <span class="workspace-kicker">VALIDATION RESULT</span>
+                    <h2>@ReadinessTitle</h2>
+                    <p>@(L.IsArabic ? "هذه النتيجة تخص الفحوصات المدرجة أدناه فقط. راجع التحذيرات والأخطاء قبل الاعتماد أو النشر." : "This result applies only to the checks listed below. Review warnings and errors before approval or deployment.")</p>
                 </div>
-                <span class="settings-badge @(_report.IsHealthy ? "success" : "danger")">@(_report.IsHealthy ? "READY" : "ACTION REQUIRED")</span>
+                <span class="settings-badge @ReadinessClass">@ReadinessBadge</span>
             </header>
 
             <div class="database-info-grid">
@@ -61,11 +90,11 @@
                         <div class="d-flex justify-content-between align-items-start gap-3">
                             <div>
                                 <small>@(L.IsArabic ? item.TitleAr : item.Title)</small>
-                                <strong style="display:block;margin:.35rem 0;word-break:break-word">@item.Value</strong>
+                                <strong style="display:block;margin:.35rem 0;word-break:break-word">@DisplayValue(item)</strong>
                             </div>
                             <span class="settings-badge @StatusClass(item.Status)">@StatusText(item.Status)</span>
                         </div>
-                        <p style="margin:.75rem 0 0">@(L.IsArabic ? item.MessageAr : item.Message)</p>
+                        <p style="margin:.75rem 0 0">@DisplayMessage(item)</p>
                     </article>
                 }
             </div>
@@ -74,27 +103,92 @@
 </div>
 
 @code {
+    private static readonly HashSet<string> ManagedPathKeys = new(StringComparer.Ordinal)
+    {
+        "local-data", "logs", "backups"
+    };
+
     private ConfigurationValidationReport? _report;
     private string? _error;
+    private bool _copying;
+    private bool _copySucceeded;
+    private string? _copyError;
     private int ValidCount => _report?.Items.Count(x => x.Status == ValidationStatus.Valid) ?? 0;
+
+    private string ReadinessTitle => _report is null
+        ? string.Empty
+        : _report.CriticalCount > 0
+            ? (L.IsArabic ? "توجد أخطاء مانعة في فحوصات الإعدادات" : "Blocking errors found in the configuration checks")
+            : _report.WarningCount > 0
+                ? (L.IsArabic ? "لا توجد أخطاء مانعة؛ توجد تحذيرات للمراجعة" : "No blocking errors; warnings require review")
+                : (L.IsArabic ? "لم تُكتشف أخطاء مانعة في فحوصات الإعدادات" : "No blocking errors detected in these configuration checks");
+
+    private string ReadinessBadge => _report is null
+        ? string.Empty
+        : _report.CriticalCount > 0
+            ? (L.IsArabic ? "إجراء مطلوب" : "ACTION REQUIRED")
+            : _report.WarningCount > 0
+                ? (L.IsArabic ? "توجد تحذيرات" : "WARNINGS PRESENT")
+                : (L.IsArabic ? "لا توجد أخطاء مانعة" : "NO BLOCKERS");
+
+    private string ReadinessClass => _report is null
+        ? string.Empty
+        : _report.CriticalCount > 0
+            ? "danger"
+            : _report.WarningCount > 0
+                ? "warning"
+                : "success";
 
     protected override void OnInitialized() => RunValidation();
 
     private void RunValidation()
     {
+        _copySucceeded = false;
+        _copyError = null;
+
         try
         {
             _error = null;
-            _report = new ConfigurationValidationService(Configuration, Environment, Paths).Validate();
+            _report = new ConfigurationValidationService(Configuration, Environment, Paths, CurrentUser).Validate();
         }
-        catch (Exception ex)
+        catch (UnauthorizedAccessException)
         {
             _report = null;
-            _error = L.TranslateMessage(ex.Message);
-            Notifications.Error(
-                _error,
-                L.IsArabic ? "فشل فحص الإعدادات" : "Configuration validation failed");
+            _error = L.IsArabic
+                ? "ليست لديك صلاحية إدارة الإعدادات المطلوبة لتشغيل هذا الفحص."
+                : "You do not have the Settings.Manage permission required to run this validation.";
         }
+        catch (Exception)
+        {
+            _report = null;
+            _error = L.IsArabic
+                ? "تعذر إكمال فحص الإعدادات. لم يتم عرض تفاصيل الخادم الداخلية؛ يمكنك إعادة المحاولة."
+                : "Configuration validation could not complete. Internal server details were withheld; you can retry.";
+        }
+    }
+
+    private string DisplayValue(ConfigurationValidationItem item) => item.Key switch
+    {
+        "local-data" => L.IsArabic ? "تخزين بيانات التطبيق المُدار" : "Managed application-data storage",
+        "logs" => L.IsArabic ? "تخزين السجلات المُدار" : "Managed log storage",
+        "backups" => L.IsArabic ? "تخزين النسخ الاحتياطية المُدار" : "Managed backup storage",
+        _ => item.Value
+    };
+
+    private string DisplayMessage(ConfigurationValidationItem item)
+    {
+        if (ManagedPathKeys.Contains(item.Key))
+        {
+            return item.Status == ValidationStatus.Error
+                ? (L.IsArabic
+                    ? "تعذر التحقق من قابلية الكتابة لهذا التخزين المُدار. تم حجب مسار الخادم وتفاصيل الاستثناء."
+                    : "This managed storage target could not be verified as writable. Server paths and exception details were withheld.")
+                : (L.IsArabic
+                    ? "تم التحقق من توفر هذا التخزين المُدار وقابليته للكتابة."
+                    : "This managed storage target was verified as available and writable.");
+        }
+
+        return L.IsArabic ? item.MessageAr : item.Message;
     }
 
     private string StatusClass(ValidationStatus status) => status switch
@@ -113,9 +207,10 @@
         _ => status.ToString()
     };
 
-    private async Task CopyReportAsync()
+    private string BuildSanitizedCopyReport()
     {
-        if (_report is null) return;
+        if (_report is null)
+            return string.Empty;
 
         var lines = new List<string>
         {
@@ -123,22 +218,37 @@
             $"Checked: {_report.CheckedAtUtc:O}",
             $"Critical: {_report.CriticalCount}",
             $"Warnings: {_report.WarningCount}",
+            $"Result: {(_report.CriticalCount > 0 ? "Blocking errors found" : _report.WarningCount > 0 ? "No blockers; warnings require review" : "No blockers detected in these checks")}",
             string.Empty
         };
-        lines.AddRange(_report.Items.Select(x => $"[{x.Status}] {x.Title}: {x.Value}{System.Environment.NewLine}{x.Message}"));
+        lines.AddRange(_report.Items.Select(item =>
+            $"[{item.Status}] {item.Title}: {DisplayValue(item)}{System.Environment.NewLine}{DisplayMessage(item)}"));
+        return string.Join(System.Environment.NewLine, lines);
+    }
+
+    private async Task CopyReportAsync()
+    {
+        if (_report is null || _copying)
+            return;
+
+        _copying = true;
+        _copySucceeded = false;
+        _copyError = null;
 
         try
         {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", string.Join(System.Environment.NewLine, lines));
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", BuildSanitizedCopyReport());
+            _copySucceeded = true;
         }
-        catch (JSDisconnectedException)
+        catch (Exception)
         {
+            _copyError = L.IsArabic
+                ? "لم يؤكد المتصفح نجاح الكتابة إلى الحافظة. لم يتم الإبلاغ عن نجاح النسخ؛ يمكنك إعادة المحاولة."
+                : "The browser did not confirm a clipboard write. No copy success was reported; you can retry.";
         }
-        catch (Exception ex)
+        finally
         {
-            Notifications.Error(
-                L.TranslateMessage(ex.Message),
-                L.IsArabic ? "تعذر نسخ التقرير" : "Could not copy report");
+            _copying = false;
         }
     }
 }

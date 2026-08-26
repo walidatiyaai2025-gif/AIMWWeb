@@ -59,6 +59,7 @@ builder.Services.AddScoped<SiteOperationMaintenanceService>();
 builder.Services.AddScoped<LocalAuthenticationService>();
 builder.Services.AddScoped<AccountProfileService>();
 builder.Services.AddScoped<EmailScheduleService>();
+builder.Services.AddScoped<AccountAutomationCenterService>();
 builder.Services.AddScoped<IWordPressConnectionTester, WordPressConnectionTester>();
 builder.Services.AddScoped<IWordPressApiClient, WordPressApiClient>();
 builder.Services.AddScoped<SiteWebService>();
@@ -290,8 +291,11 @@ app.MapGet("/api/build", (BuildInformationService service) => Results.Ok(service
     .RequireAuthorization(ApplicationPermissionCatalog.OperationsView);
 app.MapGet("/api/dashboard", async (DashboardLiveService service, CancellationToken cancellationToken) => Results.Ok(await service.GetAsync(cancellationToken)))
     .RequireAuthorization(ApplicationPermissionCatalog.OperationsView);
-app.MapGet("/api/automations", (AutomationCenterService service) => Results.Ok(new { jobs = service.GetJobs(), history = service.GetHistory(100) }))
-    .RequireAuthorization(ApplicationPermissionCatalog.OperationsView);
+app.MapGet("/api/automations", async (AccountAutomationCenterService service, CancellationToken cancellationToken) =>
+{
+    var snapshot = await service.GetSnapshotAsync(100, cancellationToken);
+    return Results.Ok(new { jobs = snapshot.Jobs, history = snapshot.History });
+}).RequireAuthorization(ApplicationPermissionCatalog.OperationsView);
 
 app.MapGet("/api/ai/prompts", (string? culture, IAIPromptRegistry registry) => Results.Ok(registry.GetAll(string.IsNullOrWhiteSpace(culture) ? "en" : culture)))
     .RequireAuthorization(ApplicationPermissionCatalog.ContentView);

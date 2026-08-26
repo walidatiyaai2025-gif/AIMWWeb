@@ -1,5 +1,8 @@
+using AIWordPressManager.Application.Abstractions;
 using AIWordPressManager.Application.Abstractions.AI;
+using AIWordPressManager.Persistence;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 namespace AIWordPressManager.Web.Services;
 
@@ -14,21 +17,28 @@ public sealed class ContentPlannerService
     private readonly ExecutionCenterService _execution;
     private readonly NotificationInboxService _notifications;
     private readonly CurrentUserContext _currentUser;
+    private readonly AppDbContext _dbContext;
+    private readonly ApplicationSecurityAuditService _securityAudit;
 
     public ContentPlannerService(
         IAIOrchestrator ai,
         IAIPromptRegistry prompts,
         ExecutionCenterService execution,
         NotificationInboxService notifications,
-        CurrentUserContext currentUser)
+        CurrentUserContext currentUser,
+        IApplicationPathService applicationPaths,
+        AppDbContext dbContext,
+        ApplicationSecurityAuditService securityAudit)
     {
         _ai = ai;
         _prompts = prompts;
         _execution = execution;
         _notifications = notifications;
         _currentUser = currentUser;
+        _dbContext = dbContext;
+        _securityAudit = securityAudit;
 
-        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIWordPressManager", "Data");
+        var directory = applicationPaths.GetApplicationDataDirectory();
         Directory.CreateDirectory(directory);
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -39,8 +49,13 @@ public sealed class ContentPlannerService
         Initialize();
     }
 
-    public IReadOnlyList<PlannerItem> GetItems(Guid? siteId = null, PlannerItemStatus? status = null, DateTime? fromUtc = null, DateTime? toUtc = null)
+    public IReadOnlyList<PlannerItem> GetItems(
+        Guid? siteId = null,
+        PlannerItemStatus? status = null,
+        DateTime? fromUtc = null,
+        DateTime? toUtc = null)
     {
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentView);
         lock (_sync)
         {
             using var connection = Open();
@@ -49,13 +64,15 @@ public sealed class ContentPlannerService
                 SELECT Id, SiteId, SiteName, Title, Status, Idea, Brief, DraftContent,
                        ScheduledAtUtc, WordPressPostId, CreatedAtUtc, UpdatedAtUtc, CreatedBy
                 FROM PlannerItems
-                WHERE ($siteId IS NULL OR SiteId=$siteId)
+                WHERE OwnerUserId=$ownerUserId
+                  AND ($siteId IS NULL OR SiteId=$siteId)
                   AND ($status IS NULL OR Status=$status)
                   AND ($fromUtc IS NULL OR ScheduledAtUtc >= $fromUtc)
                   AND ($toUtc IS NULL OR ScheduledAtUtc <= $toUtc)
                 ORDER BY COALESCE(ScheduledAtUtc, UpdatedAtUtc), UpdatedAtUtc DESC;
                 """;
-            command.Parameters.AddWithValue("$siteId", Db(siteId?.ToString()));
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString("D"));
+            command.Parameters.AddWithValue("$siteId", Db(siteId?.ToString("D")));
             command.Parameters.AddWithValue("$status", Db(status?.ToString()));
             command.Parameters.AddWithValue("$fromUtc", Db(fromUtc?.ToUniversalTime().ToString("O")));
             command.Parameters.AddWithValue("$toUtc", Db(toUtc?.ToUniversalTime().ToString("O")));
@@ -66,16 +83,38 @@ public sealed class ContentPlannerService
         }
     }
 
-    public PlannerItem Create(CreatePlannerItem request)
+    public PlannerItem? Get(Guid id)
+    {
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentView);
+        return GetOwned(id, ownerUserId);
+    }
+
+    public async Task<PlannerItem> CreateAsync(CreatePlannerItem request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Title)) throw new InvalidOperationException("Title is required.");
-        var ownerUserId = _currentUser.UserId;
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        var site = await ResolveOwnedSiteAsync(request.SiteId, ownerUserId, cancellationToken);
         var now = DateTime.UtcNow;
-        var item = new PlannerItem(Guid.NewGuid(), request.SiteId, request.SiteName?.Trim() ?? string.Empty,
-            request.Title.Trim(), PlannerItemStatus.Idea, request.Idea?.Trim(), null, null,
-            request.ScheduledAtUtc?.ToUniversalTime(), null, now, now,
-            string.IsNullOrWhiteSpace(request.CreatedBy) ? _currentUser.UserName : request.CreatedBy.Trim());
-        Save(item);
+        var actor = string.IsNullOrWhiteSpace(_currentUser.UserName)
+            ? ownerUserId.ToString("D")
+            : _currentUser.UserName.Trim();
+        var item = new PlannerItem(
+            Guid.NewGuid(),
+            site?.Id,
+            site?.Name ?? string.Empty,
+            request.Title.Trim(),
+            PlannerItemStatus.Idea,
+            request.Idea?.Trim(),
+            null,
+            null,
+            request.ScheduledAtUtc?.ToUniversalTime(),
+            null,
+            now,
+            now,
+            actor);
+
+        Save(item, ownerUserId);
+        await AuditSucceededAsync("Create", item, cancellationToken);
         _notifications.Create(
             ownerUserId,
             "Content planner",
@@ -87,10 +126,194 @@ public sealed class ContentPlannerService
         return item;
     }
 
-    public PlannerItem Update(Guid id, UpdatePlannerItem request)
+    public async Task<PlannerItem> UpdateAsync(Guid id, UpdatePlannerItem request, CancellationToken cancellationToken = default)
     {
-        var current = Get(id) ?? throw new InvalidOperationException("Planner item not found.");
-        var updated = current with
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        var current = RequireOwned(id, ownerUserId);
+        await EnsureItemSiteOwnershipAsync(current, ownerUserId, cancellationToken);
+        var updated = ApplyUpdate(current, request);
+        Save(updated, ownerUserId);
+        await AuditSucceededAsync("Update", updated, cancellationToken);
+        return updated;
+    }
+
+    public async Task<PlannerItem> GenerateBriefAsync(
+        Guid id,
+        string culture,
+        CancellationToken cancellationToken = default)
+    {
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        var item = RequireOwned(id, ownerUserId);
+        await EnsureItemSiteOwnershipAsync(item, ownerUserId, cancellationToken);
+        var prompt = _prompts.Get("content-brief", culture);
+        var result = await _ai.ExecuteAsync(
+            new AIRequest(
+                item.Idea ?? item.Title,
+                prompt,
+                null,
+                0.2,
+                1800,
+                item.SiteId,
+                ownerUserId.ToString("D"),
+                "content-brief"),
+            cancellationToken);
+        if (!result.IsSuccess) throw new InvalidOperationException(result.Error ?? "AI brief generation failed.");
+
+        var updated = ApplyUpdate(item, new UpdatePlannerItem(null, PlannerItemStatus.Brief, null, result.Content, null, null, null));
+        Save(updated, ownerUserId);
+        await AuditSucceededAsync("GenerateBrief", updated, cancellationToken);
+        return updated;
+    }
+
+    public async Task<PlannerItem> GenerateDraftAsync(
+        Guid id,
+        string culture,
+        CancellationToken cancellationToken = default)
+    {
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        var item = RequireOwned(id, ownerUserId);
+        await EnsureItemSiteOwnershipAsync(item, ownerUserId, cancellationToken);
+        var input = string.IsNullOrWhiteSpace(item.Brief) ? item.Idea ?? item.Title : item.Brief;
+        var prompt = culture.StartsWith("ar", StringComparison.OrdinalIgnoreCase)
+            ? "اكتب مسودة مقال كاملة ومنظمة بصيغة HTML اعتمادًا على الملخص التالي. لا تنشر تلقائيًا."
+            : "Write a complete, structured HTML article draft from the following brief. Do not publish automatically.";
+        var result = await _ai.ExecuteAsync(
+            new AIRequest(
+                input,
+                prompt,
+                null,
+                0.3,
+                4000,
+                item.SiteId,
+                ownerUserId.ToString("D"),
+                "planner-draft"),
+            cancellationToken);
+        if (!result.IsSuccess) throw new InvalidOperationException(result.Error ?? "AI draft generation failed.");
+
+        var updated = ApplyUpdate(item, new UpdatePlannerItem(null, PlannerItemStatus.Draft, null, null, result.Content, null, null));
+        Save(updated, ownerUserId);
+        await AuditSucceededAsync("GenerateDraft", updated, cancellationToken);
+        return updated;
+    }
+
+    public async Task<PlannerItem> QueueForExecutionAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var ownerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.ContentEdit);
+        var executionOwnerUserId = _currentUser.RequirePermission(ApplicationPermissionCatalog.OperationsExecute);
+        if (executionOwnerUserId != ownerUserId)
+            throw new UnauthorizedAccessException("Authenticated account identity changed during the planner operation.");
+
+        var item = RequireOwned(id, ownerUserId);
+        if (string.IsNullOrWhiteSpace(item.DraftContent)) throw new InvalidOperationException("A draft is required before queueing.");
+        if (!item.SiteId.HasValue)
+            throw new InvalidOperationException("Select an owned site before queueing planner content for execution.");
+
+        var site = await ResolveOwnedSiteAsync(item.SiteId, ownerUserId, cancellationToken)
+            ?? throw new InvalidOperationException("Site is unavailable.");
+        var executionJob = _execution.Enqueue(
+            ownerUserId,
+            site.Id,
+            $"Publish planned content: {item.Title}",
+            "Planner Publish",
+            site.Name,
+            1);
+
+        _notifications.Create(
+            ownerUserId,
+            "Execution queued",
+            item.Title,
+            NotificationSeverity.Information,
+            relatedId: item.Id,
+            siteId: site.Id,
+            executionJobId: executionJob.Id,
+            source: "ContentPlanner");
+
+        var updated = ApplyUpdate(item, new UpdatePlannerItem(null, PlannerItemStatus.Review, null, null, null, null, null));
+        Save(updated, ownerUserId);
+        await AuditSucceededAsync(
+            "QueueForExecution",
+            updated,
+            cancellationToken,
+            new Dictionary<string, string> { ["executionJobId"] = executionJob.Id.ToString("D") });
+        return updated;
+    }
+
+    private PlannerItem RequireOwned(Guid id, Guid ownerUserId) =>
+        GetOwned(id, ownerUserId) ?? throw new InvalidOperationException("Planner item not found.");
+
+    private PlannerItem? GetOwned(Guid id, Guid ownerUserId)
+    {
+        lock (_sync)
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT Id, SiteId, SiteName, Title, Status, Idea, Brief, DraftContent,
+                       ScheduledAtUtc, WordPressPostId, CreatedAtUtc, UpdatedAtUtc, CreatedBy
+                FROM PlannerItems
+                WHERE Id=$id AND OwnerUserId=$ownerUserId
+                LIMIT 1;
+                """;
+            command.Parameters.AddWithValue("$id", id.ToString("D"));
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString("D"));
+            using var reader = command.ExecuteReader();
+            return reader.Read() ? Read(reader) : null;
+        }
+    }
+
+    private async Task<AIWordPressManager.Domain.Entities.Site?> ResolveOwnedSiteAsync(
+        Guid? siteId,
+        Guid ownerUserId,
+        CancellationToken cancellationToken)
+    {
+        if (!siteId.HasValue) return null;
+        var site = await _dbContext.Sites.AsNoTracking()
+            .SingleOrDefaultAsync(
+                x => x.Id == siteId.Value && x.OwnerUserId == ownerUserId,
+                cancellationToken);
+        if (site is null)
+            throw new InvalidOperationException("Site is unavailable.");
+        return site;
+    }
+
+    private async Task EnsureItemSiteOwnershipAsync(
+        PlannerItem item,
+        Guid ownerUserId,
+        CancellationToken cancellationToken)
+    {
+        if (item.SiteId.HasValue)
+            _ = await ResolveOwnedSiteAsync(item.SiteId, ownerUserId, cancellationToken);
+    }
+
+    private async Task AuditSucceededAsync(
+        string action,
+        PlannerItem item,
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, string>? extraMetadata = null)
+    {
+        var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["ownerScoped"] = "true",
+            ["siteScope"] = item.SiteId?.ToString("D") ?? "account"
+        };
+        if (extraMetadata is not null)
+        {
+            foreach (var pair in extraMetadata) metadata[pair.Key] = pair.Value;
+        }
+
+        await _securityAudit.RecordCurrentAsync(
+            "ContentPlanner",
+            action,
+            "Succeeded",
+            "PlannerItem",
+            item.Id.ToString("D"),
+            item.Title,
+            metadata,
+            cancellationToken);
+    }
+
+    private static PlannerItem ApplyUpdate(PlannerItem current, UpdatePlannerItem request) =>
+        current with
         {
             Title = string.IsNullOrWhiteSpace(request.Title) ? current.Title : request.Title.Trim(),
             Status = request.Status ?? current.Status,
@@ -101,56 +324,8 @@ public sealed class ContentPlannerService
             WordPressPostId = request.WordPressPostId ?? current.WordPressPostId,
             UpdatedAtUtc = DateTime.UtcNow
         };
-        Save(updated);
-        return updated;
-    }
 
-    public async Task<PlannerItem> GenerateBriefAsync(Guid id, string culture, string? userId, CancellationToken cancellationToken)
-    {
-        var item = Get(id) ?? throw new InvalidOperationException("Planner item not found.");
-        var prompt = _prompts.Get("content-brief", culture);
-        var result = await _ai.ExecuteAsync(new AIRequest(item.Idea ?? item.Title, prompt, null, 0.2, 1800, item.SiteId, userId, "content-brief"), cancellationToken);
-        if (!result.IsSuccess) throw new InvalidOperationException(result.Error ?? "AI brief generation failed.");
-        return Update(id, new UpdatePlannerItem(null, PlannerItemStatus.Brief, null, result.Content, null, null, null));
-    }
-
-    public async Task<PlannerItem> GenerateDraftAsync(Guid id, string culture, string? userId, CancellationToken cancellationToken)
-    {
-        var item = Get(id) ?? throw new InvalidOperationException("Planner item not found.");
-        var input = string.IsNullOrWhiteSpace(item.Brief) ? item.Idea ?? item.Title : item.Brief;
-        var prompt = culture.StartsWith("ar", StringComparison.OrdinalIgnoreCase)
-            ? "اكتب مسودة مقال كاملة ومنظمة بصيغة HTML اعتمادًا على الملخص التالي. لا تنشر تلقائيًا."
-            : "Write a complete, structured HTML article draft from the following brief. Do not publish automatically.";
-        var result = await _ai.ExecuteAsync(new AIRequest(input, prompt, null, 0.3, 4000, item.SiteId, userId, "planner-draft"), cancellationToken);
-        if (!result.IsSuccess) throw new InvalidOperationException(result.Error ?? "AI draft generation failed.");
-        return Update(id, new UpdatePlannerItem(null, PlannerItemStatus.Draft, null, null, result.Content, null, null));
-    }
-
-    public PlannerItem QueueForExecution(Guid id)
-    {
-        var item = Get(id) ?? throw new InvalidOperationException("Planner item not found.");
-        if (string.IsNullOrWhiteSpace(item.DraftContent)) throw new InvalidOperationException("A draft is required before queueing.");
-
-        var ownerUserId = _currentUser.UserId;
-        var executionJob = item.SiteId.HasValue
-            ? _execution.Enqueue(ownerUserId, item.SiteId.Value, $"Publish planned content: {item.Title}", "Planner Publish", item.SiteName, 1)
-            : _execution.Enqueue($"Publish planned content: {item.Title}", "Planner Publish", item.SiteName, 1);
-
-        _notifications.Create(
-            ownerUserId,
-            "Execution queued",
-            item.Title,
-            NotificationSeverity.Information,
-            relatedId: item.Id,
-            siteId: item.SiteId,
-            executionJobId: executionJob.Id,
-            source: "ContentPlanner");
-        return Update(id, new UpdatePlannerItem(null, PlannerItemStatus.Review, null, null, null, null, null));
-    }
-
-    public PlannerItem? Get(Guid id) => GetItems().FirstOrDefault(x => x.Id == id);
-
-    private void Save(PlannerItem item)
+    private void Save(PlannerItem item, Guid ownerUserId)
     {
         lock (_sync)
         {
@@ -158,17 +333,19 @@ public sealed class ContentPlannerService
             using var command = connection.CreateCommand();
             command.CommandText = """
                 INSERT INTO PlannerItems
-                (Id, SiteId, SiteName, Title, Status, Idea, Brief, DraftContent, ScheduledAtUtc,
+                (Id, OwnerUserId, SiteId, SiteName, Title, Status, Idea, Brief, DraftContent, ScheduledAtUtc,
                  WordPressPostId, CreatedAtUtc, UpdatedAtUtc, CreatedBy)
-                VALUES ($id,$siteId,$siteName,$title,$status,$idea,$brief,$draft,$scheduled,$postId,$created,$updated,$createdBy)
+                VALUES ($id,$ownerUserId,$siteId,$siteName,$title,$status,$idea,$brief,$draft,$scheduled,$postId,$created,$updated,$createdBy)
                 ON CONFLICT(Id) DO UPDATE SET
-                  SiteName=excluded.SiteName, Title=excluded.Title, Status=excluded.Status,
+                  SiteId=excluded.SiteId, SiteName=excluded.SiteName, Title=excluded.Title, Status=excluded.Status,
                   Idea=excluded.Idea, Brief=excluded.Brief, DraftContent=excluded.DraftContent,
                   ScheduledAtUtc=excluded.ScheduledAtUtc, WordPressPostId=excluded.WordPressPostId,
-                  UpdatedAtUtc=excluded.UpdatedAtUtc;
+                  UpdatedAtUtc=excluded.UpdatedAtUtc
+                WHERE PlannerItems.OwnerUserId=excluded.OwnerUserId;
                 """;
-            command.Parameters.AddWithValue("$id", item.Id.ToString());
-            command.Parameters.AddWithValue("$siteId", Db(item.SiteId?.ToString()));
+            command.Parameters.AddWithValue("$id", item.Id.ToString("D"));
+            command.Parameters.AddWithValue("$ownerUserId", ownerUserId.ToString("D"));
+            command.Parameters.AddWithValue("$siteId", Db(item.SiteId?.ToString("D")));
             command.Parameters.AddWithValue("$siteName", item.SiteName);
             command.Parameters.AddWithValue("$title", item.Title);
             command.Parameters.AddWithValue("$status", item.Status.ToString());
@@ -180,37 +357,113 @@ public sealed class ContentPlannerService
             command.Parameters.AddWithValue("$created", item.CreatedAtUtc.ToString("O"));
             command.Parameters.AddWithValue("$updated", item.UpdatedAtUtc.ToString("O"));
             command.Parameters.AddWithValue("$createdBy", item.CreatedBy);
-            command.ExecuteNonQuery();
+            if (command.ExecuteNonQuery() != 1)
+                throw new InvalidOperationException("Planner item could not be persisted for the current account.");
         }
     }
 
     private void Initialize()
     {
         using var connection = Open();
-        using var command = connection.CreateCommand();
-        command.CommandText = """
-            PRAGMA journal_mode=WAL;
-            CREATE TABLE IF NOT EXISTS PlannerItems(
-              Id TEXT PRIMARY KEY, SiteId TEXT NULL, SiteName TEXT NOT NULL, Title TEXT NOT NULL,
-              Status TEXT NOT NULL, Idea TEXT NULL, Brief TEXT NULL, DraftContent TEXT NULL,
-              ScheduledAtUtc TEXT NULL, WordPressPostId INTEGER NULL, CreatedAtUtc TEXT NOT NULL,
-              UpdatedAtUtc TEXT NOT NULL, CreatedBy TEXT NOT NULL);
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = """
+                PRAGMA journal_mode=WAL;
+                CREATE TABLE IF NOT EXISTS PlannerItems(
+                  Id TEXT PRIMARY KEY, OwnerUserId TEXT NULL, SiteId TEXT NULL, SiteName TEXT NOT NULL, Title TEXT NOT NULL,
+                  Status TEXT NOT NULL, Idea TEXT NULL, Brief TEXT NULL, DraftContent TEXT NULL,
+                  ScheduledAtUtc TEXT NULL, WordPressPostId INTEGER NULL, CreatedAtUtc TEXT NOT NULL,
+                  UpdatedAtUtc TEXT NOT NULL, CreatedBy TEXT NOT NULL);
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        // Existing installations intentionally retain NULL ownership for legacy rows. Normal account
+        // queries never return those rows; silently assigning them to whichever user upgrades first
+        // would create a cross-account disclosure.
+        if (!HasColumn(connection, "PlannerItems", "OwnerUserId"))
+        {
+            using var migration = connection.CreateCommand();
+            migration.CommandText = "ALTER TABLE PlannerItems ADD COLUMN OwnerUserId TEXT NULL;";
+            migration.ExecuteNonQuery();
+        }
+
+        using var indexes = connection.CreateCommand();
+        indexes.CommandText = """
             CREATE INDEX IF NOT EXISTS IX_PlannerItems_Status_Scheduled ON PlannerItems(Status, ScheduledAtUtc);
+            CREATE INDEX IF NOT EXISTS IX_PlannerItems_Owner_Status_Scheduled ON PlannerItems(OwnerUserId, Status, ScheduledAtUtc);
             """;
-        command.ExecuteNonQuery();
+        indexes.ExecuteNonQuery();
     }
 
-    private SqliteConnection Open() { var connection = new SqliteConnection(_connectionString); connection.Open(); return connection; }
+    private static bool HasColumn(SqliteConnection connection, string tableName, string columnName)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info({tableName});";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    private SqliteConnection Open()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        return connection;
+    }
+
     private static object Db(object? value) => value ?? DBNull.Value;
     private static DateTime ParseDate(string value) => DateTime.Parse(value, null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
     private static PlannerItem Read(SqliteDataReader reader) => new(
-        Guid.Parse(reader.GetString(0)), reader.IsDBNull(1) ? null : Guid.Parse(reader.GetString(1)), reader.GetString(2),
-        reader.GetString(3), Enum.Parse<PlannerItemStatus>(reader.GetString(4), true), reader.IsDBNull(5) ? null : reader.GetString(5),
-        reader.IsDBNull(6) ? null : reader.GetString(6), reader.IsDBNull(7) ? null : reader.GetString(7),
-        reader.IsDBNull(8) ? null : ParseDate(reader.GetString(8)), reader.IsDBNull(9) ? null : reader.GetInt32(9),
-        ParseDate(reader.GetString(10)), ParseDate(reader.GetString(11)), reader.GetString(12));
+        Guid.Parse(reader.GetString(0)),
+        reader.IsDBNull(1) ? null : Guid.Parse(reader.GetString(1)),
+        reader.GetString(2),
+        reader.GetString(3),
+        Enum.Parse<PlannerItemStatus>(reader.GetString(4), true),
+        reader.IsDBNull(5) ? null : reader.GetString(5),
+        reader.IsDBNull(6) ? null : reader.GetString(6),
+        reader.IsDBNull(7) ? null : reader.GetString(7),
+        reader.IsDBNull(8) ? null : ParseDate(reader.GetString(8)),
+        reader.IsDBNull(9) ? null : reader.GetInt32(9),
+        ParseDate(reader.GetString(10)),
+        ParseDate(reader.GetString(11)),
+        reader.GetString(12));
 }
 
-public sealed record PlannerItem(Guid Id, Guid? SiteId, string SiteName, string Title, PlannerItemStatus Status, string? Idea, string? Brief, string? DraftContent, DateTime? ScheduledAtUtc, int? WordPressPostId, DateTime CreatedAtUtc, DateTime UpdatedAtUtc, string CreatedBy);
-public sealed record CreatePlannerItem(Guid? SiteId, string? SiteName, string Title, string? Idea, DateTime? ScheduledAtUtc, string? CreatedBy);
-public sealed record UpdatePlannerItem(string? Title, PlannerItemStatus? Status, string? Idea, string? Brief, string? DraftContent, DateTime? ScheduledAtUtc, int? WordPressPostId);
+public sealed record PlannerItem(
+    Guid Id,
+    Guid? SiteId,
+    string SiteName,
+    string Title,
+    PlannerItemStatus Status,
+    string? Idea,
+    string? Brief,
+    string? DraftContent,
+    DateTime? ScheduledAtUtc,
+    int? WordPressPostId,
+    DateTime CreatedAtUtc,
+    DateTime UpdatedAtUtc,
+    string CreatedBy);
+
+// SiteName and CreatedBy remain in the input shape for compatibility with existing callers, but the
+// service never trusts them: both are resolved from authenticated server state before persistence.
+public sealed record CreatePlannerItem(
+    Guid? SiteId,
+    string? SiteName,
+    string Title,
+    string? Idea,
+    DateTime? ScheduledAtUtc,
+    string? CreatedBy);
+
+public sealed record UpdatePlannerItem(
+    string? Title,
+    PlannerItemStatus? Status,
+    string? Idea,
+    string? Brief,
+    string? DraftContent,
+    DateTime? ScheduledAtUtc,
+    int? WordPressPostId);
