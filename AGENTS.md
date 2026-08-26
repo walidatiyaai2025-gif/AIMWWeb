@@ -1,5 +1,14 @@
 # AIMWWeb Agent Instructions
 
+## PCC authority and routing contract
+- This repository is managed through `walidatiyaai2025-gif/project-control-center` (PCC) as project `AIMWWEB`.
+- Project model: `STANDALONE`; default implementation scope: `PROJECT`.
+- Every Manager/Lead/Worker/QA/Integration/Release role must fetch current PCC `main`, read the PCC root `AGENTS.md` and applicable policies, resolve `AIMWWEB` through `portfolio/project-routing.json`, and obtain/reconcile a current PCC routing packet before implementation writes.
+- Live GitHub state remains authoritative for repository SHAs, PRs, CI, production lineage, and implementation evidence. Stale prompts and historical SHAs are non-authoritative until revalidated.
+- If PCC routing and this repository conflict, stop non-emergency writes and reconcile governance first. A verified production emergency may use only the minimum safe stabilization path allowed by the PCC emergency-production policy.
+- Existing AIMWWeb production-closure, Patch, package, security, QA, release, and delivery contracts below remain authoritative local rules and are not weakened by PCC onboarding.
+- Durable governance changes must be persisted in PCC and repository control files; chat memory is not canonical.
+
 ## Source of truth
 - Reconstruct the current repository state from GitHub before acting. Do not treat chat memory or stale task trackers as authoritative.
 - `main`, merged pull requests, current CI, and the actual implementation are authoritative.
