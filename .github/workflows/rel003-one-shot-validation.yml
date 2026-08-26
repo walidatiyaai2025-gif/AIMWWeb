@@ -1,0 +1,41 @@
+name: REL003 One Shot Validation
+
+on:
+  push:
+    branches:
+      - lead/rel003-final-offline-recovery-closure
+
+permissions:
+  contents: write
+
+jobs:
+  apply-validate-commit:
+    if: ${{ github.event.head_commit.message != 'feat: apply transactional backup and admin recovery boundary' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lead/rel003-final-offline-recovery-closure
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Apply deterministic REL-003 patch
+        run: python3 Build/rel003-apply-and-validate.py
+      - name: Validate diff
+        run: git diff --check
+      - name: Restore
+        run: dotnet restore AIWordPressManager.Web.sln --disable-parallel
+      - name: Build
+        run: dotnet build AIWordPressManager.Web.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test tests/AIWordPressManager.Tests/AIWordPressManager.Tests.csproj --configuration Release --no-build
+      - name: Commit clean production change
+        run: |
+          rm -f Build/rel003-apply-and-validate.py .github/workflows/rel003-one-shot-validation.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: apply transactional backup and admin recovery boundary"
+          git push origin HEAD:lead/rel003-final-offline-recovery-closure
