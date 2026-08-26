@@ -29,8 +29,41 @@ Issue #183 may close only when the inventory is **100.00% terminal** with every 
 
 This rule is permanent after #183: any future feature that adds an actionable user-facing control without a real production destination or an explicit unavailable state plus appropriate automated evidence is a release blocker.
 
+## Constitutional Git-based Patch delivery contract
+When the user asks for a **"Patch"**, **"باتش"**, or wording that clearly requests the project patch/update mechanism, this contract takes precedence over the prebuilt update-package contract below.
+
+A Patch is a **small Windows updater ZIP that pulls and builds the latest approved merged `main` from GitHub at execution time**. It is not a source ZIP, not a prebuilt application payload, and must never be silently pinned to a historical commit.
+
+Required behavior before delivering a Patch:
+1. Fetch live GitHub state first: current `main`, open PRs, exact heads, mergeability, and required CI.
+2. Integrate only production work that is genuinely completed, dependency-safe, merge-ready, and green on its required exact-head gates. Never force-merge failing, stale-conflicted, explicitly incomplete, or dependency-blocked work merely to make the Patch appear newer.
+3. Re-fetch final `main` after any integration and treat that final merged state as the only production source of truth.
+4. The Patch itself must resolve the current remote `main` again when it runs, then record and build the exact SHA it actually fetched. A SHA may be displayed as current provenance but must not be hard-coded as the updater's permanent source.
+5. By default, refuse deployment when required GitHub Actions for that exact fetched `main` SHA are failed or not terminal. Any bypass must be explicit and opt-in.
+6. Restore, build and publish the exact fetched source using the repository-supported .NET/runtime contract before IIS downtime.
+7. Deploy through safe update semantics: full rollback backup, preservation of runtime data/local configuration, IIS stop/start, payload verification, and automatic rollback on deployment or health-check failure.
+8. Verify the real application health endpoint after restart (`/health/live` unless the application contract changes).
+9. Write durable local provenance including exact installed Git SHA, version, UTC install time, target path, and rollback backup location.
+10. Hand the user the actual Git-updater ZIP. Do not substitute an older Actions artifact when the user explicitly requested a Patch.
+
+### Patch safety invariants
+The Git-based Patch must:
+- use fresh remote `main` state on every run and avoid reuse of an old local checkout;
+- build before taking IIS down whenever possible;
+- preserve `Data`, `Logs`, `Screenshots`, `Backups`, `Exports`, `Temp`, `appsettings.Production.json`, and `appsettings.Local.json`;
+- never delete runtime/user data to make deployment succeed;
+- automatically restore the previous application when post-deployment verification fails and a rollback backup is available;
+- leave an auditable marker such as `.aimw-git-update.json` and a human-readable last-update record containing the exact installed SHA;
+- support an administrator-friendly one-command launcher (`.cmd`/`.bat`) for Windows Server.
+
+### Patch naming
+Use the stable delivery name:
+`AIMWWeb-Git-Updater.zip`
+
+The updater is intentionally reusable: running the same delivered Patch later must fetch the then-current approved `main`, subject to the exact-SHA quality gate above.
+
 ## Permanent update-package delivery contract
-When the user asks for any wording equivalent to **"نسخة"**, **"آخر نسخة"**, **"update package"**, **"installable package"**, **"package update"**, or asks for a build to install, the default deliverable is an **installable Windows/IIS ZIP produced by GitHub Actions**, not a source-code archive and not an unverified local build.
+When the user asks for any wording equivalent to **"نسخة"**, **"آخر نسخة"**, **"update package"**, **"installable package"**, **"package update"**, or asks for a build to install, the default deliverable is an **installable Windows/IIS ZIP produced by GitHub Actions**, not a source-code archive and not an unverified local build. If the user explicitly says Patch/باتش, use the Git-based Patch contract above instead.
 
 Required behavior on every such request:
 1. Reconstruct the latest `main` state and identify the newest completed/merged product commit.
