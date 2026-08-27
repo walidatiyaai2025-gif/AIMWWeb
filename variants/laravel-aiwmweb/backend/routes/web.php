@@ -7,6 +7,8 @@ use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SiteDiagnosticsController;
+use App\Http\Controllers\SiteManagementController;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
@@ -17,11 +19,11 @@ Route::post('/api/connector/pair', [DemoController::class, 'completePairing'])->
 Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth');
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {
-    Route::get('/sites', [DemoController::class, 'sites']);
-    Route::post('/sites', [DemoController::class, 'createSite']);
-    Route::get('/sites/{site}', [DemoController::class, 'showSite']);
-    Route::patch('/sites/{site}', [DemoController::class, 'updateSite']);
-    Route::delete('/sites/{site}', [DemoController::class, 'deleteSite']);
+    Route::get('/sites', [SiteManagementController::class, 'index']);
+    Route::post('/sites', [SiteManagementController::class, 'store']);
+    Route::get('/sites/{site}', [SiteManagementController::class, 'show']);
+    Route::patch('/sites/{site}', [SiteManagementController::class, 'update']);
+    Route::delete('/sites/{site}', [SiteManagementController::class, 'destroy']);
     Route::post('/sites/{site}/pairing', [DemoController::class, 'pairing']);
     Route::get('/sites/{site}/connector', [DemoController::class, 'connector']);
     Route::put('/sites/{site}/connector/scopes', [DemoController::class, 'scopes']);
@@ -50,6 +52,19 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal']);
     Route::post('/sites/{site}/seo/executions/bulk', [SeoController::class, 'executeBulk']);
     Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry']);
+
+    Route::get('/sites/{site}/connection', [SiteDiagnosticsController::class, 'status']);
+    Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck']);
+    Route::post('/sites/{site}/connection/reconnect', [SiteDiagnosticsController::class, 'reconnect']);
+    Route::post('/sites/{site}/connection/disconnect', [SiteDiagnosticsController::class, 'disconnect']);
+    Route::get('/sites/{site}/capabilities', [SiteDiagnosticsController::class, 'capabilities']);
+    Route::get('/sites/{site}/diagnostics', [SiteDiagnosticsController::class, 'diagnosticHistory']);
+    Route::get('/sites/{site}/operations', [SiteDiagnosticsController::class, 'operations']);
+    Route::get('/site-operations/summary', [SiteDiagnosticsController::class, 'operationSummary']);
+    Route::get('/site-operations/storage', [SiteDiagnosticsController::class, 'storage']);
+    Route::post('/site-operations/cleanup/preview', [SiteDiagnosticsController::class, 'previewCleanup']);
+    Route::post('/site-operations/cleanup', [SiteDiagnosticsController::class, 'cleanup']);
+    Route::get('/sites-entitlements', [SiteDiagnosticsController::class, 'entitlements']);
 });
 
 Route::prefix('api/v1/billing')->group(function () {
