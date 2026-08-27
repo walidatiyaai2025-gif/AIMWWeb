@@ -26,6 +26,7 @@ final class ResolveTenantContext
             ->firstOrFail();
 
         $this->context->activate($membership->tenant, $membership);
+        $request->attributes->set('tenant_id', (int) $membership->tenant->getKey());
 
         try {
             return $next($request);

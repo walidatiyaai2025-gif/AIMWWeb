@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - worker/laravel-aiwmweb-acceptance-parity
+      - worker/laravel-aiwmweb-production-runtime
     paths:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb.yml'
@@ -107,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.4
+        image: mysql:8.4.11
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: laravel_aiwmweb
@@ -141,19 +142,253 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env
       - run: php artisan key:generate
-      - name: Validate forward, rollback and forward migration
+      - name: Validate fresh, rollback and forward migration
         run: |
           php artisan migrate:fresh --force
+          php artisan runtime:mysql-smoke
           php artisan migrate:rollback --step=3 --force
           php artisan migrate --force
+          php artisan migrate --force
+          php artisan runtime:mysql-smoke
       - name: Run full tests on MySQL
         run: php artisan test
+
+  redis-queue-scheduler:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_aiwmweb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7.4.11-alpine3.21
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: laravel_aiwmweb
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      REDIS_HOST: 127.0.0.1
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      SESSION_CONNECTION: default
+      REDIS_QUEUE: default
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, redis, pcntl
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: php artisan migrate:fresh --force
+      - name: Redis tenant lock smoke
+        run: php artisan runtime:redis-smoke
+      - name: Real Redis queue worker and tenant-context smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          php artisan runtime:queue-smoke --timeout=45 > /tmp/queue-smoke.log 2>&1 &
+          smoke_pid=$!
+          sleep 1
+          php artisan queue:work redis --queue=runtime --stop-when-empty --sleep=1 --tries=3 --timeout=30
+          wait "$smoke_pid"
+          cat /tmp/queue-smoke.log
+      - name: Scheduler freshness and readiness smoke
+        run: |
+          php artisan runtime:scheduler-heartbeat
+          php artisan runtime:health --ready
+
+  frontend-production-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install frontend dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f package-lock.json ]]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
+      - run: npm run --if-present typecheck
+      - run: npm run --if-present test -- --run
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laravel-aiwmweb-frontend-${{ github.sha }}
+          path: variants/laravel-aiwmweb/backend/public/build
+          if-no-files-found: error
+
+  wordpress-disposable-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create ephemeral runtime environment
+        shell: bash
+        run: |
+          cat > variants/laravel-aiwmweb/runtime/.env <<'ENV'
+          COMPOSE_PROJECT_NAME=laravel-aiwmweb-wp-ci
+          APP_KEY=base64:ZGV0ZXJtaW5pc3RpYy10ZXN0LWtleS1vbmx5LTAwMDAwMDAwMDA=
+          DB_PASSWORD=test-only-db
+          DB_ROOT_PASSWORD=test-only-root
+          WORDPRESS_DB_PASSWORD=test-only-wp-db
+          WORDPRESS_DB_ROOT_PASSWORD=test-only-wp-root
+          WORDPRESS_ADMIN_USER=ci-admin
+          WORDPRESS_ADMIN_PASSWORD=test-only-admin-password
+          WORDPRESS_ADMIN_EMAIL=ci@example.invalid
+          WORDPRESS_PORT=8081
+          WORDPRESS_URL=http://localhost:8081
+          AIMW_REQUIRE_CONNECTOR=0
+          ENV
+      - name: Reset, install and exercise real disposable WordPress
+        run: bash variants/laravel-aiwmweb/runtime/scripts/wp-reset.sh
+        env:
+          RUNTIME_ENV_FILE: ${{ github.workspace }}/variants/laravel-aiwmweb/runtime/.env
+          COMPOSE_PROJECT_NAME: laravel-aiwmweb-wp-ci
+      - name: Cleanup WordPress runtime
+        if: always()
+        shell: bash
+        run: |
+          docker compose --project-name laravel-aiwmweb-wp-ci \
+            --env-file variants/laravel-aiwmweb/runtime/.env \
+            -f variants/laravel-aiwmweb/runtime/docker-compose.yml \
+            --profile wordpress down -v --remove-orphans || true
+
+  compose-production-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create ephemeral runtime environment
+        shell: bash
+        run: |
+          app_key="base64:$(openssl rand -base64 32 | tr -d '\n')"
+          cat > variants/laravel-aiwmweb/runtime/.env <<ENV
+          COMPOSE_PROJECT_NAME=laravel-aiwmweb-runtime-ci
+          APP_ENV=production
+          APP_KEY=${app_key}
+          APP_URL=http://localhost:8080
+          FRONTEND_URL=http://localhost:8080
+          APP_PORT=8080
+          DB_DATABASE=laravel_aiwmweb
+          DB_USERNAME=laravel_aiwmweb
+          DB_PASSWORD=test-only-db
+          DB_ROOT_PASSWORD=test-only-root
+          WORDPRESS_DB_PASSWORD=test-only-wp-db
+          WORDPRESS_DB_ROOT_PASSWORD=test-only-wp-root
+          CORS_ALLOWED_ORIGINS=http://localhost:8080
+          TRUSTED_PROXIES=*
+          ENV
+      - name: Validate compose model and build runtime images
+        shell: bash
+        working-directory: variants/laravel-aiwmweb
+        run: |
+          set -euo pipefail
+          compose=(docker compose --env-file runtime/.env -f runtime/docker-compose.yml)
+          "${compose[@]}" config --quiet
+          "${compose[@]}" build api web worker scheduler
+      - name: Boot production-style stack and run real runtime smokes
+        shell: bash
+        working-directory: variants/laravel-aiwmweb
+        run: |
+          set -euo pipefail
+          compose=(docker compose --env-file runtime/.env -f runtime/docker-compose.yml)
+          "${compose[@]}" up -d mysql redis
+          "${compose[@]}" run --rm api php artisan migrate:fresh --force
+          "${compose[@]}" up -d api web worker scheduler
+          "${compose[@]}" exec -T api php artisan runtime:mysql-smoke
+          "${compose[@]}" exec -T api php artisan runtime:redis-smoke
+          "${compose[@]}" exec -T api php artisan runtime:queue-smoke --timeout=45
+          "${compose[@]}" exec -T scheduler php artisan schedule:run --no-interaction
+          for _ in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8080/health/ready >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl --fail --silent http://localhost:8080/health/live >/dev/null
+          curl --fail --silent http://localhost:8080/health/ready >/dev/null
+          echo 'COMPOSE_PRODUCTION_RUNTIME=PASS'
+      - name: Capture compose diagnostics
+        if: failure()
+        shell: bash
+        working-directory: variants/laravel-aiwmweb
+        run: docker compose --env-file runtime/.env -f runtime/docker-compose.yml ps && docker compose --env-file runtime/.env -f runtime/docker-compose.yml logs --no-color --tail=200
+      - name: Cleanup production-style stack
+        if: always()
+        shell: bash
+        working-directory: variants/laravel-aiwmweb
+        run: docker compose --env-file runtime/.env -f runtime/docker-compose.yml down -v --remove-orphans || true
+
+  runtime-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package Connector when canonical source is present
+        id: connector
+        shell: bash
+        run: |
+          set +e
+          variants/laravel-aiwmweb/runtime/scripts/package-connector.sh > /tmp/connector.log 2>&1
+          rc=$?
+          set -e
+          cat /tmp/connector.log
+          if [[ "$rc" -eq 3 ]]; then
+            echo 'CONNECTOR_ARTIFACT_GATE=BLOCKED_SOURCE'
+          elif [[ "$rc" -ne 0 ]]; then
+            exit "$rc"
+          else
+            echo 'CONNECTOR_ARTIFACT_GATE=PASS'
+          fi
+      - name: Create source-traceable runtime manifest and runbook bundle
+        shell: bash
+        working-directory: variants/laravel-aiwmweb
+        run: |
+          set -euo pipefail
+          runtime/scripts/runtime-manifest.sh
+          tar --exclude='runtime/artifacts' --exclude='runtime/.env' \
+            -czf "runtime/artifacts/Laravel-AIWMWeb-runtime-runbook-${GITHUB_SHA::12}.tgz" \
+            runtime docs/PRODUCTION_RUNTIME_RUNBOOK.md README.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laravel-aiwmweb-runtime-${{ github.sha }}
+          path: variants/laravel-aiwmweb/runtime/artifacts
+          if-no-files-found: error
 
   wordpress-real-rest-e2e:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.0.46
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: wordpress
@@ -176,5 +411,5 @@ jobs:
           php-version: '8.4'
           extensions: mysqli, curl
           coverage: none
-      - name: Install disposable WordPress and prove real REST mutation
+      - name: Preserve merged real WordPress REST acceptance gate
         run: bash variants/laravel-aiwmweb/tests/wordpress/bootstrap-wordpress.sh
