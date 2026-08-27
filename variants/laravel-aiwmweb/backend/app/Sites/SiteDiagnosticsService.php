@@ -7,8 +7,10 @@ use App\Connector\PairingService;
 use App\Models\Connector;
 use App\Models\Site;
 use App\Models\SiteDiagnostic;
+use DateTimeInterface;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Throwable;
 
 final class SiteDiagnosticsService
@@ -123,12 +125,12 @@ final class SiteDiagnosticsService
                 return $this->persist($site, SiteConnectionState::CAPABILITY_DISABLED, $rest, null, 'diagnostics_scope_disabled', 'Diagnostics capability is supported but disabled by the owner.', $capabilities, [], $started);
             }
 
-            $operationId = (string) \Illuminate\Support\Str::uuid();
+            $operationId = (string) Str::uuid();
             $result = $this->wordpress->operate($site, $operationId, 'site.health');
             $health = (array) ($result['health'] ?? []);
             $db = (bool) data_get($health, 'database.connected', false);
             $remoteRest = (string) data_get($health, 'rest.state', SiteConnectionState::TEMPORARILY_UNAVAILABLE);
-            $classification = ($rest['state'] === SiteConnectionState::CONNECTED && $db && $remoteRest === 'SUPPORTED_ENABLED')
+            $classification = $rest['state'] === SiteConnectionState::CONNECTED && $db && $remoteRest === 'SUPPORTED_ENABLED'
                 ? SiteConnectionState::CONNECTED
                 : SiteConnectionState::DEGRADED;
             $diagnostic = $this->persist($site, $classification, $rest, $health, null, null, $capabilities, $health, $started);
@@ -146,7 +148,7 @@ final class SiteDiagnosticsService
         return SiteDiagnostic::query()->where('site_id', $site->id)->latest('checked_at')->limit(max(1, min(500, $take)))->get()->toArray();
     }
 
-    private function persist(Site $site, string $classification, array $rest, ?array $health, ?string $failureCode, ?string $failureMessage, array $capabilities, array $details, \DateTimeInterface $started): SiteDiagnostic
+    private function persist(Site $site, string $classification, array $rest, ?array $health, ?string $failureCode, ?string $failureMessage, array $capabilities, array $details, DateTimeInterface $started): SiteDiagnostic
     {
         $record = SiteDiagnostic::query()->create([
             'site_id' => $site->id,
@@ -211,7 +213,7 @@ final class SiteDiagnosticsService
     private function classifyFailure(Throwable $e): string
     {
         $message = strtolower($e->getMessage());
-        if (str_contains($message, 'scope is disabled') || str_contains($message, 'capability') && str_contains($message, 'disabled')) {
+        if (str_contains($message, 'scope is disabled') || (str_contains($message, 'capability') && str_contains($message, 'disabled'))) {
             return SiteConnectionState::CAPABILITY_DISABLED;
         }
         if (str_contains($message, 'connector is revoked') || str_contains($message, 'not active')) {
