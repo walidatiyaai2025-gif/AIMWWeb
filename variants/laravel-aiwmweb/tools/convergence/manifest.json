@@ -1,6 +1,6 @@
 {
-  "schema": 1,
-  "captured_at": "2026-08-27T20:45:00Z",
+  "schema": 2,
+  "captured_at": "2026-08-27T21:05:00Z",
   "main": {
     "branch": "main",
     "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
@@ -12,14 +12,28 @@
       "role": "site_connector_protocol",
       "branch": "feature/laravel-aiwmweb-demo-vertical-slice",
       "sha": "85b83ce53ce6be434176964bc77ced6beefa6e68",
-      "composition": "logical_authority; transported by PR #269 because #269 contains this head"
+      "composition": "logical authority only; transported by advanced_connector_extension"
     },
     {
       "pr": 269,
       "role": "advanced_connector_extension",
       "branch": "worker/laravel-aiwmweb-wp-runtime",
       "sha": "391c717c2b197226207afe2ddf432dd86e0ce6eb",
-      "composition": "merge first; contains #260 Site/Connector protocol plus advanced extension"
+      "composition": "merge first; contains #260 Site/Connector lineage plus advanced extension"
+    },
+    {
+      "pr": null,
+      "role": "seo_closure",
+      "branch": "worker/laravel-aiwmweb-seo-closure",
+      "sha": "600d83aab3392456bd59d0c60812f8d3b12b8a72",
+      "composition": "stacked on #269; adds SEO parity closure and shares an identical AiGenerator contract blob with #267"
+    },
+    {
+      "pr": null,
+      "role": "sites_diagnostics",
+      "branch": "worker/laravel-aiwmweb-sites-diagnostics",
+      "sha": "aa868f03a5ad095e165fb79f56a8427d6cffb76e",
+      "composition": "stacked on #269; diagnostics extension only; #260 remains Site identity/protocol authority"
     },
     {
       "pr": 263,
@@ -78,29 +92,32 @@
     },
     {
       "branch": "worker/laravel-aiwmweb-sync-reconciliation",
-      "sha": "f3855fa2c2728ab5920deb24e32c566caa0cc7ec",
+      "sha": "bcd20b364a77ee4cebd1fb2e17a4941bc5401e7f",
       "parent": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
-      "reason": "staging-only commit adds .sync-payload.part1; no reviewable product source yet"
-    },
-    {
-      "branch": "seo-closure",
-      "reason": "not present in live Laravel worker branches"
-    },
-    {
-      "branch": "sites-diagnostics",
-      "reason": "not present in live Laravel worker branches"
+      "reason": "three staging-only payload files (.sync-payload.part1/2/3); no reviewable product source yet"
     }
   ],
-  "composition_order": [269, 263, 266, 267, 264, 265, 262],
+  "composition_order": [
+    "advanced_connector_extension",
+    "seo_closure",
+    "sites_diagnostics",
+    "content",
+    "billing",
+    "ai_platform",
+    "admin_operations",
+    "production_runtime",
+    "frontend"
+  ],
   "mechanical_overlays": [
     "union AppServiceProvider bindings without rebinding the same abstraction",
     "union bootstrap routing/middleware/exception hooks",
-    "union web routes and place frontend catch-all last",
+    "union web routes; preserve #260 canonical site CRUD, add SEO/sites-diagnostics extension routes, and place frontend catch-all last",
     "union runtime/admin/billing console commands and schedules",
     "preserve #269 WordPress connector E2E harness over #265 placeholder connector behavior",
     "union #265 runtime env with #266 PayPal variables",
     "rename #263 SQLite-conflicting explicit content index to content_items_remote_unique in the composed tree",
-    "regenerate npm package-lock after #262 package.json is present",
+    "probe React 19 compatibility because @laravel/multiplex 0.4.3 requires react ^19.2.7 while #262 declares React 18",
+    "regenerate npm package-lock from the final composed package contract; never use legacy-peer-deps",
     "preserve merged main parity ledger rather than stale worker ledger edits"
   ]
 }
