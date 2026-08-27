@@ -122,13 +122,16 @@ public sealed class SeoRemediationWebService(
                 continue;
             }
 
+            if (provider.HasApiKey)
+                return new(SeoAiProviderState.Ready, provider.Provider, string.Empty);
+
             var runtime = await providerSettings.ResolveAsync(
                 provider.Provider,
                 $"AI:{provider.Provider}:ApiKey",
                 $"AI:{provider.Provider}:Model",
                 provider.Model,
                 cancellationToken);
-            if (provider.HasApiKey || !string.IsNullOrWhiteSpace(runtime.ApiKey))
+            if (!string.IsNullOrWhiteSpace(runtime.ApiKey))
                 return new(SeoAiProviderState.Ready, provider.Provider, string.Empty);
         }
 
