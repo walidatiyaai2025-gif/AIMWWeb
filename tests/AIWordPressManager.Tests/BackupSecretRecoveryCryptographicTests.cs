@@ -16,7 +16,7 @@ public sealed class BackupSecretRecoveryCryptographicTests : IDisposable
     public void WrappedEnvelope_MustValidateCryptographicallyBeforeSecretRecoveryPassesPreflight()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 3, 3, 7]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var masterKey = RandomNumberGenerator.GetBytes(32);
 
         try

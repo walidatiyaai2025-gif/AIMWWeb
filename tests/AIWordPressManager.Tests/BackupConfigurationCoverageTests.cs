@@ -25,7 +25,7 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     {
         var service = CreateService();
         var databasePath = Path.Combine(service.DataDirectory, "application.db");
-        File.WriteAllBytes(databasePath, [1, 3, 5, 7]);
+        SqliteTestDatabase.Create(databasePath);
         WriteSqliteConfiguration(service, databasePath);
 
         var securityDirectory = Path.Combine(service.ApplicationRoot, "Security");
@@ -86,7 +86,7 @@ public sealed class BackupConfigurationCoverageTests : IDisposable
     public void RestoreReadiness_RequiresDatabaseSetupConfigurationRatherThanAnyConfigFile()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [2, 4, 6, 8]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         File.WriteAllText(Path.Combine(service.ConfigurationDirectory, "unrelated.json"), "{}");
         var backup = service.CreateBackup();
         var readiness = service.CheckRestoreReadiness(backup.FileName);

@@ -14,7 +14,7 @@ public sealed class BackupArchivePathSafetyTests : IDisposable
     public void Inspect_RejectsUnexpectedRootPayload()
     {
         var service = CreateService();
-        File.WriteAllBytes(Path.Combine(service.DataDirectory, "application.db"), [1, 2, 3, 4]);
+        SqliteTestDatabase.Create(Path.Combine(service.DataDirectory, "application.db"));
         var backup = service.CreateBackup();
         var path = Path.Combine(service.BackupDirectory, backup.FileName);
 
