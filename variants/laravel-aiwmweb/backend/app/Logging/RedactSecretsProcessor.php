@@ -16,8 +16,9 @@ final class RedactSecretsProcessor
         );
     }
 
-    /** @param array<mixed> $values
-     *  @return array<mixed>
+    /**
+     * @param  array<mixed>  $values
+     * @return array<mixed>
      */
     private function redact(array $values, int $depth = 0): array
     {
