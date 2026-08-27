@@ -12,9 +12,17 @@ use RuntimeException;
 
 final class PairingService
 {
-    public const CAPABILITIES = ['health', 'content.read', 'content.update', 'seo.read', 'seo.write', 'audit.local', 'connector.manage'];
+    public const CAPABILITIES = [
+        'health', 'content.read', 'content.update', 'seo.read', 'seo.write', 'audit.local', 'connector.manage',
+        'adapters.read', 'plugins.read', 'plugins.manage', 'themes.read', 'themes.manage', 'cache.manage',
+        'cron.read', 'cron.manage', 'diagnostics.read', 'backup.read', 'backup.create', 'backup.restore',
+        'filesystem.read', 'database.read', 'database.manage',
+    ];
 
-    public const SAFE_DEFAULT_SCOPES = ['health', 'content.read', 'seo.read', 'connector.manage'];
+    public const SAFE_DEFAULT_SCOPES = [
+        'health', 'content.read', 'seo.read', 'connector.manage', 'adapters.read', 'plugins.read', 'themes.read',
+        'cron.read', 'diagnostics.read', 'backup.read', 'filesystem.read', 'database.read',
+    ];
 
     public function create(Site $site): string
     {
@@ -40,18 +48,27 @@ final class PairingService
         try {
             $site = Site::query()->findOrFail($pairing->site_id);
             $secret = Str::random(64);
+            $negotiated = array_values(array_intersect(self::CAPABILITIES, $capabilities));
             $connector = Connector::query()->updateOrCreate(['site_id' => $site->id], [
                 'identity' => $identity,
                 'encrypted_secret' => $secret,
                 'protocol_version' => $version,
-                'capabilities' => array_values(array_intersect(self::CAPABILITIES, $capabilities)),
-                'enabled_scopes' => array_values(array_intersect(self::SAFE_DEFAULT_SCOPES, $capabilities)),
+                'capabilities' => $negotiated,
+                'enabled_scopes' => array_values(array_intersect(self::SAFE_DEFAULT_SCOPES, $negotiated)),
                 'revoked_at' => null,
             ]);
             $pairing->forceFill(['used_at' => now()])->save();
             $site->update(['connection_status' => 'paired']);
 
-            return ['connector_id' => $connector->identity, 'secret' => $secret, 'protocol_version' => $version, 'enabled_scopes' => $connector->enabled_scopes];
+            return [
+                'connector_id' => $connector->identity,
+                'secret' => $secret,
+                'protocol_version' => $version,
+                'tenant_id' => $tenant->id,
+                'site_id' => $site->id,
+                'capabilities' => $connector->capabilities,
+                'enabled_scopes' => $connector->enabled_scopes,
+            ];
         } finally {
             $context->forget();
         }
