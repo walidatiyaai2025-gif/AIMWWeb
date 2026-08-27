@@ -62,7 +62,7 @@ class FrontendContextTest extends TestCase
             ->get('/tenants/alpha/module/posts')
             ->assertOk()
             ->assertSee('id="app"', false)
-            ->assertSee('Laravel AIWMWeb');
+            ->assertSee('AI WordPress Manager — Laravel');
     }
 
     private function tenantMembership(User $user, string $slug, array $permissions): TenantMembership
