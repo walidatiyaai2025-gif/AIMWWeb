@@ -70,15 +70,18 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
             readinessText.Should().Contain("Restore must run while the web application is stopped");
             readinessText.Should().Contain("In-process restore remains blocked");
 
-            await page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = false }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true }).ClickAsync();
             await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
             await page.GetByText(note, new() { Exact = true }).WaitForAsync();
             (await page.Locator(".backup-row").Filter(new LocatorFilterOptions { HasText = note }).CountAsync()).Should().Be(1,
                 "refresh and browser reload must reconcile the durable archive rather than a local-only row");
 
             row = page.Locator(".backup-row").Filter(new LocatorFilterOptions { HasText = note }).First;
-            await row.GetByRole(AriaRole.Button, new() { Name = "Delete", Exact = false }).ClickAsync();
-            await page.GetByText("Backup deleted.", new() { Exact = true }).WaitForAsync();
+            var delete = row.GetByRole(AriaRole.Button, new() { Name = "Delete", Exact = false });
+            await ClickUntilAsync(
+                delete,
+                async () => await page.GetByText("Backup deleted.", new() { Exact = true }).CountAsync() == 1,
+                "The hydrated Delete action never reported success after deleting the real archive.");
             await WaitUntilAsync(
                 async () => await page.GetByText(note, new() { Exact = true }).CountAsync() == 0,
                 "Delete success did not reconcile the visible archive out of the list.");
@@ -86,11 +89,14 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
                 "delete success must correspond to the real archive being removed");
             (await page.Locator(".backup-list").Last.InnerTextAsync()).Should().Contain("Delete");
 
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+            (await page.GetByText(note, new() { Exact = true }).CountAsync()).Should().Be(0,
+                "browser re-entry must prove the deleted archive stays deleted");
+
             pageErrors.Should().BeEmpty("real backup create/inspect/preflight/reload/delete actions must not cause browser errors");
         }
         finally
         {
-            CleanupApplicationRoot();
             await context.CloseBoundedAsync("backup-restore-browser-real-flow");
         }
     }
@@ -117,7 +123,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
                 await writer.WriteAsync("not a backup manifest");
             }
 
-            var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = false });
+            var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
             await ClickUntilAsync(
                 refresh,
                 async () => await page.GetByText(fileName, new() { Exact = true }).CountAsync() == 1,
@@ -149,7 +155,6 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         }
         finally
         {
-            CleanupApplicationRoot();
             await context.CloseBoundedAsync("backup-restore-invalid-archive");
         }
     }
@@ -157,7 +162,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
     [Fact]
     public async Task Backup_routes_deny_non_administrator_and_clipboard_denial_never_reports_success()
     {
-        var (viewerContext, _) = await host.CreateContentViewerContextAsync(new UxViewport("desktop", 1440, 900));
+        var (viewerContext, _) = await CreateContentViewerContextAfterConfigurationResetAsync();
         try
         {
             foreach (var path in new[] { "/backups", "/module/backups" })
@@ -171,6 +176,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
                 response.Should().NotBeNull();
                 response!.Status.Should().BeLessThan(400);
                 await page.GetByRole(AriaRole.Heading, new() { Name = "Access denied", Exact = true }).WaitForAsync();
+                (await page.GetByText("403", new() { Exact = true }).CountAsync()).Should().BeGreaterThan(0);
                 (await page.Locator(".backup-page").CountAsync()).Should().Be(0);
                 await page.CloseAsync();
             }
@@ -202,6 +208,29 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         }
     }
 
+    private async Task<(IBrowserContext Context, Guid SiteId)> CreateContentViewerContextAfterConfigurationResetAsync()
+    {
+        var configPath = Path.Combine(ApplicationRoot(), "Config", "setup.database.json");
+        if (File.Exists(configPath)) File.Delete(configPath);
+
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        Exception? last = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                return await host.CreateContentViewerContextAsync(new UxViewport("desktop", 1440, 900));
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("could not authenticate the Content.View-only user", StringComparison.Ordinal))
+            {
+                last = ex;
+                await Task.Delay(300);
+            }
+        }
+
+        throw new TimeoutException("The application did not reload the startup database configuration before the view-only authentication proof.", last);
+    }
+
     private async Task NavigateToBackupsAsync(IPage page)
     {
         var response = await page.GotoAsync(host.BaseUrl + "/backups", new PageGotoOptions
@@ -217,8 +246,10 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
     private async Task<string> CopyRealBackupPathAsync(IPage page)
     {
         var copy = page.GetByRole(AriaRole.Button, new() { Name = "Copy path", Exact = true });
-        await copy.ClickAsync();
-        await page.GetByText("Backup path copied.", new() { Exact = true }).WaitForAsync();
+        await ClickUntilAsync(
+            copy,
+            async () => await page.GetByText("Backup path copied.", new() { Exact = true }).CountAsync() == 1,
+            "Copy path did not report browser-confirmed success.");
         var path = await page.EvaluateAsync<string>("navigator.clipboard.readText()");
         path.Should().NotBeNullOrWhiteSpace();
         Directory.Exists(path).Should().BeTrue("the copied path must be the real backup directory");
@@ -227,7 +258,6 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
 
     private async Task PrepareManagedSqliteFixtureAsync()
     {
-        CleanupApplicationRoot();
         var root = ApplicationRoot();
         var data = Path.Combine(root, "Data");
         var config = Path.Combine(root, "Config");
@@ -236,12 +266,34 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         Directory.CreateDirectory(config);
         Directory.CreateDirectory(backups);
 
+        var runtimeDbPath = RuntimeDatabasePath();
+        File.Exists(runtimeDbPath).Should().BeTrue("the browser host must have a real live SQLite database before backup acceptance starts");
+
         var dbPath = Path.Combine(data, "ux-browser-backup.db");
-        await using (var connection = new SqliteConnection($"Data Source={dbPath};Pooling=False"))
+        if (File.Exists(dbPath)) File.Delete(dbPath);
+
+        var sourceBuilder = new SqliteConnectionStringBuilder
         {
-            await connection.OpenAsync();
-            await using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TABLE Evidence (Id INTEGER PRIMARY KEY, Marker TEXT NOT NULL); INSERT INTO Evidence(Marker) VALUES ('browser-real-backup');";
+            DataSource = runtimeDbPath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
+        };
+        var destinationBuilder = new SqliteConnectionStringBuilder
+        {
+            DataSource = dbPath,
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Pooling = false
+        };
+
+        await using (var source = new SqliteConnection(sourceBuilder.ToString()))
+        await using (var destination = new SqliteConnection(destinationBuilder.ToString()))
+        {
+            await source.OpenAsync();
+            await destination.OpenAsync();
+            source.BackupDatabase(destination);
+
+            await using var command = destination.CreateCommand();
+            command.CommandText = "CREATE TABLE IF NOT EXISTS Evidence (Id INTEGER PRIMARY KEY, Marker TEXT NOT NULL); INSERT INTO Evidence(Marker) VALUES ('browser-real-backup');";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -269,11 +321,12 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
             ?? throw new InvalidOperationException("UX runtime root is unavailable."));
     }
 
-    private void CleanupApplicationRoot()
+    private string RuntimeDatabasePath()
     {
-        var root = ApplicationRoot();
-        try { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
-        catch { }
+        var field = typeof(UxTestHost).GetField("_databasePath", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Could not resolve UX runtime database path.");
+        return (string)(field.GetValue(host)
+            ?? throw new InvalidOperationException("UX runtime database path is unavailable."));
     }
 
     private static async Task ClickUntilAsync(ILocator control, Func<Task<bool>> condition, string failure)
