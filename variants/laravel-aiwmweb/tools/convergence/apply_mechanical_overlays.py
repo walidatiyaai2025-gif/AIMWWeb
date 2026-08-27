@@ -146,6 +146,8 @@ use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SiteDiagnosticsController;
 use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
@@ -159,6 +161,7 @@ Route::post('/api/connector/pair', [DemoController::class, 'completePairing'])->
 Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth');
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function (): void {
+    // #260 remains canonical for Site identity and CRUD semantics.
     Route::get('/sites', [DemoController::class, 'sites']);
     Route::post('/sites', [DemoController::class, 'createSite']);
     Route::get('/sites/{site}', [DemoController::class, 'showSite']);
@@ -181,6 +184,32 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/approvals/{approval}/execute', [DemoController::class, 'execute']);
     Route::post('/executions/{execution}/cancel', [DemoController::class, 'cancel']);
     Route::get('/executions/{execution}/receipt', [DemoController::class, 'receipt']);
+
+    // SEO closure extends #260 without redefining Site identity.
+    Route::get('/sites/{site}/seo/audits', [SeoController::class, 'audits']);
+    Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit']);
+    Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings']);
+    Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata']);
+    Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider']);
+    Route::post('/sites/{site}/seo/findings/{finding}/prepare', [SeoController::class, 'prepare']);
+    Route::post('/sites/{site}/seo/remediations/bulk', [SeoController::class, 'prepareBulk']);
+    Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal']);
+    Route::post('/sites/{site}/seo/executions/bulk', [SeoController::class, 'executeBulk']);
+    Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry']);
+
+    // Sites diagnostics adds observability/operations only; shared CRUD remains #260 authority.
+    Route::get('/sites/{site}/connection', [SiteDiagnosticsController::class, 'status']);
+    Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck']);
+    Route::post('/sites/{site}/connection/reconnect', [SiteDiagnosticsController::class, 'reconnect']);
+    Route::post('/sites/{site}/connection/disconnect', [SiteDiagnosticsController::class, 'disconnect']);
+    Route::get('/sites/{site}/capabilities', [SiteDiagnosticsController::class, 'capabilities']);
+    Route::get('/sites/{site}/diagnostics', [SiteDiagnosticsController::class, 'diagnosticHistory']);
+    Route::get('/sites/{site}/operations', [SiteDiagnosticsController::class, 'operations']);
+    Route::get('/site-operations/summary', [SiteDiagnosticsController::class, 'operationSummary']);
+    Route::get('/site-operations/storage', [SiteDiagnosticsController::class, 'storage']);
+    Route::post('/site-operations/cleanup/preview', [SiteDiagnosticsController::class, 'previewCleanup']);
+    Route::post('/site-operations/cleanup', [SiteDiagnosticsController::class, 'cleanup']);
+    Route::get('/sites-entitlements', [SiteDiagnosticsController::class, 'entitlements']);
 });
 
 Route::prefix('api/v1/billing')->group(function (): void {
@@ -320,6 +349,17 @@ Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/{path?}', 
     if migration_text.count(needle) != 1:
         raise RuntimeError("Expected exactly one #263 content_remote_unique index before overlay")
     content_migration.write_text(migration_text.replace(needle, "'content_items_remote_unique'"), encoding="utf-8")
+
+    # Laravel 13's @laravel/multiplex 0.4.3 depends on React ^19.2.7.  #262 currently
+    # declares React 18, which makes a strict npm install fail ERESOLVE.  Probe the minimal
+    # compatibility upgrade in the disposable tree; never use --legacy-peer-deps.
+    package_path = root / "variants/laravel-aiwmweb/backend/package.json"
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    package.setdefault("dependencies", {})["react"] = "^19.2.7"
+    package["dependencies"]["react-dom"] = "^19.2.7"
+    package.setdefault("devDependencies", {})["@types/react"] = "^19.0.0"
+    package["devDependencies"]["@types/react-dom"] = "^19.0.0"
+    package_path.write_text(json.dumps(package, indent=2) + "\n", encoding="utf-8")
 
     # The acceptance ledger is generated authority from merged main. Stale manual worker edits must not win conflicts.
     for ledger_path in [
