@@ -19,6 +19,9 @@ use App\AI\Platform\Contracts\PlannerApprovalGateway;
 use App\AI\Platform\Contracts\PlannerSiteGateway;
 use App\AI\Platform\Quota\UnconfiguredAiQuotaGateway;
 use App\AI\Platform\Services\AiGenerationService;
+use App\Email\Contracts\EmailTransport;
+use App\Email\Services\SymfonyEmailTransport;
+use App\Email\Services\SyncNotificationSubscriber;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
 use App\Sync\CanonicalSyncSiteGuard;
@@ -26,6 +29,7 @@ use App\Sync\Contracts\SyncSiteGuard;
 use App\Sync\Contracts\SyncWebhookVerifier;
 use App\Sync\Webhooks\ConnectorSyncWebhookVerifier;
 use App\Tenancy\TenantContext;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -45,10 +49,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AiGenerator::class, AiGenerationService::class);
         $this->app->bind(PlannerApprovalGateway::class, UnconfiguredPlannerApprovalGateway::class);
         $this->app->bind(PlannerSiteGateway::class, UnconfiguredPlannerSiteGateway::class);
+        $this->app->bind(EmailTransport::class, SymfonyEmailTransport::class);
     }
 
     public function boot(): void
     {
         Gate::policy(TenantSecret::class, TenantSecretPolicy::class);
+        Event::subscribe(SyncNotificationSubscriber::class);
     }
 }
