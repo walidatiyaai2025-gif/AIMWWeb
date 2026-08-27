@@ -2,7 +2,6 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
-    ApiError,
     apiRequest,
     resolveCapability,
     switchTenantPath,
@@ -126,7 +125,7 @@ describe('API client failure semantics', () => {
             errors: { title: ['Title is required'] },
         }), { status: 422, headers: { 'content-type': 'application/json' } })));
 
-        await expect(apiRequest('/api/example', { method: 'POST', body: JSON.stringify({}) })).rejects.toMatchObject<ApiError>({
+        await expect(apiRequest('/api/example', { method: 'POST', body: JSON.stringify({}) })).rejects.toMatchObject({
             status: 422,
             message: 'Validation failed',
             validation: { title: ['Title is required'] },
