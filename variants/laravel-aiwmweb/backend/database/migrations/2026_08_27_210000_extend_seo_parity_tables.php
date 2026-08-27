@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('synced_contents', function (Blueprint $table) {
-            $table->unsignedTinyInteger('seo_readability_score')->nullable()->after('seo_source_hash');
+            $table->unsignedTinyInteger('seo_readability_score')->nullable()->after('seo_description');
         });
 
         Schema::table('seo_audits', function (Blueprint $table) {
@@ -21,7 +21,7 @@ return new class extends Migration
         });
 
         Schema::table('seo_findings', function (Blueprint $table) {
-            $table->text('before_value')->nullable()->after('current_value');
+            $table->text('before_value')->nullable()->after('recommendation');
             $table->text('suggested_value')->nullable()->after('before_value');
             $table->json('evidence')->nullable()->after('suggested_value');
         });
