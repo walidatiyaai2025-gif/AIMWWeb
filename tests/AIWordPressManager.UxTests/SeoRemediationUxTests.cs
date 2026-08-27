@@ -36,7 +36,7 @@ public sealed class SeoRemediationUxTests(UxTestHost host)
         (await rows.CountAsync()).Should().BeGreaterThan(0,
             "each attempted field must retain an explicit terminal failure instead of disappearing");
         foreach (var suggested in await page.Locator("[data-testid^='proposal-suggested-']").AllAsync())
-            (await suggested.InnerTextAsync()).Should().BeNullOrWhiteSpace(
+            (await suggested.Locator("p").InnerTextAsync()).Should().BeNullOrWhiteSpace(
                 "an unavailable provider must not be replaced with locally fabricated suggestions");
         foreach (var status in await page.Locator("[data-testid^='proposal-status-']").AllAsync())
             (await status.InnerTextAsync()).Should().ContainEquivalentOf("failed");
