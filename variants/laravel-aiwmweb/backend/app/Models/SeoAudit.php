@@ -6,6 +6,6 @@ class SeoAudit extends DomainModel
 {
     protected function casts(): array
     {
-        return ['completed_at' => 'datetime'];
+        return ['completed_at' => 'datetime', 'log' => 'array'];
     }
 }

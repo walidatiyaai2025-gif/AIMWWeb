@@ -6,6 +6,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\SeoController;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,17 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/approvals/{approval}/execute', [DemoController::class, 'execute']);
     Route::post('/executions/{execution}/cancel', [DemoController::class, 'cancel']);
     Route::get('/executions/{execution}/receipt', [DemoController::class, 'receipt']);
+
+    Route::get('/sites/{site}/seo/audits', [SeoController::class, 'audits']);
+    Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit']);
+    Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings']);
+    Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata']);
+    Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider']);
+    Route::post('/sites/{site}/seo/findings/{finding}/prepare', [SeoController::class, 'prepare']);
+    Route::post('/sites/{site}/seo/remediations/bulk', [SeoController::class, 'prepareBulk']);
+    Route::post('/sites/{site}/seo/findings/{finding}/ai-proposal', [SeoController::class, 'aiProposal']);
+    Route::post('/sites/{site}/seo/executions/bulk', [SeoController::class, 'executeBulk']);
+    Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry']);
 });
 
 Route::prefix('api/v1/billing')->group(function () {
