@@ -1,0 +1,113 @@
+{
+  "tenant_resources": [
+    "sites",
+    "content",
+    "media",
+    "comments",
+    "taxonomy",
+    "credentials",
+    "connector",
+    "ai_config",
+    "audits",
+    "findings",
+    "suggestions",
+    "approvals",
+    "executions",
+    "evidence",
+    "jobs",
+    "schedules",
+    "backups",
+    "reports",
+    "members",
+    "settings"
+  ],
+  "tenant_attack_shapes": [
+    "read_guessed_id",
+    "update_guessed_id",
+    "delete_guessed_id",
+    "bulk_mixed_tenant_ids",
+    "enqueue_foreign_resource",
+    "approve_foreign_resource",
+    "execute_foreign_resource",
+    "retry_foreign_resource",
+    "cancel_foreign_resource"
+  ],
+  "connector_security": [
+    "valid_signature",
+    "modified_payload",
+    "expired_timestamp",
+    "nonce_replay",
+    "wrong_connector",
+    "wrong_site",
+    "wrong_tenant",
+    "revoked_connector",
+    "disabled_scope",
+    "unsupported_operation",
+    "protocol_mismatch",
+    "idempotent_replay",
+    "rate_limit_behavior"
+  ],
+  "execution_safety": [
+    "before_state_capture",
+    "approval_required",
+    "mutation_once",
+    "after_state_capture",
+    "authoritative_verification",
+    "failure_before_remote_mutation",
+    "failure_after_remote_before_response",
+    "failure_after_response_before_verification",
+    "retry_does_not_duplicate_mutation",
+    "evidence_receipt_persisted"
+  ],
+  "queue_concurrency": [
+    "tenant_context_cleanup",
+    "parallel_tenants",
+    "same_site_operation_lease",
+    "different_site_concurrency",
+    "retry",
+    "cancel",
+    "worker_failure",
+    "stale_lock_recovery",
+    "idempotency"
+  ],
+  "mysql_validation": [
+    "foreign_keys",
+    "indexes",
+    "tenant_unique_constraints",
+    "migrate_fresh",
+    "rollback_then_forward",
+    "full_phpunit_suite"
+  ],
+  "wordpress_e2e": [
+    "real_wordpress_install",
+    "rest_index",
+    "connector_plugin_install_when_present",
+    "pairing_when_connector_runtime_present",
+    "health_when_connector_runtime_present",
+    "sync_when_domain_runtime_present",
+    "content_read_when_domain_runtime_present",
+    "mutation_and_verification_when_domain_runtime_present"
+  ],
+  "performance": [
+    "large_content_lists_paginated",
+    "sync_batches_bounded",
+    "audit_batches_bounded",
+    "queue_batches_bounded",
+    "reports_bounded",
+    "connector_payload_bounded",
+    "no_obvious_n_plus_one",
+    "no_unbounded_eloquent_all"
+  ],
+  "frontend_acceptance": [
+    "route_coverage",
+    "dead_controls",
+    "loading_state",
+    "error_state",
+    "empty_state",
+    "permission_state",
+    "connector_capability_disabled_state",
+    "rtl",
+    "responsive",
+    "accessibility"
+  ]
+}
