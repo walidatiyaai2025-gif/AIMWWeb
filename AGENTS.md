@@ -2,12 +2,32 @@
 
 ## PCC authority and routing contract
 - This repository is managed through `walidatiyaai2025-gif/project-control-center` (PCC) as project `AIMWWEB`.
-- Project model: `STANDALONE`; default implementation scope: `PROJECT`.
+- Project model: `PRODUCT_FAMILY`; there is no repository-wide default implementation scope. Every write must resolve to `CORE` or exactly one routed `VARIANT`.
+- Family manifest: `.pcc/project-family.json`.
+- Active variants are `AIMWWEB_CURRENT` (primary/current ASP.NET product) and `LARAVEL_AIWMWEB` (Laravel AIWMWeb product variant).
+- `LARAVEL_AIWMWEB` implementation is isolated to `variants/laravel-aiwmweb`. Variant-specific source, configuration, branding, dependencies, deployment behavior, database schema and runtime code must not leak into `AIMWWEB_CURRENT`.
+- Shared `CORE` writes are blocked unless current PCC and `.pcc/project-family.json` both report `CORE_ROUTING_STATE=READY`. A branch name never establishes variant identity.
 - Every Manager/Lead/Worker/QA/Integration/Release role must fetch current PCC `main`, read the PCC root `AGENTS.md` and applicable policies, resolve `AIMWWEB` through `portfolio/project-routing.json`, and obtain/reconcile a current PCC routing packet before implementation writes.
 - Live GitHub state remains authoritative for repository SHAs, PRs, CI, production lineage, and implementation evidence. Stale prompts and historical SHAs are non-authoritative until revalidated.
 - If PCC routing and this repository conflict, stop non-emergency writes and reconcile governance first. A verified production emergency may use only the minimum safe stabilization path allowed by the PCC emergency-production policy.
-- Existing AIMWWeb production-closure, Patch, package, security, QA, release, and delivery contracts below remain authoritative local rules and are not weakened by PCC onboarding.
+- Existing AIMWWeb production-closure, Patch, package, security, QA, release, and delivery contracts below remain authoritative for `AIMWWEB_CURRENT` and are not automatically inherited as Laravel packaging/deployment rules unless Issue #257 or later routed Laravel governance explicitly adopts them.
 - Durable governance changes must be persisted in PCC and repository control files; chat memory is not canonical.
+
+## Laravel AIWMWeb constitutional invariants
+
+Issue #257 is the product authority for the initial `LARAVEL_AIWMWEB` port. Any Worker routed to that variant must preserve these invariants:
+
+- Functional parity target is **100%** relative to the current AIMWWeb capability/action inventory. No existing capability may be silently dropped because the technology changes.
+- Establish and maintain a canonical Capability Parity Ledger with stable capability/operation IDs. Terminal migration states are `PORTED`, `ADAPTED`, `VERIFIED_UNAVAILABLE_EXTERNAL`, or `BLOCKED`; missing rows are not allowed to count as progress.
+- Multi-tenancy is architectural from first production code, not a later feature. Every tenant-owned record and runtime path must carry explicit tenant context and authorization.
+- Tenant isolation covers at least memberships/RBAC, sites, connector pairings, credentials/secrets, provider configuration, AI usage, jobs, schedules, cache keys, locks, rate limits, approvals, executions, evidence, reports, audit logs, quotas, entitlements and idempotency keys.
+- Direct identifier access must not cross tenant boundaries. Isolation tests must prove Tenant A cannot read, mutate, enqueue, approve, execute, cancel, retry or inspect Tenant B resources.
+- Laravel owns application/domain/backend runtime. The frontend must preserve current AIMWWeb visual and workflow parity as closely as practical.
+- Managed WordPress targets use native WordPress REST where sufficient and the AIMW Connector plugin for advanced/sensitive operations.
+- Connector sensitive scopes are disabled by default and explicitly enabled by the target-site owner. The Connector must still enforce WordPress capabilities, signed/versioned requests, replay protection and local audit.
+- Provider keys and WordPress credentials remain server-side, tenant-scoped and absent from browser payloads/assets.
+- Mutations require governed authorization, idempotency, before-state evidence where applicable, execution, verification and durable audit/receipt semantics.
+- Laravel variant implementation writes must remain inside `variants/laravel-aiwmweb` unless a valid PCC packet explicitly routes a proven `CORE` change.
 
 ## Source of truth
 - Reconstruct the current repository state from GitHub before acting. Do not treat chat memory or stale task trackers as authoritative.
