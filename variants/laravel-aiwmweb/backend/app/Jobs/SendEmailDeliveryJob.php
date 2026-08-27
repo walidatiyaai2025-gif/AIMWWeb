@@ -7,6 +7,7 @@ use App\Email\Services\EmailDeliveryService;
 final class SendEmailDeliveryJob extends TenantAwareJob
 {
     public int $tries = 5;
+
     public int $timeout = 60;
 
     public function __construct(int $tenantId, public readonly int $deliveryId)
