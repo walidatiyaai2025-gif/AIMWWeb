@@ -103,9 +103,9 @@ final class SiteOperationHistoryService
             'started_at' => $startedAt ?? now(),
             'completed_at' => now(),
         ]);
-        $overflow = SiteOperationHistory::query()->latest('started_at')->skip(self::MAX_RECORDS)->pluck('id');
-        if ($overflow->isNotEmpty()) {
-            SiteOperationHistory::query()->whereIn('id', $overflow)->delete();
+        $protected = SiteOperationHistory::query()->latest('started_at')->limit(self::MAX_RECORDS)->pluck('id');
+        if ($protected->isNotEmpty()) {
+            SiteOperationHistory::query()->whereNotIn('id', $protected)->delete();
         }
 
         return $record;
