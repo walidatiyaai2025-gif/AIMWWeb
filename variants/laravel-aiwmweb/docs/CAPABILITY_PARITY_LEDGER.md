@@ -14,9 +14,9 @@ Unknown work is `PENDING`. Terminal states are only `PORTED`, `ADAPTED`, `VERIFI
 - PENDING: **931**
 - BLOCKED: **0**
 - VERIFIED_UNAVAILABLE_EXTERNAL: **0**
-- CONNECTOR_REQUIRED: **2**
-- NATIVE_REST: **0**
-- LARAVEL_ONLY: **0**
+- CONNECTOR_REQUIRED: **16**
+- NATIVE_REST: **449**
+- LARAVEL_ONLY: **116**
 - DEAD_FUNCTION_FINDINGS_REQUIRING_REVIEW: **0**
 
 Completion % = `(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL + BLOCKED) / TOTAL_OPERATIONS × 100`. `BLOCKED` is terminal accounting only when the blocker and evidence are explicit; it is not a success claim.
@@ -35,9 +35,24 @@ Completion % = `(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL + BLOCKED) / T
 
 | Domain | Operations |
 | --- | ---: |
-| `ai` | 671 |
+| `ai` | 92 |
+| `approvals` | 25 |
+| `automation` | 59 |
+| `backup` | 14 |
 | `billing` | 178 |
+| `comments` | 8 |
+| `content` | 164 |
 | `email` | 82 |
+| `identity` | 7 |
+| `media` | 15 |
+| `operations` | 5 |
+| `platform` | 18 |
+| `reports` | 1 |
+| `seo` | 24 |
+| `settings` | 1 |
+| `sites` | 12 |
+| `sync` | 213 |
+| `taxonomy` | 13 |
 
 ## Canonical operation records
 

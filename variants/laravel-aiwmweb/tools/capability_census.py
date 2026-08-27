@@ -67,7 +67,7 @@ def attrs(text: str) -> dict[str, str]:
 
 
 def domain_for(*values: str) -> str:
-    haystack = " ".join(values).lower()
+    haystack = " ".join(values).lower().replace("aiwordpressmanager", "")
     for domain, words in DOMAIN_RULES:
         if any(word in haystack for word in words):
             return domain

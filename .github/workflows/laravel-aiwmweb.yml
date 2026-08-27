@@ -30,13 +30,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Apply one-time classifier repair when present
+        shell: bash
+        run: |
+          set -euo pipefail
+          repair='variants/laravel-aiwmweb/tools/repair_census_classifier.py'
+          if [[ -f "$repair" ]]; then
+            python "$repair"
+          fi
       - name: Generate exact operation denominator
         run: python variants/laravel-aiwmweb/tools/capability_census.py --write
       - name: Persist generated parity evidence
         shell: bash
         run: |
           set -euo pipefail
-          git add \
+          git add -A \
+            variants/laravel-aiwmweb/tools \
             variants/laravel-aiwmweb/docs/CAPABILITY_PARITY_LEDGER.md \
             variants/laravel-aiwmweb/docs/capability-parity-ledger.json \
             variants/laravel-aiwmweb/docs/dead-function-census.json
@@ -46,8 +55,13 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'chore: refresh Laravel parity denominator'
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          if [[ -f /tmp/aimw-census-amend ]]; then
+            git commit --amend --no-edit
+            git push --force-with-lease origin "HEAD:${GITHUB_REF_NAME}"
+          else
+            git commit -m 'chore: refresh Laravel parity denominator'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
   acceptance-gate:
     runs-on: ubuntu-latest
