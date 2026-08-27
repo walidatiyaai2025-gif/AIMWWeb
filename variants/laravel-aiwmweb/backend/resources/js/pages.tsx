@@ -7,6 +7,7 @@ import {
     capabilityReason,
     resolveCapability,
     tenantUrl,
+    workspaceRoutes,
     type ActionContract,
     type FrontendContext,
     type WorkspaceRoute,
