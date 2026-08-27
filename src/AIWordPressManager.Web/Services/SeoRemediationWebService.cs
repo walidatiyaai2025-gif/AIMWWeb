@@ -5,7 +5,9 @@ using System.Text.Json;
 using AIWordPressManager.Application.Abstractions.AI;
 using AIWordPressManager.Application.Abstractions.Billing;
 using AIWordPressManager.Application.Abstractions.WordPress;
+using AIWordPressManager.Application.Settings;
 using AIWordPressManager.Domain.Entities;
+using AIWordPressManager.Infrastructure.AI;
 using AIWordPressManager.Persistence;
 using AIWordPressManager.Persistence.Billing;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +18,8 @@ public sealed class SeoRemediationWebService(
     AppDbContext dbContext,
     CurrentUserContext currentUser,
     IAccountEntitlementEnforcementService entitlementEnforcement,
+    AIProviderRuntimeSettingsResolver providerSettings,
+    IConfiguration configuration,
     IAIOrchestrator ai,
     IWordPressPostEditorService editor,
     WordPressSyncWebService synchronization,
@@ -31,12 +35,16 @@ public sealed class SeoRemediationWebService(
     public IReadOnlyList<SeoRemediationProposal> GetProposals(Guid siteId) =>
         _proposals.Values.Where(x => x.SiteId == siteId).OrderBy(x => x.GeneratedAtUtc).ToArray();
 
-    public async Task<IReadOnlyList<SeoRemediationProposal>> GenerateAsync(
+    public async Task<SeoRemediationGenerationResult> GenerateAsync(
         Guid siteId,
         IReadOnlyCollection<SeoRemediationTarget>? targets = null,
         CancellationToken cancellationToken = default)
     {
         var actor = await AuthorizeAsync(siteId, requireEdit: false, cancellationToken);
+        var readiness = await GetProviderReadinessAsync(cancellationToken);
+        if (readiness.State != SeoAiProviderState.Ready)
+            return new(readiness, Array.Empty<SeoRemediationProposal>());
+
         var resolvedTargets = targets is { Count: > 0 }
             ? targets.Take(MaximumTargets).ToArray()
             : await ResolveTargetsAsync(siteId, cancellationToken);
@@ -86,7 +94,45 @@ public sealed class SeoRemediationWebService(
             generated.Add(proposal);
         }
 
-        return generated;
+        return new(readiness, generated);
+    }
+
+    public async Task<SeoAiProviderReadiness> GetProviderReadinessAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await providerSettings.GetSettingsAsync(cancellationToken);
+        if (!settings.Enabled)
+            return new(SeoAiProviderState.Unavailable, "Not configured", "AI features are disabled in application settings.");
+
+        var enabled = settings.Providers
+            .Where(x => x.Enabled && AIProviderRuntimeCatalog.IsAvailable(x.Provider))
+            .OrderBy(x => x.Priority)
+            .ToArray();
+        if (enabled.Length == 0)
+            return new(SeoAiProviderState.NotConfigured, "Not configured", "No AI provider is enabled.");
+
+        foreach (var provider in enabled)
+        {
+            if (provider.Provider.Equals("Puter", StringComparison.OrdinalIgnoreCase))
+            {
+                var endpoint = configuration["AI:Puter:Endpoint"];
+                if (Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps)
+                    return new(SeoAiProviderState.Ready, provider.Provider, string.Empty);
+                if (!string.IsNullOrWhiteSpace(endpoint))
+                    return new(SeoAiProviderState.Unavailable, provider.Provider, "The Puter endpoint is invalid.");
+                continue;
+            }
+
+            var runtime = await providerSettings.ResolveAsync(
+                provider.Provider,
+                $"AI:{provider.Provider}:ApiKey",
+                $"AI:{provider.Provider}:Model",
+                provider.Model,
+                cancellationToken);
+            if (provider.HasApiKey || !string.IsNullOrWhiteSpace(runtime.ApiKey))
+                return new(SeoAiProviderState.Ready, provider.Provider, string.Empty);
+        }
+
+        return new(SeoAiProviderState.NotConfigured, "Not configured", "AI Provider not configured.");
     }
 
     public Task<SeoRemediationApplyResult> ApplyAsync(Guid siteId, Guid proposalId, CancellationToken cancellationToken = default) =>
@@ -321,6 +367,9 @@ public sealed class SeoRemediationWebService(
 public enum SeoRemediationField { Title, MetaDescription, ImageAltText, InternalLink }
 public enum SeoRemediationSafetyClass { SafeAutomatic, ReviewRequired, Unsupported }
 public enum SeoRemediationProposalState { NotGenerated, AiSuggested, Selected, Applying, Verified, Failed, Conflict, NeedsReview }
+public enum SeoAiProviderState { Ready, NotConfigured, Unavailable }
+public sealed record SeoAiProviderReadiness(SeoAiProviderState State, string Provider, string Message);
+public sealed record SeoRemediationGenerationResult(SeoAiProviderReadiness Readiness, IReadOnlyList<SeoRemediationProposal> Proposals);
 public sealed record SeoRemediationTarget(int ContentId, string ContentType, SeoRemediationField Field);
 public sealed record SeoRemediationProposal(Guid ProposalId, Guid CorrelationId, Guid SiteId, int ContentId, string ContentType,
     SeoRemediationField Field, string CurrentValue, string SuggestedValue, string Reason, decimal Confidence,
