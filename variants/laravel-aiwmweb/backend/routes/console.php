@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
