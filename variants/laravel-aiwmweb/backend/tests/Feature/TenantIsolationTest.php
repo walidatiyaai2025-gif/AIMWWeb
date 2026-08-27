@@ -17,6 +17,7 @@ use App\Tenancy\TenantContext;
 use App\Tenancy\TenantLock;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Queue;
@@ -66,6 +67,47 @@ class TenantIsolationTest extends TestCase
         $this->assertNull(TenantSecret::query()->find($secretB->id));
         $this->expectException(ModelNotFoundException::class);
         $repository->findOrFail(TenantSecret::class, $secretB->id);
+    }
+
+    public function test_cross_tenant_direct_id_update_and_delete_are_rejected_without_disclosure(): void
+    {
+        [$tenantA, $memberA] = $this->tenantWithMember('alpha', true);
+        [$tenantB, $memberB] = $this->tenantWithMember('beta', true);
+        $context = app(TenantContext::class);
+        $repository = app(TenantRepository::class);
+
+        $context->activate($tenantB, $memberB);
+        $secretB = $repository->create(TenantSecret::class, [
+            'name' => 'provider',
+            'encrypted_value' => 'beta-original',
+        ]);
+        $secretBId = $secretB->id;
+
+        $context->activate($tenantA, $memberA);
+
+        $updateRejected = false;
+        try {
+            $repository->findOrFail(TenantSecret::class, $secretBId)
+                ->update(['encrypted_value' => 'alpha-overwrite']);
+        } catch (ModelNotFoundException) {
+            $updateRejected = true;
+        }
+
+        $deleteRejected = false;
+        try {
+            $repository->findOrFail(TenantSecret::class, $secretBId)->delete();
+        } catch (ModelNotFoundException) {
+            $deleteRejected = true;
+        }
+
+        $this->assertTrue($updateRejected, 'Cross-tenant update must be rejected as not found.');
+        $this->assertTrue($deleteRejected, 'Cross-tenant delete must be rejected as not found.');
+        $this->assertNull(TenantSecret::query()->find($secretBId));
+
+        $context->activate($tenantB, $memberB);
+        $preserved = TenantSecret::query()->findOrFail($secretBId);
+        $this->assertSame('provider', $preserved->name);
+        $this->assertSame('beta-original', $preserved->encrypted_value);
     }
 
     public function test_secret_is_encrypted_hidden_and_tenant_scoped(): void
@@ -133,6 +175,24 @@ class TenantIsolationTest extends TestCase
         $audit->update(['event' => 'tampered']);
     }
 
+    public function test_executed_jobs_restore_their_tenant_and_never_leak_context(): void
+    {
+        [$tenantA] = $this->tenantWithMember('alpha', true);
+        [$tenantB] = $this->tenantWithMember('beta', true);
+        $context = app(TenantContext::class);
+        ObservingTenantJob::$observedTenantIds = [];
+
+        $this->assertFalse($context->active());
+
+        Bus::dispatchSync(new ObservingTenantJob($tenantA->id));
+        $this->assertSame([$tenantA->id], ObservingTenantJob::$observedTenantIds);
+        $this->assertFalse($context->active(), 'Tenant A context leaked after Job A.');
+
+        Bus::dispatchSync(new ObservingTenantJob($tenantB->id));
+        $this->assertSame([$tenantA->id, $tenantB->id], ObservingTenantJob::$observedTenantIds);
+        $this->assertFalse($context->active(), 'Tenant B context leaked after Job B.');
+    }
+
     private function tenantWithMember(string $slug, bool $grant): array
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
@@ -156,4 +216,15 @@ class TenantIsolationTest extends TestCase
 final class DemoTenantJob extends TenantAwareJob
 {
     public function handle(): void {}
+}
+
+final class ObservingTenantJob extends TenantAwareJob
+{
+    /** @var list<int> */
+    public static array $observedTenantIds = [];
+
+    public function handle(TenantContext $context): void
+    {
+        self::$observedTenantIds[] = $context->id();
+    }
 }
