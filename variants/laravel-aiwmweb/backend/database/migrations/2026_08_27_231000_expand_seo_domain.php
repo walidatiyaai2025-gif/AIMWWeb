@@ -42,6 +42,10 @@ return new class extends Migration
             $table->dropColumn(['field', 'current_value', 'normalized_state', 'detected_at', 'resolved_at']);
         });
         Schema::table('seo_audits', function (Blueprint $table) {
+            // MySQL may remove the original single-column tenant index as redundant when the
+            // history index is created. Restore a leading tenant index before dropping history,
+            // otherwise the foreign key has no supporting index during rollback.
+            $table->index('tenant_id', 'seo_audits_tenant_id_rollback_idx');
             $table->dropIndex('seo_audit_history_idx');
             $table->dropColumn(['score', 'audited_items', 'high_issues', 'medium_issues', 'low_issues', 'source_hash', 'rule_version', 'started_at']);
         });
