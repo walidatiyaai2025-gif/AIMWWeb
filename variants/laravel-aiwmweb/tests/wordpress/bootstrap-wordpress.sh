@@ -21,6 +21,9 @@ wp() {
 
 wp core download --quiet
 wp config create --dbname="$DB_NAME" --dbuser="$DB_USER" --dbpass="$DB_PASSWORD" --dbhost="$DB_HOST" --skip-check --quiet
+# WordPress intentionally disables Application Password authentication over plain HTTP
+# unless the environment is local. The disposable CI instance is loopback-only.
+wp config set WP_ENVIRONMENT_TYPE local --quiet
 wp core install --url="$WP_URL" --title="AIMW Acceptance" --admin_user=admin --admin_password='Acceptance-Only-Strong-Password-257!' --admin_email=acceptance@example.invalid --skip-email --quiet
 
 php -S "127.0.0.1:${WP_PORT}" -t "$WP_PATH" > /tmp/aimw-wordpress-server.log 2>&1 &
