@@ -1,0 +1,123 @@
+{
+  "schema": 2,
+  "captured_at": "2026-08-27T21:05:00Z",
+  "main": {
+    "branch": "main",
+    "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+    "authority": "Merged Tenant Core + acceptance framework"
+  },
+  "authorities": [
+    {
+      "pr": 260,
+      "role": "site_connector_protocol",
+      "branch": "feature/laravel-aiwmweb-demo-vertical-slice",
+      "sha": "85b83ce53ce6be434176964bc77ced6beefa6e68",
+      "composition": "logical authority only; transported by advanced_connector_extension"
+    },
+    {
+      "pr": 269,
+      "role": "advanced_connector_extension",
+      "branch": "worker/laravel-aiwmweb-wp-runtime",
+      "sha": "391c717c2b197226207afe2ddf432dd86e0ce6eb",
+      "composition": "merge first; contains #260 Site/Connector lineage plus advanced extension"
+    },
+    {
+      "pr": null,
+      "role": "seo_closure",
+      "branch": "worker/laravel-aiwmweb-seo-closure",
+      "sha": "600d83aab3392456bd59d0c60812f8d3b12b8a72",
+      "composition": "stacked on #269; adds SEO parity closure and shares an identical AiGenerator contract blob with #267"
+    },
+    {
+      "pr": null,
+      "role": "sites_diagnostics",
+      "branch": "worker/laravel-aiwmweb-sites-diagnostics",
+      "sha": "aa868f03a5ad095e165fb79f56a8427d6cffb76e",
+      "composition": "stacked on #269; diagnostics extension only; #260 remains Site identity/protocol authority"
+    },
+    {
+      "pr": 263,
+      "role": "content",
+      "branch": "worker/laravel-aiwmweb-content-platform",
+      "sha": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
+      "composition": "merge"
+    },
+    {
+      "pr": 266,
+      "role": "billing",
+      "branch": "worker/laravel-aiwmweb-billing-platform",
+      "sha": "3c2e2904457b18882f0a168857ed149c067bdd1c",
+      "composition": "merge before AI contract activation"
+    },
+    {
+      "pr": 267,
+      "role": "ai_platform",
+      "branch": "worker/laravel-aiwmweb-ai-platform",
+      "sha": "f981d18fde23bd02bb7b6783ed22b3df9fc81790",
+      "composition": "merge; keep fail-closed gateways until Codex wires canonical adapters"
+    },
+    {
+      "pr": 264,
+      "role": "admin_operations",
+      "branch": "worker/laravel-aiwmweb-admin-operations",
+      "sha": "7f0a297b331c4e324c8f76309b2c5cb61660e44a",
+      "composition": "merge"
+    },
+    {
+      "pr": 265,
+      "role": "production_runtime",
+      "branch": "worker/laravel-aiwmweb-production-runtime",
+      "sha": "285355ada0032cd013bb9fb814b1211beb0eb53e",
+      "composition": "merge after backend domains; retain runtime CI as final superset"
+    },
+    {
+      "pr": 262,
+      "role": "frontend",
+      "branch": "worker/laravel-aiwmweb-full-frontend",
+      "sha": "81c639e23a96d7fbaceda66b6275ca27cb276ace",
+      "composition": "merge last; catch-all route must remain last"
+    }
+  ],
+  "excluded_or_pending": [
+    {
+      "pr": 268,
+      "branch": "worker/laravel-aiwmweb-email-notifications",
+      "sha": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
+      "reason": "zero changed files; handoff only, explicitly not product functionality"
+    },
+    {
+      "branch": "worker/laravel-aiwmweb-email-delivery-closure",
+      "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+      "reason": "identical to main; no implementation delta"
+    },
+    {
+      "branch": "worker/laravel-aiwmweb-sync-reconciliation",
+      "sha": "bcd20b364a77ee4cebd1fb2e17a4941bc5401e7f",
+      "parent": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
+      "reason": "three staging-only payload files (.sync-payload.part1/2/3); no reviewable product source yet"
+    }
+  ],
+  "composition_order": [
+    "advanced_connector_extension",
+    "seo_closure",
+    "sites_diagnostics",
+    "content",
+    "billing",
+    "ai_platform",
+    "admin_operations",
+    "production_runtime",
+    "frontend"
+  ],
+  "mechanical_overlays": [
+    "union AppServiceProvider bindings without rebinding the same abstraction",
+    "union bootstrap routing/middleware/exception hooks",
+    "union web routes; preserve #260 canonical site CRUD, add SEO/sites-diagnostics extension routes, and place frontend catch-all last",
+    "union runtime/admin/billing console commands and schedules",
+    "preserve #269 WordPress connector E2E harness over #265 placeholder connector behavior",
+    "union #265 runtime env with #266 PayPal variables",
+    "rename #263 SQLite-conflicting explicit content index to content_items_remote_unique in the composed tree",
+    "probe React 19 compatibility because @laravel/multiplex 0.4.3 requires react ^19.2.7 while #262 declares React 18",
+    "regenerate npm package-lock from the final composed package contract; never use legacy-peer-deps",
+    "preserve merged main parity ledger rather than stale worker ledger edits"
+  ]
+}

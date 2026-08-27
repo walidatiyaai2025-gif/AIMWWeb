@@ -1,0 +1,153 @@
+name: Laravel AIWMWeb Convergence Preflight
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'variants/laravel-aiwmweb/tools/convergence/**'
+      - 'variants/laravel-aiwmweb/tools/convergence_preflight.py'
+      - 'variants/laravel-aiwmweb/docs/CONVERGENCE_PREFLIGHT.md'
+      - '.github/workflows/laravel-aiwmweb-convergence-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composed-working-tree:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4.11
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_aiwmweb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, pdo_sqlite, sqlite3
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Compose pinned worker heads without touching main
+        shell: bash
+        run: bash variants/laravel-aiwmweb/tools/convergence/convergence-compose.sh
+
+      - name: Composer install
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Regenerate deterministic frontend lock for composed package contract
+        working-directory: variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --no-audit --no-fund
+
+      - name: Mechanical PHP formatting normalization, then strict Pint gate
+        working-directory: variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          vendor/bin/pint
+          vendor/bin/pint --test
+
+      - name: SQLite migrate fresh
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/laravel-aiwmweb-convergence.sqlite
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$DB_DATABASE"
+          touch "$DB_DATABASE"
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate:fresh --force
+
+      - name: MySQL migrate fresh
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_aiwmweb
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: php artisan migrate:fresh --force
+
+      - name: Route collision census
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/laravel-aiwmweb-convergence.sqlite
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        run: php artisan route:list --json > /tmp/laravel-aiwmweb-routes.json
+
+      - name: Mechanical convergence invariant gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "${RUNNER_TEMP}/laravel-aiwmweb-convergence-preflight/convergence_preflight.py" \
+            --root "$GITHUB_WORKSPACE" \
+            --route-json /tmp/laravel-aiwmweb-routes.json \
+            --json-out /tmp/laravel-aiwmweb-convergence-report.json \
+            --require-composed
+
+      - name: PHPUnit full composed suite
+        working-directory: variants/laravel-aiwmweb/backend
+        run: php artisan test
+
+      - name: Frontend typecheck, test and production build
+        working-directory: variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Capture preflight evidence
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p preflight-artifacts
+          cp "${RUNNER_TEMP}/laravel-aiwmweb-convergence-preflight/manifest.json" preflight-artifacts/manifest.json || true
+          cp "${RUNNER_TEMP}/laravel-aiwmweb-convergence-preflight/merge-log.txt" preflight-artifacts/merge-log.txt || true
+          cp /tmp/laravel-aiwmweb-convergence-report.json preflight-artifacts/report.json || true
+          cp /tmp/laravel-aiwmweb-routes.json preflight-artifacts/routes.json || true
+          git status --short > preflight-artifacts/composed-status.txt || true
+          git diff --stat > preflight-artifacts/mechanical-diff-stat.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: laravel-aiwmweb-convergence-preflight-${{ github.sha }}
+          path: preflight-artifacts
+          if-no-files-found: error
