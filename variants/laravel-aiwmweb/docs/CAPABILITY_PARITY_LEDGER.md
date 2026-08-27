@@ -2,12 +2,47 @@
 
 Authority: AIMWWeb Issue #257
 
-This is the initial ledger structure. Broad feature census and porting are intentionally deferred until Tenant Core is accepted.
+This ledger is generated from the **current ASP.NET AIMWWeb source** by `tools/capability_census.py`. The JSON ledger is canonical at operation granularity; this Markdown file is the human summary.
 
-Allowed terminal states: `PORTED`, `ADAPTED`, `VERIFIED_UNAVAILABLE_EXTERNAL`, `BLOCKED`.
+Unknown work is `PENDING`. Terminal states are only `PORTED`, `ADAPTED`, `VERIFIED_UNAVAILABLE_EXTERNAL`, and `BLOCKED`. No operation may be removed from the denominator to improve the score.
 
-| Capability ID | Operation ID | Current AIMWWeb source | User-visible behavior | Tenant-owned data | Laravel destination | State | Evidence |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| _inventory pending_ | _inventory pending_ | _pending census_ | _pending census_ | _pending classification_ | _not yet ported_ | `BLOCKED` | Tenant Core first slice |
+## Live parity totals
 
-No capability may be removed from the denominator or marked terminal without source and acceptance evidence.
+- TOTAL_OPERATIONS: **931**
+- PORTED: **0**
+- ADAPTED: **0**
+- PENDING: **931**
+- BLOCKED: **0**
+- VERIFIED_UNAVAILABLE_EXTERNAL: **0**
+- CONNECTOR_REQUIRED: **2**
+- NATIVE_REST: **0**
+- LARAVEL_ONLY: **0**
+- DEAD_FUNCTION_FINDINGS_REQUIRING_REVIEW: **0**
+
+Completion % = `(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL + BLOCKED) / TOTAL_OPERATIONS × 100`. `BLOCKED` is terminal accounting only when the blocker and evidence are explicit; it is not a success claim.
+
+## Denominator composition
+
+| Kind | Operations |
+| --- | ---: |
+| `api` | 31 |
+| `background_job` | 21 |
+| `route` | 84 |
+| `service` | 349 |
+| `visible_control` | 446 |
+
+## Domain composition
+
+| Domain | Operations |
+| --- | ---: |
+| `ai` | 671 |
+| `billing` | 178 |
+| `email` | 82 |
+
+## Canonical operation records
+
+See `capability-parity-ledger.json`. Each row records stable `operation_id`, domain, route/screen, visible control, current source, service, persistence, background job, mutation/external/approval/verification classification, Laravel destination, Native WP REST vs Connector path, tenant ownership, risk, migration state, acceptance test, and evidence.
+
+## Dead / fake function census
+
+See `dead-function-census.json`. High-confidence source patterns are recorded as findings for explicit review; the Laravel release gate fails if forbidden fake-success patterns appear in the new variant production source.
