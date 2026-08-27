@@ -90,7 +90,6 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         }
         finally
         {
-            CleanupApplicationRoot();
             await context.CloseBoundedAsync("backup-restore-browser-real-flow");
         }
     }
@@ -149,7 +148,6 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         }
         finally
         {
-            CleanupApplicationRoot();
             await context.CloseBoundedAsync("backup-restore-invalid-archive");
         }
     }
@@ -230,7 +228,6 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
 
     private async Task PrepareManagedSqliteFixtureAsync()
     {
-        CleanupApplicationRoot();
         var root = ApplicationRoot();
         var data = Path.Combine(root, "Data");
         var config = Path.Combine(root, "Config");
@@ -239,12 +236,34 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         Directory.CreateDirectory(config);
         Directory.CreateDirectory(backups);
 
+        var runtimeDbPath = RuntimeDatabasePath();
+        File.Exists(runtimeDbPath).Should().BeTrue("the browser host must have a real live SQLite database before backup acceptance starts");
+
         var dbPath = Path.Combine(data, "ux-browser-backup.db");
-        await using (var connection = new SqliteConnection($"Data Source={dbPath};Pooling=False"))
+        if (File.Exists(dbPath)) File.Delete(dbPath);
+
+        var sourceBuilder = new SqliteConnectionStringBuilder
         {
-            await connection.OpenAsync();
-            await using var command = connection.CreateCommand();
-            command.CommandText = "CREATE TABLE Evidence (Id INTEGER PRIMARY KEY, Marker TEXT NOT NULL); INSERT INTO Evidence(Marker) VALUES ('browser-real-backup');";
+            DataSource = runtimeDbPath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
+        };
+        var destinationBuilder = new SqliteConnectionStringBuilder
+        {
+            DataSource = dbPath,
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Pooling = false
+        };
+
+        await using (var source = new SqliteConnection(sourceBuilder.ToString()))
+        await using (var destination = new SqliteConnection(destinationBuilder.ToString()))
+        {
+            await source.OpenAsync();
+            await destination.OpenAsync();
+            source.BackupDatabase(destination);
+
+            await using var command = destination.CreateCommand();
+            command.CommandText = "CREATE TABLE IF NOT EXISTS Evidence (Id INTEGER PRIMARY KEY, Marker TEXT NOT NULL); INSERT INTO Evidence(Marker) VALUES ('browser-real-backup');";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -272,11 +291,12 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
             ?? throw new InvalidOperationException("UX runtime root is unavailable."));
     }
 
-    private void CleanupApplicationRoot()
+    private string RuntimeDatabasePath()
     {
-        var root = ApplicationRoot();
-        try { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
-        catch { }
+        var field = typeof(UxTestHost).GetField("_databasePath", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Could not resolve UX runtime database path.");
+        return (string)(field.GetValue(host)
+            ?? throw new InvalidOperationException("UX runtime database path is unavailable."));
     }
 
     private static async Task ClickUntilAsync(ILocator control, Func<Task<bool>> condition, string failure)
