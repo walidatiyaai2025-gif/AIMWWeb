@@ -133,7 +133,7 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->assertSame('RETRY_RECONCILIATION', $resolved->resolution);
         $run = SyncRun::query()->where('trigger', 'conflict-retry')->firstOrFail();
         $this->assertSame(['posts'], $run->resources);
-        Queue::assertPushed(ProcessSyncRunJob::class, fn (ProcessSyncRunJob $job) => $job->runId === $run->id);
+        Queue::assertPushed(ProcessSyncRunJob::class, fn (ProcessSyncRunJob $job) => $job->syncRunId === $run->id);
     }
 
     public function test_remote_missing_is_not_deleted_until_two_completed_full_observations(): void
@@ -256,7 +256,8 @@ class SyncReconciliationRuntimeTest extends TestCase
             'action' => 'updated',
             'payload' => [],
         ];
-        $this->app->instance(SyncWebhookVerifier::class, new FakeWebhookVerifier($event));
+        $verifier = new FakeWebhookVerifier($event);
+        $this->app->instance(SyncWebhookVerifier::class, $verifier);
 
         $this->postJson('/api/v1/sync/webhooks/connector', ['event_id' => 'ignored'])
             ->assertAccepted()
@@ -268,7 +269,7 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->assertSame(1, SyncRun::withoutGlobalScopes()->where('trigger', 'webhook')->count());
 
         $event['event_id'] = 'evt-2';
-        $this->app->instance(SyncWebhookVerifier::class, new FakeWebhookVerifier($event));
+        $verifier->event = $event;
         $this->postJson('/api/v1/sync/webhooks/connector')
             ->assertAccepted()
             ->assertJsonPath('status', 'deferred');
@@ -405,7 +406,7 @@ final class FakeSyncDriver implements ContentRemoteDriver
 
 final class FakeWebhookVerifier implements SyncWebhookVerifier
 {
-    public function __construct(private readonly array $event) {}
+    public function __construct(public array $event) {}
 
     public function verify(Request $request): array
     {
