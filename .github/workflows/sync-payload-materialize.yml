@@ -44,10 +44,8 @@ jobs:
               if not (clean.startswith(allowed_roots[0]) or clean == allowed_roots[1]):
                   raise SystemExit(f'out-of-scope archive path: {name}')
           PY
-          tar -xf /tmp/sync-payload.tar -C .
+          tar -xf /tmp/sync-payload.tar -C . --exclude='./.github/workflows/laravel-aiwmweb-sync.yml'
           rm -f .sync-payload.part1 .sync-payload.part2 .sync-payload.part3
-          rm -f .github/workflows/sync-payload-recovery-inspect.yml
-          rm -f .github/workflows/sync-payload-materialize.yml
           if find . -maxdepth 1 -name '.sync-payload.part*' -print -quit | grep -q .; then
             echo 'staging payload remains' >&2
             exit 2
