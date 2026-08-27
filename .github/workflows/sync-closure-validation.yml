@@ -63,3 +63,5 @@ jobs:
       - name: Full PHPUnit
         working-directory: variants/laravel-aiwmweb/backend
         run: php artisan test
+
+# Re-run after PHPUnit helper compatibility fix.
