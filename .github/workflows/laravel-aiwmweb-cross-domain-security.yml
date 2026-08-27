@@ -1,0 +1,144 @@
+name: Laravel AIWMWeb Cross-Domain Security
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/security/**'
+      - '.github/workflows/laravel-aiwmweb-cross-domain-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  targets:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          p='variants/laravel-aiwmweb/security/targets.json'
+          data=json.load(open(p, encoding='utf-8'))
+          include=[]
+          for target in data['targets']:
+              include.append({
+                  'id': target['id'],
+                  'branch': target['branch'],
+                  'ref': target['ref'],
+                  'overlay_filter': target['overlay_filter'],
+                  'native_commands': target['native_commands'],
+              })
+          print('matrix='+json.dumps({'include': include}, separators=(',', ':')))
+          PY
+      - name: Reject stale target heads
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          data=json.load(open('variants/laravel-aiwmweb/security/targets.json', encoding='utf-8'))
+          failures=[]
+          for target in data['targets']:
+              branch=target['branch']
+              expected=target['ref']
+              out=subprocess.check_output(['git','ls-remote','origin',f'refs/heads/{branch}'], text=True).strip()
+              actual=out.split()[0] if out else ''
+              if actual != expected:
+                  failures.append(f"{target['id']}: {branch} expected {expected} got {actual or 'MISSING'}")
+          if failures:
+              raise SystemExit('Stale security target manifest:\n'+'\n'.join(failures))
+          PY
+
+  adversarial:
+    needs: targets
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.targets.outputs.matrix) }}
+    steps:
+      - name: Checkout security overlay
+        uses: actions/checkout@v4
+        with:
+          path: security-worker
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          path: candidate
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3, redis
+          coverage: none
+      - name: Install candidate dependencies
+        working-directory: candidate/variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Install adversarial overlay
+        shell: bash
+        run: |
+          mkdir -p candidate/variants/laravel-aiwmweb/backend/tests/Feature/Security
+          cp security-worker/variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php \
+             candidate/variants/laravel-aiwmweb/backend/tests/Feature/Security/CrossDomainSecurityAcceptanceTest.php
+      - name: Prepare isolated SQLite database
+        working-directory: candidate/variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch "$RUNNER_TEMP/${{ matrix.id }}.sqlite"
+          php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ runner.temp }}/${{ matrix.id }}.sqlite
+          REDIS_HOST: 127.0.0.1
+      - name: Laravel formatting gate for overlay
+        working-directory: candidate/variants/laravel-aiwmweb/backend
+        run: vendor/bin/pint --test tests/Feature/Security/CrossDomainSecurityAcceptanceTest.php
+      - name: Run cross-domain adversarial overlay
+        working-directory: candidate/variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          if [ -n "$OVERLAY_FILTER" ]; then
+            php artisan test tests/Feature/Security/CrossDomainSecurityAcceptanceTest.php --filter="$OVERLAY_FILTER"
+          else
+            php artisan test tests/Feature/Security/CrossDomainSecurityAcceptanceTest.php
+          fi
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ runner.temp }}/${{ matrix.id }}.sqlite
+          CACHE_STORE: redis
+          REDIS_HOST: 127.0.0.1
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+          OVERLAY_FILTER: ${{ matrix.overlay_filter }}
+      - name: Run candidate-native focused security acceptance
+        if: ${{ toJson(matrix.native_commands) != '[]' }}
+        working-directory: candidate/variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          commands=json.loads(os.environ['NATIVE_COMMANDS'])
+          for command in commands:
+              print('+', command, flush=True)
+              subprocess.run(command, shell=True, check=True)
+          PY
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ runner.temp }}/${{ matrix.id }}.sqlite
+          REDIS_HOST: 127.0.0.1
+          NATIVE_COMMANDS: ${{ toJson(matrix.native_commands) }}

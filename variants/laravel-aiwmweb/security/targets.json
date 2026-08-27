@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "authority": "AIMWWeb Issue #257",
+  "main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
+  "targets": [
+    {
+      "id": "tenant-core-merged-connector",
+      "branch": "main",
+      "ref": "bd6d272748753e21b65655901eaed8bb65a267c7",
+      "domains": ["tenant-core", "sites", "connector", "approvals", "executions", "queue", "cache", "locks", "idempotency"],
+      "overlay_filter": "",
+      "native_commands": ["php artisan test tests/Feature/TenantIsolationTest.php tests/Feature/DemoVerticalSliceTest.php --filter='/test_every_vertical_slice_resource_rejects_cross_tenant_guessed_ids|test_connector_protocol_rejects_tampering_expiry_replay_scope_and_revocation|test_operations_are_bound_to_server_required_scopes/'"]
+    },
+    {
+      "id": "connector-head",
+      "branch": "worker/laravel-aiwmweb-wp-runtime",
+      "ref": "391c717c2b197226207afe2ddf432dd86e0ce6eb",
+      "domains": ["sites", "connector", "approvals", "executions", "seo-foundation"],
+      "overlay_filter": "",
+      "native_commands": [
+        "php artisan test tests/Feature/DemoVerticalSliceTest.php --filter='/test_every_vertical_slice_resource_rejects_cross_tenant_guessed_ids|test_connector_protocol_rejects_tampering_expiry_replay_scope_and_revocation|test_operations_are_bound_to_server_required_scopes/'",
+        "php artisan test tests/Feature/AdvancedConnectorScopeTest.php"
+      ]
+    },
+    {
+      "id": "content",
+      "branch": "worker/laravel-aiwmweb-content-platform",
+      "ref": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
+      "domains": ["content", "media", "comments", "taxonomy", "basic-sync"],
+      "overlay_filter": "",
+      "native_commands": [
+        "php artisan test tests/Feature/ContentPlatformIsolationTest.php --filter='/test_every_content_family_is_tenant_scoped_even_for_guessed_ids|test_site_scope_blocks_guessed_ids_and_bulk_selection_before_dispatch|test_remote_change_creates_conflict_and_never_calls_mutation/'"
+      ]
+    },
+    {
+      "id": "admin-operations",
+      "branch": "worker/laravel-aiwmweb-admin-operations",
+      "ref": "7f0a297b331c4e324c8f76309b2c5cb61660e44a",
+      "domains": ["admin", "members", "sessions", "automation", "backups", "reports", "operations"],
+      "overlay_filter": "",
+      "native_commands": ["php artisan test tests/Feature/AdminOperationsControlPlaneTest.php"]
+    },
+    {
+      "id": "runtime",
+      "branch": "worker/laravel-aiwmweb-production-runtime",
+      "ref": "285355ada0032cd013bb9fb814b1211beb0eb53e",
+      "domains": ["queue-runtime", "cache-runtime", "locks-runtime"],
+      "overlay_filter": "test_cache_locks_idempotency_and_queue_context_are_partitioned_between_tenants",
+      "native_commands": ["php artisan test tests/Feature/TenantIsolationTest.php"]
+    },
+    {
+      "id": "billing",
+      "branch": "worker/laravel-aiwmweb-billing-platform",
+      "ref": "3c2e2904457b18882f0a168857ed149c067bdd1c",
+      "domains": ["billing", "subscriptions", "quotas", "billing-webhooks"],
+      "overlay_filter": "",
+      "native_commands": [
+        "php artisan test tests/Feature/Billing/BillingPlatformTest.php --filter='/test_entitlements_and_atomic_quota_are_tenant_scoped_reset_by_period_and_reject_overage|test_cross_tenant_billing_is_not_disclosed_and_provider_identifiers_are_absent_from_api|test_webhook_replay_is_idempotent_and_invalid_signature_does_not_mutate_state|test_provider_credentials_are_encrypted_and_never_exposed/'"
+      ]
+    },
+    {
+      "id": "ai-platform",
+      "branch": "worker/laravel-aiwmweb-ai-platform",
+      "ref": "f981d18fde23bd02bb7b6783ed22b3df9fc81790",
+      "domains": ["ai", "ai-provider-config", "ai-secrets"],
+      "overlay_filter": "",
+      "native_commands": []
+    },
+    {
+      "id": "seo",
+      "branch": "worker/laravel-aiwmweb-seo-closure",
+      "ref": "b9214cc720616753e37820862f576e27af4cafc8",
+      "domains": ["seo", "seo-permissions", "seo-evidence"],
+      "overlay_filter": "",
+      "native_commands": [
+        "php artisan test tests/Feature/SeoParityClosureTest.php --filter='/test_connector_scope_policy_requires_seo_write_for_all_plugin_metadata|test_seo_write_permission_is_fail_closed|test_stale_state_blocks_mutation_and_persists_failed_evidence|test_seo_records_remain_tenant_isolated/'"
+      ]
+    },
+    {
+      "id": "sites-diagnostics",
+      "branch": "worker/laravel-aiwmweb-sites-diagnostics",
+      "ref": "f3df553f93382c404b465dfc4576b5df89475cc4",
+      "domains": ["sites", "diagnostics", "connector-lifecycle"],
+      "overlay_filter": "",
+      "native_commands": [
+        "php artisan test tests/Feature/SiteDiagnosticsClosureTest.php --filter='/test_site_and_diagnostic_ids_do_not_cross_tenants|test_disconnect_and_reconnect_reuse_canonical_connector_pairing|test_connector_auth_failure_disabled_scope_and_unsupported_protocol_are_distinct|test_capability_explorer_reports_owner_disabled_and_redacts_secrets/'"
+      ]
+    }
+  ],
+  "not_executable": [
+    {
+      "domain": "advanced-sync-reconciliation",
+      "branch": "worker/laravel-aiwmweb-sync-reconciliation",
+      "ref": "bcd20b364a77ee4cebd1fb2e17a4941bc5401e7f",
+      "reason": "staging-only payload commits; no reviewable final product source or exact-head CI"
+    },
+    {
+      "domain": "notifications",
+      "branch": "worker/laravel-aiwmweb-email-notifications",
+      "ref": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
+      "reason": "handoff-only PR #268 with zero product implementation changes"
+    },
+    {
+      "domain": "email-delivery",
+      "branch": "worker/laravel-aiwmweb-email-delivery-closure",
+      "ref": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+      "reason": "branch had no implementation delta at live inspection"
+    }
+  ]
+}
