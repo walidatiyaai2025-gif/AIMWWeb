@@ -45,8 +45,24 @@ public sealed class BlazorFrameworkAuthorizationResultHandler : IAuthorizationMi
 
             if (context.Request.Path.Equals("/logout", StringComparison.OrdinalIgnoreCase))
                 await validator.EndCurrentOnLogoutAsync(context.User, context.RequestAborted);
+
+            if (authorizeResult.Forbidden && IsHtmlNavigation(context))
+            {
+                context.Response.Redirect("/access-denied");
+                return;
+            }
         }
 
         await _defaultHandler.HandleAsync(next, context, policy, authorizeResult);
+    }
+
+    private static bool IsHtmlNavigation(HttpContext context)
+    {
+        if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+            return false;
+        if (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/health"))
+            return false;
+
+        return context.Request.Headers.Accept.ToString().Contains("text/html", StringComparison.OrdinalIgnoreCase);
     }
 }
