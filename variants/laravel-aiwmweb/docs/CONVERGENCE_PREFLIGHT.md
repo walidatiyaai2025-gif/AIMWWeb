@@ -1,243 +1,150 @@
 # Laravel AIWMWeb Convergence Preflight
 
-Authority: Issue #257. This document is a **dry-run convergence aid**, not integration authority. Fresh Codex remains responsible for the final architectural and merge decisions.
+Authority: Issue #257. Worker 11 is a dry-run preflight specialist; Fresh Codex remains the only integration authority.
 
-## Captured live heads
+## Captured live graph
 
-| Authority | PR / branch | Captured head | Relationship |
+Canonical base is `main` at `e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb` (Tenant Core + merged acceptance framework).
+
+| Role | Live source | Captured head | Dependency |
 | --- | --- | --- | --- |
-| Tenant Core + acceptance | `main` | `e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb` | canonical base |
-| Site / Connector protocol | #260 `feature/laravel-aiwmweb-demo-vertical-slice` | `85b83ce53ce6be434176964bc77ced6beefa6e68` | logical protocol authority |
-| Advanced Connector | #269 `worker/laravel-aiwmweb-wp-runtime` | `391c717c2b197226207afe2ddf432dd86e0ce6eb` | contains #260 lineage plus advanced extension |
-| Content | #263 `worker/laravel-aiwmweb-content-platform` | `7cb250d893fbf4c0f82b13093eec87e3c1310dfd` | independent worker |
-| Billing | #266 `worker/laravel-aiwmweb-billing-platform` | `3c2e2904457b18882f0a168857ed149c067bdd1c` | independent worker |
-| AI Platform | #267 `worker/laravel-aiwmweb-ai-platform` | `f981d18fde23bd02bb7b6783ed22b3df9fc81790` | independent worker; fail-closed adapters |
-| Admin / Operations | #264 `worker/laravel-aiwmweb-admin-operations` | `7f0a297b331c4e324c8f76309b2c5cb61660e44a` | independent worker |
-| Production Runtime | #265 `worker/laravel-aiwmweb-production-runtime` | `285355ada0032cd013bb9fb814b1211beb0eb53e` | independent worker |
-| Frontend | #262 `worker/laravel-aiwmweb-full-frontend` | `81c639e23a96d7fbaceda66b6275ca27cb276ace` | independent worker; merge last |
-| Email handoff | #268 `worker/laravel-aiwmweb-email-notifications` | `2b54783b24834b41ed60a4ee73d7f50213b16a21` | zero changed files; **not product functionality** |
+| Site / Connector protocol | PR #260 | `85b83ce53ce6be434176964bc77ced6beefa6e68` | main |
+| Advanced Connector | PR #269 | `391c717c2b197226207afe2ddf432dd86e0ce6eb` | contains #260 lineage |
+| SEO closure | `worker/laravel-aiwmweb-seo-closure` | `600d83aab3392456bd59d0c60812f8d3b12b8a72` | stacked on #269 |
+| Sites diagnostics | `worker/laravel-aiwmweb-sites-diagnostics` | `aa868f03a5ad095e165fb79f56a8427d6cffb76e` | stacked on #269 |
+| Content | PR #263 | `7cb250d893fbf4c0f82b13093eec87e3c1310dfd` | main; consumes #260 contracts when present |
+| Billing | PR #266 | `3c2e2904457b18882f0a168857ed149c067bdd1c` | main |
+| AI Platform | PR #267 | `f981d18fde23bd02bb7b6783ed22b3df9fc81790` | main; fail-closed adapters |
+| Admin / Operations | PR #264 | `7f0a297b331c4e324c8f76309b2c5cb61660e44a` | main |
+| Production Runtime | PR #265 | `285355ada0032cd013bb9fb814b1211beb0eb53e` | main |
+| Frontend | PR #262 | `81c639e23a96d7fbaceda66b6275ca27cb276ace` | main; integrate last |
 
-Additional live branch census:
+Excluded from product composition:
 
-- `worker/laravel-aiwmweb-sync-reconciliation` = `f3855fa2c2728ab5920deb24e32c566caa0cc7ec`, one commit above #263 that only adds `.sync-payload.part1`. It is staging material, not reviewable product source, and is excluded from the composition.
-- `worker/laravel-aiwmweb-email-delivery-closure` currently equals `main` exactly and has no implementation delta.
-- No Laravel `seo-closure` branch was present under that name.
-- No Laravel `sites-diagnostics` branch was present under that name.
+- PR #268: zero changed files and explicitly not Email functionality.
+- `worker/laravel-aiwmweb-email-delivery-closure`: still exactly equal to main; no implementation delta.
+- `worker/laravel-aiwmweb-sync-reconciliation` at `bcd20b364a77ee4cebd1fb2e17a4941bc5401e7f`: three commits above #263 containing only `.sync-payload.part1`, `.part2`, `.part3`; staging transport, not reviewable product source.
 
-The machine-readable capture is `tools/convergence/manifest.json`.
-
-## Dependency graph
+## Dependency graph and order
 
 ```text
 main / Tenant Core
  |
- +--> #260 Site + Connector protocol --------------------+
- |       |                                               |
- |       +--> #269 Advanced Connector (stacked)          |
- |                                                       |
- +--> #263 Content ----consumes Site/WordPressGateway----+
- |                                                       |
- +--> #266 Billing ----quota/entitlement adapter-------> #267 AI Platform
- |                                                       |
- +--> #264 Admin/Operations --connector/content gateways-+
- |                                                       |
- +--> #265 Runtime --validates DB/Redis/queue/WP----------+
- |                                                       |
- +--> #262 Frontend --discovers all integrated APIs-------+
+ +--> #260 Site + Connector protocol
+ |      +--> #269 Advanced Connector
+ |             +--> SEO closure
+ |             +--> Sites diagnostics
+ |
+ +--> #263 Content --------consumes #260 Site/WordPressGateway
+ +--> #266 Billing --------adapter required by #267 quota gateway
+ +--> #267 AI Platform ----adapter required for Site + Approval
+ +--> #264 Admin/Ops ------consumes content/connector gateways
+ +--> #265 Runtime --------validates final backend/runtime stack
+ +--> #262 Frontend -------discovery layer and catch-all LAST
 ```
 
-`#269` is intentionally used as the **composition transport for #260 + #269**. The #260 head is an ancestor of #269 and its canonical Site/Connector types are retained. Merging both as unrelated feature trees is unnecessary and creates avoidable conflict churn.
+Recommended convergence order: use #269 as the transport for #260+#269, then compose SEO closure, Sites diagnostics, #263, #266, #267, #264, #265, and #262 last. Rebuild the parity ledger only after the final source tree is stable.
 
-## Recommended integration / cherry-pick order
+## Confirmed migration findings
 
-1. Establish #260 as the logical Site/Connector contract authority; use the current #269 head as the transport that contains #260 plus its advanced extension.
-2. #263 Content.
-3. #266 Billing.
-4. #267 AI Platform. Keep its fail-closed quota/site/approval gateways until explicit adapters are installed.
-5. #264 Admin / Operations.
-6. #265 Production Runtime.
-7. #262 Frontend last, so its tenant catch-all route remains after every specific backend route.
-8. Rebuild the parity ledger from the final source tree.
-9. Integrate newer sync/email/SEO/sites work only when real reviewable source exists. Do not treat #268 as email functionality.
+Expected lexical order after Tenant Core:
 
-This is an integration order, not a request to merge any PR from this worker.
+1. `2026_08_27_000100_create_demo_vertical_slice_tables.php` (#260/#269)
+2. `2026_08_27_191500_create_ai_platform_tables.php` (#267)
+3. `2026_08_27_210000_create_billing_platform.php` (#266)
+4. `2026_08_27_210000_create_content_platform_tables.php` (#263)
+5. `2026_08_27_210000_extend_seo_parity_tables.php` (SEO closure)
+6. `2026_08_27_220000_create_admin_operations_tables.php` (#264)
+7. `2026_08_27_231000_expand_seo_domain.php` (SEO closure)
+8. `2026_08_27_232000_create_site_diagnostics_tables.php` (Sites diagnostics)
 
-## Exact shared-file conflict set
+The shared `210000` timestamp is not itself a duplicate filename; lexical ordering is deterministic. SEO extension tables depend on the #260 base and therefore must follow #269.
+
+Confirmed mechanical blocker: #260 `synced_contents` and #263 `content_items` both explicitly name an index `content_remote_unique`. MySQL permits that name on different tables; SQLite index names are schema-global. The disposable composition renames only #263's index to `content_items_remote_unique`, preserving columns and uniqueness semantics.
+
+No duplicate `Schema::create()` table name or duplicate migration filename was found in the canonical captured set. Sites diagnostics adds `site_diagnostics` and `site_operation_histories` with FKs to the canonical #260 `sites` table rather than creating another Site table.
+
+## Shared-file conflict plan
 
 ### `app/Providers/AppServiceProvider.php`
 
-Touched by #260/#269, #263, #266 and #267.
-
-Bindings are **additive, not competing** when #269 transports #260:
-
-- `WordPressGateway -> HttpWordPressGateway` (#260/#269)
-- `AdvancedWordPressGateway -> HttpWordPressGateway` (#269)
-- `AiProvider -> HttpAiProvider` legacy demo path (#260/#269)
-- `ContentRemoteDriver -> DualPathContentDriver` (#263)
-- `BillingProvider -> PayPalProvider` (#266)
-- `AiQuotaGateway -> UnconfiguredAiQuotaGateway` (#267)
-- `AiGenerator -> AiGenerationService` (#267)
-- `PlannerApprovalGateway -> UnconfiguredPlannerApprovalGateway` (#267)
-- `PlannerSiteGateway -> UnconfiguredPlannerSiteGateway` (#267)
-
-Mechanical fix: union the bindings once. Architectural follow-up: Codex decides when the #267 fail-closed gateways are replaced by Billing/Site/Approval adapters.
+Touched by #260/#269, #263, #266 and #267. Bindings are additive in the mechanical union: WordPressGateway, AdvancedWordPressGateway, legacy AiProvider, ContentRemoteDriver, BillingProvider, AiQuotaGateway, AiGenerator, PlannerApprovalGateway and PlannerSiteGateway each have one concrete binding. Codex must later replace #267's fail-closed adapters deliberately; preflight does not invent adapters.
 
 ### `bootstrap/app.php`
 
-Touched by #263, #265 and #266.
-
-Mechanical union required:
-
-- load `routes/api.php` (#263),
-- preserve `tenant.context`,
-- add request correlation and trusted proxy handling (#265),
-- add `platform.admin`, PayPal CSRF exception and Billing exception rendering (#266),
-- preserve JSON rendering for API plus runtime health paths.
-
-No middleware alias name collision was found.
+Union #263 API routing, #265 correlation/trusted-proxy runtime middleware, and #266 platform-admin/PayPal exception semantics. No middleware alias collision was found.
 
 ### `routes/web.php`
 
-Touched by #260/#269, #262, #264, #265 and #266.
+Touched by #260/#269, SEO closure, Sites diagnostics, #262, #264, #265 and #266. Mechanical composition preserves #260 Site CRUD as canonical, adds non-overlapping SEO and diagnostics extension routes, adds Billing/Admin/health routes, uses #262's rich tenant-context shape, and keeps #262's `/tenants/{tenant}/{path?}` catch-all last.
 
-The routes are largely disjoint. The one repeatedly edited route is `/tenants/{tenant}/context`: use #262's richer frontend context response, then integrate worker discovery data deliberately. Required order in the final file:
-
-1. health + root,
-2. #260 Connector/demo APIs,
-3. #266 Billing APIs,
-4. rich tenant context,
-5. #264 Admin routes,
-6. #260 console route,
-7. #262 `/tenants/{tenant}/{path?}` frontend catch-all **last**.
-
-The preflight CI runs `php artisan route:list --json` and fails on duplicate HTTP method + URI pairs.
+Sites diagnostics also proposes `SiteManagementController` for the same CRUD URIs. Because the prompt declares #260 Site/Connector protocol canonical, preflight does not silently replace #260 CRUD. Whether Codex adopts the newer controller behind the same public contract is an integration decision.
 
 ### `routes/console.php`
 
-Touched by #264, #265 and #266. Command names are disjoint:
-
-- `ops:dispatch-due`,
-- runtime health/MySQL/Redis/queue/scheduler commands,
-- billing credential/maintenance commands.
-
-Mechanical fix: union imports, commands and schedules. Do not drop `withoutOverlapping`; keep the runtime heartbeat and Billing `onOneServer` behavior.
+#264, #265 and #266 commands/schedules are name-disjoint and can be mechanically unioned. Keep runtime heartbeat, `withoutOverlapping`, and Billing `onOneServer` semantics.
 
 ### `.env.example`
 
-Touched by #265 and #266. Use the Runtime environment as the production baseline and append the PayPal variables. No actual secrets are introduced.
+Use #265 runtime environment as baseline and append #266 PayPal variables. No secrets are introduced.
 
-### `.github/workflows/laravel-aiwmweb.yml`
+### CI workflow
 
-Touched by #262 and #265. #265 is the broader production acceptance superset (MySQL, Redis, queues, scheduler, WordPress, Compose, artifacts). #262 adds mandatory frontend typecheck/test/build semantics. Final convergence must retain both. The preflight workflow independently executes strict `npm run typecheck`, `npm test`, and `npm run build` so a missing script cannot silently pass via `--if-present`.
+#265 is the broad production acceptance superset; #262 requires strict frontend typecheck/test/build; #269 has the real Connector WordPress E2E. Final CI must retain all three characteristics.
 
-### `tests/wordpress/bootstrap-wordpress.sh`
+## Model / contract collisions
 
-#269 provides the real advanced-Connector install/activate/schema/namespace test. It supersedes #265's earlier behavior that intentionally stopped when Connector source appeared. Final convergence should keep #269's real Connector E2E while retaining #265's disposable runtime infrastructure.
+There is a single canonical `App\Models\Site` lineage from #260, inherited by #269 and both newer Site/SEO branches. #263 does not define another Site model.
 
-### Capability parity ledger
+SEO closure and #267 both add `App\AI\Platform\Contracts\AiGenerator.php`, but the files are byte-identical (`6484c13fa93161d88a27429972c68abc9e7da131`). This is a lineage/ownership overlap, not an incompatible interface. Keep #267 as AI Platform authority while allowing SEO to consume the same contract.
 
-#260 and #264 contain stale/manual ledger edits relative to merged #261 acceptance authority. The final ledger must be regenerated from the fully composed source. The preflight composition restores merged-main generated ledger files rather than allowing stale worker conflict resolution to become canonical evidence.
+#260 legacy `App\AI\AiProvider` / `AiProviderConfig` and #267 advanced AI Platform are different APIs. They do not collide at class level, but Codex must adapt the legacy suggestion journey rather than deleting either path during a mechanical merge.
 
-## Migration plan and conflicts
+#267 `AiQuotaGateway::check(...)` is not directly equivalent to #266 `UsageQuotaService::consume(...)`. An explicit Billing-to-AI quota adapter is required; direct rebinding would change semantics.
 
-Expected order by filename:
+#260 owns governed `Approval` / `Execution` / evidence for the demo mutation journey. #264 owns separate automation/operation records. #267 ships a fail-closed `PlannerApprovalGateway`. Codex must select the canonical planner submission adapter.
 
-1. merged-main Tenant Core migrations,
-2. `2026_08_27_000100_create_demo_vertical_slice_tables.php` (#260/#269) — creates canonical `sites` and Connector/demo tables,
-3. `2026_08_27_191500_create_ai_platform_tables.php` (#267),
-4. `2026_08_27_210000_create_billing_platform.php` (#266),
-5. `2026_08_27_210000_create_content_platform_tables.php` (#263),
-6. `2026_08_27_220000_create_admin_operations_tables.php` (#264).
+## Frontend contract
 
-The two `210000` migrations have distinct filenames and no direct FK dependency; Laravel's lexical ordering makes Billing run before Content. Retimestamping is therefore not required for correctness, though Codex may choose a deterministic naming cleanup during convergence.
+#262 has typed API paths and explicit `api`, `capabilities`, `actions` and `connectors` discovery maps. Its current backend context intentionally returns empty discovery maps, so a compiled frontend can remain truthfully `pending_integration`. Codex must populate maps from the final real backend surface; preflight never marks availability based only on route existence.
 
-### Confirmed mechanical migration blocker
+Billing, AI, SEO and Sites diagnostics need final discovery-map entries after their public API surface is accepted.
 
-#260's `synced_contents` and #263's `content_items` both explicitly name a unique index `content_remote_unique`. MySQL permits identical index names on different tables. SQLite index names are schema-global, so the composed SQLite migration can fail with `index content_remote_unique already exists`.
+## npm incompatibility
 
-Safe preflight overlay: rename the #263 index in the ephemeral composition to `content_items_remote_unique`. Column set and uniqueness semantics remain unchanged. The final convergence should commit an equivalent name disambiguation on the integrated source.
+A strict composed install exposed a real dependency collision, not merely a stale lock:
 
-### Other migration findings
+- #262 declares `react` / `react-dom` `^18.3.1`.
+- the Laravel 13 template keeps optional `@laravel/multiplex ^0.4.1`.
+- the current lock resolves Multiplex `0.4.3`, whose direct dependency is `react ^19.2.7`.
+- strict `npm install --package-lock-only` fails `ERESOLVE`; using `--legacy-peer-deps` would weaken the gate and is forbidden.
 
-- No duplicate `Schema::create()` table names were found across the captured canonical workers.
-- No exact duplicate migration filename was found.
-- `users.platform_admin` is added only by #266.
-- No competing FK definition for the same column/table was found.
-- #263 and #267 intentionally use raw `site_id` values rather than introducing a second Site table/foreign key. Whether to strengthen those FKs later is a domain/integration decision, not a preflight mechanical fix.
-- `SyncedContent` (#260) and `ContentItem` (#263) are separate tables/models. That is a **semantic legacy-vs-content-authority overlap**, not a duplicate-table error. Codex must decide the adaptation of the demo SEO pipeline to #263 ownership.
+The disposable preflight tree therefore probes the smallest compatibility upgrade: React/ReactDOM to `^19.2.7` and React type packages to `^19`. It then regenerates the lock and requires strict `npm ci`, TypeScript, Vitest and Vite build. If that proof passes, Codex has a tested mechanical dependency fix; the frontend worker branch itself is not rewritten by Worker 11.
 
-## Model and contract overlap
+## Composition CI
 
-### Site / Connector
+The preflight workflow resets an ephemeral tree to captured main, fetches exact branch heads, composes them without merging anything to main, applies the mechanical overlays above, and then runs:
 
-There is one canonical `App\Models\Site` lineage: #260, inherited by #269. #263 does not create a competing Site model and dynamically consumes `App\Models\Site` plus `App\Connector\WordPressGateway`. Keep #260 signatures canonical; apply #269 only as an extension.
+- Composer install
+- strict npm lock regeneration + `npm ci`
+- Pint normalization in the disposable tree followed by `pint --test`
+- SQLite `migrate:fresh`
+- MySQL 8.4 `migrate:fresh`
+- `route:list --json` duplicate method/URI census
+- duplicate table/index/FQCN/service-binding/package-lock/conflict-marker invariants
+- full PHPUnit
+- frontend typecheck, Vitest and Vite production build
 
-### AI provider overlap
+Artifacts contain the exact-head manifest, merge log, route census and invariant report where reached.
 
-There is no duplicate PHP class name, but two layers exist:
+## Codex must resolve
 
-- #260 legacy demo `App\AI\AiProvider` + `AiProviderConfig` used by `GenerateSuggestionJob`,
-- #267 advanced `App\AI\Platform\...` provider/profile/generation contracts.
-
-#267 deliberately does not redefine #260 classes. Codex must adapt the legacy suggestion flow to the canonical AI Platform when appropriate; preflight does not replace interfaces.
-
-### Billing -> AI quota
-
-#267 `AiQuotaGateway::check(tenantId, userId, workflow, requestedAdditional)` does not directly match #266 `UsageQuotaService::consume(metric, amount)` / entitlement APIs. #267 currently binds an `UnconfiguredAiQuotaGateway` and therefore fails closed. Codex must supply an explicit adapter with metric mapping and consume/check semantics; do not bind these classes directly merely because both concern quota.
-
-### Approval / execution
-
-#260 owns `Approval`, `Execution`, `EvidenceReceipt` for the governed demo mutation journey. #264 owns automation/operation execution records with different table/class names. #267 consumes a `PlannerApprovalGateway` and ships an unconfigured implementation. There is no class/table collision, but Codex must decide which canonical approval API the planner submits into.
-
-## Frontend discovery contract
-
-#262 already has typed paths for #260, #263 and #264 in `resources/js/contracts.ts`, but runtime availability is controlled by `FrontendContext.api`, `capabilities`, `actions`, and `connectors`. Its current context response intentionally advertises empty maps.
-
-Therefore a composed build can be green while feature screens remain `pending_integration`. Codex must populate discovery maps from integrated, real backend capabilities. Preflight does not mark endpoints available merely because a route file exists.
-
-Billing (#266) and AI Platform (#267) also need their final discovery keys mapped into #262's route/API contract after Codex establishes the canonical public API surface.
-
-## npm / Composer preflight
-
-Composer constraints are shared and no worker changes `composer.json` in the captured feature set.
-
-Confirmed npm blocker: #262 updates `package.json` with React, TypeScript, Vitest, Testing Library, React Query and Zod, but does not update `package-lock.json`. #260/#269 brings an older lock whose root dependency contract lacks those packages. #265 correctly chooses `npm ci` whenever a lock exists. A raw composition therefore fails deterministic frontend installation.
-
-Safe mechanical fix: after #262 is integrated, regenerate `package-lock.json` from the final `package.json`, then run `npm ci`, typecheck, tests and build. The preflight workflow performs this regeneration only inside the disposable composed working tree and its invariant scanner verifies root package/lock parity.
-
-## CI composition proof
-
-`.github/workflows/laravel-aiwmweb-convergence-preflight.yml` does not merge feature PRs to main. It:
-
-1. checks out this preflight PR,
-2. copies the preflight tooling to runner temp,
-3. resets a disposable working tree to the captured main SHA,
-4. merges #269, #263, #266, #267, #264, #265, #262 using pinned heads,
-5. applies only the mechanical overlays described above,
-6. regenerates the npm lock,
-7. runs Composer install,
-8. runs Pint normalization then `pint --test`,
-9. runs SQLite `migrate:fresh`,
-10. runs MySQL 8.4 `migrate:fresh`,
-11. runs a route collision census,
-12. runs the convergence invariant scanner,
-13. runs the full PHPUnit suite,
-14. runs frontend typecheck, Vitest and Vite production build,
-15. uploads a merge log, route census and invariant report.
-
-The merge strategy is intentionally not a final source history. Shared files are synthesized from their canonical owners only to prove compatibility and expose remaining non-mechanical blockers.
-
-## Codex-owned decisions remaining
-
-These are explicitly **not** fixed by Worker 11:
-
-- adapt #260 legacy `SyncedContent` / SEO suggestion pipeline to #263 Content ownership,
-- install #266-backed implementation of #267 `AiQuotaGateway`, including check-vs-consume semantics,
-- connect #267 `PlannerSiteGateway` to canonical #260 Site authority,
-- connect #267 `PlannerApprovalGateway` to the canonical governed approval/execution destination,
-- decide how #260 legacy `AiProvider` transitions to #267 AI Platform without breaking the demo journey,
-- populate #262 frontend API/capability/action/connector discovery maps from final integrated routes,
-- reconcile the final authoritative workflow file, preserving #265 production gates plus strict #262 frontend gates and #269 real Connector E2E,
-- regenerate the parity ledger after final convergence,
-- ignore #268 as product functionality and wait for real email-delivery source,
-- exclude `.sync-payload.part1` until sync-reconciliation is committed as reviewable source.
+1. Decide whether Sites diagnostics' `SiteManagementController` replaces #260's CRUD implementation while preserving #260's public Site/Connector contract.
+2. Adapt #260 legacy `SyncedContent`/SEO journey to #263 Content ownership without duplicating content truth.
+3. Provide #266-backed `AiQuotaGateway` semantics for #267.
+4. Connect #267 Planner Site and Approval gateways to canonical #260/#approval destinations.
+5. Transition #260 legacy AI provider usage toward #267 without breaking existing governed mutation behavior.
+6. Populate #262 discovery maps for Content, Billing, AI, SEO, Sites, Admin and Connector capability truth.
+7. Commit a final deterministic npm dependency/lock decision only after strict frontend proof.
+8. Regenerate the parity ledger after convergence.
+9. Ignore #268 and email-delivery placeholder branches until actual Email source appears; ignore sync payload parts until reviewable source replaces staging transport.
