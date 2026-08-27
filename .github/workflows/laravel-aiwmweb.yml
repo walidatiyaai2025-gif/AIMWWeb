@@ -1,4 +1,4 @@
-name: Laravel AIWMWeb Tenant Core
+name: Laravel AIWMWeb Acceptance
 
 on:
   pull_request:
@@ -6,7 +6,9 @@ on:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb.yml'
   push:
-    branches: [main]
+    branches:
+      - main
+      - worker/laravel-aiwmweb-acceptance-parity
     paths:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb.yml'
@@ -15,7 +17,51 @@ permissions:
   contents: read
 
 jobs:
-  tenant-core:
+  generate-parity-ledger:
+    if: github.event_name == 'push' && github.ref_name == 'worker/laravel-aiwmweb-acceptance-parity' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate exact operation denominator
+        run: python variants/laravel-aiwmweb/tools/capability_census.py --write
+      - name: Persist generated parity evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            variants/laravel-aiwmweb/docs/CAPABILITY_PARITY_LEDGER.md \
+            variants/laravel-aiwmweb/docs/capability-parity-ledger.json \
+            variants/laravel-aiwmweb/docs/dead-function-census.json
+          if git diff --cached --quiet; then
+            echo 'PARITY_LEDGER_CHANGED=NO'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: refresh Laravel parity denominator'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+  acceptance-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Rebuild census from checked-out source
+        run: python variants/laravel-aiwmweb/tools/capability_census.py --write
+      - name: Run Laravel acceptance release gate
+        run: python variants/laravel-aiwmweb/tools/acceptance_gate.py
+
+  tenant-core-sqlite:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,3 +85,82 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+
+  mysql-production-like:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_aiwmweb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: laravel_aiwmweb
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Validate forward, rollback and forward migration
+        run: |
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=3 --force
+          php artisan migrate --force
+      - name: Run full tests on MySQL
+        run: php artisan test
+
+  wordpress-real-rest-e2e:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      WP_DB_HOST: 127.0.0.1
+      WP_DB_NAME: wordpress
+      WP_DB_USER: root
+      WP_DB_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mysqli, curl
+          coverage: none
+      - name: Install disposable WordPress and prove real REST mutation
+        run: bash variants/laravel-aiwmweb/tests/wordpress/bootstrap-wordpress.sh
