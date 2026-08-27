@@ -20,6 +20,8 @@ use App\AI\Platform\Contracts\PlannerSiteGateway;
 use App\AI\Platform\Quota\UnconfiguredAiQuotaGateway;
 use App\AI\Platform\Services\AiGenerationService;
 use App\Email\Contracts\EmailTransport;
+use App\Email\Contracts\NotificationEventSink;
+use App\Email\Services\NotificationPlatformService;
 use App\Email\Services\SymfonyEmailTransport;
 use App\Email\Services\SyncNotificationSubscriber;
 use App\Models\TenantSecret;
@@ -50,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PlannerApprovalGateway::class, UnconfiguredPlannerApprovalGateway::class);
         $this->app->bind(PlannerSiteGateway::class, UnconfiguredPlannerSiteGateway::class);
         $this->app->bind(EmailTransport::class, SymfonyEmailTransport::class);
+        $this->app->bind(NotificationEventSink::class, NotificationPlatformService::class);
     }
 
     public function boot(): void
