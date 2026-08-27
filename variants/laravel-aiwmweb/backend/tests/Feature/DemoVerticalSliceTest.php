@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\AI\AiProvider;
 use App\Connector\ConnectorProtocol;
+use App\Connector\ConnectorScopePolicy;
 use App\Connector\WordPressGateway;
+use App\Execution\ExecutionCreator;
 use App\Jobs\ExecuteApprovedSuggestionJob;
 use App\Jobs\GenerateSuggestionJob;
 use App\Jobs\RunSeoAuditJob;
@@ -80,10 +82,25 @@ class DemoVerticalSliceTest extends TestCase
         $this->assertSame('PENDING', $approval->status);
         $approval->update(['status' => 'APPROVED', 'decided_at' => now()]);
 
-        $execution = Execution::query()->create([
-            'operation_id' => fake()->uuid(), 'request_id' => fake()->uuid(), 'correlation_id' => fake()->uuid(),
-            'site_id' => $site->id, 'approval_id' => $approval->id, 'actor_user_id' => $membership->user_id,
-        ]);
+        [$execution, $created] = app(ExecutionCreator::class)->create($approval, $membership->user_id);
+        [$duplicate, $duplicateCreated] = app(ExecutionCreator::class)->create($approval, $membership->user_id);
+        $this->assertTrue($created);
+        $this->assertFalse($duplicateCreated);
+        $this->assertSame($execution->id, $duplicate->id);
+        $this->assertSame($execution->operation_id, $duplicate->operation_id);
+        $this->assertSame(1, Execution::query()->where('approval_id', $approval->id)->count());
+        try {
+            Execution::query()->create([
+                'operation_id' => fake()->uuid(), 'request_id' => fake()->uuid(), 'correlation_id' => fake()->uuid(),
+                'site_id' => $site->id, 'approval_id' => $approval->id, 'actor_user_id' => $membership->user_id,
+            ]);
+            $this->fail('Database accepted a second execution for one approval.');
+        } catch (QueryException) {
+            $this->assertSame(1, Execution::query()->where('approval_id', $approval->id)->count());
+        }
+        Bus::dispatchSync(new ExecuteApprovedSuggestionJob($tenant->id, $execution->id));
+        $this->assertFalse(app(TenantContext::class)->active());
+        app(TenantContext::class)->activate($tenant, $membership);
         Bus::dispatchSync(new ExecuteApprovedSuggestionJob($tenant->id, $execution->id));
         $this->assertFalse(app(TenantContext::class)->active());
         app(TenantContext::class)->activate($tenant, $membership);
@@ -94,6 +111,7 @@ class DemoVerticalSliceTest extends TestCase
         $this->assertSame('A useful title', $receipt->actual_after_state['title']);
         $this->assertSame('A useful title', $gateway->remote['title']);
         $this->assertSame($execution->operation_id, $receipt->operation_id);
+        $this->assertSame(1, $gateway->mutationCount);
         $this->assertArrayNotHasKey('encrypted_secret', Connector::query()->firstOrFail()->toArray());
         $this->assertArrayNotHasKey('encrypted_api_key', AiProviderConfig::query()->firstOrFail()->toArray());
         app(TenantContext::class)->forget();
@@ -165,6 +183,30 @@ class DemoVerticalSliceTest extends TestCase
         $this->assertProtocolRejected(fn () => $protocol->verifyInbound($connector, 'GET', '/wp-json/aimw/v1/health', '', $revoked), 'Connector is revoked.');
     }
 
+    public function test_operations_are_bound_to_server_required_scopes(): void
+    {
+        $policy = app(ConnectorScopePolicy::class);
+        $this->assertSame(['health'], $policy->requiredFor('health'));
+        $this->assertSame(['content.read'], $policy->requiredFor('content.read'));
+        $this->assertSame(['connector.manage'], $policy->requiredFor('connector.rotate'));
+        $this->assertProtocolRejected(
+            fn () => $policy->assertAuthorized('content.execute', ['changes' => ['title' => 'mutate']], ['health']),
+            'Required connector scope is disabled: content.update.'
+        );
+        $this->assertProtocolRejected(
+            fn () => $policy->assertAuthorized('content.execute', ['changes' => ['title' => 'mutate']], ['content.read']),
+            'Required connector scope is disabled: content.update.'
+        );
+        $this->assertProtocolRejected(
+            fn () => $policy->assertAuthorized('content.execute', ['changes' => ['seo_title' => 'SEO']], ['content.update']),
+            'Required connector scope is disabled: seo.write.'
+        );
+        $this->assertProtocolRejected(
+            fn () => $policy->assertAuthorized('content.read', [], []),
+            'Required connector scope is disabled: content.read.'
+        );
+    }
+
     private function tenant(string $slug): array
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
@@ -198,6 +240,8 @@ final class DeterministicAiProvider implements AiProvider
 
 final class InMemoryWordPressGateway implements WordPressGateway
 {
+    public int $mutationCount = 0;
+
     public array $remote = ['type' => 'post', 'id' => 42, 'slug' => 'hello', 'title' => '', 'content' => 'short', 'excerpt' => '', 'headings' => [], 'taxonomy' => [], 'media' => [], 'seo_title' => '', 'seo_description' => '', 'modified_at' => '2026-08-27T00:00:00+00:00'];
 
     public function health(Site $site): array
@@ -212,6 +256,7 @@ final class InMemoryWordPressGateway implements WordPressGateway
 
     public function execute(Site $site, string $operationId, array $change): array
     {
+        $this->mutationCount++;
         $this->remote = array_replace($this->remote, $change['changes']);
 
         return ['operation_id' => $operationId, 'status' => 'succeeded'];

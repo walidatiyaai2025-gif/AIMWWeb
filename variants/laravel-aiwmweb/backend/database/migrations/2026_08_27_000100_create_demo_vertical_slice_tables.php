@@ -169,6 +169,7 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->text('failure')->nullable();
             $table->timestamps();
+            $table->unique(['tenant_id', 'approval_id'], 'execution_approval_unique');
         });
 
         Schema::create('evidence_receipts', function (Blueprint $table) {

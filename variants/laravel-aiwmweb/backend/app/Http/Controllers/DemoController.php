@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Connector\PairingService;
 use App\Connector\WordPressGateway;
+use App\Execution\ExecutionCreator;
 use App\Jobs\ExecuteApprovedSuggestionJob;
 use App\Jobs\GenerateSuggestionJob;
 use App\Jobs\RunSeoAuditJob;
@@ -24,7 +25,6 @@ use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 final class DemoController extends Controller
 {
@@ -229,19 +229,17 @@ final class DemoController extends Controller
         return response()->json($model);
     }
 
-    public function execute(int $approval, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function execute(int $approval, Request $request, TenantContext $context, TenantAuthorizer $auth, ExecutionCreator $creator): JsonResponse
     {
         $auth->authorize('executions.manage');
         $model = Approval::query()->findOrFail($approval);
         abort_unless($model->status === 'APPROVED', 409, 'Approval required.');
-        $suggestion = Suggestion::query()->findOrFail($model->suggestion_id);
-        $existing = Execution::query()->where('approval_id', $model->id)->first();
-        if ($existing) {
-            return response()->json($existing, 200);
-        } $execution = Execution::query()->create(['operation_id' => (string) Str::uuid(), 'request_id' => (string) Str::uuid(), 'correlation_id' => (string) Str::uuid(), 'site_id' => $suggestion->site_id, 'approval_id' => $model->id, 'actor_user_id' => $request->user()->id]);
-        ExecuteApprovedSuggestionJob::dispatch($context->id(), $execution->id);
+        [$execution, $created] = $creator->create($model, $request->user()->id);
+        if ($created) {
+            ExecuteApprovedSuggestionJob::dispatch($context->id(), $execution->id);
+        }
 
-        return response()->json($execution, 202);
+        return response()->json($execution, $created ? 202 : 200);
     }
 
     public function cancel(int $execution, TenantAuthorizer $auth): JsonResponse

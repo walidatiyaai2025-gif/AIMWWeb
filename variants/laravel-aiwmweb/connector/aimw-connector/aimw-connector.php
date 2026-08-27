@@ -11,7 +11,7 @@ defined('ABSPATH') || exit;
 final class AIMW_Connector_V1 {
     private const NS = 'aimw/v1';
     private const VERSION = '1';
-    private const CAPABILITIES = ['health','content.read','content.update','seo.read','seo.write','audit.local'];
+    private const CAPABILITIES = ['health','content.read','content.update','seo.read','seo.write','audit.local','connector.manage'];
 
     public static function boot(): void { add_action('rest_api_init',[self::class,'routes']); }
     public static function routes(): void {
@@ -32,7 +32,7 @@ final class AIMW_Connector_V1 {
         if(is_wp_error($response) || wp_remote_retrieve_response_code($response)!==201) return new WP_Error('pairing_failed','Laravel pairing was rejected.',['status'=>502]);
         $payload=json_decode(wp_remote_retrieve_body($response),true);
         if(empty($payload['secret'])) return new WP_Error('pairing_failed','Pairing response did not include a secret.',['status'=>502]);
-        update_option('aimw_connector',['platform_url'=>$platform,'identity'=>$identity,'secret'=>$payload['secret'],'protocol_version'=>self::VERSION,'enabled_scopes'=>$payload['enabled_scopes']??['health','content.read','seo.read'],'revoked'=>false],false);
+        update_option('aimw_connector',['platform_url'=>$platform,'identity'=>$identity,'secret'=>$payload['secret'],'protocol_version'=>self::VERSION,'enabled_scopes'=>$payload['enabled_scopes']??['health','content.read','seo.read','connector.manage'],'revoked'=>false],false);
         self::audit('paired',['identity'=>$identity]);
         return ['paired'=>true,'identity'=>$identity,'protocol_version'=>self::VERSION,'capabilities'=>self::CAPABILITIES];
     }
@@ -43,7 +43,9 @@ final class AIMW_Connector_V1 {
         $values=['version'=>$one('x-aimw-version'),'tenant'=>$one('x-aimw-tenant'),'site'=>$one('x-aimw-site'),'connector'=>$one('x-aimw-connector'),'timestamp'=>$one('x-aimw-timestamp'),'nonce'=>$one('x-aimw-nonce'),'request'=>$one('x-aimw-request-id'),'correlation'=>$one('x-aimw-correlation-id'),'operation'=>$one('x-aimw-operation-id'),'scope'=>$one('x-aimw-scope'),'signature'=>$one('x-aimw-signature')];
         if(in_array('',array_values($values),true)||$values['version']!==self::VERSION||$values['connector']!==$config['identity']) return new WP_Error('invalid_protocol','Protocol identity/version mismatch.',['status'=>401]);
         if(abs(time()-(int)$values['timestamp'])>300) return new WP_Error('expired_request','Request timestamp expired.',['status'=>401]);
-        if(!in_array($values['scope'],$config['enabled_scopes']??[],true)) return new WP_Error('scope_disabled','Connector scope is disabled.',['status'=>403]);
+        $required=self::required_scopes($request); $primary=end($required);
+        if($values['scope']!==$primary) return new WP_Error('scope_mismatch','Signed scope does not match the operation-required scope.',['status'=>403]);
+        foreach($required as $scope)if(!in_array($scope,$config['enabled_scopes']??[],true))return new WP_Error('scope_disabled','Required connector scope is disabled: '.$scope.'.',['status'=>403]);
         if(get_transient('aimw_nonce_'.hash('sha256',$values['nonce']))) return new WP_Error('replay','Nonce already used.',['status'=>409]);
         $path='/wp-json'.$request->get_route(); $query=$request->get_query_params(); if($query)$path.='?'.http_build_query($query);
         $canonical=implode("\n",[strtoupper($request->get_method()),$path,hash('sha256',$request->get_body()),$values['version'],$values['tenant'],$values['site'],$values['connector'],$values['timestamp'],$values['nonce'],$values['request'],$values['correlation'],$values['operation'],$values['scope']]);
@@ -66,6 +68,14 @@ final class AIMW_Connector_V1 {
     }
     public static function rotate(WP_REST_Request $request) { $config=get_option('aimw_connector',[]); $secret=(string)($request->get_json_params()['new_secret']??''); if(strlen($secret)<32)return new WP_Error('invalid_secret','Replacement secret is invalid.',['status'=>422]); $config['secret']=$secret; update_option('aimw_connector',$config,false); self::audit('secret_rotated',[]); return ['rotated'=>true]; }
     public static function disconnect() { $config=get_option('aimw_connector',[]); $config['revoked']=true; update_option('aimw_connector',$config,false); self::audit('disconnected',[]); return ['disconnected'=>true]; }
+    private static function required_scopes(WP_REST_Request $request): array {
+        $route=$request->get_route();
+        if($route==='/'.self::NS.'/health')return ['health'];
+        if($route==='/'.self::NS.'/content'||preg_match('#^/'.self::NS.'/content/(post|page)/\d+$#',$route))return ['content.read'];
+        if($route==='/'.self::NS.'/rotate'||$route==='/'.self::NS.'/disconnect')return ['connector.manage'];
+        if($route==='/'.self::NS.'/execute'){$changes=(array)(($request->get_json_params()['changes']??[]));$required=[];if(array_intersect(['title','content','slug'],array_keys($changes)))$required[]='content.update';if(array_intersect(['seo_title','seo_description'],array_keys($changes)))$required[]='seo.write';if($required)return $required;}
+        return ['deny'];
+    }
     private static function serialize(WP_Post $post): array { preg_match_all('/<h[1-6][^>]*>(.*?)<\/h[1-6]>/is',$post->post_content,$m); $media=get_attached_media('image',$post->ID); return ['type'=>$post->post_type,'id'=>$post->ID,'slug'=>$post->post_name,'title'=>get_the_title($post),'content'=>$post->post_content,'excerpt'=>$post->post_excerpt,'headings'=>array_map('wp_strip_all_tags',$m[1]??[]),'taxonomy'=>['categories'=>wp_get_post_categories($post->ID),'tags'=>wp_get_post_tags($post->ID,['fields'=>'ids'])],'media'=>array_map(fn($item)=>['id'=>$item->ID,'url'=>wp_get_attachment_url($item->ID)],array_values($media)),'seo_title'=>(string)get_post_meta($post->ID,'_yoast_wpseo_title',true),'seo_description'=>(string)get_post_meta($post->ID,'_yoast_wpseo_metadesc',true),'modified_at'=>get_post_modified_time(DATE_ATOM,true,$post)]; }
     private static function audit(string $event,array $data): void { $events=get_option('aimw_connector_audit',[]); $events[]=['event'=>$event,'data'=>$data,'at'=>gmdate(DATE_ATOM),'user_id'=>get_current_user_id()]; update_option('aimw_connector_audit',array_slice($events,-500),false); }
 }

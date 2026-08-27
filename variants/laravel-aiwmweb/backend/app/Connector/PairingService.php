@@ -12,9 +12,9 @@ use RuntimeException;
 
 final class PairingService
 {
-    public const CAPABILITIES = ['health', 'content.read', 'content.update', 'seo.read', 'seo.write', 'audit.local'];
+    public const CAPABILITIES = ['health', 'content.read', 'content.update', 'seo.read', 'seo.write', 'audit.local', 'connector.manage'];
 
-    public const SAFE_DEFAULT_SCOPES = ['health', 'content.read', 'seo.read'];
+    public const SAFE_DEFAULT_SCOPES = ['health', 'content.read', 'seo.read', 'connector.manage'];
 
     public function create(Site $site): string
     {

@@ -26,9 +26,13 @@ final class ExecuteApprovedSuggestionJob extends TenantAwareJob
     public function handle(WordPressGateway $wordpress): void
     {
         $execution = Execution::query()->findOrFail($this->executionId);
-        if ($execution->cancelled_at) {
+        $claimed = Execution::query()->whereKey($execution->id)->where('status', 'queued')->update([
+            'status' => 'running', 'started_at' => now(), 'attempts' => $execution->attempts + 1, 'failure' => null,
+        ]);
+        if (! $claimed) {
             return;
         }
+        $execution->refresh();
         $approval = Approval::query()->findOrFail($execution->approval_id);
         if ($approval->status !== 'APPROVED') {
             throw new \RuntimeException('Execution requires an approved change.');
@@ -36,7 +40,6 @@ final class ExecuteApprovedSuggestionJob extends TenantAwareJob
         $suggestion = Suggestion::query()->findOrFail($approval->suggestion_id);
         $content = SyncedContent::query()->findOrFail($suggestion->synced_content_id);
         $site = Site::query()->findOrFail($execution->site_id);
-        $execution->update(['status' => 'running', 'started_at' => now(), 'attempts' => $execution->attempts + 1, 'failure' => null]);
         try {
             $change = ['resource_type' => $content->resource_type, 'remote_id' => $content->remote_id, 'changes' => $approval->proposed_state];
             $wordpress->execute($site, $execution->operation_id, $change);
