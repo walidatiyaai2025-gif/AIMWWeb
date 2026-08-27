@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "captured_at": "2026-08-27T20:45:00Z",
+  "main": {
+    "branch": "main",
+    "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+    "authority": "Merged Tenant Core + acceptance framework"
+  },
+  "authorities": [
+    {
+      "pr": 260,
+      "role": "site_connector_protocol",
+      "branch": "feature/laravel-aiwmweb-demo-vertical-slice",
+      "sha": "85b83ce53ce6be434176964bc77ced6beefa6e68",
+      "composition": "logical_authority; transported by PR #269 because #269 contains this head"
+    },
+    {
+      "pr": 269,
+      "role": "advanced_connector_extension",
+      "branch": "worker/laravel-aiwmweb-wp-runtime",
+      "sha": "391c717c2b197226207afe2ddf432dd86e0ce6eb",
+      "composition": "merge first; contains #260 Site/Connector protocol plus advanced extension"
+    },
+    {
+      "pr": 263,
+      "role": "content",
+      "branch": "worker/laravel-aiwmweb-content-platform",
+      "sha": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
+      "composition": "merge"
+    },
+    {
+      "pr": 266,
+      "role": "billing",
+      "branch": "worker/laravel-aiwmweb-billing-platform",
+      "sha": "3c2e2904457b18882f0a168857ed149c067bdd1c",
+      "composition": "merge before AI contract activation"
+    },
+    {
+      "pr": 267,
+      "role": "ai_platform",
+      "branch": "worker/laravel-aiwmweb-ai-platform",
+      "sha": "f981d18fde23bd02bb7b6783ed22b3df9fc81790",
+      "composition": "merge; keep fail-closed gateways until Codex wires canonical adapters"
+    },
+    {
+      "pr": 264,
+      "role": "admin_operations",
+      "branch": "worker/laravel-aiwmweb-admin-operations",
+      "sha": "7f0a297b331c4e324c8f76309b2c5cb61660e44a",
+      "composition": "merge"
+    },
+    {
+      "pr": 265,
+      "role": "production_runtime",
+      "branch": "worker/laravel-aiwmweb-production-runtime",
+      "sha": "285355ada0032cd013bb9fb814b1211beb0eb53e",
+      "composition": "merge after backend domains; retain runtime CI as final superset"
+    },
+    {
+      "pr": 262,
+      "role": "frontend",
+      "branch": "worker/laravel-aiwmweb-full-frontend",
+      "sha": "81c639e23a96d7fbaceda66b6275ca27cb276ace",
+      "composition": "merge last; catch-all route must remain last"
+    }
+  ],
+  "excluded_or_pending": [
+    {
+      "pr": 268,
+      "branch": "worker/laravel-aiwmweb-email-notifications",
+      "sha": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
+      "reason": "zero changed files; handoff only, explicitly not product functionality"
+    },
+    {
+      "branch": "worker/laravel-aiwmweb-email-delivery-closure",
+      "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+      "reason": "identical to main; no implementation delta"
+    },
+    {
+      "branch": "worker/laravel-aiwmweb-sync-reconciliation",
+      "sha": "f3855fa2c2728ab5920deb24e32c566caa0cc7ec",
+      "parent": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
+      "reason": "staging-only commit adds .sync-payload.part1; no reviewable product source yet"
+    },
+    {
+      "branch": "seo-closure",
+      "reason": "not present in live Laravel worker branches"
+    },
+    {
+      "branch": "sites-diagnostics",
+      "reason": "not present in live Laravel worker branches"
+    }
+  ],
+  "composition_order": [269, 263, 266, 267, 264, 265, 262],
+  "mechanical_overlays": [
+    "union AppServiceProvider bindings without rebinding the same abstraction",
+    "union bootstrap routing/middleware/exception hooks",
+    "union web routes and place frontend catch-all last",
+    "union runtime/admin/billing console commands and schedules",
+    "preserve #269 WordPress connector E2E harness over #265 placeholder connector behavior",
+    "union #265 runtime env with #266 PayPal variables",
+    "rename #263 SQLite-conflicting explicit content index to content_items_remote_unique in the composed tree",
+    "regenerate npm package-lock after #262 package.json is present",
+    "preserve merged main parity ledger rather than stale worker ledger edits"
+  ]
+}
