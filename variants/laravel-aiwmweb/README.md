@@ -28,4 +28,4 @@ Planned implementation roots under this directory:
 - `docs/` — capability parity ledger, architecture decisions, protocol and acceptance evidence.
 - `tests/` — tenant-isolation, contract, integration and end-to-end acceptance.
 
-This README materializes the variant boundary only. It is not evidence that the product implementation is complete.
+The initial Laravel 13 Tenant Core backend is under `backend/`. It establishes tenant context, scoped persistence, RBAC, queues, cache/locks/idempotency, encrypted secrets, immutable audit events, and isolation tests. It is not evidence that broad product parity is complete.
