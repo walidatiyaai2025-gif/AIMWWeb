@@ -171,6 +171,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
                 response.Should().NotBeNull();
                 response!.Status.Should().BeLessThan(400);
                 await page.GetByRole(AriaRole.Heading, new() { Name = "Access denied", Exact = true }).WaitForAsync();
+                (await page.GetByText("403", new() { Exact = true }).CountAsync()).Should().BeGreaterThan(0);
                 (await page.Locator(".backup-page").CountAsync()).Should().Be(0);
                 await page.CloseAsync();
             }
@@ -217,8 +218,10 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
     private async Task<string> CopyRealBackupPathAsync(IPage page)
     {
         var copy = page.GetByRole(AriaRole.Button, new() { Name = "Copy path", Exact = true });
-        await copy.ClickAsync();
-        await page.GetByText("Backup path copied.", new() { Exact = true }).WaitForAsync();
+        await ClickUntilAsync(
+            copy,
+            async () => await page.GetByText("Backup path copied.", new() { Exact = true }).CountAsync() == 1,
+            "Copy path did not report browser-confirmed success.");
         var path = await page.EvaluateAsync<string>("navigator.clipboard.readText()");
         path.Should().NotBeNullOrWhiteSpace();
         Directory.Exists(path).Should().BeTrue("the copied path must be the real backup directory");
