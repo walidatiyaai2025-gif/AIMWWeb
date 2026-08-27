@@ -19,7 +19,13 @@
     "backups",
     "reports",
     "members",
-    "settings"
+    "settings",
+    "billing_subscription",
+    "billing_profile",
+    "billing_usage",
+    "billing_transactions",
+    "billing_changes",
+    "billing_audits"
   ],
   "tenant_attack_shapes": [
     "read_guessed_id",
