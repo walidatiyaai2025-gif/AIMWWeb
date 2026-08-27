@@ -1,20 +1,93 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Billing\Exceptions\BillingConflictException;
 use App\Models\BillingPlan;
 use App\Models\TenantSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 final class BillingPlanAdminController extends Controller
 {
-    public function index(): JsonResponse { return response()->json(['data'=>BillingPlan::query()->orderBy('display_order')->get()]); }
-    public function store(Request $r): JsonResponse { $p=BillingPlan::query()->create($this->validated($r));$this->audit($r,'created',$p,null,$p->toArray());return response()->json(['data'=>$p],201); }
-    public function update(Request $r,BillingPlan $plan): JsonResponse { $before=$plan->toArray();$plan->update($this->validated($r,true));$this->audit($r,'updated',$plan,$before,$plan->fresh()->toArray());return response()->json(['data'=>$plan->fresh()]); }
-    public function clone(Request $r,BillingPlan $plan): JsonResponse { $data=$r->validate(['code'=>'required|string|max:64|unique:billing_plans,code','name'=>'required|string|max:255']);$copy=$plan->replicate(['provider_product_id','provider_plan_id','retired_at']);$copy->code=$data['code'];$copy->name=$data['name'];$copy->enabled=false;$copy->display_order=(int)BillingPlan::max('display_order')+1;$copy->save();$this->audit($r,'cloned',$copy,null,$copy->toArray());return response()->json(['data'=>$copy],201); }
-    public function setEnabled(Request $r,BillingPlan $plan): JsonResponse { $v=$r->validate(['enabled'=>'required|boolean']);$before=$plan->toArray();$plan->update(['enabled'=>$v['enabled']]);$this->audit($r,$v['enabled']?'enabled':'disabled',$plan,$before,$plan->fresh()->toArray());return response()->json(['data'=>$plan->fresh()]); }
-    public function reorder(Request $r): JsonResponse { $data=$r->validate(['plans'=>'required|array|min:1','plans.*.code'=>'required|string','plans.*.display_order'=>'required|integer|min:0']);DB::transaction(fn()=>collect($data['plans'])->each(fn($x)=>BillingPlan::query()->where('code',$x['code'])->update(['display_order'=>$x['display_order']])));DB::table('billing_plan_audits')->insert(['actor_user_id'=>$r->user()->id,'action'=>'reordered','before'=>null,'after'=>json_encode($data['plans']),'occurred_at'=>now()]);return response()->json(['data'=>true]); }
-    public function retire(Request $r,BillingPlan $plan): JsonResponse { $active=['TRIALING','ACTIVE','PAST_DUE','GRACE','SUSPENDED'];if(TenantSubscription::withoutGlobalScopes()->where('billing_plan_id',$plan->id)->whereIn('state',$active)->exists())throw new BillingConflictException('Plan has active subscribers and cannot be retired.');$before=$plan->toArray();$plan->update(['enabled'=>false,'retired_at'=>now()]);$this->audit($r,'retired',$plan,$before,$plan->fresh()->toArray());return response()->json(['data'=>$plan->fresh()]); }
-    private function validated(Request $r,bool $partial=false): array { $prefix=$partial?'sometimes':'required';$ignore=$partial?','.$r->route('plan')?->id:'';return $r->validate(['code'=>"{$prefix}|string|max:64|unique:billing_plans,code{$ignore}",'name'=>"{$prefix}|string|max:255",'localized_name'=>'sometimes|array','description'=>'nullable|string','price_minor'=>'nullable|integer|min:0','currency'=>'sometimes|string|size:3','billing_interval'=>'sometimes|in:month,year','trial_period_days'=>'sometimes|integer|min:0|max:365','grace_period_days'=>'sometimes|integer|min:0|max:90','enabled'=>'sometimes|boolean','display_order'=>'sometimes|integer|min:0','provider'=>'nullable|in:paypal','provider_product_id'=>'nullable|string|max:255','provider_plan_id'=>'nullable|string|max:255','limits'=>'sometimes|array','entitlements'=>'sometimes|array']); }
-    private function audit(Request $r,string $action,BillingPlan $p,?array $before,?array $after): void { DB::table('billing_plan_audits')->insert(['billing_plan_id'=>$p->id,'actor_user_id'=>$r->user()->id,'action'=>$action,'before'=>$before?json_encode($before):null,'after'=>$after?json_encode($after):null,'occurred_at'=>now()]); }
+    public function index(): JsonResponse
+    {
+        return response()->json(['data' => BillingPlan::query()->orderBy('display_order')->get()]);
+    }
+
+    public function store(Request $r): JsonResponse
+    {
+        $p = BillingPlan::query()->create($this->validated($r));
+        $this->audit($r, 'created', $p, null, $p->toArray());
+
+        return response()->json(['data' => $p], 201);
+    }
+
+    public function update(Request $r, BillingPlan $plan): JsonResponse
+    {
+        $before = $plan->toArray();
+        $plan->update($this->validated($r, true));
+        $this->audit($r, 'updated', $plan, $before, $plan->fresh()->toArray());
+
+        return response()->json(['data' => $plan->fresh()]);
+    }
+
+    public function clone(Request $r, BillingPlan $plan): JsonResponse
+    {
+        $data = $r->validate(['code' => 'required|string|max:64|unique:billing_plans,code', 'name' => 'required|string|max:255']);
+        $copy = $plan->replicate(['provider_product_id', 'provider_plan_id', 'retired_at']);
+        $copy->code = $data['code'];
+        $copy->name = $data['name'];
+        $copy->enabled = false;
+        $copy->display_order = (int) BillingPlan::max('display_order') + 1;
+        $copy->save();
+        $this->audit($r, 'cloned', $copy, null, $copy->toArray());
+
+        return response()->json(['data' => $copy], 201);
+    }
+
+    public function setEnabled(Request $r, BillingPlan $plan): JsonResponse
+    {
+        $v = $r->validate(['enabled' => 'required|boolean']);
+        $before = $plan->toArray();
+        $plan->update(['enabled' => $v['enabled']]);
+        $this->audit($r, $v['enabled'] ? 'enabled' : 'disabled', $plan, $before, $plan->fresh()->toArray());
+
+        return response()->json(['data' => $plan->fresh()]);
+    }
+
+    public function reorder(Request $r): JsonResponse
+    {
+        $data = $r->validate(['plans' => 'required|array|min:1', 'plans.*.code' => 'required|string', 'plans.*.display_order' => 'required|integer|min:0']);
+        DB::transaction(fn () => collect($data['plans'])->each(fn ($x) => BillingPlan::query()->where('code', $x['code'])->update(['display_order' => $x['display_order']])));
+        DB::table('billing_plan_audits')->insert(['actor_user_id' => $r->user()->id, 'action' => 'reordered', 'before' => null, 'after' => json_encode($data['plans']), 'occurred_at' => now()]);
+
+        return response()->json(['data' => true]);
+    }
+
+    public function retire(Request $r, BillingPlan $plan): JsonResponse
+    {
+        $active = ['TRIALING', 'ACTIVE', 'PAST_DUE', 'GRACE', 'SUSPENDED'];
+        if (TenantSubscription::withoutGlobalScopes()->where('billing_plan_id', $plan->id)->whereIn('state', $active)->exists()) {
+            throw new BillingConflictException('Plan has active subscribers and cannot be retired.');
+        }$before = $plan->toArray();
+        $plan->update(['enabled' => false, 'retired_at' => now()]);
+        $this->audit($r, 'retired', $plan, $before, $plan->fresh()->toArray());
+
+        return response()->json(['data' => $plan->fresh()]);
+    }
+
+    private function validated(Request $r, bool $partial = false): array
+    {
+        $prefix = $partial ? 'sometimes' : 'required';
+        $ignore = $partial ? ','.$r->route('plan')?->id : '';
+
+        return $r->validate(['code' => "{$prefix}|string|max:64|unique:billing_plans,code{$ignore}", 'name' => "{$prefix}|string|max:255", 'localized_name' => 'sometimes|array', 'description' => 'nullable|string', 'price_minor' => 'nullable|integer|min:0', 'currency' => 'sometimes|string|size:3', 'billing_interval' => 'sometimes|in:month,year', 'trial_period_days' => 'sometimes|integer|min:0|max:365', 'grace_period_days' => 'sometimes|integer|min:0|max:90', 'enabled' => 'sometimes|boolean', 'display_order' => 'sometimes|integer|min:0', 'provider' => 'nullable|in:paypal', 'provider_product_id' => 'nullable|string|max:255', 'provider_plan_id' => 'nullable|string|max:255', 'limits' => 'sometimes|array', 'entitlements' => 'sometimes|array']);
+    }
+
+    private function audit(Request $r, string $action, BillingPlan $p, ?array $before, ?array $after): void
+    {
+        DB::table('billing_plan_audits')->insert(['billing_plan_id' => $p->id, 'actor_user_id' => $r->user()->id, 'action' => $action, 'before' => $before ? json_encode($before) : null, 'after' => $after ? json_encode($after) : null, 'occurred_at' => now()]);
+    }
 }
