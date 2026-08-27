@@ -40,7 +40,7 @@
       "branch": "worker/laravel-aiwmweb-admin-operations",
       "ref": "7f0a297b331c4e324c8f76309b2c5cb61660e44a",
       "domains": ["admin", "members", "sessions", "automation", "backups", "reports", "operations"],
-      "overlay_filter": "",
+      "overlay_filter": "/test_cache_locks_idempotency_and_queue_context_are_partitioned_between_tenants|test_admin_retry_cancel_and_report_download_reject_foreign_tenant_ids/",
       "native_commands": ["php artisan test tests/Feature/AdminOperationsControlPlaneTest.php"]
     },
     {
