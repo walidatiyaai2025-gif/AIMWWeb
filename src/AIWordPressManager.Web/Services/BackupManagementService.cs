@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using AIWordPressManager.Application.Abstractions;
 using Microsoft.Data.Sqlite;
@@ -73,11 +74,8 @@ public sealed class BackupManagementService
         lock (_sync)
         {
             if (!File.Exists(_historyPath)) return Array.Empty<BackupAuditEntry>();
-            return File.ReadLines(_historyPath)
+            return ReadAuditEntries()
                 .TakeLast(Math.Clamp(take, 1, 500))
-                .Select(TryDeserializeAudit)
-                .Where(x => x is not null)
-                .Cast<BackupAuditEntry>()
                 .OrderByDescending(x => x.TimestampUtc)
                 .ToList();
         }
@@ -638,10 +636,52 @@ public sealed class BackupManagementService
         catch { return false; }
     }
 
+    private IReadOnlyList<BackupAuditEntry> ReadAuditEntries()
+    {
+        var entries = new List<BackupAuditEntry>();
+        StringBuilder? legacyEntry = null;
+
+        foreach (var line in File.ReadLines(_historyPath))
+        {
+            if (legacyEntry is null)
+            {
+                var current = TryDeserializeAudit(line);
+                if (current is not null)
+                {
+                    entries.Add(current);
+                    continue;
+                }
+
+                if (line.TrimStart().StartsWith('{'))
+                {
+                    legacyEntry = new StringBuilder();
+                    legacyEntry.AppendLine(line);
+                    if (line.Trim() == "}")
+                    {
+                        var singleLegacy = TryDeserializeAudit(legacyEntry.ToString());
+                        if (singleLegacy is not null) entries.Add(singleLegacy);
+                        legacyEntry = null;
+                    }
+                }
+
+                continue;
+            }
+
+            legacyEntry.AppendLine(line);
+            if (line.Trim() != "}") continue;
+
+            var parsed = TryDeserializeAudit(legacyEntry.ToString());
+            if (parsed is not null) entries.Add(parsed);
+            legacyEntry = null;
+        }
+
+        return entries;
+    }
+
     private void WriteAudit(string action, string fileName, bool succeeded, string message)
     {
         var entry = new BackupAuditEntry(DateTime.UtcNow, action, fileName, succeeded, SanitizeAuditMessage(message));
-        File.AppendAllText(_historyPath, JsonSerializer.Serialize(entry, JsonOptions) + Environment.NewLine);
+        File.AppendAllText(_historyPath, JsonSerializer.Serialize(entry, AuditJsonOptions) + Environment.NewLine);
     }
 
     private static BackupAuditEntry? TryDeserializeAudit(string line)
@@ -782,6 +822,7 @@ public sealed class BackupManagementService
     };
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
+    private static readonly JsonSerializerOptions AuditJsonOptions = new(JsonOptions) { WriteIndented = false };
     private sealed record ManagedBackupSource(string SourcePath, string RelativePath, BackupContentKind Kind);
 }
 
