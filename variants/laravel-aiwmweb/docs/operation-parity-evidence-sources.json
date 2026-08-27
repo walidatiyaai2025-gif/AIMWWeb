@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
-  "captured_at_utc": "2026-08-27T20:00:00Z",
+  "captured_at_utc": "2026-08-27T21:08:00Z",
   "countable_sources": [
     {
       "label": "main/Tenant Core + canonical acceptance",
@@ -11,22 +11,22 @@
     },
     {
       "label": "PR #260 tenant-safe WordPress vertical slice",
-      "sha": "85b83d99c87158465b6548777b3d934ddaac09dc",
+      "sha": "85b83ce53ce6be434176964bc77ced6beefa6e68",
       "domains": ["ai", "approvals", "platform", "seo", "sites", "sync"]
     },
     {
       "label": "PR #263 content publishing platform",
-      "sha": "7cbc66d15c5c98eaff1088654974b2826fd71cd6",
+      "sha": "7cb250d893fbf4c0f82b13093eec87e3c1310dfd",
       "domains": ["comments", "content", "media", "sync", "taxonomy"]
     },
     {
       "label": "PR #264 administration/operations",
-      "sha": "7f0b330a89cc85a1712d8b91f4bc2f49887582e2",
+      "sha": "7f0a297b331c4e324c8f76309b2c5cb61660e44a",
       "domains": ["approvals", "automation", "backup", "identity", "operations", "platform", "reports", "settings", "sync"]
     },
     {
       "label": "PR #265 production runtime",
-      "sha": "2859d21bbcc6fd8c541723132b873237904b598b",
+      "sha": "285355ada0032cd013bb9fb814b1211beb0eb53e",
       "domains": ["operations", "platform"]
     },
     {
@@ -36,27 +36,33 @@
     },
     {
       "label": "PR #267 advanced AI platform",
-      "sha": "f98151d51c926827c09fe475c23ed606c105f685",
+      "sha": "f981d18fde23bd02bb7b6783ed22b3df9fc81790",
       "domains": ["ai"]
     },
     {
       "label": "PR #269 advanced connector runtime",
-      "sha": "391b5781585930fc7751261b3bc2aee8e6b64a07",
+      "sha": "391c717c2b197226207afe2ddf432dd86e0ce6eb",
       "domains": ["backup", "operations", "platform", "sites"]
     },
     {
-      "label": "SEO closure branch",
-      "sha": "6266803d19206a6133229450ea9d458187697063",
+      "label": "PR #271 SEO closure",
+      "sha": "b9214cc720616753e37820862f576e27af4cafc8",
       "domains": ["seo"]
     },
     {
-      "label": "Sites diagnostics branch",
-      "sha": "924d0a48fef8e65681a533b88f9da34e292b382f",
+      "label": "PR #272 Sites diagnostics closure",
+      "sha": "f3df553f93382c404b465dfc4576b5df89475cc4",
       "domains": ["operations", "platform", "sites"]
     },
     {
       "label": "PR #262 frontend parity foundation",
-      "sha": "81c21e27d9cb64177c3e4ba3935c4bca0cbabf5b",
+      "sha": "81c639e23a96d7fbaceda66b6275ca27cb276ace",
+      "domains": ["ai", "approvals", "automation", "backup", "billing", "comments", "content", "email", "identity", "media", "operations", "platform", "reports", "seo", "settings", "sites", "sync", "taxonomy"],
+      "supporting_only": true
+    },
+    {
+      "label": "PR #270 convergence preflight",
+      "sha": "f41f6c9651f86296ca0c99055b2833f3f12e876e",
       "domains": ["ai", "approvals", "automation", "backup", "billing", "comments", "content", "email", "identity", "media", "operations", "platform", "reports", "seo", "settings", "sites", "sync", "taxonomy"],
       "supporting_only": true
     }
@@ -74,13 +80,12 @@
     },
     {
       "label": "Sync reconciliation branch",
-      "sha": "bcd98b39d760e070d49097a7139007cac8238d3f",
-      "reason": "new reconciliation payload is staged as .sync-payload.part1/2/3 rather than integrated source; inherited #263 code is counted from PR #263 only"
-    },
-    {
-      "label": "Convergence preflight branch",
-      "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
-      "reason": "branch equals main; no convergence implementation delta"
+      "sha": "bcd20b364a77ee4cebd1fb2e17a4941bc5401e7f",
+      "reason": "new reconciliation payload is staged as .sync-payload.part1/2/3 rather than integrated source; inherited content-platform code is counted from PR #263 only"
     }
+  ],
+  "known_composition_blockers": [
+    "PR #270: SQLite schema-global explicit index collision between #260 and #263 (content_remote_unique)",
+    "PR #270: strict npm dependency mismatch between #262 React 18 and Laravel template @laravel/multiplex requiring React ^19.2.7"
   ]
 }
