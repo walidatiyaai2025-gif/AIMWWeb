@@ -36,7 +36,7 @@ return new class extends Migration
             $table->boolean('stale')->default(false);
             $table->json('metadata')->nullable();
             $table->timestamps();
-            $table->unique(['tenant_id', 'site_id', 'type', 'remote_id'], 'content_remote_unique');
+            $table->unique(['tenant_id', 'site_id', 'type', 'remote_id'], 'content_items_remote_unique');
             $table->index(['tenant_id', 'site_id', 'type', 'status']);
             $table->index(['tenant_id', 'site_id', 'remote_modified_at']);
         });
