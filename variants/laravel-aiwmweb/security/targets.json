@@ -9,7 +9,10 @@
       "ref": "bd6d272748753e21b65655901eaed8bb65a267c7",
       "domains": ["tenant-core", "sites", "connector", "approvals", "executions", "queue", "cache", "locks", "idempotency"],
       "overlay_filter": "",
-      "native_commands": ["php artisan test tests/Feature/TenantIsolationTest.php tests/Feature/DemoVerticalSliceTest.php --filter='/test_every_vertical_slice_resource_rejects_cross_tenant_guessed_ids|test_connector_protocol_rejects_tampering_expiry_replay_scope_and_revocation|test_operations_are_bound_to_server_required_scopes/'"]
+      "native_commands": [
+        "php artisan test tests/Feature/TenantIsolationTest.php",
+        "php artisan test tests/Feature/DemoVerticalSliceTest.php --filter='/test_every_vertical_slice_resource_rejects_cross_tenant_guessed_ids|test_connector_protocol_rejects_tampering_expiry_replay_scope_and_revocation|test_operations_are_bound_to_server_required_scopes/'"
+      ]
     },
     {
       "id": "connector-head",
