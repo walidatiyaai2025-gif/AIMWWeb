@@ -13,6 +13,9 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -51,7 +54,7 @@ jobs:
             routes/api.php \
             routes/console.php \
             tests/Feature/Sync/SyncReconciliationRuntimeTest.php
-      - name: Fresh migration
+      - name: Fresh SQLite migration
         working-directory: variants/laravel-aiwmweb/backend
         run: php artisan migrate:fresh --force
       - name: Focused Sync acceptance
