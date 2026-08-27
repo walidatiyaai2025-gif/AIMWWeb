@@ -30,7 +30,7 @@ jobs:
           - shard: authenticated-routes
             filter: FullyQualifiedName~Authenticated_routes_render_and_pass_accessibility_smoke
           - shard: seo-audit
-            filter: FullyQualifiedName~SeoAuditUxTests
+            filter: FullyQualifiedName~SeoAuditUxTests|FullyQualifiedName~SeoRemediationUxTests
           - shard: comments-moderation
             filter: FullyQualifiedName~CommentsModerationUxTests
           - shard: taxonomy-mutations
