@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "base_main_sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+  "captured_at_utc": "2026-08-27T20:00:00Z",
+  "countable_sources": [
+    {
+      "label": "main/Tenant Core + canonical acceptance",
+      "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+      "domains": ["identity", "platform", "settings"]
+    },
+    {
+      "label": "PR #260 tenant-safe WordPress vertical slice",
+      "sha": "85b83d99c87158465b6548777b3d934ddaac09dc",
+      "domains": ["ai", "approvals", "platform", "seo", "sites", "sync"]
+    },
+    {
+      "label": "PR #263 content publishing platform",
+      "sha": "7cbc66d15c5c98eaff1088654974b2826fd71cd6",
+      "domains": ["comments", "content", "media", "sync", "taxonomy"]
+    },
+    {
+      "label": "PR #264 administration/operations",
+      "sha": "7f0b330a89cc85a1712d8b91f4bc2f49887582e2",
+      "domains": ["approvals", "automation", "backup", "identity", "operations", "platform", "reports", "settings", "sync"]
+    },
+    {
+      "label": "PR #265 production runtime",
+      "sha": "2859d21bbcc6fd8c541723132b873237904b598b",
+      "domains": ["operations", "platform"]
+    },
+    {
+      "label": "PR #266 billing platform",
+      "sha": "3c2e2904457b18882f0a168857ed149c067bdd1c",
+      "domains": ["billing"]
+    },
+    {
+      "label": "PR #267 advanced AI platform",
+      "sha": "f98151d51c926827c09fe475c23ed606c105f685",
+      "domains": ["ai"]
+    },
+    {
+      "label": "PR #269 advanced connector runtime",
+      "sha": "391b5781585930fc7751261b3bc2aee8e6b64a07",
+      "domains": ["backup", "operations", "platform", "sites"]
+    },
+    {
+      "label": "SEO closure branch",
+      "sha": "6266803d19206a6133229450ea9d458187697063",
+      "domains": ["seo"]
+    },
+    {
+      "label": "Sites diagnostics branch",
+      "sha": "924d0a48fef8e65681a533b88f9da34e292b382f",
+      "domains": ["operations", "platform", "sites"]
+    },
+    {
+      "label": "PR #262 frontend parity foundation",
+      "sha": "81c21e27d9cb64177c3e4ba3935c4bca0cbabf5b",
+      "domains": ["ai", "approvals", "automation", "backup", "billing", "comments", "content", "email", "identity", "media", "operations", "platform", "reports", "seo", "settings", "sites", "sync", "taxonomy"],
+      "supporting_only": true
+    }
+  ],
+  "excluded_sources": [
+    {
+      "label": "PR #268 email integration handoff",
+      "sha": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
+      "reason": "0 changed files; explicitly not Email implementation"
+    },
+    {
+      "label": "Email delivery closure branch",
+      "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+      "reason": "branch equals main; prepared work was not pushed"
+    },
+    {
+      "label": "Sync reconciliation branch",
+      "sha": "bcd98b39d760e070d49097a7139007cac8238d3f",
+      "reason": "new reconciliation payload is staged as .sync-payload.part1/2/3 rather than integrated source; inherited #263 code is counted from PR #263 only"
+    },
+    {
+      "label": "Convergence preflight branch",
+      "sha": "e8abab4d9ce9487efdb97ea21a37ca3fbb99e0eb",
+      "reason": "branch equals main; no convergence implementation delta"
+    }
+  ]
+}

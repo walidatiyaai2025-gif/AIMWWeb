@@ -1,0 +1,55 @@
+name: Laravel AIWMWeb Parity Reconciliation
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/tools/reconcile_operation_parity.py'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+      - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
+  push:
+    branches:
+      - worker/laravel-aiwmweb-parity-reconciliation
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rebuild operation-level reconciliation
+        run: |
+          python variants/laravel-aiwmweb/tools/reconcile_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --check-total 931
+
+      - name: Verify committed artifact when present
+        shell: bash
+        run: |
+          set -euo pipefail
+          committed='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          if [[ -f "$committed" ]]; then
+            cmp "$committed" /tmp/operation-parity-reconciliation.json
+          else
+            echo "Committed artifact not present yet; generated artifact will be uploaded for evidence review."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laravel-aiwmweb-operation-parity-reconciliation
+          path: |
+            /tmp/operation-parity-reconciliation.json
+            /tmp/operation-parity-summary.json
