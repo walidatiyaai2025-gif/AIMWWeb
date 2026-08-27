@@ -9,6 +9,8 @@ use App\Connector\HttpWordPressGateway;
 use App\Connector\WordPressGateway;
 use App\Content\Remote\ContentRemoteDriver;
 use App\Content\Remote\DualPathContentDriver;
+use App\Billing\Providers\BillingProvider;
+use App\Billing\Providers\PayPalProvider;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
 use App\Sync\CanonicalSyncSiteGuard;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ContentRemoteDriver::class, DualPathContentDriver::class);
         $this->app->bind(SyncSiteGuard::class, CanonicalSyncSiteGuard::class);
         $this->app->bind(SyncWebhookVerifier::class, ConnectorSyncWebhookVerifier::class);
+        $this->app->bind(BillingProvider::class, PayPalProvider::class);
     }
 
     public function boot(): void
