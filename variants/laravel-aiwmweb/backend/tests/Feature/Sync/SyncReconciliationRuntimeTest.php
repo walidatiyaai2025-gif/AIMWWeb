@@ -52,7 +52,7 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->activate($tenant);
         $this->driver->set('posts', 1, [$this->post(10, 'Initial', '2026-08-27T10:00:00Z')]);
 
-        $run = $this->run(1, true, ['posts']);
+        $run = $this->syncRunRecord(1, true, ['posts']);
         $this->assertSame('completed', $run->state);
         $this->assertSame(1, $run->discovered_count);
         $this->assertSame(1, $run->created_count);
@@ -62,7 +62,7 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->assertTrue(SyncEvent::query()->where('event_type', 'SyncCompleted')->exists());
 
         $this->driver->set('posts', 1, [$this->post(10, 'Remote changed', '2026-08-27T11:00:00Z')]);
-        $incremental = $this->run(1, false, ['posts']);
+        $incremental = $this->syncRunRecord(1, false, ['posts']);
         $this->assertSame('completed', $incremental->state);
         $this->assertSame(1, $incremental->updated_count);
         $this->assertSame('Remote changed', ContentItem::query()->where('site_id', 1)->firstOrFail()->title);
@@ -74,13 +74,13 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->guard->allow(1, $tenant->id);
         $this->activate($tenant);
         $this->driver->set('posts', 1, [$this->post(10, 'Base', '2026-08-27T10:00:00Z')]);
-        $this->run(1, true, ['posts']);
+        $this->syncRunRecord(1, true, ['posts']);
 
         $local = ContentItem::query()->where('site_id', 1)->firstOrFail();
         $local->forceFill(['title' => 'Local edit'])->save();
         $this->driver->set('posts', 1, [$this->post(10, 'Remote edit', '2026-08-27T11:00:00Z')]);
 
-        $run = $this->run(1, false, ['posts']);
+        $run = $this->syncRunRecord(1, false, ['posts']);
         $this->assertSame(1, $run->conflicted_count);
         $this->assertSame('Local edit', $local->fresh()->title);
         $conflict = ContentConflict::query()->where('site_id', 1)->where('status', 'open')->firstOrFail();
@@ -101,11 +101,11 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->guard->allow(1, $tenant->id);
         $this->activate($tenant);
         $this->driver->set('posts', 1, [$this->post(10, 'Base', '2026-08-27T10:00:00Z')]);
-        $this->run(1, true, ['posts']);
+        $this->syncRunRecord(1, true, ['posts']);
         $local = ContentItem::query()->where('site_id', 1)->firstOrFail();
         $local->forceFill(['title' => 'Keep me'])->save();
         $this->driver->set('posts', 1, [$this->post(10, 'Remote edit', '2026-08-27T11:00:00Z')]);
-        $this->run(1, false, ['posts']);
+        $this->syncRunRecord(1, false, ['posts']);
 
         $conflict = ContentConflict::query()->where('status', 'open')->firstOrFail();
         app(SyncRuntimeService::class)->resolveConflict($conflict, 'KEEP_LOCAL', [], null);
@@ -142,16 +142,16 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->guard->allow(1, $tenant->id);
         $this->activate($tenant);
         $this->driver->set('posts', 1, [$this->post(10, 'Base', '2026-08-27T10:00:00Z')]);
-        $this->run(1, true, ['posts']);
+        $this->syncRunRecord(1, true, ['posts']);
         $local = ContentItem::query()->where('site_id', 1)->firstOrFail();
 
         $this->driver->set('posts', 1, []);
-        $firstMissing = $this->run(1, true, ['posts']);
+        $firstMissing = $this->syncRunRecord(1, true, ['posts']);
         $this->assertSame(0, $firstMissing->deleted_count);
         $this->assertFalse((bool) $local->fresh()->stale);
         $this->assertSame(1, SyncTombstone::query()->firstOrFail()->missing_observations);
 
-        $secondMissing = $this->run(1, true, ['posts']);
+        $secondMissing = $this->syncRunRecord(1, true, ['posts']);
         $this->assertSame(1, $secondMissing->deleted_count);
         $this->assertTrue((bool) $local->fresh()->stale);
         $this->assertNotNull(SyncTombstone::query()->firstOrFail()->confirmed_deleted_at);
@@ -194,7 +194,7 @@ class SyncReconciliationRuntimeTest extends TestCase
             ['id' => 0, 'title' => ['rendered' => 'Bad']],
         ]);
 
-        $run = $this->run(1, true, ['posts']);
+        $run = $this->syncRunRecord(1, true, ['posts']);
         $this->assertSame('partial', $run->state);
         $this->assertSame(1, $run->created_count);
         $this->assertSame(1, $run->failed_count);
@@ -280,7 +280,7 @@ class SyncReconciliationRuntimeTest extends TestCase
         $this->assertSame(2, SyncWebhookEvent::withoutGlobalScopes()->count());
     }
 
-    private function run(int $siteId, bool $full, array $resources): SyncRun
+    private function syncRunRecord(int $siteId, bool $full, array $resources): SyncRun
     {
         $tenantId = app(TenantContext::class)->id();
         $runtime = app(SyncRuntimeService::class);
