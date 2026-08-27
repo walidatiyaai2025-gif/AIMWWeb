@@ -75,12 +75,62 @@ print('WORDPRESS_AUTHORITATIVE_REREAD=PASS')
 PY
 
 connector_dir="${GITHUB_WORKSPACE:-$(pwd)}/variants/laravel-aiwmweb/connector"
-if [[ -d "$connector_dir" ]] && find "$connector_dir" -maxdepth 3 -type f -name '*.php' -print -quit | grep -q .; then
-  echo "CONNECTOR_RUNTIME_PRESENT=YES"
-  echo "CONNECTOR_E2E=REQUIRES_PLUGIN_MANIFEST_SPECIFIC_INSTALL_STEP"
-  exit 2
+plugin_source="$connector_dir/aimw-connector"
+if [[ ! -f "$plugin_source/aimw-connector.php" ]]; then
+  echo "CONNECTOR_RUNTIME_PRESENT=NO"
+  echo "CONNECTOR_E2E=BLOCKED_RUNTIME"
+  echo "WORDPRESS_NATIVE_REST_E2E=PASS"
+  exit 0
 fi
 
-echo "CONNECTOR_RUNTIME_PRESENT=NO"
-echo "CONNECTOR_E2E=BLOCKED_RUNTIME"
+echo "CONNECTOR_RUNTIME_PRESENT=YES"
+rm -rf "$WP_PATH/wp-content/plugins/aimw-connector"
+cp -R "$plugin_source" "$WP_PATH/wp-content/plugins/aimw-connector"
+find "$WP_PATH/wp-content/plugins/aimw-connector" -type f -name '*.php' -print0 \
+  | xargs -0 -n1 php -l >/tmp/aimw-connector-php-lint.log
+
+echo "CONNECTOR_PHP_LINT=PASS"
+wp plugin activate aimw-connector --quiet
+wp plugin is-active aimw-connector
+
+plugin_version="$(wp plugin get aimw-connector --field=version)"
+if [[ "$plugin_version" != "0.2.0" ]]; then
+  echo "Unexpected AIMW Connector version: $plugin_version" >&2
+  exit 1
+fi
+
+schema_version="$(wp option get aimw_connector_schema_version)"
+if [[ "$schema_version" != "2" ]]; then
+  echo "Unexpected AIMW Connector schema version: $schema_version" >&2
+  exit 1
+fi
+
+wp eval '
+$config = get_option("aimw_connector", []);
+if (($config["local_enabled"] ?? null) !== true) {
+    fwrite(STDERR, "Connector activation did not enable local runtime.\n");
+    exit(1);
+}
+global $wpdb;
+$table = $wpdb->prefix."aimw_connector_history";
+$found = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table));
+if ($found !== $table) {
+    fwrite(STDERR, "Connector history table was not migrated.\n");
+    exit(1);
+}
+' >/dev/null
+
+echo "CONNECTOR_ACTIVATION=PASS"
+echo "CONNECTOR_SCHEMA_V2=PASS"
+
+curl -fsS "$WP_URL/?rest_route=/" > /tmp/wp-index-connector.json
+python3 - <<'PY'
+import json
+from pathlib import Path
+payload = json.loads(Path('/tmp/wp-index-connector.json').read_text())
+assert 'aimw/v1' in payload.get('namespaces', []), 'AIMW Connector REST namespace not registered'
+print('CONNECTOR_REST_NAMESPACE=PASS')
+PY
+
+echo "CONNECTOR_E2E=PASS"
 echo "WORDPRESS_NATIVE_REST_E2E=PASS"
