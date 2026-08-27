@@ -1,0 +1,41 @@
+name: Laravel AIWMWeb Tenant Core
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tenant-core:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: vendor/bin/pint --test
+      - run: php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+      - run: php artisan test
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
