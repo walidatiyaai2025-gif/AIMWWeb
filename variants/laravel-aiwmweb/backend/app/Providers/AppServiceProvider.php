@@ -9,9 +9,11 @@ use App\Connector\HttpWordPressGateway;
 use App\Connector\WordPressGateway;
 use App\Email\Contracts\EmailTransport;
 use App\Email\Services\SymfonyEmailTransport;
+use App\Email\Services\SyncNotificationSubscriber;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
 use App\Tenancy\TenantContext;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,5 +37,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(TenantSecret::class, TenantSecretPolicy::class);
+        Event::subscribe(SyncNotificationSubscriber::class);
     }
 }

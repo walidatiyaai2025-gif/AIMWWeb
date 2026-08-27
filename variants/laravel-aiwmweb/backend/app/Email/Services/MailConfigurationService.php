@@ -4,6 +4,7 @@ namespace App\Email\Services;
 
 use App\Email\Contracts\EmailTransport;
 use App\Models\MailConfiguration;
+use App\Models\Site;
 use App\Services\AuditLogger;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +31,9 @@ final class MailConfigurationService
         }
         if (($input['transport'] ?? 'smtp') !== 'smtp') {
             throw ValidationException::withMessages(['transport' => 'Only canonical SMTP transport is currently supported.']);
+        }
+        if (array_key_exists('site_id', $input) && $input['site_id'] !== null) {
+            Site::query()->findOrFail((int) $input['site_id']);
         }
 
         $configuration = MailConfiguration::query()->firstOrNew(['configuration_key' => $key]);

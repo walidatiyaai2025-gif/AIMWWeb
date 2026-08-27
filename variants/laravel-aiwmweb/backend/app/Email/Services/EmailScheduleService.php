@@ -4,6 +4,7 @@ namespace App\Email\Services;
 
 use App\Jobs\RunEmailSchedulesJob;
 use App\Models\EmailSchedule;
+use App\Models\Site;
 use App\Services\AuditLogger;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Arr;
@@ -28,6 +29,10 @@ final class EmailScheduleService
         $recipient = trim((string) ($input['recipient'] ?? $schedule?->recipient));
         if (! filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             throw ValidationException::withMessages(['recipient' => 'Schedule recipient is invalid.']);
+        }
+        $siteId = $input['site_id'] ?? $schedule?->site_id;
+        if ($siteId !== null) {
+            Site::query()->findOrFail((int) $siteId);
         }
 
         $schedule ??= new EmailSchedule;

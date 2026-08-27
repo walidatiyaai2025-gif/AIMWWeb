@@ -36,6 +36,9 @@ final class EmailTemplateService
         if ($subjectTemplate === '' || trim($htmlTemplate) === '') {
             throw ValidationException::withMessages(['template' => 'Subject and HTML templates are required.']);
         }
+        if (preg_match('/[\r\n]/', $subjectTemplate)) {
+            throw ValidationException::withMessages(['subject_template' => 'Email subject templates cannot contain line breaks.']);
+        }
         $variables = array_values(array_unique(array_map('strval', (array) ($input['variables'] ?? []))));
         foreach ($variables as $variable) {
             if (! preg_match('/^[a-zA-Z][a-zA-Z0-9_.-]{0,79}$/', $variable)) {
@@ -95,7 +98,10 @@ final class EmailTemplateService
             $replaceHtml['{{'.$key.'}}'] = e($string);
             $replaceText['{{'.$key.'}}'] = $string;
         }
-        $subject = str_replace(["\r", "\n"], ' ', strtr($template->subject_template, $replaceText));
+        $subject = strtr($template->subject_template, $replaceText);
+        if (preg_match('/[\r\n]/', $subject)) {
+            throw ValidationException::withMessages(['subject' => 'Rendered email subjects cannot contain line breaks.']);
+        }
         $direction = $locale === 'ar' ? 'rtl' : 'ltr';
         $body = strtr($template->html_template, $replaceHtml);
         $html = '<!doctype html><html lang="'.$locale.'" dir="'.$direction.'"><body style="direction:'.$direction.';text-align:'.($direction === 'rtl' ? 'right' : 'left').';font-family:Arial,sans-serif">'.$body.'</body></html>';

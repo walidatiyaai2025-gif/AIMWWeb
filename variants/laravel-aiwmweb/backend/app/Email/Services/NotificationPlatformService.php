@@ -3,6 +3,7 @@
 namespace App\Email\Services;
 
 use App\Email\Contracts\NotificationEventSink;
+use App\Models\AuditEvent;
 use App\Models\InAppNotification;
 use App\Models\NotificationEventReceipt;
 use App\Models\NotificationPreference;
@@ -13,6 +14,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 
 final class NotificationPlatformService implements NotificationEventSink
 {
@@ -117,14 +119,14 @@ final class NotificationPlatformService implements NotificationEventSink
             ], $mode === 'disabled');
         }
 
-        $this->audit->record('notification.created', [
+        $this->recordAudit('notification.created', [
             'notification_id' => $notification->notification_id,
             'event_type' => $type,
             'category' => $definition['category'],
             'severity' => $definition['severity'],
             'delivery_mode' => $mode,
             'mandatory' => $mandatory,
-        ], InAppNotification::class, $notification->id);
+        ], $notification, $userId);
 
         return $notification;
     }
@@ -197,11 +199,31 @@ final class NotificationPlatformService implements NotificationEventSink
             return null;
         }
         $link = (string) $link;
-        if (! Str::startsWith($link, '/')) {
-            throw ValidationException::withMessages(['deep_link' => 'Notification deep links must be application-relative.']);
+        if (! Str::startsWith($link, '/') || Str::startsWith($link, '//') || preg_match('/[\x00-\x1F\x7F]/', $link)) {
+            throw ValidationException::withMessages(['deep_link' => 'Notification deep links must be safe application-relative paths.']);
         }
 
         return $link;
+    }
+
+    private function recordAudit(string $event, array $metadata, InAppNotification $notification, int $actorUserId): void
+    {
+        try {
+            $this->audit->record($event, $metadata, InAppNotification::class, $notification->id);
+
+            return;
+        } catch (LogicException) {
+            // Domain-event workers intentionally carry tenant context without an authenticated membership.
+        }
+
+        AuditEvent::query()->create([
+            'actor_user_id' => $actorUserId,
+            'event' => $event,
+            'subject_type' => InAppNotification::class,
+            'subject_id' => $notification->id,
+            'metadata' => $metadata,
+            'occurred_at' => now(),
+        ]);
     }
 
     private function serialize(InAppNotification $n): array
