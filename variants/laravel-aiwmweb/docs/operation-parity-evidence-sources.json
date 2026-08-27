@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "captured_at_utc": "2026-08-27T21:15:00Z",
+  "captured_at_utc": "2026-08-27T21:17:00Z",
   "countable_sources": [
     {"label":"main after merged PR #269 connector runtime","sha":"bd6d272748753e21b65655901eaed8bb65a267c7","domains":["ai","approvals","backup","identity","operations","platform","seo","settings","sites","sync"]},
     {"label":"PR #263 content publishing platform","sha":"7cb250d893fbf4c0f82b13093eec87e3c1310dfd","domains":["comments","content","media","sync","taxonomy"]},
@@ -17,7 +17,7 @@
     {"label":"merged PR #269 source provenance","sha":"391c717c2b197226207afe2ddf432dd86e0ce6eb","domains":["backup","operations","platform","sites"],"supporting_only":true},
     {"label":"PR #262 frontend parity foundation","sha":"81c639e23a96d7fbaceda66b6275ca27cb276ace","domains":["ai","approvals","automation","backup","billing","comments","content","email","identity","media","operations","platform","reports","seo","settings","sites","sync","taxonomy"],"supporting_only":true},
     {"label":"PR #270 convergence preflight","sha":"f41f6c9651f86296ca0c99055b2833f3f12e876e","domains":["ai","approvals","automation","backup","billing","comments","content","email","identity","media","operations","platform","reports","seo","settings","sites","sync","taxonomy"],"supporting_only":true},
-    {"label":"PR #274 cross-domain security acceptance","sha":"b324cc099e05449edaa97a9d457697dcdd6bbead","domains":["ai","approvals","automation","backup","billing","comments","content","email","identity","media","operations","platform","reports","seo","settings","sites","sync","taxonomy"],"supporting_only":true}
+    {"label":"PR #274 cross-domain security acceptance","sha":"6ad89d0dca6e05641a5fe58ed2b9b49e3391a9f5","domains":["ai","approvals","automation","backup","billing","comments","content","email","identity","media","operations","platform","reports","seo","settings","sites","sync","taxonomy"],"supporting_only":true}
   ],
   "excluded_sources": [
     {"label":"PR #268 email integration handoff","sha":"2b54783b24834b41ed60a4ee73d7f50213b16a21","reason":"0 product changed files; handoff only and not Email implementation"},
