@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\AI\AiProvider;
 use App\AI\HttpAiProvider;
+use App\Connector\AdvancedWordPressGateway;
 use App\Connector\HttpWordPressGateway;
 use App\Connector\WordPressGateway;
 use App\Models\TenantSecret;
@@ -21,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(TenantContext::class, fn () => new TenantContext);
         $this->app->bind(WordPressGateway::class, HttpWordPressGateway::class);
+        $this->app->bind(AdvancedWordPressGateway::class, HttpWordPressGateway::class);
         $this->app->bind(AiProvider::class, HttpAiProvider::class);
     }
 
