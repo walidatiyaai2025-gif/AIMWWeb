@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mechanical convergence invariants for Laravel AIWMWeb.
 
-This intentionally does not decide product architecture.  It validates conditions that
+This intentionally does not decide product architecture. It validates conditions that
 must be true after Codex composes the authoritative worker branches.
 """
 
@@ -155,15 +155,18 @@ def main() -> int:
             "App\\Content\\ContentPlatformService",
             "App\\Billing\\UsageQuotaService",
             "App\\AI\\Platform\\Services\\AiGenerationService",
+            "App\\Services\\SeoManagerService",
+            "App\\Sites\\SiteDiagnosticsService",
             "App\\Http\\Controllers\\HealthController",
         }
         missing = sorted(required - set(declarations))
         if missing:
             errors.append(f"composed authority classes missing: {missing}")
 
-        # #268 and staging payloads are deliberately not convergence product inputs.
-        if (root / ".sync-payload.part1").exists():
-            errors.append("staging payload .sync-payload.part1 leaked into composed product tree")
+        # #268 and sync staging payloads are deliberately not convergence product inputs.
+        leaked_payloads = sorted(path.name for path in root.glob(".sync-payload.part*"))
+        if leaked_payloads:
+            errors.append(f"staging sync payloads leaked into composed product tree: {leaked_payloads}")
 
     facts.update(
         {
