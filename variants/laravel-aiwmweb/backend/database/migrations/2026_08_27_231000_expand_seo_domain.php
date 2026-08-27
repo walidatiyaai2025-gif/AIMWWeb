@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private const ROLLBACK_TENANT_INDEX = 'seo_audits_tenant_id_rollback_idx';
+
     public function up(): void
     {
         Schema::table('synced_contents', function (Blueprint $table) {
@@ -27,6 +29,10 @@ return new class extends Migration
             $table->index(['tenant_id', 'site_id', 'completed_at'], 'seo_audit_history_idx');
         });
 
+        if ($this->isMysql() && $this->hasNamedIndex('seo_audits', self::ROLLBACK_TENANT_INDEX)) {
+            Schema::table('seo_audits', fn (Blueprint $table) => $table->dropIndex(self::ROLLBACK_TENANT_INDEX));
+        }
+
         Schema::table('seo_findings', function (Blueprint $table) {
             $table->string('field')->nullable()->after('code');
             $table->text('current_value')->nullable()->after('recommendation');
@@ -41,16 +47,44 @@ return new class extends Migration
         Schema::table('seo_findings', function (Blueprint $table) {
             $table->dropColumn(['field', 'current_value', 'normalized_state', 'detected_at', 'resolved_at']);
         });
+
+        if ($this->isMysql() && ! $this->hasLeadingIndex('seo_audits', 'tenant_id', 'seo_audit_history_idx')) {
+            Schema::table('seo_audits', fn (Blueprint $table) => $table->index('tenant_id', self::ROLLBACK_TENANT_INDEX));
+        }
+
         Schema::table('seo_audits', function (Blueprint $table) {
-            // MySQL may remove the original single-column tenant index as redundant when the
-            // history index is created. Restore a leading tenant index before dropping history,
-            // otherwise the foreign key has no supporting index during rollback.
-            $table->index('tenant_id', 'seo_audits_tenant_id_rollback_idx');
             $table->dropIndex('seo_audit_history_idx');
             $table->dropColumn(['score', 'audited_items', 'high_issues', 'medium_issues', 'low_issues', 'source_hash', 'rule_version', 'started_at']);
         });
         Schema::table('synced_contents', function (Blueprint $table) {
             $table->dropColumn(['seo_canonical', 'seo_robots', 'seo_provider', 'seo_source_hash']);
         });
+    }
+
+    private function isMysql(): bool
+    {
+        return Schema::getConnection()->getDriverName() === 'mysql';
+    }
+
+    private function hasNamedIndex(string $table, string $name): bool
+    {
+        foreach (Schema::getIndexes($table) as $index) {
+            if (($index['name'] ?? null) === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function hasLeadingIndex(string $table, string $column, string $except): bool
+    {
+        foreach (Schema::getIndexes($table) as $index) {
+            if (($index['name'] ?? null) !== $except && (($index['columns'][0] ?? null) === $column)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };
