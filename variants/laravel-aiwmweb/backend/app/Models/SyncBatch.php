@@ -2,20 +2,20 @@
 
 namespace App\Models;
 
-class SyncRun extends DomainModel
+class SyncBatch extends ContentDomainModel
 {
     protected function casts(): array
     {
         return [
-            'resources' => 'array',
-            'metadata' => 'array',
+            'cursor' => 'array',
+            'next_cursor' => 'array',
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
         ];
     }
 
-    public function batches()
+    public function run()
     {
-        return $this->hasMany(SyncBatch::class);
+        return $this->belongsTo(SyncRun::class, 'sync_run_id');
     }
 }
