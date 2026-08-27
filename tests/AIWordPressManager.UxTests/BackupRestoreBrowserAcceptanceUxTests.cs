@@ -77,14 +77,21 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
                 "refresh and browser reload must reconcile the durable archive rather than a local-only row");
 
             row = page.Locator(".backup-row").Filter(new LocatorFilterOptions { HasText = note }).First;
-            await row.GetByRole(AriaRole.Button, new() { Name = "Delete", Exact = false }).ClickAsync();
-            await page.GetByText("Backup deleted.", new() { Exact = true }).WaitForAsync();
+            var delete = row.GetByRole(AriaRole.Button, new() { Name = "Delete", Exact = false });
+            await ClickUntilAsync(
+                delete,
+                async () => await page.GetByText("Backup deleted.", new() { Exact = true }).CountAsync() == 1,
+                "The hydrated Delete action never reported success after deleting the real archive.");
             await WaitUntilAsync(
                 async () => await page.GetByText(note, new() { Exact = true }).CountAsync() == 0,
                 "Delete success did not reconcile the visible archive out of the list.");
             File.Exists(Path.Combine(backupDirectory, backupFile)).Should().BeFalse(
                 "delete success must correspond to the real archive being removed");
             (await page.Locator(".backup-list").Last.InnerTextAsync()).Should().Contain("Delete");
+
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+            (await page.GetByText(note, new() { Exact = true }).CountAsync()).Should().Be(0,
+                "browser re-entry must prove the deleted archive stays deleted");
 
             pageErrors.Should().BeEmpty("real backup create/inspect/preflight/reload/delete actions must not cause browser errors");
         }
@@ -155,7 +162,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
     [Fact]
     public async Task Backup_routes_deny_non_administrator_and_clipboard_denial_never_reports_success()
     {
-        var (viewerContext, _) = await host.CreateContentViewerContextAsync(new UxViewport("desktop", 1440, 900));
+        var (viewerContext, _) = await CreateContentViewerContextAfterConfigurationResetAsync();
         try
         {
             foreach (var path in new[] { "/backups", "/module/backups" })
@@ -199,6 +206,29 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
         {
             await adminContext.CloseBoundedAsync("backup-restore-clipboard-denial");
         }
+    }
+
+    private async Task<(IBrowserContext Context, Guid SiteId)> CreateContentViewerContextAfterConfigurationResetAsync()
+    {
+        var configPath = Path.Combine(ApplicationRoot(), "Config", "setup.database.json");
+        if (File.Exists(configPath)) File.Delete(configPath);
+
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        Exception? last = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                return await host.CreateContentViewerContextAsync(new UxViewport("desktop", 1440, 900));
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("could not authenticate the Content.View-only user", StringComparison.Ordinal))
+            {
+                last = ex;
+                await Task.Delay(300);
+            }
+        }
+
+        throw new TimeoutException("The application did not reload the startup database configuration before the view-only authentication proof.", last);
     }
 
     private async Task NavigateToBackupsAsync(IPage page)
