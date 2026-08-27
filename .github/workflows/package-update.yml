@@ -49,8 +49,11 @@ jobs:
           "ShortCommit=$shortCommit" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ArtifactName=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Restore for win-x64
+      - name: Restore web for win-x64
         run: dotnet restore .\src\AIWordPressManager.Web\AIWordPressManager.Web.csproj -r win-x64
+
+      - name: Restore recovery tool for win-x64
+        run: dotnet restore .\src\AIWordPressManager.RecoveryTool\AIWordPressManager.RecoveryTool.csproj -r win-x64
 
       - name: Publish update payload
         shell: pwsh
@@ -66,6 +69,19 @@ jobs:
             /p:GitBranch=main
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Publish offline recovery tool
+        shell: pwsh
+        run: |
+          $publish = Join-Path $PWD 'artifacts\package\recovery'
+          New-Item -ItemType Directory -Path $publish -Force | Out-Null
+          dotnet publish .\src\AIWordPressManager.RecoveryTool\AIWordPressManager.RecoveryTool.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained false `
+            --no-restore `
+            --output $publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Add safe installer and package metadata
         shell: pwsh
         run: |
@@ -78,7 +94,8 @@ jobs:
             "package workflow commit: $env:GITHUB_SHA",
             "runtime: win-x64",
             "framework: net8.0",
-            "deployment: framework-dependent"
+            "deployment: framework-dependent",
+            "offline recovery: recovery\AIWordPressManager.RecoveryTool.exe"
           ) | Set-Content (Join-Path $package 'VERSION.txt') -Encoding UTF8
 
       - name: Verify package contents
@@ -91,7 +108,9 @@ jobs:
             'VERSION.txt',
             'app\AIWordPressManager.Web.dll',
             'app\AIWordPressManager.Web.exe',
-            'app\web.config'
+            'app\web.config',
+            'recovery\AIWordPressManager.RecoveryTool.dll',
+            'recovery\AIWordPressManager.RecoveryTool.exe'
           )
           foreach ($relative in $required) {
             $path = Join-Path $package $relative
