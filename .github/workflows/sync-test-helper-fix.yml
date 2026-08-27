@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Rename PHPUnit-reserved helper
+      - name: Rename framework-reserved post helper
         shell: bash
         run: |
           set -euo pipefail
@@ -25,11 +25,11 @@ jobs:
           from pathlib import Path
           path = Path('variants/laravel-aiwmweb/backend/tests/Feature/Sync/SyncReconciliationRuntimeTest.php')
           text = path.read_text(encoding='utf-8')
-          assert text.count('private function run(') == 1, 'expected exactly one run helper'
-          calls = text.count('$this->run(')
-          assert calls > 0, 'expected run helper call sites'
-          text = text.replace('$this->run(', '$this->syncRunRecord(')
-          text = text.replace('private function run(', 'private function syncRunRecord(')
+          assert text.count('private function post(') == 1, 'expected exactly one post helper'
+          calls = text.count('$this->post(')
+          assert calls > 0, 'expected post helper call sites'
+          text = text.replace('$this->post(', '$this->remotePost(')
+          text = text.replace('private function post(', 'private function remotePost(')
           path.write_text(text, encoding='utf-8')
           print(f'RENAMED_CALLS={calls}')
           PY
@@ -37,5 +37,5 @@ jobs:
           git config user.name 'Laravel AIWMWeb Sync Closure'
           git config user.email 'sync-closure@example.invalid'
           git add variants/laravel-aiwmweb/backend/tests/Feature/Sync/SyncReconciliationRuntimeTest.php
-          git commit -m 'test(sync): avoid PHPUnit final run override'
+          git commit -m 'test(sync): avoid framework post helper collision'
           git push origin HEAD:worker/laravel-aiwmweb-sync-reconciliation
