@@ -64,4 +64,4 @@ jobs:
         working-directory: variants/laravel-aiwmweb/backend
         run: php artisan test
 
-# Re-run after PHPUnit helper compatibility fix.
+# Re-run after framework helper compatibility fixes.
