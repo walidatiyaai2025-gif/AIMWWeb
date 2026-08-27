@@ -1,0 +1,56 @@
+name: Laravel Billing Format Repair
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-billing-platform
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-billing-format-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-billing-platform
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Install Laravel dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Repair MySQL identifier and apply Pint
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/backend/database/migrations/2026_08_27_210000_create_billing_platform.php')
+          text = path.read_text()
+          old = "$table->unique(['tenant_id','provider','provider_transaction_hash']);"
+          new = "$table->unique(['tenant_id','provider','provider_transaction_hash'], 'billing_tx_provider_ref_unique');"
+          if old not in text:
+              raise SystemExit('expected unique-index declaration not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          cd variants/laravel-aiwmweb/backend
+          vendor/bin/pint
+      - name: Commit deterministic formatting repair
+        shell: bash
+        run: |
+          git add variants/laravel-aiwmweb
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'style: apply billing Pint and MySQL index fix'
+          git push origin HEAD:worker/laravel-aiwmweb-billing-platform
