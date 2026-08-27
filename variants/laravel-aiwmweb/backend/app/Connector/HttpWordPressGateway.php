@@ -7,13 +7,18 @@ use App\Models\Site;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-final class HttpWordPressGateway implements WordPressGateway
+final class HttpWordPressGateway implements AdvancedWordPressGateway
 {
     public function __construct(private readonly ConnectorProtocol $protocol, private readonly ConnectorScopePolicy $scopes) {}
 
     public function health(Site $site): array
     {
         return $this->request($site, 'GET', '/wp-json/aimw/v1/health', 'health');
+    }
+
+    public function capabilities(Site $site): array
+    {
+        return $this->request($site, 'GET', '/wp-json/aimw/v1/capabilities', 'health');
     }
 
     public function content(Site $site, ?string $modifiedAfter = null): array
@@ -28,6 +33,14 @@ final class HttpWordPressGateway implements WordPressGateway
         $required = $this->scopes->requiredFor('content.execute', $change);
 
         return $this->request($site, 'POST', '/wp-json/aimw/v1/execute', end($required), $change, $operationId, $required);
+    }
+
+    public function operate(Site $site, string $operationId, string $operation, array $arguments = []): array
+    {
+        $payload = ['operation' => $operation, 'arguments' => $arguments];
+        $required = $this->scopes->requiredFor('connector.operate', $payload);
+
+        return $this->request($site, 'POST', '/wp-json/aimw/v1/operate', end($required), $payload, $operationId, $required);
     }
 
     public function read(Site $site, string $type, int $remoteId): array
@@ -60,7 +73,8 @@ final class HttpWordPressGateway implements WordPressGateway
         $headers = $this->protocol->sign($connector, $method, $path, $body, $scope, $operationId);
         $response = Http::timeout(30)->withHeaders($headers)->withBody($body, 'application/json')->send($method, rtrim($site->url, '/').$path);
         if (! $response->successful()) {
-            throw new RuntimeException("Connector request failed ({$response->status()}).");
+            $message = data_get($response->json(), 'message');
+            throw new RuntimeException(is_string($message) && $message !== '' ? $message : "Connector request failed ({$response->status()}).");
         }
 
         return $response->json() ?? [];
