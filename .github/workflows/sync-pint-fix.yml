@@ -1,0 +1,42 @@
+name: Sync Pint Fix
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-sync-reconciliation
+    paths:
+      - '.github/workflows/sync-pint-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Apply Laravel Pint to Sync-owned style failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd variants/laravel-aiwmweb/backend
+          composer install --no-interaction --prefer-dist
+          vendor/bin/pint app/Http/Controllers/SyncApiController.php app/Sync/SyncFallbackReconciler.php
+          vendor/bin/pint --test app/Http/Controllers/SyncApiController.php app/Sync/SyncFallbackReconciler.php
+          cd ../../..
+          git diff --check
+          git config user.name 'Laravel AIWMWeb Sync Closure'
+          git config user.email 'sync-closure@example.invalid'
+          git add variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php variants/laravel-aiwmweb/backend/app/Sync/SyncFallbackReconciler.php
+          if git diff --cached --quiet; then
+            echo 'PINT_CHANGES=NONE'
+            exit 0
+          fi
+          git commit -m 'style(sync): apply Laravel Pint to reconciliation scope'
+          git push origin HEAD:worker/laravel-aiwmweb-sync-reconciliation
