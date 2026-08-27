@@ -70,7 +70,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
             readinessText.Should().Contain("Restore must run while the web application is stopped");
             readinessText.Should().Contain("In-process restore remains blocked");
 
-            await page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = false }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true }).ClickAsync();
             await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
             await page.GetByText(note, new() { Exact = true }).WaitForAsync();
             (await page.Locator(".backup-row").Filter(new LocatorFilterOptions { HasText = note }).CountAsync()).Should().Be(1,
@@ -117,7 +117,7 @@ public sealed class BackupRestoreBrowserAcceptanceUxTests(UxTestHost host)
                 await writer.WriteAsync("not a backup manifest");
             }
 
-            var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = false });
+            var refresh = page.GetByRole(AriaRole.Button, new() { Name = "Refresh", Exact = true });
             await ClickUntilAsync(
                 refresh,
                 async () => await page.GetByText(fileName, new() { Exact = true }).CountAsync() == 1,
