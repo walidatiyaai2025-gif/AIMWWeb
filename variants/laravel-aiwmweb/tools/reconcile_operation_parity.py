@@ -11,22 +11,24 @@ import argparse
 import json
 import re
 import subprocess
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[3]
 VARIANT = ROOT / "variants" / "laravel-aiwmweb"
 LEDGER = VARIANT / "docs" / "capability-parity-ledger.json"
 MANIFEST = VARIANT / "docs" / "operation-parity-evidence-sources.json"
 
+ALLOWED = {"PORTED", "ADAPTED", "PENDING", "BLOCKED", "VERIFIED_UNAVAILABLE_EXTERNAL"}
 GENERIC = {
     "service", "services", "controller", "controllers", "job", "worker", "async",
     "get", "set", "save", "update", "create", "delete", "remove", "add", "run",
     "execute", "handle", "read", "write", "list", "load", "find", "try", "process",
     "manager", "provider", "repository", "gateway", "api", "http", "app",
 }
-CODE_SUFFIXES = {".php", ".py", ".ts", ".tsx", ".js", ".jsx", ".sh"}
+CODE_SUFFIXES = {".php", ".py", ".ts", ".tsx", ".js", ".jsx", ".sh", ".blade.php"}
 TEST_MARKERS = ("/tests/", "Test.php", ".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx")
 DOMAIN_TEST_HINTS = {
     "ai": ("ai", "provider", "planner"),
@@ -48,14 +50,26 @@ DOMAIN_TEST_HINTS = {
     "sync": ("contentplatform", "demoverticalslice", "sync"),
     "taxonomy": ("contentplatform", "taxonomy"),
 }
+
+# Explicit semantic aliases are deliberately narrow. They bridge known architecture
+# renames; they do not turn broad domain presence into operation evidence.
 ALIASES = {
     "ai": {
         "AIPlatformServices": ("AiCenterService", "AiGenerationService", "AiUsageService"),
         "ApplicationSettingsService": ("ProviderConfigService", "ProviderSecretStore"),
     },
-    "approvals": {"Approval": ("Approval", "ExecutionCreator"), "ApprovalService": ("Approval", "ExecutionCreator")},
-    "automation": {"Automation": ("AdministrationService", "OperationsControlPlaneService"), "Scheduler": ("OperationsControlPlaneService",)},
-    "backup": {"Backup": ("ConnectorBackupGateway", "class-aimw-connector-runtime"), "Restore": ("ConnectorBackupGateway", "class-aimw-connector-runtime")},
+    "approvals": {
+        "Approval": ("Approval", "ExecutionCreator"),
+        "ApprovalService": ("Approval", "ExecutionCreator"),
+    },
+    "automation": {
+        "Automation": ("AdministrationService", "OperationsControlPlaneService"),
+        "Scheduler": ("OperationsControlPlaneService",),
+    },
+    "backup": {
+        "Backup": ("ConnectorBackupGateway", "class-aimw-connector-runtime"),
+        "Restore": ("ConnectorBackupGateway", "class-aimw-connector-runtime"),
+    },
     "billing": {
         "Billing": ("BillingController", "SubscriptionService", "EntitlementService"),
         "Subscription": ("SubscriptionService", "SubscriptionStateMachine"),
@@ -63,23 +77,54 @@ ALIASES = {
         "Quota": ("UsageQuotaService", "EntitlementService"),
         "PayPal": ("PayPalProvider", "PayPalWebhookController"),
     },
-    "comments": {"Comment": ("ContentPlatformService", "ContentApiController", "BulkCommentModerationJob")},
+    "comments": {
+        "Comment": ("ContentPlatformService", "ContentApiController", "BulkCommentModerationJob"),
+    },
     "content": {
         "Content": ("ContentPlatformService", "ContentApiController"),
         "Revision": ("ContentPlatformService", "ContentRevision"),
         "Import": ("ContentTransferJob", "ContentPlatformService"),
         "Export": ("ContentTransferJob", "ContentPlatformService"),
     },
-    "media": {"Media": ("ContentPlatformService", "ContentApiController", "MediaUploadJob")},
-    "operations": {"Operations": ("OperationsControlPlaneService", "AdministrationService"), "Diagnostics": ("SiteDiagnosticsService", "SiteDiagnosticsController")},
-    "reports": {"Report": ("GenerateReportExport", "OperationsControlPlaneService"), "Export": ("GenerateReportExport",)},
-    "seo": {"Seo": ("SeoAuditService", "SeoRunService", "SitesSeoAuditController", "SeoRunController"), "SEO": ("SeoAuditService", "SeoRunService", "SitesSeoAuditController", "SeoRunController")},
-    "settings": {"Settings": ("AdministrationService", "OperationsControlPlaneService")},
+    "email": {
+        "EmailOutboxService": ("EmailDeliveryService", "SendEmailDeliveryJob"),
+        "OperationalEmailAlertService": ("DomainNotificationBridge", "NotificationPlatformService"),
+        "AccountEmailSettingsService": ("MailConfigurationService", "EmailSecretStore"),
+        "NotificationInboxService": ("NotificationPlatformService",),
+        "AppNotificationService": ("NotificationPlatformService",),
+        "EmailDeliveryHistoryService": ("EmailDeliveryService",),
+        "EmailOutboxWorker": ("SendEmailDeliveryJob", "EmailDeliveryService"),
+        "EmailSchedule": ("EmailScheduleService", "RunEmailSchedulesJob"),
+        "SecurityAuditEmailAlertWorker": ("DomainNotificationBridge", "NotificationPlatformService"),
+        "ExecutionJobFailureAlert": ("DomainNotificationBridge", "NotificationPlatformService"),
+        "SiteSyncFailureAlert": ("DomainNotificationBridge", "NotificationPlatformService"),
+    },
+    "media": {
+        "Media": ("ContentPlatformService", "ContentApiController", "MediaUploadJob"),
+    },
+    "operations": {
+        "Operations": ("OperationsControlPlaneService", "AdministrationService"),
+        "Diagnostics": ("SiteDiagnosticsService", "SiteDiagnosticsController"),
+    },
+    "reports": {
+        "Report": ("GenerateReportExport", "OperationsControlPlaneService"),
+        "Export": ("GenerateReportExport",),
+    },
+    "seo": {
+        "Seo": ("SeoAuditService", "SeoRunService", "SitesSeoAuditController", "SeoRunController"),
+        "SEO": ("SeoAuditService", "SeoRunService", "SitesSeoAuditController", "SeoRunController"),
+    },
+    "settings": {
+        "Settings": ("AdministrationService", "OperationsControlPlaneService"),
+    },
     "sites": {
         "Site": ("SiteManagementController", "SiteDiagnosticsService", "PairingService", "DemoController"),
         "Connector": ("PairingService", "ConnectorProtocol", "ConnectorScopePolicy"),
     },
-    "sync": {"Sync": ("SyncContentJob", "SyncSiteJob", "ContentPlatformService"), "SiteSync": ("SyncSiteJob", "SyncRun")},
+    "sync": {
+        "Sync": ("SyncContentJob", "SyncSiteJob", "ContentPlatformService"),
+        "SiteSync": ("SyncSiteJob", "SyncRun"),
+    },
     "taxonomy": {
         "Taxonomy": ("ContentPlatformService", "ContentApiController", "BulkTaxonomyAssignmentJob"),
         "Category": ("ContentPlatformService", "ContentApiController"),
@@ -128,6 +173,7 @@ def meaningful(value: str) -> set[str]:
 
 def method_name(row: dict) -> str:
     value = str(row.get("visible_control") or "")
+    # HTTP lines are routes, not method names.
     if value.upper().startswith("HTTP "):
         return ""
     bracketed = re.findall(r"\[([A-Za-z_][A-Za-z0-9_]*)\]", value)
@@ -152,7 +198,9 @@ def normalize_route(value: str) -> tuple[str, ...]:
 
 
 def is_text_path(path: str) -> bool:
-    return path.endswith(".blade.php") or Path(path).suffix.lower() in CODE_SUFFIXES
+    if path.endswith(".blade.php"):
+        return True
+    return Path(path).suffix.lower() in CODE_SUFFIXES
 
 
 def is_test_path(path: str) -> bool:
@@ -176,12 +224,24 @@ def load_snapshot(source: dict) -> Snapshot:
         if not text:
             continue
         files.append(FileEvidence(path=path, text=text, test=is_test_path(path)))
-    return Snapshot(source["label"], sha, set(source.get("domains", [])), files, bool(source.get("supporting_only", False)))
+    return Snapshot(
+        label=source["label"],
+        sha=sha,
+        domains=set(source.get("domains", [])),
+        files=files,
+        supporting_only=bool(source.get("supporting_only", False)),
+    )
 
 
 def target_aliases(domain: str, row: dict) -> set[str]:
     values: set[str] = set()
-    hay = " ".join([str(row.get("service") or ""), str(row.get("background_job") or ""), str(row.get("route_screen") or ""), str(row.get("visible_control") or ""), Path(str(row.get("current_source") or "")).stem])
+    hay = " ".join([
+        str(row.get("service") or ""),
+        str(row.get("background_job") or ""),
+        str(row.get("route_screen") or ""),
+        str(row.get("visible_control") or ""),
+        Path(str(row.get("current_source") or "")).stem,
+    ])
     for key, aliases in ALIASES.get(domain, {}).items():
         if key.lower() in hay.lower():
             values.update(aliases)
@@ -191,11 +251,16 @@ def target_aliases(domain: str, row: dict) -> set[str]:
 def file_symbol_score(row: dict, file: FileEvidence) -> tuple[int, list[str]]:
     path_name = Path(file.path).name
     text_head = file.text[:30000]
-    source_tokens = meaningful(" ".join([str(row.get("service") or ""), str(row.get("background_job") or ""), Path(str(row.get("current_source") or "")).stem]))
+    source_tokens = meaningful(" ".join([
+        str(row.get("service") or ""),
+        str(row.get("background_job") or ""),
+        Path(str(row.get("current_source") or "")).stem,
+    ]))
     target_tokens = meaningful(path_name + " " + text_head[:1500])
     overlap = sorted(source_tokens & target_tokens)
     score = len(overlap) * 2
     reasons = [f"token:{x}" for x in overlap]
+
     service = str(row.get("service") or "")
     job = str(row.get("background_job") or "")
     method = method_name(row)
@@ -273,7 +338,7 @@ def test_evidence(row: dict, snap: Snapshot, matched: FileEvidence) -> tuple[boo
     return False, ""
 
 
-def best_code_evidence(row: dict, snapshots: list[Snapshot]):
+def best_code_evidence(row: dict, snapshots: list[Snapshot]) -> tuple[Snapshot, FileEvidence, int, list[str]] | None:
     domain = str(row.get("domain"))
     kind = str(row.get("kind"))
     best = None
@@ -286,37 +351,46 @@ def best_code_evidence(row: dict, snapshots: list[Snapshot]):
                 rscore, rreasons = route_score(row, file)
                 score += rscore
                 reasons += rreasons
-            elif kind == "background_job" and ("/Jobs/" in file.path or "job" in Path(file.path).name.lower()):
-                score += 2
+            elif kind == "background_job":
+                if "/Jobs/" in file.path or "job" in Path(file.path).name.lower():
+                    score += 2
             if best is None or score > best[2]:
                 best = (snap, file, score, reasons)
     return best
 
 
-def classify(row: dict, snapshots: list[Snapshot]) -> dict:
+def classify(row: dict, snapshots: list[Snapshot], exclusions: dict[str, str]) -> dict:
     result = dict(row)
     result["migration_state"] = "PENDING"
     result["laravel_destination"] = ""
     result["acceptance_test"] = ""
     result["evidence"] = ""
-    result["reconciliation"] = {"decision": "PENDING", "reason": "", "source_label": None, "source_sha": None, "destination_path": None}
+    result["reconciliation"] = {
+        "decision": "PENDING",
+        "reason": "",
+        "source_label": None,
+        "source_sha": None,
+        "destination_path": None,
+    }
+
     domain = str(row.get("domain"))
     kind = str(row.get("kind"))
-    if domain == "email":
-        result["reconciliation"]["reason"] = "No pushed Email/Notifications implementation delta: #268 is handoff-only and email-delivery-closure equals main."
-        return result
+
     if kind in {"visible_control", "route"}:
         result["reconciliation"]["reason"] = "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity."
         return result
+
     best = best_code_evidence(row, snapshots)
     if best is None:
         result["reconciliation"]["reason"] = "No countable pushed source owns this domain operation."
         return result
     snap, file, score, reasons = best
+
     threshold = {"api": 7, "service": 6, "background_job": 6}.get(kind, 8)
     if score < threshold:
         result["reconciliation"]["reason"] = f"No operation-specific destination met evidence threshold ({score} < {threshold})."
         return result
+
     tenant_ok, tenant_reasons = tenant_security_ok(row, snap, file)
     if not tenant_ok:
         result["reconciliation"]["reason"] = "Candidate destination lacks operation-linked tenant ownership evidence."
@@ -329,6 +403,7 @@ def classify(row: dict, snapshots: list[Snapshot]) -> dict:
     if not tested:
         result["reconciliation"]["reason"] = "Candidate destination lacks test evidence."
         return result
+
     result["migration_state"] = "ADAPTED"
     result["laravel_destination"] = file.path
     result["acceptance_test"] = test_path
@@ -352,29 +427,55 @@ def summarize(rows: list[dict], manifest: dict) -> dict:
     terminal = total - states["PENDING"]
     visible = [r for r in rows if r.get("kind") == "visible_control"]
     visible_terminal = sum(1 for r in visible if r["migration_state"] != "PENDING")
-    by_domain = {}
+
+    by_domain: dict[str, dict] = {}
     for domain in sorted({str(r["domain"]) for r in rows}):
         subset = [r for r in rows if r["domain"] == domain]
         s = Counter(r["migration_state"] for r in subset)
         t = len(subset)
         term = t - s["PENDING"]
         by_domain[domain] = {
-            "total": t, "ported": s["PORTED"], "adapted": s["ADAPTED"], "pending": s["PENDING"],
-            "blocked": s["BLOCKED"], "verified_unavailable_external": s["VERIFIED_UNAVAILABLE_EXTERNAL"],
-            "terminal": term, "percent": round(term / t * 100, 2) if t else 0.0,
+            "total": t,
+            "ported": s["PORTED"],
+            "adapted": s["ADAPTED"],
+            "pending": s["PENDING"],
+            "blocked": s["BLOCKED"],
+            "verified_unavailable_external": s["VERIFIED_UNAVAILABLE_EXTERNAL"],
+            "terminal": term,
+            "percent": round(term / t * 100, 2) if t else 0.0,
         }
+
     return {
         "schema_version": 1,
         "authority": "AIMWWeb Issue #257",
         "base_main_sha": manifest["base_main_sha"],
         "classification_policy": {
-            "terminal_requires": ["pushed exact-SHA source", "operation-specific destination", "tenant ownership evidence when tenant-owned", "authorization evidence for mutations/high-risk operations", "test evidence"],
+            "terminal_requires": [
+                "pushed exact-SHA source",
+                "operation-specific destination",
+                "tenant ownership evidence when tenant-owned",
+                "authorization evidence for mutations/high-risk operations",
+                "test evidence",
+            ],
             "frontend_placeholder_policy": "not_counted",
             "unpushed_work_policy": "not_counted",
             "percentage_formula": "(TOTAL - PENDING) / TOTAL * 100",
         },
-        "totals": {"total": total, "ported": states["PORTED"], "adapted": states["ADAPTED"], "pending": states["PENDING"], "blocked": states["BLOCKED"], "verified_unavailable_external": states["VERIFIED_UNAVAILABLE_EXTERNAL"], "terminal": terminal, "overall_parity_percent": round(terminal / total * 100, 2) if total else 0.0},
-        "visible_controls": {"total": len(visible), "terminal": visible_terminal, "percent": round(visible_terminal / len(visible) * 100, 2) if visible else 0.0},
+        "totals": {
+            "total": total,
+            "ported": states["PORTED"],
+            "adapted": states["ADAPTED"],
+            "pending": states["PENDING"],
+            "blocked": states["BLOCKED"],
+            "verified_unavailable_external": states["VERIFIED_UNAVAILABLE_EXTERNAL"],
+            "terminal": terminal,
+            "overall_parity_percent": round(terminal / total * 100, 2) if total else 0.0,
+        },
+        "visible_controls": {
+            "total": len(visible),
+            "terminal": visible_terminal,
+            "percent": round(visible_terminal / len(visible) * 100, 2) if visible else 0.0,
+        },
         "domains": by_domain,
         "uncounted_work": manifest.get("excluded_sources", []),
         "operations": rows,
@@ -387,19 +488,24 @@ def main() -> int:
     parser.add_argument("--summary-output", type=Path)
     parser.add_argument("--check-total", type=int, default=931)
     args = parser.parse_args()
+
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
     source_manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     rows = ledger.get("operations", [])
     if len(rows) != args.check_total:
         raise SystemExit(f"expected {args.check_total} canonical operations, found {len(rows)}")
+
     snapshots = [load_snapshot(s) for s in source_manifest["countable_sources"]]
-    reconciled = [classify(row, snapshots) for row in rows]
+    exclusions = {s["label"]: s["reason"] for s in source_manifest.get("excluded_sources", [])}
+    reconciled = [classify(row, snapshots, exclusions) for row in rows]
     payload = summarize(reconciled, source_manifest)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.summary_output:
         compact = {k: v for k, v in payload.items() if k != "operations"}
         args.summary_output.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
     totals = payload["totals"]
     print("TOTAL=", totals["total"], sep="")
     print("PORTED=", totals["ported"], sep="")
@@ -410,6 +516,7 @@ def main() -> int:
     print("PARITY_PERCENT=", f'{totals["overall_parity_percent"]:.2f}', sep="")
     print("VISIBLE_CONTROL_PERCENT=", f'{payload["visible_controls"]["percent"]:.2f}', sep="")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
