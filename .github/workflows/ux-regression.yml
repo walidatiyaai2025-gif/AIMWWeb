@@ -55,6 +55,8 @@ jobs:
             filter: FullyQualifiedName~SettingsDatabaseProviderUxTests
           - shard: logs-diagnostics
             filter: FullyQualifiedName~LogsBrowserAcceptanceUxTests
+          - shard: backup-restore
+            filter: FullyQualifiedName~BackupRestoreBrowserAcceptanceUxTests
           - shard: workspace-hub
             filter: FullyQualifiedName~WorkspaceHubNavigationUxTests
           - shard: ai-center
