@@ -75,6 +75,7 @@ builder.Services.AddScoped<WordPressCommentsWebService>();
 builder.Services.AddScoped<WordPressUsersWebService>();
 builder.Services.AddScoped<SeoAnalysisWebService>();
 builder.Services.AddScoped<SeoAuditExecutionService>();
+builder.Services.AddScoped<SeoRemediationWebService>();
 builder.Services.AddScoped<BulkTrashExecutionService>();
 builder.Services.AddScoped<BulkStatusExecutionService>();
 builder.Services.AddScoped<SystemHealthWebService>();

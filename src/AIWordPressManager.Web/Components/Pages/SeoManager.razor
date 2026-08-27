@@ -4,6 +4,7 @@
 @using AIWordPressManager.Application.SeoAudit
 @inject SeoAnalysisWebService SeoService
 @inject SeoAuditExecutionService AuditService
+@inject SeoRemediationWebService RemediationService
 @inject AppNotificationService Notifications
 @inject AppLanguageService L
 
@@ -122,6 +123,108 @@ else
                     <div class="seo-clean-state">✓ @(L.IsArabic ? "لا توجد مشكلات في النتائج الحالية" : "No issues in the current results")</div>
                 }
             </div>
+        </section>
+
+        <section class="panel seo-remediation" data-testid="seo-remediation-workspace" aria-busy="@_remediationBusy">
+            <header>
+                <div>
+                    <span class="workspace-kicker">@(L.IsArabic ? "المعالجة بالذكاء الاصطناعي" : "AI REMEDIATION")</span>
+                    <h2>@(L.IsArabic ? "اقتراحات قابلة للمراجعة والتنفيذ" : "Reviewable, actionable suggestions")</h2>
+                    <p>@(L.IsArabic ? "راجع القيمة الحالية والاقتراح قبل أي تعديل. لا يظهر النجاح إلا بعد حفظ القيمة وإعادة قراءتها من ووردبريس." : "Compare the persisted value with the suggestion before applying. Success appears only after WordPress persistence and re-read verification.")</p>
+                </div>
+                <button class="btn primary" data-testid="seo-generate-all" @onclick="GenerateSuggestionsAsync" disabled="@_remediationBusy">
+                    @(_generating ? (L.IsArabic ? "جارٍ إنشاء الاقتراحات..." : "Generating suggestions...") : (L.IsArabic ? "إنشاء اقتراحات AI" : "Generate AI suggestions"))
+                </button>
+            </header>
+
+            <div class="seo-remediation-toolbar">
+                <button class="btn primary" data-testid="seo-apply-selected" @onclick="ApplySelectedAsync" disabled="@(_remediationBusy || _selectedProposals.Count == 0)">@(L.IsArabic ? "تطبيق المحدد" : "Apply selected")</button>
+                <button class="btn" data-testid="seo-apply-all-safe" @onclick="ApplyAllSafeAsync" disabled="@(_remediationBusy || !Proposals.Any(IsSafeEligible))">@(L.IsArabic ? "تطبيق كل الاقتراحات الآمنة" : "Apply all safe")</button>
+                <button class="btn" data-testid="seo-retry-failed" @onclick="RetryFailedAsync" disabled="@(_remediationBusy || !Proposals.Any(IsFailed))">@(L.IsArabic ? "إعادة محاولة الفاشل" : "Retry failed")</button>
+            </div>
+
+            @if (_lastBulkResult is not null)
+            {
+                <div class="seo-remediation-summary" data-testid="seo-remediation-summary" role="status">
+                    <span>@(L.IsArabic ? "المحدد" : "Selected"): @_lastBulkResult.Selected</span>
+                    <span>@(L.IsArabic ? "نجح" : "Succeeded"): @_lastBulkResult.Succeeded</span>
+                    <span>@(L.IsArabic ? "فشل" : "Failed"): @_lastBulkResult.Failed</span>
+                    <span>@(L.IsArabic ? "تعارض" : "Conflicted"): @_lastBulkResult.Conflicted</span>
+                    <span>@(L.IsArabic ? "يتطلب مراجعة" : "Review required"): @_lastBulkResult.ReviewRequired</span>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_remediationFeedback))
+            {
+                <div class="seo-remediation-feedback @(_remediationFeedbackIsError ? "error" : null)" data-testid="seo-remediation-feedback" role="@(_remediationFeedbackIsError ? "alert" : "status")" aria-live="polite">@_remediationFeedback</div>
+            }
+
+            @if (!Proposals.Any())
+            {
+                <div class="seo-proposal-empty">@(L.IsArabic ? "لم تُنشأ اقتراحات بعد. استخدم زر إنشاء اقتراحات AI للبدء." : "No suggestions have been generated. Use Generate AI suggestions to begin.")</div>
+            }
+            else
+            {
+                <div class="seo-proposal-list">
+                    @foreach (var proposal in Proposals)
+                    {
+                        var proposalId = (Guid)proposal.ProposalId;
+                        <article class="seo-proposal @(_selectedProposals.Contains(proposalId) ? "selected" : null)" data-testid="proposal-row-@proposalId">
+                            <div class="seo-proposal-head">
+                                <label class="seo-proposal-identity">
+                                    <input type="checkbox" data-testid="proposal-select-@proposalId" checked="@_selectedProposals.Contains(proposalId)" @onchange="e => SetSelected(proposalId, e.Value as bool? == true)" disabled="@(_remediationBusy || !IsSelectable(proposal))" />
+                                    <span><strong>@FieldLabel(proposal.Field.ToString())</strong><small>@proposal.ContentType #@proposal.ContentId</small></span>
+                                </label>
+                                <div class="seo-proposal-badges">
+                                    <span class="@SafetyCss(proposal.SafetyClass.ToString())">@SafetyLabel(proposal.SafetyClass.ToString())</span>
+                                    <span class="@StateCss(proposal.State.ToString())" data-testid="proposal-status-@proposalId">@StateLabel(proposal.State.ToString())</span>
+                                    <span>@Math.Round((decimal)proposal.Confidence * 100)%</span>
+                                </div>
+                            </div>
+                            <div class="seo-proposal-diff">
+                                <div class="seo-proposal-value" data-testid="proposal-current-@proposalId"><small>@(L.IsArabic ? "القيمة الحالية" : "Current")</small><p>@proposal.CurrentValue</p></div>
+                                <div class="seo-proposal-value suggested" data-testid="proposal-suggested-@proposalId"><small>@(L.IsArabic ? "اقتراح AI" : "AI suggested")</small><p>@proposal.SuggestedValue</p></div>
+                            </div>
+                            <p class="seo-proposal-reason"><strong>@(L.IsArabic ? "السبب:" : "Reason:")</strong> @proposal.Reason</p>
+                            @if (!string.IsNullOrWhiteSpace((string?)proposal.Error))
+                            {
+                                <p class="seo-remediation-feedback error" role="alert">@proposal.Error</p>
+                            }
+                            <div class="seo-proposal-actions">
+                                <button class="btn compact primary" data-testid="proposal-apply-@proposalId" @onclick="() => ApplyOneAsync(proposalId)" disabled="@(_remediationBusy || !IsApplyEligible(proposal))">@(L.IsArabic ? "تطبيق هذا الحقل" : "Apply this field")</button>
+                                @if (_undoAudits.TryGetValue(proposalId, out var auditId))
+                                {
+                                    <button class="btn compact" data-testid="proposal-undo-@proposalId" @onclick="() => UndoAsync(proposalId, auditId)" disabled="@_remediationBusy">@(L.IsArabic ? "تراجع" : "Undo")</button>
+                                }
+                                else if (proposal.State.ToString() == "Verified")
+                                {
+                                    <span class="badge">@(L.IsArabic ? "التراجع غير متاح دون سجل تحقق" : "Undo unavailable without verified audit evidence")</span>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+            @if (_remediationHistory.Count > 0)
+            {
+                <div class="seo-remediation-history" data-testid="seo-remediation-history">
+                    <h3>@(L.IsArabic ? "سجل المعالجة" : "Remediation history")</h3>
+                    @foreach (var entry in _remediationHistory.Take(12))
+                    {
+                        <div class="seo-remediation-history-row" data-testid="seo-remediation-history-entry">
+                            <span><strong>@FieldLabel(entry.Field.ToString())</strong><small>@entry.ContentType #@entry.ContentId · @entry.OccurredAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small></span>
+                            <span class="badge @StateCss(entry.Result.ToString())">@StateLabel(entry.Result.ToString())</span>
+                            @if (!string.IsNullOrWhiteSpace(entry.FailureReason))
+                            {
+                                <span class="seo-history-failure">@entry.FailureReason</span>
+                            }
+                            @if (entry.Result == SeoRemediationProposalState.Verified && !entry.Action.Equals("Undo", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <button class="btn compact" data-testid="history-undo-@entry.AuditId" @onclick="() => UndoAsync(entry.ProposalId, entry.AuditId)" disabled="@_remediationBusy">@(L.IsArabic ? "تراجع آمن" : "Safe undo")</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
         </section>
 
         <section class="panel seo-toolbar">
@@ -243,10 +346,17 @@ else
     private SeoAnalysisView? _view;
     private SeoAnalysisItem? _expanded;
     private IReadOnlyList<SeoAuditHistoryPoint> _history = Array.Empty<SeoAuditHistoryPoint>();
+    private IReadOnlyList<SeoRemediationAuditEntry> _remediationHistory = Array.Empty<SeoRemediationAuditEntry>();
     private bool _loading = true, _runningAudit, _auditFeedbackIsError;
+    private bool _remediationBusy, _generating, _remediationFeedbackIsError;
     private string? _loadErrorMessage, _auditFeedbackMessage;
+    private string? _remediationFeedback;
+    private SeoRemediationBulkResult? _lastBulkResult;
+    private readonly HashSet<Guid> _selectedProposals = new();
+    private readonly Dictionary<Guid, Guid> _undoAudits = new();
     private string _query = string.Empty, _type = "all", _quality = "all", _issue = "all";
     private int _page = 1, _pageSize = 10;
+    private IReadOnlyList<SeoRemediationProposal> Proposals => RemediationService.GetProposals(Id);
 
     private IEnumerable<SeoAnalysisItem> FilteredItems => (_view?.Items ?? Array.Empty<SeoAnalysisItem>()).Where(x =>
         (_quality == "all" || (_quality == "good" && x.Score >= 80) || (_quality == "warning" && x.Score is >= 50 and < 80) || (_quality == "poor" && x.Score < 50)) &&
@@ -279,6 +389,7 @@ else
     {
         _view = await SeoService.AnalyzeAsync(Id, _query, _type);
         _history = _view is null ? Array.Empty<SeoAuditHistoryPoint>() : await AuditService.LoadHistoryAsync(Id, 12);
+        _remediationHistory = _view is null ? Array.Empty<SeoRemediationAuditEntry>() : await RemediationService.GetHistoryAsync(Id);
         _page = 1;
         _expanded = null;
     }
@@ -311,6 +422,131 @@ else
         }
         finally { _runningAudit = false; }
     }
+
+    private async Task GenerateSuggestionsAsync()
+    {
+        if (_remediationBusy) return;
+        _remediationBusy = _generating = true;
+        _remediationFeedbackIsError = false;
+        _remediationFeedback = L.IsArabic ? "جارٍ إنشاء اقتراحات من المحتوى المحفوظ..." : "Generating suggestions from persisted content...";
+        try
+        {
+            var generated = await RemediationService.GenerateAsync(Id);
+            _selectedProposals.RemoveWhere(id => Proposals.All(x => x.ProposalId != id));
+            var usable = generated.Count(x => x.State == SeoRemediationProposalState.AiSuggested);
+            _remediationFeedbackIsError = usable == 0;
+            _remediationFeedback = usable == 0
+                ? (L.IsArabic ? "لم يُنشئ مزود AI اقتراحًا صالحًا. راجع أخطاء الحقول وإعداد المزود." : "The AI provider produced no usable suggestion. Review the field errors and provider configuration.")
+                : (L.IsArabic ? $"تم إنشاء {usable} اقتراح قابل للمراجعة." : $"Generated {usable} reviewable suggestions.");
+        }
+        catch (Exception ex)
+        {
+            _remediationFeedbackIsError = true;
+            _remediationFeedback = L.IsArabic ? "تعذر إنشاء اقتراحات AI. تحقق من إعداد مزود الذكاء الاصطناعي ثم حاول مجددًا." : "AI suggestions could not be generated. Check the configured AI provider and try again.";
+            Notifications.Error(_remediationFeedback, "SEO", ex.ToString());
+        }
+        finally { _generating = _remediationBusy = false; }
+    }
+
+    private async Task ApplyOneAsync(Guid proposalId)
+    {
+        if (_remediationBusy) return;
+        _remediationBusy = true;
+        _remediationFeedbackIsError = false;
+        try
+        {
+            var result = await RemediationService.ApplyAsync(Id, proposalId);
+            RememberAudit(result);
+            await RefreshRemediationHistoryAsync();
+            _remediationFeedbackIsError = result.State is SeoRemediationProposalState.Failed or SeoRemediationProposalState.Conflict or SeoRemediationProposalState.NeedsReview;
+            _remediationFeedback = result.Message;
+        }
+        catch (Exception ex) { SetRemediationFailure(ex); }
+        finally { _remediationBusy = false; }
+    }
+
+    private async Task ApplySelectedAsync()
+    {
+        if (_remediationBusy || _selectedProposals.Count == 0) return;
+        await RunBulkAsync(() => RemediationService.ApplySelectedAsync(Id, _selectedProposals.ToArray()));
+    }
+
+    private async Task ApplyAllSafeAsync()
+    {
+        if (_remediationBusy) return;
+        await RunBulkAsync(() => RemediationService.ApplyAllSafeAsync(Id));
+    }
+
+    private async Task RetryFailedAsync()
+    {
+        if (_remediationBusy) return;
+        await RunBulkAsync(() => RemediationService.RetryFailedAsync(Id));
+    }
+
+    private async Task RunBulkAsync(Func<Task<SeoRemediationBulkResult>> action)
+    {
+        _remediationBusy = true;
+        _remediationFeedbackIsError = false;
+        try
+        {
+            _lastBulkResult = await action();
+            foreach (var result in _lastBulkResult.Items) RememberAudit(result);
+            await RefreshRemediationHistoryAsync();
+            _remediationFeedbackIsError = _lastBulkResult.Failed > 0 || _lastBulkResult.Conflicted > 0;
+            _remediationFeedback = L.IsArabic
+                ? $"اكتمل التنفيذ: نجح {_lastBulkResult.Succeeded}، فشل {_lastBulkResult.Failed}، تعارض {_lastBulkResult.Conflicted}."
+                : $"Execution complete: {_lastBulkResult.Succeeded} succeeded, {_lastBulkResult.Failed} failed, {_lastBulkResult.Conflicted} conflicted.";
+        }
+        catch (Exception ex) { SetRemediationFailure(ex); }
+        finally { _remediationBusy = false; }
+    }
+
+    private async Task UndoAsync(Guid proposalId, Guid auditId)
+    {
+        if (_remediationBusy) return;
+        _remediationBusy = true;
+        _remediationFeedbackIsError = false;
+        try
+        {
+            var result = await RemediationService.UndoAsync(Id, auditId);
+            _remediationFeedbackIsError = result.State is SeoRemediationProposalState.Failed or SeoRemediationProposalState.Conflict or SeoRemediationProposalState.NeedsReview;
+            _remediationFeedback = result.Message;
+            if (!_remediationFeedbackIsError) _undoAudits.Remove(proposalId);
+            await RefreshRemediationHistoryAsync();
+        }
+        catch (Exception ex) { SetRemediationFailure(ex); }
+        finally { _remediationBusy = false; }
+    }
+
+    private void RememberAudit(SeoRemediationApplyResult result)
+    {
+        if (result.AuditId is Guid auditId && result.State == SeoRemediationProposalState.Verified)
+            _undoAudits[result.ProposalId] = auditId;
+    }
+
+    private async Task RefreshRemediationHistoryAsync() => _remediationHistory = await RemediationService.GetHistoryAsync(Id);
+
+    private void SetRemediationFailure(Exception ex)
+    {
+        _remediationFeedbackIsError = true;
+        _remediationFeedback = L.IsArabic ? "تعذر إكمال المعالجة. لم يتم اعتبار التغيير ناجحًا." : "Remediation could not be completed. The change was not reported as successful.";
+        Notifications.Error(_remediationFeedback, "SEO", ex.ToString());
+    }
+
+    private void SetSelected(Guid proposalId, bool selected)
+    {
+        if (selected) _selectedProposals.Add(proposalId); else _selectedProposals.Remove(proposalId);
+    }
+
+    private static bool IsSelectable(SeoRemediationProposal proposal) => proposal.State == SeoRemediationProposalState.AiSuggested && proposal.SafetyClass != SeoRemediationSafetyClass.Unsupported;
+    private static bool IsApplyEligible(SeoRemediationProposal proposal) => proposal.State == SeoRemediationProposalState.AiSuggested && proposal.SafetyClass == SeoRemediationSafetyClass.SafeAutomatic;
+    private static bool IsSafeEligible(SeoRemediationProposal proposal) => IsApplyEligible(proposal);
+    private static bool IsFailed(SeoRemediationProposal proposal) => proposal.State == SeoRemediationProposalState.Failed;
+    private string FieldLabel(string field) => L.IsArabic ? field switch { "Title" => "العنوان", "MetaDescription" => "وصف الميتا", _ => field } : field switch { "MetaDescription" => "Meta description", _ => field };
+    private string SafetyLabel(string safety) => L.IsArabic ? safety switch { "SafeAutomatic" => "آمن تلقائيًا", "ReviewRequired" => "يتطلب مراجعة", _ => "غير مدعوم" } : safety switch { "SafeAutomatic" => "Safe automatic", "ReviewRequired" => "Review required", _ => "Unsupported" };
+    private static string SafetyCss(string safety) => safety == "SafeAutomatic" ? "safe" : safety == "ReviewRequired" ? "review" : "failed";
+    private string StateLabel(string state) => L.IsArabic ? state switch { "AiSuggested" => "مقترح", "Applying" => "جارٍ التطبيق", "Verified" => "تم التحقق", "Failed" => "فشل", "Conflict" => "تعارض", "NeedsReview" => "يتطلب مراجعة", _ => state } : state switch { "AiSuggested" => "AI suggested", "NeedsReview" => "Needs review", _ => state };
+    private static string StateCss(string state) => state == "Verified" ? "safe" : state == "Failed" ? "failed" : state is "Conflict" or "NeedsReview" ? "review" : string.Empty;
 
     private static string ScoreClass(int score) => score >= 80 ? "good" : score >= 50 ? "warning" : "poor";
     private static string HistorySeverity(SeoAuditHistoryPoint point) => point.HighIssues > 0 || point.Score < 50 ? "high" : point.MediumIssues > 0 || point.Score < 80 ? "medium" : "low";
