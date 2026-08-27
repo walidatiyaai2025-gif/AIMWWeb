@@ -10,7 +10,7 @@ final class SiteEntitlementHook
     public function snapshot(): array
     {
         $contract = 'App\\Billing\\EntitlementService';
-        if (! class_exists($contract) || ! app()->bound($contract)) {
+        if (! class_exists($contract)) {
             return [
                 'state' => 'TEMPORARILY_UNAVAILABLE',
                 'source' => 'PR #266 EntitlementService not integrated',
