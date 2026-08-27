@@ -7,6 +7,8 @@ use App\AI\HttpAiProvider;
 use App\Connector\AdvancedWordPressGateway;
 use App\Connector\HttpWordPressGateway;
 use App\Connector\WordPressGateway;
+use App\Email\Contracts\EmailTransport;
+use App\Email\Services\SymfonyEmailTransport;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
 use App\Tenancy\TenantContext;
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WordPressGateway::class, HttpWordPressGateway::class);
         $this->app->bind(AdvancedWordPressGateway::class, HttpWordPressGateway::class);
         $this->app->bind(AiProvider::class, HttpAiProvider::class);
+        $this->app->bind(EmailTransport::class, SymfonyEmailTransport::class);
     }
 
     /**

@@ -1,0 +1,67 @@
+name: Email Delivery Closure Replay
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-email-delivery-closure
+    paths:
+      - '.github/workflows/email-delivery-replay.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Replay Email deliverable onto current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORIGINAL=f88e41f9b74442cbb9666f5618c9845c2ac48a9a
+          BRANCH=worker/laravel-aiwmweb-email-delivery-closure
+          OLD_HEAD="$GITHUB_SHA"
+          cp .github/workflows/email-delivery-replay.yml /tmp/email-delivery-replay.yml
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p .github/workflows
+          cp /tmp/email-delivery-replay.yml .github/workflows/email-delivery-replay.yml
+          git checkout "$ORIGINAL" -- \
+            variants/laravel-aiwmweb/backend/app/Email \
+            variants/laravel-aiwmweb/backend/app/Http/Controllers/EmailNotificationController.php \
+            variants/laravel-aiwmweb/backend/app/Jobs/RunEmailSchedulesJob.php \
+            variants/laravel-aiwmweb/backend/app/Jobs/SendEmailDeliveryJob.php \
+            variants/laravel-aiwmweb/backend/app/Models/EmailDelivery.php \
+            variants/laravel-aiwmweb/backend/app/Models/EmailSchedule.php \
+            variants/laravel-aiwmweb/backend/app/Models/EmailTemplate.php \
+            variants/laravel-aiwmweb/backend/app/Models/InAppNotification.php \
+            variants/laravel-aiwmweb/backend/app/Models/MailConfiguration.php \
+            variants/laravel-aiwmweb/backend/app/Models/NotificationEventReceipt.php \
+            variants/laravel-aiwmweb/backend/app/Models/NotificationPreference.php \
+            variants/laravel-aiwmweb/backend/database/migrations/2026_08_27_230000_create_email_notification_platform_tables.php \
+            variants/laravel-aiwmweb/backend/routes/api.php
+          python3 - <<'PY'
+          from pathlib import Path
+          provider = Path('variants/laravel-aiwmweb/backend/app/Providers/AppServiceProvider.php')
+          text = provider.read_text()
+          if 'use App\\Email\\Contracts\\EmailTransport;' not in text:
+              text = text.replace('use App\\Connector\\WordPressGateway;\n', 'use App\\Connector\\WordPressGateway;\nuse App\\Email\\Contracts\\EmailTransport;\nuse App\\Email\\Services\\SymfonyEmailTransport;\n')
+          if '$this->app->bind(EmailTransport::class, SymfonyEmailTransport::class);' not in text:
+              text = text.replace('        $this->app->bind(AiProvider::class, HttpAiProvider::class);\n', '        $this->app->bind(AiProvider::class, HttpAiProvider::class);\n        $this->app->bind(EmailTransport::class, SymfonyEmailTransport::class);\n')
+          provider.write_text(text)
+
+          bootstrap = Path('variants/laravel-aiwmweb/backend/bootstrap/app.php')
+          text = bootstrap.read_text()
+          if "api: __DIR__.'/../routes/api.php'," not in text:
+              text = text.replace("        web: __DIR__.'/../routes/web.php',\n", "        web: __DIR__.'/../routes/web.php',\n        api: __DIR__.'/../routes/api.php',\n")
+          bootstrap.write_text(text)
+          PY
+          git diff --check
+          git config user.name 'Laravel AIWMWeb Email Closure'
+          git config user.email 'email-closure@example.invalid'
+          git add -A
+          git commit -m 'feat(laravel): close email and notification delivery'
+          git push --force-with-lease=refs/heads/$BRANCH:$OLD_HEAD origin HEAD:$BRANCH
