@@ -89,6 +89,7 @@ The Lead maintains a complete inventory covering at minimum:
 - Comments moderation/reply;
 - Categories/Tags/Taxonomy;
 - SEO workspace and suggestions/audits/execution/history;
+- **AI SEO Remediation Workspace: AI-generated field-level proposals, preview/diff, per-field Apply, selected-row bulk Apply, Apply All Safe, WordPress persistence, re-read verification, partial-failure/retry, audit and rollback/undo evidence**;
 - AI Center, providers, prompts and usage;
 - Approvals and execution reconciliation;
 - Scheduling, Automation Center and Execution Center;
@@ -104,6 +105,36 @@ The Lead maintains a complete inventory covering at minimum:
 
 Each inventory row must record:
 `Route | Visible control/capability | Permission/ownership | Real target | Reconciliation | Evidence | Status | PR/commit | Remaining blocker`.
+
+## AI SEO Remediation constitutional acceptance
+
+The existing SEO analyzer is not considered product-complete if it only diagnoses problems and sends the operator to manual editing. For supported remediation classes, AIMWWeb must turn analysis into an actionable, reviewable AI proposal and a real persisted mutation.
+
+The minimum terminal capability set is exactly **8 independently countable closure rows**:
+
+1. **Generate field-level AI proposals** — generate a concrete proposal for a supported field from current persisted content and configured AI provider/runtime; never fabricate provider success.
+2. **Preview current vs suggested value** — show the current persisted value and AI suggestion before mutation, with enough context to understand what will change.
+3. **Apply one field** — a user can apply only one proposed field without implicitly applying sibling proposals.
+4. **Apply selected rows/fields** — a user can select a subset of content rows/fields and execute only that selection.
+5. **Apply All Safe** — a deliberate bulk command applies all currently eligible safe proposals while review-required/destructive classes remain gated.
+6. **Persist and re-read verify** — success requires authenticated WordPress mutation followed by authoritative re-fetch/reconciliation proving the persisted value; request dispatch or toast alone never counts.
+7. **Partial failure, retry and idempotency** — bulk execution reports success/failure per row/field, retries only failed work, and repeated execution must not duplicate links/text or corrupt content.
+8. **Audit plus rollback/undo evidence** — retain actor/time/content/field/before/after/result evidence and provide safe rollback/undo where the mutation class supports it; unsupported rollback must be explicit rather than fabricated.
+
+Suggested lifecycle states are `NOT_GENERATED`, `AI_SUGGESTED`, `SELECTED`, `APPLYING`, `APPLIED`, `VERIFIED`, `FAILED`, and `NEEDS_REVIEW`. Only the final user-visible behavior and persisted evidence determine terminal closure status.
+
+Safety classification is mandatory. Non-destructive metadata/text improvements may be eligible for bulk safe application when runtime validation permits. Destructive or identity-affecting operations such as slug/canonical/taxonomy deletion or large body replacement must remain review-gated unless a narrower constitutional rule explicitly proves them safe.
+
+For these eight rows, AI SEO Remediation completion is calculated independently as:
+
+`AI SEO Remediation % = terminal AI-remediation rows / 8 × 100`
+
+It is also part of the global visible-capability inventory, so adding these rows increases the authoritative global denominator. The Lead must not report the historical denominator after this constitutional change. Until `docs/UI_SERVICE_CLOSURE.md` is reconciled with these eight rows, the old `22/27` percentage is historical and **must not be presented as current overall completion**.
+
+Terminal acceptance for each mutation row requires, as applicable:
+`analysis → AI proposal → preview/selection → authorization/ownership/entitlement → authenticated WordPress mutation → persisted re-read → visible reconciliation → audit/history`.
+
+No row may be marked `BROWSER VERIFIED REAL` from static code, mocked provider output, local-only state, request dispatch, or a success toast.
 
 ## Status vocabulary
 
@@ -146,6 +177,20 @@ Lead prioritizes current unclosed surfaces after existing Browser Verified core 
 5. remaining Settings/operations/import-export visible controls;
 6. mechanical Razor/control census for any surface not represented in the ledger.
 
+### Wave A2 — AI SEO Remediation execution
+Treat AI SEO remediation as priority closure work, not an optional future enhancement. Reuse the canonical SEO workspace and existing AI/provider/WordPress boundaries rather than creating a duplicate prototype workspace.
+
+Dependency-safe order:
+1. proposal model + provider/runtime generation contract + persisted current-value snapshot;
+2. current-vs-suggested preview and per-field selection;
+3. authenticated single-field WordPress mutation + re-read verification;
+4. selected-row/field bulk execution with bounded concurrency, per-item result and idempotency;
+5. Apply All Safe classification/gating;
+6. audit/history and rollback/undo contract;
+7. browser acceptance for single, selected, all-safe, partial failure, retry, permission/provider failure and persisted reload.
+
+The Lead reports both the independent `AI SEO Remediation %` (`terminal/8`) and the recomputed global closure percentage on every meaningful checkpoint until all eight rows are terminal.
+
 ### Wave B — REL-003 dependency consumption
 Do not duplicate active Backup/Restore implementation ownership. The Lead monitors #167/#172/#173 and related PRs. Once their work is merged:
 - Agent 1 inventories every Backup/Restore UI claim/control;
@@ -184,6 +229,6 @@ For WordPress mutations, prove the authenticated REST request and reconciled UI.
 - Never count a hidden/unreachable control as fixed if another route/component still exposes it.
 - Never claim 100% from static code search alone.
 
-## Permanent rule for future features
+## permanent rule for future features
 
 After #183 closes, this remains the release constitution: every new user-facing capability must enter the closure inventory and ship with a real runtime destination or an explicit unavailable state plus appropriate automated evidence. A feature that adds an actionable UI control without production closure evidence is a release blocker.
