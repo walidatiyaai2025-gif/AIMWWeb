@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
 use App\Models\ContentConflict;
-use App\Models\SyncBatch;
 use App\Models\SyncEvent;
 use App\Models\SyncItem;
 use App\Models\SyncRun;

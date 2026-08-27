@@ -32,6 +32,7 @@ final class SyncFallbackReconciler
             $tenant = Tenant::query()->find($target->tenant_id);
             if (! $tenant) {
                 $result['skipped']++;
+
                 continue;
             }
 
