@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDiagnosticsController;
@@ -13,6 +14,8 @@ use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
+Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
+Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
 Route::post('/api/login', [DemoController::class, 'login']);
 Route::post('/api/connector/pair', [DemoController::class, 'completePairing'])->middleware('throttle:20,1');

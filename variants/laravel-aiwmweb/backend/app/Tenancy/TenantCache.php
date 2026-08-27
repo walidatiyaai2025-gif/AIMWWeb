@@ -18,4 +18,19 @@ final class TenantCache
     {
         return $this->cache->remember($this->key($key), $ttl, $callback);
     }
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->cache->get($this->key($key), $default);
+    }
+
+    public function put(string $key, mixed $value, mixed $ttl = null): bool
+    {
+        return $this->cache->put($this->key($key), $value, $ttl);
+    }
+
+    public function forget(string $key): bool
+    {
+        return $this->cache->forget($this->key($key));
+    }
 }
