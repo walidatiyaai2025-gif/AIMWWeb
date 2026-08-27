@@ -1,0 +1,36 @@
+name: Sync Payload Recovery Inspect
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-sync-reconciliation
+    paths:
+      - '.github/workflows/sync-payload-recovery-inspect.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode and inspect staged sync payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .sync-payload.part1
+          test -f .sync-payload.part2
+          test -f .sync-payload.part3
+          cat .sync-payload.part1 .sync-payload.part2 .sync-payload.part3 | base64 --decode > /tmp/sync-payload.gz
+          gzip -t /tmp/sync-payload.gz
+          gzip -dc /tmp/sync-payload.gz > /tmp/sync-payload
+          echo "PAYLOAD_BYTES=$(wc -c < /tmp/sync-payload)"
+          file /tmp/sync-payload
+          if tar -tf /tmp/sync-payload >/tmp/sync-payload-files.txt 2>/dev/null; then
+            echo 'PAYLOAD_FORMAT=tar'
+            cat /tmp/sync-payload-files.txt
+          else
+            echo 'PAYLOAD_FORMAT=non-tar'
+            head -c 256 /tmp/sync-payload | od -An -tx1c
+          fi
