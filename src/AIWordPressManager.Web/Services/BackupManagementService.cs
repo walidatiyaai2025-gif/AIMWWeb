@@ -436,12 +436,14 @@ public sealed class BackupManagementService
         var sourceBuilder = new SqliteConnectionStringBuilder
         {
             DataSource = Path.GetFullPath(sourcePath),
-            Mode = SqliteOpenMode.ReadOnly
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
         };
         var destinationBuilder = new SqliteConnectionStringBuilder
         {
             DataSource = Path.GetFullPath(snapshotPath),
-            Mode = SqliteOpenMode.ReadWriteCreate
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Pooling = false
         };
 
         using (var source = new SqliteConnection(sourceBuilder.ToString()))
@@ -460,7 +462,8 @@ public sealed class BackupManagementService
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = Path.GetFullPath(snapshotPath),
-            Mode = SqliteOpenMode.ReadOnly
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
         };
         using var connection = new SqliteConnection(builder.ToString());
         connection.Open();

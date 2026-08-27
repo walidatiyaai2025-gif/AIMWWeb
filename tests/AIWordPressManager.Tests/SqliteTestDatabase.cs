@@ -12,7 +12,8 @@ internal static class SqliteTestDatabase
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = Path.GetFullPath(path),
-            Mode = SqliteOpenMode.ReadWriteCreate
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Pooling = false
         };
         using var connection = new SqliteConnection(builder.ToString());
         connection.Open();

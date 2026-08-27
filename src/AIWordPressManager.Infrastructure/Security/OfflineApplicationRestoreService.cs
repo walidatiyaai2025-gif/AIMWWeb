@@ -309,7 +309,8 @@ public sealed class OfflineApplicationRestoreService
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
-            Mode = SqliteOpenMode.ReadOnly
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false
         };
         using var connection = new SqliteConnection(builder.ToString());
         connection.Open();
