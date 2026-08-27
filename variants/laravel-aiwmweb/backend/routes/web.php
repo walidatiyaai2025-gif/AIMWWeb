@@ -10,6 +10,8 @@ use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
+use App\Models\Connector;
+use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
@@ -99,8 +101,51 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $context = app(TenantContext::class);
         app(TenantAuthorizer::class)->authorize('tenant.view');
 
+        $membership = $context->membership()->loadMissing('roles.permissions');
+        $permissions = $membership->roles->flatMap(fn ($role) => $role->permissions)
+            ->pluck('name')->unique()->sort()->values();
+        $tenants = TenantMembership::query()->withoutGlobalScopes()->with('tenant:id,slug,name')
+            ->where('user_id', request()->user()->getKey())->where('status', 'active')->get()
+            ->pluck('tenant')->filter()->unique('id')->sortBy('name')->values()
+            ->map(fn ($tenant) => ['slug' => $tenant->slug, 'name' => $tenant->name]);
+        $connectors = Connector::query()->get()->map(fn (Connector $connector) => [
+            'key' => (string) $connector->identity,
+            'state' => $connector->revoked_at ? 'disconnected' : ($connector->verified_at ? 'connected' : 'unknown'),
+            'scopes' => $connector->enabled_scopes ?? [],
+            'protocol' => $connector->protocol_version,
+            'reason' => $connector->revoked_at ? 'revoked' : null,
+        ])->values();
+        $tenant = $context->tenant()->slug;
+
         return response()->json([
+            'user' => ['id' => request()->user()->getKey(), 'name' => request()->user()->name, 'email' => request()->user()->email],
             'tenant' => ['slug' => $context->tenant()->slug, 'name' => $context->tenant()->name],
+            'tenants' => $tenants,
+            'permissions' => $permissions,
+            'connectors' => $connectors,
+            'capabilities' => (object) [],
+            'api' => [
+                'sites' => "/api/tenants/{$tenant}/sites",
+                'posts' => "/api/v1/tenants/{$tenant}/sites/{site}/content/post",
+                'pages' => "/api/v1/tenants/{$tenant}/sites/{site}/content/page",
+                'media' => "/api/v1/tenants/{$tenant}/sites/{site}/media",
+                'comments' => "/api/v1/tenants/{$tenant}/sites/{site}/comments",
+                'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{site}/taxonomy",
+                'sync' => "/api/v1/tenants/{$tenant}/sites/{site}/sync",
+                'seo-audit' => "/api/tenants/{$tenant}/sites/{site}/seo/audits",
+                'operations' => "/tenants/{$tenant}/admin/operations",
+                'notifications' => "/api/v1/tenants/{$tenant}/notifications",
+                'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
+                'reports' => "/tenants/{$tenant}/admin/reports/exports",
+                'logs' => "/tenants/{$tenant}/admin/logs",
+                'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
+                'backups' => "/tenants/{$tenant}/admin/backups",
+                'account.billing' => "/api/v1/tenants/{$tenant}/billing/subscription",
+                'application-users' => "/tenants/{$tenant}/admin/members",
+                'roles' => "/tenants/{$tenant}/admin/roles",
+                'sessions' => "/tenants/{$tenant}/admin/sessions",
+            ],
+            'actions' => (object) [],
         ]);
     });
 
@@ -146,3 +191,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
 });
 
 Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn (string $tenant) => view('console', compact('tenant')));
+
+Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/{path?}', function () {
+    app(TenantAuthorizer::class)->authorize('tenant.view');
+
+    return view('app');
+})->where('path', '.*');
