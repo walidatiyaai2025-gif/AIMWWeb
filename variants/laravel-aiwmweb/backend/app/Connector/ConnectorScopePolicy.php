@@ -9,10 +9,12 @@ final class ConnectorScopePolicy
     public function requiredFor(string $operation, array $payload = []): array
     {
         return match ($operation) {
-            'health' => ['health'],
+            'health', 'capabilities' => ['health'],
+            'history' => ['audit.local'],
             'content.list', 'content.read' => ['content.read'],
             'content.execute' => $this->mutationScopes($payload),
             'connector.rotate', 'connector.disconnect' => ['connector.manage'],
+            'connector.operate' => $this->advancedScopes($payload),
             default => throw new RuntimeException('Unknown connector operation.'),
         };
     }
@@ -41,5 +43,29 @@ final class ConnectorScopePolicy
         }
 
         return $required;
+    }
+
+    private function advancedScopes(array $payload): array
+    {
+        $operation = (string) ($payload['operation'] ?? '');
+
+        return match ($operation) {
+            'adapters.list' => ['adapters.read'],
+            'plugins.list' => ['plugins.read'],
+            'plugin.install', 'plugin.activate', 'plugin.deactivate', 'plugin.update', 'plugin.delete' => ['plugins.manage'],
+            'themes.list' => ['themes.read'],
+            'theme.install', 'theme.activate', 'theme.update', 'theme.delete' => ['themes.manage'],
+            'cache.purge' => ['cache.manage'],
+            'cron.list', 'cron.inspect' => ['cron.read'],
+            'cron.run_due', 'cron.run' => ['cron.manage'],
+            'site.health' => ['diagnostics.read'],
+            'backup.list', 'backup.inspect' => ['backup.read'],
+            'backup.create' => ['backup.create'],
+            'backup.restore' => ['backup.restore'],
+            'filesystem.inspect' => ['filesystem.read'],
+            'database.health' => ['database.read'],
+            'database.optimize' => ['database.manage'],
+            default => throw new RuntimeException('Unknown connector semantic operation.'),
+        };
     }
 }
