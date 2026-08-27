@@ -1,0 +1,42 @@
+name: Sync Closure Validation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-sync-reconciliation
+    paths:
+      - '.github/workflows/sync-closure-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring,pdo_sqlite,sqlite3
+          coverage: none
+      - name: Composer install
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Configure test app
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Pint
+        working-directory: variants/laravel-aiwmweb/backend
+        run: vendor/bin/pint --test
+      - name: Fresh migration
+        working-directory: variants/laravel-aiwmweb/backend
+        run: php artisan migrate:fresh --force
+      - name: Focused Sync acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        run: php artisan test --filter=SyncReconciliationRuntimeTest
+      - name: Full PHPUnit
+        working-directory: variants/laravel-aiwmweb/backend
+        run: php artisan test
