@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "integration_base": "lead/laravel-aiwmweb-final-convergence",
+  "integration_base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+  "implementation_snapshot_sha": "5670460bab1ec5a28d9c733f407fb422460270ad",
+  "inventory": {
+    "pending_route_api_rows_found": 92,
+    "pending_routes_found": 84,
+    "pending_apis_found": 8,
+    "terminalized_by_this_closure": 11,
+    "still_pending_on_this_pr_inventory": 81,
+    "generated_reconciliation_modified": false
+  },
+  "terminalized_by_domain": {
+    "backup": 2,
+    "content": 7,
+    "email": 2
+  },
+  "operations": [
+    {
+      "operation_id": "AIMW-CONT-D828690844",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/sites",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::show",
+      "service": "SiteManagementController::index -> Site::query()",
+      "backing_api": "GET /api/tenants/{tenant}/sites",
+      "permission": ["tenant.view", "sites.view"],
+      "tenant/site ownership": "auth + tenant.context proves active membership for the tenant slug; Site uses the shared tenant scope. This is a tenant-wide site collection route, so no individual site id is accepted by the screen route.",
+      "response_semantics": "Server authorizes both screen and backing-read permissions before rendering the React app; the backing API returns the real tenant-scoped Site collection.",
+      "test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_has_expected_pending_inventory_and_only_real_rows_are_claimed; ::test_artisan_route_list_contains_explicit_guarded_canonical_routes; ::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-EMAI-2E95AF6C05",
+      "domain": "email",
+      "kind": "route",
+      "route": "/tenants/{tenant}/notifications",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::show",
+      "service": "EmailNotificationController::index -> NotificationPlatformService::listForCurrentUser",
+      "backing_api": "GET /api/v1/tenants/{tenant}/notifications",
+      "permission": ["tenant.view", "notifications.view"],
+      "tenant/site ownership": "auth + tenant.context requires active membership; NotificationPlatformService reads the current tenant/current user partition. No site id is accepted by this tenant notification inbox route.",
+      "response_semantics": "The server-render boundary fails closed before app render; the discovered notification API returns real filtered notification data for the current tenant/user.",
+      "test": "RouteApiTerminalityInventoryTest::test_artisan_route_list_contains_explicit_guarded_canonical_routes; ::test_backing_api_routes_resolve_to_real_controllers_and_are_tenant_guarded; ::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; EmailDeliveryAcceptanceTest::cross tenant notification history preference and configuration idor",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-EMAI-78352CD34E",
+      "domain": "email",
+      "kind": "route",
+      "route": "/tenants/{tenant}/email/history",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::show",
+      "service": "EmailNotificationController::deliveries -> EmailDeliveryService::history",
+      "backing_api": "GET /api/v1/tenants/{tenant}/email/deliveries",
+      "permission": ["tenant.manage", "diagnostics.view"],
+      "tenant/site ownership": "auth + tenant.context requires active tenant membership; EmailDeliveryService history is tenant-scoped. This route is tenant-wide and accepts no site id.",
+      "response_semantics": "History screen is rendered only after both the frontend route permission and backing-service permission are authorized; backing history is real persisted/redacted delivery history.",
+      "test": "RouteApiTerminalityInventoryTest::test_backing_api_routes_resolve_to_real_controllers_and_are_tenant_guarded; ::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; EmailDeliveryAcceptanceTest::configuration and delivery history redact secrets and sensitive content",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-BACK-66BFA49775",
+      "domain": "backup",
+      "kind": "route",
+      "route": "/tenants/{tenant}/module/backups",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::show",
+      "service": "AdminOperationsController::backups -> OperationsControlPlaneService::backups",
+      "backing_api": "GET /tenants/{tenant}/admin/backups",
+      "permission": ["backup.manage", "backups.view"],
+      "tenant/site ownership": "auth + tenant.context establishes the tenant partition; OperationsControlPlaneService reads tenant-scoped backup records. No guessed site id is accepted by this route.",
+      "response_semantics": "The route requires both view and service authorization before rendering; backing API returns persisted backup records and existing control-plane tests reject cross-tenant restore access.",
+      "test": "RouteApiTerminalityInventoryTest::test_artisan_route_list_contains_explicit_guarded_canonical_routes; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::backup restore isolation and no fake connector success",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-CONT-DF483546DA",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/module/logs",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::show",
+      "service": "AdminOperationsController::logs -> OperationsControlPlaneService::logs",
+      "backing_api": "GET /tenants/{tenant}/admin/logs",
+      "permission": ["operations.manage", "diagnostics.view"],
+      "tenant/site ownership": "auth + tenant.context establishes active membership; OperationsControlPlaneService log persistence is tenant-partitioned. No site id is accepted by this global log workspace.",
+      "response_semantics": "The route is not counted from the SPA catch-all: an explicit server route authorizes both screen and backing service permissions and the backing API returns persisted filtered log records.",
+      "test": "RouteApiTerminalityInventoryTest::test_artisan_route_list_contains_explicit_guarded_canonical_routes; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::sensitive operation payloads are redacted",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-CONT-FBD0368CAA",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/operations",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::show",
+      "service": "AdminOperationsController::operations -> OperationsControlPlaneService::operations",
+      "backing_api": "GET /tenants/{tenant}/admin/operations",
+      "permission": ["operations.manage", "execution.view"],
+      "tenant/site ownership": "auth + tenant.context resolves only active membership; OperationsControlPlaneService queries tenant-owned operation persistence and existing IDOR tests reject foreign operation ids.",
+      "response_semantics": "Explicit route authorization precedes app render; the backing API returns real operation state rather than a route-only placeholder.",
+      "test": "RouteApiTerminalityInventoryTest::test_backing_api_routes_resolve_to_real_controllers_and_are_tenant_guarded; ::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::operation and export ids cannot cross tenants",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-CONT-BB5B32880A",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/admin/application-users",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::redirect",
+      "service": "AdminOperationsController::members -> AdministrationService::members",
+      "backing_api": "GET /tenants/{tenant}/admin/members",
+      "permission": ["tenant.view", "users.view"],
+      "tenant/site ownership": "auth + tenant.context requires active tenant membership; AdministrationService members are tenant-scoped. The source route contains no site id.",
+      "response_semantics": "After authorization, the legacy canonical route redirects to the current React users workspace /tenants/{tenant}/admin/users; that workspace is explicitly guarded and its backing API returns real membership data.",
+      "test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::member idor and last owner protection",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-CONT-1DA83B9262",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/settings/sessions",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::redirect",
+      "service": "AdminOperationsController::sessions -> AdministrationService::sessions",
+      "backing_api": "GET /tenants/{tenant}/admin/sessions",
+      "permission": ["sessions.manage", "sessions.view"],
+      "tenant/site ownership": "auth + tenant.context establishes the tenant partition; AdministrationService session enumeration is scoped to the current tenant/user contract. No site id is accepted.",
+      "response_semantics": "After both route and backing-service permissions pass, the legacy route redirects to the current /tenants/{tenant}/account/sessions workspace. The backing JSON route remains owned by AdminOperationsController and is not shadowed.",
+      "test": "RouteApiTerminalityInventoryTest::test_canonical_routes_do_not_shadow_existing_backend_json_routes; ::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::session revocation is user scoped",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-CONT-9B8574AA90",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/logs",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::redirect",
+      "service": "AdminOperationsController::logs -> OperationsControlPlaneService::logs",
+      "backing_api": "GET /tenants/{tenant}/admin/logs",
+      "permission": ["operations.manage", "diagnostics.view"],
+      "tenant/site ownership": "auth + tenant.context establishes active tenant membership; OperationsControlPlaneService log reads are tenant-partitioned.",
+      "response_semantics": "Authorized legacy route redirects to /tenants/{tenant}/module/logs, whose explicit guarded route and real backing log API are separately verified.",
+      "test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-CONT-E14274269E",
+      "domain": "content",
+      "kind": "route",
+      "route": "/tenants/{tenant}/operations/hub",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::redirect",
+      "service": "AdminOperationsController::operations -> OperationsControlPlaneService::operations",
+      "backing_api": "GET /tenants/{tenant}/admin/operations",
+      "permission": ["operations.manage", "execution.view"],
+      "tenant/site ownership": "auth + tenant.context establishes active membership; operation persistence is tenant-owned and guessed foreign operation ids are rejected by existing control-plane tests.",
+      "response_semantics": "Authorized alias redirects to the explicit /tenants/{tenant}/operations workspace; the target has its own permission boundary and real backing API.",
+      "test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::operation and export ids cannot cross tenants",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    },
+    {
+      "operation_id": "AIMW-BACK-979DEF54FA",
+      "domain": "backup",
+      "kind": "route",
+      "route": "/tenants/{tenant}/backups",
+      "method": "GET",
+      "controller": "CanonicalWorkspaceRouteController::redirect",
+      "service": "AdminOperationsController::backups -> OperationsControlPlaneService::backups",
+      "backing_api": "GET /tenants/{tenant}/admin/backups",
+      "permission": ["backup.manage", "backups.view"],
+      "tenant/site ownership": "auth + tenant.context establishes active membership; backup persistence is tenant-owned and existing restore tests reject foreign backup ids.",
+      "response_semantics": "Authorized legacy route redirects to /tenants/{tenant}/module/backups, whose explicit route and persisted backing API are verified independently.",
+      "test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions; ::test_terminal_routes_are_backed_by_live_service_responses_not_placeholder_pages; AdminOperationsControlPlaneTest::backup restore isolation and no fake connector success",
+      "exact commit": "5670460bab1ec5a28d9c733f407fb422460270ad"
+    }
+  ],
+  "still_pending_evidence": {
+    "parallel_owned_api_rows": [
+      {
+        "operation_id": "AIMW-CONT-2F2E40D7F0",
+        "reason": "POST /login is independently terminalized by pushed PR #283; this PR does not duplicate Worker 2 ownership."
+      },
+      {
+        "operation_id": "AIMW-CONT-270F69CE9A",
+        "reason": "POST /logout is independently terminalized by pushed PR #283; this PR does not duplicate Worker 2 ownership."
+      }
+    ],
+    "api_blockers": [
+      {
+        "operation_id": "AIMW-CONT-475267F150",
+        "route": "POST /setup",
+        "reason": "No safe Laravel first-run database provisioning service exists; adding an anonymous provisioning architecture is outside route terminality and PR #283 records the same blocker."
+      },
+      {
+        "operation_id": "AIMW-EMAI-2D94EFDD53",
+        "route": "GET /api/notifications",
+        "reason": "The current real endpoint is tenant-explicit (/api/v1/tenants/{tenant}/notifications). The legacy path carries no tenant identity and cannot be safely aliased for a multi-tenant user without inventing an implicit-tenant contract."
+      },
+      {
+        "operation_id": "AIMW-OPER-ABB41FC891",
+        "route": "GET /login",
+        "reason": "No equivalent Laravel login-page controller/render contract exists on PR #277; POST /api/login alone is not evidence for GET /login."
+      },
+      {
+        "operation_id": "AIMW-PLAT-A91A2B0B11",
+        "route": "GET /api/build",
+        "reason": "No pushed PR #277 backend build-information response contract maps this canonical endpoint; route-only fabrication would not satisfy service/response evidence."
+      },
+      {
+        "operation_id": "AIMW-PLAT-FAC7505B26",
+        "route": "GET /api/dashboard",
+        "reason": "No pushed PR #277 dashboard aggregation API contract maps this endpoint; the SPA shell is not a substitute for a real API response."
+      },
+      {
+        "operation_id": "AIMW-PLAT-18A8EE0324",
+        "route": "GET /setup",
+        "reason": "No safe Laravel setup-page/backend setup contract exists; setup architecture is explicitly outside this focused route binding worker."
+      }
+    ],
+    "route_blockers": [
+      {
+        "operation_ids": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
+        "reason": "The natural tenant-prefixed paths /admin/sessions and /admin/roles are already real JSON backend routes. Shadowing them with SPA routes would break the API contract. Tests explicitly preserve AdminOperationsController ownership."
+      },
+      {
+        "operation_ids": ["AIMW-CONT-4A295D45D4", "AIMW-CONT-EA0DDC0ABE", "AIMW-MEDI-BF81D0B635", "AIMW-COMM-C2DDF5DAE3", "AIMW-SYNC-1C799B7D70", "AIMW-TAXO-AEEE1025B9"],
+        "reason": "Backend services exist, but the current frontend context exposes literal {site} endpoint templates and the generic resource loader does not bind a site id before fetch. Rendering the route would not prove correct site ownership/data semantics, so these remain pending rather than being counted from the catch-all."
+      },
+      {
+        "operation_ids": ["AIMW-CONT-5D18F49928", "AIMW-CONT-8140D785B5"],
+        "reason": "The current reports discovery endpoint points at POST-only report export creation while the generic resource workspace performs GET collection reads; response semantics are not compatible."
+      },
+      {
+        "operation_ids": ["AIMW-BILL-2FFFC55BAB"],
+        "reason": "The current billing subscription endpoint returns a subscription object while the generic resource screen contract normalizes collection responses; the existing route does not yet provide the canonical billing screen semantics."
+      },
+      {
+        "operation_ids": ["AIMW-AI-C37F405767", "AIMW-CONT-50DF6B23CC", "AIMW-CONT-55FA799054", "AIMW-CONT-98918A6C27", "AIMW-CONT-6D14B76763", "AIMW-CONT-3443C173C6", "AIMW-SEO-5F71B89C92"],
+        "reason": "These routes carry a canonical site id. The current generic SPA catch-all does not perform a route-level tenant-scoped Site lookup, so site IDOR/site ownership cannot be proven at route terminality without additional frontend/site-routing work owned elsewhere."
+      },
+      {
+        "operation_ids": ["AIMW-AI-82F795EE67", "AIMW-APPR-A292974395", "AIMW-AUTO-38567579D6", "AIMW-SEO-4CBBC7AAD9"],
+        "reason": "The current Laravel frontend does not expose a matching real server-backed workspace contract for these canonical screens. The tenant catch-all alone is intentionally not counted as terminal evidence."
+      }
+    ]
+  },
+  "notes": [
+    "No visible_control row is claimed by this evidence file.",
+    "No generated canonical reconciliation output is edited by this worker.",
+    "A route matching the generic tenant SPA catch-all is explicitly insufficient for terminality.",
+    "The initial diagnostic commit deliberately failed after emitting the exact 92-row inventory; it was replaced by non-diagnostic acceptance tests before implementation handoff."
+  ]
+}
