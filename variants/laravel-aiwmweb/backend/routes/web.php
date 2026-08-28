@@ -141,7 +141,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'logs' => "/tenants/{$tenant}/admin/logs",
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
             'backups' => "/tenants/{$tenant}/admin/backups",
-            'account.billing' => "/api/v1/tenants/{$tenant}/billing/subscription",
+            'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
+            'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
             'application-users' => "/tenants/{$tenant}/admin/members",
             'roles' => "/tenants/{$tenant}/admin/roles",
             'sessions' => "/tenants/{$tenant}/admin/sessions",
@@ -215,6 +216,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     Route::prefix('/tenants/{tenant}/route-api')->controller(RouteApiAdapterController::class)->group(function (): void {
         Route::get('/report-exports', 'reportExports')->name('canonical.api.report-exports');
         Route::get('/site-operations', 'siteOperations')->name('canonical.api.site-operations');
+        Route::get('/billing-overview', 'billingOverview')->name('canonical.api.billing-overview');
+        Route::get('/account-profile', 'accountProfile')->name('canonical.api.account-profile');
     });
 });
 
@@ -230,6 +233,8 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
+        Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
+        Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
 
         Route::get('/module/posts', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.posts');
         Route::get('/module/pages', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
