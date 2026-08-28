@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-APPR-A292974395",
+    "domain": "approvals",
+    "kind": "route",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor",
+    "source_route": "/approvals",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "source_behavior": "An authenticated user opens the Approval Queue screen at /approvals to review real governed approval state before execution.",
+  "laravel_adaptation": {
+    "canonical_route": "/tenants/{tenant}/approvals",
+    "route_name": "canonical.alias.approvals",
+    "controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::redirect",
+    "middleware": ["web", "auth", "tenant.context"],
+    "permissions": ["tenant.view", "approvals.view"],
+    "workspace_target": "/module/approvals",
+    "frontend_registry": "resources/js/core.ts workspaceRoutes key=approvals path=/module/approvals",
+    "frontend_dispatch": "resources/js/app.tsx RouteElement dispatches route.key=approvals to ApprovalQueueRoute",
+    "api_endpoint_binding": "resources/js/approvalQueue.ts injects /api/tenants/{tenant}/approvals",
+    "api_route": "GET /api/tenants/{tenant}/approvals",
+    "api_controller": "App\\Http\\Controllers\\ApprovalQueueReadController::index",
+    "data_source": "real tenant-scoped persisted Approval/Suggestion/Site state"
+  },
+  "runtime_path": [
+    "GET /tenants/{tenant}/approvals",
+    "auth + tenant.context",
+    "CanonicalWorkspaceRouteController::redirect",
+    "tenant.view + approvals.view authorization",
+    "302 /tenants/{tenant}/module/approvals",
+    "React workspaceRoutes approvals registration",
+    "ApprovalQueueRoute",
+    "tenant-qualified /api/tenants/{tenant}/approvals binding",
+    "ApprovalQueueReadController::index",
+    "authoritative persisted tenant-scoped approval collection"
+  ],
+  "authorization_and_tenant_isolation": {
+    "guest": "JSON route access returns 401 before tenant runtime access",
+    "missing_approvals_view": "canonical route and backing API return 403",
+    "foreign_tenant": "Tenant A direct access to Tenant B route/API returns 404 through tenant.context",
+    "api_authorization": "ApprovalQueueReadController requires approvals.view through TenantAuthorizer",
+    "tenant_scoping": "TenantContext and tenant global scopes constrain persisted approval dependencies",
+    "idor": "foreign tenant slug cannot select or read another tenant's queue"
+  },
+  "read_semantics": {
+    "mutation": false,
+    "authoritative_reread": "focused acceptance follows the canonical route and verifies the real backing API returns the exact persisted Approval row",
+    "empty_state": "a tenant with no approval rows returns total=0 and data=[]",
+    "fake_success": false,
+    "demo_data": false
+  },
+  "dependencies": {
+    "base_branch": "worker/laravel-aiwmweb-approval-next-discovery",
+    "base_sha": "07f33d1008c9e07a793ba2e8cf0364fb4d301147",
+    "reused_prs": [296, 298],
+    "notes": "Reuses the existing real Approval Queue API, React runtime, tenant context, authorization, and persistence. No parallel approval architecture was created."
+  },
+  "acceptance_tests": {
+    "file": "backend/tests/Feature/ApprovalsRouteTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation identity and PENDING metadata",
+      "explicit named route precedes generic fallback behavior",
+      "server-side auth + tenant.context + tenant.view + approvals.view wiring",
+      "exact tenant-qualified redirect to the real Approval Queue workspace",
+      "real frontend route registry, ApprovalQueueRoute dispatch, and tenant API endpoint injection",
+      "authoritative persisted Approval API reread",
+      "guest 401, missing permission 403, foreign tenant 404",
+      "truthful empty queue with no synthetic success"
+    ]
+  },
+  "implementation": {
+    "production_change_commit": "5e797ac88125e482a26e8bf722b3f0dd942d91ef",
+    "implementation_and_test_snapshot_sha": "265c7bf28dd7e5408d0e9b818c09e74217ce8f9f",
+    "exact_tested_sha": "265c7bf28dd7e5408d0e9b818c09e74217ce8f9f"
+  },
+  "ci": {
+    "implementation_test_snapshot": {
+      "pr_plan_link": {"run_number": 910, "run_id": 33220931620, "result": "success"},
+      "cross_domain_security": {"run_number": 195, "run_id": 33220931601, "result": "success"},
+      "laravel_aiwmweb_acceptance": {"run_number": 264, "run_id": 33220931598, "result": "success"},
+      "pint": "success",
+      "sqlite_migrations_full_php": "success",
+      "mysql_fresh_rollback_forward_full_php": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success",
+      "frontend_typecheck_tests": "success",
+      "production_frontend_build": "success",
+      "runtime_artifacts": "success",
+      "production_docker_compose_runtime_smoke": "success"
+    },
+    "final_evidence_head": "pending exact-head CI rerun after this evidence commit"
+  },
+  "canonical_denominator_contribution": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "denominator": 931,
+    "previous_terminal": 358,
+    "new_terminal": 359,
+    "previous_pending": 573,
+    "new_pending": 572,
+    "operation_still_pending_in_authority_snapshot": true,
+    "generated_reconciliation_modified": false,
+    "note": "This is only this operation's +1 terminal / -1 pending contribution; unrelated unconsumed parallel evidence is not folded into these counts."
+  },
+  "scope": {
+    "other_operations_started": false,
+    "approval_mutations_owned": false,
+    "generated_931_reconciliation_modified": false,
+    "aspnet_current_product_modified": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "implementation_complete": true,
+    "runtime_wiring_complete": true,
+    "security_tenant_enforcement_complete": true,
+    "focused_tests_complete": true,
+    "implementation_head_ci_green": true,
+    "final_evidence_head_ci_green": false,
+    "integration_ready": false,
+    "reason": "Final evidence commit must pass the same exact-head repository gates before terminal handoff."
+  }
+}
