@@ -2,17 +2,17 @@
   "schema_version": 2,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "route-api-platform-read-convergence",
-  "integration_base": "lead/laravel-aiwmweb-final-convergence",
-  "integration_base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-  "implementation_branch": "worker/laravel-aiwmweb-platform-read-api-terminality",
-  "implementation_snapshot_sha": "83689007f252a96525b8eb735bb9a93160219e05",
+  "wave": "route-api-platform-setup-read-convergence",
+  "integration_base": "worker/laravel-aiwmweb-platform-read-api-terminality",
+  "integration_base_sha": "9598df59c4da31669e4ea309b700e5137229a2e7",
+  "implementation_branch": "codex/laravel-issue257-platform-api-contract-18a8ee",
+  "implementation_snapshot_sha": "2a555420d96e520c8d740222d9a45e52343cf888",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
     "pending_apis_found": 8,
-    "terminalized_by_implementation_snapshot": 33,
-    "still_pending_after_this_snapshot": 59,
+    "terminalized_by_implementation_snapshot": 34,
+    "still_pending_after_this_snapshot": 58,
     "generated_reconciliation_modified": false
   },
   "terminalized_by_domain": {
@@ -23,7 +23,7 @@
     "content": 14,
     "email": 2,
     "media": 2,
-    "platform": 2,
+    "platform": 3,
     "sync": 1,
     "taxonomy": 2
   },
@@ -60,7 +60,8 @@
     {"operation_id":"AIMW-BILL-2FFFC55BAB","source_route":"/account/billing","canonical_route":"/tenants/{tenant}/account/billing","proof":"explicit guarded billing workspace + GET collection-shaped billing overview adapter for subscription, entitlements and usage"},
     {"operation_id":"AIMW-CONT-FB7F9189C0","source_route":"/account/profile","canonical_route":"/tenants/{tenant}/account/profile","proof":"explicit guarded account workspace + current tenant membership profile adapter"},
     {"operation_id":"AIMW-PLAT-A91A2B0B11","source_route":"/api/build","canonical_route":"/api/build","proof":"authenticated PlatformReadController build metadata response with execution.view authorization and fail-closed tenant selection"},
-    {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"}
+    {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"},
+    {"operation_id":"AIMW-PLAT-18A8EE0324","source_route":"/setup","canonical_route":"/setup","proof":"anonymous SetupReadController backed by live database reachability and migration-ledger state; ready installations redirect to the landing page and incomplete installations render non-secret setup guidance"}
   ],
   "acceptance_evidence": {
     "inventory_test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows",
@@ -79,8 +80,13 @@
       "PlatformReadApiTerminalityTest::test_multi_tenant_requests_fail_closed_until_explicit_tenant_is_selected",
       "PlatformReadApiTerminalityTest::test_platform_reads_require_the_operations_read_equivalent_permission"
     ],
+    "platform_setup_read_tests": [
+      "PlatformSetupReadTerminalityTest::test_canonical_setup_get_is_anonymous_and_resolves_to_real_controller",
+      "PlatformSetupReadTerminalityTest::test_setup_redirects_to_landing_when_database_and_migrations_are_ready",
+      "PlatformSetupReadTerminalityTest::test_incomplete_setup_renders_authoritative_non_secret_status"
+    ],
     "parent_snapshot_ci": {
-      "snapshot": "81e2dc06ae72e1277b5af0617e19941ce07d48ce",
+      "snapshot": "9598df59c4da31669e4ea309b700e5137229a2e7",
       "laravel_aiwmweb_acceptance": "success",
       "laravel_aiwmweb_cross_domain_security": "success",
       "pr_plan_link": "success",
@@ -90,16 +96,17 @@
   },
   "remaining_blockers": {
     "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
-    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-EMAI-2D94EFDD53", "AIMW-OPER-ABB41FC891", "AIMW-PLAT-18A8EE0324"],
+    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-EMAI-2D94EFDD53", "AIMW-OPER-ABB41FC891"],
     "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
-    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 59 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 58 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
   },
   "notes": [
-    "This evidence cumulatively converges the 31 route operations from PR #284/#287 plus the two canonical Platform read APIs implemented by the current wave.",
+    "This evidence cumulatively converges the 33 route/API operations from PR #288 plus the canonical GET /setup Platform read implemented by this wave.",
+    "Only GET /setup is claimed; POST /setup remains outside this wave and is not inferred terminal.",
     "No visible_control row is claimed by this evidence file.",
     "No generated canonical reconciliation output is edited by this worker.",
-    "Tenant-less canonical Platform APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector.",
+    "The setup read is intentionally tenantless and anonymous, matching source first-run semantics, but never renders database credentials or connection strings.",
     "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot 83689007f252a96525b8eb735bb9a93160219e05; later implementation movement requires revalidation."
+    "Counts are evidence-backed for implementation snapshot 2a555420d96e520c8d740222d9a45e52343cf888; later implementation movement requires revalidation."
   ]
 }
