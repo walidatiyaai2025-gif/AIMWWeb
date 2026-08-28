@@ -328,7 +328,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:ExecuteAsync, alias:AiCenterService, alias:AiGenerationService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:ExecuteAsync, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -339,9 +339,9 @@
         "signals": [
           "symbol:AIPlatformServices",
           "method:ExecuteAsync",
-          "alias:AiCenterService",
           "alias:AiGenerationService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -370,7 +370,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:Get, alias:AiCenterService, alias:AiGenerationService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:Get, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -381,9 +381,9 @@
         "signals": [
           "symbol:AIPlatformServices",
           "method:Get",
-          "alias:AiCenterService",
           "alias:AiGenerationService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -412,7 +412,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiCenterService, alias:AiGenerationService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -422,9 +422,9 @@
         "score": 17,
         "signals": [
           "symbol:AIPlatformServices",
-          "alias:AiCenterService",
           "alias:AiGenerationService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -453,7 +453,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiCenterService, alias:AiGenerationService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -463,9 +463,9 @@
         "score": 17,
         "signals": [
           "symbol:AIPlatformServices",
-          "alias:AiCenterService",
           "alias:AiGenerationService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -494,7 +494,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AdminOperationsControlPlaneTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiCenterService, alias:AiGenerationService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -504,9 +504,9 @@
         "score": 17,
         "signals": [
           "symbol:AIPlatformServices",
-          "alias:AiCenterService",
           "alias:AiGenerationService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -535,7 +535,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiCenterService, alias:AiGenerationService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -545,9 +545,9 @@
         "score": 17,
         "signals": [
           "symbol:AIPlatformServices",
-          "alias:AiCenterService",
           "alias:AiGenerationService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -607,7 +607,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -617,8 +617,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -647,7 +647,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -657,8 +657,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -687,7 +687,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -697,8 +697,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -727,7 +727,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -737,8 +737,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -767,7 +767,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -777,8 +777,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -807,7 +807,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -817,8 +817,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -3499,7 +3499,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3508,8 +3508,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php",
         "score": 8,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -3662,7 +3662,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3671,8 +3671,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 11,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "verb:GET",
           "tenant:belongstotenant",
@@ -3703,7 +3703,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:Approval, alias:ExecutionCreator, route:approvals, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:ExecutionCreator, alias:Approval, route:approvals, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3712,8 +3712,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 11,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "verb:POST",
           "tenant:belongstotenant",
@@ -3744,7 +3744,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3753,8 +3753,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 11,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "verb:GET",
           "tenant:belongstotenant",
@@ -3785,7 +3785,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, route:approve, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, route:approve, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3794,8 +3794,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 15,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "route:approve",
           "tenant:belongstotenant",
@@ -3829,7 +3829,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, route:audit, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, route:audit, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3838,8 +3838,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 16,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "route:audit",
           "verb:GET",
@@ -3912,7 +3912,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, route:reject, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, route:reject, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3921,8 +3921,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 15,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "route:reject",
           "tenant:belongstotenant",
@@ -3953,7 +3953,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Approve, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Approve, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3964,8 +3964,8 @@
         "signals": [
           "token:approval",
           "method:Approve",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -3997,7 +3997,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4007,8 +4007,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4037,7 +4037,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4047,8 +4047,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4077,7 +4077,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4087,8 +4087,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4117,7 +4117,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4127,8 +4127,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4157,7 +4157,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4167,8 +4167,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4197,7 +4197,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Reject, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Reject, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4208,8 +4208,8 @@
         "signals": [
           "token:approval",
           "method:Reject",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4279,7 +4279,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4289,8 +4289,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7031,7 +7031,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7040,10 +7040,10 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:BillingPlan",
           "alias:SubscriptionStateMachine",
           "alias:BillingPlanAdminController",
           "alias:SubscriptionService",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7153,7 +7153,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingController, alias:SubscriptionStateMachine, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7162,9 +7162,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:BillingController",
           "alias:SubscriptionStateMachine",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -7194,7 +7194,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7203,10 +7203,10 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:BillingPlan",
           "alias:SubscriptionStateMachine",
           "alias:BillingPlanAdminController",
           "alias:SubscriptionService",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7396,7 +7396,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:SubscriptionStateMachine, alias:PayPalProvider, alias:PayPalWebhookController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:SubscriptionStateMachine, alias:PayPalWebhookController, alias:SubscriptionService, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7407,9 +7407,9 @@
         "signals": [
           "method:CreateAsync",
           "alias:SubscriptionStateMachine",
-          "alias:PayPalProvider",
           "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalProvider",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7598,7 +7598,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:SubscriptionStateMachine, alias:PayPalProvider, alias:PayPalWebhookController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:SubscriptionStateMachine, alias:PayPalWebhookController, alias:SubscriptionService, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7609,9 +7609,9 @@
         "signals": [
           "method:CreateAsync",
           "alias:SubscriptionStateMachine",
-          "alias:PayPalProvider",
           "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalProvider",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7640,7 +7640,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:PayPalProvider, alias:PayPalWebhookController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:PayPalWebhookController, alias:SubscriptionService, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7650,9 +7650,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionStateMachine",
-          "alias:PayPalProvider",
           "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalProvider",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7681,7 +7681,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:PayPalProvider, alias:PayPalWebhookController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:PayPalWebhookController, alias:SubscriptionService, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7691,9 +7691,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionStateMachine",
-          "alias:PayPalProvider",
           "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalProvider",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7764,7 +7764,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7774,8 +7774,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7804,7 +7804,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7814,8 +7814,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7844,7 +7844,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7854,8 +7854,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7884,7 +7884,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7894,8 +7894,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7924,7 +7924,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/routes/web.php; token:plan, method:RemoveAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/routes/web.php; token:plan, method:RemoveAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7935,8 +7935,8 @@
         "signals": [
           "token:plan",
           "method:RemoveAsync",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -7968,7 +7968,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; method:ResolveAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; method:ResolveAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7978,8 +7978,8 @@
         "score": 11,
         "signals": [
           "method:ResolveAsync",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8008,7 +8008,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8018,8 +8018,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8088,7 +8088,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8097,10 +8097,10 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:BillingPlan",
           "alias:SubscriptionStateMachine",
           "alias:BillingPlanAdminController",
           "alias:SubscriptionService",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8210,7 +8210,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionStateMachine, alias:BillingPlanAdminController, alias:SubscriptionService, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8219,10 +8219,10 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:BillingPlan",
           "alias:SubscriptionStateMachine",
           "alias:BillingPlanAdminController",
           "alias:SubscriptionService",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8492,7 +8492,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:BillingController, alias:SubscriptionStateMachine, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:SubscriptionStateMachine, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8502,9 +8502,9 @@
         "score": 19,
         "signals": [
           "method:ExecuteAsync",
-          "alias:BillingController",
           "alias:SubscriptionStateMachine",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -8534,7 +8534,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8544,8 +8544,8 @@
         "score": 10,
         "signals": [
           "token:planner",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -11829,7 +11829,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -11838,8 +11838,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php",
         "score": 8,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -11868,7 +11868,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -11877,8 +11877,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php",
         "score": 8,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -11907,7 +11907,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -11916,8 +11916,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "route:planner",
           "verb:GET",
           "tenant:belongstotenant",
@@ -11948,7 +11948,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -11957,8 +11957,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "route:planner",
           "verb:POST",
           "tenant:belongstotenant",
@@ -11989,7 +11989,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:PUT, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:PUT, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -11998,8 +11998,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "route:planner",
           "verb:PUT",
           "tenant:belongstotenant",
@@ -12030,7 +12030,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12039,8 +12039,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "route:planner",
           "verb:POST",
           "tenant:belongstotenant",
@@ -12074,7 +12074,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12083,8 +12083,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "route:planner",
           "verb:POST",
           "tenant:belongstotenant",
@@ -12118,7 +12118,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AcceptanceFrameworkTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, route:queue, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, route:queue, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12127,8 +12127,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 16,
         "signals": [
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "route:planner",
           "route:queue",
           "verb:POST",
@@ -12160,7 +12160,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12170,8 +12170,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12201,7 +12201,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, method:ChangePlanAsync, alias:SubscriptionService, alias:BillingPlan, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, method:ChangePlanAsync, alias:BillingPlan, alias:BillingController, alias:SubscriptionService, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12212,10 +12212,10 @@
         "signals": [
           "token:billing",
           "method:ChangePlanAsync",
-          "alias:SubscriptionService",
           "alias:BillingPlan",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:SubscriptionService",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12244,7 +12244,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:PayPalProvider, alias:PayPalWebhookController, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:PayPalProvider, alias:BillingController, alias:SubscriptionService, alias:PayPalWebhookController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12253,11 +12253,11 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 20,
         "signals": [
-          "alias:SubscriptionService",
           "alias:PayPalProvider",
+          "alias:BillingController",
+          "alias:SubscriptionService",
           "alias:PayPalWebhookController",
           "alias:EntitlementService",
-          "alias:BillingController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12286,7 +12286,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12296,8 +12296,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12327,7 +12327,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12337,8 +12337,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12368,7 +12368,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:List, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:List, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12378,8 +12378,8 @@
         "score": 15,
         "signals": [
           "method:List",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12409,7 +12409,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12419,8 +12419,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12450,7 +12450,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12460,8 +12460,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12491,7 +12491,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12501,8 +12501,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12532,7 +12532,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12542,8 +12542,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12573,7 +12573,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12583,8 +12583,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12614,7 +12614,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:PayPalProvider, alias:PayPalWebhookController, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:PayPalProvider, alias:BillingController, alias:SubscriptionService, alias:PayPalWebhookController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12623,11 +12623,11 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 20,
         "signals": [
-          "alias:SubscriptionService",
           "alias:PayPalProvider",
+          "alias:BillingController",
+          "alias:SubscriptionService",
           "alias:PayPalWebhookController",
           "alias:EntitlementService",
-          "alias:BillingController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12656,7 +12656,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12666,8 +12666,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12697,7 +12697,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:BillingController, alias:EntitlementService, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:EntitlementService, alias:BillingController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12707,8 +12707,8 @@
         "score": 14,
         "signals": [
           "token:billing",
-          "alias:BillingController",
           "alias:EntitlementService",
+          "alias:BillingController",
           "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -12738,7 +12738,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:CreateAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:CreateAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12750,8 +12750,8 @@
           "token:content",
           "token:planner",
           "method:CreateAsync",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12862,7 +12862,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:Get, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:Get, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12874,8 +12874,8 @@
           "token:content",
           "token:planner",
           "method:Get",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12904,7 +12904,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12915,8 +12915,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12945,7 +12945,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12956,8 +12956,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12986,7 +12986,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12997,8 +12997,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13027,7 +13027,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13038,8 +13038,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13068,7 +13068,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:UpdateAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:UpdateAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13080,8 +13080,8 @@
           "token:content",
           "token:planner",
           "method:UpdateAsync",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13110,7 +13110,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Billing/BillingPlatformTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, method:ExecuteAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, method:ExecuteAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13121,8 +13121,8 @@
         "signals": [
           "token:planner",
           "method:ExecuteAsync",
-          "alias:BillingPlan",
           "alias:BillingPlanAdminController",
+          "alias:BillingPlan",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18505,7 +18505,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:background, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:background, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18515,8 +18515,8 @@
         "score": 11,
         "signals": [
           "method:background",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18545,7 +18545,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18555,8 +18555,8 @@
         "score": 11,
         "signals": [
           "method:ExecuteAsync",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18585,7 +18585,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18595,8 +18595,8 @@
         "score": 13,
         "signals": [
           "symbol:OperationalEmailAlertService",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18625,7 +18625,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18635,8 +18635,8 @@
         "score": 13,
         "signals": [
           "symbol:OperationalEmailAlertService",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18665,7 +18665,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18675,8 +18675,8 @@
         "score": 11,
         "signals": [
           "method:ExecuteAsync",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18705,7 +18705,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:SendEmailDeliveryJob, alias:EmailDeliveryService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:EmailDeliveryService, alias:SendEmailDeliveryJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18715,8 +18715,8 @@
         "score": 13,
         "signals": [
           "symbol:EmailOutboxService",
-          "alias:SendEmailDeliveryJob",
           "alias:EmailDeliveryService",
+          "alias:SendEmailDeliveryJob",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18745,7 +18745,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:SendEmailDeliveryJob, alias:EmailDeliveryService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:EmailDeliveryService, alias:SendEmailDeliveryJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18755,8 +18755,8 @@
         "score": 13,
         "signals": [
           "symbol:EmailOutboxService",
-          "alias:SendEmailDeliveryJob",
           "alias:EmailDeliveryService",
+          "alias:SendEmailDeliveryJob",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18785,7 +18785,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:SendEmailDeliveryJob, alias:EmailDeliveryService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:EmailDeliveryService, alias:SendEmailDeliveryJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18795,8 +18795,8 @@
         "score": 13,
         "signals": [
           "symbol:EmailOutboxService",
-          "alias:SendEmailDeliveryJob",
           "alias:EmailDeliveryService",
+          "alias:SendEmailDeliveryJob",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18825,7 +18825,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:SendEmailDeliveryJob, alias:EmailDeliveryService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:EmailDeliveryService, alias:SendEmailDeliveryJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18835,8 +18835,8 @@
         "score": 13,
         "signals": [
           "symbol:EmailOutboxService",
-          "alias:SendEmailDeliveryJob",
           "alias:EmailDeliveryService",
+          "alias:SendEmailDeliveryJob",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18865,7 +18865,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:SendEmailDeliveryJob, alias:EmailDeliveryService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxService, alias:EmailDeliveryService, alias:SendEmailDeliveryJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18875,8 +18875,8 @@
         "score": 13,
         "signals": [
           "symbol:EmailOutboxService",
-          "alias:SendEmailDeliveryJob",
           "alias:EmailDeliveryService",
+          "alias:SendEmailDeliveryJob",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19813,7 +19813,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19825,8 +19825,8 @@
           "token:account",
           "token:email",
           "token:settings",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19855,7 +19855,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:ClearPasswordAsync, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:ClearPasswordAsync, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19868,8 +19868,8 @@
           "token:email",
           "token:settings",
           "method:ClearPasswordAsync",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19898,7 +19898,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19910,8 +19910,8 @@
           "token:account",
           "token:email",
           "token:settings",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -19943,7 +19943,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:GetAsync, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:GetAsync, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19956,8 +19956,8 @@
           "token:email",
           "token:settings",
           "method:GetAsync",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19986,7 +19986,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:GetDeliveryProfileAsync, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:GetDeliveryProfileAsync, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19999,8 +19999,8 @@
           "token:email",
           "token:settings",
           "method:GetDeliveryProfileAsync",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -20029,7 +20029,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:GetTestProfileAsync, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, method:GetTestProfileAsync, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -20042,8 +20042,8 @@
           "token:email",
           "token:settings",
           "method:GetTestProfileAsync",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -20072,7 +20072,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -20084,8 +20084,8 @@
           "token:account",
           "token:email",
           "token:settings",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -20114,7 +20114,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:EmailSecretStore, alias:MailConfigurationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Email/Services/SiteMailProfileService.php; token:account, token:email, token:settings, alias:MailConfigurationService, alias:EmailSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -20126,8 +20126,8 @@
           "token:account",
           "token:email",
           "token:settings",
-          "alias:EmailSecretStore",
           "alias:MailConfigurationService",
+          "alias:EmailSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -20513,7 +20513,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxWorker, method:ExecuteAsync, alias:SendEmailDeliveryJob, alias:EmailDeliveryService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:EmailOutboxWorker, method:ExecuteAsync, alias:EmailDeliveryService, alias:SendEmailDeliveryJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -20524,8 +20524,8 @@
         "signals": [
           "symbol:EmailOutboxWorker",
           "method:ExecuteAsync",
-          "alias:SendEmailDeliveryJob",
           "alias:EmailDeliveryService",
+          "alias:SendEmailDeliveryJob",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -21176,7 +21176,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SecurityAuditEmailAlertWorker, method:ExecuteAsync, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SecurityAuditEmailAlertWorker, method:ExecuteAsync, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -21187,8 +21187,8 @@
         "signals": [
           "symbol:SecurityAuditEmailAlertWorker",
           "method:ExecuteAsync",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -23048,7 +23048,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23058,9 +23058,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23090,7 +23090,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23100,9 +23100,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23132,7 +23132,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23142,9 +23142,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23174,7 +23174,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23184,9 +23184,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23526,7 +23526,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, route:sites, route:run, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, route:sites, route:run, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23535,9 +23535,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 21,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "route:sites",
           "route:run",
@@ -23572,7 +23572,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23581,9 +23581,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23613,7 +23613,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23622,9 +23622,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23654,7 +23654,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23663,9 +23663,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23695,7 +23695,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23704,9 +23704,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23736,7 +23736,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23745,9 +23745,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23777,7 +23777,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:GenerateAsync, alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:GenerateAsync, alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23787,9 +23787,9 @@
         "score": 19,
         "signals": [
           "method:GenerateAsync",
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23819,7 +23819,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23828,9 +23828,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23860,7 +23860,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23869,9 +23869,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23901,7 +23901,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoRunController, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23910,9 +23910,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
+          "alias:SeoRunController",
+          "alias:SeoAuditService",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24075,7 +24075,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24088,8 +24088,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -24121,7 +24121,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24134,8 +24134,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24164,7 +24164,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Get, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Get, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24178,8 +24178,8 @@
           "token:site",
           "symbol:SiteOperationHistoryService",
           "method:Get",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24208,7 +24208,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24221,8 +24221,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24251,7 +24251,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24264,8 +24264,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24294,7 +24294,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24307,8 +24307,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24337,7 +24337,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24350,8 +24350,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24380,7 +24380,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24393,8 +24393,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -24426,7 +24426,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Record, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Composed closure rehearsal implementation@d289f546484aba12f8c2aa2837da3f4bd6da52ad: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Record, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24440,8 +24440,8 @@
           "token:site",
           "symbol:SiteOperationHistoryService",
           "method:Record",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
