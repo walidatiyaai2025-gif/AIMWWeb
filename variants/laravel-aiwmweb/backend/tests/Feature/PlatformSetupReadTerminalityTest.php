@@ -18,7 +18,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $route = Route::getRoutes()->getByName('canonical.api.setup');
 
         $this->assertNotNull($route);
-        $this->assertSame(SetupReadController::class, $route->getActionName());
+        $this->assertSame(SetupReadController::class.'@__invoke', $route->getActionName());
         $this->assertContains('GET', $route->methods());
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
