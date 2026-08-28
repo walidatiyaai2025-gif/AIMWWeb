@@ -25,7 +25,10 @@ class LegacyNotificationApiTerminalityTest extends TestCase
         $this->getJson('/api/notifications')->assertUnauthorized();
 
         $route = Route::getRoutes()->match(Request::create('/api/notifications', 'GET'));
-        $this->assertSame(LegacyNotificationReadController::class.'@index', $route->getActionName());
+        $this->assertSame(
+            LegacyNotificationReadController::class.'@index',
+            ltrim($route->getActionName(), '\\'),
+        );
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertContains('auth', $route->gatherMiddleware());
     }
