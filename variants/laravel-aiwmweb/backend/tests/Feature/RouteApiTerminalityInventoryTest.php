@@ -58,6 +58,8 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'AIMW-AUTO-1546E5BCAF' => '/module/schedules',
         'AIMW-AUTO-6522502C20' => '/execution-center',
         'AIMW-AUTO-968FD60A95' => '/module/execution',
+        'AIMW-BILL-2FFFC55BAB' => '/account/billing',
+        'AIMW-CONT-FB7F9189C0' => '/account/profile',
     ];
 
     private const SECOND_PASS_INVENTORY_SHA256 = '266f461bae43748c229ba04a26d73287fdd8b0e2026844403895864bdd5a0174';
@@ -74,6 +76,8 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'canonical.alias.logs' => 'tenants/{tenant}/logs',
         'canonical.alias.operations-hub' => 'tenants/{tenant}/operations/hub',
         'canonical.alias.backups' => 'tenants/{tenant}/backups',
+        'canonical.workspace.account-profile' => 'tenants/{tenant}/account/profile',
+        'canonical.workspace.account-billing' => 'tenants/{tenant}/account/billing',
         'canonical.workspace.posts' => 'tenants/{tenant}/module/posts',
         'canonical.workspace.pages' => 'tenants/{tenant}/module/pages',
         'canonical.workspace.media' => 'tenants/{tenant}/module/media',
@@ -98,6 +102,7 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'tenant.view', 'sites.view', 'notifications.view', 'tenant.manage', 'diagnostics.view',
         'backup.manage', 'backups.view', 'operations.manage', 'execution.view', 'users.view',
         'sessions.manage', 'sessions.view', 'content.view', 'sync.view', 'reports.view', 'automation.view',
+        'billing.view',
     ];
 
     public function test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows(): void
@@ -122,8 +127,8 @@ class RouteApiTerminalityInventoryTest extends TestCase
             $this->assertFalse((bool) $byId[$operationId]['mutation']);
         }
 
-        $this->assertCount(29, self::FIRST_PASS + self::SECOND_PASS);
-        $this->assertCount(18, self::SECOND_PASS);
+        $this->assertCount(31, self::FIRST_PASS + self::SECOND_PASS);
+        $this->assertCount(20, self::SECOND_PASS);
     }
 
     public function test_second_pass_inventory_is_exact_and_deterministic(): void
@@ -186,6 +191,8 @@ class RouteApiTerminalityInventoryTest extends TestCase
             '/tenants/alpha/admin/schedules' => AdminOperationsController::class.'@schedules',
             '/tenants/alpha/route-api/report-exports' => RouteApiAdapterController::class.'@reportExports',
             '/tenants/alpha/route-api/site-operations' => RouteApiAdapterController::class.'@siteOperations',
+            '/tenants/alpha/route-api/billing-overview' => RouteApiAdapterController::class.'@billingOverview',
+            '/tenants/alpha/route-api/account-profile' => RouteApiAdapterController::class.'@accountProfile',
         ];
 
         foreach ($contracts as $uri => $action) {
@@ -270,13 +277,13 @@ class RouteApiTerminalityInventoryTest extends TestCase
         }
     }
 
-    public function test_second_pass_read_routes_use_real_services_and_preserve_read_only_report_semantics(): void
+    public function test_second_pass_read_routes_use_real_services_and_preserve_response_semantics(): void
     {
         $user = User::factory()->create();
         $this->tenantMembership($user, 'alpha', self::ALL_PERMISSIONS);
         $this->withoutVite();
 
-        foreach (['/module/reports', '/site-operations', '/automation-center', '/module/schedules', '/module/execution'] as $path) {
+        foreach (['/module/reports', '/site-operations', '/automation-center', '/module/schedules', '/module/execution', '/account/profile', '/account/billing'] as $path) {
             $this->actingAs($user)->get('/tenants/alpha'.$path)->assertOk()->assertSee('id="app"', false);
         }
         foreach (['/reports' => '/module/reports', '/operations/sites' => '/site-operations', '/automation-schedules' => '/module/schedules', '/execution-center' => '/module/execution'] as $source => $target) {
@@ -288,6 +295,10 @@ class RouteApiTerminalityInventoryTest extends TestCase
         $this->actingAs($user)->getJson('/tenants/alpha/admin/operations')->assertOk()->assertJsonStructure(['data']);
         $this->actingAs($user)->getJson('/tenants/alpha/route-api/report-exports')->assertOk()->assertJsonStructure(['data']);
         $this->actingAs($user)->getJson('/tenants/alpha/route-api/site-operations')->assertOk()->assertJsonStructure(['data']);
+        $billing = $this->actingAs($user)->getJson('/tenants/alpha/route-api/billing-overview')->assertOk()->json('data');
+        $this->assertSame(['subscription', 'entitlements', 'usage'], array_column($billing, 'section'));
+        $profile = $this->actingAs($user)->getJson('/tenants/alpha/route-api/account-profile')->assertOk();
+        $profile->assertJsonPath('data.0.user_id', $user->id)->assertJsonPath('data.0.email', $user->email);
     }
 
     public function test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions(): void
@@ -306,6 +317,7 @@ class RouteApiTerminalityInventoryTest extends TestCase
         }
         $this->actingAs($limited)->get('/tenants/limited/module/reports')->assertForbidden();
         $this->actingAs($limited)->get('/tenants/limited/automation-center')->assertForbidden();
+        $this->actingAs($limited)->get('/tenants/limited/account/billing')->assertForbidden();
         $this->actingAs($authorized)->get('/tenants/beta/sites')->assertNotFound();
     }
 
