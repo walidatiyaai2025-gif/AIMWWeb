@@ -54,15 +54,21 @@ final class ActionContractRegistry
 
             $contracts[$key] = [
                 'operation_id' => $definition['operation_id'],
+                'dependency_operation_id' => $definition['dependency_operation_id'] ?? null,
                 'canonical_kind' => $definition['canonical']['kind'],
                 'tenant_id' => (int) $tenant->id,
                 'tenant_slug' => (string) $tenant->slug,
                 'site_id' => $ownership === 'site' ? $site?->id : null,
                 'permission' => $permission,
                 'capability' => $definition['capability'] ?? null,
+                'connector_scope' => $definition['connector_scope'] ?? null,
                 'endpoint' => $endpoint,
                 'method' => $definition['method'],
                 'availability' => $availability,
+                'risk' => $definition['risk'] ?? 'low',
+                'approval_required' => (bool) ($definition['approval_required'] ?? false),
+                'terminal_candidate' => (bool) ($definition['terminal_candidate'] ?? false),
+                'ui_role' => $definition['ui_role'] ?? null,
                 'fields' => $definition['fields'] ?? [],
                 'fixed' => $definition['fixed'] ?? (object) [],
                 'reconcile_api_key' => $definition['reconcile_api_key'] ?? null,
@@ -97,7 +103,7 @@ final class ActionContractRegistry
      * Validate every registered operation against the canonical ledger without
      * making production action discovery depend on docs being packaged at runtime.
      *
-     * @return array{mapped:int, visible_controls:int, operation_ids:array<int, string>}
+     * @return array{mapped:int, visible_controls:int, terminal_candidates:int, operation_ids:array<int, string>}
      */
     public function auditCanonicalMappings(): array
     {
@@ -112,24 +118,25 @@ final class ActionContractRegistry
             throw new RuntimeException('Canonical parity ledger contains no operations array.');
         }
 
-        $allIds = [];
+        $byId = [];
         foreach ($operations as $operation) {
             $id = $operation['operation_id'] ?? null;
             if (! is_string($id) || ! preg_match('/^AIMW-[A-Z]+-[0-9A-F]{10}$/', $id)) {
                 throw new RuntimeException('Canonical parity ledger contains a malformed operation_id.');
             }
-            if (isset($allIds[$id])) {
+            if (isset($byId[$id])) {
                 throw new RuntimeException("Canonical parity ledger contains duplicate operation_id {$id}.");
             }
-            $allIds[$id] = true;
+            $byId[$id] = $operation;
         }
 
         $mapped = [];
         $visible = 0;
+        $terminalCandidates = 0;
         foreach (config('frontend_actions', []) as $key => $definition) {
             $operationId = $definition['operation_id'] ?? null;
             $selector = $definition['canonical'] ?? [];
-            if (! is_string($operationId) || ! isset($allIds[$operationId])) {
+            if (! is_string($operationId) || ! isset($byId[$operationId])) {
                 throw new RuntimeException("Action {$key} references an unknown canonical operation_id.");
             }
 
@@ -150,9 +157,29 @@ final class ActionContractRegistry
                 throw new RuntimeException("Action {$key} canonical selector resolved a different operation_id.");
             }
 
+            $dependencyId = $definition['dependency_operation_id'] ?? null;
+            if ($dependencyId !== null && (! is_string($dependencyId) || ! isset($byId[$dependencyId]))) {
+                throw new RuntimeException("Action {$key} references an unknown dependency_operation_id.");
+            }
+
+            $isVisible = ($matches[0]['kind'] ?? null) === 'visible_control';
+            $isTerminalCandidate = (bool) ($definition['terminal_candidate'] ?? false);
+            if ($isTerminalCandidate && ! $isVisible) {
+                throw new RuntimeException("Action {$key} is terminal_candidate but its canonical kind is not visible_control.");
+            }
+            if ($isTerminalCandidate && isset($definition['blocked_reason'])) {
+                throw new RuntimeException("Action {$key} cannot be terminal_candidate while blocked_reason is present.");
+            }
+            if ($isTerminalCandidate && (bool) ($definition['approval_required'] ?? false)) {
+                throw new RuntimeException("Action {$key} cannot be terminal_candidate while approval_required is true without an approval-flow contract.");
+            }
+
             $mapped[] = $operationId;
-            if (($matches[0]['kind'] ?? null) === 'visible_control') {
+            if ($isVisible) {
                 $visible++;
+            }
+            if ($isTerminalCandidate) {
+                $terminalCandidates++;
             }
         }
 
@@ -160,6 +187,11 @@ final class ActionContractRegistry
             throw new RuntimeException('Action registry maps multiple actions to the same canonical operation_id.');
         }
 
-        return ['mapped' => count($mapped), 'visible_controls' => $visible, 'operation_ids' => $mapped];
+        return [
+            'mapped' => count($mapped),
+            'visible_controls' => $visible,
+            'terminal_candidates' => $terminalCandidates,
+            'operation_ids' => $mapped,
+        ];
     }
 }
