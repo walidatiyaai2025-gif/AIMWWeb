@@ -26,6 +26,7 @@ class FrontendContextTest extends TestCase
         $response = $this->actingAs($user)->getJson('/tenants/alpha/context');
 
         $response->assertOk()
+            ->assertJsonPath('tenant.id', $alpha->tenant_id)
             ->assertJsonPath('tenant.slug', 'alpha')
             ->assertJsonPath('user.email', 'frontend@example.test')
             ->assertJsonCount(2, 'tenants')
@@ -39,7 +40,12 @@ class FrontendContextTest extends TestCase
             ->assertJsonPath('api.sites', '/api/tenants/alpha/sites')
             ->assertJsonPath('api.posts', '/api/v1/tenants/alpha/sites/{site}/content/post')
             ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications')
-            ->assertJsonPath('actions', []);
+            ->assertJsonPath('actions.sites.refresh.operation_id', 'AIMW-SYNC-A9E956A4DA')
+            ->assertJsonPath('actions.sites.refresh.tenant_id', $alpha->tenant_id)
+            ->assertJsonPath('actions.sites.refresh.availability.state', 'enabled')
+            ->assertJsonPath('actions.sites.connect.availability.state', 'permission_denied')
+            ->assertJsonPath('actions.users.disable.availability.state', 'permission_denied')
+            ->assertJsonPath('actions.seo.audit.run.availability.state', 'site_context_required');
 
         $this->assertSame($alpha->tenant_id, Tenant::query()->where('slug', 'alpha')->value('id'));
     }
