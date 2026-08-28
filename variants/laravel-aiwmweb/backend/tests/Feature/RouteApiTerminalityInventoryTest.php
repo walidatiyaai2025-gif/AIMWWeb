@@ -29,8 +29,6 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'AIMW-CONT-DF483546DA' => '/module/logs',
         'AIMW-CONT-FBD0368CAA' => '/operations',
         'AIMW-CONT-BB5B32880A' => '/admin/application-users',
-        'AIMW-CONT-9CF12067E6' => '/admin/roles-permissions',
-        'AIMW-CONT-6B051BD8C0' => '/admin/sessions',
         'AIMW-CONT-1DA83B9262' => '/settings/sessions',
         'AIMW-CONT-9B8574AA90' => '/logs',
         'AIMW-CONT-E14274269E' => '/operations/hub',
@@ -45,8 +43,6 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'canonical.workspace.logs' => 'tenants/{tenant}/module/logs',
         'canonical.workspace.operations' => 'tenants/{tenant}/operations',
         'canonical.alias.application-users' => 'tenants/{tenant}/admin/application-users',
-        'canonical.alias.roles-permissions' => 'tenants/{tenant}/admin/roles-permissions',
-        'canonical.alias.admin-sessions' => 'tenants/{tenant}/admin/sessions',
         'canonical.alias.settings-sessions' => 'tenants/{tenant}/settings/sessions',
         'canonical.alias.logs' => 'tenants/{tenant}/logs',
         'canonical.alias.operations-hub' => 'tenants/{tenant}/operations/hub',
@@ -56,7 +52,7 @@ class RouteApiTerminalityInventoryTest extends TestCase
     private const ALL_PERMISSIONS = [
         'tenant.view', 'sites.view', 'notifications.view', 'tenant.manage', 'diagnostics.view',
         'backup.manage', 'backups.view', 'operations.manage', 'execution.view', 'users.view',
-        'roles.view', 'sessions.manage', 'sessions.view',
+        'sessions.manage', 'sessions.view',
     ];
 
     public function test_live_reconciliation_has_expected_pending_inventory_and_only_real_rows_are_claimed(): void
@@ -107,7 +103,6 @@ class RouteApiTerminalityInventoryTest extends TestCase
             '/tenants/alpha/admin/logs' => AdminOperationsController::class.'@logs',
             '/tenants/alpha/admin/operations' => AdminOperationsController::class.'@operations',
             '/tenants/alpha/admin/members' => AdminOperationsController::class.'@members',
-            '/tenants/alpha/admin/roles' => AdminOperationsController::class.'@roles',
             '/tenants/alpha/admin/sessions' => AdminOperationsController::class.'@sessions',
         ];
 
@@ -118,6 +113,18 @@ class RouteApiTerminalityInventoryTest extends TestCase
             $this->assertContains('tenant.context', $middleware, $uri);
             $this->assertTrue(in_array('auth', $middleware, true) || in_array('web', $middleware, true), $uri);
         }
+    }
+
+    public function test_canonical_routes_do_not_shadow_existing_backend_json_routes(): void
+    {
+        $this->assertSame(
+            AdminOperationsController::class.'@sessions',
+            Route::getRoutes()->match(Request::create('/tenants/alpha/admin/sessions', 'GET'))->getActionName()
+        );
+        $this->assertSame(
+            AdminOperationsController::class.'@roles',
+            Route::getRoutes()->match(Request::create('/tenants/alpha/admin/roles', 'GET'))->getActionName()
+        );
     }
 
     public function test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions(): void
@@ -132,7 +139,7 @@ class RouteApiTerminalityInventoryTest extends TestCase
 
         $direct = [
             '/sites', '/notifications', '/email/history', '/module/backups', '/module/logs', '/operations',
-            '/admin/users', '/admin/roles', '/account/sessions',
+            '/admin/users', '/account/sessions',
         ];
         foreach ($direct as $path) {
             $this->actingAs($authorized)->get('/tenants/alpha'.$path)->assertOk()->assertSee('id="app"', false);
@@ -140,8 +147,6 @@ class RouteApiTerminalityInventoryTest extends TestCase
 
         $aliases = [
             '/admin/application-users' => '/admin/users',
-            '/admin/roles-permissions' => '/admin/roles',
-            '/admin/sessions' => '/account/sessions',
             '/settings/sessions' => '/account/sessions',
             '/logs' => '/module/logs',
             '/operations/hub' => '/operations',
@@ -171,7 +176,6 @@ class RouteApiTerminalityInventoryTest extends TestCase
         $this->actingAs($user)->getJson('/tenants/alpha/admin/logs')->assertOk()->assertJsonStructure(['data']);
         $this->actingAs($user)->getJson('/tenants/alpha/admin/operations')->assertOk()->assertJsonStructure(['data']);
         $this->actingAs($user)->getJson('/tenants/alpha/admin/members')->assertOk()->assertJsonStructure(['data']);
-        $this->actingAs($user)->getJson('/tenants/alpha/admin/roles')->assertOk()->assertJsonStructure(['data']);
         $this->actingAs($user)->getJson('/tenants/alpha/admin/sessions')->assertOk()->assertJsonStructure(['data']);
     }
 
