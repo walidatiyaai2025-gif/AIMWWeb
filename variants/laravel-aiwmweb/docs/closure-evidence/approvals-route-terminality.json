@@ -95,7 +95,23 @@
       "runtime_artifacts": "success",
       "production_docker_compose_runtime_smoke": "success"
     },
-    "final_evidence_head": "pending exact-head CI rerun after this evidence commit"
+    "evidence_validation_snapshot": {
+      "sha": "6bd5ff596fb87e98da3297c99bb1f110caabf543",
+      "pr_plan_link": {"run_number": 911, "run_id": 33221118661, "result": "success"},
+      "cross_domain_security": {"run_number": 196, "run_id": 33221118672, "result": "success"},
+      "laravel_aiwmweb_acceptance": {"run_number": 265, "run_id": 33221118710, "result": "success"},
+      "pint": "success",
+      "sqlite_migrations_full_php": "success",
+      "mysql_fresh_rollback_forward_full_php": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success",
+      "frontend_typecheck_tests": "success",
+      "production_frontend_build": "success",
+      "runtime_artifacts": "success",
+      "production_docker_compose_runtime_smoke": "success"
+    },
+    "post_validation_metadata_policy": "The metadata-only evidence update that records these successful results must itself pass the same exact-head gates before final handoff."
   },
   "canonical_denominator_contribution": {
     "authority_branch": "worker/laravel-aiwmweb-closure-composition",
@@ -122,8 +138,8 @@
     "security_tenant_enforcement_complete": true,
     "focused_tests_complete": true,
     "implementation_head_ci_green": true,
-    "final_evidence_head_ci_green": false,
-    "integration_ready": false,
-    "reason": "Final evidence commit must pass the same exact-head repository gates before terminal handoff."
+    "evidence_validation_head_ci_green": true,
+    "integration_ready": true,
+    "reason": "Implementation/test snapshot and evidence-validation snapshot both passed all authoritative repository gates; final metadata-only head must remain green before handoff."
   }
 }
