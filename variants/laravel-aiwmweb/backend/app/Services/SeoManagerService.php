@@ -375,6 +375,9 @@ final class SeoManagerService
             return;
         }
         $state = $this->providerState($provider);
+        if (in_array($state['state'], ['UNSUPPORTED', 'WORDPRESS_NATIVE'], true)) {
+            throw new RuntimeException('SEO plugin metadata write is unsupported for the detected provider.');
+        }
         if ($state['state'] !== 'SUPPORTED_ENABLED') {
             throw new RuntimeException('SEO plugin metadata write is unavailable for the detected provider state.');
         }
