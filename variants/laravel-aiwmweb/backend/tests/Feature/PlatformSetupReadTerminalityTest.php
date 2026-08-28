@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\SetupReadController;
 use App\Services\DatabaseSetupReadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -34,6 +35,17 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $this->assertTrue($status['complete']);
 
         $this->get('/setup')->assertRedirect('/');
+    }
+
+    public function test_setup_stays_incomplete_when_any_repository_migration_is_missing(): void
+    {
+        DB::table('migrations')->orderByDesc('batch')->orderByDesc('migration')->limit(1)->delete();
+
+        $status = app(DatabaseSetupReadService::class)->status();
+
+        $this->assertTrue($status['database_reachable']);
+        $this->assertFalse($status['migrations_ready']);
+        $this->assertFalse($status['complete']);
     }
 
     public function test_incomplete_setup_renders_authoritative_non_secret_status(): void
