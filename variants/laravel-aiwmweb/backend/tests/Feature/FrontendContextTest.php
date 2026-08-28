@@ -37,7 +37,8 @@ class FrontendContextTest extends TestCase
             ->assertJsonPath('connectors', [])
             ->assertJsonPath('capabilities', [])
             ->assertJsonPath('api.sites', '/api/tenants/alpha/sites')
-            ->assertJsonPath('api.posts', '/api/v1/tenants/alpha/sites/{site}/content/post')
+            ->assertJsonMissingPath('api.posts')
+            ->assertJsonPath('active_site', null)
             ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications')
             ->assertJsonPath('actions', []);
 
@@ -54,14 +55,14 @@ class FrontendContextTest extends TestCase
         $this->actingAs($owner)->getJson('/tenants/beta/context')->assertNotFound();
     }
 
-    public function test_spa_route_is_guarded_by_real_tenant_permission(): void
+    public function test_generic_spa_fallback_is_guarded_by_real_tenant_permission(): void
     {
         $user = User::factory()->create();
         $this->tenantMembership($user, 'alpha', ['tenant.view']);
         $this->withoutVite();
 
         $this->actingAs($user)
-            ->get('/tenants/alpha/module/posts')
+            ->get('/tenants/alpha/workspace')
             ->assertOk()
             ->assertSee('id="app"', false)
             ->assertSee('AI WordPress Manager — Laravel');
