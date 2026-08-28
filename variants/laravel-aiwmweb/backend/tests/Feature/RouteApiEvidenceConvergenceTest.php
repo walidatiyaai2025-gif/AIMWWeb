@@ -6,7 +6,7 @@ use Tests\TestCase;
 
 class RouteApiEvidenceConvergenceTest extends TestCase
 {
-    private const IMPLEMENTATION_SNAPSHOT = '2a555420d96e520c8d740222d9a45e52343cf888';
+    private const IMPLEMENTATION_SNAPSHOT = '05cea87bc2168b8714fc70aa0df79177b5b445ff';
 
     private const TENANTLESS_CANONICAL_APIS = [
         'AIMW-PLAT-A91A2B0B11' => '/api/build',
