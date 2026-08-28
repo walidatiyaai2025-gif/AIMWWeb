@@ -1,6 +1,7 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
@@ -19,6 +20,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
+Route::get('/access-denied', AccessDeniedReadController::class)->name('canonical.access-denied');
 Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
