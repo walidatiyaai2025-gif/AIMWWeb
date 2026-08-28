@@ -8,6 +8,7 @@ use App\Models\Execution;
 use App\Models\MediaItem;
 use App\Models\Site;
 use App\Models\TenantMembership;
+use App\Platform\BuildInformationReadService;
 use App\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,7 @@ final class PlatformReadController extends Controller
     public function __construct(
         private readonly TenantContext $context,
         private readonly TenantAuthorizer $authorizer,
+        private readonly BuildInformationReadService $buildInformation,
     ) {}
 
     public function build(Request $request): JsonResponse
@@ -26,29 +28,7 @@ final class PlatformReadController extends Controller
         return $this->withinSelectedTenant($request, function (): JsonResponse {
             $this->authorizer->authorize('execution.view');
 
-            $version = trim((string) env('APP_VERSION', '0.0.0')) ?: '0.0.0';
-            $informational = trim((string) env('APP_INFORMATIONAL_VERSION', $version)) ?: $version;
-            $branch = $this->firstNonEmpty([
-                env('GITHUB_HEAD_REF'),
-                env('GITHUB_REF_NAME'),
-                env('BUILD_SOURCEBRANCHNAME'),
-            ], 'unknown');
-            $commit = $this->firstNonEmpty([
-                env('GITHUB_SHA'),
-                env('BUILD_SOURCEVERSION'),
-            ], 'unknown');
-            if ($commit !== 'unknown') {
-                $commit = substr($commit, 0, 12);
-            }
-
-            return response()->json([
-                'version' => $version,
-                'informationalVersion' => $informational,
-                'branch' => $branch,
-                'commit' => $commit,
-                'buildTimeUtc' => $this->buildTimeUtc(),
-                'assemblyName' => (string) config('app.name', 'Laravel AIWMWeb'),
-            ]);
+            return response()->json($this->buildInformation->snapshot());
         });
     }
 
@@ -169,30 +149,5 @@ final class PlatformReadController extends Controller
         $failurePenalty = min(30, $failedJobs * 5);
 
         return max(0, min(100, (int) round($connectionScore - $failurePenalty)));
-    }
-
-    private function firstNonEmpty(array $values, string $fallback): string
-    {
-        foreach ($values as $value) {
-            $clean = trim((string) ($value ?? ''));
-            if ($clean !== '') {
-                return $clean;
-            }
-        }
-
-        return $fallback;
-    }
-
-    private function buildTimeUtc(): string
-    {
-        $configured = trim((string) env('BUILD_TIME_UTC', ''));
-        if ($configured !== '') {
-            return Carbon::parse($configured)->utc()->toIso8601String();
-        }
-
-        $artifact = base_path('composer.lock');
-        $timestamp = is_file($artifact) ? filemtime($artifact) : false;
-
-        return Carbon::createFromTimestampUTC($timestamp !== false ? $timestamp : 0)->toIso8601String();
     }
 }

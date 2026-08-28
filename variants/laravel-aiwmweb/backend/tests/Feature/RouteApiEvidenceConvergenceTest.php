@@ -6,7 +6,7 @@ use Tests\TestCase;
 
 class RouteApiEvidenceConvergenceTest extends TestCase
 {
-    private const IMPLEMENTATION_SNAPSHOT = '71b6ca332d9ba6062866299c4be4885bbf9e419b';
+    private const IMPLEMENTATION_SNAPSHOT = 'f2509609b3566e7a77a032bf1eb933be5bed3b9a';
 
     private const TENANTLESS_CANONICAL_APIS = [
         'AIMW-PLAT-A91A2B0B11' => '/api/build',
@@ -52,9 +52,10 @@ class RouteApiEvidenceConvergenceTest extends TestCase
         'AIMW-PLAT-FAC7505B26',
         'AIMW-EMAI-2D94EFDD53',
         'AIMW-OPER-ABB41FC891',
+        'AIMW-CONT-81B4B20D2D',
     ];
 
-    public function test_route_api_evidence_matches_the_live_36_operation_implementation_snapshot(): void
+    public function test_route_api_evidence_matches_the_live_37_operation_implementation_snapshot(): void
     {
         $evidence = $this->evidence();
 
@@ -63,14 +64,14 @@ class RouteApiEvidenceConvergenceTest extends TestCase
         $this->assertSame(92, $evidence['inventory']['pending_route_api_rows_found']);
         $this->assertSame(84, $evidence['inventory']['pending_routes_found']);
         $this->assertSame(8, $evidence['inventory']['pending_apis_found']);
-        $this->assertSame(36, $evidence['inventory']['terminalized_by_implementation_snapshot']);
-        $this->assertSame(56, $evidence['inventory']['still_pending_after_this_snapshot']);
+        $this->assertSame(37, $evidence['inventory']['terminalized_by_implementation_snapshot']);
+        $this->assertSame(55, $evidence['inventory']['still_pending_after_this_snapshot']);
 
         $claimed = array_column($evidence['operations'], 'operation_id');
         $this->assertSame(self::CLAIMED_OPERATION_IDS, $claimed);
-        $this->assertCount(36, $claimed);
-        $this->assertCount(36, array_unique($claimed));
-        $this->assertSame(36, array_sum($evidence['terminalized_by_domain']));
+        $this->assertCount(37, $claimed);
+        $this->assertCount(37, array_unique($claimed));
+        $this->assertSame(37, array_sum($evidence['terminalized_by_domain']));
     }
 
     public function test_claimed_operations_are_not_reintroduced_as_blockers(): void
