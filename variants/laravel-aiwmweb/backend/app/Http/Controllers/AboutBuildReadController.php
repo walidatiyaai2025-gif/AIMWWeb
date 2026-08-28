@@ -21,6 +21,7 @@ final class AboutBuildReadController extends Controller
 
         return view('platform.about-build', [
             'build' => $buildInformation->snapshot(),
+            'buildApiUrl' => '/api/build?tenant='.rawurlencode($tenant),
             'currentRelease' => null,
             'releases' => [],
             'runtime' => 'PHP '.PHP_VERSION,
