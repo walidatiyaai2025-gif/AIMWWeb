@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withApprovalQueueEndpoint } from '../approvalQueue';
+import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from '../approvalQueue';
 import { resolveCapability, workspaceRoutes, type FrontendContext } from '../core';
 
 const context = (): FrontendContext => ({
@@ -30,5 +30,20 @@ describe('canonical ApprovalQueue.LoadAsync frontend contract', () => {
 
         expect(withApprovalQueueEndpoint(serverContext)).toBe(serverContext);
         expect(serverContext.api.approvals).toBe('/server/owned/approval-feed');
+    });
+});
+
+describe('canonical ApprovalQueue execution-center visible control', () => {
+    it('targets the active tenant canonical execution workspace', () => {
+        const executionRoute = workspaceRoutes.find((route) => route.key === 'execution');
+        expect(executionRoute?.path).toBe('/module/execution');
+        expect(approvalExecutionCenterHref(context())).toBe('/tenants/alpha%20workspace/module/execution');
+    });
+
+    it('never emits the unqualified source path or a different tenant', () => {
+        const href = approvalExecutionCenterHref(context());
+        expect(href).not.toBe('/module/execution');
+        expect(href).not.toContain('/tenants/beta/');
+        expect(href).toContain('/tenants/alpha%20workspace/');
     });
 });
