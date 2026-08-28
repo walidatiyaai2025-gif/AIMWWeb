@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "wave": "setup-render-service-terminality",
+  "base": {
+    "pull_request": 292,
+    "branch": "worker/laravel-aiwmweb-setup-mutation-terminality",
+    "sha": "967b71f525b4c16e9b5c996d4c586cd1e935cd0a"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-43AF0076B5",
+    "kind": "service",
+    "domain": "content",
+    "route_screen": "service:DatabaseSetupService",
+    "visible_control": "RenderPage",
+    "current_source": "src/AIWordPressManager.Web/Services/DatabaseSetupService.cs"
+  },
+  "source_semantics": {
+    "summary": "Current AIMWWeb DatabaseSetupService.RenderPage owns first-run setup-page composition, setup defaults, error presentation, and the database/administrator setup form.",
+    "security_property": "Dynamic error text is HTML encoded before it is emitted into the setup page.",
+    "first_run_boundary": "The page is pre-authentication installation UI and does not operate on an already-selected tenant resource."
+  },
+  "laravel_adaptation": {
+    "rendering_service": "App\\Services\\DatabaseSetupPageService::render",
+    "status_source": "App\\Services\\DatabaseSetupReadService::status",
+    "view": "resources/views/setup.blade.php",
+    "read_consumer": "App\\Http\\Controllers\\SetupReadController",
+    "failure_consumer": "App\\Http\\Controllers\\SetupMutationController",
+    "database_credentials": "deployment-owned; no database password or connection string is accepted as setup page-model input",
+    "error_encoding": "Blade escaped interpolation; operation-specific acceptance proves raw script markup is not emitted",
+    "failure_message": "bounded generic operator-safe message; caught exception details are reported server-side and are not rendered",
+    "completion_semantics": "completed installations continue to redirect away from /setup rather than render first-run UI"
+  },
+  "acceptance": {
+    "test_file": "backend/tests/Feature/SetupRenderServiceTerminalityTest.php",
+    "tests": [
+      "test_canonical_render_page_operation_is_the_setup_rendering_service_contract",
+      "test_page_service_renders_authoritative_setup_state_and_real_submit_contract",
+      "test_page_service_escapes_failure_text_and_never_reads_database_credentials_into_the_page",
+      "test_setup_get_is_composed_through_the_page_service_and_completed_installations_still_redirect"
+    ],
+    "existing_regression_coverage": [
+      "SetupMutationTerminalityTest",
+      "PlatformSetupReadTerminalityTest"
+    ]
+  },
+  "implementation_snapshot_sha": "b72684ebadd4166e8ebd37c924b2bcd633d9b735",
+  "route_api_denominator_delta": 0,
+  "generated_reconciliation_modified": false,
+  "scope": {
+    "allowed": "variants/laravel-aiwmweb/**",
+    "react_modified": false,
+    "aspnet_modified": false,
+    "parallel_site_details_modified": false
+  },
+  "current_pr_ci": "pending"
+}
