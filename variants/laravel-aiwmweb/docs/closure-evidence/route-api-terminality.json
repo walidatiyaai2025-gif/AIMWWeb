@@ -2,20 +2,21 @@
   "schema_version": 2,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "route-api-legacy-notification-convergence",
+  "wave": "route-api-site-details-convergence",
   "integration_base": "lead/laravel-aiwmweb-final-convergence",
   "integration_base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-  "implementation_branch": "worker/laravel-aiwmweb-legacy-notification-api-terminality",
-  "implementation_snapshot_sha": "e159ce6b09a66a7679f1f55ae2874c021c9e11d2",
+  "implementation_branch": "worker/laravel-aiwmweb-site-details-route-terminality",
+  "implementation_snapshot_sha": "f1db97a6e7a3e286dcdd5d22a4864b49f17b3b7a",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
     "pending_apis_found": 8,
-    "terminalized_by_implementation_snapshot": 34,
-    "still_pending_after_this_snapshot": 58,
+    "terminalized_by_implementation_snapshot": 35,
+    "still_pending_after_this_snapshot": 57,
     "generated_reconciliation_modified": false
   },
   "terminalized_by_domain": {
+    "ai": 1,
     "automation": 5,
     "backup": 2,
     "billing": 1,
@@ -48,6 +49,7 @@
     {"operation_id":"AIMW-COMM-A16719E105","source_route":"/sites/{SiteId:guid}/comments","canonical_route":"/tenants/{tenant}/sites/{site}/comments","proof":"tenant-scoped site lookup fails closed before redirecting to bound comments workspace"},
     {"operation_id":"AIMW-MEDI-8BADBE1261","source_route":"/sites/{SiteId:guid}/media","canonical_route":"/tenants/{tenant}/sites/{site}/media","proof":"tenant-scoped site lookup fails closed before redirecting to bound media workspace"},
     {"operation_id":"AIMW-TAXO-CDC6948A06","source_route":"/sites/{SiteId:guid}/taxonomy","canonical_route":"/tenants/{tenant}/sites/{site}/taxonomy","proof":"tenant-scoped site lookup fails closed before redirecting to bound taxonomy workspace"},
+    {"operation_id":"AIMW-AI-C37F405767","source_route":"/sites/{Id:guid}","canonical_route":"/tenants/{tenant}/sites/{site}","proof":"explicit guarded site-details workspace performs tenant-scoped Site lookup before rendering, binds the site into session context, publishes sites.detail.<id> to the real SiteManagementController::show endpoint, and foreign site ids fail closed"},
     {"operation_id":"AIMW-CONT-5D18F49928","source_route":"/module/reports","canonical_route":"/tenants/{tenant}/module/reports","proof":"explicit reports workspace + GET collection adapter over persisted report operations"},
     {"operation_id":"AIMW-CONT-8140D785B5","source_route":"/reports","canonical_route":"/tenants/{tenant}/reports","proof":"authorized alias to guarded reports workspace backed by GET report collection adapter"},
     {"operation_id":"AIMW-CONT-9B87A269F3","source_route":"/site-operations","canonical_route":"/tenants/{tenant}/site-operations","proof":"explicit guarded workspace + tenant-scoped site operation history adapter"},
@@ -72,10 +74,15 @@
       "RouteApiTerminalityInventoryTest::test_site_binding_fails_closed_for_missing_ambiguous_foreign_invalid_and_stale_sites",
       "RouteApiTerminalityInventoryTest::test_site_specific_aliases_validate_site_ownership_before_redirecting"
     ],
+    "site_details_route_tests": [
+      "SiteDetailsRouteTerminalityTest::test_site_details_route_is_explicit_guarded_and_precedes_spa_fallback",
+      "SiteDetailsRouteTerminalityTest::test_opening_site_details_binds_real_detail_api_for_the_same_tenant_site",
+      "SiteDetailsRouteTerminalityTest::test_site_details_fails_closed_for_foreign_site_and_missing_site_view_permission"
+    ],
     "response_semantics_test": "RouteApiTerminalityInventoryTest::test_second_pass_read_routes_use_real_services_and_preserve_response_semantics",
     "authorization_test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions",
     "platform_read_api_tests": [
-      "PlatformReadApiTerminalityTest::test_canonical_platform_reads_require_authentication_and_resolve_to_real_controller",
+      "PlatformReadApiTerminalityTest::test_canonical_platform_reads_require_authentication_and_resolves_to_real_controller",
       "PlatformReadApiTerminalityTest::test_single_tenant_build_and_dashboard_return_real_scoped_state",
       "PlatformReadApiTerminalityTest::test_multi_tenant_requests_fail_closed_until_explicit_tenant_is_selected",
       "PlatformReadApiTerminalityTest::test_platform_reads_require_the_operations_read_equivalent_permission"
@@ -87,14 +94,16 @@
       "LegacyNotificationApiTerminalityTest::test_legacy_notification_read_requires_operations_read_equivalent_permission"
     ],
     "parent_snapshot_ci": {
-      "snapshot": "9598df59c4da31669e4ea309b700e5137229a2e7",
+      "snapshot": "a40dbbfac23b3ad19e608512698a24297187e308",
       "laravel_aiwmweb_acceptance": "success",
       "laravel_aiwmweb_cross_domain_security": "success",
       "pr_plan_link": "success",
       "sqlite_full_suite": "success",
       "mysql_full_suite": "success",
       "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
       "wordpress_real_rest": "success",
+      "frontend": "success",
       "production_compose_smoke": "success"
     },
     "current_pr_ci": "pending"
@@ -103,15 +112,16 @@
     "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
     "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-OPER-ABB41FC891", "AIMW-PLAT-18A8EE0324"],
     "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
-    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 58 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 57 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
   },
   "notes": [
-    "This evidence cumulatively converges the 31 route operations from PR #284/#287, two canonical Platform reads from PR #288, and the legacy notification read from the current wave.",
+    "This evidence cumulatively converges the prior 34 terminal Route/API operations plus the canonical site-details route from the current wave.",
     "No visible_control row is claimed by this evidence file.",
     "No generated canonical reconciliation output is edited by this worker.",
+    "The source GUID route is adapted to the Laravel tenant-owned integer Site key already used consistently by the target variant; no cross-tenant identifier translation is performed.",
     "Tenant-less canonical APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector.",
     "The legacy notification userId query parameter is compatibility-only and is never an ownership selector.",
     "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot e159ce6b09a66a7679f1f55ae2874c021c9e11d2; later implementation movement requires revalidation."
+    "Counts are evidence-backed for implementation snapshot f1db97a6e7a3e286dcdd5d22a4864b49f17b3b7a; later implementation movement requires revalidation."
   ]
 }
