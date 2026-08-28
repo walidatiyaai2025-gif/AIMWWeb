@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SetupMutationController;
+use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Tenancy\TenantContext;
@@ -49,7 +50,7 @@ class SetupMutationTerminalityTest extends TestCase
         $tenant = DB::table('tenants')->where('id', $membership->tenant_id)->first();
         $this->assertNotNull($tenant);
 
-        app(TenantContext::class)->activate(\App\Models\Tenant::query()->findOrFail($membership->tenant_id), $membership);
+        app(TenantContext::class)->activate(Tenant::query()->findOrFail($membership->tenant_id), $membership);
         $role = $membership->roles()->where('name', 'Owner')->sole();
         $this->assertGreaterThan(0, $role->permissions()->count());
         app(TenantContext::class)->forget();
