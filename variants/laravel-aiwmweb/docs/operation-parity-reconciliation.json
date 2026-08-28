@@ -13,17 +13,18 @@
     "frontend_placeholder_policy": "not_counted",
     "unpushed_work_policy": "not_counted",
     "percentage_formula": "(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL) / TOTAL * 100",
-    "blocked_progress_policy": "not_counted"
+    "blocked_progress_policy": "not_counted",
+    "explicit_route_policy": "route rows remain pending unless an exact pushed source declares operation_evidence and the generator verifies route, auth/tenant action, test, and evidence links"
   },
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 347,
-    "pending": 584,
+    "adapted": 358,
+    "pending": 573,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 347,
-    "overall_parity_percent": 37.27
+    "terminal": 358,
+    "overall_parity_percent": 38.45
   },
   "visible_controls": {
     "total": 446,
@@ -66,12 +67,12 @@
     "backup": {
       "total": 14,
       "ported": 0,
-      "adapted": 12,
-      "pending": 2,
+      "adapted": 14,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 12,
-      "percent": 85.71
+      "terminal": 14,
+      "percent": 100.0
     },
     "billing": {
       "total": 178,
@@ -96,22 +97,22 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 2,
-      "pending": 162,
+      "adapted": 9,
+      "pending": 155,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 2,
-      "percent": 1.22
+      "terminal": 9,
+      "percent": 5.49
     },
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 54,
-      "pending": 28,
+      "adapted": 56,
+      "pending": 26,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 54,
-      "percent": 65.85
+      "terminal": 56,
+      "percent": 68.29
     },
     "identity": {
       "total": 7,
@@ -221,14 +222,9 @@
       "reason": "Handoff only; explicitly superseded by the Email implementation already integrated in PR #277 via PR #276."
     },
     {
-      "label": "PR #284 route/API terminality",
-      "sha": "e15d9f36bff0a43d28e47f498b0e6429aa313175",
-      "reason": "Pushed and reviewed but not a finished closure input: exact-head Laravel Acceptance run 33161143947 fails both SQLite and MySQL full PHPUnit. Current failures include a nonexistent Illuminate\\Routing\\Route::getDefaults() call, a canonical controller-action mismatch, and 500 responses on guarded workspace routes."
-    },
-    {
       "label": "PR #285 action discovery contract",
-      "sha": "97ab06332cb99ca14e0733913b6e9dd3133fe61c",
-      "reason": "Pushed and reviewed but not a finished closure input: exact-head Laravel Acceptance run 33160696220 fails both SQLite and MySQL ActionContractClosureTest because expected canonical action metadata resolves to null. Its proposed visible-control candidates are therefore not counted."
+      "sha": "cea89181af0c21143454ce8aad420d214eb7947b",
+      "reason": "Current exact head is pushed and green, but it overlaps PR #278 frontend reconciliation architecture and PR #284 routes/web.php. This focused PR #284 refresh does not make a semantic architecture choice between those implementations; PR #285 therefore receives no parity credit here."
     },
     {
       "label": "worker/laravel-aiwmweb-content-sync-final-closure",
@@ -6513,21 +6509,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": true,
       "connector_scope": "advanced-site-operations",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-BACK-979DEF54FA; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-BACK-979DEF54FA",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -6544,21 +6550,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": true,
       "connector_scope": "advanced-site-operations",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-BACK-66BFA49775; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-BACK-66BFA49775",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -13732,21 +13748,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-BB5B32880A; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-BB5B32880A",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -15127,21 +15153,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-9B8574AA90; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-9B8574AA90",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -15189,21 +15225,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-DF483546DA; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-DF483546DA",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -15406,21 +15452,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-1DA83B9262; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-1DA83B9262",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -16708,21 +16764,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-FBD0368CAA; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-FBD0368CAA",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -16801,21 +16867,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-E14274269E; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-E14274269E",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -17514,21 +17590,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-CONT-D828690844; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-D828690844",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -19331,21 +19417,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-EMAI-78352CD34E; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-78352CD34E",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -19455,21 +19551,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+      "evidence": "PR #284 route/API terminality@826da069737793de9d2aea9ec8daf2c60f1c7d21: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-contract:AIMW-EMAI-2E95AF6C05; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "PR #284 route/API terminality",
+        "source_sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-2E95AF6C05",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php"
+        ]
       }
     },
     {
@@ -32559,12 +32665,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 0,
-      "pending": 84,
+      "adapted": 11,
+      "pending": 73,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
+      "terminal": 11,
+      "percent": 13.1
     },
     "service": {
       "total": 349,
@@ -32704,10 +32810,7 @@
       "AIMW-AUTO-FE8B6EAC62",
       "AIMW-AUTO-FF4812A204"
     ],
-    "backup": [
-      "AIMW-BACK-66BFA49775",
-      "AIMW-BACK-979DEF54FA"
-    ],
+    "backup": [],
     "billing": [
       "AIMW-BILL-07134347F9",
       "AIMW-BILL-07A0F6427B",
@@ -32836,7 +32939,6 @@
       "AIMW-CONT-16D4AD8DC8",
       "AIMW-CONT-1A08B49164",
       "AIMW-CONT-1C2443112C",
-      "AIMW-CONT-1DA83B9262",
       "AIMW-CONT-247E791DA7",
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2752ED9351",
@@ -32922,7 +33024,6 @@
       "AIMW-CONT-966F49CDAE",
       "AIMW-CONT-97AD37042A",
       "AIMW-CONT-98918A6C27",
-      "AIMW-CONT-9B8574AA90",
       "AIMW-CONT-9B87A269F3",
       "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9CF12067E6",
@@ -32943,7 +33044,6 @@
       "AIMW-CONT-B6BB292F85",
       "AIMW-CONT-B9E6EFF3DF",
       "AIMW-CONT-BB31987A53",
-      "AIMW-CONT-BB5B32880A",
       "AIMW-CONT-BCAD1E3A49",
       "AIMW-CONT-BCE1211CE3",
       "AIMW-CONT-BF5F72F4F9",
@@ -32959,12 +33059,9 @@
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
       "AIMW-CONT-D76D83682F",
-      "AIMW-CONT-D828690844",
       "AIMW-CONT-DD56664FDA",
-      "AIMW-CONT-DF483546DA",
       "AIMW-CONT-DF6FFA9D87",
       "AIMW-CONT-DF8B12B6DE",
-      "AIMW-CONT-E14274269E",
       "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
       "AIMW-CONT-E38ADF8481",
@@ -32985,7 +33082,6 @@
       "AIMW-CONT-F9A87DD98C",
       "AIMW-CONT-FB7F9189C0",
       "AIMW-CONT-FBA95BDC1D",
-      "AIMW-CONT-FBD0368CAA",
       "AIMW-CONT-FE1F15935E",
       "AIMW-CONT-FE6EE5740C"
     ],
@@ -32997,12 +33093,10 @@
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2D94EFDD53",
       "AIMW-EMAI-2E59E39808",
-      "AIMW-EMAI-2E95AF6C05",
       "AIMW-EMAI-470599356B",
       "AIMW-EMAI-54E7EEFB15",
       "AIMW-EMAI-62B0B8EE4C",
       "AIMW-EMAI-77C637E3E3",
-      "AIMW-EMAI-78352CD34E",
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-7F2D7C5921",
@@ -33235,7 +33329,31 @@
           "sync",
           "taxonomy"
         ],
-        "supporting_only": false
+        "supporting_only": false,
+        "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "PR #284 route/API terminality",
+        "sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+        "domains": [
+          "backup",
+          "content",
+          "email"
+        ],
+        "supporting_only": false,
+        "explicit_operation_evidence_ids": [
+          "AIMW-BACK-66BFA49775",
+          "AIMW-BACK-979DEF54FA",
+          "AIMW-CONT-1DA83B9262",
+          "AIMW-CONT-9B8574AA90",
+          "AIMW-CONT-BB5B32880A",
+          "AIMW-CONT-D828690844",
+          "AIMW-CONT-DF483546DA",
+          "AIMW-CONT-E14274269E",
+          "AIMW-CONT-FBD0368CAA",
+          "AIMW-EMAI-2E95AF6C05",
+          "AIMW-EMAI-78352CD34E"
+        ]
       }
     ]
   },
@@ -33251,9 +33369,23 @@
     "terminal_evidence_references_exist": true,
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
+      "826da069737793de9d2aea9ec8daf2c60f1c7d21",
       "d289f546484aba12f8c2aa2837da3f4bd6da52ad"
     ],
     "unpushed_sources_counted": [],
+    "explicit_route_contract_terminals": [
+      "AIMW-BACK-66BFA49775",
+      "AIMW-BACK-979DEF54FA",
+      "AIMW-CONT-1DA83B9262",
+      "AIMW-CONT-9B8574AA90",
+      "AIMW-CONT-BB5B32880A",
+      "AIMW-CONT-D828690844",
+      "AIMW-CONT-DF483546DA",
+      "AIMW-CONT-E14274269E",
+      "AIMW-CONT-FBD0368CAA",
+      "AIMW-EMAI-2E95AF6C05",
+      "AIMW-EMAI-78352CD34E"
+    ],
     "route_or_visible_placeholder_terminals": [],
     "frontend_placeholders_not_counted": true,
     "errors": [],
