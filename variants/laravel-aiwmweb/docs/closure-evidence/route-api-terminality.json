@@ -2,17 +2,17 @@
   "schema_version": 2,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "route-api-platform-read-convergence",
+  "wave": "route-api-legacy-notification-convergence",
   "integration_base": "lead/laravel-aiwmweb-final-convergence",
   "integration_base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-  "implementation_branch": "worker/laravel-aiwmweb-platform-read-api-terminality",
-  "implementation_snapshot_sha": "83689007f252a96525b8eb735bb9a93160219e05",
+  "implementation_branch": "worker/laravel-aiwmweb-legacy-notification-api-terminality",
+  "implementation_snapshot_sha": "e159ce6b09a66a7679f1f55ae2874c021c9e11d2",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
     "pending_apis_found": 8,
-    "terminalized_by_implementation_snapshot": 33,
-    "still_pending_after_this_snapshot": 59,
+    "terminalized_by_implementation_snapshot": 34,
+    "still_pending_after_this_snapshot": 58,
     "generated_reconciliation_modified": false
   },
   "terminalized_by_domain": {
@@ -21,7 +21,7 @@
     "billing": 1,
     "comments": 2,
     "content": 14,
-    "email": 2,
+    "email": 3,
     "media": 2,
     "platform": 2,
     "sync": 1,
@@ -60,7 +60,8 @@
     {"operation_id":"AIMW-BILL-2FFFC55BAB","source_route":"/account/billing","canonical_route":"/tenants/{tenant}/account/billing","proof":"explicit guarded billing workspace + GET collection-shaped billing overview adapter for subscription, entitlements and usage"},
     {"operation_id":"AIMW-CONT-FB7F9189C0","source_route":"/account/profile","canonical_route":"/tenants/{tenant}/account/profile","proof":"explicit guarded account workspace + current tenant membership profile adapter"},
     {"operation_id":"AIMW-PLAT-A91A2B0B11","source_route":"/api/build","canonical_route":"/api/build","proof":"authenticated PlatformReadController build metadata response with execution.view authorization and fail-closed tenant selection"},
-    {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"}
+    {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"},
+    {"operation_id":"AIMW-EMAI-2D94EFDD53","source_route":"/api/notifications","canonical_route":"/api/notifications","proof":"authenticated legacy notification adapter ignores caller userId, enforces execution.view, binds a safe active tenant and returns only persisted current-user notifications"}
   ],
   "acceptance_evidence": {
     "inventory_test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows",
@@ -79,27 +80,38 @@
       "PlatformReadApiTerminalityTest::test_multi_tenant_requests_fail_closed_until_explicit_tenant_is_selected",
       "PlatformReadApiTerminalityTest::test_platform_reads_require_the_operations_read_equivalent_permission"
     ],
+    "legacy_notification_api_tests": [
+      "LegacyNotificationApiTerminalityTest::test_legacy_notification_read_requires_auth_and_resolves_to_real_controller",
+      "LegacyNotificationApiTerminalityTest::test_caller_supplied_user_id_is_ignored_and_filters_apply_to_current_user_only",
+      "LegacyNotificationApiTerminalityTest::test_multi_tenant_legacy_reads_fail_closed_and_explicit_selection_is_isolated",
+      "LegacyNotificationApiTerminalityTest::test_legacy_notification_read_requires_operations_read_equivalent_permission"
+    ],
     "parent_snapshot_ci": {
-      "snapshot": "81e2dc06ae72e1277b5af0617e19941ce07d48ce",
+      "snapshot": "9598df59c4da31669e4ea309b700e5137229a2e7",
       "laravel_aiwmweb_acceptance": "success",
       "laravel_aiwmweb_cross_domain_security": "success",
       "pr_plan_link": "success",
+      "sqlite_full_suite": "success",
+      "mysql_full_suite": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_real_rest": "success",
       "production_compose_smoke": "success"
     },
     "current_pr_ci": "pending"
   },
   "remaining_blockers": {
     "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
-    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-EMAI-2D94EFDD53", "AIMW-OPER-ABB41FC891", "AIMW-PLAT-18A8EE0324"],
+    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-OPER-ABB41FC891", "AIMW-PLAT-18A8EE0324"],
     "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
-    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 59 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 58 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
   },
   "notes": [
-    "This evidence cumulatively converges the 31 route operations from PR #284/#287 plus the two canonical Platform read APIs implemented by the current wave.",
+    "This evidence cumulatively converges the 31 route operations from PR #284/#287, two canonical Platform reads from PR #288, and the legacy notification read from the current wave.",
     "No visible_control row is claimed by this evidence file.",
     "No generated canonical reconciliation output is edited by this worker.",
-    "Tenant-less canonical Platform APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector.",
+    "Tenant-less canonical APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector.",
+    "The legacy notification userId query parameter is compatibility-only and is never an ownership selector.",
     "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot 83689007f252a96525b8eb735bb9a93160219e05; later implementation movement requires revalidation."
+    "Counts are evidence-backed for implementation snapshot e159ce6b09a66a7679f1f55ae2874c021c9e11d2; later implementation movement requires revalidation."
   ]
 }
