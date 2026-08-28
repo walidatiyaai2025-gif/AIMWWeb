@@ -6,11 +6,12 @@ use Tests\TestCase;
 
 class RouteApiEvidenceConvergenceTest extends TestCase
 {
-    private const IMPLEMENTATION_SNAPSHOT = '83689007f252a96525b8eb735bb9a93160219e05';
+    private const IMPLEMENTATION_SNAPSHOT = '2a555420d96e520c8d740222d9a45e52343cf888';
 
     private const TENANTLESS_CANONICAL_APIS = [
         'AIMW-PLAT-A91A2B0B11' => '/api/build',
         'AIMW-PLAT-FAC7505B26' => '/api/dashboard',
+        'AIMW-PLAT-18A8EE0324' => '/setup',
     ];
 
     private const CLAIMED_OPERATION_IDS = [
@@ -47,9 +48,10 @@ class RouteApiEvidenceConvergenceTest extends TestCase
         'AIMW-CONT-FB7F9189C0',
         'AIMW-PLAT-A91A2B0B11',
         'AIMW-PLAT-FAC7505B26',
+        'AIMW-PLAT-18A8EE0324',
     ];
 
-    public function test_route_api_evidence_matches_the_live_33_operation_implementation_snapshot(): void
+    public function test_route_api_evidence_matches_the_live_34_operation_implementation_snapshot(): void
     {
         $evidence = $this->evidence();
 
@@ -58,14 +60,14 @@ class RouteApiEvidenceConvergenceTest extends TestCase
         $this->assertSame(92, $evidence['inventory']['pending_route_api_rows_found']);
         $this->assertSame(84, $evidence['inventory']['pending_routes_found']);
         $this->assertSame(8, $evidence['inventory']['pending_apis_found']);
-        $this->assertSame(33, $evidence['inventory']['terminalized_by_implementation_snapshot']);
-        $this->assertSame(59, $evidence['inventory']['still_pending_after_this_snapshot']);
+        $this->assertSame(34, $evidence['inventory']['terminalized_by_implementation_snapshot']);
+        $this->assertSame(58, $evidence['inventory']['still_pending_after_this_snapshot']);
 
         $claimed = array_column($evidence['operations'], 'operation_id');
         $this->assertSame(self::CLAIMED_OPERATION_IDS, $claimed);
-        $this->assertCount(33, $claimed);
-        $this->assertCount(33, array_unique($claimed));
-        $this->assertSame(33, array_sum($evidence['terminalized_by_domain']));
+        $this->assertCount(34, $claimed);
+        $this->assertCount(34, array_unique($claimed));
+        $this->assertSame(34, array_sum($evidence['terminalized_by_domain']));
     }
 
     public function test_claimed_operations_are_not_reintroduced_as_blockers(): void
