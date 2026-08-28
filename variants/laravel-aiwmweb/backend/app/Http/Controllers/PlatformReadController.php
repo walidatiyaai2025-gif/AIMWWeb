@@ -8,7 +8,6 @@ use App\Models\Execution;
 use App\Models\MediaItem;
 use App\Models\Site;
 use App\Models\TenantMembership;
-use App\Operations\OperationsControlPlaneService;
 use App\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +19,6 @@ final class PlatformReadController extends Controller
     public function __construct(
         private readonly TenantContext $context,
         private readonly TenantAuthorizer $authorizer,
-        private readonly OperationsControlPlaneService $operations,
     ) {}
 
     public function build(Request $request): JsonResponse
@@ -43,14 +41,12 @@ final class PlatformReadController extends Controller
                 $commit = substr($commit, 0, 12);
             }
 
-            $buildTime = $this->buildTimeUtc();
-
             return response()->json([
                 'version' => $version,
                 'informationalVersion' => $informational,
                 'branch' => $branch,
                 'commit' => $commit,
-                'buildTimeUtc' => $buildTime,
+                'buildTimeUtc' => $this->buildTimeUtc(),
                 'assemblyName' => (string) config('app.name', 'Laravel AIWMWeb'),
             ]);
         });
