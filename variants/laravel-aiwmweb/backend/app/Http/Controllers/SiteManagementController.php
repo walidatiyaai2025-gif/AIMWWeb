@@ -34,9 +34,10 @@ final class SiteManagementController extends Controller
         return response()->json(Site::query()->create($data), 201);
     }
 
-    public function show(int|string $site, TenantAuthorizer $auth, TenantContext $context): JsonResponse
+    public function show(string $tenant, int|string $site, TenantAuthorizer $auth, TenantContext $context): JsonResponse
     {
         $auth->authorize('tenant.view');
+        abort_unless($tenant === $context->tenant()->slug, 404);
         abort_unless(is_int($site) || ctype_digit($site), 404);
 
         $siteId = (int) $site;
