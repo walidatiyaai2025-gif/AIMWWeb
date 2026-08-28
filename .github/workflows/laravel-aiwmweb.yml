@@ -408,7 +408,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          # Match the supported disposable/production WordPress runtime image
+          # (wordpress:7.0.4-php8.3-apache). Laravel PHP 8.4 compatibility is
+          # independently enforced by SQLite/MySQL/Redis acceptance jobs above.
+          php-version: '8.3'
           extensions: mysqli, curl
           coverage: none
       - name: Preserve merged real WordPress REST acceptance gate
