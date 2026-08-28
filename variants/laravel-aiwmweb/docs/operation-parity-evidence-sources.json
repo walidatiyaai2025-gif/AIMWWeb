@@ -2,15 +2,31 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "captured_at_utc": "2026-08-28T00:00:00Z",
+  "previous_reconciliation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
   "countable_sources": [
     {
-      "label": "Final composed Laravel AIWMWeb candidate",
-      "sha": "86c39dc90bbd6374a1ed1c814d7f8895255770d0",
+      "label": "Composed closure rehearsal implementation",
+      "sha": "d289f546484aba12f8c2aa2837da3f4bd6da52ad",
+      "observed_pr_head": "d289f546484aba12f8c2aa2837da3f4bd6da52ad",
       "domains": [
-        "ai", "approvals", "automation", "backup", "billing", "comments",
-        "content", "email", "identity", "media", "operations", "platform",
-        "reports", "seo", "settings", "sites", "sync", "taxonomy"
+        "ai",
+        "approvals",
+        "automation",
+        "backup",
+        "billing",
+        "comments",
+        "content",
+        "email",
+        "identity",
+        "media",
+        "operations",
+        "platform",
+        "reports",
+        "seo",
+        "settings",
+        "sites",
+        "sync",
+        "taxonomy"
       ]
     }
   ],
@@ -18,7 +34,21 @@
     {
       "label": "PR #268 email integration handoff",
       "sha": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
-      "reason": "Handoff only; superseded by real Email implementation PR #276."
+      "reason": "Handoff only; explicitly superseded by the Email implementation already integrated in PR #277 via PR #276."
+    },
+    {
+      "label": "worker/laravel-aiwmweb-action-contract-closure",
+      "sha": "2354c1602dbf8d1ba4a2f1b42ee0089bee3cdcb8",
+      "reason": "Pushed but not a finished closure input: no PR and no exact-head CI; overlaps finished PR #278 and has no authoritative supersession relationship."
+    },
+    {
+      "label": "worker/laravel-aiwmweb-route-api-terminality",
+      "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+      "reason": "Branch has no delta from the canonical PR #277 head."
+    },
+    {
+      "label": "worker/laravel-aiwmweb-content-sync-final-closure",
+      "reason": "No pushed branch exists; unpushed work is not countable."
     }
   ],
   "known_composition_blockers": []
