@@ -255,6 +255,6 @@ final class ContentPlatformService
             return null;
         }
 
-return $value instanceof \DateTimeInterface ? Carbon::instance($value) : Carbon::parse($value, 'UTC');
+        return $value instanceof \DateTimeInterface ? Carbon::instance($value) : Carbon::parse($value, 'UTC');
     }
 }

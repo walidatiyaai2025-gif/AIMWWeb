@@ -41,7 +41,7 @@ class ContentPlatformIsolationTest extends TestCase
         $transfer = ContentTransfer::query()->create(['site_id' => 7, 'kind' => 'export']);
 
         $context->activate($tenantA);
-        foreach ([[ContentItem::class, $content->id], [ContentRevision::class, $revision->id], [MediaItem::class, $media->id], [Comment::class, $comment->id], [TaxonomyTerm::class, $term->id], [ContentSyncState::class, $sync->id], [ContentConflict::class, $conflict->id], [ContentTransfer::class, $transfer->id]] as [$class,$id]) {
+        foreach ([[ContentItem::class, $content->id], [ContentRevision::class, $revision->id], [MediaItem::class, $media->id], [Comment::class, $comment->id], [TaxonomyTerm::class, $term->id], [ContentSyncState::class, $sync->id], [ContentConflict::class, $conflict->id], [ContentTransfer::class, $transfer->id]] as [$class, $id]) {
             $this->assertNull($class::query()->find($id), "{$class} leaked across tenant scope");
         }
     }
@@ -130,7 +130,7 @@ final class FakeContentDriver implements ContentRemoteDriver
         return ['id' => 100, 'source_url' => 'https://example.test/'.$name];
     }
 
-    public function semantic(int $siteId,string $operation,array $payload = []): array
+    public function semantic(int $siteId, string $operation, array $payload = []): array
     {
         return [];
     }
