@@ -16,10 +16,9 @@ final class ActionContractRegistry
     public function contracts(Tenant $tenant, Collection|array $permissions, ?Site $site = null): array
     {
         $permissionNames = $permissions instanceof Collection ? $permissions->all() : $permissions;
-        $definitions = config('frontend_actions', []);
         $contracts = [];
 
-        foreach ($definitions as $key => $definition) {
+        foreach (config('frontend_actions', []) as $key => $definition) {
             $availability = ['state' => 'enabled', 'reason' => null];
             $permission = $definition['permission'] ?? null;
             $ownership = $definition['ownership'] ?? 'tenant';
@@ -66,6 +65,27 @@ final class ActionContractRegistry
         }
 
         return $contracts;
+    }
+
+    /** @return array<string, array{state:string, reason:?string}> */
+    public function capabilityStates(array $contracts): array
+    {
+        $states = [];
+        foreach (config('frontend_actions', []) as $actionKey => $definition) {
+            $availability = $contracts[$actionKey]['availability'] ?? ['state' => 'pending_integration', 'reason' => 'Action discovery is unavailable.'];
+            if (($availability['state'] ?? 'pending_integration') === 'enabled') {
+                continue;
+            }
+            $state = ($availability['state'] ?? '') === 'permission_denied' ? 'permission_denied' : 'pending_integration';
+            foreach ($definition['route_keys'] ?? [] as $routeKey) {
+                $states["{$routeKey}.{$actionKey}"] = [
+                    'state' => $state,
+                    'reason' => $availability['reason'] ?? 'The action is unavailable.',
+                ];
+            }
+        }
+
+        return $states;
     }
 
     /**
