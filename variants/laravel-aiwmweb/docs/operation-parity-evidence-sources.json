@@ -2,16 +2,53 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "captured_at_utc": "2026-08-28T00:00:00Z",
+  "previous_reconciliation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+  "captured_at_utc": "2026-08-28T09:27:41Z",
   "countable_sources": [
     {
       "label": "Final composed Laravel AIWMWeb candidate",
-      "sha": "86c39dc90bbd6374a1ed1c814d7f8895255770d0",
+      "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+      "observed_pr_head": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
       "domains": [
         "ai", "approvals", "automation", "backup", "billing", "comments",
         "content", "email", "identity", "media", "operations", "platform",
         "reports", "seo", "settings", "sites", "sync", "taxonomy"
       ]
+    },
+    {
+      "label": "PR #281 SEO final closure",
+      "sha": "a5ce70bee0cc013997b76278560bbe4a694e42bb",
+      "observed_pr_head": "d9255d6922d7afe7d8ab151d03e1274756481ca3",
+      "domains": ["seo"]
+    },
+    {
+      "label": "PR #278 visible-control reconciliation evidence",
+      "sha": "c43b11c3bea5e297d1a03c51a95aa08a35d0b72e",
+      "observed_pr_head": "c43b11c3bea5e297d1a03c51a95aa08a35d0b72e",
+      "domains": [
+        "ai", "approvals", "automation", "backup", "billing", "comments",
+        "content", "email", "identity", "media", "operations", "platform",
+        "reports", "seo", "settings", "sites", "sync", "taxonomy"
+      ],
+      "supporting_only": true
+    },
+    {
+      "label": "PR #279 platform-services closure evidence",
+      "sha": "40716fc16ae0d983dbb35c5d518e55655cb4d457",
+      "observed_pr_head": "9132df25a164ce12d82b324a8b90c87dbb4f4763",
+      "domains": ["billing", "ai", "approvals", "email", "identity", "automation", "settings", "platform"],
+      "supporting_only": true
+    },
+    {
+      "label": "PR #280 runtime acceptance evidence",
+      "sha": "75b314d68af253ee717b79f2379dd3b57fa839cd",
+      "observed_pr_head": "9887747a71f79b1387c9baca2f67cc5764540db9",
+      "domains": [
+        "ai", "approvals", "automation", "backup", "billing", "comments",
+        "content", "email", "identity", "media", "operations", "platform",
+        "reports", "seo", "settings", "sites", "sync", "taxonomy"
+      ],
+      "supporting_only": true
     }
   ],
   "excluded_sources": [
