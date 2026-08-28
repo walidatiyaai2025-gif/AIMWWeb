@@ -55,26 +55,30 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'sessions.manage', 'sessions.view',
     ];
 
-    public function test_live_reconciliation_has_expected_pending_inventory_and_only_real_rows_are_claimed(): void
+    public function test_composed_reconciliation_records_exact_route_closure_without_parallel_double_count(): void
     {
         $path = base_path('../docs/operation-parity-reconciliation.json');
         $this->assertFileExists($path);
         $payload = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+        $byId = collect($payload['operations'])->keyBy('operation_id');
 
-        $pending = collect($payload['operations'])
-            ->filter(fn (array $operation): bool => $operation['migration_state'] === 'PENDING')
-            ->filter(fn (array $operation): bool => in_array($operation['kind'], ['route', 'api'], true));
+        $this->assertCount(11, self::TERMINALIZED);
+        $this->assertSame([], array_values(array_intersect(
+            array_keys(self::TERMINALIZED),
+            ['AIMW-CONT-2F2E40D7F0', 'AIMW-CONT-270F69CE9A'],
+        )));
 
-        $this->assertCount(92, $pending);
-        $this->assertSame(84, $pending->where('kind', 'route')->count());
-        $this->assertSame(8, $pending->where('kind', 'api')->count());
-
-        $byId = $pending->keyBy('operation_id');
         foreach (self::TERMINALIZED as $operationId => $sourcePath) {
             $this->assertArrayHasKey($operationId, $byId);
-            $this->assertSame('route', $byId[$operationId]['kind']);
-            $this->assertSame($sourcePath, $byId[$operationId]['route_screen']);
-            $this->assertFalse((bool) $byId[$operationId]['mutation']);
+            $operation = $byId[$operationId];
+            $this->assertSame('route', $operation['kind']);
+            $this->assertSame($sourcePath, $operation['route_screen']);
+            $this->assertFalse((bool) $operation['mutation']);
+            $this->assertSame('ADAPTED', $operation['migration_state']);
+            $this->assertSame('variants/laravel-aiwmweb/backend/routes/web.php', $operation['laravel_destination']);
+            $this->assertSame('variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php', $operation['acceptance_test']);
+            $this->assertSame('826da069737793de9d2aea9ec8daf2c60f1c7d21', $operation['reconciliation']['source_sha']);
+            $this->assertSame('explicit_route_contract', $operation['reconciliation']['evidence_mode']);
         }
     }
 
