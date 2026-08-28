@@ -60,9 +60,10 @@ class SiteDetailsRouteTerminalityTest extends TestCase
 
         $context = $this->actingAs($user)->getJson('/tenants/alpha/context')->assertOk();
         $context->assertJsonPath('active_site.id', $site->id);
+        $api = $context->json('api');
         $this->assertSame(
             "/api/tenants/alpha/sites/{$site->id}",
-            $context->json('api.sites.detail.'.$site->id),
+            $api['sites.detail.'.$site->id] ?? null,
         );
 
         $backingRoute = Route::getRoutes()->match(Request::create("/api/tenants/alpha/sites/{$site->id}", 'GET'));
