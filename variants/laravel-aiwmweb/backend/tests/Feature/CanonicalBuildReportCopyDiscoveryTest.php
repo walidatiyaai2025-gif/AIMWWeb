@@ -14,23 +14,14 @@ final class CanonicalBuildReportCopyDiscoveryTest extends TestCase
 
         $target = 'AIMW-SYNC-68B372C9FE';
         $matches = [];
-        $statusCounts = [];
 
-        $walk = function (mixed $value) use (&$walk, &$matches, &$statusCounts, $target): void {
+        $walk = function (mixed $value) use (&$walk, &$matches, $target): void {
             if (! is_array($value)) {
                 return;
             }
 
             if (($value['operation_id'] ?? $value['operationId'] ?? $value['id'] ?? null) === $target) {
                 $matches[] = $value;
-            }
-
-            $status = $value['status'] ?? $value['state'] ?? null;
-            if (is_string($status)) {
-                $normalized = strtoupper($status);
-                if (in_array($normalized, ['PENDING', 'TERMINAL', 'TERMINALIZED', 'CLOSED', 'COMPLETE', 'COMPLETED'], true)) {
-                    $statusCounts[$normalized] = ($statusCounts[$normalized] ?? 0) + 1;
-                }
             }
 
             foreach ($value as $child) {
@@ -43,8 +34,8 @@ final class CanonicalBuildReportCopyDiscoveryTest extends TestCase
         throw new RuntimeException(json_encode([
             'target' => $target,
             'matches' => $matches,
-            'status_counts' => $statusCounts,
-            'top_level_keys' => array_keys($payload),
+            'totals' => $payload['totals'] ?? null,
+            'visible_controls' => $payload['visible_controls'] ?? null,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 }
