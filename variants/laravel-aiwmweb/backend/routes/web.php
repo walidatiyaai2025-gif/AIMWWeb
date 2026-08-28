@@ -1,6 +1,7 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
 use App\Models\Connector;
+use App\Models\Site;
 use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
@@ -97,7 +99,7 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
-    Route::get('/tenants/{tenant}/context', function () {
+    Route::get('/tenants/{tenant}/context', function (ActionContractRegistry $actionRegistry) {
         $context = app(TenantContext::class);
         app(TenantAuthorizer::class)->authorize('tenant.view');
 
@@ -107,7 +109,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $tenants = TenantMembership::query()->withoutGlobalScopes()->with('tenant:id,slug,name')
             ->where('user_id', request()->user()->getKey())->where('status', 'active')->get()
             ->pluck('tenant')->filter()->unique('id')->sortBy('name')->values()
-            ->map(fn ($tenant) => ['slug' => $tenant->slug, 'name' => $tenant->name]);
+            ->map(fn ($tenant) => ['id' => (int) $tenant->id, 'slug' => $tenant->slug, 'name' => $tenant->name]);
         $connectors = Connector::query()->get()->map(fn (Connector $connector) => [
             'key' => (string) $connector->identity,
             'state' => $connector->revoked_at ? 'disconnected' : ($connector->verified_at ? 'connected' : 'unknown'),
@@ -115,24 +117,28 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'protocol' => $connector->protocol_version,
             'reason' => $connector->revoked_at ? 'revoked' : null,
         ])->values();
-        $tenant = $context->tenant()->slug;
+        $tenantModel = $context->tenant();
+        $tenant = $tenantModel->slug;
+        $site = request()->has('site') ? Site::query()->findOrFail(request()->integer('site')) : null;
+        $siteToken = $site ? (string) $site->id : '{site}';
 
         return response()->json([
             'user' => ['id' => request()->user()->getKey(), 'name' => request()->user()->name, 'email' => request()->user()->email],
-            'tenant' => ['slug' => $context->tenant()->slug, 'name' => $context->tenant()->name],
+            'tenant' => ['id' => (int) $tenantModel->id, 'slug' => $tenantModel->slug, 'name' => $tenantModel->name],
             'tenants' => $tenants,
+            'active_site' => $site ? ['id' => (int) $site->id, 'name' => (string) $site->name] : null,
             'permissions' => $permissions,
             'connectors' => $connectors,
             'capabilities' => (object) [],
             'api' => [
                 'sites' => "/api/tenants/{$tenant}/sites",
-                'posts' => "/api/v1/tenants/{$tenant}/sites/{site}/content/post",
-                'pages' => "/api/v1/tenants/{$tenant}/sites/{site}/content/page",
-                'media' => "/api/v1/tenants/{$tenant}/sites/{site}/media",
-                'comments' => "/api/v1/tenants/{$tenant}/sites/{site}/comments",
-                'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{site}/taxonomy",
-                'sync' => "/api/v1/tenants/{$tenant}/sites/{site}/sync",
-                'seo-audit' => "/api/tenants/{$tenant}/sites/{site}/seo/audits",
+                'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/content/post",
+                'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/content/page",
+                'media' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/media",
+                'comments' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/comments",
+                'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/taxonomy",
+                'sync' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/sync",
+                'seo-audit' => "/api/tenants/{$tenant}/sites/{$siteToken}/seo/audits",
                 'operations' => "/tenants/{$tenant}/admin/operations",
                 'notifications' => "/api/v1/tenants/{$tenant}/notifications",
                 'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
@@ -145,7 +151,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
                 'roles' => "/tenants/{$tenant}/admin/roles",
                 'sessions' => "/tenants/{$tenant}/admin/sessions",
             ],
-            'actions' => (object) [],
+            'actions' => $actionRegistry->contracts($tenantModel, $permissions, $site),
         ]);
     });
 
