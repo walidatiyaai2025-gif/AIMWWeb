@@ -6,7 +6,7 @@
   "integration_base": "worker/laravel-aiwmweb-platform-read-api-terminality",
   "integration_base_sha": "9598df59c4da31669e4ea309b700e5137229a2e7",
   "implementation_branch": "codex/laravel-issue257-platform-api-contract-18a8ee",
-  "implementation_snapshot_sha": "05cea87bc2168b8714fc70aa0df79177b5b445ff",
+  "implementation_snapshot_sha": "f07cbf239c8df1de9ebd8f4e129a37868c1c4ddf",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
@@ -109,6 +109,6 @@
     "The setup read is intentionally tenantless and anonymous, matching source first-run semantics, but never renders database credentials or connection strings.",
     "Setup readiness fails closed when the database is unreachable, the migrations ledger is absent, or any repository migration is not recorded as run.",
     "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot 05cea87bc2168b8714fc70aa0df79177b5b445ff; later implementation movement requires revalidation."
+    "Counts are evidence-backed for implementation snapshot f07cbf239c8df1de9ebd8f4e129a37868c1c4ddf; later implementation movement requires revalidation."
   ]
 }
