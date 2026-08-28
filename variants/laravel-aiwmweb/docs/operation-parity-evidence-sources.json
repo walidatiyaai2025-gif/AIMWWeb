@@ -37,19 +37,30 @@
       "reason": "Handoff only; explicitly superseded by the Email implementation already integrated in PR #277 via PR #276."
     },
     {
-      "label": "worker/laravel-aiwmweb-action-contract-closure",
-      "sha": "2354c1602dbf8d1ba4a2f1b42ee0089bee3cdcb8",
-      "reason": "Pushed but not a finished closure input: no PR and no exact-head CI; overlaps finished PR #278 and has no authoritative supersession relationship."
+      "label": "PR #284 route/API terminality",
+      "sha": "e15d9f36bff0a43d28e47f498b0e6429aa313175",
+      "reason": "Pushed and reviewed but not a finished closure input: exact-head Laravel Acceptance run 33161143947 fails both SQLite and MySQL full PHPUnit. Current failures include a nonexistent Illuminate\\Routing\\Route::getDefaults() call, a canonical controller-action mismatch, and 500 responses on guarded workspace routes."
     },
     {
-      "label": "worker/laravel-aiwmweb-route-api-terminality",
-      "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-      "reason": "Branch has no delta from the canonical PR #277 head."
+      "label": "PR #285 action discovery contract",
+      "sha": "97ab06332cb99ca14e0733913b6e9dd3133fe61c",
+      "reason": "Pushed and reviewed but not a finished closure input: exact-head Laravel Acceptance run 33160696220 fails both SQLite and MySQL ActionContractClosureTest because expected canonical action metadata resolves to null. Its proposed visible-control candidates are therefore not counted."
     },
     {
       "label": "worker/laravel-aiwmweb-content-sync-final-closure",
       "reason": "No pushed branch exists; unpushed work is not countable."
     }
   ],
-  "known_composition_blockers": []
+  "known_composition_blockers": [
+    {
+      "source": "PR #284",
+      "classification": "UNFINISHED_INPUT",
+      "detail": "Route/API terminality worker exact-head acceptance is red on SQLite and MySQL."
+    },
+    {
+      "source": "PR #285",
+      "classification": "UNFINISHED_INPUT",
+      "detail": "ActionContract worker exact-head acceptance is red on SQLite and MySQL."
+    }
+  ]
 }
