@@ -62,7 +62,10 @@ class ApprovalsRouteTerminalityTest extends TestCase
         $this->actingAs($user)->get('/tenants/alpha/approvals')
             ->assertRedirect('/tenants/alpha/module/approvals');
 
-        $this->actingAs($user)->get('/tenants/alpha/module/approvals')->assertOk();
+        $frontend = file_get_contents(resource_path('js/core.ts'));
+        $this->assertStringContainsString("path: '/module/approvals'", $frontend);
+        $this->assertStringContainsString("apiKey: 'approvals'", $frontend);
+        $this->assertStringContainsString('component: ApprovalQueueRoute', $frontend);
 
         $this->actingAs($user)->getJson('/api/tenants/alpha/approvals')
             ->assertOk()
@@ -74,7 +77,7 @@ class ApprovalsRouteTerminalityTest extends TestCase
     public function test_guest_missing_permission_and_foreign_tenant_access_fail_closed(): void
     {
         $foreign = Tenant::query()->create(['name' => 'Foreign', 'slug' => 'foreign']);
-        $this->get('/tenants/'.$foreign->slug.'/approvals')->assertRedirect('/login');
+        $this->getJson('/tenants/'.$foreign->slug.'/approvals')->assertUnauthorized();
 
         $limited = User::factory()->create();
         $this->membership($limited, 'limited', ['tenant.view']);
