@@ -1,3 +1,17 @@
+@php
+    $buildReportPayload = [
+        'assemblyName' => $build['assemblyName'],
+        'version' => $build['version'],
+        'informationalVersion' => $build['informationalVersion'],
+        'branch' => $build['branch'],
+        'commit' => $build['commit'],
+        'buildTimeUtc' => $build['buildTimeUtc'],
+        'currentRelease' => $currentRelease ? [
+            'title' => $currentRelease['title'] ?? '',
+            'changes' => $currentRelease['changes'] ?? [],
+        ] : null,
+    ];
+@endphp
 <!doctype html>
 <html lang="en">
 <head>
@@ -21,18 +35,7 @@
             </div>
         </section>
 
-        <script id="build-report-payload" type="application/json">@json([
-            'assemblyName' => $build['assemblyName'],
-            'version' => $build['version'],
-            'informationalVersion' => $build['informationalVersion'],
-            'branch' => $build['branch'],
-            'commit' => $build['commit'],
-            'buildTimeUtc' => $build['buildTimeUtc'],
-            'currentRelease' => $currentRelease ? [
-                'title' => $currentRelease['title'] ?? '',
-                'changes' => $currentRelease['changes'] ?? [],
-            ] : null,
-        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
+        <script id="build-report-payload" type="application/json">@json($buildReportPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
 
         <section aria-labelledby="build-information">
             <h2 id="build-information">Build information</h2>
