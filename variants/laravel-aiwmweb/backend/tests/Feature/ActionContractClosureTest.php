@@ -29,7 +29,7 @@ class ActionContractClosureTest extends TestCase
         }
     }
 
-    public function test_site_bound_action_is_enabled_only_for_a_site_owned_by_active_tenant(): void
+    public function test_site_bound_action_carries_owned_site_and_semantic_blocker(): void
     {
         $user = User::factory()->create();
         $alphaMembership = $this->tenantMembership($user, 'alpha', ['tenant.view', 'seo.view', 'seo.manage']);
@@ -43,7 +43,8 @@ class ActionContractClosureTest extends TestCase
             ->assertJsonPath('actions.seo.audit.run.site_id', $alphaSite->id)
             ->assertJsonPath('actions.seo.audit.run.permission', 'seo.manage')
             ->assertJsonPath('actions.seo.audit.run.endpoint', "/api/tenants/alpha/sites/{$alphaSite->id}/seo/audits")
-            ->assertJsonPath('actions.seo.audit.run.availability.state', 'enabled');
+            ->assertJsonPath('actions.seo.audit.run.availability.state', 'pending_integration')
+            ->assertJsonPath('actions.seo.audit.run.availability.reason', 'Canonical SEO audit execution is approval-required, but the current Laravel endpoint dispatches immediately.');
 
         $outsider = User::factory()->create();
         $betaMembership = $this->tenantMembership($outsider, 'beta', ['tenant.view', 'seo.manage']);
@@ -51,6 +52,7 @@ class ActionContractClosureTest extends TestCase
         $betaSite = $this->siteFor($beta, 'Beta Site');
 
         $this->actingAs($user)->getJson("/tenants/alpha/context?site={$betaSite->id}")->assertNotFound();
+        $this->actingAs($user)->postJson("/api/tenants/alpha/sites/{$betaSite->id}/seo/audits")->assertNotFound();
     }
 
     public function test_wrong_tenant_membership_cannot_be_mutated_and_permission_is_enforced(): void
