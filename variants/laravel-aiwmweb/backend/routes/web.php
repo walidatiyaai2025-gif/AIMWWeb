@@ -4,6 +4,7 @@ use App\Authorization\TenantAuthorizer;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
+use App\Http\Controllers\CanonicalWorkspaceRouteController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
@@ -189,6 +190,39 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::get('/reports/{report}', 'report');
     });
 });
+
+Route::prefix('/tenants/{tenant}')
+    ->middleware(['auth', 'tenant.context'])
+    ->controller(CanonicalWorkspaceRouteController::class)
+    ->group(function (): void {
+        Route::get('/sites', 'show')->defaults('workspace_permission', 'tenant.view')->name('canonical.workspace.sites');
+        Route::get('/module/posts', 'show')->defaults('workspace_permission', 'content.view')->name('canonical.workspace.posts');
+        Route::get('/module/pages', 'show')->defaults('workspace_permission', 'content.view')->name('canonical.workspace.pages');
+        Route::get('/module/media', 'show')->defaults('workspace_permission', 'content.view')->name('canonical.workspace.media');
+        Route::get('/module/comments', 'show')->defaults('workspace_permission', 'content.view')->name('canonical.workspace.comments');
+        Route::get('/module/taxonomy', 'show')->defaults('workspace_permission', 'content.view')->name('canonical.workspace.taxonomy');
+        Route::get('/module/sync', 'show')->defaults('workspace_permission', 'sync.view')->name('canonical.workspace.sync');
+        Route::get('/notifications', 'show')->defaults('workspace_permission', 'tenant.view')->name('canonical.workspace.notifications');
+        Route::get('/email/history', 'show')->defaults('workspace_permission', 'tenant.manage')->name('canonical.workspace.email-history');
+        Route::get('/module/backups', 'show')->defaults('workspace_permission', 'backup.manage')->name('canonical.workspace.backups');
+        Route::get('/account/billing', 'show')->defaults('workspace_permission', 'billing.view')->name('canonical.workspace.billing');
+        Route::get('/module/logs', 'show')->defaults('workspace_permission', 'operations.manage')->name('canonical.workspace.logs');
+        Route::get('/module/reports', 'show')->defaults('workspace_permission', 'reports.manage')->name('canonical.workspace.reports');
+        Route::get('/operations', 'show')->defaults('workspace_permission', 'operations.manage')->name('canonical.workspace.operations');
+
+        Route::get('/admin/users', 'show')->defaults('workspace_permission', 'tenant.view')->name('canonical.workspace.admin-users');
+        Route::get('/admin/roles', 'show')->defaults('workspace_permission', 'tenant.view')->name('canonical.workspace.admin-roles');
+        Route::get('/account/sessions', 'show')->defaults('workspace_permission', 'sessions.manage')->name('canonical.workspace.account-sessions');
+
+        Route::get('/admin/application-users', 'redirect')->defaults('workspace_permission', 'tenant.view')->defaults('workspace_target', '/admin/users')->name('canonical.alias.application-users');
+        Route::get('/admin/roles-permissions', 'redirect')->defaults('workspace_permission', 'tenant.view')->defaults('workspace_target', '/admin/roles')->name('canonical.alias.roles-permissions');
+        Route::get('/admin/sessions', 'redirect')->defaults('workspace_permission', 'sessions.manage')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.admin-sessions');
+        Route::get('/settings/sessions', 'redirect')->defaults('workspace_permission', 'sessions.manage')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.settings-sessions');
+        Route::get('/logs', 'redirect')->defaults('workspace_permission', 'operations.manage')->defaults('workspace_target', '/module/logs')->name('canonical.alias.logs');
+        Route::get('/reports', 'redirect')->defaults('workspace_permission', 'reports.manage')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
+        Route::get('/operations/hub', 'redirect')->defaults('workspace_permission', 'operations.manage')->defaults('workspace_target', '/operations')->name('canonical.alias.operations-hub');
+        Route::get('/backups', 'redirect')->defaults('workspace_permission', 'backup.manage')->defaults('workspace_target', '/module/backups')->name('canonical.alias.backups');
+    });
 
 Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn (string $tenant) => view('console', compact('tenant')));
 
