@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "integration_base": {
+    "branch": "lead/laravel-aiwmweb-final-convergence",
+    "pr": 277,
+    "base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6"
+  },
+  "implementation_head_before_evidence": "72fffa93d57ddd07f393a8f579e5767c8b0f7dab",
+  "registry": {
+    "path": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "canonical_source": "variants/laravel-aiwmweb/docs/capability-parity-ledger.json",
+    "mapping_policy": "Exact operation_id plus unique canonical fingerprint; fail closed on zero, duplicate, ambiguous, malformed or semantically incompatible mapping.",
+    "actions_mapped": 4,
+    "canonical_visible_controls_terminalized": 2
+  },
+  "terminalized_controls": [
+    {
+      "operation_id": "AIMW-SYNC-A9E956A4DA",
+      "canonical_kind": "visible_control",
+      "route_screen": "/sites",
+      "control": "sites.refresh / ReloadClickedAsync",
+      "api_destination": "GET /api/tenants/{tenant}/sites",
+      "permission": "tenant.view plus route-level sites.view",
+      "tenant_ownership": "Action discovery carries tenant_id and tenant_slug from active TenantContext; request endpoint is generated from that tenant and revalidated in prepareActionRequest.",
+      "site_ownership": "not site-owned",
+      "availability": "enabled only when route/action capability checks pass",
+      "reconciliation_behavior": "GET action completes through mutateThenReconcile and the active workspace query refetch must succeed before visible success.",
+      "tests": [
+        "resources/js/__tests__/action-contract.test.ts :: supports canonical read controls without fabricating a request body",
+        "resources/js/__tests__/reconciliation.test.ts :: does not resolve until authoritative refresh completes",
+        "tests/Feature/FrontendContextTest.php :: action identity, tenant binding and capability state"
+      ],
+      "exact_commit": "72fffa93d57ddd07f393a8f579e5767c8b0f7dab"
+    },
+    {
+      "operation_id": "AIMW-SYNC-6FCFE15D24",
+      "canonical_kind": "visible_control",
+      "route_screen": "/admin/application-users",
+      "control": "users.disable / ConfirmDisableAsync",
+      "api_destination": "PATCH /tenants/{tenant}/admin/members/{membership}",
+      "permission": "members.manage plus route-level users.view",
+      "tenant_ownership": "Action discovery carries active tenant identity; membership lookup is tenant-scoped; wrong-tenant membership resolves 404.",
+      "site_ownership": "not site-owned",
+      "availability": "permission denial is published into frontend capabilities and rechecked immediately before fetch",
+      "reconciliation_behavior": "Mutation must be followed by authoritative active-list refetch before visible success; refresh failure is surfaced as accepted-but-not-reconciled.",
+      "tests": [
+        "resources/js/__tests__/action-contract.test.ts :: operation identity / wrong tenant / permission / unavailable guards",
+        "resources/js/__tests__/reconciliation.test.ts :: success ordering and refresh failure",
+        "tests/Feature/ActionContractClosureTest.php :: wrong tenant, permission enforcement, mutation then authoritative read",
+        "tests/Feature/FrontendContextTest.php :: discovered operation_id / tenant_id / availability"
+      ],
+      "exact_commit": "72fffa93d57ddd07f393a8f579e5767c8b0f7dab"
+    }
+  ],
+  "mapped_not_visible_control_denominator": [
+    {
+      "action": "sites.connect",
+      "operation_id": "AIMW-SYNC-E27768E92A",
+      "canonical_kind": "service",
+      "destination": "POST /api/tenants/{tenant}/sites",
+      "status": "mapped_real_action",
+      "counted_as_visible_control_terminal": false,
+      "reason": "The exact canonical row is service-kind (SiteWebService.AddSiteAsync), so it is not claimed against the 446 visible_control denominator."
+    }
+  ],
+  "mapped_blocked": [
+    {
+      "action": "seo.audit.run",
+      "operation_id": "AIMW-SEO-FB0F0E9067",
+      "canonical_kind": "api",
+      "ownership": "site",
+      "destination": "POST /api/tenants/{tenant}/sites/{site}/seo/audits",
+      "status": "pending_integration",
+      "reason": "Canonical operation requires approval, while the current Laravel endpoint dispatches immediately. The action remains fail-closed even when tenant/site/permission identity is valid."
+    }
+  ],
+  "safety_evidence": {
+    "wrong_tenant": "Frontend prepareActionRequest rejects contract tenant mismatch; Laravel test proves foreign membership mutation is 404.",
+    "wrong_site": "Context site lookup and SEO endpoint both use tenant-scoped Site query; Laravel test proves foreign-site context and invocation are 404.",
+    "permission": "Discovery publishes permission_denied into capabilities and frontend request preparation rechecks permission.",
+    "unavailable": "Discovery publishes explicit state/reason; frontend gating disables action and request preparation independently rejects non-enabled state.",
+    "canonical_integrity": "ActionContractRegistry::auditCanonicalMappings rejects malformed or duplicate ledger IDs, missing IDs, ambiguous fingerprints, fingerprint/ID mismatch and duplicate registered mappings.",
+    "authoritative_reconciliation": "Shared mutateThenReconcile from PR #278 is consumed; visible success occurs only after authoritative refetch."
+  },
+  "expected_reconciliation_delta": {
+    "visible_control_terminal": "+2 candidates",
+    "visible_control_pending": "-2 candidates",
+    "overall_terminal_operations": "+2 candidates",
+    "canonical_percentage_claimed": false,
+    "note": "Canonical generated reconciliation outputs were intentionally not edited. The reconciliation owner must rerun classification against this evidence."
+  }
+}

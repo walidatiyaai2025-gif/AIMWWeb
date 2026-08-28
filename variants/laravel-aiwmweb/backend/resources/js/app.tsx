@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { BrowserRouter, Outlet, Route, Routes, useOutletContext, useParams } from 'react-router-dom';
+import { BrowserRouter, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
@@ -54,9 +54,12 @@ function ContextFailure({ error, retry }: { error: unknown; retry: () => void })
 
 function TenantBootstrap() {
     const { tenantSlug } = useParams();
+    const location = useLocation();
+    const activeSite = new URLSearchParams(location.search).get('site');
+    const contextUrl = `/tenants/${encodeURIComponent(tenantSlug ?? '')}/context${activeSite ? `?site=${encodeURIComponent(activeSite)}` : ''}`;
     const query = useQuery({
-        queryKey: ['frontend-context', tenantSlug],
-        queryFn: () => apiRequest<FrontendContext>(`/tenants/${encodeURIComponent(tenantSlug ?? '')}/context`),
+        queryKey: ['frontend-context', tenantSlug, activeSite],
+        queryFn: () => apiRequest<FrontendContext>(contextUrl),
         enabled: Boolean(tenantSlug),
     });
 
