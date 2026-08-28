@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\DatabaseSetupReadService;
-use Illuminate\Contracts\View\View;
+use App\Services\DatabaseSetupPageService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 
 final class SetupReadController extends Controller
 {
-    public function __invoke(DatabaseSetupReadService $setup): View|RedirectResponse
+    public function __invoke(DatabaseSetupPageService $page): RedirectResponse|Response
     {
-        $status = $setup->status();
+        $status = $page->status();
 
         if ($status['complete']) {
             return redirect('/');
         }
 
-        return view('setup', ['status' => $status]);
+        return $page->render(setupStatus: $status);
     }
 }
