@@ -9,6 +9,7 @@
     <main>
         <h1>About this build</h1>
         <p>Verify the deployed build and review what shipped in the current release.</p>
+        <p><a href="{{ $buildApiUrl }}" target="_blank" rel="noopener noreferrer">Open build API</a></p>
 
         <section aria-labelledby="build-information">
             <h2 id="build-information">Build information</h2>
@@ -52,7 +53,7 @@
                 <dt>Framework</dt><dd>{{ $framework }}</dd>
                 <dt>Operating system</dt><dd>{{ $operatingSystem }}</dd>
                 <dt>Git commit</dt><dd>{{ $build['commit'] ?: '—' }}</dd>
-                <dt>API endpoint</dt><dd><a href="/api/build">/api/build</a></dd>
+                <dt>API endpoint</dt><dd><a href="{{ $buildApiUrl }}">/api/build</a></dd>
             </dl>
         </section>
     </main>
