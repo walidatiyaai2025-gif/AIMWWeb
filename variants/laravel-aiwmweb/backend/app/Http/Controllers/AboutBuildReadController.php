@@ -19,9 +19,11 @@ final class AboutBuildReadController extends Controller
         $authorizer->authorize('tenant.view');
         abort_unless($context->tenant()->slug === $tenant, 404);
 
+        $canOpenBuildApi = $context->membership()->hasPermission('execution.view');
+
         return view('platform.about-build', [
             'build' => $buildInformation->snapshot(),
-            'buildApiUrl' => '/api/build?tenant='.rawurlencode($tenant),
+            'buildApiUrl' => $canOpenBuildApi ? '/api/build?tenant='.rawurlencode($tenant) : null,
             'currentRelease' => null,
             'releases' => [],
             'runtime' => 'PHP '.PHP_VERSION,
