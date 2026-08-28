@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\ViewErrorBag;
 
 final class DatabaseSetupPageService
 {
@@ -29,9 +30,14 @@ final class DatabaseSetupPageService
      */
     public function render(?string $error = null, int $statusCode = 200, ?array $setupStatus = null): Response
     {
+        $errors = request()->hasSession()
+            ? request()->session()->get('errors', new ViewErrorBag)
+            : new ViewErrorBag;
+
         return response()->view('setup', [
             'status' => $setupStatus ?? $this->status(),
             'error' => $error,
+            'errors' => $errors,
         ], $statusCode);
     }
 }
