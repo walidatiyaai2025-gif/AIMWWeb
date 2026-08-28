@@ -28,6 +28,84 @@
         "sync",
         "taxonomy"
       ]
+    },
+    {
+      "label": "PR #284 route/API terminality",
+      "sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+      "observed_pr_head": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
+      "domains": [
+        "backup",
+        "content",
+        "email"
+      ],
+      "operation_evidence": {
+        "AIMW-CONT-D828690844": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-EMAI-2E95AF6C05": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-EMAI-78352CD34E": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-BACK-66BFA49775": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-DF483546DA": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-FBD0368CAA": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-BB5B32880A": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-1DA83B9262": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-9B8574AA90": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-E14274269E": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-BACK-979DEF54FA": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        }
+      }
     }
   ],
   "excluded_sources": [
@@ -37,14 +115,9 @@
       "reason": "Handoff only; explicitly superseded by the Email implementation already integrated in PR #277 via PR #276."
     },
     {
-      "label": "PR #284 route/API terminality",
-      "sha": "e15d9f36bff0a43d28e47f498b0e6429aa313175",
-      "reason": "Pushed and reviewed but not a finished closure input: exact-head Laravel Acceptance run 33161143947 fails both SQLite and MySQL full PHPUnit. Current failures include a nonexistent Illuminate\\Routing\\Route::getDefaults() call, a canonical controller-action mismatch, and 500 responses on guarded workspace routes."
-    },
-    {
       "label": "PR #285 action discovery contract",
-      "sha": "97ab06332cb99ca14e0733913b6e9dd3133fe61c",
-      "reason": "Pushed and reviewed but not a finished closure input: exact-head Laravel Acceptance run 33160696220 fails both SQLite and MySQL ActionContractClosureTest because expected canonical action metadata resolves to null. Its proposed visible-control candidates are therefore not counted."
+      "sha": "cea89181af0c21143454ce8aad420d214eb7947b",
+      "reason": "Current exact head is pushed and green, but it overlaps PR #278 frontend reconciliation architecture and PR #284 routes/web.php. This focused PR #284 refresh does not make a semantic architecture choice between those implementations; PR #285 therefore receives no parity credit here."
     },
     {
       "label": "worker/laravel-aiwmweb-content-sync-final-closure",
@@ -53,14 +126,9 @@
   ],
   "known_composition_blockers": [
     {
-      "source": "PR #284",
-      "classification": "UNFINISHED_INPUT",
-      "detail": "Route/API terminality worker exact-head acceptance is red on SQLite and MySQL."
-    },
-    {
       "source": "PR #285",
-      "classification": "UNFINISHED_INPUT",
-      "detail": "ActionContract worker exact-head acceptance is red on SQLite and MySQL."
+      "classification": "SEMANTIC_OVERLAP_REQUIRES_SEPARATE_INTEGRATION_DECISION",
+      "detail": "Exact live head cea89181af0c21143454ce8aad420d214eb7947b is green, but overlaps the already composed PR #278 frontend reconciliation architecture and PR #284 route file; excluded rather than resolving a product architecture decision inside this rehearsal refresh."
     }
   ]
 }
