@@ -37,7 +37,7 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
         $this->assertSame('LoadAsync [LoadAsync]', $operation['visible_control']);
 
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/approvals', 'GET'));
-        $this->assertSame(ApprovalQueueReadController::class.'@index', $route->getActionName());
+        $this->assertSame(ApprovalQueueReadController::class.'@index', ltrim($route->getActionName(), '\\'));
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
@@ -115,9 +115,10 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
         $context = app(TenantContext::class);
         $context->activate($membership->tenant, $membership);
 
+        $siteSequence = Site::query()->count() + 1;
         $site = Site::query()->create([
-            'name' => $membership->tenant->name.' Site',
-            'url' => 'https://'.$membership->tenant->slug.'.test',
+            'name' => $membership->tenant->name." Site {$siteSequence}",
+            'url' => 'https://'.$membership->tenant->slug."-{$siteSequence}.test",
         ]);
         $content = SyncedContent::query()->create([
             'site_id' => $site->id,
