@@ -12,7 +12,7 @@ final class CanonicalBuildReportCopyDiscoveryTest extends TestCase
         $path = base_path('../docs/operation-parity-reconciliation.json');
         $payload = json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
 
-        $target = 'AIMW-SYNC-68B372C9FE';
+        $target = 'AIMW-SEO-C48570747C';
         $matches = [];
 
         $walk = function (mixed $value) use (&$walk, &$matches, $target): void {
