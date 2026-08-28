@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "integration_base": {
+    "branch": "lead/laravel-aiwmweb-final-convergence",
+    "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6"
+  },
+  "scope": {
+    "domains": ["content", "media", "comments", "taxonomy", "sync"],
+    "kinds": ["service", "api", "background_job"],
+    "generated_reconciliation_files_modified": false
+  },
+  "live_pending_backend_inventory": {
+    "total": 4,
+    "by_domain": {
+      "content": 4,
+      "media": 0,
+      "comments": 0,
+      "taxonomy": 0,
+      "sync": 0
+    },
+    "operation_ids": [
+      "AIMW-CONT-2F2E40D7F0",
+      "AIMW-CONT-270F69CE9A",
+      "AIMW-CONT-475267F150",
+      "AIMW-CONT-43AF0076B5"
+    ]
+  },
+  "terminalized_operations": [
+    {
+      "operation_id": "AIMW-CONT-2F2E40D7F0",
+      "domain": "content",
+      "kind": "api",
+      "destination": "variants/laravel-aiwmweb/backend/routes/web.php: POST /api/login",
+      "api_controller": "App\\Http\\Controllers\\DemoController::login",
+      "service_job": "Laravel session authentication guard; no background job",
+      "persistence_remote_path": "users persistence plus authenticated server session; no WordPress remote operation",
+      "permission": "anonymous credential-entry boundary; validates email/password and authenticates only on Auth::attempt success",
+      "tenant_site_ownership": "pre-tenant authentication boundary; accepts no tenant or site identifier, so no cross-tenant/site object can be selected by the request",
+      "reconciliation": "successful credentials are authoritatively reflected by Laravel authenticated-session state; invalid credentials return 422 and leave the caller unauthenticated",
+      "test_name": "Tests\\Feature\\ContentBackendTerminalityTest::test_AIMW_CONT_2F2E40D7F0_login_authenticates_through_the_real_session_endpoint; Tests\\Feature\\ContentBackendTerminalityTest::test_AIMW_CONT_2F2E40D7F0_login_rejects_invalid_credentials_without_authenticating",
+      "implementation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+      "exact_commit_sha": "82902e6f9fd98e12eba6cc1a13e25aebc88c340f"
+    },
+    {
+      "operation_id": "AIMW-CONT-270F69CE9A",
+      "domain": "content",
+      "kind": "api",
+      "destination": "variants/laravel-aiwmweb/backend/routes/web.php: POST /api/logout",
+      "api_controller": "App\\Http\\Controllers\\DemoController::logout",
+      "service_job": "Laravel session authentication guard; no background job",
+      "persistence_remote_path": "authenticated server session invalidation and CSRF-token regeneration; no WordPress remote operation",
+      "permission": "route is protected by auth middleware",
+      "tenant_site_ownership": "session-bound user operation; accepts no tenant or site identifier and cannot target another tenant/site resource",
+      "reconciliation": "logout authoritatively clears Laravel authentication state after invalidating the session and regenerating the CSRF token",
+      "test_name": "Tests\\Feature\\ContentBackendTerminalityTest::test_AIMW_CONT_270F69CE9A_logout_invalidates_the_authenticated_session",
+      "implementation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+      "exact_commit_sha": "82902e6f9fd98e12eba6cc1a13e25aebc88c340f"
+    }
+  ],
+  "still_pending": [
+    {
+      "operation_id": "AIMW-CONT-475267F150",
+      "domain": "content",
+      "kind": "api",
+      "canonical_operation": "POST /setup",
+      "blocker": "The Laravel variant has no first-run database-configuration POST endpoint. The canonical operation mutates database-provider/configuration and bootstraps an administrator before normal authentication. Adding an anonymous database-configuration surface is security- and installation-architecture work outside this focused content backend closure and cannot be claimed from route/class presence."
+    },
+    {
+      "operation_id": "AIMW-CONT-43AF0076B5",
+      "domain": "content",
+      "kind": "service",
+      "canonical_operation": "DatabaseSetupService.RenderPage",
+      "blocker": "The Laravel variant has no equivalent first-run DatabaseSetupService rendering contract. Laravel database provisioning is currently deployment/configuration driven, and visible setup rendering is explicitly outside this worker's UI scope. No safe backend-equivalent operation exists to terminalize truthfully."
+    }
+  ],
+  "expected_parity_delta": 2,
+  "test_commit_sha": "82902e6f9fd98e12eba6cc1a13e25aebc88c340f"
+}
