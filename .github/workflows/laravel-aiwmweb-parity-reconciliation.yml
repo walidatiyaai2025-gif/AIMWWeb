@@ -12,7 +12,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   reconcile:
@@ -69,19 +69,3 @@ jobs:
             /tmp/operation-parity-reconciliation.json
             /tmp/operation-parity-reconciliation.md
             /tmp/operation-parity-summary.json
-
-      - name: Persist exact refreshed rehearsal reconciliation once
-        if: always() && github.event.pull_request.head.ref == 'worker/laravel-aiwmweb-closure-composition'
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m 'docs(parity): refresh composed closure reconciliation'
-          git push origin HEAD:${{ github.head_ref }}
