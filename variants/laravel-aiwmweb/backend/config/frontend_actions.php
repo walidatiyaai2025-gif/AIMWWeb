@@ -1,0 +1,78 @@
+<?php
+
+return [
+    'sites.connect' => [
+        'operation_id' => 'AIMW-SYNC-E27768E92A',
+        'canonical' => [
+            'kind' => 'service',
+            'domain' => 'sync',
+            'route_screen' => 'service:SiteWebService',
+            'visible_control' => 'AddSiteAsync',
+            'current_source' => 'src/AIWordPressManager.Web/Services/SiteWebService.cs',
+        ],
+        'ownership' => 'tenant',
+        'permission' => 'sites.manage',
+        'capability' => 'sites.connect',
+        'endpoint' => '/api/tenants/{tenant}/sites',
+        'method' => 'POST',
+        'reconcile_api_key' => 'sites',
+        'fields' => [
+            ['key' => 'name', 'type' => 'text', 'label' => ['en' => 'Site name', 'ar' => 'اسم الموقع'], 'required' => true],
+            ['key' => 'url', 'type' => 'text', 'label' => ['en' => 'WordPress URL', 'ar' => 'رابط WordPress'], 'required' => true],
+        ],
+    ],
+    'sites.refresh' => [
+        'operation_id' => 'AIMW-SYNC-A9E956A4DA',
+        'canonical' => [
+            'kind' => 'visible_control',
+            'domain' => 'sync',
+            'route_screen' => '/sites',
+            'visible_control' => '@(_refreshing ? (L.IsArabic ? [ReloadClickedAsync]',
+            'current_source' => 'src/AIWordPressManager.Web/Components/Pages/Sites.razor',
+        ],
+        'ownership' => 'tenant',
+        'permission' => 'tenant.view',
+        'capability' => 'sites.refresh',
+        'endpoint' => '/api/tenants/{tenant}/sites',
+        'method' => 'GET',
+        'reconcile_api_key' => 'sites',
+        'fields' => [],
+    ],
+    'users.disable' => [
+        'operation_id' => 'AIMW-SYNC-6FCFE15D24',
+        'canonical' => [
+            'kind' => 'visible_control',
+            'domain' => 'sync',
+            'route_screen' => '/admin/application-users',
+            'visible_control' => '@(L.IsArabic ? [ConfirmDisableAsync]',
+            'current_source' => 'src/AIWordPressManager.Web/Components/Pages/ApplicationUsers.razor',
+        ],
+        'ownership' => 'tenant',
+        'permission' => 'members.manage',
+        'capability' => 'users.disable',
+        'endpoint' => '/tenants/{tenant}/admin/members/{membership}',
+        'method' => 'PATCH',
+        'reconcile_api_key' => 'application-users',
+        'fixed' => ['status' => 'inactive'],
+        'fields' => [
+            ['key' => 'membership', 'type' => 'number', 'label' => ['en' => 'Membership ID', 'ar' => 'معرّف العضوية'], 'required' => true, 'path' => true],
+        ],
+    ],
+    'seo.audit.run' => [
+        'operation_id' => 'AIMW-SEO-FB0F0E9067',
+        'canonical' => [
+            'kind' => 'api',
+            'domain' => 'seo',
+            'route_screen' => '/api/sites/{siteId:guid}/seo-audit/run',
+            'visible_control' => 'HTTP POST /api/sites/{siteId:guid}/seo-audit/run',
+            'current_source' => 'src/AIWordPressManager.Web/Program.cs',
+        ],
+        'ownership' => 'site',
+        'permission' => 'seo.manage',
+        'capability' => 'seo.audit.run',
+        'endpoint' => '/api/tenants/{tenant}/sites/{site}/seo/audits',
+        'method' => 'POST',
+        'reconcile_api_key' => 'seo-audit',
+        'fields' => [],
+    ],
+];
