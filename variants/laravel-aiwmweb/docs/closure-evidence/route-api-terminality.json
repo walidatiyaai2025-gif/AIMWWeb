@@ -2,17 +2,17 @@
   "schema_version": 2,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "route-api-platform-setup-read-convergence",
-  "integration_base": "worker/laravel-aiwmweb-platform-read-api-terminality",
-  "integration_base_sha": "9598df59c4da31669e4ea309b700e5137229a2e7",
-  "implementation_branch": "codex/laravel-issue257-platform-api-contract-18a8ee",
-  "implementation_snapshot_sha": "f07cbf239c8df1de9ebd8f4e129a37868c1c4ddf",
+  "wave": "route-api-setup-mutation-convergence",
+  "integration_base": "codex/laravel-issue257-platform-api-contract-18a8ee",
+  "integration_base_sha": "0081cf664139ab0e7645436ec2f8fd3c39219c87",
+  "implementation_branch": "worker/laravel-aiwmweb-setup-mutation-terminality",
+  "implementation_snapshot_sha": "e2c8c63123a71f5fc0336e8ecc26ab7e0837df98",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
     "pending_apis_found": 8,
-    "terminalized_by_implementation_snapshot": 34,
-    "still_pending_after_this_snapshot": 58,
+    "terminalized_by_implementation_snapshot": 35,
+    "still_pending_after_this_snapshot": 57,
     "generated_reconciliation_modified": false
   },
   "terminalized_by_domain": {
@@ -20,7 +20,7 @@
     "backup": 2,
     "billing": 1,
     "comments": 2,
-    "content": 14,
+    "content": 15,
     "email": 2,
     "media": 2,
     "platform": 3,
@@ -61,7 +61,8 @@
     {"operation_id":"AIMW-CONT-FB7F9189C0","source_route":"/account/profile","canonical_route":"/tenants/{tenant}/account/profile","proof":"explicit guarded account workspace + current tenant membership profile adapter"},
     {"operation_id":"AIMW-PLAT-A91A2B0B11","source_route":"/api/build","canonical_route":"/api/build","proof":"authenticated PlatformReadController build metadata response with execution.view authorization and fail-closed tenant selection"},
     {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"},
-    {"operation_id":"AIMW-PLAT-18A8EE0324","source_route":"/setup","canonical_route":"/setup","proof":"anonymous SetupReadController backed by live database reachability and full repository migration state; ready installations redirect to the landing page and incomplete or partially migrated installations render non-secret setup guidance"}
+    {"operation_id":"AIMW-PLAT-18A8EE0324","source_route":"/setup","canonical_route":"/setup","proof":"anonymous GET /setup through SetupReadController uses live database reachability, full repository migration state and identity readiness; complete installations redirect and incomplete installations render non-secret setup state"},
+    {"operation_id":"AIMW-CONT-475267F150","source_route":"/setup","canonical_route":"/setup","proof":"anonymous CSRF-protected POST /setup through SetupMutationController runs the real repository migrations, refuses any pre-existing identity state, transactionally bootstraps one tenant plus hashed first administrator, active membership and Owner RBAC, and returns a secret-safe 400 on rejected setup"}
   ],
   "acceptance_evidence": {
     "inventory_test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows",
@@ -82,33 +83,49 @@
     ],
     "platform_setup_read_tests": [
       "PlatformSetupReadTerminalityTest::test_canonical_setup_get_is_anonymous_and_resolves_to_real_controller",
-      "PlatformSetupReadTerminalityTest::test_setup_redirects_to_landing_when_database_and_migrations_are_ready",
+      "PlatformSetupReadTerminalityTest::test_migrations_without_first_identity_remain_in_setup_mode",
       "PlatformSetupReadTerminalityTest::test_setup_stays_incomplete_when_any_repository_migration_is_missing",
       "PlatformSetupReadTerminalityTest::test_incomplete_setup_renders_authoritative_non_secret_status"
     ],
-    "parent_snapshot_ci": {
-      "snapshot": "9598df59c4da31669e4ea309b700e5137229a2e7",
-      "laravel_aiwmweb_acceptance": "success",
-      "laravel_aiwmweb_cross_domain_security": "success",
+    "setup_mutation_tests": [
+      "SetupMutationTerminalityTest::test_canonical_setup_post_is_anonymous_web_mutation_with_csrf_middleware",
+      "SetupMutationTerminalityTest::test_fresh_setup_creates_one_hashed_owner_and_real_rbac_then_redirects",
+      "SetupMutationTerminalityTest::test_partial_existing_identity_state_is_never_claimed_and_password_is_not_rendered",
+      "SetupMutationTerminalityTest::test_invalid_password_confirmation_does_not_mutate_identity_state"
+    ],
+    "implementation_snapshot_ci": {
+      "snapshot": "e2c8c63123a71f5fc0336e8ecc26ab7e0837df98",
       "pr_plan_link": "success",
-      "production_compose_smoke": "success"
+      "laravel_aiwmweb_cross_domain_security": "success",
+      "tenant_core_sqlite_pint_migrations_full_tests": "success",
+      "mysql_migration_rehearsal_and_full_tests": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_real_rest": "success",
+      "wordpress_disposable_runtime": "success",
+      "frontend": "success",
+      "frontend_production_build": "success",
+      "runtime_artifacts": "success",
+      "acceptance_gate": "success",
+      "production_compose_smoke": "pending_at_evidence_capture"
     },
-    "current_pr_ci": "pending"
+    "current_pr_ci": "final evidence head revalidation required"
   },
   "remaining_blockers": {
     "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
-    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-EMAI-2D94EFDD53", "AIMW-OPER-ABB41FC891"],
+    "unsafe_or_missing_api_contracts": ["AIMW-EMAI-2D94EFDD53", "AIMW-OPER-ABB41FC891"],
     "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
-    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 58 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 57 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
   },
   "notes": [
-    "This evidence cumulatively converges the 33 route/API operations from PR #288 plus the canonical GET /setup Platform read implemented by this wave.",
-    "Only GET /setup is claimed; POST /setup remains outside this wave and is not inferred terminal.",
+    "This evidence cumulatively converges the 34 route/API operations from PR #290 plus canonical POST /setup operation AIMW-CONT-475267F150 on this independent branch stack.",
+    "The 35/57 count matches some parallel stacks numerically but the operation set is branch-specific; no parallel operation is inferred or claimed here.",
+    "GET /setup remains the Platform read contract from PR #290; POST /setup is a distinct canonical Content operation and is now independently evidenced.",
+    "Database connection credentials remain deployment-owned in Laravel and are never accepted or rendered by the browser setup flow.",
+    "First-run setup fails closed when any pre-existing user, tenant or membership identity state exists, preventing ownership takeover of an existing installation.",
+    "Fresh setup uses the shipped migration set and transactionally creates a hashed administrator, tenant membership and Owner role with permissions derived from trusted application authorization contracts.",
     "No visible_control row is claimed by this evidence file.",
     "No generated canonical reconciliation output is edited by this worker.",
-    "The setup read is intentionally tenantless and anonymous, matching source first-run semantics, but never renders database credentials or connection strings.",
-    "Setup readiness fails closed when the database is unreachable, the migrations ledger is absent, or any repository migration is not recorded as run.",
     "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot f07cbf239c8df1de9ebd8f4e129a37868c1c4ddf; later implementation movement requires revalidation."
+    "Counts are evidence-backed for implementation snapshot e2c8c63123a71f5fc0336e8ecc26ab7e0837df98; the evidence-only final head requires its own CI revalidation."
   ]
 }
