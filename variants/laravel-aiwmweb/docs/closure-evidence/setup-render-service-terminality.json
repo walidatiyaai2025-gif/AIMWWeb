@@ -30,7 +30,8 @@
     "database_credentials": "deployment-owned; no database password or connection string is accepted as setup page-model input",
     "error_encoding": "Blade escaped interpolation; operation-specific acceptance proves raw script markup is not emitted",
     "failure_message": "bounded generic operator-safe message; caught exception details are reported server-side and are not rendered",
-    "completion_semantics": "completed installations continue to redirect away from /setup rather than render first-run UI"
+    "completion_semantics": "completed installations continue to redirect away from /setup rather than render first-run UI",
+    "standalone_rendering": "the rendering service supplies an explicit ViewErrorBag so the page remains valid both through web middleware and when the service contract is exercised directly"
   },
   "acceptance": {
     "test_file": "backend/tests/Feature/SetupRenderServiceTerminalityTest.php",
@@ -45,7 +46,33 @@
       "PlatformSetupReadTerminalityTest"
     ]
   },
-  "implementation_snapshot_sha": "b72684ebadd4166e8ebd37c924b2bcd633d9b735",
+  "implementation_snapshot_sha": "7787b5b6130207019ac81762ddbab601daa4845b",
+  "implementation_snapshot_ci": {
+    "pr_plan_link": {
+      "conclusion": "success",
+      "run_id": 33214334693
+    },
+    "laravel_aiwmweb_cross_domain_security": {
+      "conclusion": "success",
+      "run_id": 33214334744
+    },
+    "laravel_aiwmweb_acceptance": {
+      "conclusion": "success",
+      "run_id": 33214334732,
+      "verified_jobs": [
+        "acceptance-gate",
+        "tenant-core-sqlite",
+        "mysql-production-like",
+        "redis-queue-scheduler",
+        "wordpress-real-rest-e2e",
+        "wordpress-disposable-runtime",
+        "frontend",
+        "frontend-production-build",
+        "runtime-artifacts",
+        "compose-production-runtime"
+      ]
+    }
+  },
   "route_api_denominator_delta": 0,
   "generated_reconciliation_modified": false,
   "scope": {
@@ -54,5 +81,5 @@
     "aspnet_modified": false,
     "parallel_site_details_modified": false
   },
-  "current_pr_ci": "pending"
+  "current_pr_ci": "pending-final-evidence-revalidation"
 }
