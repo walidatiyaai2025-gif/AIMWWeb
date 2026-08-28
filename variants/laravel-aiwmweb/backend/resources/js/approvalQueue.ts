@@ -1,4 +1,5 @@
 import type { FrontendContext } from './core';
+import { tenantUrl } from './core';
 
 export function withApprovalQueueEndpoint(context: FrontendContext): FrontendContext {
     if (context.api.approvals) return context;
@@ -10,4 +11,8 @@ export function withApprovalQueueEndpoint(context: FrontendContext): FrontendCon
             approvals: `/api/tenants/${encodeURIComponent(context.tenant.slug)}/approvals`,
         },
     };
+}
+
+export function approvalExecutionCenterHref(context: FrontendContext): string {
+    return tenantUrl(context.tenant.slug, '/module/execution');
 }
