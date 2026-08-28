@@ -50,7 +50,7 @@
       "server-advertised approval endpoint remains authoritative"
     ]
   },
-  "implementation_snapshot_sha": "ae8bdb719c5accdd476a1dff0dd749b941e90f7d",
+  "implementation_snapshot_sha": "9c5a2f86fc8a9d79e4fe7499650103756b1acff6",
   "generated_reconciliation_modified": false,
   "scope": {
     "allowed": "variants/laravel-aiwmweb/**",
@@ -59,6 +59,35 @@
     "generated_reconciliation_modified": false
   },
   "ci": {
-    "implementation_snapshot": "pending"
+    "implementation_snapshot": "full_pass",
+    "pr_plan_link": {
+      "run_id": 33215921460,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33215921499,
+      "conclusion": "success"
+    },
+    "acceptance": {
+      "run_id": 33215921902,
+      "conclusion": "success",
+      "jobs": {
+        "acceptance_gate": "success",
+        "tenant_core_sqlite": "success",
+        "mysql_production_like": "success",
+        "redis_queue_scheduler": "success",
+        "wordpress_real_rest_e2e": "success",
+        "wordpress_disposable_runtime": "success",
+        "frontend": "success",
+        "frontend_production_build": "success",
+        "runtime_artifacts": "success",
+        "compose_production_runtime": "success"
+      }
+    },
+    "notes": [
+      "The first candidate head failed Pint only because bootstrap provider imports were not ordered; the import-only fix was applied.",
+      "The next candidate reached the full PHP suite and exposed two acceptance-fixture issues: Laravel returned the controller action with a leading namespace separator and the fixture attempted a duplicate tenant site URL. Both tests were corrected without changing runtime behavior.",
+      "The implementation snapshot then passed the complete exact-head workflow set, including production Docker Compose build and real runtime smoke."
+    ]
   }
 }
