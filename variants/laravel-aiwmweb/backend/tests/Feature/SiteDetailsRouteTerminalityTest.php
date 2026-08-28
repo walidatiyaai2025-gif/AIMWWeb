@@ -90,6 +90,14 @@ class SiteDetailsRouteTerminalityTest extends TestCase
         $this->actingAs($user)->get('/tenants/alpha/sites/'.$alphaSite->id)->assertOk();
         $this->actingAs($user)->get('/tenants/alpha/sites/'.$betaSite->id)->assertNotFound();
 
+        $this->actingAs($user)
+            ->getJson('/api/tenants/alpha/sites/'.$alphaSite->id)
+            ->assertOk()
+            ->assertJsonPath('id', $alphaSite->id);
+        $this->actingAs($user)->getJson('/api/tenants/alpha/sites/'.$betaSite->id)->assertNotFound();
+        $this->actingAs($user)->getJson('/api/tenants/alpha/sites/not-a-number')->assertNotFound();
+        $this->actingAs($user)->getJson('/api/tenants/alpha/sites/0')->assertNotFound();
+
         $limited = User::factory()->create();
         $limitedMembership = $this->tenantMembership($limited, 'limited', ['tenant.view']);
         $limitedSite = $this->site($limitedMembership, 'Limited Site');
