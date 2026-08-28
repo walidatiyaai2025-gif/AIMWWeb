@@ -34,10 +34,14 @@ final class SyncLeaseService
 
     public function refresh(int $siteId, string $ownerToken, int $ttlSeconds = 1800): bool
     {
-        return SyncSiteLease::query()
+        $lease = SyncSiteLease::query()
             ->where('site_id', $siteId)
-            ->where('owner_token', $ownerToken)
-            ->update(['leased_until' => now()->addSeconds($ttlSeconds), 'updated_at' => now()]) === 1;
+            ->where('owner_token', $ownerToken);
+        $updated = (clone $lease)->update(['leased_until' => now()->addSeconds($ttlSeconds), 'updated_at' => now()]);
+
+        // MySQL reports zero affected rows when a refresh lands in the same
+        // timestamp second even though this worker still owns the lease.
+        return $updated === 1 || $lease->exists();
     }
 
     public function release(int $siteId, string $ownerToken): void
