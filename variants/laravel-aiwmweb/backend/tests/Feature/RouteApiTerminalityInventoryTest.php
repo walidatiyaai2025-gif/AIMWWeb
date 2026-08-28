@@ -35,6 +35,8 @@ class RouteApiTerminalityInventoryTest extends TestCase
         'AIMW-BACK-979DEF54FA' => '/backups',
     ];
 
+    private const SECOND_PASS_INVENTORY_SHA256 = '266f461bae43748c229ba04a26d73287fdd8b0e2026844403895864bdd5a0174';
+
     private const ROUTE_NAMES = [
         'canonical.workspace.sites' => 'tenants/{tenant}/sites',
         'canonical.workspace.notifications' => 'tenants/{tenant}/notifications',
@@ -78,9 +80,11 @@ class RouteApiTerminalityInventoryTest extends TestCase
         }
     }
 
-    public function test_second_pass_inventory_diagnostic(): void
+    public function test_second_pass_inventory_is_exact_and_deterministic(): void
     {
-        $payload = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
+        $path = base_path('../docs/operation-parity-reconciliation.json');
+        $this->assertFileExists($path);
+        $payload = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
         $remaining = collect($payload['operations'])
             ->filter(fn (array $operation): bool => $operation['migration_state'] === 'PENDING')
             ->filter(fn (array $operation): bool => in_array($operation['kind'], ['route', 'api'], true))
@@ -110,7 +114,30 @@ class RouteApiTerminalityInventoryTest extends TestCase
         fwrite(STDERR, "SECOND_PASS_ROUTE_API_END\n");
 
         $this->assertCount(81, $remaining);
-        $this->fail('Second-pass diagnostic emitted exactly 81 remaining route/API rows.');
+
+        $ids = $remaining->pluck('id')->all();
+        $uniqueIds = array_values(array_unique($ids));
+        $this->assertCount(81, $uniqueIds, 'Second-pass route/API inventory contains duplicate operation IDs.');
+
+        $invalidKinds = $remaining
+            ->reject(fn (array $operation): bool => in_array($operation['kind'], ['route', 'api'], true))
+            ->pluck('kind')
+            ->unique()
+            ->values()
+            ->all();
+        $this->assertSame([], $invalidKinds, 'Second-pass inventory contains a kind outside route/api.');
+
+        sort($uniqueIds, SORT_STRING);
+        $this->assertSame(
+            self::SECOND_PASS_INVENTORY_SHA256,
+            hash('sha256', implode("\n", $uniqueIds)),
+            'Second-pass route/API operation inventory drifted from the exact reviewed 81-row set.'
+        );
+
+        $this->assertContains('AIMW-CONT-2F2E40D7F0', $ids, 'POST /login must remain outside this PR because PR #283 owns its terminality.');
+        $this->assertContains('AIMW-CONT-270F69CE9A', $ids, 'POST /logout must remain outside this PR because PR #283 owns its terminality.');
+        $this->assertArrayNotHasKey('AIMW-CONT-2F2E40D7F0', self::TERMINALIZED);
+        $this->assertArrayNotHasKey('AIMW-CONT-270F69CE9A', self::TERMINALIZED);
     }
 
     public function test_artisan_route_list_contains_explicit_guarded_canonical_routes(): void
