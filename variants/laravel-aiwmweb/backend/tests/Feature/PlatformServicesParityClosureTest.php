@@ -38,7 +38,7 @@ class PlatformServicesParityClosureTest extends TestCase
         'AIMW-EMAI-B2D6A96405',
     ];
 
-    public function test_canonical_generated_snapshot_records_the_exact_backend_pending_baseline(): void
+    public function test_composed_reconciliation_never_regresses_the_frozen_backend_pending_baseline(): void
     {
         $pending = $this->pendingBackend();
         $actual = collect(self::OWNED_DOMAINS)
@@ -46,18 +46,40 @@ class PlatformServicesParityClosureTest extends TestCase
             ->sortKeys()
             ->all();
 
-        $expected = collect(self::BACKEND_PENDING_BASELINE)->sortKeys()->all();
+        foreach (self::BACKEND_PENDING_BASELINE as $domain => $baseline) {
+            $this->assertLessThanOrEqual(
+                $baseline,
+                $actual[$domain] ?? 0,
+                $domain.' backend PENDING inventory regressed above the frozen PR #279 integration baseline.',
+            );
+        }
 
-        $this->assertSame($expected, $actual);
-        $this->assertSame(60, $pending->count());
+        $this->assertLessThanOrEqual(60, $pending->count());
     }
 
-    public function test_first_batch_targets_are_real_backend_pending_rows_in_the_frozen_snapshot(): void
+    public function test_first_batch_targets_remain_pending_or_have_terminal_countable_evidence_after_composition(): void
     {
-        $ids = $this->pendingBackend()->pluck('operation_id')->all();
+        $operations = collect($this->reconciliation()['operations'])->keyBy('operation_id');
 
         foreach (self::FIRST_BATCH_OPERATION_IDS as $operationId) {
-            $this->assertContains($operationId, $ids, $operationId.' must be a real canonical backend PENDING row at the integration baseline.');
+            $this->assertTrue($operations->has($operationId), $operationId.' disappeared from the canonical 931-operation ledger.');
+
+            $operation = $operations->get($operationId);
+            if ($operation['migration_state'] === 'PENDING') {
+                continue;
+            }
+
+            $this->assertContains(
+                $operation['migration_state'],
+                ['PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'],
+                $operationId.' may leave the frozen PENDING baseline only through a terminal classification.',
+            );
+
+            if (in_array($operation['migration_state'], ['PORTED', 'ADAPTED'], true)) {
+                $this->assertNotSame('', trim((string) $operation['laravel_destination']), $operationId.' is missing a Laravel destination.');
+                $this->assertNotSame('', trim((string) $operation['acceptance_test']), $operationId.' is missing test evidence.');
+                $this->assertNotSame('', trim((string) ($operation['reconciliation']['source_sha'] ?? '')), $operationId.' is missing exact-SHA evidence.');
+            }
         }
     }
 
@@ -81,7 +103,7 @@ class PlatformServicesParityClosureTest extends TestCase
         }
     }
 
-    public function test_owned_pending_inventory_is_split_between_backend_and_frontend_work(): void
+    public function test_owned_pending_inventory_can_only_shrink_while_frontend_truthfulness_remains_explicit(): void
     {
         $payload = $this->reconciliation();
         $pending = collect($payload['operations'])
@@ -91,8 +113,8 @@ class PlatformServicesParityClosureTest extends TestCase
         $backend = $pending->reject(fn (array $operation): bool => in_array($operation['kind'], ['visible_control', 'route'], true));
         $frontend = $pending->filter(fn (array $operation): bool => in_array($operation['kind'], ['visible_control', 'route'], true));
 
-        $this->assertSame(282, $pending->count());
-        $this->assertSame(60, $backend->count());
+        $this->assertLessThanOrEqual(282, $pending->count());
+        $this->assertLessThanOrEqual(60, $backend->count());
         $this->assertSame(222, $frontend->count());
         $this->assertSame(['route', 'visible_control'], $frontend->pluck('kind')->unique()->sort()->values()->all());
     }
