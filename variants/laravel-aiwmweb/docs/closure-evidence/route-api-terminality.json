@@ -2,17 +2,17 @@
   "schema_version": 2,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "route-api-site-details-convergence",
-  "integration_base": "lead/laravel-aiwmweb-final-convergence",
-  "integration_base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-  "implementation_branch": "worker/laravel-aiwmweb-site-details-route-terminality",
-  "implementation_snapshot_sha": "f1db97a6e7a3e286dcdd5d22a4864b49f17b3b7a",
+  "wave": "route-api-login-read-convergence",
+  "integration_base": "codex/laravel-issue257-site-details-acceptance-repair",
+  "integration_base_sha": "3403631822771f55518742226aa2373c2baa4ed9",
+  "implementation_branch": "codex/laravel-issue257-operations-api-abb41",
+  "implementation_snapshot_sha": "71b6ca332d9ba6062866299c4be4885bbf9e419b",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
     "pending_apis_found": 8,
-    "terminalized_by_implementation_snapshot": 35,
-    "still_pending_after_this_snapshot": 57,
+    "terminalized_by_implementation_snapshot": 36,
+    "still_pending_after_this_snapshot": 56,
     "generated_reconciliation_modified": false
   },
   "terminalized_by_domain": {
@@ -24,6 +24,7 @@
     "content": 14,
     "email": 3,
     "media": 2,
+    "operations": 1,
     "platform": 2,
     "sync": 1,
     "taxonomy": 2
@@ -63,7 +64,8 @@
     {"operation_id":"AIMW-CONT-FB7F9189C0","source_route":"/account/profile","canonical_route":"/tenants/{tenant}/account/profile","proof":"explicit guarded account workspace + current tenant membership profile adapter"},
     {"operation_id":"AIMW-PLAT-A91A2B0B11","source_route":"/api/build","canonical_route":"/api/build","proof":"authenticated PlatformReadController build metadata response with execution.view authorization and fail-closed tenant selection"},
     {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"},
-    {"operation_id":"AIMW-EMAI-2D94EFDD53","source_route":"/api/notifications","canonical_route":"/api/notifications","proof":"authenticated legacy notification adapter ignores caller userId, enforces execution.view, binds a safe active tenant and returns only persisted current-user notifications"}
+    {"operation_id":"AIMW-EMAI-2D94EFDD53","source_route":"/api/notifications","canonical_route":"/api/notifications","proof":"authenticated legacy notification adapter ignores caller userId, enforces execution.view, binds a safe active tenant and returns only persisted current-user notifications"},
+    {"operation_id":"AIMW-OPER-ABB41FC891","source_route":"/login","canonical_route":"/login","proof":"explicit anonymous LoginReadController renders the canonical sign-in entry page, escapes caller-supplied error text, constrains returnUrl to safe local paths, and redirects authenticated users only to a validated local path or the landing page"}
   ],
   "acceptance_evidence": {
     "inventory_test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows",
@@ -93,8 +95,14 @@
       "LegacyNotificationApiTerminalityTest::test_multi_tenant_legacy_reads_fail_closed_and_explicit_selection_is_isolated",
       "LegacyNotificationApiTerminalityTest::test_legacy_notification_read_requires_operations_read_equivalent_permission"
     ],
+    "login_read_api_tests": [
+      "LoginReadApiTerminalityTest::test_canonical_row_is_the_pending_low_risk_get_login_contract",
+      "LoginReadApiTerminalityTest::test_login_get_is_anonymous_and_resolves_to_a_real_controller",
+      "LoginReadApiTerminalityTest::test_anonymous_login_renders_real_form_and_escapes_read_inputs",
+      "LoginReadApiTerminalityTest::test_authenticated_login_redirects_only_to_safe_local_paths"
+    ],
     "parent_snapshot_ci": {
-      "snapshot": "a40dbbfac23b3ad19e608512698a24297187e308",
+      "snapshot": "3403631822771f55518742226aa2373c2baa4ed9",
       "laravel_aiwmweb_acceptance": "success",
       "laravel_aiwmweb_cross_domain_security": "success",
       "pr_plan_link": "success",
@@ -110,18 +118,20 @@
   },
   "remaining_blockers": {
     "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
-    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-OPER-ABB41FC891", "AIMW-PLAT-18A8EE0324"],
+    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-PLAT-18A8EE0324"],
     "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
-    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 57 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 56 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
   },
   "notes": [
-    "This evidence cumulatively converges the prior 34 terminal Route/API operations plus the canonical site-details route from the current wave.",
+    "This evidence cumulatively converges the prior 35 terminal Route/API operations plus the canonical GET /login read contract from the current wave.",
     "No visible_control row is claimed by this evidence file.",
     "No generated canonical reconciliation output is edited by this worker.",
-    "The source GUID route is adapted to the Laravel tenant-owned integer Site key already used consistently by the target variant; no cross-tenant identifier translation is performed.",
-    "Tenant-less canonical APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector.",
+    "The GET /login source contract is anonymous and read-only; this wave does not claim or implement the separate POST /login mutation operation.",
+    "The Laravel login page targets the already-existing /api/login mutation endpoint rather than creating a second unclaimed mutation route.",
+    "The source GUID site-details route is adapted to the Laravel tenant-owned integer Site key already used consistently by the target variant; no cross-tenant identifier translation is performed.",
+    "Tenant-less canonical APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector where tenant selection is required.",
     "The legacy notification userId query parameter is compatibility-only and is never an ownership selector.",
     "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot f1db97a6e7a3e286dcdd5d22a4864b49f17b3b7a; later implementation movement requires revalidation."
+    "Counts are evidence-backed for implementation snapshot 71b6ca332d9ba6062866299c4be4885bbf9e419b; later implementation movement requires revalidation."
   ]
 }
