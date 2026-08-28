@@ -6,7 +6,7 @@ use App\Services\DatabaseSetupMutationService;
 use App\Services\DatabaseSetupReadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Http\Response;
 use Throwable;
 
 final class SetupMutationController extends Controller
@@ -16,7 +16,7 @@ final class SetupMutationController extends Controller
         private readonly DatabaseSetupReadService $readService,
     ) {}
 
-    public function __invoke(Request $request): RedirectResponse|View
+    public function __invoke(Request $request): RedirectResponse|Response
     {
         if ($this->readService->status()['complete']) {
             return redirect('/');
