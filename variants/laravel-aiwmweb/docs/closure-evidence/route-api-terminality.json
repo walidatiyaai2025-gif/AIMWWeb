@@ -82,7 +82,7 @@
     "response_semantics_test": "RouteApiTerminalityInventoryTest::test_second_pass_read_routes_use_real_services_and_preserve_response_semantics",
     "authorization_test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions",
     "platform_read_api_tests": [
-      "PlatformReadApiTerminalityTest::test_canonical_platform_reads_require_authentication_and_resolves_to_real_controller",
+      "PlatformReadApiTerminalityTest::test_canonical_platform_reads_require_authentication_and_resolve_to_real_controller",
       "PlatformReadApiTerminalityTest::test_single_tenant_build_and_dashboard_return_real_scoped_state",
       "PlatformReadApiTerminalityTest::test_multi_tenant_requests_fail_closed_until_explicit_tenant_is_selected",
       "PlatformReadApiTerminalityTest::test_platform_reads_require_the_operations_read_equivalent_permission"
