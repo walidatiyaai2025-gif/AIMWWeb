@@ -38,6 +38,11 @@ class PlatformServicesParityClosureTest extends TestCase
         'AIMW-EMAI-B2D6A96405',
     ];
 
+    private const COMPOSED_ROUTE_CLOSURES_IN_OWNED_DOMAINS = [
+        'AIMW-EMAI-2E95AF6C05',
+        'AIMW-EMAI-78352CD34E',
+    ];
+
     public function test_composed_reconciliation_never_regresses_the_frozen_backend_pending_baseline(): void
     {
         $pending = $this->pendingBackend();
@@ -106,17 +111,30 @@ class PlatformServicesParityClosureTest extends TestCase
     public function test_owned_pending_inventory_can_only_shrink_while_frontend_truthfulness_remains_explicit(): void
     {
         $payload = $this->reconciliation();
-        $pending = collect($payload['operations'])
+        $operations = collect($payload['operations']);
+        $pending = $operations
             ->filter(fn (array $operation): bool => in_array($operation['domain'], self::OWNED_DOMAINS, true))
             ->filter(fn (array $operation): bool => $operation['migration_state'] === 'PENDING');
 
         $backend = $pending->reject(fn (array $operation): bool => in_array($operation['kind'], ['visible_control', 'route'], true));
         $frontend = $pending->filter(fn (array $operation): bool => in_array($operation['kind'], ['visible_control', 'route'], true));
+        $visibleControls = $operations
+            ->filter(fn (array $operation): bool => in_array($operation['domain'], self::OWNED_DOMAINS, true))
+            ->filter(fn (array $operation): bool => $operation['kind'] === 'visible_control');
 
         $this->assertLessThanOrEqual(282, $pending->count());
         $this->assertLessThanOrEqual(60, $backend->count());
-        $this->assertSame(222, $frontend->count());
+        $this->assertSame(220, $frontend->count(), 'Exactly two PR #284 email route rows leave the frozen 222 frontend/route PENDING inventory.');
+        $this->assertTrue($visibleControls->every(fn (array $operation): bool => $operation['migration_state'] === 'PENDING'));
         $this->assertSame(['route', 'visible_control'], $frontend->pluck('kind')->unique()->sort()->values()->all());
+
+        foreach (self::COMPOSED_ROUTE_CLOSURES_IN_OWNED_DOMAINS as $operationId) {
+            $operation = $operations->firstWhere('operation_id', $operationId);
+            $this->assertNotNull($operation);
+            $this->assertSame('route', $operation['kind']);
+            $this->assertSame('ADAPTED', $operation['migration_state']);
+            $this->assertSame('explicit_route_contract', $operation['reconciliation']['evidence_mode'] ?? null);
+        }
     }
 
     private function pendingBackend()
