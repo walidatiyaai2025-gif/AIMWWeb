@@ -150,7 +150,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         if ($site) {
             $siteId = (int) $site->getKey();
             $api += [
-                'sites.detail.' . $siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
+                'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
