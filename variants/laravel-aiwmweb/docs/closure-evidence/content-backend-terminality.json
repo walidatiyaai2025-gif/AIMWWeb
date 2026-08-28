@@ -38,9 +38,9 @@
       "permission": "anonymous credential-entry boundary; validates email/password and authenticates only on Auth::attempt success",
       "tenant_site_ownership": "pre-tenant authentication boundary; accepts no tenant or site identifier, so no cross-tenant/site object can be selected by the request",
       "reconciliation": "successful credentials are authoritatively reflected by Laravel authenticated-session state; invalid credentials return 422 and leave the caller unauthenticated",
-      "test_name": "Tests\\Feature\\ContentBackendTerminalityTest::test_AIMW_CONT_2F2E40D7F0_login_authenticates_through_the_real_session_endpoint; Tests\\Feature\\ContentBackendTerminalityTest::test_AIMW_CONT_2F2E40D7F0_login_rejects_invalid_credentials_without_authenticating",
+      "test_name": "Tests\\Feature\\ContentBackendTerminalityTest::test_aimw_cont_2f2e40d7f0_login_authenticates_through_the_real_session_endpoint; Tests\\Feature\\ContentBackendTerminalityTest::test_aimw_cont_2f2e40d7f0_login_rejects_invalid_credentials_without_authenticating",
       "implementation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-      "exact_commit_sha": "82902e6f9fd98e12eba6cc1a13e25aebc88c340f"
+      "exact_commit_sha": "27d8471c91a7abe1c1aedbb0b1a8558f7d001bd4"
     },
     {
       "operation_id": "AIMW-CONT-270F69CE9A",
@@ -53,9 +53,9 @@
       "permission": "route is protected by auth middleware",
       "tenant_site_ownership": "session-bound user operation; accepts no tenant or site identifier and cannot target another tenant/site resource",
       "reconciliation": "logout authoritatively clears Laravel authentication state after invalidating the session and regenerating the CSRF token",
-      "test_name": "Tests\\Feature\\ContentBackendTerminalityTest::test_AIMW_CONT_270F69CE9A_logout_invalidates_the_authenticated_session",
+      "test_name": "Tests\\Feature\\ContentBackendTerminalityTest::test_aimw_cont_270f69ce9a_logout_invalidates_the_authenticated_session",
       "implementation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
-      "exact_commit_sha": "82902e6f9fd98e12eba6cc1a13e25aebc88c340f"
+      "exact_commit_sha": "27d8471c91a7abe1c1aedbb0b1a8558f7d001bd4"
     }
   ],
   "still_pending": [
@@ -75,5 +75,5 @@
     }
   ],
   "expected_parity_delta": 2,
-  "test_commit_sha": "82902e6f9fd98e12eba6cc1a13e25aebc88c340f"
+  "test_commit_sha": "27d8471c91a7abe1c1aedbb0b1a8558f7d001bd4"
 }
