@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Outlet, Route, Routes, useOutletContext, useParams } from 'react-router-dom';
+import { withApprovalQueueEndpoint } from './approvalQueue';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
@@ -64,7 +65,9 @@ function TenantBootstrap() {
     if (query.error) return <ContextFailure error={query.error} retry={() => query.refetch()} />;
     if (!query.data) return <ContextFailure error={new Error('Tenant context returned no data.')} retry={() => query.refetch()} />;
 
-    return <ToastProvider><AppShell context={query.data}><Outlet context={{ context: query.data } satisfies OutletState} /></AppShell></ToastProvider>;
+    const context = withApprovalQueueEndpoint(query.data);
+
+    return <ToastProvider><AppShell context={context}><Outlet context={{ context } satisfies OutletState} /></AppShell></ToastProvider>;
 }
 
 function RouteElement({ route }: { route: WorkspaceRoute }) {
