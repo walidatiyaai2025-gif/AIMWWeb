@@ -23,7 +23,12 @@ final class ActionContractRegistry
             $permission = $definition['permission'] ?? null;
             $ownership = $definition['ownership'] ?? 'tenant';
 
-            if ($site !== null && (int) $site->tenant_id !== (int) $tenant->id) {
+            if (isset($definition['blocked_reason'])) {
+                $availability = [
+                    'state' => 'pending_integration',
+                    'reason' => (string) $definition['blocked_reason'],
+                ];
+            } elseif ($site !== null && (int) $site->tenant_id !== (int) $tenant->id) {
                 $availability = [
                     'state' => 'context_mismatch',
                     'reason' => 'The selected site does not belong to the active tenant.',
