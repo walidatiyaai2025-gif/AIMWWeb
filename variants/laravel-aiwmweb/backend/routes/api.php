@@ -2,8 +2,14 @@
 
 use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\EmailNotificationController;
+use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SyncApiController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
+    Route::get('build', 'build')->name('canonical.api.build');
+    Route::get('dashboard', 'dashboard')->name('canonical.api.dashboard');
+});
 
 Route::post('v1/sync/webhooks/connector', [SyncApiController::class, 'webhook']);
 
