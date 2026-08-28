@@ -90,8 +90,4 @@ export function wireCopyBuildReport(root: ParentNode = document): void {
     retry.addEventListener('click', () => void copy());
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => wireCopyBuildReport(), { once: true });
-} else {
-    wireCopyBuildReport();
-}
+wireCopyBuildReport();
