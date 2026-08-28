@@ -203,12 +203,9 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
 
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
-        Route::get('/admin/roles', 'show')->defaults('workspace_permissions', 'tenant.view,roles.view')->name('canonical.workspace.admin-roles');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
 
         Route::get('/admin/application-users', 'redirect')->defaults('workspace_permissions', 'tenant.view,users.view')->defaults('workspace_target', '/admin/users')->name('canonical.alias.application-users');
-        Route::get('/admin/roles-permissions', 'redirect')->defaults('workspace_permissions', 'tenant.view,roles.view')->defaults('workspace_target', '/admin/roles')->name('canonical.alias.roles-permissions');
-        Route::get('/admin/sessions', 'redirect')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.admin-sessions');
         Route::get('/settings/sessions', 'redirect')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.settings-sessions');
         Route::get('/logs', 'redirect')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->defaults('workspace_target', '/module/logs')->name('canonical.alias.logs');
         Route::get('/operations/hub', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/operations')->name('canonical.alias.operations-hub');
