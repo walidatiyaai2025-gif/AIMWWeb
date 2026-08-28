@@ -32,12 +32,23 @@ class NextRouteApiDiscoveryTest extends TestCase
         ];
 
         $rows = collect($reconciliation['operations'])
-            ->filter(fn (array $row): bool => ($row['status'] ?? null) === 'PENDING')
+            ->filter(fn (array $row): bool => ($row['migration_state'] ?? null) === 'PENDING')
             ->filter(fn (array $row): bool => in_array($row['kind'] ?? null, ['route', 'api'], true))
             ->reject(fn (array $row): bool => in_array($row['operation_id'] ?? '', $claimed, true))
             ->reject(fn (array $row): bool => in_array($row['operation_id'] ?? '', $reserved, true))
             ->values()
             ->take(15)
+            ->map(fn (array $row): array => [
+                'operation_id' => $row['operation_id'] ?? null,
+                'domain' => $row['domain'] ?? null,
+                'kind' => $row['kind'] ?? null,
+                'route_screen' => $row['route_screen'] ?? null,
+                'source_file' => $row['source_file'] ?? null,
+                'source_symbol' => $row['source_symbol'] ?? null,
+                'mutation' => $row['mutation'] ?? null,
+                'tenant_owned' => $row['tenant_owned'] ?? null,
+                'risk' => $row['risk'] ?? null,
+            ])
             ->all();
 
         $this->assertNotEmpty($rows);
