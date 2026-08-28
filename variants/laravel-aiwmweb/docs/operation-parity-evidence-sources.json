@@ -8,6 +8,7 @@
     {
       "label": "Final composed Laravel AIWMWeb candidate",
       "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+      "observed_pr_head": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
       "domains": [
         "ai", "approvals", "automation", "backup", "billing", "comments",
         "content", "email", "identity", "media", "operations", "platform",
@@ -16,12 +17,14 @@
     },
     {
       "label": "PR #281 SEO final closure",
-      "sha": "d9255d6922d7afe7d8ab151d03e1274756481ca3",
+      "sha": "a5ce70bee0cc013997b76278560bbe4a694e42bb",
+      "observed_pr_head": "d9255d6922d7afe7d8ab151d03e1274756481ca3",
       "domains": ["seo"]
     },
     {
       "label": "PR #278 visible-control reconciliation evidence",
       "sha": "c43b11c3bea5e297d1a03c51a95aa08a35d0b72e",
+      "observed_pr_head": "c43b11c3bea5e297d1a03c51a95aa08a35d0b72e",
       "domains": [
         "ai", "approvals", "automation", "backup", "billing", "comments",
         "content", "email", "identity", "media", "operations", "platform",
@@ -31,13 +34,15 @@
     },
     {
       "label": "PR #279 platform-services closure evidence",
-      "sha": "9132df25a164ce12d82b324a8b90c87dbb4f4763",
+      "sha": "40716fc16ae0d983dbb35c5d518e55655cb4d457",
+      "observed_pr_head": "9132df25a164ce12d82b324a8b90c87dbb4f4763",
       "domains": ["billing", "ai", "approvals", "email", "identity", "automation", "settings", "platform"],
       "supporting_only": true
     },
     {
       "label": "PR #280 runtime acceptance evidence",
-      "sha": "9887747a71f79b1387c9baca2f67cc5764540db9",
+      "sha": "75b314d68af253ee717b79f2379dd3b57fa839cd",
+      "observed_pr_head": "9887747a71f79b1387c9baca2f67cc5764540db9",
       "domains": [
         "ai", "approvals", "automation", "backup", "billing", "comments",
         "content", "email", "identity", "media", "operations", "platform",
