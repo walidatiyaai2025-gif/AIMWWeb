@@ -36,7 +36,6 @@ class FrontendContextTest extends TestCase
             ->assertJsonFragment(['tenant.view'])
             ->assertJsonFragment(['content.view'])
             ->assertJsonPath('connectors', [])
-            ->assertJsonPath('capabilities', [])
             ->assertJsonPath('api.sites', '/api/tenants/alpha/sites')
             ->assertJsonPath('api.posts', '/api/v1/tenants/alpha/sites/{site}/content/post')
             ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications')
@@ -47,6 +46,12 @@ class FrontendContextTest extends TestCase
             ->assertJsonPath('actions.users.disable.availability.state', 'permission_denied')
             ->assertJsonPath('actions.seo.audit.run.availability.state', 'site_context_required');
 
+        $capabilities = $response->json('capabilities');
+        $this->assertSame('permission_denied', $capabilities['sites.sites.connect']['state']);
+        $this->assertSame('permission_denied', $capabilities['site-connect.sites.connect']['state']);
+        $this->assertSame('permission_denied', $capabilities['application-users.users.disable']['state']);
+        $this->assertSame('pending_integration', $capabilities['seo-audit.seo.audit.run']['state']);
+        $this->assertArrayNotHasKey('sites.sites.refresh', $capabilities);
         $this->assertSame($alpha->tenant_id, Tenant::query()->where('slug', 'alpha')->value('id'));
     }
 
