@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "captured_at_utc": "2026-08-28T00:05:49Z",
+  "captured_at_utc": "2026-08-28T09:21:33Z",
   "countable_sources": [
     {
       "label": "Final composed Laravel AIWMWeb candidate",
@@ -12,6 +12,37 @@
         "content", "email", "identity", "media", "operations", "platform",
         "reports", "seo", "settings", "sites", "sync", "taxonomy"
       ]
+    },
+    {
+      "label": "PR #281 SEO final closure",
+      "sha": "a5ce70bee0cc013997b76278560bbe4a694e42bb",
+      "domains": ["seo"]
+    },
+    {
+      "label": "PR #278 visible-control reconciliation evidence",
+      "sha": "c43b11c3bea5e297d1a03c51a95aa08a35d0b72e",
+      "domains": [
+        "ai", "approvals", "automation", "backup", "billing", "comments",
+        "content", "email", "identity", "media", "operations", "platform",
+        "reports", "seo", "settings", "sites", "sync", "taxonomy"
+      ],
+      "supporting_only": true
+    },
+    {
+      "label": "PR #279 platform-services closure evidence",
+      "sha": "40716fc16ae0d983dbb35c5d518e55655cb4d457",
+      "domains": ["billing", "ai", "approvals", "email", "identity", "automation", "settings", "platform"],
+      "supporting_only": true
+    },
+    {
+      "label": "PR #280 runtime acceptance evidence",
+      "sha": "75b314d68af253ee717b79f2379dd3b57fa839cd",
+      "domains": [
+        "ai", "approvals", "automation", "backup", "billing", "comments",
+        "content", "email", "identity", "media", "operations", "platform",
+        "reports", "seo", "settings", "sites", "sync", "taxonomy"
+      ],
+      "supporting_only": true
     }
   ],
   "excluded_sources": [
