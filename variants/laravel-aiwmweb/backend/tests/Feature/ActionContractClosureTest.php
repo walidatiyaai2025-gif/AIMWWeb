@@ -37,14 +37,18 @@ class ActionContractClosureTest extends TestCase
         $alphaSite = $this->siteFor($alpha, 'Alpha Site');
 
         $response = $this->actingAs($user)->getJson("/tenants/alpha/context?site={$alphaSite->id}");
-        $response->assertOk()
-            ->assertJsonPath('active_site.id', $alphaSite->id)
-            ->assertJsonPath('actions.seo.audit.run.operation_id', 'AIMW-SEO-FB0F0E9067')
-            ->assertJsonPath('actions.seo.audit.run.site_id', $alphaSite->id)
-            ->assertJsonPath('actions.seo.audit.run.permission', 'seo.manage')
-            ->assertJsonPath('actions.seo.audit.run.endpoint', "/api/tenants/alpha/sites/{$alphaSite->id}/seo/audits")
-            ->assertJsonPath('actions.seo.audit.run.availability.state', 'pending_integration')
-            ->assertJsonPath('actions.seo.audit.run.availability.reason', 'Canonical SEO audit execution is approval-required, but the current Laravel endpoint dispatches immediately.');
+        $response->assertOk()->assertJsonPath('active_site.id', $alphaSite->id);
+
+        $action = $response->json('actions')['seo.audit.run'];
+        $this->assertSame('AIMW-SEO-FB0F0E9067', $action['operation_id']);
+        $this->assertSame($alphaSite->id, $action['site_id']);
+        $this->assertSame('seo.manage', $action['permission']);
+        $this->assertSame("/api/tenants/alpha/sites/{$alphaSite->id}/seo/audits", $action['endpoint']);
+        $this->assertSame('pending_integration', $action['availability']['state']);
+        $this->assertSame(
+            'Canonical SEO audit execution is approval-required, but the current Laravel endpoint dispatches immediately.',
+            $action['availability']['reason'],
+        );
 
         $outsider = User::factory()->create();
         $betaMembership = $this->tenantMembership($outsider, 'beta', ['tenant.view', 'seo.manage']);
@@ -84,8 +88,9 @@ class ActionContractClosureTest extends TestCase
         $targetMembership = $this->addMembershipToTenant($target, $alphaMembership->tenant_id);
 
         $context = $this->actingAs($operator)->getJson('/tenants/alpha/context')->assertOk();
-        $context->assertJsonPath('actions.users.disable.operation_id', 'AIMW-SYNC-6FCFE15D24')
-            ->assertJsonPath('actions.users.disable.availability.state', 'enabled');
+        $action = $context->json('actions')['users.disable'];
+        $this->assertSame('AIMW-SYNC-6FCFE15D24', $action['operation_id']);
+        $this->assertSame('enabled', $action['availability']['state']);
 
         $this->actingAs($operator)
             ->patchJson("/tenants/alpha/admin/members/{$targetMembership->id}", ['status' => 'inactive'])
