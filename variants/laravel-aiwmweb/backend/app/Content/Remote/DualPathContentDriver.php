@@ -13,14 +13,14 @@ final class DualPathContentDriver implements ContentRemoteDriver
 
     public function get(int $siteId, string $resource, int $remoteId, array $query = []): array
     {
-        return $this->rest->available($siteId) && in_array($resource, ['posts','pages','media','comments','categories','tags'], true)
+        return $this->rest->available($siteId) && in_array($resource, ['posts', 'pages', 'media', 'comments', 'categories', 'tags'], true)
             ? $this->rest->get($siteId, $resource, $remoteId, $query)
             : $this->connector->get($siteId, $resource, $remoteId);
     }
 
     public function mutate(int $siteId, string $resource, ?int $remoteId, string $action, array $payload = []): array
     {
-        return $this->rest->available($siteId) && in_array($resource, ['posts','pages','media','comments','categories','tags'], true)
+        return $this->rest->available($siteId) && in_array($resource, ['posts', 'pages', 'media', 'comments', 'categories', 'tags'], true)
             ? $this->rest->mutate($siteId, $resource, $remoteId, $action, $payload)
             : $this->connector->mutate($siteId, $resource, $remoteId, $action, $payload);
     }
@@ -29,7 +29,7 @@ final class DualPathContentDriver implements ContentRemoteDriver
     {
         return $this->rest->available($siteId)
             ? $this->rest->upload($siteId, $path, $name, $mimeType, $metadata)
-            : $this->connector->semantic($siteId, 'media.upload', ['path'=>$path,'name'=>$name,'mime_type'=>$mimeType,'metadata'=>$metadata]);
+            : $this->connector->semantic($siteId, 'media.upload', ['path' => $path, 'name' => $name, 'mime_type' => $mimeType, 'metadata' => $metadata]);
     }
 
     public function semantic(int $siteId, string $operation, array $payload = []): array

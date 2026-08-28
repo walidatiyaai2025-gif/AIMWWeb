@@ -87,6 +87,7 @@ final class GenerateReportExport extends TenantAwareJob
         rewind($stream);
         $csv = stream_get_contents($stream);
         fclose($stream);
+
         return "\xEF\xBB\xBF".$csv;
     }
 }

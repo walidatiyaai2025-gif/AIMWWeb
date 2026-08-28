@@ -33,6 +33,6 @@ final class BillingMaintenanceService
             }
         }
 
-return $result;
+        return $result;
     }
 }

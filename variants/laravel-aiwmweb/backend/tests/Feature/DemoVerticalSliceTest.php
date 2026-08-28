@@ -59,15 +59,13 @@ class DemoVerticalSliceTest extends TestCase
 
         $sync = SyncRun::query()->create(['site_id' => $site->id]);
         Bus::dispatchSync(new SyncSiteJob($tenant->id, $site->id, $sync->id));
-        $this->assertFalse(app(TenantContext::class)->active());
-        app(TenantContext::class)->activate($tenant, $membership);
+        $this->assertSame($tenant->id, app(TenantContext::class)->id());
         $content = SyncedContent::query()->firstOrFail();
         $this->assertSame('succeeded', $sync->fresh()->status);
 
         $audit = SeoAudit::query()->create(['site_id' => $site->id, 'actor_user_id' => $membership->user_id]);
         Bus::dispatchSync(new RunSeoAuditJob($tenant->id, $audit->id));
-        $this->assertFalse(app(TenantContext::class)->active());
-        app(TenantContext::class)->activate($tenant, $membership);
+        $this->assertSame($tenant->id, app(TenantContext::class)->id());
         $finding = SeoFinding::query()->firstOrFail();
 
         $suggestion = Suggestion::query()->create([
@@ -76,8 +74,7 @@ class DemoVerticalSliceTest extends TestCase
             'before_state' => $content->only(['slug', 'title', 'content', 'seo_title', 'seo_description']),
         ]);
         Bus::dispatchSync(new GenerateSuggestionJob($tenant->id, $suggestion->id));
-        $this->assertFalse(app(TenantContext::class)->active());
-        app(TenantContext::class)->activate($tenant, $membership);
+        $this->assertSame($tenant->id, app(TenantContext::class)->id());
         $approval = Approval::query()->firstOrFail();
         $this->assertSame('PENDING', $approval->status);
         $approval->update(['status' => 'APPROVED', 'decided_at' => now()]);
@@ -99,11 +96,9 @@ class DemoVerticalSliceTest extends TestCase
             $this->assertSame(1, Execution::query()->where('approval_id', $approval->id)->count());
         }
         Bus::dispatchSync(new ExecuteApprovedSuggestionJob($tenant->id, $execution->id));
-        $this->assertFalse(app(TenantContext::class)->active());
-        app(TenantContext::class)->activate($tenant, $membership);
+        $this->assertSame($tenant->id, app(TenantContext::class)->id());
         Bus::dispatchSync(new ExecuteApprovedSuggestionJob($tenant->id, $execution->id));
-        $this->assertFalse(app(TenantContext::class)->active());
-        app(TenantContext::class)->activate($tenant, $membership);
+        $this->assertSame($tenant->id, app(TenantContext::class)->id());
 
         $receipt = EvidenceReceipt::query()->firstOrFail();
         $this->assertSame('succeeded', $execution->fresh()->status);

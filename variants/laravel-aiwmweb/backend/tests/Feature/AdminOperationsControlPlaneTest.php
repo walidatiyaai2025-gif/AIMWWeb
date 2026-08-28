@@ -128,6 +128,7 @@ class AdminOperationsControlPlaneTest extends TestCase
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $membership->setRelation('user', $user);
         $context->forget();
+
         return [$tenant, $membership];
     }
 }

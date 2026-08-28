@@ -24,7 +24,7 @@ final class EntitlementService
             return null;
         }
 
-return $s->plan;
+        return $s->plan;
     }
 
     public function may(string $capability): bool

@@ -15,6 +15,6 @@ final class BillingProviderManager
             throw new InvalidArgumentException("Unsupported billing provider: {$name}");
         }
 
-return $this->paypal;
+        return $this->paypal;
     }
 }

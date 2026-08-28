@@ -336,6 +336,7 @@ final class SeoFakeAiGenerator implements AiGenerator
 final class SeoFakeWordPressGateway implements WordPressGateway
 {
     public int $mutationCount = 0;
+
     public bool $failNextMutation = false;
 
     public function __construct(public array $remote) {}

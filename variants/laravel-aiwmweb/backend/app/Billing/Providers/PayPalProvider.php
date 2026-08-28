@@ -47,7 +47,7 @@ class PayPalProvider implements BillingProvider
             throw new RuntimeException('PayPal authentication failed.');
         }
 
-return (string) $r->json('access_token');
+        return (string) $r->json('access_token');
     }
 
     private function auth()
@@ -67,7 +67,7 @@ return (string) $r->json('access_token');
             throw new RuntimeException('PayPal intent response is incomplete.');
         }
 
-return ['provider_subscription_id' => (string) $r->json('id'), 'approval_url' => $approval['href'], 'status' => (string) $r->json('status', 'APPROVAL_PENDING')];
+        return ['provider_subscription_id' => (string) $r->json('id'), 'approval_url' => $approval['href'], 'status' => (string) $r->json('status', 'APPROVAL_PENDING')];
     }
 
     public function changeSubscription(TenantSubscription $subscription, BillingPlan $plan): array
@@ -80,7 +80,7 @@ return ['provider_subscription_id' => (string) $r->json('id'), 'approval_url' =>
             throw new RuntimeException('PayPal plan change failed.');
         }
 
-return ['requested' => true];
+        return ['requested' => true];
     }
 
     public function cancelSubscription(TenantSubscription $subscription): void
@@ -119,6 +119,6 @@ return ['requested' => true];
             throw new RuntimeException('PayPal reconciliation failed.');
         }
 
-return ['status' => (string) $r->json('status'), 'provider_plan_id' => (string) $r->json('plan_id'), 'occurred_at' => now()->toAtomString()];
+        return ['status' => (string) $r->json('status'), 'provider_plan_id' => (string) $r->json('plan_id'), 'occurred_at' => now()->toAtomString()];
     }
 }

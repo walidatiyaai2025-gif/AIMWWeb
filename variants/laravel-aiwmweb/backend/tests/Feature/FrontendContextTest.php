@@ -36,7 +36,9 @@ class FrontendContextTest extends TestCase
             ->assertJsonFragment(['content.view'])
             ->assertJsonPath('connectors', [])
             ->assertJsonPath('capabilities', [])
-            ->assertJsonPath('api', [])
+            ->assertJsonPath('api.sites', '/api/tenants/alpha/sites')
+            ->assertJsonPath('api.posts', '/api/v1/tenants/alpha/sites/{site}/content/post')
+            ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications')
             ->assertJsonPath('actions', []);
 
         $this->assertSame($alpha->tenant_id, Tenant::query()->where('slug', 'alpha')->value('id'));

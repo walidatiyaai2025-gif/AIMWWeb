@@ -22,6 +22,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -328,6 +329,16 @@ final class FakeSyncSiteGuard implements SyncSiteGuard
     public function allow(int $siteId, int $tenantId): void
     {
         $this->sites[$siteId] = $tenantId;
+        DB::table('sites')->updateOrInsert(
+            ['id' => $siteId],
+            [
+                'tenant_id' => $tenantId,
+                'name' => 'Sync Test Site '.$siteId,
+                'url' => 'https://sync-'.$tenantId.'-'.$siteId.'.example.test',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
     }
 
     public function assertAccessible(int $siteId): void

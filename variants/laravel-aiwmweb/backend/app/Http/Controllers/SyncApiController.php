@@ -27,10 +27,9 @@ final class SyncApiController extends Controller
     public function __construct(
         private readonly SyncRuntimeService $runtime,
         private readonly TenantContext $tenant,
-        private readonly SyncWebhookVerifier $webhooks,
     ) {}
 
-    public function start(Request $request, TenantAuthorizer $auth, int $site): JsonResponse
+    public function start(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.edit');
         $data = $request->validate([
@@ -56,7 +55,7 @@ final class SyncApiController extends Controller
         return response()->json($run, 202);
     }
 
-    public function index(Request $request, TenantAuthorizer $auth, int $site): JsonResponse
+    public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
         $query = SyncRun::query()->where('site_id', $site)->latest('id');
@@ -67,7 +66,7 @@ final class SyncApiController extends Controller
         return response()->json($query->paginate(min(max((int) $request->query('per_page', 25), 1), 100)));
     }
 
-    public function show(TenantAuthorizer $auth, int $site, int $run): JsonResponse
+    public function show(TenantAuthorizer $auth, string $tenant, int $site, int $run): JsonResponse
     {
         $auth->authorize('content.view');
         $syncRun = SyncRun::query()->where('site_id', $site)->with(['batches' => fn ($query) => $query->orderBy('id')])->findOrFail($run);
@@ -79,7 +78,7 @@ final class SyncApiController extends Controller
         ]);
     }
 
-    public function resume(TenantAuthorizer $auth, int $site, int $run): JsonResponse
+    public function resume(TenantAuthorizer $auth, string $tenant, int $site, int $run): JsonResponse
     {
         $auth->authorize('content.edit');
         $syncRun = SyncRun::query()->where('site_id', $site)->findOrFail($run);
@@ -93,7 +92,7 @@ final class SyncApiController extends Controller
         return response()->json($resumed, 202);
     }
 
-    public function retryItem(TenantAuthorizer $auth, int $site, int $item): JsonResponse
+    public function retryItem(TenantAuthorizer $auth, string $tenant, int $site, int $item): JsonResponse
     {
         $auth->authorize('content.edit');
         $syncItem = SyncItem::query()->where('site_id', $site)->findOrFail($item);
@@ -102,14 +101,14 @@ final class SyncApiController extends Controller
         return response()->json($syncItem->fresh(), 202);
     }
 
-    public function conflicts(TenantAuthorizer $auth, int $site): JsonResponse
+    public function conflicts(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
 
         return response()->json(ContentConflict::query()->where('site_id', $site)->latest('id')->paginate(50));
     }
 
-    public function resolveConflict(Request $request, TenantAuthorizer $auth, int $site, int $conflict): JsonResponse
+    public function resolveConflict(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $conflict): JsonResponse
     {
         $auth->authorize('content.edit');
         $item = ContentConflict::query()->where('site_id', $site)->where('status', 'open')->findOrFail($conflict);
@@ -127,7 +126,7 @@ final class SyncApiController extends Controller
         }
     }
 
-    public function diagnostics(TenantAuthorizer $auth, int $site): JsonResponse
+    public function diagnostics(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
 
@@ -141,10 +140,10 @@ final class SyncApiController extends Controller
         ]);
     }
 
-    public function webhook(Request $request): JsonResponse
+    public function webhook(Request $request, SyncWebhookVerifier $webhooks): JsonResponse
     {
         try {
-            $event = $this->webhooks->verify($request);
+            $event = $webhooks->verify($request);
         } catch (Throwable $exception) {
             return response()->json(['code' => 'INVALID_SYNC_WEBHOOK', 'message' => 'Webhook verification failed.'], 401);
         }

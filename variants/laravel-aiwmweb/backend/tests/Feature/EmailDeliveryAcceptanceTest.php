@@ -24,9 +24,9 @@ use App\Models\TenantSecret;
 use App\Models\User;
 use App\Tenancy\TenantCache;
 use App\Tenancy\TenantContext;
+use App\Tenancy\TenantJobMiddleware;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -372,7 +372,11 @@ class EmailDeliveryAcceptanceTest extends TestCase
         $delivery = app(EmailDeliveryService::class)->queue($this->deliveryInput('job-context'));
         app(TenantContext::class)->forget();
 
-        Bus::dispatchSync(new SendEmailDeliveryJob($tenant->id, $delivery->id));
+        $job = new SendEmailDeliveryJob($tenant->id, $delivery->id);
+        (new TenantJobMiddleware)->handle(
+            $job,
+            fn (SendEmailDeliveryJob $runningJob) => $runningJob->handle(app(EmailDeliveryService::class)),
+        );
 
         $this->assertSame([$tenant->id], $observedTenantIds);
         $this->assertFalse(app(TenantContext::class)->active());

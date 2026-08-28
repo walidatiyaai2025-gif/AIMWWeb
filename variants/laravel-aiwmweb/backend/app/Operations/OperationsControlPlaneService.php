@@ -15,7 +15,9 @@ use Throwable;
 final class OperationsControlPlaneService
 {
     private const TASK_TYPES = ['sync', 'backup_l1', 'backup_l2', 'backup_l3', 'report'];
+
     private const AUTOMATION_TRIGGERS = ['manual', 'schedule.completed', 'sync.failed', 'backup.completed'];
+
     private const AUTOMATION_ACTIONS = ['enqueue_sync', 'request_backup_l1', 'request_backup_l2', 'request_backup_l3', 'generate_report', 'write_audit'];
 
     public function __construct(
@@ -175,6 +177,7 @@ final class OperationsControlPlaneService
         ]);
         if ($rule->approval_required) {
             $this->audit($actorUserId, 'automation.awaiting_approval', 'automation_run', $runId, ['correlation_id' => $correlationId]);
+
             return ['matched' => true, 'run_id' => $runId, 'status' => 'awaiting_approval'];
         }
 
@@ -201,6 +204,7 @@ final class OperationsControlPlaneService
         if (! empty($filters['type'])) {
             $query->where('type', 'like', $filters['type'].'%');
         }
+
         return $query->orderByDesc('id')->limit(200)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['payload', 'result']))->all();
     }
 
@@ -208,6 +212,7 @@ final class OperationsControlPlaneService
     {
         $operation = $this->row('operation_executions', $id);
         $logs = DB::table('operation_logs')->where('tenant_id', $this->context->id())->where('operation_execution_id', $id)->orderBy('id')->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
+
         return ['operation' => $this->decodeColumns($operation, ['payload', 'result']), 'logs' => $logs];
     }
 
@@ -268,7 +273,9 @@ final class OperationsControlPlaneService
         if (! in_array($level, ['L1', 'L2', 'L3'], true)) {
             throw ValidationException::withMessages(['level' => 'Backup level must be L1, L2, or L3.']);
         }
-        $risk = match ($level) { 'L1' => 'low', 'L2' => 'medium', 'L3' => 'high' };
+        $risk = match ($level) {
+            'L1' => 'low', 'L2' => 'medium', 'L3' => 'high'
+        };
         $approvalRequired = $level === 'L3';
         $operation = $this->createOperation('backup.'.strtolower($level), 'backup', null, ['site_key' => $siteKey, 'level' => $level, 'manifest' => $manifest], 3, $actorUserId);
         $backupId = DB::table('backups')->insertGetId([
@@ -293,6 +300,7 @@ final class OperationsControlPlaneService
         }
         DB::table('backups')->where('id', $backupId)->update(['approved_by_user_id' => $actorUserId, 'status' => 'requested', 'updated_at' => now()]);
         $this->startBackup($backupId, $actorUserId);
+
         return $this->backup($backupId);
     }
 
@@ -308,6 +316,7 @@ final class OperationsControlPlaneService
             'status' => 'awaiting_approval', 'risk_level' => 'high', 'operation_execution_id' => $operation['id'], 'created_at' => now(), 'updated_at' => now(),
         ]);
         $this->audit($actorUserId, 'restore.requested', 'restore_request', $restoreId, ['backup_id' => $backupId]);
+
         return $this->row('restore_requests', $restoreId);
     }
 
@@ -332,6 +341,7 @@ final class OperationsControlPlaneService
                 DB::table('restore_requests')->where('id', $restoreId)->update(['status' => 'failed', 'updated_at' => now()]);
             }
         }
+
         return $this->row('restore_requests', $restoreId);
     }
 
@@ -352,6 +362,7 @@ final class OperationsControlPlaneService
         if (! empty($filters['q'])) {
             $query->where('message', 'like', '%'.$filters['q'].'%');
         }
+
         return $query->orderByDesc('occurred_at')->limit(500)->get()->map(fn ($row) => $this->decodeColumns($this->objectToArray($row), ['context']))->all();
     }
 
@@ -388,6 +399,7 @@ final class OperationsControlPlaneService
         DB::table('operation_executions')->where('id', $operation['id'])->update(['subject_id' => (string) $exportId]);
         GenerateReportExport::dispatch($this->context->id(), $exportId);
         $this->audit($actorUserId, 'report.export_queued', 'report_export', $exportId, ['report_type' => $type]);
+
         return $this->decodeColumns($this->row('report_exports', $exportId), ['filters']);
     }
 
@@ -405,6 +417,7 @@ final class OperationsControlPlaneService
             $type = (string) $action['type'];
             if ($type === 'write_audit') {
                 $this->audit($actorUserId, 'automation.action', 'automation_rule', $rule->id, ['message' => $action['message'] ?? 'automation action']);
+
                 continue;
             }
             $operationType = match ($type) {
@@ -418,6 +431,7 @@ final class OperationsControlPlaneService
         }
         DB::table('automation_runs')->where('id', $runId)->update(['status' => 'succeeded', 'result' => json_encode(['operation_ids' => $operationIds], JSON_THROW_ON_ERROR), 'updated_at' => now()]);
         $this->audit($actorUserId, 'automation.executed', 'automation_run', $runId, ['operation_ids' => $operationIds]);
+
         return ['matched' => true, 'run_id' => $runId, 'status' => 'succeeded', 'operation_ids' => $operationIds];
     }
 
@@ -428,6 +442,7 @@ final class OperationsControlPlaneService
         if (! app()->bound(ConnectorBackupGateway::class)) {
             $this->failOperation((int) $operation->id, 'WordPress connector backup capability is not integrated.');
             DB::table('backups')->where('id', $backupId)->update(['status' => 'blocked', 'updated_at' => now()]);
+
             return;
         }
         try {
@@ -455,6 +470,7 @@ final class OperationsControlPlaneService
             'safe_to_cancel' => true, 'payload' => json_encode($this->redactor->redact($payload), JSON_THROW_ON_ERROR), 'created_at' => now(), 'updated_at' => now(),
         ]);
         $this->log($tenantId, $id, $correlationId, 'info', 'Operation queued.', ['type' => $type]);
+
         return ['id' => $id, 'correlation_id' => $correlationId, 'status' => 'queued'];
     }
 
@@ -486,6 +502,7 @@ final class OperationsControlPlaneService
         if (! $row) {
             throw (new ModelNotFoundException)->setModel($table);
         }
+
         return $this->objectToArray($row);
     }
 
@@ -503,6 +520,7 @@ final class OperationsControlPlaneService
             'monthly' => $local->copy()->addMonth()->startOfDay(),
             default => $this->intervalNextRun($schedule, $local),
         };
+
         return $next->utc();
     }
 
@@ -515,6 +533,7 @@ final class OperationsControlPlaneService
         if ($minutes < 5 || $minutes > 10080) {
             throw ValidationException::withMessages(['schedule' => 'Minute interval must be between 5 and 10080.']);
         }
+
         return $local->copy()->addMinutes($minutes);
     }
 
@@ -533,6 +552,7 @@ final class OperationsControlPlaneService
                 return false;
             }
         }
+
         return true;
     }
 
@@ -545,6 +565,7 @@ final class OperationsControlPlaneService
             return [];
         }
         $decoded = json_decode($value, true);
+
         return is_array($decoded) ? $decoded : [];
     }
 
@@ -560,6 +581,7 @@ final class OperationsControlPlaneService
                 $row[$column] = json_decode($row[$column], true);
             }
         }
+
         return $this->redactor->redact($row);
     }
 

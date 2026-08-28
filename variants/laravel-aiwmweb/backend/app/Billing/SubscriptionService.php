@@ -117,7 +117,7 @@ final class SubscriptionService
             $count++;
         }
 
-return $count;
+        return $count;
     }
 
     public function handleWebhook(string $provider, Request $request): string
@@ -219,16 +219,16 @@ return $count;
         }foreach (TenantSubscription::query()->where('state', SubscriptionState::GRACE->value)->where('grace_ends_at', '<=', now())->get() as $s) {
             $this->transition($s, SubscriptionState::SUSPENDED);
             $s->save();
-            $this->audit->record('billing.grace.expired',[],'subscription',$s->id,null,true);
+            $this->audit->record('billing.grace.expired', [], 'subscription', $s->id, null, true);
             $count++;
         }
 
-return $count;
+        return $count;
     }
 
-    private function transition(TenantSubscription $s,SubscriptionState $to): void
+    private function transition(TenantSubscription $s, SubscriptionState $to): void
     {
-        $this->states->assert($s->state,$to);
+        $this->states->assert($s->state, $to);
         $s->state = $to;
     }
 }

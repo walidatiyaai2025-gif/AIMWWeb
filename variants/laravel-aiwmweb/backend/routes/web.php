@@ -93,7 +93,7 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
     Route::post('/change-plan', [BillingController::class, 'changePlan']);
     Route::get('/entitlements', [BillingController::class, 'entitlements']);
     Route::get('/usage', [BillingController::class, 'usage']);
-    Route::get('/history',[BillingController::class, 'history']);
+    Route::get('/history', [BillingController::class, 'history']);
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {

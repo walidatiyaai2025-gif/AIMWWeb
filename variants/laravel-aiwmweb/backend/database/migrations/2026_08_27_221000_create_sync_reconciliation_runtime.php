@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sync_runs', function (Blueprint $table) {
-            $table->string('mode', 32);
+            $table->string('mode', 32)->default('full');
             $table->string('trigger', 32)->default('manual');
             $table->string('state', 32)->default('queued');
-            $table->json('resources');
+            $table->json('resources')->nullable();
             $table->json('metadata')->nullable();
             $table->uuid('lease_token')->nullable();
             $table->foreignId('initiated_by_user_id')->nullable()->constrained('users')->nullOnDelete();

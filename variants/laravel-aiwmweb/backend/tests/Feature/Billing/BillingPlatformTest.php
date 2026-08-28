@@ -299,7 +299,7 @@ final class FakePayPalProvider implements BillingProvider
             throw new InvalidProviderSignatureException('bad');
         }
 
-return $this->event;
+        return $this->event;
     }
 
     public function reconcile(TenantSubscription $subscription): array

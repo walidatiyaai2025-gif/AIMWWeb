@@ -134,7 +134,7 @@ final class NotificationPlatformService implements NotificationEventSink
     public function listForCurrentUser(array $filters = []): array
     {
         return InAppNotification::query()
-            ->where('user_id', $this->context->membership()->user_id)
+            ->where('user_id', app(TenantContext::class)->membership()->user_id)
             ->when(isset($filters['unread']), fn ($q) => $filters['unread'] ? $q->whereNull('read_at') : $q)
             ->when($filters['severity'] ?? null, fn ($q, $v) => $q->where('severity', $v))
             ->when($filters['source'] ?? null, fn ($q, $v) => $q->where('source', $v))
@@ -144,12 +144,12 @@ final class NotificationPlatformService implements NotificationEventSink
 
     public function unreadCount(): int
     {
-        return InAppNotification::query()->where('user_id', $this->context->membership()->user_id)->whereNull('read_at')->count();
+        return InAppNotification::query()->where('user_id', app(TenantContext::class)->membership()->user_id)->whereNull('read_at')->count();
     }
 
     public function markRead(int $id): array
     {
-        $notification = InAppNotification::query()->where('user_id', $this->context->membership()->user_id)->findOrFail($id);
+        $notification = InAppNotification::query()->where('user_id', app(TenantContext::class)->membership()->user_id)->findOrFail($id);
         $notification->update(['read_at' => $notification->read_at ?? now()]);
 
         return $this->serialize($notification->fresh());
@@ -157,7 +157,7 @@ final class NotificationPlatformService implements NotificationEventSink
 
     public function markAllRead(): int
     {
-        return InAppNotification::query()->where('user_id', $this->context->membership()->user_id)->whereNull('read_at')->update(['read_at' => now()]);
+        return InAppNotification::query()->where('user_id', app(TenantContext::class)->membership()->user_id)->whereNull('read_at')->update(['read_at' => now()]);
     }
 
     public function preferences(?int $userId = null): array

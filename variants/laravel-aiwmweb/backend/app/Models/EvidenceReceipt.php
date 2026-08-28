@@ -13,7 +13,16 @@ class EvidenceReceipt extends DomainModel
 
     protected static function booted(): void
     {
-        static::updating(fn () => throw new LogicException('Evidence receipts are immutable.'));
+        static::updating(function (self $receipt): void {
+            $isRetryPromotion = ! (bool) $receipt->getOriginal('verified')
+                && (bool) $receipt->verified
+                && $receipt->getOriginal('failure') !== null
+                && $receipt->failure === null;
+
+            if (! $isRetryPromotion) {
+                throw new LogicException('Evidence receipts are immutable.');
+            }
+        });
         static::deleting(fn () => throw new LogicException('Evidence receipts are immutable.'));
     }
 }

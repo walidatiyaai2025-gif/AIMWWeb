@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Connector\AdvancedWordPressGateway;
 use App\Connector\PairingService;
 use App\Models\Connector;
+use App\Models\ConnectorPairing;
 use App\Models\Site;
 use App\Models\SiteDiagnostic;
 use App\Models\SiteOperationHistory;
@@ -70,7 +71,7 @@ class SiteDiagnosticsClosureTest extends TestCase
 
         $reconnect = $service->reconnect($site->fresh());
         $this->assertSame(64, strlen($reconnect['pairing_token']));
-        $this->assertSame(1, \App\Models\ConnectorPairing::query()->where('site_id', $site->id)->count());
+        $this->assertSame(1, ConnectorPairing::query()->where('site_id', $site->id)->count());
     }
 
     public function test_failed_rest_and_unhealthy_database_are_never_reported_green(): void
@@ -201,6 +202,7 @@ final class SiteGatewayStub implements AdvancedWordPressGateway
         'connection' => ['connection' => 'CONNECTED', 'protocol_state' => 'SUPPORTED_ENABLED'],
         'runtime' => ['states' => [], 'adapters' => []],
     ];
+
     public array $healthPayload = [
         'wordpress_version' => '6.9',
         'php_version' => '8.3',
@@ -213,7 +215,9 @@ final class SiteGatewayStub implements AdvancedWordPressGateway
         'cron' => ['events' => 3, 'due' => 0],
         'adapters' => [],
     ];
+
     public ?RuntimeException $capabilityException = null;
+
     public int $disconnectCount = 0;
 
     public function health(Site $site): array

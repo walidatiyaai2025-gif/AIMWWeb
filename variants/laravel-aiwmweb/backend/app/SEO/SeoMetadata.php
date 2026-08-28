@@ -42,6 +42,7 @@ final class SeoMetadata
         foreach ($changes as $field => $value) {
             if ($field === 'seo_robots') {
                 $result[$field] = self::normalize(['seo_robots' => $value])['seo_robots'];
+
                 continue;
             }
             $text = trim((string) $value);

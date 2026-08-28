@@ -3,8 +3,9 @@
 namespace App\Logging;
 
 use Monolog\LogRecord;
+use Monolog\Processor\ProcessorInterface;
 
-final class RedactSecretsProcessor
+final class RedactSecretsProcessor implements ProcessorInterface
 {
     private const REDACTED = '[REDACTED]';
 
