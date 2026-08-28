@@ -4,15 +4,14 @@ on:
   pull_request:
     paths:
       - 'variants/laravel-aiwmweb/tools/reconcile_operation_parity.py'
+      - 'variants/laravel-aiwmweb/tools/finalize_operation_parity.py'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
-  push:
-    branches:
-      - worker/laravel-aiwmweb-parity-reconciliation
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -21,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
@@ -29,27 +29,33 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Rebuild operation-level reconciliation
+      - name: Rebuild and validate operation-level reconciliation
         run: |
-          python variants/laravel-aiwmweb/tools/reconcile_operation_parity.py \
-            --output /tmp/operation-parity-reconciliation.json \
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
             --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
             --check-total 931
 
-      - name: Verify committed artifact when present
+      - name: Commit reproducible generated artifacts
         shell: bash
         run: |
           set -euo pipefail
-          committed='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
-          if [[ -f "$committed" ]]; then
-            cmp "$committed" /tmp/operation-parity-reconciliation.json
-          else
-            echo "Committed artifact not present yet; generated artifact will be uploaded for evidence review."
+          json='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          md='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          if ! git diff --quiet -- "$json" "$md"; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$json" "$md"
+            git commit -m 'chore(parity): regenerate final reconciliation artifacts'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: laravel-aiwmweb-operation-parity-reconciliation
           path: |
-            /tmp/operation-parity-reconciliation.json
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
             /tmp/operation-parity-summary.json
