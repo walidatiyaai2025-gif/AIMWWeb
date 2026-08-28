@@ -51,6 +51,6 @@ final class AccountEntitlementEnforcementService
 
     private function platformAdministrator(): bool
     {
-        return (bool) (Auth::user()?->is_platform_admin ?? false);
+        return (bool) (Auth::user()?->platform_admin ?? false);
     }
 }
