@@ -121,6 +121,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $tenant = $tenantModel->slug;
         $site = request()->has('site') ? Site::query()->findOrFail(request()->integer('site')) : null;
         $siteToken = $site ? (string) $site->id : '{site}';
+        $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         return response()->json([
             'user' => ['id' => request()->user()->getKey(), 'name' => request()->user()->name, 'email' => request()->user()->email],
@@ -129,7 +130,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'active_site' => $site ? ['id' => (int) $site->id, 'name' => (string) $site->name] : null,
             'permissions' => $permissions,
             'connectors' => $connectors,
-            'capabilities' => (object) [],
+            'capabilities' => $actionRegistry->capabilityStates($actions),
             'api' => [
                 'sites' => "/api/tenants/{$tenant}/sites",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/content/post",
@@ -151,7 +152,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
                 'roles' => "/tenants/{$tenant}/admin/roles",
                 'sessions' => "/tenants/{$tenant}/admin/sessions",
             ],
-            'actions' => $actionRegistry->contracts($tenantModel, $permissions, $site),
+            'actions' => $actions,
         ]);
     });
 
