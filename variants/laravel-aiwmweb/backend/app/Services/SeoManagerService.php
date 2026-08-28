@@ -131,7 +131,11 @@ final class SeoManagerService
         return [
             'metadata' => $metadata,
             'source_hash' => $this->sourceHash($metadata),
-            'provider' => $this->providerState($metadata['seo_provider']),
+            'provider' => $this->providerState(
+                $metadata['seo_provider'],
+                $this->nullableBool($remote['seo_provider_enabled'] ?? null),
+                $this->nullableBool($remote['seo_provider_available'] ?? null),
+            ),
             'readability_score' => $this->readabilityScore((string) ($remote['content'] ?? '')),
             'authoritative' => true,
         ];
@@ -284,14 +288,27 @@ final class SeoManagerService
         return true;
     }
 
-    public function providerState(?string $provider): array
+    public function providerState(?string $provider, ?bool $enabled = null, ?bool $available = null): array
     {
-        return match ($provider) {
-            'yoast-seo' => ['provider' => 'yoast-seo', 'state' => 'SUPPORTED_ENABLED', 'writable' => ['seo_title', 'seo_description', 'seo_canonical', 'seo_robots']],
-            'rank-math' => ['provider' => 'rank-math', 'state' => 'SUPPORTED_ENABLED', 'writable' => ['seo_title', 'seo_description', 'seo_canonical', 'seo_robots']],
-            null, '' => ['provider' => null, 'state' => 'WORDPRESS_NATIVE', 'writable' => ['title', 'slug']],
-            default => ['provider' => $provider, 'state' => 'UNSUPPORTED', 'writable' => ['title', 'slug']],
-        };
+        if (! in_array($provider, ['yoast-seo', 'rank-math'], true)) {
+            return match ($provider) {
+                null, '' => ['provider' => null, 'state' => 'WORDPRESS_NATIVE', 'writable' => ['title', 'slug']],
+                default => ['provider' => $provider, 'state' => 'UNSUPPORTED', 'writable' => ['title', 'slug']],
+            };
+        }
+
+        if ($available === false) {
+            return ['provider' => $provider, 'state' => 'TEMPORARILY_UNAVAILABLE', 'writable' => []];
+        }
+        if ($enabled === false) {
+            return ['provider' => $provider, 'state' => 'SUPPORTED_DISABLED', 'writable' => []];
+        }
+
+        return [
+            'provider' => $provider,
+            'state' => 'SUPPORTED_ENABLED',
+            'writable' => ['seo_title', 'seo_description', 'seo_canonical', 'seo_robots'],
+        ];
     }
 
     public function readabilityScore(string $html): int
@@ -358,12 +375,34 @@ final class SeoManagerService
             return;
         }
         $state = $this->providerState($provider);
-        if (! in_array($state['state'], ['SUPPORTED_ENABLED'], true)) {
-            throw new RuntimeException('SEO plugin metadata write is unsupported for the detected provider.');
+        if ($state['state'] !== 'SUPPORTED_ENABLED') {
+            throw new RuntimeException('SEO plugin metadata write is unavailable for the detected provider state.');
         }
         if (array_diff($pluginFields, $state['writable'])) {
             throw new RuntimeException('Detected SEO provider does not support the requested metadata fields.');
         }
+    }
+
+    private function nullableBool(mixed $value): ?bool
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_int($value)) {
+            return $value !== 0;
+        }
+        if (is_string($value)) {
+            return match (strtolower(trim($value))) {
+                '1', 'true', 'yes', 'enabled', 'available' => true,
+                '0', 'false', 'no', 'disabled', 'unavailable' => false,
+                default => null,
+            };
+        }
+
+        return null;
     }
 
     private function fallbackTitle(string $value): string
