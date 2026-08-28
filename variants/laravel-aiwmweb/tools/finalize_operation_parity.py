@@ -12,9 +12,9 @@ import reconcile_operation_parity as reconcile
 TERMINAL_STATES = {"PORTED", "ADAPTED", "VERIFIED_UNAVAILABLE_EXTERNAL"}
 
 
-def pushed_remote_refs(sha: str) -> list[str]:
+def source_is_pushed(sha: str) -> bool:
     output = reconcile.run_git("branch", "-r", "--contains", sha, check=False)
-    return sorted(line.strip() for line in output.splitlines() if line.strip())
+    return any(line.strip() for line in output.splitlines())
 
 
 def state_summary(rows: list[dict]) -> dict:
@@ -104,12 +104,11 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
     if invalid_states:
         errors.append(f"invalid statuses: {', '.join(invalid_states)}")
 
-    source_refs: dict[str, list[str]] = {}
+    source_presence: dict[str, bool] = {}
     for source in manifest["countable_sources"]:
         sha = str(source["sha"])
-        refs = pushed_remote_refs(sha)
-        source_refs[sha] = refs
-        if not refs:
+        source_presence[sha] = source_is_pushed(sha)
+        if not source_presence[sha]:
             errors.append(f"countable source is not reachable from a pushed remote ref: {sha}")
 
     snapshots_by_sha = {snap.sha: snap for snap in snapshots}
@@ -159,6 +158,7 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
     if visible["terminal"] + visible["pending"] + visible["blocked"] != visible["total"]:
         errors.append("visible-control totals do not reconcile")
 
+    unpushed = sorted(sha for sha, present in source_presence.items() if not present)
     validation = {
         "denominator_exact": len(rows) == expected,
         "operation_id_count": len(operation_ids),
@@ -170,8 +170,8 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
         "terminal_excludes_blocked": totals["terminal"] == expected_terminal,
         "terminal_evidence_references_exist": not missing_evidence_refs,
         "missing_terminal_evidence_operation_ids": missing_evidence_refs,
-        "pushed_source_refs": source_refs,
-        "unpushed_sources_counted": [sha for sha, refs in source_refs.items() if not refs],
+        "pushed_source_shas_verified": sorted(sha for sha, present in source_presence.items() if present),
+        "unpushed_sources_counted": unpushed,
         "route_or_visible_placeholder_terminals": placeholder_terminals,
         "frontend_placeholders_not_counted": not placeholder_terminals,
         "errors": errors,
