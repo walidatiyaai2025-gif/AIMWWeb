@@ -1,12 +1,13 @@
 import type { ActionContract, FrontendContext } from './core';
 
-export type DiscoveredActionContract = ActionContract & {
+export type DiscoveredActionContract = Omit<ActionContract, 'method' | 'fields'> & {
     operation_id: string;
     canonical_kind: 'visible_control' | 'service' | 'api' | string;
     tenant_id: number;
     tenant_slug: string;
     site_id?: number | null;
     permission?: string | null;
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     availability: { state: string; reason?: string | null };
     fixed?: Record<string, string | number>;
     reconcile_api_key?: string | null;
@@ -25,12 +26,12 @@ export class ActionContractError extends Error {
     }
 }
 
-export function discoveredAction(contract: ActionContract): DiscoveredActionContract {
+export function discoveredAction(contract: ActionContract | DiscoveredActionContract): DiscoveredActionContract {
     return contract as DiscoveredActionContract;
 }
 
 export function prepareActionRequest(
-    contract: ActionContract,
+    contract: ActionContract | DiscoveredActionContract,
     context: FrontendContext,
     values: Record<string, string | number>,
 ): { endpoint: string; method: string; body?: string; operationId: string } {
@@ -70,10 +71,9 @@ export function prepareActionRequest(
         throw new ActionContractError('The action endpoint still contains an unresolved ownership or path parameter.');
     }
 
-    const method = action.method as string;
-    const body = ['GET', 'HEAD', 'DELETE'].includes(method.toUpperCase())
+    const body = ['GET', 'HEAD', 'DELETE'].includes(action.method.toUpperCase())
         ? undefined
         : JSON.stringify(payload);
 
-    return { endpoint, method, body, operationId: action.operation_id };
+    return { endpoint, method: action.method, body, operationId: action.operation_id };
 }
