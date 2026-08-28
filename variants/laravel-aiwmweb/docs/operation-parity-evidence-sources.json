@@ -2,11 +2,11 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "captured_at_utc": "2026-08-28T00:00:00Z",
+  "captured_at_utc": "2026-08-28T00:05:49Z",
   "countable_sources": [
     {
       "label": "Final composed Laravel AIWMWeb candidate",
-      "sha": "86c39dc90bbd6374a1ed1c814d7f8895255770d0",
+      "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
       "domains": [
         "ai", "approvals", "automation", "backup", "billing", "comments",
         "content", "email", "identity", "media", "operations", "platform",
