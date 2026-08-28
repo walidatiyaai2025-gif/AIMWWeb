@@ -2,6 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
+  "previous_reconciliation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
   "captured_at_utc": "2026-08-28T09:21:33Z",
   "countable_sources": [
     {
