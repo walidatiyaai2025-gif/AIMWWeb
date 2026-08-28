@@ -7,21 +7,35 @@ use Tests\TestCase;
 
 final class CanonicalBuildReportCopyDiscoveryTest extends TestCase
 {
-    public function test_dump_target_row_and_global_counts(): void
+    public function test_dump_independently_closable_pending_reads(): void
     {
-        $path = base_path('../docs/operation-parity-reconciliation.json');
-        $payload = json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        $payload = json_decode((string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, flags: JSON_THROW_ON_ERROR);
+        $candidates = [];
 
-        $target = 'AIMW-SEO-C48570747C';
-        $matches = [];
-
-        $walk = function (mixed $value) use (&$walk, &$matches, $target): void {
+        $walk = function (mixed $value) use (&$walk, &$candidates): void {
             if (! is_array($value)) {
                 return;
             }
 
-            if (($value['operation_id'] ?? $value['operationId'] ?? $value['id'] ?? null) === $target) {
-                $matches[] = $value;
+            $operationId = $value['operation_id'] ?? null;
+            $state = strtoupper((string) ($value['migration_state'] ?? $value['reconciliation']['decision'] ?? ''));
+            $kind = strtolower((string) ($value['kind'] ?? ''));
+            $mutation = (bool) ($value['mutation'] ?? false);
+
+            if (is_string($operationId) && $state === 'PENDING' && ! $mutation && in_array($kind, ['api', 'route'], true)) {
+                $candidates[] = [
+                    'operation_id' => $operationId,
+                    'kind' => $kind,
+                    'domain' => $value['domain'] ?? null,
+                    'route_screen' => $value['route_screen'] ?? null,
+                    'visible_control' => $value['visible_control'] ?? null,
+                    'current_source' => $value['current_source'] ?? null,
+                    'service' => $value['service'] ?? null,
+                    'external_dependency' => $value['external_dependency'] ?? null,
+                    'tenant_owned' => $value['tenant_owned'] ?? null,
+                    'risk' => $value['risk'] ?? null,
+                    'reason' => $value['reconciliation']['reason'] ?? null,
+                ];
             }
 
             foreach ($value as $child) {
@@ -32,10 +46,9 @@ final class CanonicalBuildReportCopyDiscoveryTest extends TestCase
         $walk($payload);
 
         throw new RuntimeException(json_encode([
-            'target' => $target,
-            'matches' => $matches,
+            'count' => count($candidates),
+            'candidates' => array_slice($candidates, 0, 80),
             'totals' => $payload['totals'] ?? null,
-            'visible_controls' => $payload['visible_controls'] ?? null,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 }
