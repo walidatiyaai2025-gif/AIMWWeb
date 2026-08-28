@@ -40,6 +40,23 @@ describe('canonical action contracts', () => {
         });
     });
 
+    it('supports canonical read controls without fabricating a request body', () => {
+        expect(prepareActionRequest(contract({
+            operation_id: 'AIMW-SYNC-A9E956A4DA',
+            permission: 'tenant.view',
+            capability: 'sites.refresh',
+            endpoint: '/api/tenants/alpha/sites',
+            method: 'GET',
+            fixed: {},
+            fields: [],
+        }), context(), {})).toEqual({
+            endpoint: '/api/tenants/alpha/sites',
+            method: 'GET',
+            body: undefined,
+            operationId: 'AIMW-SYNC-A9E956A4DA',
+        });
+    });
+
     it('rejects a contract from the wrong tenant', () => {
         expect(() => prepareActionRequest(contract({ tenant_id: 99 }), context(), { membership: 7 }))
             .toThrowError(ActionContractError);
