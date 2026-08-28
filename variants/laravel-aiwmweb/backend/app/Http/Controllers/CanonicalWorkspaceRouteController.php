@@ -22,7 +22,7 @@ final class CanonicalWorkspaceRouteController extends Controller
     public function redirect(Request $request, string $tenant): RedirectResponse
     {
         $this->authorizeRoute($request);
-        $target = (string) ($request->route()->getDefaults()['workspace_target'] ?? '');
+        $target = (string) ($request->route()->defaults['workspace_target'] ?? '');
 
         if (! str_starts_with($target, '/') || str_starts_with($target, '//')) {
             throw new RuntimeException('Canonical workspace redirect target is invalid.');
@@ -33,7 +33,7 @@ final class CanonicalWorkspaceRouteController extends Controller
 
     private function authorizeRoute(Request $request): void
     {
-        $raw = (string) ($request->route()->getDefaults()['workspace_permissions'] ?? 'tenant.view');
+        $raw = (string) ($request->route()->defaults['workspace_permissions'] ?? 'tenant.view');
         $permissions = array_values(array_filter(array_map('trim', explode(',', $raw))));
 
         foreach ($permissions as $permission) {
