@@ -33,6 +33,110 @@ def state_summary(rows: list[dict]) -> dict:
     }
 
 
+def apply_explicit_route_evidence(rows: list[dict], manifest: dict, snapshots: list[reconcile.Snapshot]) -> None:
+    """Terminalize only exact route IDs backed by a pushed, operation-linked contract.
+
+    Generic route/visible-control presence is still never parity. This narrow path
+    exists for closure workers that provide an explicit operation-ID inventory,
+    guarded route implementation, backing action boundary, and acceptance test.
+    """
+    rows_by_id = {str(row.get("operation_id") or ""): row for row in rows}
+    snapshots_by_sha = {snapshot.sha: snapshot for snapshot in snapshots}
+    applied: set[str] = set()
+
+    for source in manifest["countable_sources"]:
+        evidence_map = source.get("operation_evidence") or {}
+        if not evidence_map:
+            continue
+
+        source_sha = str(source["sha"])
+        snapshot = snapshots_by_sha.get(source_sha)
+        if snapshot is None:
+            raise SystemExit(f"explicit route evidence source was not loaded: {source_sha}")
+
+        files_by_path = {file.path: file for file in snapshot.files}
+        source_domains = set(source.get("domains", []))
+
+        for operation_id, evidence in evidence_map.items():
+            if operation_id in applied:
+                raise SystemExit(f"explicit route evidence is duplicated for operation: {operation_id}")
+
+            row = rows_by_id.get(operation_id)
+            if row is None:
+                raise SystemExit(f"explicit route evidence references unknown operation: {operation_id}")
+            if row.get("kind") != "route":
+                raise SystemExit(f"explicit route evidence may only terminalize route rows: {operation_id}")
+            if row.get("migration_state") != "PENDING":
+                raise SystemExit(
+                    f"explicit route evidence would double-count an already terminal operation: {operation_id}"
+                )
+            if str(row.get("domain")) not in source_domains:
+                raise SystemExit(f"explicit route evidence source does not own operation domain: {operation_id}")
+
+            destination_path = str(evidence.get("destination_path") or "")
+            action_path = str(evidence.get("action_path") or "")
+            acceptance_test = str(evidence.get("acceptance_test") or "")
+            evidence_path = str(evidence.get("evidence_path") or "")
+            required_paths = (destination_path, action_path, acceptance_test)
+            if not all(path and path in files_by_path for path in required_paths):
+                raise SystemExit(f"explicit route evidence is missing pushed code/test paths: {operation_id}")
+
+            route_text = files_by_path[destination_path].text
+            action_text = files_by_path[action_path].text
+            test_text = files_by_path[acceptance_test].text
+            evidence_text = reconcile.run_git("show", f"{source_sha}:{evidence_path}", check=False)
+            route_screen = str(row.get("route_screen") or "")
+
+            if operation_id not in test_text or operation_id not in evidence_text:
+                raise SystemExit(f"explicit route evidence is not operation-linked in test/evidence: {operation_id}")
+            if route_screen and route_screen not in route_text:
+                raise SystemExit(f"explicit route destination does not contain canonical route path: {operation_id}")
+            if Path(action_path).stem not in route_text:
+                raise SystemExit(f"explicit route destination is not wired to the declared action: {operation_id}")
+            if "tenant.context" not in route_text or "auth" not in route_text:
+                raise SystemExit(f"explicit route destination lacks auth/tenant middleware evidence: {operation_id}")
+            if "TenantAuthorizer" not in action_text or "authorize" not in action_text:
+                raise SystemExit(f"explicit route action lacks authorization evidence: {operation_id}")
+
+            row["migration_state"] = "ADAPTED"
+            row["laravel_destination"] = destination_path
+            row["acceptance_test"] = acceptance_test
+            row["evidence"] = (
+                f"{source['label']}@{source_sha}: {destination_path}; "
+                f"explicit-route-contract:{operation_id}; action:{action_path}; evidence:{evidence_path}"
+            )
+            row["reconciliation"] = {
+                "decision": "ADAPTED",
+                "reason": (
+                    "Exact pushed route contract is linked to the canonical operation ID, "
+                    "auth+tenant authorization, a real backing action boundary, and acceptance evidence."
+                ),
+                "source_label": source["label"],
+                "source_sha": source_sha,
+                "destination_path": destination_path,
+                "evidence_mode": "explicit_route_contract",
+                "action_path": action_path,
+                "evidence_path": evidence_path,
+                "signals": [
+                    f"operation:{operation_id}",
+                    "middleware:auth",
+                    "middleware:tenant.context",
+                    "authorization:TenantAuthorizer",
+                    f"test:{acceptance_test}",
+                ],
+            }
+            applied.add(operation_id)
+
+    expected = {
+        operation_id
+        for source in manifest["countable_sources"]
+        for operation_id in (source.get("operation_evidence") or {})
+    }
+    if applied != expected:
+        missing = sorted(expected - applied)
+        raise SystemExit("explicit route evidence was not fully applied: " + ", ".join(missing))
+
+
 def finalize_summary(payload: dict, rows: list[dict], manifest: dict) -> None:
     totals = state_summary(rows)
     payload["totals"] = {
@@ -43,15 +147,21 @@ def finalize_summary(payload: dict, rows: list[dict], manifest: dict) -> None:
         "(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL) / TOTAL * 100"
     )
     payload["classification_policy"]["blocked_progress_policy"] = "not_counted"
+    payload["classification_policy"]["explicit_route_policy"] = (
+        "route rows remain pending unless an exact pushed source declares operation_evidence "
+        "and the generator verifies route, auth/tenant action, test, and evidence links"
+    )
 
     domains: dict[str, dict] = {}
     for domain in sorted({str(row["domain"]) for row in rows}):
-        domains[domain] = state_summary([row for row in rows if str(row["domain"]) == domain])
+        subset = [row for row in rows if str(row["domain"]) == domain]
+        domains[domain] = state_summary(subset)
     payload["domains"] = domains
 
     kinds: dict[str, dict] = {}
     for kind in sorted({str(row["kind"]) for row in rows}):
-        kinds[kind] = state_summary([row for row in rows if str(row["kind"]) == kind])
+        subset = [row for row in rows if str(row["kind"]) == kind]
+        kinds[kind] = state_summary(subset)
     payload["kinds"] = kinds
 
     visible = [row for row in rows if row.get("kind") == "visible_control"]
@@ -82,6 +192,7 @@ def finalize_summary(payload: dict, rows: list[dict], manifest: dict) -> None:
                 "sha": source["sha"],
                 "domains": source.get("domains", []),
                 "supporting_only": bool(source.get("supporting_only", False)),
+                "explicit_operation_evidence_ids": sorted((source.get("operation_evidence") or {}).keys()),
             }
             for source in manifest["countable_sources"]
         ],
@@ -132,10 +243,24 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
             + ", ".join(missing_evidence_refs[:20])
         )
 
+    explicit_route_terminals = [
+        str(row["operation_id"])
+        for row in rows
+        if row.get("kind") == "route"
+        and row["migration_state"] in TERMINAL_STATES
+        and (row.get("reconciliation") or {}).get("evidence_mode") == "explicit_route_contract"
+    ]
     placeholder_terminals = [
         str(row["operation_id"])
         for row in rows
-        if row.get("kind") in {"route", "visible_control"} and row["migration_state"] in TERMINAL_STATES
+        if row["migration_state"] in TERMINAL_STATES
+        and (
+            row.get("kind") == "visible_control"
+            or (
+                row.get("kind") == "route"
+                and (row.get("reconciliation") or {}).get("evidence_mode") != "explicit_route_contract"
+            )
+        )
     ]
     if placeholder_terminals:
         errors.append(
@@ -172,6 +297,7 @@ def validate(rows: list[dict], payload: dict, manifest: dict, snapshots: list[re
         "missing_terminal_evidence_operation_ids": missing_evidence_refs,
         "pushed_source_shas_verified": sorted(sha for sha, present in source_presence.items() if present),
         "unpushed_sources_counted": unpushed,
+        "explicit_route_contract_terminals": sorted(explicit_route_terminals),
         "route_or_visible_placeholder_terminals": placeholder_terminals,
         "frontend_placeholders_not_counted": not placeholder_terminals,
         "errors": errors,
@@ -250,6 +376,7 @@ def render_markdown(payload: dict) -> str:
         f"- Allowed statuses only: **{'PASS' if validation['allowed_statuses_only'] else 'FAIL'}**",
         f"- Totals reconcile: **{'PASS' if validation['status_totals_reconcile'] else 'FAIL'}**",
         f"- Evidence references exist for terminal code rows: **{'PASS' if validation['terminal_evidence_references_exist'] else 'FAIL'}**",
+        f"- Explicit route contracts: **{len(validation['explicit_route_contract_terminals'])}**",
         f"- Unpushed countable sources: **{len(validation['unpushed_sources_counted'])}**",
         f"- Frontend placeholder terminals: **{len(validation['route_or_visible_placeholder_terminals'])}**",
         f"- BLOCKED excluded from progress: **{'PASS' if validation['terminal_excludes_blocked'] else 'FAIL'}**",
@@ -283,6 +410,7 @@ def main() -> int:
     snapshots = [reconcile.load_snapshot(source) for source in manifest["countable_sources"]]
     exclusions = {source["label"]: source["reason"] for source in manifest.get("excluded_sources", [])}
     reconciled_rows = [reconcile.classify(row, snapshots, exclusions) for row in rows]
+    apply_explicit_route_evidence(reconciled_rows, manifest, snapshots)
     payload = reconcile.summarize(reconciled_rows, manifest)
     finalize_summary(payload, reconciled_rows, manifest)
     validate(reconciled_rows, payload, manifest, snapshots, args.check_total)
