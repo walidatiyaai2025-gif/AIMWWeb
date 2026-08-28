@@ -2,17 +2,17 @@
   "schema_version": 2,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "route-api-login-read-convergence",
-  "integration_base": "codex/laravel-issue257-site-details-acceptance-repair",
-  "integration_base_sha": "3403631822771f55518742226aa2373c2baa4ed9",
-  "implementation_branch": "codex/laravel-issue257-operations-api-abb41",
-  "implementation_snapshot_sha": "71b6ca332d9ba6062866299c4be4885bbf9e419b",
+  "wave": "route-about-build-convergence",
+  "integration_base": "codex/laravel-issue257-operations-api-abb41",
+  "integration_base_sha": "5e1abf41491f8aa734fd8c639e8e0eaba41f6b6a",
+  "implementation_branch": "codex/laravel-issue257-route-api-next-discovery",
+  "implementation_snapshot_sha": "f2509609b3566e7a77a032bf1eb933be5bed3b9a",
   "inventory": {
     "pending_route_api_rows_found": 92,
     "pending_routes_found": 84,
     "pending_apis_found": 8,
-    "terminalized_by_implementation_snapshot": 36,
-    "still_pending_after_this_snapshot": 56,
+    "terminalized_by_implementation_snapshot": 37,
+    "still_pending_after_this_snapshot": 55,
     "generated_reconciliation_modified": false
   },
   "terminalized_by_domain": {
@@ -21,7 +21,7 @@
     "backup": 2,
     "billing": 1,
     "comments": 2,
-    "content": 14,
+    "content": 15,
     "email": 3,
     "media": 2,
     "operations": 1,
@@ -65,7 +65,8 @@
     {"operation_id":"AIMW-PLAT-A91A2B0B11","source_route":"/api/build","canonical_route":"/api/build","proof":"authenticated PlatformReadController build metadata response with execution.view authorization and fail-closed tenant selection"},
     {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"},
     {"operation_id":"AIMW-EMAI-2D94EFDD53","source_route":"/api/notifications","canonical_route":"/api/notifications","proof":"authenticated legacy notification adapter ignores caller userId, enforces execution.view, binds a safe active tenant and returns only persisted current-user notifications"},
-    {"operation_id":"AIMW-OPER-ABB41FC891","source_route":"/login","canonical_route":"/login","proof":"explicit anonymous LoginReadController renders the canonical sign-in entry page, escapes caller-supplied error text, constrains returnUrl to safe local paths, and redirects authenticated users only to a validated local path or the landing page"}
+    {"operation_id":"AIMW-OPER-ABB41FC891","source_route":"/login","canonical_route":"/login","proof":"explicit anonymous LoginReadController renders the canonical sign-in entry page, escapes caller-supplied error text, constrains returnUrl to safe local paths, and redirects authenticated users only to a validated local path or the landing page"},
+    {"operation_id":"AIMW-CONT-81B4B20D2D","source_route":"/about-build","canonical_route":"/tenants/{tenant}/about-build","proof":"explicit auth and tenant-context AboutBuildReadController renders live build metadata from the same BuildInformationReadService used by /api/build, exposes the source /release-notes alias, reports an honest empty release-notes state when no authoritative history source is available, and fails closed on tenant or permission mismatch"}
   ],
   "acceptance_evidence": {
     "inventory_test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows",
@@ -101,8 +102,15 @@
       "LoginReadApiTerminalityTest::test_anonymous_login_renders_real_form_and_escapes_read_inputs",
       "LoginReadApiTerminalityTest::test_authenticated_login_redirects_only_to_safe_local_paths"
     ],
+    "about_build_route_tests": [
+      "AboutBuildRouteTerminalityTest::test_canonical_reconciliation_row_is_the_pending_about_build_route",
+      "AboutBuildRouteTerminalityTest::test_about_build_and_release_notes_alias_are_explicit_guarded_routes",
+      "AboutBuildRouteTerminalityTest::test_guest_is_redirected_to_login",
+      "AboutBuildRouteTerminalityTest::test_authorized_tenant_member_sees_live_build_metadata_and_truthful_release_empty_state",
+      "AboutBuildRouteTerminalityTest::test_route_fails_closed_for_missing_permission_and_foreign_tenant"
+    ],
     "parent_snapshot_ci": {
-      "snapshot": "3403631822771f55518742226aa2373c2baa4ed9",
+      "snapshot": "5e1abf41491f8aa734fd8c639e8e0eaba41f6b6a",
       "laravel_aiwmweb_acceptance": "success",
       "laravel_aiwmweb_cross_domain_security": "success",
       "pr_plan_link": "success",
@@ -120,18 +128,20 @@
     "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
     "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-PLAT-18A8EE0324"],
     "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
-    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 56 rows from the canonical operation reconciliation rather than infer completion from the SPA fallback."
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 55 rows from the canonical operation reconciliation rather than infer completion from the generic tenant fallback."
   },
   "notes": [
-    "This evidence cumulatively converges the prior 35 terminal Route/API operations plus the canonical GET /login read contract from the current wave.",
+    "This evidence cumulatively converges the prior 36 terminal Route/API operations plus the canonical /about-build route from the current wave.",
     "No visible_control row is claimed by this evidence file.",
     "No generated canonical reconciliation output is edited by this worker.",
-    "The GET /login source contract is anonymous and read-only; this wave does not claim or implement the separate POST /login mutation operation.",
-    "The Laravel login page targets the already-existing /api/login mutation endpoint rather than creating a second unclaimed mutation route.",
+    "The source /release-notes alias is implemented by the same controller but this wave claims only AIMW-CONT-81B4B20D2D for /about-build.",
+    "No synthetic release history is emitted when an authoritative release-notes source is unavailable; the rendered empty state matches the source behavior.",
+    "The existing /api/build authorization and tenant-selection contract is preserved while its build metadata calculation is centralized in BuildInformationReadService.",
+    "The GET /login source contract remains anonymous and read-only; this wave does not alter authentication mutations.",
     "The source GUID site-details route is adapted to the Laravel tenant-owned integer Site key already used consistently by the target variant; no cross-tenant identifier translation is performed.",
     "Tenant-less canonical APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector where tenant selection is required.",
     "The legacy notification userId query parameter is compatibility-only and is never an ownership selector.",
-    "A route matching only the generic tenant SPA catch-all is explicitly insufficient for terminality.",
-    "Counts are evidence-backed for implementation snapshot 71b6ca332d9ba6062866299c4be4885bbf9e419b; later implementation movement requires revalidation."
+    "A generic tenant fallback by itself is explicitly insufficient for terminality.",
+    "Counts are evidence-backed for implementation snapshot f2509609b3566e7a77a032bf1eb933be5bed3b9a; later implementation movement requires revalidation."
   ]
 }
