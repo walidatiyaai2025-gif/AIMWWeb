@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\AI\Platform\Services\AIProviderSettingsAdministrationService;
-use App\AI\Platform\Services\AIUsageService;
+use App\AI\Platform\Services\AiUsageService;
 use App\AI\Platform\Services\AIUsageWebService;
 use App\Billing\AccountEntitlementEnforcementService;
 use App\Billing\Enums\SubscriptionState;
@@ -69,7 +69,7 @@ class PlatformServicesCompatibilityTest extends TestCase
         [$tenantA, $memberA] = $this->tenantMember('platform-usage-a', ['tenant.view']);
         $this->activate($tenantA, $memberA);
         $siteA = Site::query()->create(['name' => 'Usage A', 'url' => 'https://usage-a.example.test']);
-        app(AIUsageService::class)->record([
+        app(AiUsageService::class)->record([
             'user_id' => $memberA->user_id,
             'provider_key' => 'openai',
             'model_key' => 'gpt-4o-mini',
