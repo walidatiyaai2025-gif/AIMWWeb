@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\DatabaseSetupMutationService;
-use App\Services\DatabaseSetupReadService;
+use App\Services\DatabaseSetupPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -13,12 +13,12 @@ final class SetupMutationController extends Controller
 {
     public function __construct(
         private readonly DatabaseSetupMutationService $mutationService,
-        private readonly DatabaseSetupReadService $readService,
+        private readonly DatabaseSetupPageService $pageService,
     ) {}
 
     public function __invoke(Request $request): RedirectResponse|Response
     {
-        if ($this->readService->status()['complete']) {
+        if ($this->pageService->status()['complete']) {
             return redirect('/');
         }
 
@@ -34,10 +34,7 @@ final class SetupMutationController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
-            return response()->view('setup', [
-                'status' => $this->readService->status(),
-                'error' => 'Setup could not be completed safely. Verify the configured database and existing installation state, then try again.',
-            ], 400);
+            return $this->pageService->render(DatabaseSetupPageService::FAILURE_MESSAGE, 400);
         }
 
         return redirect('/');
