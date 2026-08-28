@@ -23,12 +23,7 @@ final class ActionContractRegistry
             $permission = $definition['permission'] ?? null;
             $ownership = $definition['ownership'] ?? 'tenant';
 
-            if (isset($definition['blocked_reason'])) {
-                $availability = [
-                    'state' => 'pending_integration',
-                    'reason' => (string) $definition['blocked_reason'],
-                ];
-            } elseif ($site !== null && (int) $site->tenant_id !== (int) $tenant->id) {
+            if ($site !== null && (int) $site->tenant_id !== (int) $tenant->id) {
                 $availability = [
                     'state' => 'context_mismatch',
                     'reason' => 'The selected site does not belong to the active tenant.',
@@ -37,6 +32,11 @@ final class ActionContractRegistry
                 $availability = [
                     'state' => 'site_context_required',
                     'reason' => 'Select a site owned by the active tenant before invoking this action.',
+                ];
+            } elseif (isset($definition['blocked_reason'])) {
+                $availability = [
+                    'state' => 'pending_integration',
+                    'reason' => (string) $definition['blocked_reason'],
                 ];
             } elseif (is_string($permission)
                 && ! in_array('*', $permissionNames, true)
