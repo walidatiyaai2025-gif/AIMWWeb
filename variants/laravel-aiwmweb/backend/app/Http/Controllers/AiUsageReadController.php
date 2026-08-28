@@ -45,6 +45,11 @@ final class AiUsageReadController extends Controller
             ->values()
             ->all();
 
+        // Preserve the full usage dashboard payload while also publishing the
+        // generic live-resource envelope consumed by the existing React workspace.
+        $report['data'] = $report['recent'];
+        $report['total'] = $report['summary']['total_calls'];
+
         return response()->json($report);
     }
 }
