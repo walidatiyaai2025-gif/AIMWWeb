@@ -62,10 +62,17 @@ class ApprovalsRouteTerminalityTest extends TestCase
         $this->actingAs($user)->get('/tenants/alpha/approvals')
             ->assertRedirect('/tenants/alpha/module/approvals');
 
-        $frontend = file_get_contents(resource_path('js/core.ts'));
-        $this->assertStringContainsString("path: '/module/approvals'", $frontend);
-        $this->assertStringContainsString("apiKey: 'approvals'", $frontend);
-        $this->assertStringContainsString('component: ApprovalQueueRoute', $frontend);
+        $registry = file_get_contents(resource_path('js/core.ts'));
+        $this->assertStringContainsString("r('approvals', '/module/approvals'", $registry);
+        $this->assertStringContainsString("permission: 'approvals.view'", $registry);
+
+        $app = file_get_contents(resource_path('js/app.tsx'));
+        $this->assertStringContainsString('function ApprovalQueueRoute', $app);
+        $this->assertStringContainsString("route.key === 'approvals'", $app);
+        $this->assertStringContainsString('withApprovalQueueEndpoint(query.data)', $app);
+
+        $endpoint = file_get_contents(resource_path('js/approvalQueue.ts'));
+        $this->assertStringContainsString('approvals: `/api/tenants/${encodeURIComponent(context.tenant.slug)}/approvals`', $endpoint);
 
         $this->actingAs($user)->getJson('/api/tenants/alpha/approvals')
             ->assertOk()
