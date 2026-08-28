@@ -78,6 +78,41 @@ class RouteApiTerminalityInventoryTest extends TestCase
         }
     }
 
+    public function test_second_pass_inventory_diagnostic(): void
+    {
+        $payload = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
+        $remaining = collect($payload['operations'])
+            ->filter(fn (array $operation): bool => $operation['migration_state'] === 'PENDING')
+            ->filter(fn (array $operation): bool => in_array($operation['kind'], ['route', 'api'], true))
+            ->reject(fn (array $operation): bool => array_key_exists($operation['operation_id'], self::TERMINALIZED))
+            ->map(fn (array $operation): array => [
+                'id' => $operation['operation_id'],
+                'domain' => $operation['domain'],
+                'kind' => $operation['kind'],
+                'path' => $operation['route_screen'],
+                'control' => $operation['visible_control'],
+                'source' => $operation['current_source'],
+                'tenant' => (bool) $operation['tenant_owned'],
+            ])
+            ->values();
+
+        fwrite(STDERR, "\nSECOND_PASS_ROUTE_API_BEGIN\n");
+        foreach ($remaining as $operation) {
+            fwrite(STDERR, implode('|', [
+                $operation['id'],
+                $operation['domain'],
+                $operation['kind'],
+                str_replace('|', '/', (string) $operation['path']),
+                str_replace('|', '/', (string) $operation['control']),
+                $operation['tenant'] ? 'tenant' : 'global',
+            ])."\n");
+        }
+        fwrite(STDERR, "SECOND_PASS_ROUTE_API_END\n");
+
+        $this->assertCount(81, $remaining);
+        $this->fail('Second-pass diagnostic emitted exactly 81 remaining route/API rows.');
+    }
+
     public function test_artisan_route_list_contains_explicit_guarded_canonical_routes(): void
     {
         Artisan::call('route:list', ['--json' => true]);
