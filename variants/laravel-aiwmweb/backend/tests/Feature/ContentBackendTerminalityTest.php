@@ -11,7 +11,7 @@ final class ContentBackendTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_AIMW_CONT_2F2E40D7F0_login_authenticates_through_the_real_session_endpoint(): void
+    public function test_aimw_cont_2f2e40d7f0_login_authenticates_through_the_real_session_endpoint(): void
     {
         $user = User::factory()->create([
             'email' => 'content-terminality@example.test',
@@ -30,7 +30,7 @@ final class ContentBackendTerminalityTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
-    public function test_AIMW_CONT_2F2E40D7F0_login_rejects_invalid_credentials_without_authenticating(): void
+    public function test_aimw_cont_2f2e40d7f0_login_rejects_invalid_credentials_without_authenticating(): void
     {
         $user = User::factory()->create([
             'email' => 'content-terminality-invalid@example.test',
@@ -45,7 +45,7 @@ final class ContentBackendTerminalityTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_AIMW_CONT_270F69CE9A_logout_invalidates_the_authenticated_session(): void
+    public function test_aimw_cont_270f69ce9a_logout_invalidates_the_authenticated_session(): void
     {
         $user = User::factory()->create();
 
