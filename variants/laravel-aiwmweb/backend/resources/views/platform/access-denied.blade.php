@@ -22,7 +22,7 @@
             <span class="access-denied-code">403</span>
             <h1 id="access-denied-title">Access denied</h1>
             <p>You are signed in, but your account does not have permission to open this page.</p>
-            <a class="btn primary" href="/">Return home</a>
+            <a class="btn primary" href="/" data-canonical-operation="AIMW-CONT-9D5E269773">Return home</a>
         </section>
     </main>
 </body>
