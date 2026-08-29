@@ -81,7 +81,7 @@ class CommandPaletteFullClosureTest extends TestCase
         $limitedUser = User::factory()->create();
         $this->membership($limitedUser, 'limited', ['sites.view']);
 
-        $this->get('/tenants/alpha/context')->assertRedirect('/login');
+        $this->getJson('/tenants/alpha/context')->assertUnauthorized();
         $this->actingAs($limitedUser)->getJson('/tenants/limited/context')->assertForbidden();
         $this->actingAs($alphaUser)->getJson('/tenants/beta/context')->assertNotFound();
     }
