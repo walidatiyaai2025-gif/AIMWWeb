@@ -44,10 +44,10 @@ class CommandPaletteCloseFullClosureTest extends TestCase
         $components = (string) file_get_contents(resource_path('js/components.tsx'));
 
         $this->assertStringContainsString('data-canonical-operation="AIMW-AI-D3A8A100B4"', $components);
-        $this->assertStringContainsString("event.key !== 'Escape'", $components);
-        $this->assertStringContainsString("event.preventDefault();", $components);
-        $this->assertStringContainsString("trigger?.focus()", $components);
-        $this->assertStringContainsString("event.target === event.currentTarget && onClose()", $components);
+        $this->assertStringContainsString('event.key !== \'Escape\'', $components);
+        $this->assertStringContainsString('event.preventDefault();', $components);
+        $this->assertStringContainsString('trigger?.focus()', $components);
+        $this->assertStringContainsString('event.target === event.currentTarget && onClose()', $components);
         $this->assertStringContainsString("'Close search'", $components);
     }
 
