@@ -62,6 +62,7 @@ class AccountProfileRouteTerminalityTest extends TestCase
             'name' => 'Alpha Owner',
             'email' => 'alpha-owner@example.test',
         ]);
+        $roleName = 'Owner-alpha-'.$user->id;
         $this->membership($user, 'alpha', ['tenant.view'], 'Owner');
         $this->withoutVite();
 
@@ -85,7 +86,7 @@ class AccountProfileRouteTerminalityTest extends TestCase
             ->assertJsonPath('data.0.name', 'Alpha Owner')
             ->assertJsonPath('data.0.email', 'alpha-owner@example.test')
             ->assertJsonPath('data.0.membership_status', 'active')
-            ->assertJsonPath('data.0.roles.0', 'Owner');
+            ->assertJsonPath('data.0.roles.0', $roleName);
     }
 
     public function test_guest_missing_permission_and_cross_tenant_direct_access_fail_closed(): void
