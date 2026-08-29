@@ -118,6 +118,38 @@
       }
     }
   },
+  "evidence_validation": {
+    "tested_evidence_sha": "8f0ab9ab48951b24b06174bcccbb616dcd3fc60b",
+    "exact_head_ci": {
+      "pr_plan_link": {
+        "run_id": 33224568128,
+        "run_number": 948,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "run_id": 33224567816,
+        "run_number": 223,
+        "conclusion": "success"
+      },
+      "laravel_acceptance": {
+        "run_id": 33224567766,
+        "run_number": 292,
+        "conclusion": "success"
+      },
+      "sub_gates": {
+        "acceptance_release_gate": "success",
+        "runtime_artifacts": "success",
+        "pint_sqlite_migrations_full_php": "success",
+        "mysql_fresh_rollback_forward_full_php": "success",
+        "redis_queue_scheduler": "success",
+        "wordpress_disposable_runtime": "success",
+        "wordpress_real_rest_e2e": "success",
+        "frontend_typecheck_tests_build": "success",
+        "frontend_production_build": "success",
+        "production_docker_compose_runtime_smoke": "success"
+      }
+    }
+  },
   "canonical_denominator": {
     "generated_authority_baseline": {
       "terminal": 358,
@@ -147,9 +179,9 @@
     "force_push_performed": false
   },
   "finalization": {
-    "evidence_bearing_sha": null,
-    "exact_head_ci": "PENDING_AFTER_EVIDENCE_COMMIT",
-    "integration_ready": false,
-    "note": "This evidence file records the fully-green implementation snapshot. Terminal delivery requires the evidence-bearing SHA itself to pass the same authoritative exact-head gates."
+    "terminal_state": "ADAPTED",
+    "integration_ready": true,
+    "exact_head_rule": "The commit containing this JSON is independently required to pass the same authoritative PR checks; its SHA and runs are recorded in PR #310 and Issue #257 because a file cannot embed the SHA of the commit that contains itself.",
+    "note": "Implementation SHA and the preceding evidence-bearing SHA are both exact-head green. The final metadata-only evidence closure commit must also be exact-head green before delivery."
   }
 }
