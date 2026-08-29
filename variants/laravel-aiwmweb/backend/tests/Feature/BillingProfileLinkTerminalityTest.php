@@ -83,12 +83,19 @@ class BillingProfileLinkTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('id="app"', false);
 
-        $this->actingAs($user)
+        $context = $this->actingAs($user)
             ->getJson('/tenants/alpha/context')
-            ->assertOk()
-            ->assertJsonPath('tenant.slug', 'alpha')
-            ->assertJsonPath('api.account.billing', '/tenants/alpha/route-api/billing-overview')
-            ->assertJsonPath('api.account.profile', '/tenants/alpha/route-api/account-profile');
+            ->assertOk();
+        $contextPayload = $context->json();
+        $this->assertSame('alpha', $contextPayload['tenant']['slug'] ?? null);
+        $this->assertSame(
+            '/tenants/alpha/route-api/billing-overview',
+            $contextPayload['api']['account.billing'] ?? null,
+        );
+        $this->assertSame(
+            '/tenants/alpha/route-api/account-profile',
+            $contextPayload['api']['account.profile'] ?? null,
+        );
 
         $this->actingAs($user)
             ->getJson('/tenants/alpha/route-api/billing-overview')
