@@ -61,7 +61,7 @@ class SitesReportExportTerminalityTest extends TestCase
 
         $this->assertStringStartsWith("\xEF\xBB\xBF", $content);
         $this->assertStringContainsString('Name,Url,Status', $content);
-        $this->assertStringContainsString('Alpha Site,https://alpha.example,connected', $content);
+        $this->assertStringContainsString('"Alpha Site",https://alpha.example,connected', $content);
         $this->assertStringNotContainsString('Beta Secret Site', $content);
         $this->assertStringNotContainsString('beta-secret.example', $content);
         $this->assertStringContainsString('attachment; filename=sites-report.csv', (string) $response->headers->get('content-disposition'));
