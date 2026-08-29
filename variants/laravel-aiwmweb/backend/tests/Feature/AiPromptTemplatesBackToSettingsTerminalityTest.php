@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -96,6 +97,8 @@ class AiPromptTemplatesBackToSettingsTerminalityTest extends TestCase
     private function membership(User $user, string $slug, array $permissions): Tenant
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
 
         $membership = TenantMembership::query()->create([
             'user_id' => $user->id,
@@ -107,6 +110,7 @@ class AiPromptTemplatesBackToSettingsTerminalityTest extends TestCase
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $context->forget();
 
         return $tenant;
     }
