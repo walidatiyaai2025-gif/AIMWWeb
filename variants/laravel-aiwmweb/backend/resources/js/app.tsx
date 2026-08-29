@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Outlet, Route, Routes, useOutletContext, useParams } from 'react-router-dom';
+import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
@@ -70,6 +71,7 @@ function TenantBootstrap() {
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
     if (route.key === 'site-details') return <SiteDetailsRoute context={context} route={route} />;
+    if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
     return <WorkspacePage context={context} route={route} />;
 }
 
