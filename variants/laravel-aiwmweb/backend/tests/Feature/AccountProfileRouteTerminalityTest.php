@@ -77,7 +77,10 @@ class AccountProfileRouteTerminalityTest extends TestCase
             ->json();
 
         $this->assertSame('alpha', data_get($context, 'tenant.slug'));
-        $this->assertSame('/tenants/alpha/route-api/account-profile', data_get($context, 'api.account.profile'));
+        $this->assertSame(
+            '/tenants/alpha/route-api/account-profile',
+            $context['api']['account.profile'] ?? null,
+        );
 
         $this->actingAs($user)
             ->getJson('/tenants/alpha/route-api/account-profile')
