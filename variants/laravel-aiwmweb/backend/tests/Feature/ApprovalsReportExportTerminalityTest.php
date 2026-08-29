@@ -79,8 +79,8 @@ class ApprovalsReportExportTerminalityTest extends TestCase
         [, $memberB] = $this->tenantMember('beta', ['reports.view', 'reports.manage']);
         [, $noView] = $this->tenantMember('gamma', ['reports.manage']);
 
-        $this->get('/tenants/alpha/reports')->assertRedirect('/login');
-        $this->get('/tenants/alpha/reports/approvals.csv')->assertRedirect('/login');
+        $this->get('/tenants/alpha/reports')->assertUnauthorized();
+        $this->get('/tenants/alpha/reports/approvals.csv')->assertUnauthorized();
         $this->actingAs($noView->user)->get('/tenants/gamma/reports')->assertForbidden();
         $this->actingAs($memberA->user)->get('/tenants/beta/reports')->assertNotFound();
         $this->actingAs($memberA->user)->get('/tenants/beta/reports/approvals.csv')->assertNotFound();
