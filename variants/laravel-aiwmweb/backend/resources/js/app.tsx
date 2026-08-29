@@ -5,6 +5,7 @@ import { BrowserRouter, Outlet, Route, Routes, useOutletContext, useParams } fro
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
+import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 
 const queryClient = new QueryClient({
@@ -70,6 +71,7 @@ function TenantBootstrap() {
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
     if (route.key === 'site-details') return <SiteDetailsRoute context={context} route={route} />;
+    if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><WorkspacePage context={context} route={route} /></>;
     return <WorkspacePage context={context} route={route} />;
 }
 
