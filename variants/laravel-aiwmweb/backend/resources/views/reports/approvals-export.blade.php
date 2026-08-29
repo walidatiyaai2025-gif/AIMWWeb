@@ -13,6 +13,36 @@
         <p>Live reports from real application data.</p>
     </section>
 
+    <section data-canonical-operation="AIMW-SYNC-D8581471A2">
+        <header>
+            <h2>Sites report</h2>
+            @if ($canExport)
+                <a href="{{ $sitesDownloadUrl }}" download="sites-report.csv">CSV</a>
+            @else
+                <span aria-disabled="true">CSV — reports.manage required</span>
+            @endif
+        </header>
+
+        @if ($siteRows->isEmpty())
+            <p>No site rows are available for this tenant.</p>
+        @else
+            <table>
+                <thead>
+                <tr><th>Name</th><th>URL</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                @foreach ($siteRows->take(12) as $site)
+                    <tr>
+                        <td>{{ $site['name'] }}</td>
+                        <td>{{ $site['url'] }}</td>
+                        <td>{{ $site['status'] }}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        @endif
+    </section>
+
     <section data-canonical-operation="AIMW-APPR-A8F5FB3762">
         <header>
             <h2>Approvals report</h2>
