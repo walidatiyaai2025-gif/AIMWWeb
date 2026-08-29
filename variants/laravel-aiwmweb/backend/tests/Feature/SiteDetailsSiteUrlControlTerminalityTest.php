@@ -78,10 +78,11 @@ class SiteDetailsSiteUrlControlTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('id="app"', false);
 
-        $this->actingAs($user)
-            ->getJson('/tenants/alpha/context')
-            ->assertOk()
-            ->assertJsonPath('api.sites.detail.'.$site->id, "/api/tenants/alpha/sites/{$site->id}");
+        $contextResponse = $this->actingAs($user)->getJson('/tenants/alpha/context')->assertOk();
+        $this->assertSame(
+            "/api/tenants/alpha/sites/{$site->id}",
+            ($contextResponse->json('api') ?? [])['sites.detail.'.$site->id] ?? null,
+        );
 
         $this->actingAs($user)
             ->getJson('/api/tenants/alpha/sites/'.$site->id)
