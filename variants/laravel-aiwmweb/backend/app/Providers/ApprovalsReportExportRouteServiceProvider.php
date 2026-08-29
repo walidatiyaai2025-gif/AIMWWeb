@@ -10,7 +10,7 @@ final class ApprovalsReportExportRouteServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Route::middleware(['web', 'auth', 'tenant.context'])
+        Route::middleware(['web', 'tenant.context'])
             ->prefix('tenants/{tenant}')
             ->group(function (): void {
                 Route::get('/reports', [ApprovalsReportExportController::class, 'show'])
