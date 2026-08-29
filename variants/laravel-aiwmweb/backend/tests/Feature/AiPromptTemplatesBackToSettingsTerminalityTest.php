@@ -48,6 +48,7 @@ class AiPromptTemplatesBackToSettingsTerminalityTest extends TestCase
             ->assertSee('href="/tenants/alpha/settings"', false)
             ->assertSee('← Settings', false);
 
+        $this->withoutVite();
         $this->actingAs($user)->get('/tenants/alpha/settings')->assertOk();
 
         $this->assertSame($templateCount, AiPromptTemplate::query()->withoutGlobalScopes()->count());
