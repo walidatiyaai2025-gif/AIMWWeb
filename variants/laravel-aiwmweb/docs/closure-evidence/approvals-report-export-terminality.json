@@ -9,10 +9,7 @@
     "previous_state": "PENDING",
     "terminal_state": "ADAPTED",
     "source": "src/AIWordPressManager.Web/Components/Pages/ReportsExports.razor",
-    "source_screens": [
-      "/reports",
-      "/module/reports"
-    ],
+    "source_screens": ["/reports", "/module/reports"],
     "source_control": "ExportApprovalsAsync [ExportApprovalsAsync]"
   },
   "source_behavior": {
@@ -28,12 +25,7 @@
       "GET /tenants/{tenant}/reports/approvals.csv"
     ],
     "filename": "approvals-report.csv",
-    "columns": [
-      "Id",
-      "Title",
-      "Site",
-      "Status"
-    ],
+    "columns": ["Id", "Title", "Site", "Status"],
     "fake_or_sample_rows": false,
     "persists_export_state": false,
     "wordpress_mutation": false
@@ -78,16 +70,8 @@
   "implementation_sha": "feadb0843aab038b8b521d8be7a04e1ce68f73b0",
   "tested_sha": "feadb0843aab038b8b521d8be7a04e1ce68f73b0",
   "implementation_ci": {
-    "pr_plan_link": {
-      "run_number": 972,
-      "run_id": 33243572355,
-      "result": "SUCCESS"
-    },
-    "cross_domain_security": {
-      "run_number": 240,
-      "run_id": 33243572344,
-      "result": "SUCCESS"
-    },
+    "pr_plan_link": {"run_number": 972, "run_id": 33243572355, "result": "SUCCESS"},
+    "cross_domain_security": {"run_number": 240, "run_id": 33243572344, "result": "SUCCESS"},
     "laravel_aiwmweb_acceptance": {
       "run_number": 309,
       "run_id": 33243572348,
@@ -107,6 +91,17 @@
       }
     }
   },
+  "evidence_validation": {
+    "tested_sha": "bdd41725ddf89a788b83cf31605e8b12db9647ad",
+    "pr_plan_link": {"run_number": 973, "run_id": 33243716359, "result": "SUCCESS"},
+    "cross_domain_security": {"run_number": 241, "run_id": 33243716364, "result": "SUCCESS"},
+    "laravel_aiwmweb_acceptance": {
+      "run_number": 310,
+      "run_id": 33243716356,
+      "result": "SUCCESS",
+      "all_applicable_required_gates": "SUCCESS"
+    }
+  },
   "canonical_denominator": {
     "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
     "total": 931,
@@ -117,7 +112,7 @@
     "generated_reconciliation_edited": false,
     "parallel_unmerged_worker_deltas_included": false
   },
-  "final_head_policy": "This evidence commit changes the branch head. Terminal handoff requires PR Plan Link, Cross-Domain Security and the complete Laravel AIWMWeb Acceptance matrix to be green again on that exact final evidence-bearing SHA.",
+  "final_head_policy": "The metadata-only evidence-finalization commit after the fully-green evidence-validation SHA must itself pass PR Plan Link, Cross-Domain Security and the complete Laravel AIWMWeb Acceptance matrix before handoff. No further file mutation is permitted after that final exact-head validation.",
   "terminality": {
     "real_user_control": true,
     "real_backend_read": true,
@@ -126,6 +121,7 @@
     "truthful_empty_state_proven": true,
     "no_fake_success_path": true,
     "exact_implementation_head_green": true,
-    "exact_final_evidence_head_green": false
+    "exact_evidence_validation_head_green": true,
+    "terminal_state": "ADAPTED"
   }
 }
