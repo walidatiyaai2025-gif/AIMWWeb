@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
@@ -70,15 +70,17 @@ describe('canonical Site Details external Site URL control', () => {
     });
 
     it('fails closed for a non-http persisted destination instead of creating a clickable control', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
             id: 17,
             url: 'javascript:alert(1)',
-        }), { status: 200, headers: { 'content-type': 'application/json' } })));
+        }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
 
         renderControl();
 
-        expect(await screen.findByText('LIVE SITE')).toBeInTheDocument();
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
         expect(screen.queryByRole('link')).not.toBeInTheDocument();
+        expect(screen.queryByText('LIVE SITE')).not.toBeInTheDocument();
     });
 
     it('does not fetch or synthesize a destination when the exact Site Details API contract is absent', () => {
