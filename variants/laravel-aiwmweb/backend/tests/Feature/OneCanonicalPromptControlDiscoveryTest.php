@@ -16,10 +16,10 @@ class OneCanonicalPromptControlDiscoveryTest extends TestCase
         );
 
         $rows = collect($payload['operations'])
-            ->filter(fn (array $row): bool =>
-                ($row['current_source'] ?? null) === 'src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'
-                && ($row['migration_state'] ?? null) === 'PENDING'
-            )
+            ->filter(function (array $row): bool {
+                return ($row['current_source'] ?? null) === 'src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'
+                    && ($row['migration_state'] ?? null) === 'PENDING';
+            })
             ->map(fn (array $row): array => [
                 'operation_id' => $row['operation_id'] ?? null,
                 'domain' => $row['domain'] ?? null,
