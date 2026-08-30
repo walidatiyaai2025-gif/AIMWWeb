@@ -15,17 +15,18 @@
     "percentage_formula": "(PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL) / TOTAL * 100",
     "blocked_progress_policy": "not_counted",
     "explicit_route_policy": "route rows remain pending unless an exact pushed source declares operation_evidence and the generator verifies route, auth/tenant action, test, and evidence links",
+    "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected or explicitly tenant-neutral security semantics",
     "focused_visible_control_policy": "visible-control rows remain PENDING unless an exact pushed closure evidence file, production operation-ID marker, focused operation-ID test, and applicable tenant/security assertions are all present"
   },
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 416,
-    "pending": 515,
+    "adapted": 424,
+    "pending": 507,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 416,
-    "overall_parity_percent": 44.68
+    "terminal": 424,
+    "overall_parity_percent": 45.54
   },
   "visible_controls": {
     "total": 446,
@@ -38,12 +39,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 47,
-      "pending": 45,
+      "adapted": 48,
+      "pending": 44,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 47,
-      "percent": 51.09
+      "terminal": 48,
+      "percent": 52.17
     },
     "approvals": {
       "total": 25,
@@ -88,12 +89,12 @@
     "comments": {
       "total": 8,
       "ported": 0,
-      "adapted": 1,
-      "pending": 7,
+      "adapted": 2,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 1,
-      "percent": 12.5
+      "terminal": 2,
+      "percent": 25.0
     },
     "content": {
       "total": 164,
@@ -108,12 +109,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 56,
-      "pending": 26,
+      "adapted": 57,
+      "pending": 25,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 56,
-      "percent": 68.29
+      "terminal": 57,
+      "percent": 69.51
     },
     "identity": {
       "total": 7,
@@ -128,32 +129,32 @@
     "media": {
       "total": 15,
       "ported": 0,
-      "adapted": 3,
-      "pending": 12,
+      "adapted": 4,
+      "pending": 11,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 3,
-      "percent": 20.0
+      "terminal": 4,
+      "percent": 26.67
     },
     "operations": {
       "total": 5,
       "ported": 0,
-      "adapted": 0,
-      "pending": 5,
+      "adapted": 1,
+      "pending": 4,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
+      "terminal": 1,
+      "percent": 20.0
     },
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 0,
-      "pending": 18,
+      "adapted": 2,
+      "pending": 16,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
+      "terminal": 2,
+      "percent": 11.11
     },
     "reports": {
       "total": 1,
@@ -208,12 +209,12 @@
     "taxonomy": {
       "total": 13,
       "ported": 0,
-      "adapted": 1,
-      "pending": 12,
+      "adapted": 2,
+      "pending": 11,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 1,
-      "percent": 7.69
+      "terminal": 2,
+      "percent": 15.38
     }
   },
   "uncounted_work": [],
@@ -2327,21 +2328,34 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-AI-C37F405767; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-C37F405767",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -13597,21 +13611,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-COMM-A16719E105; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-COMM-A16719E105",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -20290,21 +20317,36 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/api.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/api.php; explicit-route-api:AIMW-EMAI-2D94EFDD53; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/LegacyNotificationReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/api.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/LegacyNotificationReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-2D94EFDD53",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "tenant:selected",
+          "authorization:TenantAuthorizer",
+          "test:401",
+          "test:403",
+          "test:404",
+          "test:409/conflict"
+        ]
       }
     },
     {
@@ -22738,21 +22780,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-MEDI-8BADBE1261; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-8BADBE1261",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -22916,21 +22971,33 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php; explicit-route-api:AIMW-OPER-ABB41FC891; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/LoginReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/LoginReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-OPER-ABB41FC891",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:web-only",
+          "tenant:neutral",
+          "route:no-parameters",
+          "redirect:safe-local-only"
+        ]
       }
     },
     {
@@ -23412,21 +23479,36 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/api.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/api.php; explicit-route-api:AIMW-PLAT-A91A2B0B11; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/api.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-A91A2B0B11",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "tenant:selected",
+          "authorization:TenantAuthorizer",
+          "test:401",
+          "test:403",
+          "test:404",
+          "test:409/conflict"
+        ]
       }
     },
     {
@@ -23443,21 +23525,36 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/api.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/api.php; explicit-route-api:AIMW-PLAT-FAC7505B26; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/api.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-FAC7505B26",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "tenant:selected",
+          "authorization:TenantAuthorizer",
+          "test:401",
+          "test:403",
+          "test:404",
+          "test:409/conflict"
+        ]
       }
     },
     {
@@ -33097,21 +33194,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+      "evidence": "Live exact route/API provenance gap closure@c19ba111947512de296aa73dd62e03c334bd8f43: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-TAXO-CDC6948A06; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Live exact route/API provenance gap closure",
+        "source_sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-TAXO-CDC6948A06",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -33181,12 +33291,12 @@
     "api": {
       "total": 31,
       "ported": 0,
-      "adapted": 23,
-      "pending": 8,
+      "adapted": 27,
+      "pending": 4,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 23,
-      "percent": 74.19
+      "terminal": 27,
+      "percent": 87.1
     },
     "background_job": {
       "total": 21,
@@ -33201,12 +33311,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 33,
-      "pending": 51,
+      "adapted": 37,
+      "pending": 47,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 33,
-      "percent": 39.29
+      "terminal": 37,
+      "percent": 44.05
     },
     "service": {
       "total": 349,
@@ -33268,7 +33378,6 @@
       "AIMW-AI-B711182657",
       "AIMW-AI-BC89B13AF8",
       "AIMW-AI-C2776A0F99",
-      "AIMW-AI-C37F405767",
       "AIMW-AI-C5BC29CF27",
       "AIMW-AI-C7621E276C",
       "AIMW-AI-CAAC427FC0",
@@ -33423,7 +33532,6 @@
       "AIMW-COMM-843A2F029B",
       "AIMW-COMM-85A340C8BC",
       "AIMW-COMM-A0D005681B",
-      "AIMW-COMM-A16719E105",
       "AIMW-COMM-B16FBF4792",
       "AIMW-COMM-C083D47BC4"
     ],
@@ -33577,7 +33685,6 @@
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-12A6FEB2FF",
-      "AIMW-EMAI-2D94EFDD53",
       "AIMW-EMAI-2E59E39808",
       "AIMW-EMAI-470599356B",
       "AIMW-EMAI-54E7EEFB15",
@@ -33618,7 +33725,6 @@
       "AIMW-MEDI-727FAEEB01",
       "AIMW-MEDI-73C0DA6B3D",
       "AIMW-MEDI-799B36D113",
-      "AIMW-MEDI-8BADBE1261",
       "AIMW-MEDI-8F93BEDD59",
       "AIMW-MEDI-F55A549341"
     ],
@@ -33626,7 +33732,6 @@
       "AIMW-OPER-21EC1BDE45",
       "AIMW-OPER-55C6982761",
       "AIMW-OPER-85A7A01127",
-      "AIMW-OPER-ABB41FC891",
       "AIMW-OPER-FC4C071FAA"
     ],
     "platform": [
@@ -33643,11 +33748,9 @@
       "AIMW-PLAT-827A8F1C0D",
       "AIMW-PLAT-83994BBD03",
       "AIMW-PLAT-A2624EDC66",
-      "AIMW-PLAT-A91A2B0B11",
       "AIMW-PLAT-AF47A254FE",
       "AIMW-PLAT-C6260410D1",
-      "AIMW-PLAT-F6C1A04662",
-      "AIMW-PLAT-FAC7505B26"
+      "AIMW-PLAT-F6C1A04662"
     ],
     "reports": [],
     "seo": [
@@ -33769,7 +33872,6 @@
       "AIMW-TAXO-602DE140EB",
       "AIMW-TAXO-770DAA668D",
       "AIMW-TAXO-A96714F338",
-      "AIMW-TAXO-CDC6948A06",
       "AIMW-TAXO-D5A5B530C7",
       "AIMW-TAXO-D6126926AD",
       "AIMW-TAXO-D784149312",
@@ -33861,6 +33963,21 @@
           "AIMW-CONT-110268CC96",
           "AIMW-CONT-81B4B20D2D"
         ]
+      },
+      {
+        "label": "Live exact route/API provenance gap closure",
+        "sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
+        "domains": [
+          "ai",
+          "comments",
+          "email",
+          "media",
+          "operations",
+          "platform",
+          "taxonomy"
+        ],
+        "supporting_only": true,
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -33876,6 +33993,7 @@
     "terminal_evidence_references_exist": true,
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
+      "c19ba111947512de296aa73dd62e03c334bd8f43",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "fb068134c2ad60111bd376f4f400c1bd247394ca"
@@ -33920,6 +34038,17 @@
     "frontend_placeholders_not_counted": true,
     "errors": [],
     "passed": true,
+    "explicit_route_api_contract_terminals": [
+      "AIMW-AI-C37F405767",
+      "AIMW-COMM-A16719E105",
+      "AIMW-EMAI-2D94EFDD53",
+      "AIMW-MEDI-8BADBE1261",
+      "AIMW-OPER-ABB41FC891",
+      "AIMW-PLAT-A91A2B0B11",
+      "AIMW-PLAT-FAC7505B26",
+      "AIMW-TAXO-CDC6948A06"
+    ],
+    "explicit_route_api_contract_count": 8,
     "focused_closure_source_sha": "79a2a30565b08656920c0821333df1217d9f283b",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
