@@ -32,7 +32,7 @@ class SiteDetailsBackControlTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/sites/{Id:guid}', $operation['route_screen']);

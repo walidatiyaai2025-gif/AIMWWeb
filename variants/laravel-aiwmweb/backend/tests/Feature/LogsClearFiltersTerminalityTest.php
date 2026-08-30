@@ -33,7 +33,7 @@ final class LogsClearFiltersTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/logs | /module/logs', $operation['route_screen']);

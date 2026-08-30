@@ -35,7 +35,7 @@ class AiPromptTemplateSaveVisibleControlTerminalityTest extends TestCase
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'));
         $this->assertStringContainsString('private void SaveClicked(MouseEventArgs _) => Save();', $source);
