@@ -72,9 +72,9 @@ def security_signals(kind: str, mode: str, destination: str, action: str, accept
                 f"explicit API provenance lacks authorization fail-closed acceptance: {operation_id}")
         require("assertnotfound" in test_low or "404" in test_low,
                 f"explicit API provenance lacks foreign-tenant fail-closed acceptance: {operation_id}")
-        require("409" in test_low,
+        require("assertconflict" in test_low or "409" in test_low,
                 f"explicit API provenance lacks ambiguous-tenant fail-closed acceptance: {operation_id}")
-        signals.extend(["middleware:auth", "tenant:selected", "authorization:TenantAuthorizer", "test:401", "test:403", "test:404", "test:409"])
+        signals.extend(["middleware:auth", "tenant:selected", "authorization:TenantAuthorizer", "test:401", "test:403", "test:404", "test:409/conflict"])
         return signals
 
     if mode == "tenant_neutral":
