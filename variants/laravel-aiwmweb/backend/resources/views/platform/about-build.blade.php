@@ -25,7 +25,7 @@
         <h1>About this build</h1>
         <p>Verify the deployed build and review what shipped in the current release.</p>
         @if ($buildApiUrl)
-            <p><a href="{{ $buildApiUrl }}" target="_blank" rel="noopener noreferrer">Open build API</a></p>
+            <p><a href="{{ $buildApiUrl }}" target="_blank" rel="noopener noreferrer" data-canonical-operation="AIMW-CONT-EBD53650BC">Open build API</a></p>
         @endif
 
         <section aria-labelledby="build-actions">
