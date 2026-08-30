@@ -18,12 +18,12 @@ final class AccessDeniedReturnHomeTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-9D5E269773';
 
-    public function test_exact_canonical_operation_is_the_pending_return_home_visible_control(): void
+    public function test_exact_canonical_operation_is_the_terminal_return_home_visible_control(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('content', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('/access-denied', $row['route_screen']);
