@@ -6,6 +6,7 @@ import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approv
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
+import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
@@ -100,6 +101,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
         </>
     );
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
+    if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><WorkspacePage context={context} route={route} /></>;
     return <WorkspacePage context={context} route={route} />;
 }
 
