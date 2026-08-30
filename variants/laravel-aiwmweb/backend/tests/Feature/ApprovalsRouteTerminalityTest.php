@@ -25,9 +25,7 @@ class ApprovalsRouteTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-APPR-A292974395';
-
     private const LOAD_OPERATION_ID = 'AIMW-APPR-31A36E339F';
-
     private const EXECUTION_LINK_OPERATION_ID = 'AIMW-APPR-B360D1C8BA';
 
     public function test_canonical_row_is_the_pending_approvals_route(): void
