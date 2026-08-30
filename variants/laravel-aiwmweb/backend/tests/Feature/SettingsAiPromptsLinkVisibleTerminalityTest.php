@@ -50,8 +50,10 @@ final class SettingsAiPromptsLinkVisibleTerminalityTest extends TestCase
         $readRoute = Route::getRoutes()->match(Request::create('/tenants/alpha/settings/ai-prompts', 'GET'));
         $saveRoute = Route::getRoutes()->match(Request::create('/tenants/alpha/settings/ai-prompts/example', 'PATCH'));
 
-        $this->assertSame(AiPromptTemplatesReadController::class, ltrim($readRoute->getActionName(), '\\'));
-        $this->assertSame(AiPromptTemplateSaveController::class, ltrim($saveRoute->getActionName(), '\\'));
+        $this->assertSame(AiPromptTemplatesReadController::class.'@__invoke', ltrim($readRoute->getActionName(), '\\'));
+        $this->assertSame(AiPromptTemplateSaveController::class.'@__invoke', ltrim($saveRoute->getActionName(), '\\'));
+        $this->assertSame(['tenant'], $readRoute->parameterNames());
+        $this->assertSame(['tenant', 'template'], $saveRoute->parameterNames());
         $this->assertContains('auth', $readRoute->gatherMiddleware());
         $this->assertContains('tenant.context', $readRoute->gatherMiddleware());
         $this->assertContains('auth', $saveRoute->gatherMiddleware());
