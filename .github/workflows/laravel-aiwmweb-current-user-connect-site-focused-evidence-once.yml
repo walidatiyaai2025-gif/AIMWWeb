@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONHASHSEED: '0'
-      FOCUSED_SOURCE_SHA: 706796195036894b63acfd4723e5fbb7e85b8ee9
+      FOCUSED_SOURCE_SHA: bafacfa2e21a70330c5d31bedf2c96894b4686eb
     steps:
       - uses: actions/checkout@v4
         with:
