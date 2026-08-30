@@ -228,7 +228,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
         if row.get("kind") in {"route", "visible_control"}
         and row.get("migration_state") in TERMINAL_STATES
         and (row.get("reconciliation") or {}).get("evidence_mode")
-        not in {"explicit_route_contract", "focused_closure_contract"}
+        not in {"explicit_route_contract", "explicit_route_api_contract", "focused_closure_contract"}
     ]
     if placeholder_terminals:
         errors.append(
