@@ -36,6 +36,9 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
         $this->assertSame('/approvals', $operation['route_screen']);
         $this->assertSame('LoadAsync [LoadAsync]', $operation['visible_control']);
 
+        $appSource = file_get_contents(resource_path('js/app.tsx'));
+        $this->assertStringContainsString('AIMW-APPR-31A36E339F', $appSource);
+
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/approvals', 'GET'));
         $this->assertSame(ApprovalQueueReadController::class.'@index', ltrim($route->getActionName(), '\\'));
         $this->assertContains('web', $route->gatherMiddleware());
@@ -61,6 +64,19 @@ class ApprovalQueueLoadTerminalityTest extends TestCase
             ->assertJsonPath('data.0.execution_status', 'running');
 
         $this->assertNotSame($betaApproval->id, $response->json('data.0.id'));
+    }
+
+    public function test_load_rejects_a_foreign_tenant_route(): void
+    {
+        $alphaUser = User::factory()->create();
+        $this->membership($alphaUser, 'alpha-foreign', ['tenant.view', 'approvals.view']);
+
+        $betaUser = User::factory()->create();
+        $this->membership($betaUser, 'beta-foreign', ['tenant.view', 'approvals.view']);
+
+        $this->actingAs($alphaUser)
+            ->getJson('/api/tenants/beta-foreign/approvals')
+            ->assertNotFound();
     }
 
     public function test_load_requires_approval_read_permission_and_never_falls_back_to_demo_rows(): void
