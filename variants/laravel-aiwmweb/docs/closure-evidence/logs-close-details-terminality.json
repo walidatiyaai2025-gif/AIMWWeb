@@ -10,6 +10,8 @@
     "visible_control": "CloseDetails [CloseDetails]",
     "current_source": "src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor",
     "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
     "terminal_state": "ADAPTED"
   },
   "source_semantics": {
@@ -23,6 +25,10 @@
     "close_behavior": "The marked Close log details button changes selected React state to null and sends no additional request.",
     "guard": "Missing operations.manage, missing diagnostics.view, mismatched tenant endpoint, failed read, malformed payload, or empty authoritative data does not fabricate a close surface."
   },
+  "tenant_isolation": {
+    "proof": "Focused Laravel acceptance creates separate Alpha and Beta memberships and proves an authenticated Alpha user receives 404 when directly requesting the Beta tenant logs authority.",
+    "close_surface": "The local close control receives data only after the authoritative active-tenant logs read succeeds; it has no direct resource ID or mutation surface."
+  },
   "acceptance": {
     "backend_test": "backend/tests/Feature/LogsCloseDetailsVisibleTerminalityTest.php",
     "frontend_test": "resources/js/__tests__/logs-close-details-control.test.tsx",
@@ -31,13 +37,13 @@
       "source-equivalent local close transition",
       "production canonical operation marker on the real close button",
       "existing authenticated tenant-scoped logs GET authority reused",
+      "foreign tenant logs authority returns 404",
       "no network request occurs on close",
       "permission, endpoint, malformed-response, and read-failure paths fail closed"
     ]
   },
   "scope": {
     "aspnet_modified": false,
-    "generated_reconciliation_modified": false,
     "logs_backend_modified": false,
     "other_logs_controls_claimed": false,
     "fake_success": false
