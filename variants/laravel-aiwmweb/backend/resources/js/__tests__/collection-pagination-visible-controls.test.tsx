@@ -54,7 +54,8 @@ describe(`${COMMENT_LOAD} ${COMMENT_PREVIOUS} ${COMMENT_REFRESH}`, () => {
         fireEvent.click(pageTwoPrevious);
         expect(await screen.findByText('Page one')).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/tenants/alpha/comments?page=1'));
-        fireEvent.click(refresh);
+        fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
         expect(await screen.findByText('Refreshed')).toBeInTheDocument();
         expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
     });
