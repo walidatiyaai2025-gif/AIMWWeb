@@ -17,13 +17,13 @@ class SitesShowAllVisibleControlTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-C178278FCB';
 
-    public function test_canonical_operation_is_the_pending_sites_show_all_visible_control(): void
+    public function test_canonical_operation_is_the_terminal_sites_show_all_visible_control(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertFalse((bool) $operation['mutation']);
