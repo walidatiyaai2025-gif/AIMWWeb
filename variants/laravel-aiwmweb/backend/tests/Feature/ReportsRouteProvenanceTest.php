@@ -69,6 +69,9 @@ class ReportsRouteProvenanceTest extends TestCase
 
         foreach (['/reports', '/module/reports'] as $suffix) {
             $this->get('/tenants/alpha'.$suffix)->assertRedirect('/login');
+        }
+
+        foreach (['/reports', '/module/reports'] as $suffix) {
             $this->actingAs($limited->user)->get('/tenants/limited'.$suffix)->assertForbidden();
             $this->actingAs($alpha->user)->get('/tenants/beta'.$suffix)->assertNotFound();
         }
