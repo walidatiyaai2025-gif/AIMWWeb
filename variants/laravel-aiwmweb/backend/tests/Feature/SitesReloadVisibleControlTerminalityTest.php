@@ -43,6 +43,7 @@ class SitesReloadVisibleControlTerminalityTest extends TestCase
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
+        $this->withoutVite();
 
         $this->actingAs($user)
             ->get('/tenants/alpha/sites')
