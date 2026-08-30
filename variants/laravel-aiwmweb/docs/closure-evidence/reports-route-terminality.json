@@ -1,0 +1,14 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "base_sha": "b0ee14d643938407f88d9f6ae981ac6006fa0c42",
+  "operation_ids": [
+    "AIMW-CONT-5D18F49928",
+    "AIMW-CONT-8140D785B5"
+  ],
+  "route_provider": "ApprovalsReportExportRouteServiceProvider.php",
+  "controller": "ApprovalsReportExportController.php",
+  "acceptance_test": "ReportsRouteTerminalityTest.php",
+  "behavior_test": "ApprovalsReportExportTerminalityTest.php",
+  "contract": "Authenticated tenant-scoped reports.view read routes with cross-tenant rejection and no mutation.",
+  "generated_parity_edited": false
+}
