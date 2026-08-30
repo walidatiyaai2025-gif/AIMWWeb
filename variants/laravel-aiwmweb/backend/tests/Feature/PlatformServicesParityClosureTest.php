@@ -124,8 +124,8 @@ class PlatformServicesParityClosureTest extends TestCase
 
         $this->assertLessThanOrEqual(282, $pending->count());
         $this->assertLessThanOrEqual(60, $backend->count());
-        $this->assertSame(220, $frontend->count(), 'Exactly two PR #284 email route rows leave the frozen 222 frontend/route PENDING inventory.');
-        $this->assertTrue($visibleControls->every(fn (array $operation): bool => $operation['migration_state'] === 'PENDING'));
+        $this->assertLessThanOrEqual(220, $frontend->count(), 'Owned frontend/route PENDING inventory may only shrink as governed closures land.');
+        $this->assertTrue($visibleControls->every(fn (array $operation): bool => in_array($operation['migration_state'], ['PENDING', 'PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'], true)));
         $this->assertSame(['route', 'visible_control'], $frontend->pluck('kind')->unique()->sort()->values()->all());
 
         foreach (self::COMPOSED_ROUTE_CLOSURES_IN_OWNED_DOMAINS as $operationId) {
