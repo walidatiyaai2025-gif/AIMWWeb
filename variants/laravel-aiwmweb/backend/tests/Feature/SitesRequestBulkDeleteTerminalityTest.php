@@ -24,7 +24,7 @@ class SitesRequestBulkDeleteTerminalityTest extends TestCase
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('sync', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('critical', $operation['risk']);
