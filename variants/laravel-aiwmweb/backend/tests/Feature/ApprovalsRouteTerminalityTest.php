@@ -25,6 +25,8 @@ class ApprovalsRouteTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-APPR-A292974395';
+    private const LOAD_OPERATION_ID = 'AIMW-APPR-31A36E339F';
+    private const EXECUTION_LINK_OPERATION_ID = 'AIMW-APPR-B360D1C8BA';
 
     public function test_canonical_row_is_the_pending_approvals_route(): void
     {
@@ -51,6 +53,7 @@ class ApprovalsRouteTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame('tenant.view,approvals.view', $route->defaults['workspace_permissions']);
         $this->assertSame('/module/approvals', $route->defaults['workspace_target']);
+        $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation']);
     }
 
     public function test_authorized_user_reaches_real_workspace_and_authoritative_persisted_queue(): void
@@ -70,6 +73,8 @@ class ApprovalsRouteTerminalityTest extends TestCase
         $this->assertStringContainsString('function ApprovalQueueRoute', $app);
         $this->assertStringContainsString("route.key === 'approvals'", $app);
         $this->assertStringContainsString('withApprovalQueueEndpoint(query.data)', $app);
+        $this->assertStringContainsString('data-canonical-operation="'.self::LOAD_OPERATION_ID.'"', $app);
+        $this->assertStringContainsString('data-canonical-operation="'.self::EXECUTION_LINK_OPERATION_ID.'"', $app);
 
         $endpoint = file_get_contents(resource_path('js/approvalQueue.ts'));
         $this->assertStringContainsString('approvals: `/api/tenants/${encodeURIComponent(context.tenant.slug)}/approvals`', $endpoint);
