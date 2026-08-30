@@ -80,7 +80,9 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_sha": "a61f644948b733e836747fa8c48e42187ebb1e41",
+    "claim_base_sha": "a61f644948b733e836747fa8c48e42187ebb1e41",
+    "current_pr_base_sha": "c695d4a8934ef464a3fb75bdef6ad4f1734e4703",
+    "base_drift_reason": "PR #385 merged after this unique claim; compare shows no overlapping changed files with this operation",
     "worker_branch": "worker/laravel-AIMW-AI-991683D92C-ai-center-approvals-link",
     "implementation_test_snapshot": "f0b5e19283a5b8f3737269730ce757968c468ee5"
   },
