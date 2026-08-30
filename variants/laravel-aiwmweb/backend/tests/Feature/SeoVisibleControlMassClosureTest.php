@@ -69,21 +69,28 @@ final class SeoVisibleControlMassClosureTest extends TestCase
 
         $response = $this->actingAs($user)->get('/tenants/alpha/sites/'.$site->id.'/seo');
         $response->assertOk()
+            ->assertViewIs('seo.manager')
+            ->assertViewHas('config', function (array $config) use ($site): bool {
+                return ($config['site']['id'] ?? null) === $site->id
+                    && ($config['urls']['audits'] ?? null) === '/api/tenants/alpha/sites/'.$site->id.'/seo/audits'
+                    && ($config['urls']['prepare_bulk'] ?? null) === '/api/tenants/alpha/sites/'.$site->id.'/seo/remediations/bulk'
+                    && ($config['urls']['proposals'] ?? null) === '/api/v1/tenants/alpha/sites/'.$site->id.'/seo/remediations/proposals'
+                    && ($config['urls']['execution'] ?? null) === '/tenants/alpha/module/execution'
+                    && ($config['urls']['explorer'] ?? null) === '/tenants/alpha/module/posts?site='.$site->id
+                    && ($config['urls']['approvals'] ?? null) === '/tenants/alpha/approvals';
+            })
             ->assertSee('id="seo-visible-controls"', false)
-            ->assertSee('data-canonical-operation="AIMW-SEO-5F71B89C92"', false)
-            ->assertSee('/api/tenants/alpha/sites/'.$site->id.'/seo/audits', false)
-            ->assertSee('/api/tenants/alpha/sites/'.$site->id.'/seo/remediations/bulk', false)
-            ->assertSee('/api/v1/tenants/alpha/sites/'.$site->id.'/seo/remediations/proposals', false)
-            ->assertSee('/tenants/alpha/module/execution', false)
-            ->assertSee('/tenants/alpha/module/posts?site='.$site->id, false)
-            ->assertSee('/tenants/alpha/approvals', false);
+            ->assertSee('data-canonical-operation="AIMW-SEO-5F71B89C92"', false);
 
         $this->actingAs($user)->get('/tenants/alpha/seo-workspace')
             ->assertOk()
-            ->assertSee('data-canonical-operation="AIMW-SEO-4CBBC7AAD9"', false)
-            ->assertSee('/tenants/alpha/module/seo-audit', false)
-            ->assertSee('/tenants/alpha/module/seo-suggestions', false)
-            ->assertSee('/tenants/alpha/approvals', false);
+            ->assertViewIs('seo.workspace')
+            ->assertViewHas('links', static function (array $links): bool {
+                return ($links['audit'] ?? null) === '/tenants/alpha/module/seo-audit'
+                    && ($links['suggestions'] ?? null) === '/tenants/alpha/module/seo-suggestions'
+                    && ($links['approvals'] ?? null) === '/tenants/alpha/approvals';
+            })
+            ->assertSee('data-canonical-operation="AIMW-SEO-4CBBC7AAD9"', false);
     }
 
     public function test_presentation_endpoint_reads_real_tenant_scoped_content_links_without_mutation(): void
