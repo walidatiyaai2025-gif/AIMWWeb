@@ -17,6 +17,8 @@
         .diagnostic small { display: block; margin-bottom: 6px; color: #94a3b8; }
         .diagnostic strong { display: block; overflow-wrap: anywhere; }
         .note { padding: 14px; border-radius: 12px; background: rgba(59, 130, 246, .09); border: 1px solid rgba(96, 165, 250, .25); }
+        .actions { margin-top: 24px; }
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 10px; background: #2563eb; color: #fff; font-weight: 700; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -36,6 +38,10 @@
             </div>
 
             <div class="note">Use the Error ID or Correlation ID when reviewing server logs or requesting support.</div>
+
+            <div class="actions">
+                <a class="button" href="/" data-canonical-operation="AIMW-CONT-85394A0E55">Back to dashboard</a>
+            </div>
         </section>
     </main>
 </body>
