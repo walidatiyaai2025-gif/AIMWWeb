@@ -92,7 +92,7 @@ describe(`${OPERATION_ID} OpenCommandPalette full closure`, () => {
         fireEvent.change(input, { target: { value: 'sites' } });
         expect(input).toHaveValue('sites');
 
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Esc' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Close search' }));
         expect(screen.queryByRole('dialog', { name: 'Quick search' })).not.toBeInTheDocument();
 
         fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
