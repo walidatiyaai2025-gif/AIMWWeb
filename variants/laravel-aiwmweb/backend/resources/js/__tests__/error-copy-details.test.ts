@@ -52,11 +52,10 @@ describe('copy error details visible control', () => {
         button.click();
 
         expect(writeText).toHaveBeenCalledTimes(1);
-        const copied = String(writeText.mock.calls[0]?.[0] ?? '');
-        expect(copied).toContain('AI WordPress Manager Error');
-        expect(copied).toContain('Error ID: error-request-0001');
-        expect(copied).toContain('Correlation ID: error-correlation-0001');
-        expect(copied).toMatch(/Time: \d{4}-\d{2}-\d{2}T/);
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining('AI WordPress Manager Error'));
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Error ID: error-request-0001'));
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining('Correlation ID: error-correlation-0001'));
+        expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/Time: \d{4}-\d{2}-\d{2}T/));
         expect(button.disabled).toBe(true);
         expect(button.getAttribute('aria-busy')).toBe('true');
         expect(success.hidden).toBe(true);
