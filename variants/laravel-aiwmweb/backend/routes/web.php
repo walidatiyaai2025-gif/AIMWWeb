@@ -2,12 +2,15 @@
 
 use App\Authorization\TenantAuthorizer;
 use App\Frontend\ActionContractRegistry;
+use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
+use App\Http\Controllers\CanonicalWorkspaceRouteController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\RouteApiAdapterController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
@@ -18,6 +21,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
+Route::get('/access-denied', AccessDeniedReadController::class)->name('canonical.access-denied');
 Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
@@ -119,39 +123,63 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         ])->values();
         $tenantModel = $context->tenant();
         $tenant = $tenantModel->slug;
-        $site = request()->has('site') ? Site::query()->findOrFail(request()->integer('site')) : null;
-        $siteToken = $site ? (string) $site->id : '{site}';
+        $site = null;
+        if (request()->has('site')) {
+            $site = Site::query()->findOrFail(request()->integer('site'));
+        } else {
+            $activeSiteId = request()->session()->get('canonical_site_id');
+            if ($activeSiteId !== null) {
+                $site = Site::query()->find((int) $activeSiteId);
+                if (! $site) {
+                    request()->session()->forget('canonical_site_id');
+                }
+            }
+        }
         $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
+
+        $api = [
+            'sites' => "/api/tenants/{$tenant}/sites",
+            'operations' => "/tenants/{$tenant}/admin/operations",
+            'automation' => "/tenants/{$tenant}/admin/automations",
+            'schedules' => "/tenants/{$tenant}/admin/schedules",
+            'execution' => "/tenants/{$tenant}/admin/operations",
+            'site-operations' => "/tenants/{$tenant}/route-api/site-operations",
+            'notifications' => "/api/v1/tenants/{$tenant}/notifications",
+            'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
+            'reports' => "/tenants/{$tenant}/route-api/report-exports",
+            'logs' => "/tenants/{$tenant}/admin/logs",
+            'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
+            'backups' => "/tenants/{$tenant}/admin/backups",
+            'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
+            'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
+            'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
+            'application-users' => "/tenants/{$tenant}/admin/members",
+            'roles' => "/tenants/{$tenant}/admin/roles",
+            'sessions' => "/tenants/{$tenant}/admin/sessions",
+        ];
+        if ($site) {
+            $siteId = (int) $site->getKey();
+            $api += [
+                'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
+                'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
+                'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
+                'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
+                'comments' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/comments",
+                'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/taxonomy",
+                'sync' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/sync",
+                'seo-audit' => "/api/tenants/{$tenant}/sites/{$siteId}/seo/audits",
+            ];
+        }
 
         return response()->json([
             'user' => ['id' => request()->user()->getKey(), 'name' => request()->user()->name, 'email' => request()->user()->email],
             'tenant' => ['id' => (int) $tenantModel->id, 'slug' => $tenantModel->slug, 'name' => $tenantModel->name],
             'tenants' => $tenants,
-            'active_site' => $site ? ['id' => (int) $site->id, 'name' => (string) $site->name] : null,
             'permissions' => $permissions,
             'connectors' => $connectors,
             'capabilities' => $actionRegistry->capabilityStates($actions),
-            'api' => [
-                'sites' => "/api/tenants/{$tenant}/sites",
-                'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/content/post",
-                'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/content/page",
-                'media' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/media",
-                'comments' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/comments",
-                'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/taxonomy",
-                'sync' => "/api/v1/tenants/{$tenant}/sites/{$siteToken}/sync",
-                'seo-audit' => "/api/tenants/{$tenant}/sites/{$siteToken}/seo/audits",
-                'operations' => "/tenants/{$tenant}/admin/operations",
-                'notifications' => "/api/v1/tenants/{$tenant}/notifications",
-                'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
-                'reports' => "/tenants/{$tenant}/admin/reports/exports",
-                'logs' => "/tenants/{$tenant}/admin/logs",
-                'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
-                'backups' => "/tenants/{$tenant}/admin/backups",
-                'account.billing' => "/api/v1/tenants/{$tenant}/billing/subscription",
-                'application-users' => "/tenants/{$tenant}/admin/members",
-                'roles' => "/tenants/{$tenant}/admin/roles",
-                'sessions' => "/tenants/{$tenant}/admin/sessions",
-            ],
+            'api' => $api,
+            'active_site' => $site ? ['id' => (int) $site->getKey(), 'name' => $site->name, 'status' => $site->status] : null,
             'actions' => $actions,
         ]);
     });
@@ -195,7 +223,59 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::get('/reports/exports/{export}/download', 'downloadExport');
         Route::get('/reports/{report}', 'report');
     });
+
+    Route::prefix('/tenants/{tenant}/route-api')->controller(RouteApiAdapterController::class)->group(function (): void {
+        Route::get('/report-exports', 'reportExports')->name('canonical.api.report-exports');
+        Route::get('/site-operations', 'siteOperations')->name('canonical.api.site-operations');
+        Route::get('/billing-overview', 'billingOverview')->name('canonical.api.billing-overview');
+        Route::get('/account-profile', 'accountProfile')->name('canonical.api.account-profile');
+    });
 });
+
+Route::prefix('/tenants/{tenant}')
+    ->middleware(['auth', 'tenant.context'])
+    ->controller(CanonicalWorkspaceRouteController::class)
+    ->group(function (): void {
+        Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
+        Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
+        Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
+        Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
+        Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
+        Route::get('/module/logs', 'show')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->name('canonical.workspace.logs');
+        Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->name('canonical.workspace.ai-usage');
+        Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
+        Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
+        Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
+        Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
+        Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
+
+        Route::get('/module/posts', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.posts');
+        Route::get('/module/pages', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
+        Route::get('/module/media', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.media');
+        Route::get('/module/comments', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.comments');
+        Route::get('/module/taxonomy', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.taxonomy');
+        Route::get('/module/sync', 'showSiteBound')->defaults('workspace_permissions', 'content.view,sync.view')->name('canonical.workspace.sync');
+
+        Route::get('/module/reports', 'show')->defaults('workspace_permissions', 'reports.view')->name('canonical.workspace.reports');
+        Route::get('/site-operations', 'show')->defaults('workspace_permissions', 'execution.view')->name('canonical.workspace.site-operations');
+        Route::get('/automation-center', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.automation');
+        Route::get('/module/schedules', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.schedules');
+        Route::get('/module/execution', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.execution');
+
+        Route::get('/sites/{site}/comments', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/comments')->whereNumber('site')->name('canonical.site.comments');
+        Route::get('/sites/{site}/media', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/media')->whereNumber('site')->name('canonical.site.media');
+        Route::get('/sites/{site}/taxonomy', 'redirectSite')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/module/taxonomy')->whereNumber('site')->name('canonical.site.taxonomy');
+
+        Route::get('/admin/application-users', 'redirect')->defaults('workspace_permissions', 'tenant.view,users.view')->defaults('workspace_target', '/admin/users')->name('canonical.alias.application-users');
+        Route::get('/settings/sessions', 'redirect')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->defaults('workspace_target', '/account/sessions')->name('canonical.alias.settings-sessions');
+        Route::get('/logs', 'redirect')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->defaults('workspace_target', '/module/logs')->name('canonical.alias.logs');
+        Route::get('/operations/hub', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/operations')->name('canonical.alias.operations-hub');
+        Route::get('/backups', 'redirect')->defaults('workspace_permissions', 'backup.manage,backups.view')->defaults('workspace_target', '/module/backups')->name('canonical.alias.backups');
+        Route::get('/reports', 'redirect')->defaults('workspace_permissions', 'reports.view')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
+        Route::get('/operations/sites', 'redirect')->defaults('workspace_permissions', 'execution.view')->defaults('workspace_target', '/site-operations')->name('canonical.alias.operations-sites');
+        Route::get('/automation-schedules', 'redirect')->defaults('workspace_permissions', 'operations.manage,automation.view')->defaults('workspace_target', '/module/schedules')->name('canonical.alias.automation-schedules');
+        Route::get('/execution-center', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/module/execution')->name('canonical.alias.execution-center');
+    });
 
 Route::middleware(['auth', 'tenant.context'])->get('/tenants/{tenant}/console', fn (string $tenant) => view('console', compact('tenant')));
 

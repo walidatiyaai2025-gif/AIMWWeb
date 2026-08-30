@@ -108,7 +108,7 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
         disabled_by_owner: { en: 'Disabled by site owner', ar: 'معطل بواسطة مالك الموقع' },
         connector_unavailable: { en: 'Connector capability unavailable', ar: 'قدرة الموصل غير متاحة' },
         protocol_upgrade_required: { en: 'Connector upgrade required', ar: 'يلزم تحديث الموصل' },
-        site_disconnected: { en: 'Site disconnected', ar: 'الموقع غير متصل حاليًا' },
+        site_disconnected: { en: 'Site disconnected', ar: 'الموقع غير متصل' },
         pending_integration: { en: 'Backend integration pending', ar: 'تكامل الخادم قيد الانتظار' },
     };
     const title = titleByState[state.state]?.[locale] ?? (locale === 'ar' ? 'القدرة غير متاحة' : 'Capability unavailable');
@@ -159,7 +159,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         },
         onError: (error) => {
             if (error instanceof AuthoritativeReconciliationError) {
-                notify(locale === 'ar' ? 'قبل الخادم العملية، لكن تعذر تحديث الحالة الموثوقة. أعد تحميل الشاشة قبل تكرار العملية.' : error.message, 'error');
+                notify(
+                    locale === 'ar'
+                        ? 'قبل الخادم العملية، لكن تعذر تحديث الحالة الموثوقة. أعد تحميل الشاشة قبل تكرار العملية.'
+                        : error.message,
+                    'error',
+                );
                 return;
             }
             notify(error instanceof Error ? error.message : (locale === 'ar' ? 'فشلت العملية.' : 'The operation failed.'), 'error');

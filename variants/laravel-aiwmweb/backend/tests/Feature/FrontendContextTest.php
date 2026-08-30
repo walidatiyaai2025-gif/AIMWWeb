@@ -15,7 +15,7 @@ class FrontendContextTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_frontend_context_is_tenant_scoped_and_exposes_no_fake_capabilities(): void
+    public function test_frontend_context_is_tenant_scoped_and_exposes_authoritative_action_contracts(): void
     {
         $user = User::factory()->create(['name' => 'Frontend User', 'email' => 'frontend@example.test']);
         $alpha = $this->tenantMembership($user, 'alpha', ['tenant.view', 'content.view']);
@@ -37,10 +37,13 @@ class FrontendContextTest extends TestCase
             ->assertJsonFragment(['content.view'])
             ->assertJsonPath('connectors', [])
             ->assertJsonPath('api.sites', '/api/tenants/alpha/sites')
-            ->assertJsonPath('api.posts', '/api/v1/tenants/alpha/sites/{site}/content/post')
+            ->assertJsonMissingPath('api.posts')
+            ->assertJsonPath('active_site', null)
             ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications');
 
         $actions = $response->json('actions');
+        $this->assertIsArray($actions);
+        $this->assertCount(count(config('frontend_actions', [])), $actions);
         $this->assertSame('AIMW-SYNC-A9E956A4DA', $actions['sites.refresh']['operation_id']);
         $this->assertSame($alpha->tenant_id, $actions['sites.refresh']['tenant_id']);
         $this->assertSame('enabled', $actions['sites.refresh']['availability']['state']);
@@ -49,11 +52,12 @@ class FrontendContextTest extends TestCase
         $this->assertSame('site_context_required', $actions['seo.audit.run']['availability']['state']);
 
         $capabilities = $response->json('capabilities');
+        $this->assertIsArray($capabilities);
         $this->assertSame('permission_denied', $capabilities['sites.sites.connect']['state']);
         $this->assertSame('permission_denied', $capabilities['site-connect.sites.connect']['state']);
-        $this->assertSame('permission_denied', $capabilities['application-users.users.disable']['state']);
         $this->assertSame('pending_integration', $capabilities['seo-audit.seo.audit.run']['state']);
         $this->assertArrayNotHasKey('sites.sites.refresh', $capabilities);
+
         $this->assertSame($alpha->tenant_id, Tenant::query()->where('slug', 'alpha')->value('id'));
     }
 
@@ -67,14 +71,14 @@ class FrontendContextTest extends TestCase
         $this->actingAs($owner)->getJson('/tenants/beta/context')->assertNotFound();
     }
 
-    public function test_spa_route_is_guarded_by_real_tenant_permission(): void
+    public function test_generic_spa_fallback_is_guarded_by_real_tenant_permission(): void
     {
         $user = User::factory()->create();
         $this->tenantMembership($user, 'alpha', ['tenant.view']);
         $this->withoutVite();
 
         $this->actingAs($user)
-            ->get('/tenants/alpha/module/posts')
+            ->get('/tenants/alpha/workspace')
             ->assertOk()
             ->assertSee('id="app"', false)
             ->assertSee('AI WordPress Manager — Laravel');

@@ -47,6 +47,7 @@ final class AiUsageService
     private function query(array $filters): Builder
     {
         return AiUsageRecord::query()
+            ->when($filters['user_id'] ?? null, fn ($query, $value) => $query->where('user_id', $value))
             ->when($filters['provider'] ?? null, fn ($query, $value) => $query->where('provider_key', $value))
             ->when($filters['model'] ?? null, fn ($query, $value) => $query->where('model_key', $value))
             ->when($filters['workflow'] ?? null, fn ($query, $value) => $query->where('workflow', $value))
@@ -74,9 +75,12 @@ final class AiUsageService
 
     private function serialize(AiUsageRecord $record): array
     {
+        $metadata = is_array($record->metadata) ? $record->metadata : [];
+
         return [
             'id' => $record->id,
             'user_id' => $record->user_id,
+            'site_id' => isset($metadata['site_id']) ? (int) $metadata['site_id'] : null,
             'provider' => $record->provider_key,
             'model' => $record->model_key,
             'workflow' => $record->workflow,
