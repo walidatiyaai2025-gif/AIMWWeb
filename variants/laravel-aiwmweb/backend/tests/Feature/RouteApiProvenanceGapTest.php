@@ -64,6 +64,14 @@ class RouteApiProvenanceGapTest extends TestCase
         $this->assertNotContains('auth', $login->gatherMiddleware());
         $this->assertNotContains('tenant.context', $login->gatherMiddleware());
         $this->assertSame([], $login->parameterNames());
+        $this->get('/login')->assertOk();
+
+        $user = User::factory()->create();
+        foreach (['https://evil.example/phish', '//evil.example/phish'] as $unsafe) {
+            $this->actingAs($user)
+                ->get('/login?returnUrl='.urlencode($unsafe))
+                ->assertRedirect('/');
+        }
     }
 
     public function test_site_aliases_are_tenant_scoped_and_fail_closed_for_permission_and_foreign_ids(): void
