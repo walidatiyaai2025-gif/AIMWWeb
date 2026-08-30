@@ -1,0 +1,79 @@
+{
+  "authority": {
+    "repository": "walidatiyaai2025-gif/AIMWWeb",
+    "issue": 257,
+    "variant": "LARAVEL_AIWMWEB",
+    "composition_branch": "worker/laravel-aiwmweb-closure-composition",
+    "composition_sha": "a61f644948b733e836747fa8c48e42187ebb1e41"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-825B2F5A38",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor",
+    "source_route": "/settings/ai-prompts",
+    "source_control": "NewTemplateClicked"
+  },
+  "source_behavior": {
+    "behavior": "NewTemplateClicked delegates to NewTemplate. The source handler clears the selected key, enters new-template state, clears editable prompt fields, enables the draft, clears revision history and clears transient message state.",
+    "request_contract": "The canonical click handler performs no backend request. Persistence belongs to the separate Save operation and is intentionally not absorbed by this one-operation closure."
+  },
+  "laravel_adaptation": {
+    "view": "variants/laravel-aiwmweb/backend/resources/views/ai/prompt-templates.blade.php",
+    "browser_handler": "variants/laravel-aiwmweb/backend/public/js/ai-prompt-new-template.js",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-prompt-new-template.test.js",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplateNewVisibleControlTerminalityTest.php",
+    "visible_binding": "The AI Prompt Templates page renders a type=button New template control with the exact canonical operation marker and aria-controls binding to a hidden blank draft editor.",
+    "state_transition": "Clicking New template clears key/title/system/user draft values, restores Enabled=true, hides prior transient success/error feedback, reveals the blank new-template editor, reports truthful unsaved state and focuses the key field.",
+    "truthfulness": "The browser handler makes no fetch/XHR/form-submit/navigation call and reports that nothing has been persisted. It cannot fabricate save success or a revision.",
+    "repeatability": "Repeated clicks deterministically discard unsaved draft edits and restore the same blank new-template state."
+  },
+  "runtime_path": [
+    "authorized GET /tenants/{tenant}/settings/ai-prompts",
+    "New template visible control",
+    "browser click event",
+    "wireAiPromptNewTemplate handler",
+    "blank new-template draft state",
+    "truthful user-visible unsaved feedback"
+  ],
+  "security_and_tenancy": {
+    "permission": "settings.manage",
+    "authenticated": true,
+    "route_context": "The control is only rendered after the existing tenant-qualified prompt-template route authorizes settings.manage and confirms the active TenantContext slug matches the route tenant.",
+    "tenant_isolation_proof": "Focused acceptance covers an authorized Tenant A manager attempting the foreign tenant route and receiving 404.",
+    "guest_semantics": "Guest GET redirects to login before the control is rendered.",
+    "missing_permission_semantics": "Authenticated tenant member without settings.manage receives 403 before the control is rendered."
+  },
+  "acceptance_tests": [
+    "test_exact_canonical_operation_matches_the_source_new_template_state_transition",
+    "test_settings_manager_receives_a_real_state_only_new_template_control_without_server_mutation",
+    "test_production_browser_handler_is_a_truthful_reset_without_request_or_navigation",
+    "test_control_inherits_route_auth_permission_and_tenant_fail_closed_semantics",
+    "frontend: resets the editor into a truthful blank new-template state without network activity",
+    "frontend: can be invoked repeatedly and clears draft edits every time"
+  ],
+  "ci": {
+    "exact_head_required": true,
+    "status": "pending exact-head workflow verification"
+  },
+  "denominator": {
+    "source": "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md at composition SHA a61f644948b733e836747fa8c48e42187ebb1e41",
+    "total": 931,
+    "previous_terminal": 424,
+    "new_terminal_after_this_isolated_closure": 425,
+    "previous_pending": 507,
+    "new_pending_after_this_isolated_closure": 506,
+    "generated_reconciliation_manually_edited": false
+  },
+  "scope_guards": {
+    "second_operation_started": false,
+    "create_or_save_persistence_absorbed": false,
+    "aspnet_current_product_modified": false,
+    "generated_reconciliation_modified": false,
+    "merged": false,
+    "force_pushed": false
+  },
+  "evidence_commit_rule": "The focused evidence is countable only from a pushed source SHA that contains the production operation marker and the focused operation-linked acceptance test. Exact-head repository CI remains mandatory before final worker handoff."
+}
