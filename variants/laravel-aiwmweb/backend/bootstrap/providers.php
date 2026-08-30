@@ -7,6 +7,7 @@ use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
+use App\Providers\SitesBulkDeleteRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -16,4 +17,5 @@ return [
     AiPromptTemplatesRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
+    SitesBulkDeleteRouteServiceProvider::class,
 ];

@@ -12,6 +12,7 @@ import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
+import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -112,6 +113,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
             <SiteDetailsRoute context={context} route={route} />
         </>
     );
+    if (route.key === 'sites') return <><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
