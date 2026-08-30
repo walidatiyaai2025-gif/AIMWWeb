@@ -7,6 +7,7 @@ use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
+use App\Providers\SiteSettingsRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
 use App\Providers\SitesConnectRouteServiceProvider;
 
@@ -20,4 +21,5 @@ return [
     SetupRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
+    SiteSettingsRouteServiceProvider::class,
 ];

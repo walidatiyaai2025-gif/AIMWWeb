@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CurrentUserConnectSiteControl } from './current-user-connect-site-control';
+import { CurrentUserSiteSettingsControl } from './current-user-site-settings-control';
 import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -54,6 +55,7 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
         <>
             <CurrentUserConnectSiteControl context={context} />
             {details}
+            <CurrentUserSiteSettingsControl context={context} />
         </>
     );
 }

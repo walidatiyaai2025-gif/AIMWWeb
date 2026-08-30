@@ -1,0 +1,81 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SITE-9F9F2977B5",
+  "domain": "sites",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "route_screen": "component:CurrentUserChip",
+    "visible_control": "/sites/{active.Id}/settings",
+    "user_visible_text": "Settings",
+    "behavior": "When an authoritative active site exists, CurrentUserChip exposes a navigation control to that site's settings surface. The control itself is read/navigation-only; mutations inside SiteSettings are separate canonical operations."
+  },
+  "laravel_adaptation": {
+    "frontend_control": "backend/resources/js/current-user-site-settings-control.tsx",
+    "integration_surface": "backend/resources/js/current-user-site-details-control.tsx",
+    "destination_route": "GET /tenants/{tenant}/sites/{site}/settings",
+    "route_name": "canonical.site.settings",
+    "controller": "App\\Http\\Controllers\\SiteSettingsReadController",
+    "view": "resources/views/platform/site-settings.blade.php",
+    "behavior": "The CurrentUserChip control renders only for an authoritative active-site contract and sites.manage permission. It derives tenant and site identifiers from FrontendContext and navigates to a real server-rendered tenant-scoped settings landing that re-authorizes and re-resolves the site."
+  },
+  "authorization": {
+    "middleware": ["web", "auth", "tenant.context"],
+    "permissions": ["tenant.view", "sites.manage"],
+    "activation_recheck": "The destination controller independently authorizes tenant.view and sites.manage; frontend visibility is not trusted as authorization."
+  },
+  "tenant_isolation": {
+    "proof": "Focused acceptance proves a caller without membership in the requested tenant receives 404 and a site ID belonging to another active tenant is 404 under the requested tenant context.",
+    "direct_id_idor": "The URL carries a site identifier because the canonical source does, but Site::query() executes under the activated tenant global scope and cannot resolve a foreign-tenant site ID."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "destination_snapshot": ["site name", "site URL", "operational status", "tenant name"],
+    "excluded_mutations": [
+      "Save profile",
+      "Save/test WordPress credential",
+      "Remove credential",
+      "Enable/disable site",
+      "Delete site"
+    ],
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "frontend": "backend/resources/js/__tests__/current-user-site-settings-control.test.tsx",
+    "backend": "backend/tests/Feature/CurrentUserSiteSettingsVisibleTerminalityTest.php",
+    "coverage": [
+      "real CurrentUserChip integration renders the exact canonical marker",
+      "tenant/site target derives only from authoritative FrontendContext",
+      "missing permission/active site/exact site API contract fails closed",
+      "explicit guarded destination route",
+      "real authoritative site snapshot renders",
+      "no unrelated settings mutations are simulated",
+      "missing sites.manage is 403",
+      "foreign tenant is 404",
+      "cross-tenant site ID is 404"
+    ]
+  },
+  "canonical_denominator": {
+    "base_composition_sha": "33b3d5db61c0a538dcd7a79b44c089d39c8a0224",
+    "total": 931,
+    "base_terminal": 413,
+    "base_pending": 518,
+    "expected_isolated_terminal": 414,
+    "expected_isolated_pending": 517
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "internal_site_settings_mutations_terminalized": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The exact visible navigation behavior is wired to a real tenant-scoped destination with independent server authorization and cross-tenant ID isolation, while all unrelated settings mutations remain unclaimed."
+  }
+}
