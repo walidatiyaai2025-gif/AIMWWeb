@@ -286,22 +286,51 @@ export function ActionDialog({
     );
 }
 
-function CommandPalette({ context, open, onClose }: { context: FrontendContext; open: boolean; onClose: () => void }) {
+function CommandPalette({
+    context,
+    open,
+    onClose,
+    triggerRef,
+}: {
+    context: FrontendContext;
+    open: boolean;
+    onClose: () => void;
+    triggerRef: React.RefObject<HTMLButtonElement | null>;
+}) {
     const { locale, text } = useLocale();
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const onCloseRef = useRef(onClose);
     const allowedRoutes = useMemo(
         () => workspaceRoutes.filter((route) => !route.hidden && resolveCapability(context, route).state === 'enabled'),
         [context],
     );
 
     useEffect(() => {
-        if (open) {
-            setQuery('');
-            window.setTimeout(() => inputRef.current?.focus(), 0);
-        }
-    }, [open]);
+        onCloseRef.current = onClose;
+    }, [onClose]);
+
+    useEffect(() => {
+        if (!open) return;
+
+        setQuery('');
+        const trigger = triggerRef.current;
+        const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 0);
+        const handleKey = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault();
+            event.stopPropagation();
+            onCloseRef.current();
+        };
+
+        document.addEventListener('keydown', handleKey);
+        return () => {
+            window.clearTimeout(focusTimer);
+            document.removeEventListener('keydown', handleKey);
+            window.setTimeout(() => trigger?.focus(), 0);
+        };
+    }, [open, triggerRef]);
     if (!open) return null;
 
     const normalizedQuery = query.trim().toLowerCase();
@@ -326,7 +355,13 @@ function CommandPalette({ context, open, onClose }: { context: FrontendContext; 
                 <header>
                     <h2 id="command-title" className="sr-only">{text(commonText.quickSearch)}</h2>
                     <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text(commonText.quickSearch)} aria-label={text(commonText.quickSearch)} aria-controls="command-palette-results" />
-                    <button type="button" className="btn" onClick={onClose}>Esc</button>
+                    <button
+                        type="button"
+                        className="btn"
+                        data-canonical-operation="AIMW-AI-D3A8A100B4"
+                        aria-label={locale === 'ar' ? 'إغلاق البحث' : 'Close search'}
+                        onClick={onClose}
+                    >Esc</button>
                 </header>
                 <div id="command-palette-results" className="command-results" aria-live="polite" aria-atomic="false">
                     {matches.length === 0 ? (
@@ -355,6 +390,7 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(() => window.localStorage.getItem('aiwm.sidebar') === 'collapsed');
     const [commandOpen, setCommandOpen] = useState(false);
+    const commandTriggerRef = useRef<HTMLButtonElement>(null);
     const [mode, setMode] = useState<'dark' | 'light'>(() => window.localStorage.getItem('aiwm.mode') === 'light' ? 'light' : 'dark');
 
     const currentRoute = useMemo(
@@ -436,6 +472,7 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                     </div>
                     <div className="topbar-actions">
                         <button
+                            ref={commandTriggerRef}
                             id="command-palette-trigger"
                             type="button"
                             className="command-trigger"
@@ -463,7 +500,7 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                 </header>
                 <main id="main-content" className="content" tabIndex={-1} aria-labelledby="page-title">{children}</main>
             </div>
-            <CommandPalette context={context} open={commandOpen} onClose={() => setCommandOpen(false)} />
+            <CommandPalette context={context} open={commandOpen} onClose={() => setCommandOpen(false)} triggerRef={commandTriggerRef} />
         </div>
     );
 }
