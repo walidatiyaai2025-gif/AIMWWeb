@@ -8,6 +8,7 @@ use App\Providers\AppServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
+use App\Providers\SitesConnectRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -18,4 +19,5 @@ return [
     ApprovalQueueRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
+    SitesConnectRouteServiceProvider::class,
 ];

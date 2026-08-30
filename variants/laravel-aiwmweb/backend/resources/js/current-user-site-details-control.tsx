@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { CurrentUserConnectSiteControl } from './current-user-connect-site-control';
 import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -24,25 +25,35 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
     }, []);
 
     const activeSite = (context as ContextWithActiveSite).active_site;
-    if (!target || !activeSite || !Number.isSafeInteger(activeSite.id) || activeSite.id <= 0) return null;
-    if (!context.permissions.includes('sites.view')) return null;
+    const canRenderDetails = Boolean(
+        target
+        && activeSite
+        && Number.isSafeInteger(activeSite.id)
+        && activeSite.id > 0
+        && context.permissions.includes('sites.view')
+        && context.api[`sites.detail.${activeSite.id}`] === `/api/tenants/${context.tenant.slug}/sites/${activeSite.id}`,
+    );
 
-    const expectedApi = `/api/tenants/${context.tenant.slug}/sites/${activeSite.id}`;
-    if (context.api[`sites.detail.${activeSite.id}`] !== expectedApi) return null;
+    const details = canRenderDetails && target && activeSite
+        ? createPortal(
+            <a
+                href={tenantUrl(context.tenant.slug, `/sites/${activeSite.id}`)}
+                className="current-user-site-link"
+                data-canonical-operation={CURRENT_USER_SITE_DETAILS_OPERATION_ID}
+                aria-label={locale === 'ar' ? `فتح تفاصيل الموقع ${activeSite.name}` : `Open ${activeSite.name} site details`}
+                title={activeSite.name}
+            >
+                <span aria-hidden="true">◉</span>
+                <span>{activeSite.name}</span>
+            </a>,
+            target,
+        )
+        : null;
 
-    const href = tenantUrl(context.tenant.slug, `/sites/${activeSite.id}`);
-
-    return createPortal(
-        <a
-            href={href}
-            className="current-user-site-link"
-            data-canonical-operation={CURRENT_USER_SITE_DETAILS_OPERATION_ID}
-            aria-label={locale === 'ar' ? `فتح تفاصيل الموقع ${activeSite.name}` : `Open ${activeSite.name} site details`}
-            title={activeSite.name}
-        >
-            <span aria-hidden="true">◉</span>
-            <span>{activeSite.name}</span>
-        </a>,
-        target,
+    return (
+        <>
+            <CurrentUserConnectSiteControl context={context} />
+            {details}
+        </>
     );
 }
