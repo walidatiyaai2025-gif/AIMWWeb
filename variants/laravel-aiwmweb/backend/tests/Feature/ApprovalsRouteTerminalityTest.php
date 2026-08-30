@@ -41,7 +41,7 @@ class ApprovalsRouteTerminalityTest extends TestCase
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor', $row['current_source']);
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
     }
 
     public function test_approvals_alias_is_explicit_guarded_and_targets_the_real_workspace(): void
