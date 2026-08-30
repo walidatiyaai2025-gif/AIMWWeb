@@ -2,13 +2,13 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
-  "focused_closure_evidence_source_sha": "0060add81df08a54de07d5a2c1cebe48058cdc41",
+  "previous_reconciliation_sha": "a067d973e0b6120a34cee5106161dadad6056fe5",
+  "focused_closure_evidence_source_sha": "3852b2ed732ca351c31f06203a5a128714cad498",
   "countable_sources": [
     {
-      "label": "Live Laravel closure composition after Action Contract discovery",
-      "sha": "0060add81df08a54de07d5a2c1cebe48058cdc41",
-      "observed_pr_head": "0060add81df08a54de07d5a2c1cebe48058cdc41",
+      "label": "Live Laravel closure composition after MainLayout and Approval Queue closure",
+      "sha": "3852b2ed732ca351c31f06203a5a128714cad498",
+      "observed_pr_head": "3852b2ed732ca351c31f06203a5a128714cad498",
       "domains": [
         "ai",
         "approvals",
@@ -113,6 +113,12 @@
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiUsageRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-usage-route-terminality.json"
+        },
+        "AIMW-APPR-A292974395": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalQueueRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/approvals-route-terminality.json"
         }
       }
     }
