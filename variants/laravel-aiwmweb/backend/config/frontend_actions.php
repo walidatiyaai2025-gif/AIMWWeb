@@ -1,6 +1,8 @@
 <?php
 
 return [
+    // Focused closure production markers are the operation_id values on these
+    // runtime-discovered contracts. Keep them attached to the real action wiring.
     'sites.connect' => [
         'operation_id' => 'AIMW-SYNC-E27768E92A',
         'canonical' => [
