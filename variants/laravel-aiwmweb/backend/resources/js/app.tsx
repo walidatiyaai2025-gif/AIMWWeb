@@ -6,6 +6,7 @@ import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approv
 import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
+import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
 import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
@@ -79,6 +80,7 @@ function TenantBootstrap() {
     return (
         <ToastProvider>
             <AppShell context={context}>
+                <CurrentUserSiteDetailsControl context={context} />
                 <MainLayoutParityControls context={context} />
                 <Outlet context={{ context } satisfies OutletState} />
             </AppShell>
