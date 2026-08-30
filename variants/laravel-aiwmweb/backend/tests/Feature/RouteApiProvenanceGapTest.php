@@ -6,11 +6,21 @@ use App\Http\Controllers\CanonicalWorkspaceRouteController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\LoginReadController;
 use App\Http\Controllers\PlatformReadController;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Site;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
+use App\Models\User;
+use App\Tenancy\TenantContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class RouteApiProvenanceGapTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const CONTRACTS = [
         'AIMW-COMM-A16719E105' => ['canonical.site.comments', CanonicalWorkspaceRouteController::class],
         'AIMW-MEDI-8BADBE1261' => ['canonical.site.media', CanonicalWorkspaceRouteController::class],
@@ -54,5 +64,69 @@ class RouteApiProvenanceGapTest extends TestCase
         $this->assertNotContains('auth', $login->gatherMiddleware());
         $this->assertNotContains('tenant.context', $login->gatherMiddleware());
         $this->assertSame([], $login->parameterNames());
+    }
+
+    public function test_site_aliases_are_tenant_scoped_and_fail_closed_for_permission_and_foreign_ids(): void
+    {
+        $user = User::factory()->create();
+        $alpha = $this->tenantMembership($user, 'alpha', ['tenant.view', 'content.view']);
+        $beta = $this->tenantMembership($user, 'beta', ['tenant.view', 'content.view']);
+        $alphaSite = $this->site($alpha, 'Alpha Site');
+        $betaSite = $this->site($beta, 'Beta Site');
+        $this->withoutVite();
+
+        foreach ([
+            'comments' => '/module/comments',
+            'media' => '/module/media',
+            'taxonomy' => '/module/taxonomy',
+        ] as $suffix => $target) {
+            $this->actingAs($user)
+                ->get("/tenants/alpha/sites/{$alphaSite->id}/{$suffix}")
+                ->assertRedirect('/tenants/alpha'.$target);
+            $this->actingAs($user)
+                ->get("/tenants/alpha/sites/{$betaSite->id}/{$suffix}")
+                ->assertNotFound();
+        }
+
+        $limited = User::factory()->create();
+        $limitedMembership = $this->tenantMembership($limited, 'limited', ['tenant.view']);
+        $limitedSite = $this->site($limitedMembership, 'Limited Site');
+        $this->actingAs($limited)
+            ->get("/tenants/limited/sites/{$limitedSite->id}/comments")
+            ->assertForbidden();
+
+        $this->get("/tenants/alpha/sites/{$alphaSite->id}/comments")->assertRedirect('/login');
+    }
+
+    private function tenantMembership(User $user, string $slug, array $permissions): TenantMembership
+    {
+        $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
+
+        $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
+        $role = Role::query()->create(['name' => "route-api-provenance-{$slug}-{$user->id}"]);
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
+            $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
+        }
+        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $context->forget();
+
+        return $membership->fresh('tenant');
+    }
+
+    private function site(TenantMembership $membership, string $name): Site
+    {
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+        $site = Site::query()->create([
+            'name' => $name,
+            'url' => 'https://'.strtolower(str_replace(' ', '-', $name)).'.test',
+            'status' => 'active',
+        ]);
+        $context->forget();
+
+        return $site;
     }
 }
