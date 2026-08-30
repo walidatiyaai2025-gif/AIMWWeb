@@ -7,6 +7,7 @@ import { mutateThenReconcile } from './reconciliation';
 
 const OPERATION_ID = 'AIMW-BILL-337E4FF969';
 const REQUEST_OPERATION_ID = 'AIMW-SYNC-7C3B0E834E';
+const TOGGLE_VISIBLE_OPERATION_ID = 'AIMW-BILL-F8102254A8';
 const MAX_SITES = 100;
 
 type SiteRow = { id: number; name?: string; url?: string; status?: string };
@@ -27,7 +28,9 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
     });
 
     const sites = useMemo(() => Array.isArray(query.data) ? query.data : [], [query.data]);
+    const visibleIds = useMemo(() => sites.slice(0, MAX_SITES).map((site) => site.id), [sites]);
     const selectedIds = useMemo(() => Array.from(selected).filter((id) => sites.some((site) => site.id === id)).slice(0, MAX_SITES), [selected, sites]);
+    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
 
     const mutation = useMutation({
         mutationFn: async (ids: number[]) => mutateThenReconcile(
@@ -64,7 +67,22 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
         });
     };
 
-    const selectVisible = () => setSelected(new Set(sites.slice(0, MAX_SITES).map((site) => site.id)));
+    const toggleSelectAllVisible = () => {
+        if (mutation.isPending) return;
+        setSelected((current) => {
+            const next = new Set(current);
+            const clearVisible = visibleIds.length > 0 && visibleIds.every((id) => next.has(id));
+            if (clearVisible) {
+                visibleIds.forEach((id) => next.delete(id));
+                return next;
+            }
+            for (const id of visibleIds) {
+                if (next.size >= MAX_SITES) break;
+                next.add(id);
+            }
+            return next;
+        });
+    };
     const requestBulkDelete = () => setConfirmOpen(true);
 
     return (
@@ -84,7 +102,13 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
             {sites.length ? (
                 <>
                     <div className="toolbar-actions">
-                        <button type="button" className="btn" onClick={selectVisible} disabled={mutation.isPending}>{locale === 'ar' ? 'تحديد الظاهر' : 'Select visible'}</button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={TOGGLE_VISIBLE_OPERATION_ID}
+                            onClick={toggleSelectAllVisible}
+                            disabled={mutation.isPending}
+                        >{allVisibleSelected ? (locale === 'ar' ? 'إلغاء تحديد الظاهر' : 'Clear visible') : (locale === 'ar' ? 'تحديد الظاهر' : 'Select visible')}</button>
                         <button type="button" className="btn" onClick={() => setSelected(new Set())} disabled={mutation.isPending || selectedIds.length === 0}>{locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}</button>
                         <button
                             type="button"
