@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "base_composition_sha": "7326dec301d104be653f512aaec7ad061b569949",
+  "domain": "seo",
+  "previous_state": "PENDING",
+  "expected_legitimate_terminalization_count": 10,
+  "operations": [
+    {"operation_id":"AIMW-SEO-C48570747C","kind":"visible_control","source_control":"/module/execution","laravel_control":"Execution Center","chain":"link -> tenant-qualified canonical execution route -> guarded Laravel workspace -> user-visible execution center"},
+    {"operation_id":"AIMW-SEO-126222BD60","kind":"visible_control","source_control":"/sites","laravel_control":"Back to Sites","chain":"link -> tenant-qualified sites route -> guarded Laravel workspace -> user-visible sites state"},
+    {"operation_id":"AIMW-SEO-0B5FC34109","kind":"visible_control","source_control":"BackToExplorer","laravel_control":"Back to Explorer","chain":"link -> site-bound module/posts route -> CanonicalWorkspaceRouteController site binding -> real content workspace"},
+    {"operation_id":"AIMW-SEO-A4307E94C8","kind":"visible_control","source_control":"item.Link","laravel_control":"Open content ↗","chain":"persisted SeoFinding -> read-only presentation endpoint -> tenant-scoped SyncedContent canonical/permalink -> external navigation"},
+    {"operation_id":"AIMW-SEO-C7C22677CB","kind":"visible_control","source_control":"ApplyAllSafeAsync","laravel_control":"Apply all safe","chain":"button -> applyAllSafe -> POST prepareBulk -> SeoManagerService::prepareRemediation -> persisted Suggestion + PENDING Approval -> prepared/failed feedback + Approval Queue link"},
+    {"operation_id":"AIMW-SEO-4F3F2AC874","kind":"visible_control","source_control":"ApplySelectedAsync","laravel_control":"Apply selected","chain":"selection checkbox -> applySelected -> POST prepareBulk -> SeoManagerService::prepareRemediation -> persisted Suggestion + PENDING Approval -> prepared/failed feedback + authoritative refresh"},
+    {"operation_id":"AIMW-SEO-5F71B89C92","kind":"route","source_control":"/sites/{Id:guid}/seo","laravel_control":"/tenants/{tenant}/sites/{site}/seo","chain":"GET -> explicit canonical route -> tenant.context + tenant.view + seo.view -> tenant-scoped Site -> real React SEO manager"},
+    {"operation_id":"AIMW-SEO-9FE309C9AE","kind":"visible_control","source_control":"PreviousPage","laravel_control":"Previous","chain":"button -> previousPage -> page decrement + authoritative audits/findings GET -> real SeoAudit/SeoFinding -> visible page/reconciliation status"},
+    {"operation_id":"AIMW-SEO-250C53DAC5","kind":"visible_control","source_control":"ResetFiltersAsync","laravel_control":"Reset filters","chain":"button -> resetFilters -> default filters + authoritative audits/findings GET -> real SeoAudit/SeoFinding -> visible refreshed state"},
+    {"operation_id":"AIMW-SEO-4CBBC7AAD9","kind":"route","source_control":"/seo-workspace","laravel_control":"/tenants/{tenant}/seo-workspace","chain":"GET -> explicit canonical route -> tenant.context + tenant.view + seo.view -> server-rendered SEO hub -> real Audit/Suggestions/Approval destinations"}
+  ],
+  "truthfulness_boundary": {
+    "apply_controls": "Apply selected and Apply all safe prepare remediations only. Laravel creates persisted suggestions and PENDING approvals; the frontend explicitly states that WordPress is not mutated until explicit approval.",
+    "external_links": "External links come from tenant-scoped persisted SyncedContent. Valid seo_canonical is preferred; otherwise a site URL plus persisted slug is used. No demo URL is synthesized.",
+    "navigation": "Source absolute routes are adapted to tenant-qualified Laravel canonical routes and keep the active site context where required."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
+    "frontend_test": "backend/resources/js/__tests__/seo-visible-controls.test.tsx",
+    "frontend_entry": "backend/resources/js/seo-visible-controls.tsx",
+    "proofs": [
+      "all ten exact canonical identities are carried in production/evidence",
+      "manager and SEO workspace are explicit guarded routes rather than catchall-only destinations",
+      "all selected controls are real interactive links/buttons rather than decorative markers",
+      "Apply selected and Apply all safe POST the existing real Laravel SEO remediation bulk contract",
+      "bulk preparation preserves explicit approval and never reports a WordPress mutation",
+      "Previous and Reset reread authoritative Laravel SEO audit/finding state",
+      "external content links are derived by a tenant-scoped read-only Laravel endpoint",
+      "guest, missing-permission and foreign-tenant paths fail closed",
+      "frontend tests cover control markers, navigation, reset, pagination, bulk request body and visible feedback"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "unrelated_redesign": false,
+    "approval_bypass": false,
+    "fake_success": false
+  }
+}
