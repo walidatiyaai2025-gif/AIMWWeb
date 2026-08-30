@@ -89,14 +89,14 @@ function ApprovalQueueRoute({ context, route }: { context: FrontendContext; rout
     const { locale } = useLocale();
 
     return (
-        <div className="workspace-stack">
+        <div className="workspace-stack" data-canonical-operation="AIMW-APPR-31A36E339F">
             <section className="hero-panel" aria-label={locale === 'ar' ? 'روابط قائمة الموافقات' : 'Approval queue navigation'}>
                 <div>
                     <span className="workspace-kicker">CONTROLLED WORKFLOW</span>
                     <h2>{locale === 'ar' ? 'التنفيذ المحكوم' : 'Governed execution'}</h2>
                     <p>{locale === 'ar' ? 'انتقل إلى مركز التنفيذ لمراجعة المهام المعتمدة وحالتها الحقيقية.' : 'Open the Execution Center to review approved jobs and their real runtime state.'}</p>
                 </div>
-                <Link className="btn" to={approvalExecutionCenterHref(context)}>▶ {locale === 'ar' ? 'مركز التنفيذ' : 'Execution center'}</Link>
+                <Link className="btn" data-canonical-operation="AIMW-APPR-B360D1C8BA" to={approvalExecutionCenterHref(context)}>▶ {locale === 'ar' ? 'مركز التنفيذ' : 'Execution center'}</Link>
             </section>
             <WorkspacePage context={context} route={route} />
         </div>
