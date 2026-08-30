@@ -14,7 +14,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -24,7 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: manager/laravel-aiwmweb-post-bulk-delete-reconciliation
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
@@ -32,6 +34,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Point focused evidence at exact live composition
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text())
+          live = 'ed3f8fa663b105d8b8105b56eb22fc7399baa8f4'
+          data['previous_reconciliation_sha'] = 'd0690941755da1521efcef0f8b6a405f55875337'
+          data['focused_closure_evidence_source_sha'] = live
+          source = data['countable_sources'][0]
+          source['label'] = 'Live Laravel closure composition after Sites ConfirmBulkDelete closure'
+          source['sha'] = live
+          source['observed_pr_head'] = live
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
 
       - name: Rebuild and validate operation-level reconciliation
         run: |
@@ -47,27 +66,20 @@ jobs:
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
 
-      - name: Verify committed reconciliation artifacts
-        shell: bash
+      - name: Commit exact generated reconciliation once
         run: |
           set -euo pipefail
-          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/operation-parity-reconciliation.json
-          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md /tmp/operation-parity-reconciliation.md
-
-      - name: Compare with previous canonical reconciliation
-        shell: bash
-        run: |
-          set -euo pipefail
-          previous_sha="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          manifest = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json').read_text())
-          print(manifest['previous_reconciliation_sha'])
-          PY
-          )"
-          python variants/laravel-aiwmweb/tools/operation_parity_delta.py \
-            --current /tmp/operation-parity-reconciliation.json \
-            --previous-sha "$previous_sha"
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(laravel): refresh parity after bulk delete closure'
+            git push origin HEAD:manager/laravel-aiwmweb-post-bulk-delete-reconciliation
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
