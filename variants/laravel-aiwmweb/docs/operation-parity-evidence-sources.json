@@ -263,6 +263,7 @@
         "platform",
         "taxonomy"
       ],
+      "supporting_only": true,
       "route_api_provenance": {
         "AIMW-COMM-A16719E105": {
           "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",

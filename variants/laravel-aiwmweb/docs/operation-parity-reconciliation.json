@@ -311,7 +311,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:ExecuteAsync, alias:AiGenerationService, alias:AiCenterService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:ExecuteAsync, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -323,8 +323,8 @@
           "symbol:AIPlatformServices",
           "method:ExecuteAsync",
           "alias:AiGenerationService",
-          "alias:AiCenterService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -353,7 +353,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:Get, alias:AiGenerationService, alias:AiCenterService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, method:Get, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -365,8 +365,8 @@
           "symbol:AIPlatformServices",
           "method:Get",
           "alias:AiGenerationService",
-          "alias:AiCenterService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -395,7 +395,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiCenterService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -406,8 +406,8 @@
         "signals": [
           "symbol:AIPlatformServices",
           "alias:AiGenerationService",
-          "alias:AiCenterService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -436,7 +436,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-usage-route.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiCenterService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -447,8 +447,8 @@
         "signals": [
           "symbol:AIPlatformServices",
           "alias:AiGenerationService",
-          "alias:AiCenterService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -477,7 +477,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/action-contract.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiCenterService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -488,8 +488,8 @@
         "signals": [
           "symbol:AIPlatformServices",
           "alias:AiGenerationService",
-          "alias:AiCenterService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -518,7 +518,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiCenterService, alias:AiUsageService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:AIPlatformServices, alias:AiGenerationService, alias:AiUsageService, alias:AiCenterService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -529,8 +529,8 @@
         "signals": [
           "symbol:AIPlatformServices",
           "alias:AiGenerationService",
-          "alias:AiCenterService",
           "alias:AiUsageService",
+          "alias:AiCenterService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -590,7 +590,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -600,8 +600,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -630,7 +630,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -640,8 +640,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -670,7 +670,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -680,8 +680,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -710,7 +710,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -720,8 +720,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -750,7 +750,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -760,8 +760,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -790,7 +790,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderSecretStore, alias:ProviderConfigService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:ApplicationSettingsService, alias:ProviderConfigService, alias:ProviderSecretStore, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -800,8 +800,8 @@
         "score": 13,
         "signals": [
           "symbol:ApplicationSettingsService",
-          "alias:ProviderSecretStore",
           "alias:ProviderConfigService",
+          "alias:ProviderSecretStore",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -3659,7 +3659,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3668,8 +3668,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php",
         "score": 8,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -3859,7 +3859,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3868,8 +3868,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 11,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "verb:GET",
           "tenant:belongstotenant",
@@ -3900,7 +3900,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:Approval, alias:ExecutionCreator, route:approvals, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:ExecutionCreator, alias:Approval, route:approvals, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3909,8 +3909,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 11,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "verb:POST",
           "tenant:belongstotenant",
@@ -3941,7 +3941,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3950,8 +3950,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 11,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "verb:GET",
           "tenant:belongstotenant",
@@ -3982,7 +3982,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalQueueLoadTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, route:approve, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, route:approve, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -3991,8 +3991,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 15,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "route:approve",
           "tenant:belongstotenant",
@@ -4026,7 +4026,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/acceptance.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, route:audit, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, route:audit, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4035,8 +4035,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 16,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "route:audit",
           "verb:GET",
@@ -4109,7 +4109,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:Approval, alias:ExecutionCreator, route:approvals, route:reject, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; alias:ExecutionCreator, alias:Approval, route:approvals, route:reject, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4118,8 +4118,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
         "score": 15,
         "signals": [
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "route:approvals",
           "route:reject",
           "tenant:belongstotenant",
@@ -4150,7 +4150,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalQueueLoadTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Approve, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Approve, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4161,8 +4161,8 @@
         "signals": [
           "token:approval",
           "method:Approve",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -4194,7 +4194,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4204,8 +4204,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4234,7 +4234,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4244,8 +4244,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4274,7 +4274,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4284,8 +4284,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4314,7 +4314,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4324,8 +4324,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4354,7 +4354,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4364,8 +4364,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4394,7 +4394,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Reject, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; token:approval, method:Reject, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4405,8 +4405,8 @@
         "signals": [
           "token:approval",
           "method:Reject",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -4476,7 +4476,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:Approval, alias:ExecutionCreator, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCreator.php; token:approval, alias:ExecutionCreator, alias:Approval, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -4486,8 +4486,8 @@
         "score": 10,
         "signals": [
           "token:approval",
-          "alias:Approval",
           "alias:ExecutionCreator",
+          "alias:Approval",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5382,7 +5382,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, route:automations, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, route:automations, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5391,8 +5391,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 11,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "route:automations",
           "verb:GET",
           "tenant:belongstotenant",
@@ -5423,7 +5423,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AdminOperationsControlPlaneTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:DeleteAsync, alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:DeleteAsync, alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5433,8 +5433,8 @@
         "score": 11,
         "signals": [
           "method:DeleteAsync",
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -5466,7 +5466,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5475,8 +5475,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5505,7 +5505,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5514,8 +5514,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5544,7 +5544,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5553,8 +5553,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5583,7 +5583,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5592,8 +5592,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5622,7 +5622,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5631,8 +5631,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5661,7 +5661,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5670,8 +5670,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5700,7 +5700,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5709,8 +5709,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5739,7 +5739,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/main-layout-controls-closure.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:Delete, alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:Delete, alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5749,8 +5749,8 @@
         "score": 11,
         "signals": [
           "method:Delete",
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -5782,7 +5782,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5791,8 +5791,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5821,7 +5821,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5830,8 +5830,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5860,7 +5860,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5869,8 +5869,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -5899,7 +5899,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; method:Save, alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; method:Save, alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5909,8 +5909,8 @@
         "score": 11,
         "signals": [
           "method:Save",
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -5942,7 +5942,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:AdministrationService, alias:OperationsControlPlaneService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php; alias:OperationsControlPlaneService, alias:AdministrationService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -5951,8 +5951,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
         "score": 8,
         "signals": [
-          "alias:AdministrationService",
           "alias:OperationsControlPlaneService",
+          "alias:AdministrationService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7310,7 +7310,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlanAdminController, alias:SubscriptionStateMachine, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7320,9 +7320,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionService",
-          "alias:BillingPlanAdminController",
-          "alias:SubscriptionStateMachine",
           "alias:BillingPlan",
+          "alias:SubscriptionStateMachine",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7432,7 +7432,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:EntitlementService, alias:SubscriptionStateMachine, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingController, alias:EntitlementService, alias:SubscriptionStateMachine, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7442,9 +7442,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionService",
+          "alias:BillingController",
           "alias:EntitlementService",
           "alias:SubscriptionStateMachine",
-          "alias:BillingController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7473,7 +7473,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlanAdminController, alias:SubscriptionStateMachine, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7483,9 +7483,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionService",
-          "alias:BillingPlanAdminController",
-          "alias:SubscriptionStateMachine",
           "alias:BillingPlan",
+          "alias:SubscriptionStateMachine",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -7675,7 +7675,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:PayPalWebhookController, alias:SubscriptionService, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:SubscriptionService, alias:PayPalWebhookController, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7685,8 +7685,8 @@
         "score": 19,
         "signals": [
           "method:CreateAsync",
-          "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalWebhookController",
           "alias:SubscriptionStateMachine",
           "alias:PayPalProvider",
           "tenant:belongstotenant",
@@ -7877,7 +7877,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:PayPalWebhookController, alias:SubscriptionService, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:CreateAsync, alias:SubscriptionService, alias:PayPalWebhookController, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7887,8 +7887,8 @@
         "score": 19,
         "signals": [
           "method:CreateAsync",
-          "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalWebhookController",
           "alias:SubscriptionStateMachine",
           "alias:PayPalProvider",
           "tenant:belongstotenant",
@@ -7919,7 +7919,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:PayPalWebhookController, alias:SubscriptionService, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:PayPalWebhookController, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7928,8 +7928,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalWebhookController",
           "alias:SubscriptionStateMachine",
           "alias:PayPalProvider",
           "tenant:belongstotenant",
@@ -7960,7 +7960,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:PayPalWebhookController, alias:SubscriptionService, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:PayPalWebhookController, alias:SubscriptionStateMachine, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -7969,8 +7969,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:PayPalWebhookController",
           "alias:SubscriptionService",
+          "alias:PayPalWebhookController",
           "alias:SubscriptionStateMachine",
           "alias:PayPalProvider",
           "tenant:belongstotenant",
@@ -8043,7 +8043,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8053,8 +8053,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8083,7 +8083,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8093,8 +8093,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8123,7 +8123,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8133,8 +8133,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8163,7 +8163,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8173,8 +8173,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8203,7 +8203,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/routes/web.php; token:plan, method:RemoveAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/routes/web.php; token:plan, method:RemoveAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8214,8 +8214,8 @@
         "signals": [
           "token:plan",
           "method:RemoveAsync",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -8247,7 +8247,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; method:ResolveAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; method:ResolveAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8257,8 +8257,8 @@
         "score": 11,
         "signals": [
           "method:ResolveAsync",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8287,7 +8287,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; token:plan, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8297,8 +8297,8 @@
         "score": 10,
         "signals": [
           "token:plan",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8367,7 +8367,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlanAdminController, alias:SubscriptionStateMachine, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8377,9 +8377,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionService",
-          "alias:BillingPlanAdminController",
-          "alias:SubscriptionStateMachine",
           "alias:BillingPlan",
+          "alias:SubscriptionStateMachine",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8489,7 +8489,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlanAdminController, alias:SubscriptionStateMachine, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:BillingPlan, alias:SubscriptionStateMachine, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8499,9 +8499,9 @@
         "score": 16,
         "signals": [
           "alias:SubscriptionService",
-          "alias:BillingPlanAdminController",
-          "alias:SubscriptionStateMachine",
           "alias:BillingPlan",
+          "alias:SubscriptionStateMachine",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8771,7 +8771,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:SubscriptionService, alias:EntitlementService, alias:SubscriptionStateMachine, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, alias:SubscriptionStateMachine, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8782,9 +8782,9 @@
         "signals": [
           "method:ExecuteAsync",
           "alias:SubscriptionService",
+          "alias:BillingController",
           "alias:EntitlementService",
           "alias:SubscriptionStateMachine",
-          "alias:BillingController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -8813,7 +8813,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -8823,8 +8823,8 @@
         "score": 10,
         "signals": [
           "token:planner",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12155,7 +12155,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12164,8 +12164,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php",
         "score": 8,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12194,7 +12194,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php; alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12203,8 +12203,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingPlanAdminController.php",
         "score": 8,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12233,7 +12233,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:GET, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12242,8 +12242,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "route:planner",
           "verb:GET",
           "tenant:belongstotenant",
@@ -12274,7 +12274,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12283,8 +12283,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "route:planner",
           "verb:POST",
           "tenant:belongstotenant",
@@ -12315,7 +12315,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/security/tests/CrossDomainSecurityAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:PUT, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:PUT, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12324,8 +12324,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "route:planner",
           "verb:PUT",
           "tenant:belongstotenant",
@@ -12356,7 +12356,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12365,8 +12365,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "route:planner",
           "verb:POST",
           "tenant:belongstotenant",
@@ -12400,7 +12400,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12409,8 +12409,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 11,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "route:planner",
           "verb:POST",
           "tenant:belongstotenant",
@@ -12444,7 +12444,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/approvalQueue.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlanAdminController, alias:BillingPlan, route:planner, route:queue, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; alias:BillingPlan, alias:BillingPlanAdminController, route:planner, route:queue, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12453,8 +12453,8 @@
         "destination_path": "variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py",
         "score": 16,
         "signals": [
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "route:planner",
           "route:queue",
           "verb:POST",
@@ -12486,7 +12486,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12497,8 +12497,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12527,7 +12527,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, method:ChangePlanAsync, alias:SubscriptionService, alias:EntitlementService, alias:BillingPlan, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, method:ChangePlanAsync, alias:BillingController, alias:EntitlementService, alias:BillingPlan, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12538,10 +12538,10 @@
         "signals": [
           "token:billing",
           "method:ChangePlanAsync",
-          "alias:SubscriptionService",
+          "alias:BillingController",
           "alias:EntitlementService",
           "alias:BillingPlan",
-          "alias:BillingController",
+          "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12570,7 +12570,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:EntitlementService, alias:PayPalWebhookController, alias:BillingController, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingController, alias:EntitlementService, alias:PayPalProvider, alias:PayPalWebhookController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12579,11 +12579,11 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 20,
         "signals": [
-          "alias:SubscriptionService",
-          "alias:EntitlementService",
-          "alias:PayPalWebhookController",
           "alias:BillingController",
+          "alias:EntitlementService",
           "alias:PayPalProvider",
+          "alias:PayPalWebhookController",
+          "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12612,7 +12612,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12623,8 +12623,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12653,7 +12653,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12664,8 +12664,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12694,7 +12694,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:List, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:List, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12705,8 +12705,8 @@
         "signals": [
           "method:List",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12735,7 +12735,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12746,8 +12746,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12776,7 +12776,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12787,8 +12787,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12817,7 +12817,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12828,8 +12828,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12858,7 +12858,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12869,8 +12869,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12899,7 +12899,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12910,8 +12910,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12940,7 +12940,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SubscriptionService, alias:EntitlementService, alias:PayPalWebhookController, alias:BillingController, alias:PayPalProvider, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:BillingController, alias:EntitlementService, alias:PayPalProvider, alias:PayPalWebhookController, alias:SubscriptionService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12949,11 +12949,11 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 20,
         "signals": [
-          "alias:SubscriptionService",
-          "alias:EntitlementService",
-          "alias:PayPalWebhookController",
           "alias:BillingController",
+          "alias:EntitlementService",
           "alias:PayPalProvider",
+          "alias:PayPalWebhookController",
+          "alias:SubscriptionService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -12982,7 +12982,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -12993,8 +12993,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13023,7 +13023,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:EntitlementService, alias:BillingController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php; token:billing, alias:SubscriptionService, alias:BillingController, alias:EntitlementService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13034,8 +13034,8 @@
         "signals": [
           "token:billing",
           "alias:SubscriptionService",
-          "alias:EntitlementService",
           "alias:BillingController",
+          "alias:EntitlementService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13064,7 +13064,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:CreateAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:CreateAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13076,8 +13076,8 @@
           "token:content",
           "token:planner",
           "method:CreateAsync",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13188,7 +13188,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:Get, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:Get, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13200,8 +13200,8 @@
           "token:content",
           "token:planner",
           "method:Get",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13230,7 +13230,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13241,8 +13241,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13271,7 +13271,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13282,8 +13282,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13312,7 +13312,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13323,8 +13323,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13353,7 +13353,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13364,8 +13364,8 @@
         "signals": [
           "token:content",
           "token:planner",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13394,7 +13394,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:UpdateAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:content, token:planner, method:UpdateAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13406,8 +13406,8 @@
           "token:content",
           "token:planner",
           "method:UpdateAsync",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -13436,7 +13436,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-profile-link.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, method:ExecuteAsync, alias:BillingPlanAdminController, alias:BillingPlan, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/convergence/apply_mechanical_overlays.py; token:planner, method:ExecuteAsync, alias:BillingPlan, alias:BillingPlanAdminController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -13447,8 +13447,8 @@
         "signals": [
           "token:planner",
           "method:ExecuteAsync",
-          "alias:BillingPlanAdminController",
           "alias:BillingPlan",
+          "alias:BillingPlanAdminController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -18842,7 +18842,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; alias:ContentApiController, alias:ContentPlatformService, route:content, route:status, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; alias:ContentPlatformService, alias:ContentApiController, route:content, route:status, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18851,8 +18851,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
         "score": 16,
         "signals": [
-          "alias:ContentApiController",
           "alias:ContentPlatformService",
+          "alias:ContentApiController",
           "route:content",
           "route:status",
           "verb:POST",
@@ -18884,7 +18884,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiSecondPassCompositionTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; alias:ContentApiController, alias:ContentPlatformService, route:content, route:trash, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; alias:ContentPlatformService, alias:ContentApiController, route:content, route:trash, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -18893,8 +18893,8 @@
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
         "score": 16,
         "signals": [
-          "alias:ContentApiController",
           "alias:ContentPlatformService",
+          "alias:ContentApiController",
           "route:content",
           "route:trash",
           "verb:POST",
@@ -19050,7 +19050,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:background, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:background, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19060,8 +19060,8 @@
         "score": 11,
         "signals": [
           "method:background",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19090,7 +19090,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19100,8 +19100,8 @@
         "score": 11,
         "signals": [
           "method:ExecuteAsync",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19130,7 +19130,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19140,8 +19140,8 @@
         "score": 13,
         "signals": [
           "symbol:OperationalEmailAlertService",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19170,7 +19170,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:OperationalEmailAlertService, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19180,8 +19180,8 @@
         "score": 13,
         "signals": [
           "symbol:OperationalEmailAlertService",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -19210,7 +19210,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:ExecuteAsync, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -19220,8 +19220,8 @@
         "score": 11,
         "signals": [
           "method:ExecuteAsync",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -21756,7 +21756,7 @@
       "risk": "medium",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailDeliveryAcceptanceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SecurityAuditEmailAlertWorker, method:ExecuteAsync, alias:NotificationPlatformService, alias:DomainNotificationBridge, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SecurityAuditEmailAlertWorker, method:ExecuteAsync, alias:DomainNotificationBridge, alias:NotificationPlatformService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -21767,8 +21767,8 @@
         "signals": [
           "symbol:SecurityAuditEmailAlertWorker",
           "method:ExecuteAsync",
-          "alias:NotificationPlatformService",
           "alias:DomainNotificationBridge",
+          "alias:NotificationPlatformService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -22814,7 +22814,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiSecondPassCompositionTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; token:media, alias:ContentApiController, alias:ContentPlatformService, alias:MediaUploadJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; token:media, alias:ContentPlatformService, alias:MediaUploadJob, alias:ContentApiController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -22824,9 +22824,9 @@
         "score": 14,
         "signals": [
           "token:media",
-          "alias:ContentApiController",
           "alias:ContentPlatformService",
           "alias:MediaUploadJob",
+          "alias:ContentApiController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -22855,7 +22855,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiSecondPassCompositionTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; token:media, alias:ContentApiController, alias:ContentPlatformService, alias:MediaUploadJob, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php; token:media, alias:ContentPlatformService, alias:MediaUploadJob, alias:ContentApiController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize, auth:policy, auth:permission",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -22865,9 +22865,9 @@
         "score": 14,
         "signals": [
           "token:media",
-          "alias:ContentApiController",
           "alias:ContentPlatformService",
           "alias:MediaUploadJob",
+          "alias:ContentApiController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -23693,7 +23693,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23703,9 +23703,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23735,7 +23735,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23745,9 +23745,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23777,7 +23777,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23787,9 +23787,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -23819,7 +23819,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesCompatibilityTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; symbol:SeoAuditService, alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -23829,9 +23829,9 @@
         "score": 21,
         "signals": [
           "symbol:SeoAuditService",
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24171,7 +24171,7 @@
       "risk": "high",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, route:sites, route:run, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, route:sites, route:run, verb:POST, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24180,9 +24180,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 21,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "route:sites",
           "route:run",
@@ -24217,7 +24217,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24226,9 +24226,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24258,7 +24258,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24267,9 +24267,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24299,7 +24299,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24308,9 +24308,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24340,7 +24340,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24349,9 +24349,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24381,7 +24381,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24390,9 +24390,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24422,7 +24422,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:GenerateAsync, alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; method:GenerateAsync, alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24432,9 +24432,9 @@
         "score": 19,
         "signals": [
           "method:GenerateAsync",
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24464,7 +24464,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24473,9 +24473,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24505,7 +24505,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24514,9 +24514,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24546,7 +24546,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunController, alias:SeoRunService, alias:SeoAuditService, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/tools/reconcile_operation_parity.py; alias:SeoRunService, alias:SeoAuditService, alias:SeoRunController, alias:SitesSeoAuditController, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24555,9 +24555,9 @@
         "destination_path": "variants/laravel-aiwmweb/tools/reconcile_operation_parity.py",
         "score": 16,
         "signals": [
-          "alias:SeoRunController",
           "alias:SeoRunService",
           "alias:SeoAuditService",
+          "alias:SeoRunController",
           "alias:SitesSeoAuditController",
           "tenant:belongstotenant",
           "tenant:tenant_id",
@@ -24747,7 +24747,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24760,8 +24760,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -24793,7 +24793,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/logs-clear-filters-control.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24806,8 +24806,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24836,7 +24836,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Get, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Get, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24850,8 +24850,8 @@
           "token:site",
           "symbol:SiteOperationHistoryService",
           "method:Get",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24880,7 +24880,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/main-layout-controls-closure.test.tsx",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24893,8 +24893,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24923,7 +24923,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24936,8 +24936,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -24966,7 +24966,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -24979,8 +24979,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -25009,7 +25009,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -25022,8 +25022,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -25052,7 +25052,7 @@
       "risk": "critical",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDiagnosticsClosureTest.php",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext, auth:authorize",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -25065,8 +25065,8 @@
           "token:operation",
           "token:site",
           "symbol:SiteOperationHistoryService",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext",
@@ -25098,7 +25098,7 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-usage-route.test.ts",
-      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Record, alias:SiteDiagnosticsService, alias:PairingService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+      "evidence": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure@e26a7d9a254f7df980714b778491d0f864605087: variants/laravel-aiwmweb/backend/app/Sites/SiteDiagnosticsService.php; token:history, token:operation, token:site, symbol:SiteOperationHistoryService, method:Record, alias:PairingService, alias:SiteDiagnosticsService, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
@@ -25112,8 +25112,8 @@
           "token:site",
           "symbol:SiteOperationHistoryService",
           "method:Record",
-          "alias:SiteDiagnosticsService",
           "alias:PairingService",
+          "alias:SiteDiagnosticsService",
           "tenant:belongstotenant",
           "tenant:tenant_id",
           "tenant:tenantcontext"
@@ -33960,7 +33960,7 @@
           "platform",
           "taxonomy"
         ],
-        "supporting_only": false,
+        "supporting_only": true,
         "explicit_operation_evidence_ids": []
       }
     ]
