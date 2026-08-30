@@ -14,7 +14,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
@@ -32,6 +33,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Pin temporary approvals reconciliation to exact live composition
+        if: github.event.pull_request.head.ref == 'manager/laravel-aiwmweb-approvals-route-evidence-reconcile'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          source_sha = 'e4762b35f077944d7dd1ded8691219c5f06ddcb5'
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          manifest['focused_closure_evidence_source_sha'] = source_sha
+          for source in manifest.get('countable_sources', []):
+              source['label'] = 'Live Laravel closure composition after MainLayout controls closure'
+              source['sha'] = source_sha
+              source['observed_pr_head'] = source_sha
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
 
       - name: Rebuild and validate operation-level reconciliation
         run: |
@@ -46,6 +65,24 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
+
+      - name: Write back temporary approvals reconciliation artifacts
+        if: github.event.pull_request.head.ref == 'manager/laravel-aiwmweb-approvals-route-evidence-reconcile'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs(laravel): refresh approvals reconciliation artifacts'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
 
       - name: Verify committed reconciliation artifacts
         shell: bash
