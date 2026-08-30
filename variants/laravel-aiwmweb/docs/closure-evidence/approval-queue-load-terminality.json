@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "wave": "approval-queue-load-terminality",
+  "base": {
+    "pull_request": 294,
+    "branch": "worker/laravel-aiwmweb-setup-render-service-terminality",
+    "sha": "eb1cb4f8bdb86d690df12b1fc52e046280700c1c"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-APPR-31A36E339F",
+    "kind": "visible_control",
+    "domain": "approvals",
+    "route_screen": "/approvals",
+    "visible_control": "LoadAsync [LoadAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor"
+  },
+  "source_semantics": {
+    "initial_load": "OnInitializedAsync delegates to LoadAsync",
+    "refresh": "the visible Refresh button delegates to the same LoadAsync method",
+    "authoritative_reads": [
+      "ApprovalWorkflowService.GetItems for the current owner",
+      "ExecutionCenterService.GetJobs for execution state"
+    ],
+    "truthfulness": "an empty authoritative result renders as an empty queue; no demo approval rows are synthesized"
+  },
+  "laravel_adaptation": {
+    "controller": "App\\Http\\Controllers\\ApprovalQueueReadController::index",
+    "route_provider": "App\\Providers\\ApprovalQueueRouteServiceProvider",
+    "endpoint": "GET /api/tenants/{tenant}/approvals",
+    "middleware": ["web", "auth", "tenant.context"],
+    "authorization": "approvals.view",
+    "tenant_boundary": "Approval and Execution are DomainModel resources and remain constrained by the active TenantContext global scope",
+    "execution_state": "persisted executions are joined by approval_id for the approvals present on the current page",
+    "frontend_contract": "withApprovalQueueEndpoint publishes api.approvals into the effective FrontendContext without overriding a server-advertised endpoint; the existing ResourceContent useQuery path then owns initial load and Refresh",
+    "mutations_out_of_scope": ["approve", "reject", "execute", "rollback"]
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/ApprovalQueueLoadTerminalityTest.php",
+    "frontend_test": "backend/resources/js/__tests__/approvalQueue.test.ts",
+    "proofs": [
+      "canonical operation identity and route contract",
+      "authentication, tenant context and approvals.view enforcement",
+      "cross-tenant isolation",
+      "real persisted execution status",
+      "truthful empty queue",
+      "refresh/search read semantics",
+      "frontend pending_integration becomes enabled only when the approval endpoint is published",
+      "server-advertised approval endpoint remains authoritative"
+    ]
+  },
+  "implementation_snapshot_sha": "9c5a2f86fc8a9d79e4fe7499650103756b1acff6",
+  "generated_reconciliation_modified": false,
+  "scope": {
+    "allowed": "variants/laravel-aiwmweb/**",
+    "parallel_operations_modified": false,
+    "approval_mutations_modified": false,
+    "generated_reconciliation_modified": false
+  },
+  "ci": {
+    "implementation_snapshot": "full_pass",
+    "pr_plan_link": {
+      "run_id": 33215921460,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33215921499,
+      "conclusion": "success"
+    },
+    "acceptance": {
+      "run_id": 33215921902,
+      "conclusion": "success",
+      "jobs": {
+        "acceptance_gate": "success",
+        "tenant_core_sqlite": "success",
+        "mysql_production_like": "success",
+        "redis_queue_scheduler": "success",
+        "wordpress_real_rest_e2e": "success",
+        "wordpress_disposable_runtime": "success",
+        "frontend": "success",
+        "frontend_production_build": "success",
+        "runtime_artifacts": "success",
+        "compose_production_runtime": "success"
+      }
+    },
+    "notes": [
+      "The first candidate head failed Pint only because bootstrap provider imports were not ordered; the import-only fix was applied.",
+      "The next candidate reached the full PHP suite and exposed two acceptance-fixture issues: Laravel returned the controller action with a leading namespace separator and the fixture attempted a duplicate tenant site URL. Both tests were corrected without changing runtime behavior.",
+      "The implementation snapshot then passed the complete exact-head workflow set, including production Docker Compose build and real runtime smoke."
+    ]
+  }
+}

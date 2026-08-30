@@ -19,6 +19,12 @@ class AboutBuildRouteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_canonical_reconciliation_row_is_the_pending_about_build_route(): void
     {
         $row = $this->canonicalRow('AIMW-CONT-81B4B20D2D');
