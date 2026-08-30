@@ -94,6 +94,7 @@
     "evidence_file_does_not_embed_mutable_run_ids": true
   },
   "terminality": {
+    "state": "ADAPTED",
     "candidate_state": "ADAPTED",
     "basis": "Real source-equivalent navigation is bound to the canonical operation and reaches only the existing guarded tenant Logs authority when tenant selection is unambiguous and authorized. Final VERIFIED_TASK_COMPLETE additionally requires exact-head CI success."
   }
