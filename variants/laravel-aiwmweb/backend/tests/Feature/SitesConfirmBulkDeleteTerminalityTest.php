@@ -3,10 +3,15 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SiteManagementController;
+use App\Models\Approval;
 use App\Models\Execution;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SeoAudit;
+use App\Models\SeoFinding;
 use App\Models\Site;
+use App\Models\Suggestion;
+use App\Models\SyncedContent;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
@@ -92,11 +97,13 @@ class SitesConfirmBulkDeleteTerminalityTest extends TestCase
 
         $context = app(TenantContext::class);
         $context->activate($membership->tenant, $membership);
+        $approval = $this->approvalForSite($second, $user);
         Execution::query()->create([
             'operation_id' => fake()->uuid(),
             'request_id' => fake()->uuid(),
             'correlation_id' => fake()->uuid(),
             'site_id' => $second->id,
+            'approval_id' => $approval->id,
             'actor_user_id' => $user->id,
             'status' => 'running',
         ]);
@@ -138,6 +145,46 @@ class SitesConfirmBulkDeleteTerminalityTest extends TestCase
             ->deleteJson('/api/tenants/limit/sites', ['ids' => range(1, 101)])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('ids');
+    }
+
+    private function approvalForSite(Site $site, User $user): Approval
+    {
+        $content = SyncedContent::query()->create([
+            'site_id' => $site->id,
+            'resource_type' => 'post',
+            'remote_id' => 1,
+            'slug' => 'bulk-delete-active-execution-fixture',
+        ]);
+        $audit = SeoAudit::query()->create([
+            'site_id' => $site->id,
+            'actor_user_id' => $user->id,
+            'status' => 'completed',
+        ]);
+        $finding = SeoFinding::query()->create([
+            'seo_audit_id' => $audit->id,
+            'synced_content_id' => $content->id,
+            'code' => 'bulk_delete_active_execution_fixture',
+            'severity' => 'high',
+            'recommendation' => 'Keep the execution active for the bulk-delete conflict test.',
+            'status' => 'open',
+        ]);
+        $suggestion = Suggestion::query()->create([
+            'site_id' => $site->id,
+            'seo_finding_id' => $finding->id,
+            'synced_content_id' => $content->id,
+            'actor_user_id' => $user->id,
+            'status' => 'approved',
+            'before_state' => ['title' => 'before'],
+            'proposed_state' => ['title' => 'after'],
+        ]);
+
+        return Approval::query()->create([
+            'suggestion_id' => $suggestion->id,
+            'actor_user_id' => $user->id,
+            'status' => 'APPROVED',
+            'before_state' => ['title' => 'before'],
+            'proposed_state' => ['title' => 'after'],
+        ]);
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
