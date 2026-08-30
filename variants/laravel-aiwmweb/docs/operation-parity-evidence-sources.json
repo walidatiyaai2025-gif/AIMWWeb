@@ -2,12 +2,13 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+  "previous_reconciliation_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+  "focused_closure_evidence_source_sha": "0060add81df08a54de07d5a2c1cebe48058cdc41",
   "countable_sources": [
     {
-      "label": "Composed closure rehearsal implementation",
-      "sha": "d289f546484aba12f8c2aa2837da3f4bd6da52ad",
-      "observed_pr_head": "d289f546484aba12f8c2aa2837da3f4bd6da52ad",
+      "label": "Live Laravel closure composition after Action Contract integration",
+      "sha": "0060add81df08a54de07d5a2c1cebe48058cdc41",
+      "observed_pr_head": "0060add81df08a54de07d5a2c1cebe48058cdc41",
       "domains": [
         "ai",
         "approvals",
@@ -27,16 +28,6 @@
         "sites",
         "sync",
         "taxonomy"
-      ]
-    },
-    {
-      "label": "PR #284 route/API terminality",
-      "sha": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
-      "observed_pr_head": "826da069737793de9d2aea9ec8daf2c60f1c7d21",
-      "domains": [
-        "backup",
-        "content",
-        "email"
       ],
       "operation_evidence": {
         "AIMW-CONT-D828690844": {
@@ -104,31 +95,28 @@
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-FB7F9189C0": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountProfileRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-profile-route-terminality.json"
+        },
+        "AIMW-AI-1E33F01F4E": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AiPromptTemplatesRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiPromptTemplatesReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplatesRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-prompt-templates-route-terminality.json"
+        },
+        "AIMW-AI-1E1BF9CEDC": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiUsageRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-usage-route-terminality.json"
         }
       }
     }
   ],
-  "excluded_sources": [
-    {
-      "label": "PR #268 email integration handoff",
-      "sha": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
-      "reason": "Handoff only; explicitly superseded by the Email implementation already integrated in PR #277 via PR #276."
-    },
-    {
-      "label": "PR #285 action discovery contract",
-      "sha": "cea89181af0c21143454ce8aad420d214eb7947b",
-      "reason": "Current exact head is pushed and green, but it overlaps PR #278 frontend reconciliation architecture and PR #284 routes/web.php. This focused PR #284 refresh does not make a semantic architecture choice between those implementations; PR #285 therefore receives no parity credit here."
-    },
-    {
-      "label": "worker/laravel-aiwmweb-content-sync-final-closure",
-      "reason": "No pushed branch exists; unpushed work is not countable."
-    }
-  ],
-  "known_composition_blockers": [
-    {
-      "source": "PR #285",
-      "classification": "SEMANTIC_OVERLAP_REQUIRES_SEPARATE_INTEGRATION_DECISION",
-      "detail": "Exact live head cea89181af0c21143454ce8aad420d214eb7947b is green, but overlaps the already composed PR #278 frontend reconciliation architecture and PR #284 route file; excluded rather than resolving a product architecture decision inside this rehearsal refresh."
-    }
-  ]
+  "excluded_sources": [],
+  "known_composition_blockers": []
 }
