@@ -8,6 +8,7 @@ import { mutateThenReconcile } from './reconciliation';
 const OPERATION_ID = 'AIMW-BILL-337E4FF969';
 const REQUEST_OPERATION_ID = 'AIMW-SYNC-7C3B0E834E';
 const TOGGLE_VISIBLE_OPERATION_ID = 'AIMW-BILL-F8102254A8';
+const RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const MAX_SITES = 100;
 
 type SiteRow = { id: number; name?: string; url?: string; status?: string };
@@ -102,6 +103,13 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
             {sites.length ? (
                 <>
                     <div className="toolbar-actions">
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={RELOAD_OPERATION_ID}
+                            onClick={() => void query.refetch()}
+                            disabled={mutation.isPending || query.isFetching}
+                        >{query.isFetching ? (locale === 'ar' ? 'جارٍ التحديث…' : 'Refreshing…') : (locale === 'ar' ? 'تحديث' : 'Refresh')}</button>
                         <button
                             type="button"
                             className="btn"
