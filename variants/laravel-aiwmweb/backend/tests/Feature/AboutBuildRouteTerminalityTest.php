@@ -25,7 +25,7 @@ class AboutBuildRouteTerminalityTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_canonical_reconciliation_row_is_the_pending_about_build_route(): void
+    public function test_canonical_reconciliation_row_is_the_adapted_about_build_route(): void
     {
         $row = $this->canonicalRow('AIMW-CONT-81B4B20D2D');
 
@@ -37,10 +37,10 @@ class AboutBuildRouteTerminalityTest extends TestCase
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
     }
 
-    public function test_canonical_reconciliation_row_is_the_distinct_pending_release_notes_route(): void
+    public function test_canonical_reconciliation_row_is_the_distinct_adapted_release_notes_route(): void
     {
         $row = $this->canonicalRow('AIMW-CONT-110268CC96');
 
@@ -53,7 +53,7 @@ class AboutBuildRouteTerminalityTest extends TestCase
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
     }
 
