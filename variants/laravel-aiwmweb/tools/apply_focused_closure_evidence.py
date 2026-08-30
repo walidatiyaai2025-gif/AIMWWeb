@@ -175,9 +175,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
             (file for file in snapshot.tests if op_id in file.text),
             key=lambda file: file.path,
         )
-        if not markers:
-            continue
-        if not tests:
+        if not markers or not tests:
             continue
 
         security_ok, security_signals = security_contract(row, tests)
@@ -268,6 +266,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--summary-output", type=Path)
     parser.add_argument("--markdown-output", type=Path, required=True)
     parser.add_argument("--check-total", type=int, default=931)
     args = parser.parse_args()
@@ -281,6 +280,10 @@ def main() -> int:
 
     applied = apply(payload, manifest)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if args.summary_output:
+        compact = {key: value for key, value in payload.items() if key != "operations"}
+        args.summary_output.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
     markdown = finalize.render_markdown(payload)
     explicit = len(payload.get("validation", {}).get("explicit_route_contract_terminals", []))
     focused = len(applied)
