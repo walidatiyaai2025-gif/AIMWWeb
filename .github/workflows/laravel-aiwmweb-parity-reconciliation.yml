@@ -20,7 +20,7 @@ jobs:
   reconcile:
     runs-on: ubuntu-latest
     env:
-      PYTHONHASHSEED: 0
+      PYTHONHASHSEED: '0'
     steps:
       - uses: actions/checkout@v4
         with:
