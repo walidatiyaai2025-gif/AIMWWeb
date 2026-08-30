@@ -3,9 +3,9 @@
 use App\Authorization\TenantAuthorizer;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
+use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
-use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
