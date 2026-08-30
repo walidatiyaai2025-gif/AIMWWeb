@@ -1,0 +1,31 @@
+{
+  "operation_id": "AIMW-AI-0F3763FDB4",
+  "kind": "service",
+  "domain": "ai",
+  "route_screen": "service:SiteBrainService",
+  "visible_control": "GetAsync",
+  "current_source": "src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs",
+  "service": "SiteBrainService",
+  "persistence": "current AIMWWeb read model / authoritative external state",
+  "background_job": "",
+  "mutation": false,
+  "external_dependency": "ai_provider and/or WordPress",
+  "approval": false,
+  "verification": "rendered/read response matches authoritative source",
+  "laravel_destination": "",
+  "native_wp_rest": false,
+  "connector_required": false,
+  "connector_scope": "",
+  "tenant_owned": true,
+  "risk": "low",
+  "migration_state": "PENDING",
+  "acceptance_test": "",
+  "evidence": "",
+  "reconciliation": {
+    "decision": "PENDING",
+    "reason": "No operation-specific destination met evidence threshold (5 < 6).",
+    "source_label": null,
+    "source_sha": null,
+    "destination_path": null
+  }
+}
