@@ -5,6 +5,7 @@ import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const CURRENT_USER_SITE_DETAILS_OPERATION_ID = 'AIMW-SITE-D7DF8247B4';
+export const CURRENT_USER_SITE_SETTINGS_OPERATION_ID = 'AIMW-SITE-9F9F2977B5';
 
 type ActiveSite = {
     id: number;
@@ -25,7 +26,7 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
     }, []);
 
     const activeSite = (context as ContextWithActiveSite).active_site;
-    const canRenderDetails = Boolean(
+    const canRenderSiteActions = Boolean(
         target
         && activeSite
         && Number.isSafeInteger(activeSite.id)
@@ -34,7 +35,7 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
         && context.api[`sites.detail.${activeSite.id}`] === `/api/tenants/${context.tenant.slug}/sites/${activeSite.id}`,
     );
 
-    const details = canRenderDetails && target && activeSite
+    const details = canRenderSiteActions && target && activeSite
         ? createPortal(
             <a
                 href={tenantUrl(context.tenant.slug, `/sites/${activeSite.id}`)}
@@ -50,10 +51,26 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
         )
         : null;
 
+    const settings = canRenderSiteActions && target && activeSite
+        ? createPortal(
+            <a
+                href={tenantUrl(context.tenant.slug, `/sites/${activeSite.id}/settings`)}
+                className="current-user-site-settings-link"
+                data-canonical-operation={CURRENT_USER_SITE_SETTINGS_OPERATION_ID}
+                aria-label={locale === 'ar' ? `فتح إعدادات الموقع ${activeSite.name}` : `Open ${activeSite.name} site settings`}
+            >
+                <span aria-hidden="true">⚙</span>
+                <span>{locale === 'ar' ? 'الإعدادات' : 'Settings'}</span>
+            </a>,
+            target,
+        )
+        : null;
+
     return (
         <>
             <CurrentUserConnectSiteControl context={context} />
             {details}
+            {settings}
         </>
     );
 }
