@@ -23,36 +23,22 @@ jobs:
           from pathlib import Path
           src = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
           payload = json.loads(src.read_text(encoding='utf-8'))
-          rows = []
-          for row in payload.get('operations', []):
-              if row.get('migration_state') != 'PENDING':
-                  continue
-              rows.append({
-                  'operation_id': row.get('operation_id'),
-                  'domain': row.get('domain'),
-                  'kind': row.get('kind'),
-                  'source_file': row.get('source_file'),
-                  'source_route': row.get('source_route'),
-                  'source_control': row.get('source_control'),
-                  'http_method': row.get('http_method'),
-                  'mutation': row.get('mutation'),
-                  'tenant_owned': row.get('tenant_owned'),
-                  'risk': row.get('risk'),
-                  'verification': row.get('verification'),
-              })
+          rows = [row for row in payload.get('operations', []) if row.get('migration_state') == 'PENDING']
           Path('/tmp/pending-closure-candidates.json').write_text(json.dumps(rows, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
           from collections import Counter
           summary = {
               'total': len(rows),
-              'by_kind': dict(Counter(str(r['kind']) for r in rows)),
-              'by_domain': dict(Counter(str(r['domain']) for r in rows)),
+              'by_kind': dict(Counter(str(r.get('kind')) for r in rows)),
+              'by_domain': dict(Counter(str(r.get('domain')) for r in rows)),
+              'row_keys': sorted({k for r in rows for k in r.keys()}),
           }
           Path('/tmp/pending-closure-summary.json').write_text(json.dumps(summary, indent=2)+'\n', encoding='utf-8')
           print(json.dumps(summary, sort_keys=True))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: pending-closure-inventory-424
+          name: pending-closure-inventory-424-full
           path: |
             /tmp/pending-closure-candidates.json
             /tmp/pending-closure-summary.json
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
