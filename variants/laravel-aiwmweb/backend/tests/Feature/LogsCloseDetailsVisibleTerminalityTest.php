@@ -25,7 +25,7 @@ final class LogsCloseDetailsVisibleTerminalityTest extends TestCase
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
 
-        $source = file_get_contents(base_path('../../src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor'));
+        $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor'));
         $frontend = file_get_contents(resource_path('js/logs-close-details-control.tsx'));
         $this->assertStringContainsString('private void CloseDetails() => _selectedLine = null;', $source);
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
