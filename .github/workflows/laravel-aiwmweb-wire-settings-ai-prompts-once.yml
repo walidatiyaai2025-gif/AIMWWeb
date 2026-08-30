@@ -1,0 +1,74 @@
+name: Laravel AIWMWeb Wire Settings AI Prompts Once
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/laravel-aiwmweb-wire-settings-ai-prompts-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Wire existing prompt authorities and Settings control
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          app = Path('variants/laravel-aiwmweb/backend/resources/js/app.tsx')
+          text = app.read_text(encoding='utf-8')
+          import_anchor = "import { SiteDetailsBackControl } from './site-details-back-control';"
+          new_import = "import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';\n"
+          if new_import.strip() not in text:
+              if import_anchor not in text:
+                  raise SystemExit('app.tsx import anchor missing')
+              text = text.replace(import_anchor, new_import + import_anchor, 1)
+          route_anchor = "    if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;"
+          settings_line = "    if (route.key === 'settings') return <><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;\n"
+          if settings_line.strip() not in text:
+              if route_anchor not in text:
+                  raise SystemExit('app.tsx route anchor missing')
+              text = text.replace(route_anchor, settings_line + route_anchor, 1)
+          app.write_text(text, encoding='utf-8')
+
+          web = Path('variants/laravel-aiwmweb/backend/routes/web.php')
+          text = web.read_text(encoding='utf-8')
+          import_anchor = 'use App\\Http\\Controllers\\AdminOperationsController;'
+          imports = 'use App\\Http\\Controllers\\AiPromptTemplateSaveController;\nuse App\\Http\\Controllers\\AiPromptTemplatesReadController;\n'
+          if 'use App\\Http\\Controllers\\AiPromptTemplatesReadController;' not in text:
+              if import_anchor not in text:
+                  raise SystemExit('web.php import anchor missing')
+              text = text.replace(import_anchor, imports + import_anchor, 1)
+          group_anchor = "Route::middleware(['auth', 'tenant.context'])->group(function (): void {\n"
+          routes = (
+              "    Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)\n"
+              "        ->name('tenant.settings.ai-prompts');\n"
+              "    Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)\n"
+              "        ->name('tenant.settings.ai-prompts.save');\n\n"
+          )
+          if "->name('tenant.settings.ai-prompts');" not in text:
+              if group_anchor not in text:
+                  raise SystemExit('web.php tenant group anchor missing')
+              text = text.replace(group_anchor, group_anchor + routes, 1)
+          web.write_text(text, encoding='utf-8')
+          PY
+
+          rm .github/workflows/laravel-aiwmweb-wire-settings-ai-prompts-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/resources/js/app.tsx \
+                  variants/laravel-aiwmweb/backend/routes/web.php \
+                  .github/workflows/laravel-aiwmweb-wire-settings-ai-prompts-once.yml
+          git commit -m 'feat(laravel): wire Settings AI prompt templates destination'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
