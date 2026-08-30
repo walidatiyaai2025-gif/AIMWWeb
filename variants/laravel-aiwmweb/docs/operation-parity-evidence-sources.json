@@ -205,10 +205,30 @@
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
         }
       }
+    },
+    {
+      "label": "Canonical reports route closure",
+      "sha": "fb068134c2ad60111bd376f4f400c1bd247394ca",
+      "observed_pr_head": "fb068134c2ad60111bd376f4f400c1bd247394ca",
+      "domains": [
+        "content"
+      ],
+      "operation_evidence": {
+        "AIMW-CONT-5D18F49928": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-8140D785B5": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        }
+      }
     }
   ],
   "excluded_sources": [],
-  "known_composition_blockers": [
-    "AIMW-CONT-5D18F49928 and AIMW-CONT-8140D785B5 remain PENDING because the live named reports routes are owned by ApprovalsReportExportRouteServiceProvider/ApprovalsReportExportController and do not satisfy the current explicit CanonicalWorkspace route verifier contract."
-  ]
+  "known_composition_blockers": []
 }
