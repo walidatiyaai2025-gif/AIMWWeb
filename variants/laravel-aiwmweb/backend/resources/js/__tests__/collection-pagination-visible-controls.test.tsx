@@ -33,22 +33,25 @@ afterEach(() => vi.unstubAllGlobals());
 describe(`${COMMENT_LOAD} ${COMMENT_PREVIOUS} ${COMMENT_REFRESH}`, () => {
     it('marks refresh/load and previous on their real tenant collection controls', async () => {
         const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 1, name: 'Page one' }], current_page: 1, last_page: 3 }), { status: 200, headers: { 'content-type': 'application/json' } }))
             .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 2, name: 'Page two' }], current_page: 2, last_page: 3 }), { status: 200, headers: { 'content-type': 'application/json' } }))
             .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 1, name: 'Page one' }], current_page: 1, last_page: 3 }), { status: 200, headers: { 'content-type': 'application/json' } }))
             .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 3, name: 'Refreshed' }], current_page: 1, last_page: 3 }), { status: 200, headers: { 'content-type': 'application/json' } }));
         vi.stubGlobal('fetch', fetchMock);
         renderComments();
 
-        expect(await screen.findByText('Page two')).toBeInTheDocument();
+        expect(await screen.findByText('Page one')).toBeInTheDocument();
         const refresh = screen.getByRole('button', { name: 'Refresh' });
         expect(refresh).toHaveAttribute('data-canonical-load-operation', COMMENT_LOAD);
         expect(refresh).toHaveAttribute('data-canonical-refresh-operation', COMMENT_REFRESH);
         const previous = screen.getByRole('button', { name: 'Previous' });
         expect(previous).toHaveAttribute('data-canonical-operation', COMMENT_PREVIOUS);
 
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByText('Page two')).toBeInTheDocument();
         fireEvent.click(previous);
         expect(await screen.findByText('Page one')).toBeInTheDocument();
-        await waitFor(() => expect(fetchMock.mock.calls[1][0]).toBe('/api/tenants/alpha/comments?page=1'));
+        await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/tenants/alpha/comments?page=1'));
         fireEvent.click(refresh);
         expect(await screen.findByText('Refreshed')).toBeInTheDocument();
         expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
