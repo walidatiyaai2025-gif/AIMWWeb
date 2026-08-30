@@ -21,13 +21,13 @@ class CurrentUserSiteSettingsVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-SITE-9F9F2977B5';
 
-    public function test_exact_canonical_operation_is_the_pending_current_user_site_settings_link(): void
+    public function test_exact_canonical_operation_is_the_terminal_current_user_site_settings_link(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('sites', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('component:CurrentUserChip', $operation['route_screen']);
