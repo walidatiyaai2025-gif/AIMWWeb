@@ -19,6 +19,8 @@ final class ApprovalsReportExportRouteServiceProvider extends ServiceProvider
                     ->name('tenant.module-reports');
                 Route::get('/reports/approvals.csv', [ApprovalsReportExportController::class, 'download'])
                     ->name('tenant.reports.approvals-download');
+                Route::get('/reports/sites.csv', [ApprovalsReportExportController::class, 'downloadSites'])
+                    ->name('tenant.reports.sites-download');
             });
     }
 }

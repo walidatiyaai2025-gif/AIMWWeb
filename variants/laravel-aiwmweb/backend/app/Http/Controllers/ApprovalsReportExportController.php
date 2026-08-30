@@ -20,11 +20,14 @@ final class ApprovalsReportExportController extends Controller
         $this->assertTenant($tenant, $context);
 
         $rows = $this->rows($context);
+        $siteRows = $this->siteRows($context);
 
         return view('reports.approvals-export', [
             'rows' => $rows,
+            'siteRows' => $siteRows,
             'canExport' => $context->membership()->hasPermission('reports.manage'),
             'downloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/approvals.csv',
+            'sitesDownloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/sites.csv',
         ]);
     }
 
@@ -49,6 +52,29 @@ final class ApprovalsReportExportController extends Controller
 
             fclose($stream);
         }, 'approvals-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function downloadSites(
+        string $tenant,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+    ): StreamedResponse {
+        $authorizer->authorize('reports.manage');
+        $this->assertTenant($tenant, $context);
+
+        $rows = $this->siteRows($context);
+
+        return response()->streamDownload(function () use ($rows): void {
+            $stream = fopen('php://output', 'wb');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, ['Name', 'Url', 'Status']);
+
+            foreach ($rows as $row) {
+                fputcsv($stream, [$row['name'], $row['url'], $row['status']]);
+            }
+
+            fclose($stream);
+        }, 'sites-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     private function rows(TenantContext $context): Collection
@@ -81,6 +107,19 @@ final class ApprovalsReportExportController extends Controller
                     : 'Approval #'.$row->id,
                 'site' => (string) $row->site_name,
                 'status' => (string) $row->status,
+            ]);
+    }
+
+    private function siteRows(TenantContext $context): Collection
+    {
+        return DB::table('sites')
+            ->where('tenant_id', $context->id())
+            ->orderBy('id')
+            ->get(['name', 'url', 'connection_status'])
+            ->map(fn ($row): array => [
+                'name' => (string) $row->name,
+                'url' => (string) $row->url,
+                'status' => (string) ($row->connection_status ?? 'unknown'),
             ]);
     }
 
