@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Apply strict exact-SHA route/API provenance that the generic matcher cannot infer.
 
-This verifier is intentionally narrow. It only consumes manifest entries under
-`route_api_provenance` from pushed exact-SHA snapshots, and requires a real
-route declaration, declared action, operation-linked test, behavior acceptance
-and operation-linked closure evidence. It does not infer parity from broad
-controller or domain presence.
+This verifier is intentionally narrow. It only consumes explicit manifest entries
+under `route_api_provenance` from pushed exact-SHA snapshots. It never participates
+in generic source inference, and requires a real route declaration, declared action,
+operation-linked test, behavior acceptance, and operation-linked closure evidence.
 """
 from __future__ import annotations
 
