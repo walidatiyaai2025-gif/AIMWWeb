@@ -3,6 +3,8 @@
 use App\Authorization\TenantAuthorizer;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
+use App\Http\Controllers\AiPromptTemplateSaveController;
+use App\Http\Controllers\AiPromptTemplatesReadController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
@@ -103,6 +105,11 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
+    Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
+        ->name('tenant.settings.ai-prompts');
+    Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
+        ->name('tenant.settings.ai-prompts.save');
+
     Route::get('/tenants/{tenant}/context', function (ActionContractRegistry $actionRegistry) {
         $context = app(TenantContext::class);
         app(TenantAuthorizer::class)->authorize('tenant.view');
