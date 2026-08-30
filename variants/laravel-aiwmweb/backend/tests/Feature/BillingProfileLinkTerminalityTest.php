@@ -31,7 +31,7 @@ class BillingProfileLinkTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('billing', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/account/billing', $operation['route_screen']);
