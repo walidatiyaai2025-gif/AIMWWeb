@@ -2,11 +2,11 @@ name: Laravel AIWMWeb Convergence Preflight
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - lead/laravel-aiwmweb-final-convergence
     paths:
-      - 'variants/laravel-aiwmweb/tools/convergence/**'
-      - 'variants/laravel-aiwmweb/tools/convergence_preflight.py'
-      - 'variants/laravel-aiwmweb/docs/CONVERGENCE_PREFLIGHT.md'
+      - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb-convergence-preflight.yml'
   workflow_dispatch:
 
@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Compose pinned worker heads without touching main
+      - name: Reconstruct pinned worker heads without replacing exact candidate
         shell: bash
         run: bash variants/laravel-aiwmweb/tools/convergence/convergence-compose.sh
 
@@ -50,21 +50,13 @@ jobs:
         working-directory: variants/laravel-aiwmweb/backend
         run: composer install --no-interaction --prefer-dist
 
-      - name: Regenerate deterministic frontend lock for composed package contract
+      - name: Deterministic frontend install from committed lock
         working-directory: variants/laravel-aiwmweb/backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          npm ci --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
-      - name: Mechanical PHP formatting normalization, then strict Pint gate
+      - name: Strict Pint gate
         working-directory: variants/laravel-aiwmweb/backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          vendor/bin/pint
-          vendor/bin/pint --test
+        run: vendor/bin/pint --test
 
       - name: SQLite migrate fresh
         working-directory: variants/laravel-aiwmweb/backend
@@ -120,7 +112,7 @@ jobs:
             --json-out /tmp/laravel-aiwmweb-convergence-report.json \
             --require-composed
 
-      - name: PHPUnit full composed suite
+      - name: PHPUnit full exact-candidate suite
         working-directory: variants/laravel-aiwmweb/backend
         run: php artisan test
 
@@ -130,7 +122,7 @@ jobs:
         run: |
           set -euo pipefail
           npm run typecheck
-          npm test
+          npm test -- --run
           npm run build
 
       - name: Capture preflight evidence
@@ -142,8 +134,12 @@ jobs:
           cp "${RUNNER_TEMP}/laravel-aiwmweb-convergence-preflight/merge-log.txt" preflight-artifacts/merge-log.txt || true
           cp /tmp/laravel-aiwmweb-convergence-report.json preflight-artifacts/report.json || true
           cp /tmp/laravel-aiwmweb-routes.json preflight-artifacts/routes.json || true
-          git status --short > preflight-artifacts/composed-status.txt || true
-          git diff --stat > preflight-artifacts/mechanical-diff-stat.txt || true
+          git status --short > preflight-artifacts/candidate-status.txt || true
+          git diff --stat > preflight-artifacts/candidate-diff-stat.txt || true
+          if [[ -d "${RUNNER_TEMP}/laravel-aiwmweb-convergence-tree" ]]; then
+            git -C "${RUNNER_TEMP}/laravel-aiwmweb-convergence-tree" status --short > preflight-artifacts/reconstruction-status.txt || true
+            git -C "${RUNNER_TEMP}/laravel-aiwmweb-convergence-tree" diff --stat > preflight-artifacts/reconstruction-diff-stat.txt || true
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()

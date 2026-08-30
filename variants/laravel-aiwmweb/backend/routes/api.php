@@ -4,6 +4,7 @@ use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\PlatformReadController;
+use App\Http\Controllers\SeoRemediationClosureController;
 use App\Http\Controllers\SyncApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,6 +61,14 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('transfers/import', [ContentApiController::class, 'import']);
     Route::get('transfers/{transfer}', [ContentApiController::class, 'transfer']);
 });
+
+Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
+    ->middleware(['web', 'auth', 'tenant.context'])
+    ->group(function (): void {
+        Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals']);
+        Route::get('/history', [SeoRemediationClosureController::class, 'history']);
+        Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo']);
+    });
 
 Route::prefix('v1/tenants/{tenant}')
     ->middleware(['auth', 'tenant.context'])
