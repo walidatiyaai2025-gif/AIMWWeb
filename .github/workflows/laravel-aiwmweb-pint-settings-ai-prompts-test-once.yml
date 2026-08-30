@@ -21,7 +21,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
       - name: Apply Pint only to focused test
