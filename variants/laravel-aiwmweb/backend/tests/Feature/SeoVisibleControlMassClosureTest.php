@@ -35,6 +35,17 @@ final class SeoVisibleControlMassClosureTest extends TestCase
         'AIMW-SEO-4CBBC7AAD9',
     ];
 
+    private const VISIBLE_IDS = [
+        'AIMW-SEO-C48570747C',
+        'AIMW-SEO-126222BD60',
+        'AIMW-SEO-0B5FC34109',
+        'AIMW-SEO-A4307E94C8',
+        'AIMW-SEO-C7C22677CB',
+        'AIMW-SEO-4F3F2AC874',
+        'AIMW-SEO-9FE309C9AE',
+        'AIMW-SEO-250C53DAC5',
+    ];
+
     public function test_manager_and_workspace_are_explicit_canonical_routes_with_fail_closed_permissions(): void
     {
         $manager = Route::getRoutes()->match(Request::create('/tenants/alpha/sites/7/seo', 'GET'));
@@ -140,11 +151,23 @@ final class SeoVisibleControlMassClosureTest extends TestCase
         $this->actingAs($user)->get('/tenants/alpha/sites/'.$betaSite->id.'/seo')->assertNotFound();
     }
 
-    public function test_frontend_source_carries_all_ten_operation_ids_and_real_backend_contracts(): void
+    public function test_production_surfaces_carry_all_ten_operation_ids_and_real_backend_contracts(): void
     {
         $frontend = file_get_contents(resource_path('js/seo-visible-controls.tsx'));
-        foreach (self::IDS as $operationId) {
+        foreach (self::VISIBLE_IDS as $operationId) {
             $this->assertStringContainsString($operationId, $frontend);
+        }
+
+        $provider = file_get_contents(app_path('Providers/SeoVisibleControlRouteServiceProvider.php'));
+        $managerView = file_get_contents(resource_path('views/seo/manager.blade.php'));
+        $workspaceView = file_get_contents(resource_path('views/seo/workspace.blade.php'));
+        $this->assertStringContainsString('AIMW-SEO-5F71B89C92', $provider);
+        $this->assertStringContainsString('AIMW-SEO-5F71B89C92', $managerView);
+        $this->assertStringContainsString('AIMW-SEO-4CBBC7AAD9', $provider);
+        $this->assertStringContainsString('AIMW-SEO-4CBBC7AAD9', $workspaceView);
+
+        foreach (self::IDS as $operationId) {
+            $this->assertStringContainsString($operationId, implode("\n", [$frontend, $provider, $managerView, $workspaceView]));
         }
         $this->assertStringContainsString('prepare_bulk', $frontend);
         $this->assertStringContainsString("method: 'POST'", $frontend);
