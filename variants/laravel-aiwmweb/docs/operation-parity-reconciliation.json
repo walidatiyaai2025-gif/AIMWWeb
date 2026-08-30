@@ -20,12 +20,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 401,
-    "pending": 530,
+    "adapted": 403,
+    "pending": 528,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 401,
-    "overall_parity_percent": 43.07
+    "terminal": 403,
+    "overall_parity_percent": 43.29
   },
   "visible_controls": {
     "total": 446,
@@ -98,12 +98,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 16,
-      "pending": 148,
+      "adapted": 18,
+      "pending": 146,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 16,
-      "percent": 9.76
+      "terminal": 18,
+      "percent": 10.98
     },
     "email": {
       "total": 82,
@@ -15921,21 +15921,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php",
+      "evidence": "Canonical reports route closure@fb068134c2ad60111bd376f4f400c1bd247394ca: variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php; explicit-route-contract:AIMW-CONT-5D18F49928; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "Canonical reports route closure",
+        "source_sha": "fb068134c2ad60111bd376f4f400c1bd247394ca",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-5D18F49928",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php"
+        ]
       }
     },
     {
@@ -15952,21 +15962,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php",
+      "evidence": "Canonical reports route closure@fb068134c2ad60111bd376f4f400c1bd247394ca: variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php; explicit-route-contract:AIMW-CONT-8140D785B5; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "Canonical reports route closure",
+        "source_sha": "fb068134c2ad60111bd376f4f400c1bd247394ca",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-8140D785B5",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php"
+        ]
       }
     },
     {
@@ -33060,12 +33080,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 29,
-      "pending": 55,
+      "adapted": 31,
+      "pending": 53,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 29,
-      "percent": 34.52
+      "terminal": 31,
+      "percent": 36.9
     },
     "service": {
       "total": 349,
@@ -33341,7 +33361,6 @@
       "AIMW-CONT-56873F3DD6",
       "AIMW-CONT-5BE26C7AB5",
       "AIMW-CONT-5CF47CBE2A",
-      "AIMW-CONT-5D18F49928",
       "AIMW-CONT-607ACDF4D8",
       "AIMW-CONT-6187F8DF8A",
       "AIMW-CONT-63EDB4BA6F",
@@ -33366,7 +33385,6 @@
       "AIMW-CONT-7EF5524637",
       "AIMW-CONT-7F2BC55FF4",
       "AIMW-CONT-80EE7CA296",
-      "AIMW-CONT-8140D785B5",
       "AIMW-CONT-81B4B20D2D",
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-859135B2D1",
@@ -33712,6 +33730,18 @@
           "AIMW-SYNC-1C799B7D70",
           "AIMW-TAXO-AEEE1025B9"
         ]
+      },
+      {
+        "label": "Canonical reports route closure",
+        "sha": "fb068134c2ad60111bd376f4f400c1bd247394ca",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": false,
+        "explicit_operation_evidence_ids": [
+          "AIMW-CONT-5D18F49928",
+          "AIMW-CONT-8140D785B5"
+        ]
       }
     ]
   },
@@ -33727,7 +33757,8 @@
     "terminal_evidence_references_exist": true,
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
-      "e26a7d9a254f7df980714b778491d0f864605087"
+      "e26a7d9a254f7df980714b778491d0f864605087",
+      "fb068134c2ad60111bd376f4f400c1bd247394ca"
     ],
     "unpushed_sources_counted": [],
     "explicit_route_contract_terminals": [
@@ -33745,6 +33776,8 @@
       "AIMW-COMM-C2DDF5DAE3",
       "AIMW-CONT-1DA83B9262",
       "AIMW-CONT-4A295D45D4",
+      "AIMW-CONT-5D18F49928",
+      "AIMW-CONT-8140D785B5",
       "AIMW-CONT-9B8574AA90",
       "AIMW-CONT-9B87A269F3",
       "AIMW-CONT-BB5B32880A",
