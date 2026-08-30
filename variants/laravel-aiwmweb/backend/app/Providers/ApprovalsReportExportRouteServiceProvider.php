@@ -10,7 +10,7 @@ final class ApprovalsReportExportRouteServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        Route::middleware(['web', 'tenant.context'])
+        Route::middleware(['web', 'auth', 'tenant.context'])
             ->prefix('tenants/{tenant}')
             ->group(function (): void {
                 Route::get('/reports/approvals.csv', [ApprovalsReportExportController::class, 'download'])
@@ -20,7 +20,7 @@ final class ApprovalsReportExportRouteServiceProvider extends ServiceProvider
             });
 
         $this->app->booted(function (): void {
-            Route::middleware(['web', 'tenant.context'])
+            Route::middleware(['web', 'auth', 'tenant.context'])
                 ->prefix('tenants/{tenant}')
                 ->group(function (): void {
                     Route::get('/reports', [ApprovalsReportExportController::class, 'show'])
