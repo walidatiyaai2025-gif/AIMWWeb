@@ -55,8 +55,37 @@
     "frontend: can be invoked repeatedly and clears draft edits every time"
   ],
   "ci": {
-    "exact_head_required": true,
-    "status": "pending exact-head workflow verification"
+    "implementation_sha": "9aa49e332c0218c74dd7a804fc71c344c4ab542c",
+    "exact_tested_sha": "9aa49e332c0218c74dd7a804fc71c344c4ab542c",
+    "implementation_head_result": "success",
+    "pr_plan_link": {
+      "run_id": 33335451081,
+      "run_number": 1326,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33335451137,
+      "run_number": 553,
+      "conclusion": "success"
+    },
+    "laravel_acceptance": {
+      "run_id": 33335451082,
+      "run_number": 622,
+      "conclusion": "success",
+      "verified_jobs": {
+        "tenant-core-sqlite": "success",
+        "mysql-production-like": "success",
+        "redis-queue-scheduler": "success",
+        "frontend": "success",
+        "frontend-production-build": "success",
+        "runtime-artifacts": "success",
+        "acceptance-gate": "success",
+        "wordpress-real-rest-e2e": "success",
+        "wordpress-disposable-runtime": "success",
+        "compose-production-runtime": "success"
+      }
+    },
+    "evidence_bearing_head_rule": "This file update creates a later evidence-bearing commit. That later commit must independently pass all exact-head repository workflows before final worker handoff."
   },
   "denominator": {
     "source": "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md at composition SHA a61f644948b733e836747fa8c48e42187ebb1e41",
@@ -75,5 +104,5 @@
     "merged": false,
     "force_pushed": false
   },
-  "evidence_commit_rule": "The focused evidence is countable only from a pushed source SHA that contains the production operation marker and the focused operation-linked acceptance test. Exact-head repository CI remains mandatory before final worker handoff."
+  "evidence_commit_rule": "A Git commit cannot embed its own SHA. The evidence-bearing commit that adds the green implementation CI metadata must itself pass all exact-head repository gates before final handoff/integration readiness is claimed."
 }
