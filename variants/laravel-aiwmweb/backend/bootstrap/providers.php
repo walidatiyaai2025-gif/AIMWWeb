@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AboutBuildRouteServiceProvider;
+use App\Providers\AiCenterApprovalStatusRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
@@ -17,6 +18,7 @@ return [
     ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
     AboutBuildRouteServiceProvider::class,
+    AiCenterApprovalStatusRouteServiceProvider::class,
     AiPromptTemplatesRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
