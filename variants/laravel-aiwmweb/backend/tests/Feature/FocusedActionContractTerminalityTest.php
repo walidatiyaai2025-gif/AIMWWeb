@@ -18,8 +18,11 @@ class FocusedActionContractTerminalityTest extends TestCase
         string $permission,
         string $ownership,
     ): void {
-        $definition = config("frontend_actions.{$key}");
+        // Action keys intentionally contain dots, so Laravel's dot-notation
+        // config helper cannot address them as nested paths.
+        $definition = config('frontend_actions', [])[$key] ?? null;
 
+        $this->assertIsArray($definition);
         $this->assertSame($operationId, $definition['operation_id']);
         $this->assertSame('visible_control', $definition['canonical']['kind']);
         $this->assertSame($method, $definition['method']);

@@ -41,6 +41,10 @@ describe('focused action-contract terminality', () => {
         expect(request.operationId).toBe(operationId);
         expect(request.method).toBe(method);
         expect(request.endpoint).toBe(endpoint);
-        expect(method === 'GET' ? request.body : request.body).toBe(method === 'GET' ? undefined : expect.any(String));
+        if (method === 'GET') {
+            expect(request.body).toBeUndefined();
+        } else {
+            expect(typeof request.body).toBe('string');
+        }
     });
 });
