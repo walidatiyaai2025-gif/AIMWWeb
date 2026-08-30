@@ -90,7 +90,7 @@ class RouteApiProvenanceGapTest extends TestCase
         ] as $suffix => $target) {
             $this->actingAs($user)
                 ->get("/tenants/alpha/sites/{$alphaSite->id}/{$suffix}")
-                ->assertRedirect('/tenants/alpha'.$target);
+                ->assertRedirect('/tenants/alpha'.$target.'?site='.$alphaSite->id);
             $this->actingAs($user)
                 ->get("/tenants/alpha/sites/{$betaSite->id}/{$suffix}")
                 ->assertNotFound();
