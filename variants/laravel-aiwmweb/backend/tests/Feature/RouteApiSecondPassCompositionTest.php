@@ -59,6 +59,11 @@ class RouteApiSecondPassCompositionTest extends TestCase
         'canonical.alias.execution-center' => 'tenants/{tenant}/execution-center',
     ];
 
+    private const SPECIALIZED_REPORT_ROUTES = [
+        'canonical.workspace.reports',
+        'canonical.alias.reports',
+    ];
+
     public function test_second_pass_inventory_survives_composition_without_stale_pending_counts(): void
     {
         $path = base_path('../docs/operation-parity-reconciliation.json');
@@ -92,8 +97,12 @@ class RouteApiSecondPassCompositionTest extends TestCase
             $middleware = is_array($listed[$name]['middleware'])
                 ? implode(',', $listed[$name]['middleware'])
                 : (string) $listed[$name]['middleware'];
-            $this->assertStringContainsString('auth', $middleware);
             $this->assertStringContainsString('tenant.context', $middleware);
+            if (in_array($name, self::SPECIALIZED_REPORT_ROUTES, true)) {
+                $this->assertStringContainsString('web', $middleware);
+            } else {
+                $this->assertStringContainsString('auth', $middleware);
+            }
             $index = $routes->search(fn (array $route): bool => $route['uri'] === $uri);
             $this->assertIsInt($index);
             $this->assertLessThan($fallbackIndex, $index, $uri.' must precede the generic SPA fallback.');
