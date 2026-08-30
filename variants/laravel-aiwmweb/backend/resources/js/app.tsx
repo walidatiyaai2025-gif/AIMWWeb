@@ -1,7 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { BrowserRouter, Outlet, Route, Routes, useOutletContext, useParams } from 'react-router-dom';
+import { BrowserRouter, Link, Outlet, Route, Routes, useOutletContext, useParams } from 'react-router-dom';
+import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
@@ -66,7 +67,27 @@ function TenantBootstrap() {
     if (query.error) return <ContextFailure error={query.error} retry={() => query.refetch()} />;
     if (!query.data) return <ContextFailure error={new Error('Tenant context returned no data.')} retry={() => query.refetch()} />;
 
-    return <ToastProvider><AppShell context={query.data}><Outlet context={{ context: query.data } satisfies OutletState} /></AppShell></ToastProvider>;
+    const context = withApprovalQueueEndpoint(query.data);
+
+    return <ToastProvider><AppShell context={context}><Outlet context={{ context } satisfies OutletState} /></AppShell></ToastProvider>;
+}
+
+function ApprovalQueueRoute({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
+    const { locale } = useLocale();
+
+    return (
+        <div className="workspace-stack">
+            <section className="hero-panel" aria-label={locale === 'ar' ? 'روابط قائمة الموافقات' : 'Approval queue navigation'}>
+                <div>
+                    <span className="workspace-kicker">CONTROLLED WORKFLOW</span>
+                    <h2>{locale === 'ar' ? 'التنفيذ المحكوم' : 'Governed execution'}</h2>
+                    <p>{locale === 'ar' ? 'انتقل إلى مركز التنفيذ لمراجعة المهام المعتمدة وحالتها الحقيقية.' : 'Open the Execution Center to review approved jobs and their real runtime state.'}</p>
+                </div>
+                <Link className="btn" to={approvalExecutionCenterHref(context)}>▶ {locale === 'ar' ? 'مركز التنفيذ' : 'Execution center'}</Link>
+            </section>
+            <WorkspacePage context={context} route={route} />
+        </div>
+    );
 }
 
 function RouteElement({ route }: { route: WorkspaceRoute }) {
@@ -78,6 +99,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
             <SiteDetailsRoute context={context} route={route} />
         </>
     );
+    if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     return <WorkspacePage context={context} route={route} />;
 }
 
