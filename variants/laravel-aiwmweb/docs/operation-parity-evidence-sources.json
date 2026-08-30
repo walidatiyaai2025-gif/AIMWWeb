@@ -2,13 +2,13 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "a067d973e0b6120a34cee5106161dadad6056fe5",
-  "focused_closure_evidence_source_sha": "e26a7d9a254f7df980714b778491d0f864605087",
+  "previous_reconciliation_sha": "d0690941755da1521efcef0f8b6a405f55875337",
+  "focused_closure_evidence_source_sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
   "countable_sources": [
     {
-      "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
-      "sha": "e26a7d9a254f7df980714b778491d0f864605087",
-      "observed_pr_head": "e26a7d9a254f7df980714b778491d0f864605087",
+      "label": "Live Laravel closure composition after Sites ConfirmBulkDelete closure",
+      "sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+      "observed_pr_head": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "domains": [
         "ai",
         "approvals",
