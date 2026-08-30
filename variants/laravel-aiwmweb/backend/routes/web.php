@@ -1,6 +1,7 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
@@ -102,7 +103,7 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
-    Route::get('/tenants/{tenant}/context', function () {
+    Route::get('/tenants/{tenant}/context', function (ActionContractRegistry $actionRegistry) {
         $context = app(TenantContext::class);
         app(TenantAuthorizer::class)->authorize('tenant.view');
 
@@ -112,7 +113,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $tenants = TenantMembership::query()->withoutGlobalScopes()->with('tenant:id,slug,name')
             ->where('user_id', request()->user()->getKey())->where('status', 'active')->get()
             ->pluck('tenant')->filter()->unique('id')->sortBy('name')->values()
-            ->map(fn ($tenant) => ['slug' => $tenant->slug, 'name' => $tenant->name]);
+            ->map(fn ($tenant) => ['id' => (int) $tenant->id, 'slug' => $tenant->slug, 'name' => $tenant->name]);
         $connectors = Connector::query()->get()->map(fn (Connector $connector) => [
             'key' => (string) $connector->identity,
             'state' => $connector->revoked_at ? 'disconnected' : ($connector->verified_at ? 'connected' : 'unknown'),
@@ -120,15 +121,21 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'protocol' => $connector->protocol_version,
             'reason' => $connector->revoked_at ? 'revoked' : null,
         ])->values();
-        $tenant = $context->tenant()->slug;
+        $tenantModel = $context->tenant();
+        $tenant = $tenantModel->slug;
         $site = null;
-        $activeSiteId = request()->session()->get('canonical_site_id');
-        if ($activeSiteId !== null) {
-            $site = Site::query()->find((int) $activeSiteId);
-            if (! $site) {
-                request()->session()->forget('canonical_site_id');
+        if (request()->has('site')) {
+            $site = Site::query()->findOrFail(request()->integer('site'));
+        } else {
+            $activeSiteId = request()->session()->get('canonical_site_id');
+            if ($activeSiteId !== null) {
+                $site = Site::query()->find((int) $activeSiteId);
+                if (! $site) {
+                    request()->session()->forget('canonical_site_id');
+                }
             }
         }
+        $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         $api = [
             'sites' => "/api/tenants/{$tenant}/sites",
@@ -166,14 +173,14 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
 
         return response()->json([
             'user' => ['id' => request()->user()->getKey(), 'name' => request()->user()->name, 'email' => request()->user()->email],
-            'tenant' => ['slug' => $context->tenant()->slug, 'name' => $context->tenant()->name],
+            'tenant' => ['id' => (int) $tenantModel->id, 'slug' => $tenantModel->slug, 'name' => $tenantModel->name],
             'tenants' => $tenants,
             'permissions' => $permissions,
             'connectors' => $connectors,
-            'capabilities' => (object) [],
+            'capabilities' => $actionRegistry->capabilityStates($actions),
             'api' => $api,
             'active_site' => $site ? ['id' => (int) $site->getKey(), 'name' => $site->name, 'status' => $site->status] : null,
-            'actions' => (object) [],
+            'actions' => $actions,
         ]);
     });
 
