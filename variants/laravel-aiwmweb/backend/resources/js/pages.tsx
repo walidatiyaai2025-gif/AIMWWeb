@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import {
     ApiError,
@@ -14,6 +14,7 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
+import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
 type CollectionEnvelope = {
     data?: Array<Record<string, unknown>>;
@@ -126,7 +127,6 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
 function ResourceContent({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale, text } = useLocale();
     const { notify } = useToast();
-    const queryClient = useQueryClient();
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
@@ -143,17 +143,31 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const mutation = useMutation({
         mutationFn: async (payload: Record<string, string | number>) => {
             if (!dialog) throw new Error('Action contract is missing.');
-            return apiRequest(dialog.contract.endpoint, {
-                method: dialog.contract.method,
-                body: dialog.contract.method === 'DELETE' ? undefined : JSON.stringify(payload),
-            });
+            return mutateThenReconcile(
+                () => apiRequest(dialog.contract.endpoint, {
+                    method: dialog.contract.method,
+                    body: dialog.contract.method === 'DELETE' ? undefined : JSON.stringify(payload),
+                }),
+                async () => {
+                    const refreshed = await query.refetch();
+                    if (refreshed.error) throw refreshed.error;
+                },
+            );
         },
-        onSuccess: async () => {
-            notify(locale === 'ar' ? 'أكد الخادم نجاح العملية.' : 'The server confirmed the operation.', 'success');
+        onSuccess: () => {
+            notify(locale === 'ar' ? 'تم تأكيد العملية وتحديث الحالة من الخادم.' : 'The operation was confirmed and reconciled from the server.', 'success');
             setDialog(null);
-            await queryClient.invalidateQueries({ queryKey: ['workspace', context.tenant.slug, route.key] });
         },
         onError: (error) => {
+            if (error instanceof AuthoritativeReconciliationError) {
+                notify(
+                    locale === 'ar'
+                        ? 'قبل الخادم العملية، لكن تعذر تحديث الحالة الموثوقة. أعد تحميل الشاشة قبل تكرار العملية.'
+                        : error.message,
+                    'error',
+                );
+                return;
+            }
             notify(error instanceof Error ? error.message : (locale === 'ar' ? 'فشلت العملية.' : 'The operation failed.'), 'error');
         },
     });

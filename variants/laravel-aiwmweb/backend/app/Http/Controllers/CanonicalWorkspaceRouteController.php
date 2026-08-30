@@ -30,6 +30,15 @@ final class CanonicalWorkspaceRouteController extends Controller
         return view('app');
     }
 
+    public function showSite(Request $request, string $tenant, int $site): View
+    {
+        $this->authorizeRoute($request);
+        $model = Site::query()->findOrFail($site);
+        $request->session()->put(self::SITE_SESSION_KEY, (int) $model->getKey());
+
+        return view('app');
+    }
+
     public function redirect(Request $request, string $tenant): RedirectResponse
     {
         $this->authorizeRoute($request);

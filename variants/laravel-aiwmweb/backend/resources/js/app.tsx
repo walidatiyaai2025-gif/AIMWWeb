@@ -7,6 +7,8 @@ import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type Works
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
+import { SiteDetailsBackControl } from './site-details-back-control';
+import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -90,7 +92,13 @@ function ApprovalQueueRoute({ context, route }: { context: FrontendContext; rout
 
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
-    if (route.key === 'site-details') return <SiteDetailsRoute context={context} route={route} />;
+    if (route.key === 'site-details') return (
+        <>
+            <SiteDetailsBackControl context={context} />
+            <SiteDetailsSiteUrlControl context={context} />
+            <SiteDetailsRoute context={context} route={route} />
+        </>
+    );
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     return <WorkspacePage context={context} route={route} />;
 }

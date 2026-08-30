@@ -150,6 +150,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         if ($site) {
             $siteId = (int) $site->getKey();
             $api += [
+                'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
@@ -226,6 +227,7 @@ Route::prefix('/tenants/{tenant}')
     ->controller(CanonicalWorkspaceRouteController::class)
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
+        Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
