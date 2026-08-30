@@ -11,6 +11,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.tsx',
                 'resources/js/about-build-copy-report.ts',
+                'resources/js/error-copy-details.ts',
             ],
             refresh: true,
             fonts: [
