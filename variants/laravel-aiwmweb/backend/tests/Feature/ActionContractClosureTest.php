@@ -19,17 +19,29 @@ class ActionContractClosureTest extends TestCase
 
     public function test_registered_actions_map_uniquely_to_canonical_ledger_rows(): void
     {
+        $definitions = config('frontend_actions', []);
         $audit = app(ActionContractRegistry::class)->auditCanonicalMappings();
 
-        $this->assertSame(4, $audit['mapped']);
-        $this->assertSame(2, $audit['visible_controls']);
-        $this->assertCount(4, array_unique($audit['operation_ids']));
+        $expectedIds = collect($definitions)->pluck('operation_id')->values()->all();
+        $expectedVisible = collect($definitions)
+            ->filter(fn (array $definition): bool => ($definition['canonical']['kind'] ?? null) === 'visible_control')
+            ->count();
+        $expectedTerminalCandidates = collect($definitions)
+            ->filter(fn (array $definition): bool => (bool) ($definition['terminal_candidate'] ?? false))
+            ->count();
+
+        $this->assertNotEmpty($definitions);
+        $this->assertSame(count($definitions), $audit['mapped']);
+        $this->assertSame($expectedVisible, $audit['visible_controls']);
+        $this->assertSame($expectedTerminalCandidates, $audit['terminal_candidates']);
+        $this->assertSame($expectedIds, $audit['operation_ids']);
+        $this->assertCount(count($definitions), array_unique($audit['operation_ids']));
         foreach ($audit['operation_ids'] as $operationId) {
             $this->assertMatchesRegularExpression('/^AIMW-[A-Z]+-[0-9A-F]{10}$/', $operationId);
         }
     }
 
-    public function test_site_bound_action_carries_owned_site_and_semantic_blocker(): void
+    public function test_site_bound_action_carries_owned_site_and_current_canonical_dependency_blocker(): void
     {
         $user = User::factory()->create();
         $alphaMembership = $this->tenantMembership($user, 'alpha', ['tenant.view', 'seo.view', 'seo.manage']);
@@ -40,24 +52,24 @@ class ActionContractClosureTest extends TestCase
         $response->assertOk()->assertJsonPath('active_site.id', $alphaSite->id);
 
         $action = $response->json('actions')['seo.audit.run'];
-        $this->assertSame('AIMW-SEO-FB0F0E9067', $action['operation_id']);
+        $definition = config('frontend_actions.seo.audit.run');
+        $this->assertSame('AIMW-BILL-3C55B3C299', $definition['operation_id']);
+        $this->assertSame('AIMW-SEO-FB0F0E9067', $definition['dependency_operation_id']);
+        $this->assertSame($definition['operation_id'], $action['operation_id']);
+        $this->assertSame($definition['dependency_operation_id'], $action['dependency_operation_id']);
         $this->assertSame($alphaSite->id, $action['site_id']);
         $this->assertSame('seo.manage', $action['permission']);
         $this->assertSame("/api/tenants/alpha/sites/{$alphaSite->id}/seo/audits", $action['endpoint']);
         $this->assertSame('pending_integration', $action['availability']['state']);
-        $this->assertSame(
-            'Canonical SEO audit execution is approval-required, but the current Laravel endpoint dispatches immediately.',
-            $action['availability']['reason'],
-        );
+        $this->assertSame($definition['blocked_reason'], $action['availability']['reason']);
+        $this->assertTrue($action['approval_required']);
+        $this->assertFalse($action['terminal_candidate']);
 
         $outsider = User::factory()->create();
         $betaMembership = $this->tenantMembership($outsider, 'beta', ['tenant.view', 'seo.manage']);
         $beta = Tenant::query()->withoutGlobalScopes()->findOrFail($betaMembership->tenant_id);
         $betaSite = $this->siteFor($beta, 'Beta Site');
 
-        // Context ownership is the frontend contract boundary. Do not invoke the
-        // known non-terminal SEO route here: current SeoController route binding
-        // throws before its ownership check, and that backend defect is evidence.
         $this->actingAs($user)->getJson("/tenants/alpha/context?site={$betaSite->id}")->assertNotFound();
     }
 
