@@ -17,6 +17,8 @@ import { commonText, useLocale } from './i18n';
 import { prepareActionRequest } from './action-contract';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
+const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
+
 type CollectionEnvelope = {
     data?: Array<Record<string, unknown>>;
     items?: Array<Record<string, unknown>>;
@@ -187,7 +189,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     <button type="submit" className="btn">{text(commonText.search)}</button>
                 </form>
                 <div className="toolbar-actions">
-                    <button type="button" className="btn" onClick={() => query.refetch()}>{text(commonText.refresh)}</button>
+                    <button
+                        type="button"
+                        className="btn"
+                        data-canonical-operation={route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined}
+                        onClick={() => query.refetch()}
+                    >{text(commonText.refresh)}</button>
                     {route.controls?.map((actionKey) => <ActionButton key={actionKey} route={route} actionKey={actionKey} context={context} onAvailable={(contract) => setDialog({ key: actionKey, contract })} />)}
                 </div>
             </section>
