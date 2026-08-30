@@ -1,0 +1,81 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-85394A0E55",
+  "domain": "content",
+  "kind": "visible_control",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
+    "route_screen": "/Error",
+    "visible_control": "/ -> /",
+    "user_visible_text": "Back to dashboard",
+    "behavior": "The canonical error page exposes a navigation-only Back to dashboard anchor whose destination is exactly /."
+  },
+  "laravel_adaptation": {
+    "source_route": "GET /Error",
+    "source_route_name": "canonical.error",
+    "source_controller": "App\\Http\\Controllers\\ErrorReadController",
+    "view": "resources/views/platform/error.blade.php",
+    "control_binding": "<a href=\"/\" data-canonical-operation=\"AIMW-CONT-85394A0E55\">Back to dashboard</a>",
+    "destination_route": "GET /",
+    "behavior": "The rendered Laravel error surface preserves the canonical navigation and targets the real public Laravel root without inventing tenant or resource identifiers."
+  },
+  "runtime_path": [
+    "GET /Error",
+    "ErrorReadController",
+    "platform.error Blade view",
+    "canonical visible anchor AIMW-CONT-85394A0E55",
+    "GET /",
+    "real Laravel welcome root"
+  ],
+  "authorization": {
+    "source_authentication": "anonymous by canonical error-route contract",
+    "destination_authentication": "anonymous",
+    "source_tenant_context": "not resolved",
+    "destination_tenant_context": "not resolved",
+    "permission": "none; navigation-only operation performs no privileged read or mutation",
+    "security_result": "Neither source nor destination exposes a tenant/user/resource route parameter; the existing safe error diagnostics contract remains unchanged."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "persistence": "none",
+    "external_dependency": "none",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "file": "backend/tests/Feature/ErrorBackDashboardTerminalityTest.php",
+    "coverage": [
+      "exact canonical PENDING operation identity and source metadata",
+      "actual rendered Back to dashboard text, exact href=/, and exact operation marker",
+      "real canonical.error source route and real public root destination route",
+      "zero source/destination route parameters and no auth or tenant-context escalation",
+      "safe request/correlation diagnostics preserved while query secrets remain undisclosed",
+      "sibling /Error controls explicitly remain outside this closure unit"
+    ]
+  },
+  "implementation": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_sha": "3b6dd1be88fbf6fb605fa246be90318bc733a367",
+    "worker_branch": "worker/laravel-AIMW-CONT-85394A0E55-error-back-dashboard"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_open_logs_operation_modified": false,
+    "sibling_copy_error_details_operation_modified": false,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "merge_performed": false
+  },
+  "ci_policy": {
+    "authority": "GitHub Actions on the exact final pushed PR head",
+    "required_before_final_handoff": true,
+    "evidence_file_does_not_embed_mutable_run_ids": true
+  },
+  "terminality": {
+    "candidate_state": "ADAPTED",
+    "basis": "Real user-visible source-equivalent navigation is bound to the exact canonical operation and reaches a real explicit destination. Final VERIFIED_TASK_COMPLETE additionally requires exact-head CI success."
+  }
+}
