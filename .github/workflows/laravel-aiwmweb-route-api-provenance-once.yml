@@ -1,0 +1,126 @@
+name: Laravel AIWMWeb Route API Provenance Once
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/laravel-aiwmweb-route-api-provenance-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  converge:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      COUNTABLE_SOURCE_SHA: e26a7d9a254f7df980714b778491d0f864605087
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Consume already-proven route and API evidence and regenerate canonical parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          source_sha = os.environ['COUNTABLE_SOURCE_SHA']
+          source = next((item for item in manifest['countable_sources'] if item.get('sha') == source_sha), None)
+          if source is None:
+              raise SystemExit(f'countable source {source_sha} not found')
+
+          routes = 'variants/laravel-aiwmweb/backend/routes/web.php'
+          api_routes = 'variants/laravel-aiwmweb/backend/routes/api.php'
+          workspace = 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php'
+          evidence = 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json'
+
+          additions = {
+              'AIMW-COMM-A16719E105': {
+                  'destination_path': routes,
+                  'action_path': workspace,
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiSecondPassCompositionTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-MEDI-8BADBE1261': {
+                  'destination_path': routes,
+                  'action_path': workspace,
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiSecondPassCompositionTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-TAXO-CDC6948A06': {
+                  'destination_path': routes,
+                  'action_path': workspace,
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiSecondPassCompositionTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-AI-C37F405767': {
+                  'destination_path': routes,
+                  'action_path': workspace,
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-EMAI-2D94EFDD53': {
+                  'destination_path': api_routes,
+                  'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/LegacyNotificationReadController.php',
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-OPER-ABB41FC891': {
+                  'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php',
+                  'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/LoginReadController.php',
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/LoginReadApiTerminalityTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-PLAT-A91A2B0B11': {
+                  'destination_path': api_routes,
+                  'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php',
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php',
+                  'evidence_path': evidence,
+              },
+              'AIMW-PLAT-FAC7505B26': {
+                  'destination_path': api_routes,
+                  'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php',
+                  'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php',
+                  'evidence_path': evidence,
+              },
+          }
+          source.setdefault('operation_evidence', {}).update(additions)
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'chore(laravel): consume proven route-api provenance gaps'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
