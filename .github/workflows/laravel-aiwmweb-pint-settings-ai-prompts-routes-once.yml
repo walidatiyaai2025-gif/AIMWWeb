@@ -1,0 +1,42 @@
+name: Laravel AIWMWeb Pint Settings AI Prompts Routes Once
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/laravel-aiwmweb-pint-settings-ai-prompts-routes-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Apply Pint only to routes file
+        run: vendor/bin/pint routes/web.php
+      - name: Remove helper and persist formatting
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/laravel-aiwmweb-pint-settings-ai-prompts-routes-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/routes/web.php \
+                  .github/workflows/laravel-aiwmweb-pint-settings-ai-prompts-routes-once.yml
+          git commit -m 'style(laravel): format Settings AI prompts routes'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
