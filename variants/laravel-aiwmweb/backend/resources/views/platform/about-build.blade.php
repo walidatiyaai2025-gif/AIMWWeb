@@ -1,9 +1,24 @@
+@php
+    $buildReportPayload = [
+        'assemblyName' => $build['assemblyName'],
+        'version' => $build['version'],
+        'informationalVersion' => $build['informationalVersion'],
+        'branch' => $build['branch'],
+        'commit' => $build['commit'],
+        'buildTimeUtc' => $build['buildTimeUtc'],
+        'currentRelease' => $currentRelease ? [
+            'title' => $currentRelease['title'] ?? '',
+            'changes' => $currentRelease['changes'] ?? [],
+        ] : null,
+    ];
+@endphp
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>About this build</title>
+    @vite('resources/js/about-build-copy-report.ts')
 </head>
 <body>
     <main>
@@ -12,6 +27,18 @@
         @if ($buildApiUrl)
             <p><a href="{{ $buildApiUrl }}" target="_blank" rel="noopener noreferrer">Open build API</a></p>
         @endif
+
+        <section aria-labelledby="build-actions">
+            <h2 id="build-actions">Build actions</h2>
+            <button type="button" data-copy-build-report aria-busy="false">Copy build report</button>
+            <p data-copy-build-success role="status" hidden>Build report copied. The browser confirmed that the report was written to the clipboard.</p>
+            <div data-copy-build-error role="alert" hidden>
+                <p data-copy-build-error-message>The browser did not confirm a clipboard write. No copy success was reported; you can retry.</p>
+                <button type="button" data-copy-build-retry>Retry copy</button>
+            </div>
+        </section>
+
+        <script id="build-report-payload" type="application/json">@json($buildReportPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
 
         <section aria-labelledby="build-information">
             <h2 id="build-information">Build information</h2>
