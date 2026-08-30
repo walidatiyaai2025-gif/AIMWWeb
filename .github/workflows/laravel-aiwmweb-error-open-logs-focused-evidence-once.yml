@@ -1,0 +1,87 @@
+name: Laravel AIWMWeb Error Open Logs Focused Evidence Once
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/laravel-aiwmweb-error-open-logs-focused-evidence-once.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: laravel-aiwmweb-error-open-logs-focused-evidence-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    env:
+      FOCUSED_SOURCE_SHA: c75b7605a1ddc4e89fb6d7be8b627ca1256309d6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Fetch live remote refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pin exact green focused evidence source
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          manifest['focused_closure_evidence_source_sha'] = os.environ['FOCUSED_SOURCE_SHA']
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+      - name: Generate canonical 931 parity from official tools
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+      - name: Assert selected operation became terminal
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text(encoding='utf-8'))
+          rows = {row['operation_id']: row for row in payload['operations']}
+          row = rows['AIMW-CONT-8B3518EF80']
+          assert row['migration_state'] == 'ADAPTED', row
+          validation = payload['validation']
+          assert validation['passed'] is True, validation
+          assert 'AIMW-CONT-8B3518EF80' in validation['focused_closure_contract_terminals'], validation
+          print(json.dumps({'totals': payload['totals'], 'focused': validation['focused_closure_contract_terminals']}, indent=2))
+          PY
+      - name: Commit deterministic reconciliation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            echo 'No reconciliation delta to commit.'
+            exit 0
+          fi
+          git commit -m 'docs(laravel): reconcile AIMW-CONT-8B3518EF80 parity'
+          git push origin HEAD:${{ github.head_ref }}
