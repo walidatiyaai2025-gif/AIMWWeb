@@ -55,7 +55,7 @@ class CurrentUserSiteSettingsVisibleTerminalityTest extends TestCase
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
-        $this->assertSame(['site'], $route->parameterNames());
+        $this->assertSame(['tenant', 'site'], $route->parameterNames());
 
         $before = Site::query()->withoutGlobalScopes()->findOrFail($site->id)->only(['name', 'url', 'status']);
         $this->actingAs($user)
