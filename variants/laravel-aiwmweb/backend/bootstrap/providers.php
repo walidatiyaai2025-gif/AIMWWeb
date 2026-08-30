@@ -1,11 +1,17 @@
 <?php
 
 use App\Providers\AboutBuildRouteServiceProvider;
+use App\Providers\ApprovalQueueRouteServiceProvider;
+use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
+use App\Providers\SetupRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
+    ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
     AboutBuildRouteServiceProvider::class,
+    ApprovalQueueRouteServiceProvider::class,
+    SetupRouteServiceProvider::class,
 ];

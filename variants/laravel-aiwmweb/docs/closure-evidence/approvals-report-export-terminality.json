@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-APPR-A8F5FB3762",
+    "domain": "approvals",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ReportsExports.razor",
+    "source_screens": ["/reports", "/module/reports"],
+    "source_control": "ExportApprovalsAsync [ExportApprovalsAsync]"
+  },
+  "source_behavior": {
+    "description": "The current AIMWWeb Reports & Exports screen exposes an Approvals report CSV control that exports the current authoritative approval collection as approvals-report.csv with Id,Title,Site,Status columns.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "laravel_adaptation": {
+    "description": "Explicit tenant-scoped Reports aliases render the real canonical Approvals CSV control. The download performs a fresh authoritative read of persisted active-tenant approvals joined to same-tenant suggestions, sites and synced content and streams approvals-report.csv without creating export workflow state or changing approval/product/WordPress state.",
+    "routes": [
+      "GET /tenants/{tenant}/reports",
+      "GET /tenants/{tenant}/module/reports",
+      "GET /tenants/{tenant}/reports/approvals.csv"
+    ],
+    "filename": "approvals-report.csv",
+    "columns": ["Id", "Title", "Site", "Status"],
+    "fake_or_sample_rows": false,
+    "persists_export_state": false,
+    "wordpress_mutation": false
+  },
+  "runtime_path": "GET /tenants/{tenant}/reports or /tenants/{tenant}/module/reports -> web + tenant.context -> reports.view -> active TenantContext authoritative approval rows -> visible CSV control when reports.manage -> GET /tenants/{tenant}/reports/approvals.csv -> reports.manage -> fresh same-tenant persisted reread -> streamed approvals-report.csv",
+  "authorization": {
+    "session_and_tenant_context": true,
+    "guest_semantics": "401 fail-closed on this composition base via tenant.context; no dependency on a separately-owned named login route",
+    "page_permission": "reports.view",
+    "download_permission": "reports.manage",
+    "missing_page_permission": 403,
+    "missing_download_permission": 403
+  },
+  "tenant_isolation": {
+    "active_tenant_source": "TenantContext",
+    "route_tenant_must_equal_active_tenant": true,
+    "approval_filter": "approvals.tenant_id = active TenantContext id",
+    "same_tenant_join_guards": [
+      "suggestions.tenant_id = approvals.tenant_id",
+      "sites.tenant_id = approvals.tenant_id",
+      "synced_contents.tenant_id = approvals.tenant_id"
+    ],
+    "caller_supplied_resource_id": false,
+    "cross_tenant_route_or_download": 404,
+    "proof": "Focused acceptance persists Alpha and Beta approval graphs and proves Beta title/content never appears in Alpha page or CSV."
+  },
+  "read_semantics": {
+    "read_only": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "authoritative_reread_on_download": true,
+    "truthful_empty_state": "Header-only CSV and explicit empty Reports message",
+    "no_persistence_mutation_proof": [
+      "approvals row count unchanged",
+      "operation_executions row count unchanged",
+      "report_exports row count unchanged"
+    ]
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalsReportExportTerminalityTest.php"
+  ],
+  "implementation_sha": "feadb0843aab038b8b521d8be7a04e1ce68f73b0",
+  "tested_sha": "feadb0843aab038b8b521d8be7a04e1ce68f73b0",
+  "implementation_ci": {
+    "pr_plan_link": {"run_number": 972, "run_id": 33243572355, "result": "SUCCESS"},
+    "cross_domain_security": {"run_number": 240, "run_id": 33243572344, "result": "SUCCESS"},
+    "laravel_aiwmweb_acceptance": {
+      "run_number": 309,
+      "run_id": 33243572348,
+      "result": "SUCCESS",
+      "gates": {
+        "pint": "SUCCESS",
+        "sqlite_migrations_and_full_php": "SUCCESS",
+        "mysql_fresh_rollback_forward_and_full_php": "SUCCESS",
+        "redis_queue_scheduler": "SUCCESS",
+        "wordpress_disposable_runtime": "SUCCESS",
+        "wordpress_real_rest_e2e": "SUCCESS",
+        "frontend_typecheck_tests_build": "SUCCESS",
+        "production_frontend_build": "SUCCESS",
+        "runtime_artifacts": "SUCCESS",
+        "acceptance_gate": "SUCCESS",
+        "production_docker_compose_runtime_smoke": "SUCCESS"
+      }
+    }
+  },
+  "evidence_validation": {
+    "tested_sha": "bdd41725ddf89a788b83cf31605e8b12db9647ad",
+    "pr_plan_link": {"run_number": 973, "run_id": 33243716359, "result": "SUCCESS"},
+    "cross_domain_security": {"run_number": 241, "run_id": 33243716364, "result": "SUCCESS"},
+    "laravel_aiwmweb_acceptance": {
+      "run_number": 310,
+      "run_id": 33243716356,
+      "result": "SUCCESS",
+      "all_applicable_required_gates": "SUCCESS"
+    }
+  },
+  "canonical_denominator": {
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal_contribution": 359,
+    "previous_pending": 573,
+    "new_pending_contribution": 572,
+    "generated_reconciliation_edited": false,
+    "parallel_unmerged_worker_deltas_included": false
+  },
+  "final_head_policy": "The metadata-only evidence-finalization commit after the fully-green evidence-validation SHA must itself pass PR Plan Link, Cross-Domain Security and the complete Laravel AIWMWeb Acceptance matrix before handoff. No further file mutation is permitted after that final exact-head validation.",
+  "terminality": {
+    "real_user_control": true,
+    "real_backend_read": true,
+    "tenant_isolation_proven": true,
+    "permission_enforcement_proven": true,
+    "truthful_empty_state_proven": true,
+    "no_fake_success_path": true,
+    "exact_implementation_head_green": true,
+    "exact_evidence_validation_head_green": true,
+    "terminal_state": "ADAPTED"
+  }
+}
