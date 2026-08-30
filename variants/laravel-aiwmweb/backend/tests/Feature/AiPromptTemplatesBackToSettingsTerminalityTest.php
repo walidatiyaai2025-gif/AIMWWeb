@@ -29,7 +29,7 @@ class AiPromptTemplatesBackToSettingsTerminalityTest extends TestCase
         $this->assertStringContainsString('settings', strtolower((string) $row['visible_control']));
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
     }
 
     public function test_settings_manager_gets_real_tenant_derived_back_to_settings_control_without_mutation(): void

@@ -34,7 +34,7 @@ class AiPromptTemplatesRouteTerminalityTest extends TestCase
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
     }
 
     public function test_ai_prompt_templates_is_an_explicit_guarded_route_without_direct_id_surface(): void

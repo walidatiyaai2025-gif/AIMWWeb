@@ -121,12 +121,29 @@ class PlatformServicesParityClosureTest extends TestCase
         $visibleControls = $operations
             ->filter(fn (array $operation): bool => in_array($operation['domain'], self::OWNED_DOMAINS, true))
             ->filter(fn (array $operation): bool => $operation['kind'] === 'visible_control');
+        $terminalStates = ['PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'];
+        $terminalVisibleControls = $visibleControls
+            ->filter(fn (array $operation): bool => in_array($operation['migration_state'], $terminalStates, true));
+        $nonTerminalVisibleControls = $visibleControls
+            ->reject(fn (array $operation): bool => in_array($operation['migration_state'], $terminalStates, true));
 
         $this->assertLessThanOrEqual(282, $pending->count());
         $this->assertLessThanOrEqual(60, $backend->count());
-        $this->assertSame(220, $frontend->count(), 'Exactly two PR #284 email route rows leave the frozen 222 frontend/route PENDING inventory.');
-        $this->assertTrue($visibleControls->every(fn (array $operation): bool => $operation['migration_state'] === 'PENDING'));
+        $this->assertLessThanOrEqual(220, $frontend->count(), 'Owned frontend/route PENDING inventory may only shrink as governed closures land.');
+        $this->assertTrue(
+            $nonTerminalVisibleControls->every(fn (array $operation): bool => $operation['migration_state'] === 'PENDING'),
+            'Owned visible controls may leave PENDING only through a terminal classification.',
+        );
         $this->assertSame(['route', 'visible_control'], $frontend->pluck('kind')->unique()->sort()->values()->all());
+
+        foreach ($terminalVisibleControls as $operation) {
+            $operationId = $operation['operation_id'];
+            $this->assertNotSame('', trim((string) $operation['laravel_destination']), $operationId.' is missing a governed frontend destination.');
+            $this->assertNotSame('', trim((string) $operation['acceptance_test']), $operationId.' is missing focused acceptance evidence.');
+            $this->assertNotSame('', trim((string) ($operation['reconciliation']['source_sha'] ?? '')), $operationId.' is missing exact-SHA evidence.');
+            $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null, $operationId.' lacks the focused closure evidence contract.');
+            $this->assertNotSame('', trim((string) ($operation['reconciliation']['evidence_path'] ?? '')), $operationId.' is missing its closure-evidence path.');
+        }
 
         foreach (self::COMPOSED_ROUTE_CLOSURES_IN_OWNED_DOMAINS as $operationId) {
             $operation = $operations->firstWhere('operation_id', $operationId);
