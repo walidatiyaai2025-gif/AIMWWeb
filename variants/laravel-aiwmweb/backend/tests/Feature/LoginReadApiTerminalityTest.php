@@ -13,7 +13,7 @@ class LoginReadApiTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_canonical_row_is_the_pending_low_risk_get_login_contract(): void
+    public function test_canonical_row_is_the_terminal_low_risk_get_login_contract(): void
     {
         $payload = json_decode(
             file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -31,7 +31,7 @@ class LoginReadApiTerminalityTest extends TestCase
         $this->assertFalse((bool) $row['mutation']);
         $this->assertTrue((bool) $row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
     }
 
     public function test_login_get_is_anonymous_and_resolves_to_a_real_controller(): void

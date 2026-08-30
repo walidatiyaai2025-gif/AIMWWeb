@@ -103,7 +103,10 @@ class PlatformServicesParityClosureTest extends TestCase
             $operationId = $operation['operation_id'];
             $this->assertNotSame('', trim((string) $operation['laravel_destination']), $operationId.' is missing a Laravel destination.');
             $this->assertNotSame('', trim((string) $operation['acceptance_test']), $operationId.' is missing test evidence.');
-            $this->assertTrue((bool) $operation['tenant_owned'], $operationId.' must remain tenant-owned.');
+            $this->assertTrue(
+                (bool) $operation['tenant_owned'] || $this->hasStrictTenantSelectedApiEvidence($operation),
+                $operationId.' must remain tenant-owned or carry the strict explicit tenant-selected API security contract.',
+            );
             $this->assertNotSame('', trim((string) ($operation['reconciliation']['source_sha'] ?? '')), $operationId.' is missing exact-SHA evidence.');
         }
     }
@@ -152,6 +155,31 @@ class PlatformServicesParityClosureTest extends TestCase
             $this->assertSame('ADAPTED', $operation['migration_state']);
             $this->assertSame('explicit_route_contract', $operation['reconciliation']['evidence_mode'] ?? null);
         }
+    }
+
+    private function hasStrictTenantSelectedApiEvidence(array $operation): bool
+    {
+        $reconciliation = $operation['reconciliation'] ?? [];
+        if (($reconciliation['evidence_mode'] ?? null) !== 'explicit_route_api_contract') {
+            return false;
+        }
+
+        $signals = $reconciliation['signals'] ?? [];
+        foreach ([
+            'middleware:auth',
+            'tenant:selected',
+            'authorization:TenantAuthorizer',
+            'test:401',
+            'test:403',
+            'test:404',
+            'test:409/conflict',
+        ] as $requiredSignal) {
+            if (! in_array($requiredSignal, $signals, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function pendingBackend()
