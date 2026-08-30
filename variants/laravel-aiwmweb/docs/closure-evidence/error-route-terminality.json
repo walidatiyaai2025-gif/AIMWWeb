@@ -1,0 +1,75 @@
+{
+  "authority": {
+    "repository": "walidatiyaai2025-gif/AIMWWeb",
+    "issue": 257,
+    "variant": "LARAVEL_AIWMWEB",
+    "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "canonical_base_sha": "7326dec301d104be653f512aaec7ad061b569949"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-455F01DAC7",
+    "domain": "content",
+    "kind": "route",
+    "source_route": "/Error",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned_metadata": true,
+    "risk": "low",
+    "previous_state": "PENDING",
+    "defended_terminal_state": "ADAPTED"
+  },
+  "source_behavior": {
+    "page_title": "Unexpected error",
+    "purpose": "Render a safe error center with Error ID, Correlation ID and error time while directing full diagnostics to server logs.",
+    "sensitive_detail_policy": "The route page itself states that sensitive technical details are not exposed.",
+    "tracking_fallback": "The source falls back to the current HTTP trace identifier when dedicated ErrorId/CorrelationId items are absent."
+  },
+  "laravel_adaptation": {
+    "route": "GET /Error",
+    "route_name": "canonical.error",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/ErrorRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ErrorReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/platform/error.blade.php",
+    "tracking_authority": "variants/laravel-aiwmweb/backend/app/Http/Middleware/RequestCorrelation.php",
+    "behavior": "The controller rereads request_id and correlation_id already normalized by RequestCorrelation and renders only those identifiers plus current error time. Query parameters, exception messages and stack traces are not rendered.",
+    "operation_marker": "AIMW-CONT-455F01DAC7"
+  },
+  "security_and_tenancy": {
+    "adaptation": "tenant-neutral route matching the source /Error surface",
+    "reason": "The canonical scanner marks the row tenant-owned, but the source route has no tenant/resource parameter or authorization attribute and its diagnostic payload is request-local rather than tenant data.",
+    "route_parameters": [],
+    "middleware": ["web"],
+    "auth_middleware": false,
+    "tenant_context_middleware": false,
+    "proof": [
+      "RequestCorrelation accepts only bounded identifier characters and generates a UUID when caller identifiers are invalid.",
+      "The Blade view uses escaped interpolation and never consumes query-string exception/error payloads.",
+      "Guest and authenticated identities receive byte-identical HTML when request IDs and time are fixed.",
+      "No tenant, user, membership or direct resource identifier appears in the route contract."
+    ]
+  },
+  "focused_acceptance": {
+    "test": "variants/laravel-aiwmweb/backend/tests/Feature/ErrorRouteTerminalityTest.php",
+    "assertions": [
+      "canonical operation metadata and exact /Error source identity",
+      "explicit ErrorReadController route with web-only middleware and zero parameters",
+      "authoritative request/correlation identifier propagation",
+      "invalid caller tracking headers are replaced and not reflected",
+      "query-supplied secrets/exception details are not rendered",
+      "guest/Alpha/Beta identity-neutral byte-equivalent output"
+    ]
+  },
+  "ownership_boundary": {
+    "claimed_operations": ["AIMW-CONT-455F01DAC7"],
+    "explicitly_unclaimed_same_source_operations": [
+      "AIMW-CONT-85394A0E55",
+      "AIMW-CONT-8B3518EF80",
+      "AIMW-SYNC-89777052CB"
+    ],
+    "same_source_control_behavior_added": false,
+    "generated_reconciliation_edited": false
+  },
+  "implementation_snapshot": "ee7c494f28b1d0a9394edb61bc47fb9c91f832c7",
+  "evidence_commit_rule": "This artifact records the implementation snapshot immediately before evidence. The evidence-bearing final PR head must itself pass exact-head CI before VERIFIED_TASK_COMPLETE may be declared."
+}
