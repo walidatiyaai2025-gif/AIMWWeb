@@ -4,7 +4,8 @@
     "issue": 257,
     "variant": "LARAVEL_AIWMWEB",
     "composition_branch": "worker/laravel-aiwmweb-closure-composition",
-    "composition_sha": "a61f644948b733e836747fa8c48e42187ebb1e41"
+    "claim_base_sha": "a61f644948b733e836747fa8c48e42187ebb1e41",
+    "latest_reconciled_composition_sha": "c695d4a8934ef464a3fb75bdef6ad4f1734e4703"
   },
   "canonical_operation": {
     "operation_id": "AIMW-AI-825B2F5A38",
@@ -85,10 +86,10 @@
         "compose-production-runtime": "success"
       }
     },
-    "evidence_bearing_head_rule": "This file update creates a later evidence-bearing commit. That later commit must independently pass all exact-head repository workflows before final worker handoff."
+    "evidence_bearing_head_rule": "The branch is subsequently reconciled with the latest live composition. That final merge-style evidence-bearing head must independently pass all exact-head repository workflows before final worker handoff."
   },
   "denominator": {
-    "source": "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md at composition SHA a61f644948b733e836747fa8c48e42187ebb1e41",
+    "source": "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md at live composition SHA c695d4a8934ef464a3fb75bdef6ad4f1734e4703",
     "total": 931,
     "previous_terminal": 424,
     "new_terminal_after_this_isolated_closure": 425,
@@ -104,5 +105,5 @@
     "merged": false,
     "force_pushed": false
   },
-  "evidence_commit_rule": "A Git commit cannot embed its own SHA. The evidence-bearing commit that adds the green implementation CI metadata must itself pass all exact-head repository gates before final handoff/integration readiness is claimed."
+  "evidence_commit_rule": "A Git commit cannot embed its own SHA. The final composition-reconciled evidence-bearing commit must pass all exact-head repository gates before final handoff/integration readiness is claimed."
 }
