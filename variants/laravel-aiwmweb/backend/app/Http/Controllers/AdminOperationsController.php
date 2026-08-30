@@ -225,8 +225,13 @@ final class AdminOperationsController extends Controller
     public function logs(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('operations.manage');
+        $filters = $request->only(['level', 'correlation_id', 'q', 'search']);
+        if (empty($filters['q']) && ! empty($filters['search'])) {
+            $filters['q'] = $filters['search'];
+        }
+        unset($filters['search']);
 
-        return response()->json(['data' => $this->operations->logs($request->only(['level', 'correlation_id', 'q']))]);
+        return response()->json(['data' => $this->operations->logs($filters)]);
     }
 
     public function diagnostics(string $tenant): JsonResponse
