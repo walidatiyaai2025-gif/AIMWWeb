@@ -16,29 +16,77 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Build compact pending inventory
+      - name: Scan exact pending IDs against live repository
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          src = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
-          payload = json.loads(src.read_text(encoding='utf-8'))
-          rows = [row for row in payload.get('operations', []) if row.get('migration_state') == 'PENDING']
-          Path('/tmp/pending-closure-candidates.json').write_text(json.dumps(rows, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
           from collections import Counter
-          summary = {
-              'total': len(rows),
-              'by_kind': dict(Counter(str(r.get('kind')) for r in rows)),
-              'by_domain': dict(Counter(str(r.get('domain')) for r in rows)),
-              'row_keys': sorted({k for r in rows for k in r.keys()}),
+
+          root = Path('.')
+          recon_path = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          payload = json.loads(recon_path.read_text(encoding='utf-8'))
+          rows = [row for row in payload.get('operations', []) if row.get('migration_state') == 'PENDING']
+          ids = {row['operation_id'] for row in rows}
+          hits = {op: [] for op in ids}
+
+          scan_roots = [Path('variants/laravel-aiwmweb')]
+          skip_names = {'operation-parity-reconciliation.json', 'operation-parity-reconciliation.md'}
+          for scan_root in scan_roots:
+              for path in scan_root.rglob('*'):
+                  if not path.is_file() or path.name in skip_names:
+                      continue
+                  try:
+                      if path.stat().st_size > 2_000_000:
+                          continue
+                      text = path.read_text(encoding='utf-8')
+                  except (UnicodeDecodeError, OSError):
+                      continue
+                  for op in ids:
+                      if op in text:
+                          s = path.as_posix()
+                          if '/docs/closure-evidence/' in s:
+                              category = 'evidence'
+                          elif '/tests/' in s or '/__tests__/' in s or s.endswith('.test.ts') or s.endswith('.test.tsx'):
+                              category = 'test'
+                          elif '/backend/' in s or '/connector/' in s:
+                              category = 'production'
+                          else:
+                              category = 'other'
+                          hits[op].append({'path': s, 'category': category})
+
+          out=[]
+          for row in rows:
+              op=row['operation_id']
+              grouped={k:[] for k in ('production','test','evidence','other')}
+              for hit in hits[op]: grouped[hit['category']].append(hit['path'])
+              out.append({
+                  'row': row,
+                  'production_hits': sorted(set(grouped['production'])),
+                  'test_hits': sorted(set(grouped['test'])),
+                  'evidence_hits': sorted(set(grouped['evidence'])),
+                  'other_hits': sorted(set(grouped['other'])),
+                  'triple_proof_candidate': bool(grouped['production'] and grouped['test'] and grouped['evidence']),
+                  'production_test_candidate': bool(grouped['production'] and grouped['test']),
+              })
+
+          summary={
+              'total_pending':len(out),
+              'triple_proof_candidates':sum(x['triple_proof_candidate'] for x in out),
+              'production_test_candidates':sum(x['production_test_candidate'] for x in out),
+              'with_production_marker':sum(bool(x['production_hits']) for x in out),
+              'with_test_marker':sum(bool(x['test_hits']) for x in out),
+              'with_evidence_marker':sum(bool(x['evidence_hits']) for x in out),
+              'triple_by_kind':dict(Counter(x['row'].get('kind') for x in out if x['triple_proof_candidate'])),
+              'triple_by_domain':dict(Counter(x['row'].get('domain') for x in out if x['triple_proof_candidate'])),
           }
-          Path('/tmp/pending-closure-summary.json').write_text(json.dumps(summary, indent=2)+'\n', encoding='utf-8')
+          Path('/tmp/pending-live-hit-scan.json').write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+          Path('/tmp/pending-live-hit-summary.json').write_text(json.dumps(summary,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
           print(json.dumps(summary, sort_keys=True))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: pending-closure-inventory-424-full
+          name: pending-live-hit-scan-424
           path: |
-            /tmp/pending-closure-candidates.json
-            /tmp/pending-closure-summary.json
-            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+            /tmp/pending-live-hit-scan.json
+            /tmp/pending-live-hit-summary.json
