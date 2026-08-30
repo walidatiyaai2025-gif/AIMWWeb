@@ -72,7 +72,7 @@
         "frontend",
         "frontend-production-build",
         "runtime-artifacts",
-        "compose-production_runtime"
+        "compose-production-runtime"
       ]
     }
   },
