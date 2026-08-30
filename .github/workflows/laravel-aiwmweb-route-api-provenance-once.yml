@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Consume strict route and API provenance and regenerate canonical parity
+      - name: Consume verified route and API provenance and regenerate canonical parity
         shell: bash
         run: |
           set -euo pipefail
