@@ -19,6 +19,7 @@ final class ApprovalQueueRouteServiceProvider extends ServiceProvider
             ->get('/tenants/{tenant}/approvals', [CanonicalWorkspaceRouteController::class, 'redirect'])
             ->defaults('workspace_permissions', 'tenant.view,approvals.view')
             ->defaults('workspace_target', '/module/approvals')
+            ->defaults('canonical_operation', 'AIMW-APPR-A292974395')
             ->name('canonical.alias.approvals');
     }
 }
