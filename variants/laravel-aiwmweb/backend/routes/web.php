@@ -1,6 +1,7 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
@@ -19,6 +20,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
+Route::get('/access-denied', AccessDeniedReadController::class)->name('canonical.access-denied');
 Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
@@ -141,6 +143,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'logs' => "/tenants/{$tenant}/admin/logs",
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
             'backups' => "/tenants/{$tenant}/admin/backups",
+            'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
             'application-users' => "/tenants/{$tenant}/admin/members",
@@ -232,6 +235,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
         Route::get('/module/logs', 'show')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->name('canonical.workspace.logs');
+        Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');

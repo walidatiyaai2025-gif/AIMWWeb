@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-1E33F01F4E",
+    "domain": "ai",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor",
+    "source_route": "/settings/ai-prompts",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "Administrator-only AI Prompt Templates registry page that reads the real prompt store, current template state and append-only revision history.",
+    "operation_boundary": "This route operation owns only opening/rendering the prompt registry. New, Save and Restore are distinct canonical controls and are not claimed by this wave.",
+    "read_semantics": "read-only registry inspection; the canonical route itself performs no prompt mutation"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/settings/ai-prompts",
+    "route_name": "tenant.settings.ai-prompts",
+    "controller": "App\\Http\\Controllers\\AiPromptTemplatesReadController",
+    "route_provider": "App\\Providers\\AiPromptTemplatesRouteServiceProvider",
+    "persistence": [
+      "App\\Models\\AiPromptTemplate using BelongsToTenant",
+      "App\\Models\\AiPromptRevision using BelongsToTenant"
+    ],
+    "view": "resources/views/ai/prompt-templates.blade.php",
+    "runtime_data": "real persisted tenant-scoped prompt templates and append-only revisions; no demo/sample rows",
+    "read_side_effect_rule": "The controller queries the persisted models directly and deliberately does not call PromptRegistryService::all(), because that service may lazily seed built-ins and would violate canonical mutation=false semantics on GET.",
+    "mutation_controls_added": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated settings manager opens /tenants/{tenant}/settings/ai-prompts",
+    "auth + tenant.context resolve an active membership for the route tenant",
+    "AiPromptTemplatesReadController authorizes settings.manage and rechecks the active TenantContext slug against the route tenant",
+    "AiPromptTemplate and AiPromptRevision are read through the existing BelongsToTenant global scope",
+    "the server-rendered view presents the authoritative template content, status/current revision and persisted revision history",
+    "an empty tenant registry renders an explicit zero-template empty state without seeding or inventing records"
+  ],
+  "authorization": {
+    "route_middleware": ["web", "auth", "tenant.context"],
+    "controller_permission": "settings.manage",
+    "source_equivalence": "settings.manage is the existing Laravel administrator/settings-management permission used for tenant settings administration",
+    "guest": "redirect to canonical /login",
+    "missing_permission": "403",
+    "foreign_tenant": "404"
+  },
+  "tenant_and_idor_isolation": {
+    "tenant_scope": "AiPromptTemplate and AiPromptRevision both use the shared BelongsToTenant scope under the active TenantContext",
+    "tenant_a_to_tenant_b_route": "404 when the authenticated user lacks an active membership for the requested tenant",
+    "tenant_a_response_contains_tenant_b_templates": false,
+    "direct_id_surface": "none; the canonical route accepts only the tenant slug and introduces no template/revision identifier parameter",
+    "foreign_template_proof": "focused acceptance persists a Beta template with secret content and proves it is absent from the Alpha response"
+  },
+  "runtime_semantics": {
+    "explicit_route_before_spa_catch_all": true,
+    "real_persisted_data": true,
+    "placeholder_or_catch_all_only": false,
+    "demo_or_sample_data": false,
+    "mutation": false,
+    "read_side_mutation": false,
+    "fake_success_path": "not applicable; this operation is read-only",
+    "authoritative_reread": "each GET reads the current persisted tenant-scoped template and revision rows",
+    "idempotency": "GET-only; focused acceptance proves prompt/revision record counts are unchanged by the read",
+    "retry_safety": "repeated requests repeat only the same authorized tenant-scoped read",
+    "truthful_empty_state": "zero persisted templates renders an explicit empty state and leaves both prompt tables empty",
+    "audit_or_mutation_receipt": "not applicable because this canonical operation is read-only"
+  },
+  "acceptance_tests": {
+    "php_feature_file": "backend/tests/Feature/AiPromptTemplatesRouteTerminalityTest.php",
+    "php_feature": [
+      "test_canonical_reconciliation_row_is_the_pending_ai_prompt_templates_route",
+      "test_ai_prompt_templates_is_an_explicit_guarded_route_without_direct_id_surface",
+      "test_guest_is_redirected_to_login",
+      "test_settings_manager_reads_only_authoritative_tenant_templates_and_revision_history",
+      "test_empty_registry_is_truthful_and_read_has_no_seed_side_effect",
+      "test_route_fails_closed_for_missing_settings_permission_and_foreign_tenant"
+    ],
+    "sqlite_full_suite": "138 passed / 1554 assertions on exact implementation SHA",
+    "production_like_repository_gates": [
+      "Pint + SQLite migrate:fresh + full PHP suite",
+      "MySQL fresh/rollback/forward + full PHP suite",
+      "Redis tenant lock + real queue worker + scheduler smoke",
+      "WordPress disposable runtime",
+      "WordPress real REST E2E",
+      "frontend typecheck/tests/build",
+      "frontend production build",
+      "runtime artifacts",
+      "acceptance release gate",
+      "production Docker Compose model/image build + stack boot + real runtime smokes + cleanup"
+    ]
+  },
+  "implementation_snapshot_sha": "e7b7da21783702dc6beea0d2bf2473670a1566f8",
+  "exact_tested_sha": "e7b7da21783702dc6beea0d2bf2473670a1566f8",
+  "exact_tested_sha_ci": {
+    "pr_plan_link": {"run_id": 33221891470, "run_number": 919, "result": "success"},
+    "laravel_aiwmweb_cross_domain_security": {"run_id": 33221891471, "run_number": 200, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 33221891479, "run_number": 269, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_suite": "success",
+    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "frontend_production_build": "success",
+    "runtime_artifacts": "success",
+    "acceptance_gate": "success",
+    "production_compose_model_image_build_stack_boot_real_runtime_smokes_cleanup": "success"
+  },
+  "canonical_denominator": {
+    "source": "latest generated 931-operation reconciliation on closure composition head 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal_after_this_one_operation": 359,
+    "previous_pending": 573,
+    "new_pending_after_this_one_operation": 572,
+    "generated_reconciliation_modified": false,
+    "note": "This is this worker's isolated one-operation contribution against the latest generated closure-composition reconciliation. Parallel unmerged closure contributions are not folded into these counts."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-1E33F01F4E",
+    "explicitly_excluded_live_owned_operation": "AIMW-AI-1E1BF9CEDC",
+    "second_operation_started": false,
+    "prompt_new_save_restore_controls_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_931_reconciliation_modified": false,
+    "force_push": false,
+    "merge": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "reason": "The exact canonical route is explicit and user-reachable, backed only by persisted tenant-scoped prompt-template and revision data, preserves read-only semantics without lazy-seed side effects, has deterministic authentication/RBAC/tenant/IDOR proof, and the implementation snapshot passed every required repository gate including production Docker Compose runtime smoke.",
+    "evidence_bearing_head_ci": "must be revalidated after this evidence-only commit; final-head CI is recorded in PR #303 because a commit cannot self-contain its own SHA without changing it"
+  }
+}
