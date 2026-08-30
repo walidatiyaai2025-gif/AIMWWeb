@@ -14,6 +14,7 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
+import { prepareActionRequest } from './action-contract';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
 type CollectionEnvelope = {
@@ -143,11 +144,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const mutation = useMutation({
         mutationFn: async (payload: Record<string, string | number>) => {
             if (!dialog) throw new Error('Action contract is missing.');
+            const request = prepareActionRequest(dialog.contract, context, payload);
             return mutateThenReconcile(
-                () => apiRequest(dialog.contract.endpoint, {
-                    method: dialog.contract.method,
-                    body: dialog.contract.method === 'DELETE' ? undefined : JSON.stringify(payload),
-                }),
+                () => apiRequest(request.endpoint, { method: request.method, body: request.body }),
                 async () => {
                     const refreshed = await query.refetch();
                     if (refreshed.error) throw refreshed.error;

@@ -15,7 +15,7 @@ class FrontendContextTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_frontend_context_is_tenant_scoped_and_exposes_no_fake_capabilities(): void
+    public function test_frontend_context_is_tenant_scoped_and_exposes_authoritative_action_contracts(): void
     {
         $user = User::factory()->create(['name' => 'Frontend User', 'email' => 'frontend@example.test']);
         $alpha = $this->tenantMembership($user, 'alpha', ['tenant.view', 'content.view']);
@@ -26,6 +26,7 @@ class FrontendContextTest extends TestCase
         $response = $this->actingAs($user)->getJson('/tenants/alpha/context');
 
         $response->assertOk()
+            ->assertJsonPath('tenant.id', $alpha->tenant_id)
             ->assertJsonPath('tenant.slug', 'alpha')
             ->assertJsonPath('user.email', 'frontend@example.test')
             ->assertJsonCount(2, 'tenants')
@@ -35,12 +36,27 @@ class FrontendContextTest extends TestCase
             ->assertJsonFragment(['tenant.view'])
             ->assertJsonFragment(['content.view'])
             ->assertJsonPath('connectors', [])
-            ->assertJsonPath('capabilities', [])
             ->assertJsonPath('api.sites', '/api/tenants/alpha/sites')
             ->assertJsonMissingPath('api.posts')
             ->assertJsonPath('active_site', null)
-            ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications')
-            ->assertJsonPath('actions', []);
+            ->assertJsonPath('api.notifications', '/api/v1/tenants/alpha/notifications');
+
+        $actions = $response->json('actions');
+        $this->assertIsArray($actions);
+        $this->assertCount(count(config('frontend_actions', [])), $actions);
+        $this->assertSame('AIMW-SYNC-A9E956A4DA', $actions['sites.refresh']['operation_id']);
+        $this->assertSame($alpha->tenant_id, $actions['sites.refresh']['tenant_id']);
+        $this->assertSame('enabled', $actions['sites.refresh']['availability']['state']);
+        $this->assertSame('permission_denied', $actions['sites.connect']['availability']['state']);
+        $this->assertSame('permission_denied', $actions['users.disable']['availability']['state']);
+        $this->assertSame('site_context_required', $actions['seo.audit.run']['availability']['state']);
+
+        $capabilities = $response->json('capabilities');
+        $this->assertIsArray($capabilities);
+        $this->assertSame('permission_denied', $capabilities['sites.sites.connect']['state']);
+        $this->assertSame('permission_denied', $capabilities['site-connect.sites.connect']['state']);
+        $this->assertSame('pending_integration', $capabilities['seo-audit.seo.audit.run']['state']);
+        $this->assertArrayNotHasKey('sites.sites.refresh', $capabilities);
 
         $this->assertSame($alpha->tenant_id, Tenant::query()->where('slug', 'alpha')->value('id'));
     }
