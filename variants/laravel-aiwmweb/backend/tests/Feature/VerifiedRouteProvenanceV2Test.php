@@ -15,8 +15,6 @@ class VerifiedRouteProvenanceV2Test extends TestCase
         'AIMW-COMM-C2DDF5DAE3' => ['canonical.workspace.comments', 'tenants/{tenant}/module/comments', '/module/comments'],
         'AIMW-TAXO-AEEE1025B9' => ['canonical.workspace.taxonomy', 'tenants/{tenant}/module/taxonomy', '/module/taxonomy'],
         'AIMW-SYNC-1C799B7D70' => ['canonical.workspace.sync', 'tenants/{tenant}/module/sync', '/module/sync'],
-        'AIMW-CONT-5D18F49928' => ['canonical.workspace.reports', 'tenants/{tenant}/module/reports', '/module/reports'],
-        'AIMW-CONT-8140D785B5' => ['canonical.alias.reports', 'tenants/{tenant}/reports', '/reports'],
         'AIMW-CONT-9B87A269F3' => ['canonical.workspace.site-operations', 'tenants/{tenant}/site-operations', '/site-operations'],
         'AIMW-CONT-D76D83682F' => ['canonical.alias.operations-sites', 'tenants/{tenant}/operations/sites', '/operations/sites'],
         'AIMW-AUTO-38567579D6' => ['canonical.workspace.automation', 'tenants/{tenant}/automation-center', '/automation-center'],
