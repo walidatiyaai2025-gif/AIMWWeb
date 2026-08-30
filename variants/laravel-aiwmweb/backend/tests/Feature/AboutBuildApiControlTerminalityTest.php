@@ -35,6 +35,8 @@ class AboutBuildApiControlTerminalityTest extends TestCase
 
     public function test_visible_control_is_tenant_qualified_and_opens_the_authoritative_build_read(): void
     {
+        $this->withoutVite();
+
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['tenant.view', 'execution.view']);
         $this->membership($user, 'beta', ['tenant.view', 'execution.view']);
@@ -57,6 +59,8 @@ class AboutBuildApiControlTerminalityTest extends TestCase
 
     public function test_control_fails_closed_when_api_permission_is_missing(): void
     {
+        $this->withoutVite();
+
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['tenant.view']);
 
