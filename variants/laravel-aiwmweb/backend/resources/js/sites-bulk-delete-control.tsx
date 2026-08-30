@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 import { mutateThenReconcile } from './reconciliation';
 
 const OPERATION_ID = 'AIMW-BILL-337E4FF969';
+const REQUEST_OPERATION_ID = 'AIMW-SYNC-7C3B0E834E';
 const MAX_SITES = 100;
 
 type SiteRow = { id: number; name?: string; url?: string; status?: string };
@@ -64,6 +65,7 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
     };
 
     const selectVisible = () => setSelected(new Set(sites.slice(0, MAX_SITES).map((site) => site.id)));
+    const requestBulkDelete = () => setConfirmOpen(true);
 
     return (
         <section className="panel data-panel" aria-label={locale === 'ar' ? 'الحذف الجماعي للمواقع' : 'Bulk site deletion'}>
@@ -84,7 +86,13 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                     <div className="toolbar-actions">
                         <button type="button" className="btn" onClick={selectVisible} disabled={mutation.isPending}>{locale === 'ar' ? 'تحديد الظاهر' : 'Select visible'}</button>
                         <button type="button" className="btn" onClick={() => setSelected(new Set())} disabled={mutation.isPending || selectedIds.length === 0}>{locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}</button>
-                        <button type="button" className="btn" onClick={() => setConfirmOpen(true)} disabled={mutation.isPending || selectedIds.length === 0}>{locale === 'ar' ? 'حذف المحدد' : 'Delete selected'}</button>
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={REQUEST_OPERATION_ID}
+                            onClick={requestBulkDelete}
+                            disabled={mutation.isPending || selectedIds.length === 0}
+                        >{locale === 'ar' ? 'حذف المحدد' : 'Delete selected'}</button>
                     </div>
                     <div className="table-scroll" role="region" aria-label={locale === 'ar' ? 'اختيار المواقع للحذف' : 'Select sites for deletion'}>
                         <table className="data-table">
