@@ -1,34 +1,20 @@
-name: Laravel AIWMWeb Reports Parity Refresh Once
+name: Laravel AIWMWeb Reports Parity Preview
 
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/laravel-aiwmweb-parity-refresh-reports-once.yml'
-      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  refresh:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+  preview:
     runs-on: ubuntu-latest
-    env:
-      PYTHONHASHSEED: '0'
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-
-      - name: Fetch exact evidence refs
-        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Regenerate exact reconciliation artifacts
+      - name: Rebuild reconciliation without repository writes
         run: |
           python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
             --output /tmp/operation-parity-reconciliation.json \
@@ -41,19 +27,3 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
-
-      - name: Commit generated reconciliation artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          if git diff --quiet -- variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md; then
-            echo 'Generated reconciliation is already current.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          git commit -m 'chore(laravel): refresh reports route parity'
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
