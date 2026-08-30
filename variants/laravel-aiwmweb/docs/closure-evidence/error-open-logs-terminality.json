@@ -63,7 +63,7 @@
   "acceptance_tests": {
     "file": "backend/tests/Feature/ErrorOpenLogsVisibleTerminalityTest.php",
     "coverage": [
-      "exact canonical PENDING operation identity and source metadata",
+      "exact canonical ADAPTED operation identity after deterministic reconciliation",
       "existing guarded tenant Logs alias and real Logs workspace are the only destination authority",
       "one authorized tenant renders exact operation marker and tenant-qualified href",
       "guest and missing-permission identities do not receive the control",
@@ -71,31 +71,43 @@
       "multiple memberships with exactly one authorized tenant resolve only that tenant",
       "foreign tenant requests return 404 and missing destination permission returns 403",
       "merged Back-to-dashboard operation remains present and separate",
-      "Copy error details AIMW-SYNC-89777052CB remains unimplemented and unclaimed"
+      "Copy error details AIMW-SYNC-89777052CB remains a separately owned operation"
     ]
   },
   "implementation": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_sha": "09e544d60a768c14483380edbc8d47912b8d7ef0",
-    "worker_branch": "worker/laravel-AIMW-CONT-8B3518EF80-error-open-logs"
+    "worker_branch": "worker/laravel-AIMW-CONT-8B3518EF80-error-open-logs",
+    "exact_green_focused_source_sha": "c75b7605a1ddc4e89fb6d7be8b627ca1256309d6"
   },
   "scope_guards": {
     "exactly_one_operation": true,
     "sibling_back_dashboard_operation_modified": false,
     "sibling_copy_error_details_operation_modified": false,
     "new_global_logs_route_added": false,
-    "generated_reconciliation_edited": false,
+    "generated_reconciliation_edited": true,
+    "generated_reconciliation_method": "official finalize_operation_parity.py plus apply_focused_closure_evidence.py pinned to exact green focused source c75b7605a1ddc4e89fb6d7be8b627ca1256309d6",
     "aspnet_current_product_modified": false,
     "merge_performed": false
   },
+  "canonical_reconciliation": {
+    "total": 931,
+    "terminal": 417,
+    "pending": 514,
+    "blocked": 0,
+    "overall_parity_percent": 44.79,
+    "selected_operation_state": "ADAPTED",
+    "validation": "PASS",
+    "note": "The official focused verifier also reconciled other previously existing exact-pushed focused evidence. This worker still claims and implements only AIMW-CONT-8B3518EF80."
+  },
   "ci_policy": {
-    "authority": "GitHub Actions on the exact final pushed PR head",
+    "authority": "GitHub Actions on the exact final pushed helper-free PR head",
     "required_before_final_handoff": true,
     "evidence_file_does_not_embed_mutable_run_ids": true
   },
   "terminality": {
     "state": "ADAPTED",
     "candidate_state": "ADAPTED",
-    "basis": "Real source-equivalent navigation is bound to the canonical operation and reaches only the existing guarded tenant Logs authority when tenant selection is unambiguous and authorized. Final VERIFIED_TASK_COMPLETE additionally requires exact-head CI success."
+    "basis": "Real source-equivalent navigation is bound to the canonical operation and reaches only the existing guarded tenant Logs authority when tenant selection is unambiguous and authorized. Official deterministic reconciliation marks the operation ADAPTED; final VERIFIED_TASK_COMPLETE additionally requires helper-free exact-head CI success."
   }
 }
