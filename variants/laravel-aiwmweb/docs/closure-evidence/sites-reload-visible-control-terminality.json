@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SYNC-A9E956A4DA",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "ReloadClickedAsync",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "reload": "The source Sites workspace Refresh control invokes ReloadClickedAsync, which rereads the authoritative site collection and reapplies the current view state.",
+    "read_only": "Reload is a read operation and does not persist, enqueue, call a provider mutation, or claim mutation success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/sites-bulk-delete-control.tsx binds AIMW-SYNC-A9E956A4DA to a real Refresh button on the Sites workspace control surface.",
+    "read_contract": "Refresh invokes the existing tenant-scoped React Query refetch for context.api.sites and therefore rereads the authoritative Laravel Sites endpoint.",
+    "mutation_boundary": "The reload control issues only the existing GET read; destructive RequestBulkDelete and ConfirmBulkDelete controls remain separate operations."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesReloadVisibleControlTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/sites-reload-visible-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and non-mutation metadata",
+      "production operation marker on the real Refresh control",
+      "Refresh performs a second authoritative tenant Sites GET",
+      "Refresh issues no mutation request",
+      "foreign tenant Sites workspace returns 404 before the control can render"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  }
+}
