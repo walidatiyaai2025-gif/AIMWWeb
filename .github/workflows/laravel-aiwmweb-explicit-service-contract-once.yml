@@ -1,0 +1,292 @@
+name: Laravel AIWMWeb Explicit Service Contract Once
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/laravel-aiwmweb-explicit-service-contract-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Add explicit service evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/tools/finalize_operation_parity.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''            if row.get("kind") != "route":
+                raise SystemExit(f"explicit route evidence may only terminalize route rows: {operation_id}")
+'''
+          new = '''            if row.get("kind") != "route":
+                if row.get("kind") == "service":
+                    continue
+                raise SystemExit(f"explicit route evidence may only terminalize route rows: {operation_id}")
+'''
+          if old not in text:
+              raise SystemExit('route kind guard anchor missing')
+          text = text.replace(old, new, 1)
+
+          old = '''    expected = {
+        operation_id
+        for source in manifest["countable_sources"]
+        for operation_id in (source.get("operation_evidence") or {})
+    }
+'''
+          new = '''    expected = {
+        operation_id
+        for source in manifest["countable_sources"]
+        for operation_id in (source.get("operation_evidence") or {})
+        if rows_by_id.get(operation_id, {}).get("kind") == "route"
+    }
+'''
+          if old not in text:
+              raise SystemExit('route expected-set anchor missing')
+          text = text.replace(old, new, 1)
+
+          anchor = '\n\ndef finalize_summary(payload: dict, rows: list[dict], manifest: dict) -> None:\n'
+          if anchor not in text:
+              raise SystemExit('finalize_summary anchor missing')
+          service_function = r'''
+
+def apply_explicit_service_evidence(rows: list[dict], manifest: dict, snapshots: list[reconcile.Snapshot]) -> None:
+    """Terminalize only exact service IDs backed by a pushed operation-linked contract."""
+    rows_by_id = {str(row.get("operation_id") or ""): row for row in rows}
+    snapshots_by_sha = {snapshot.sha: snapshot for snapshot in snapshots}
+    applied: set[str] = set()
+
+    for source in manifest["countable_sources"]:
+        evidence_map = source.get("operation_evidence") or {}
+        if not evidence_map:
+            continue
+
+        source_sha = str(source["sha"])
+        snapshot = snapshots_by_sha.get(source_sha)
+        if snapshot is None:
+            raise SystemExit(f"explicit service evidence source was not loaded: {source_sha}")
+
+        files_by_path = {file.path: file for file in snapshot.files}
+        source_domains = set(source.get("domains", []))
+
+        for operation_id, evidence in evidence_map.items():
+            row = rows_by_id.get(operation_id)
+            if row is None:
+                raise SystemExit(f"explicit service evidence references unknown operation: {operation_id}")
+            if row.get("kind") != "service":
+                continue
+            if operation_id in applied:
+                raise SystemExit(f"explicit service evidence is duplicated for operation: {operation_id}")
+            if row.get("migration_state") != "PENDING":
+                raise SystemExit(
+                    f"explicit service evidence would double-count an already terminal operation: {operation_id}"
+                )
+            if str(row.get("domain")) not in source_domains:
+                raise SystemExit(f"explicit service evidence source does not own operation domain: {operation_id}")
+
+            destination_path = str(evidence.get("destination_path") or "")
+            acceptance_test = str(evidence.get("acceptance_test") or "")
+            evidence_path = str(evidence.get("evidence_path") or "")
+            required_paths = (destination_path, acceptance_test, evidence_path)
+            if not all(path and path in files_by_path for path in required_paths):
+                raise SystemExit(f"explicit service evidence is missing pushed code/test/evidence paths: {operation_id}")
+
+            destination_text = files_by_path[destination_path].text
+            test_text = files_by_path[acceptance_test].text
+            evidence_text = files_by_path[evidence_path].text
+            canonical_service = str(row.get("service") or "")
+            service_type, _, service_method = canonical_service.partition(".")
+            destination_lower = destination_text.lower()
+            test_lower = test_text.lower()
+
+            if operation_id not in destination_text or operation_id not in test_text or operation_id not in evidence_text:
+                raise SystemExit(f"explicit service evidence is not operation-linked in code/test/evidence: {operation_id}")
+            if service_type and service_type.lower() not in destination_lower:
+                raise SystemExit(f"explicit service destination lacks canonical service type: {operation_id}")
+            if service_method and service_method.lower() not in destination_lower:
+                raise SystemExit(f"explicit service destination lacks canonical service method: {operation_id}")
+            if bool(row.get("tenant_owned")):
+                tenant_code = any(signal in destination_text for signal in ("TenantContext", "tenant_id", "BelongsToTenant"))
+                tenant_test = any(
+                    signal in test_lower
+                    for signal in ("foreign_tenant", "tenant_isolation", "modelnotfoundexception", "assertnotfound")
+                )
+                if not tenant_code or not tenant_test:
+                    raise SystemExit(f"explicit service destination lacks tenant-isolation evidence: {operation_id}")
+            if bool(row.get("mutation")):
+                mutation_security = any(
+                    signal in (destination_text + "\n" + test_text).lower()
+                    for signal in ("authorize", "permission", "approval")
+                )
+                if not mutation_security:
+                    raise SystemExit(f"explicit mutating service lacks authorization/approval evidence: {operation_id}")
+
+            try:
+                evidence_payload = json.loads(evidence_text)
+            except json.JSONDecodeError as exc:
+                raise SystemExit(f"explicit service evidence JSON is invalid for {operation_id}: {exc}") from exc
+            evidence_operation = evidence_payload.get("operation") or {}
+            if evidence_operation.get("operation_id") != operation_id or evidence_operation.get("terminal_state") != "ADAPTED":
+                raise SystemExit(f"explicit service evidence does not declare exact ADAPTED operation: {operation_id}")
+
+            row["migration_state"] = "ADAPTED"
+            row["laravel_destination"] = destination_path
+            row["acceptance_test"] = acceptance_test
+            row["evidence"] = (
+                f"{source['label']}@{source_sha}: {destination_path}; "
+                f"explicit-service-contract:{operation_id}; evidence:{evidence_path}"
+            )
+            row["reconciliation"] = {
+                "decision": "ADAPTED",
+                "reason": (
+                    "Exact pushed service contract is linked to the canonical operation ID, "
+                    "canonical service method, tenant-isolation proof when required, and acceptance evidence."
+                ),
+                "source_label": source["label"],
+                "source_sha": source_sha,
+                "destination_path": destination_path,
+                "evidence_mode": "explicit_service_contract",
+                "evidence_path": evidence_path,
+                "signals": [
+                    f"operation:{operation_id}",
+                    f"service:{canonical_service}",
+                    f"test:{acceptance_test}",
+                ],
+            }
+            applied.add(operation_id)
+
+    expected = {
+        operation_id
+        for source in manifest["countable_sources"]
+        for operation_id in (source.get("operation_evidence") or {})
+        if rows_by_id.get(operation_id, {}).get("kind") == "service"
+    }
+    if applied != expected:
+        missing = sorted(expected - applied)
+        raise SystemExit("explicit service evidence was not fully applied: " + ", ".join(missing))
+'''
+          text = text.replace(anchor, service_function + anchor, 1)
+
+          old = '''    payload["classification_policy"]["explicit_route_policy"] = (
+        "route rows remain pending unless an exact pushed source declares operation_evidence "
+        "and the generator verifies route, auth/tenant action, test, and evidence links"
+    )
+'''
+          new = old + '''    payload["classification_policy"]["explicit_service_policy"] = (
+        "service rows may use exact operation_evidence only when the generator verifies the canonical "
+        "service method, pushed code/test/evidence paths, tenant isolation when required, and mutation security"
+    )
+'''
+          if old not in text:
+              raise SystemExit('classification policy anchor missing')
+          text = text.replace(old, new, 1)
+
+          old = '''    explicit_route_terminals = [
+        str(row["operation_id"])
+        for row in rows
+        if row.get("kind") == "route"
+        and row["migration_state"] in TERMINAL_STATES
+        and (row.get("reconciliation") or {}).get("evidence_mode") == "explicit_route_contract"
+    ]
+'''
+          new = old + '''    explicit_service_terminals = [
+        str(row["operation_id"])
+        for row in rows
+        if row.get("kind") == "service"
+        and row["migration_state"] in TERMINAL_STATES
+        and (row.get("reconciliation") or {}).get("evidence_mode") == "explicit_service_contract"
+    ]
+'''
+          if old not in text:
+              raise SystemExit('explicit route validation anchor missing')
+          text = text.replace(old, new, 1)
+
+          old = '''        "explicit_route_contract_terminals": sorted(explicit_route_terminals),
+        "route_or_visible_placeholder_terminals": placeholder_terminals,
+'''
+          new = '''        "explicit_route_contract_terminals": sorted(explicit_route_terminals),
+        "explicit_service_contract_terminals": sorted(explicit_service_terminals),
+        "route_or_visible_placeholder_terminals": placeholder_terminals,
+'''
+          if old not in text:
+              raise SystemExit('validation dictionary anchor missing')
+          text = text.replace(old, new, 1)
+
+          old = '''        f"- Explicit route contracts: **{len(validation['explicit_route_contract_terminals'])}**",
+        f"- Unpushed countable sources: **{len(validation['unpushed_sources_counted'])}**",
+'''
+          new = '''        f"- Explicit route contracts: **{len(validation['explicit_route_contract_terminals'])}**",
+        f"- Explicit service contracts: **{len(validation['explicit_service_contract_terminals'])}**",
+        f"- Unpushed countable sources: **{len(validation['unpushed_sources_counted'])}**",
+'''
+          if old not in text:
+              raise SystemExit('markdown validation anchor missing')
+          text = text.replace(old, new, 1)
+
+          old = '''    apply_explicit_route_evidence(reconciled_rows, manifest, snapshots)
+    payload = reconcile.summarize(reconciled_rows, manifest)
+'''
+          new = '''    apply_explicit_route_evidence(reconciled_rows, manifest, snapshots)
+    apply_explicit_service_evidence(reconciled_rows, manifest, snapshots)
+    payload = reconcile.summarize(reconciled_rows, manifest)
+'''
+          if old not in text:
+              raise SystemExit('main application anchor missing')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify tooling is neutral before evidence pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile variants/laravel-aiwmweb/tools/finalize_operation_parity.py
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/reconciliation.json \
+            --summary-output /tmp/summary.json \
+            --markdown-output /tmp/reconciliation.md \
+            --check-total 931
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('/tmp/reconciliation.json').read_text(encoding='utf-8'))
+          totals = payload['totals']
+          actual = {k: int(totals[k]) for k in ('terminal', 'pending', 'blocked')}
+          expected = {'terminal': 416, 'pending': 515, 'blocked': 0}
+          if actual != expected:
+              raise SystemExit(f'explicit-service tooling changed parity before pin: {actual}')
+          rows = {row['operation_id']: row for row in payload['operations']}
+          for operation_id in ('AIMW-AI-0F3763FDB4', 'AIMW-AI-34EC6312B9'):
+              if rows[operation_id]['migration_state'] != 'PENDING':
+                  raise SystemExit(f'{operation_id} moved before explicit evidence pin')
+          print('EXPLICIT_SERVICE_PREPIN_NEUTRAL=PASS')
+          PY
+
+      - name: Self-remove helper and persist tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/laravel-aiwmweb-explicit-service-contract-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+                  .github/workflows/laravel-aiwmweb-explicit-service-contract-once.yml
+          git commit -m 'feat(laravel): add explicit service parity contracts'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
