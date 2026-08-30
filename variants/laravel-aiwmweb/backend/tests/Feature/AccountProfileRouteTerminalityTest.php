@@ -31,7 +31,7 @@ class AccountProfileRouteTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('route', $operation['kind']);
         $this->assertSame('/account/profile', $operation['route_screen']);
