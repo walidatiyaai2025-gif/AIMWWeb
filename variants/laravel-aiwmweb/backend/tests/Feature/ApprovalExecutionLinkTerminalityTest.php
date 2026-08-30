@@ -19,7 +19,7 @@ class ApprovalExecutionLinkTerminalityTest extends TestCase
         $operation = collect($payload['operations'])->firstWhere('operation_id', 'AIMW-APPR-B360D1C8BA');
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('approvals', $operation['domain']);
         $this->assertSame('/approvals', $operation['route_screen']);

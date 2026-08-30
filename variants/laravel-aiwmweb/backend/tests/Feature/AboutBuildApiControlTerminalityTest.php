@@ -29,7 +29,7 @@ class AboutBuildApiControlTerminalityTest extends TestCase
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
     }
 

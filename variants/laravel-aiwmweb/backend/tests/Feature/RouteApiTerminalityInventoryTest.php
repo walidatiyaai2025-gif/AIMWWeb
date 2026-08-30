@@ -77,7 +77,7 @@ class RouteApiTerminalityInventoryTest extends TestCase
             $this->assertSame('ADAPTED', $operation['migration_state']);
             $this->assertSame('variants/laravel-aiwmweb/backend/routes/web.php', $operation['laravel_destination']);
             $this->assertSame('variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php', $operation['acceptance_test']);
-            $this->assertSame('0060add81df08a54de07d5a2c1cebe48058cdc41', $operation['reconciliation']['source_sha']);
+            $this->assertSame('e26a7d9a254f7df980714b778491d0f864605087', $operation['reconciliation']['source_sha']);
             $this->assertSame('explicit_route_contract', $operation['reconciliation']['evidence_mode']);
         }
     }
