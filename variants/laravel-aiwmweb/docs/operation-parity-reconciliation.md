@@ -8,28 +8,28 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 415 |
-| PENDING | 516 |
+| ADAPTED | 416 |
+| PENDING | 515 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 415 |
-| OVERALL_PARITY_PERCENT | 44.58% |
+| TERMINAL | 416 |
+| OVERALL_PARITY_PERCENT | 44.68% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **33**
-- Pending: **413**
+- Terminal: **34**
+- Pending: **412**
 - Blocked: **0**
-- Parity: **7.40%**
+- Parity: **7.62%**
 
 ## By domain
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 46 | 46 | 0 | 0 | 46 | 50.00% |
+| ai | 92 | 0 | 47 | 45 | 0 | 0 | 47 | 51.09% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 12 | 9 | 0 | 0 | 12 | 57.14% |
 | route | 84 | 0 | 33 | 51 | 0 | 0 | 33 | 39.29% |
 | service | 349 | 0 | 314 | 35 | 0 | 0 | 314 | 89.97% |
-| visible_control | 446 | 0 | 33 | 413 | 0 | 0 | 33 | 7.40% |
+| visible_control | 446 | 0 | 34 | 412 | 0 | 0 | 34 | 7.62% |
 
 ## Reproducibility / guard results
 
@@ -66,16 +66,15 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **33**
-- Focused visible-control contracts: **33**
+- Focused visible-control contracts: **34**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (46)
+### ai (45)
 
-- `AIMW-AI-0D4D60320B`
 - `AIMW-AI-0F3763FDB4`
 - `AIMW-AI-168B406674`
 - `AIMW-AI-2B31C6BDAF`
