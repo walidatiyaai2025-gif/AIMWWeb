@@ -17,10 +17,6 @@
         .diagnostic small { display: block; margin-bottom: 6px; color: #94a3b8; }
         .diagnostic strong { display: block; overflow-wrap: anywhere; }
         .note { padding: 14px; border-radius: 12px; background: rgba(59, 130, 246, .09); border: 1px solid rgba(96, 165, 250, .25); }
-        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-        .btn { display: inline-flex; padding: 10px 16px; border-radius: 10px; background: #1e293b; color: #f8fafc; text-decoration: none; font-weight: 700; border: 1px solid rgba(148, 163, 184, .25); }
-        .btn.primary { background: #2563eb; border-color: #2563eb; }
-        .btn:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
     </style>
 </head>
 <body>
@@ -39,12 +35,7 @@
                 <div class="diagnostic"><small>Error time</small><strong>{{ $errorTime }}</strong></div>
             </div>
 
-            <div class="note">Open Logs &amp; Errors and search by Error ID or Correlation ID to locate the complete event.</div>
-
-            <div class="actions">
-                <a class="btn primary" href="/logs">Open logs</a>
-                <a class="btn" href="/">Back to dashboard</a>
-            </div>
+            <div class="note">Use the Error ID or Correlation ID when reviewing server logs or requesting support.</div>
         </section>
     </main>
 </body>
