@@ -18,6 +18,7 @@ import { prepareActionRequest } from './action-contract';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
+const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 
 type CollectionEnvelope = {
     data?: Array<Record<string, unknown>>;
@@ -133,6 +134,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [sitesFilter, setSitesFilter] = useState<'all' | 'connected'>('all');
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
@@ -178,6 +180,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;
 
     const collection = normalizeCollection(query.data);
+    const visibleRows = route.key === 'sites' && sitesFilter === 'connected'
+        ? collection.rows.filter((row) => String(row.status ?? '').toLowerCase() === 'active')
+        : collection.rows;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
 
     return (
@@ -189,6 +194,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     <button type="submit" className="btn">{text(commonText.search)}</button>
                 </form>
                 <div className="toolbar-actions">
+                    {route.key === 'sites' ? (
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={SITES_SHOW_ALL_OPERATION_ID}
+                            aria-pressed={sitesFilter === 'all'}
+                            onClick={() => setSitesFilter('all')}
+                        >{locale === 'ar' ? 'الكل' : 'All'}</button>
+                    ) : null}
                     <button
                         type="button"
                         className="btn"
@@ -199,8 +213,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 </div>
             </section>
             <section className="panel data-panel">
-                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{collection.total}</span></header>
-                {collection.rows.length ? <DataTable rows={collection.rows} /> : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
+                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter === 'connected' ? visibleRows.length : collection.total}</span></header>
+                {visibleRows.length ? <DataTable rows={visibleRows} /> : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
             </section>
             <ActionDialog
