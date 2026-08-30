@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\AccessDeniedReadController;
 use App\Models\Tenant;
+use App\Models\TenantMembership;
 use App\Models\User;
+use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -16,12 +18,12 @@ final class AccessDeniedReturnHomeTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-9D5E269773';
 
-    public function test_exact_canonical_operation_is_the_pending_return_home_visible_control(): void
+    public function test_exact_canonical_operation_is_the_terminal_return_home_visible_control(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('content', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('/access-denied', $row['route_screen']);
@@ -70,6 +72,8 @@ final class AccessDeniedReturnHomeTerminalityTest extends TestCase
         $tenantB = Tenant::query()->create(['name' => 'Return Home Beta Tenant', 'slug' => 'return-home-beta']);
         $userA = User::factory()->create(['name' => 'Return Home Alpha User', 'email' => 'return-home-alpha@example.test']);
         $userB = User::factory()->create(['name' => 'Return Home Beta User', 'email' => 'return-home-beta@example.test']);
+        $this->membership($userA, $tenantA);
+        $this->membership($userB, $tenantB);
 
         $anonymous = $this->get('/access-denied?tenant='.$tenantA->slug)->assertOk()->getContent();
         $alpha = $this->actingAs($userA)->get('/access-denied?tenant='.$tenantA->slug)->assertOk()->getContent();
@@ -85,6 +89,10 @@ final class AccessDeniedReturnHomeTerminalityTest extends TestCase
             $this->assertStringNotContainsString($sentinel, $alpha);
             $this->assertStringNotContainsString($sentinel, $beta);
         }
+
+        $this->actingAs($userA)
+            ->get('/tenants/'.$tenantB->slug.'/access-denied')
+            ->assertNotFound();
     }
 
     public function test_control_introduces_no_direct_id_or_tenant_routing_surface(): void
@@ -101,6 +109,21 @@ final class AccessDeniedReturnHomeTerminalityTest extends TestCase
         $this->assertStringNotContainsString('{tenant}', $html);
         $this->assertStringNotContainsString('{user}', $html);
         $this->assertStringNotContainsString('{id}', $html);
+    }
+
+    private function membership(User $user, Tenant $tenant): TenantMembership
+    {
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
+
+        try {
+            return TenantMembership::query()->create([
+                'user_id' => $user->id,
+                'status' => 'active',
+            ]);
+        } finally {
+            $context->forget();
+        }
     }
 
     /** @return array<string, mixed> */

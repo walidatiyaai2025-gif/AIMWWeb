@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 411 |
-| PENDING | 520 |
+| ADAPTED | 412 |
+| PENDING | 519 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 411 |
-| OVERALL_PARITY_PERCENT | 44.15% |
+| TERMINAL | 412 |
+| OVERALL_PARITY_PERCENT | 44.25% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **29**
-- Pending: **417**
+- Terminal: **30**
+- Pending: **416**
 - Blocked: **0**
-- Parity: **6.50%**
+- Parity: **6.73%**
 
 ## By domain
 
@@ -35,7 +35,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 78 | 100 | 0 | 0 | 78 | 43.82% |
 | comments | 8 | 0 | 1 | 7 | 0 | 0 | 1 | 12.50% |
-| content | 164 | 0 | 21 | 143 | 0 | 0 | 21 | 12.80% |
+| content | 164 | 0 | 22 | 142 | 0 | 0 | 22 | 13.41% |
 | email | 82 | 0 | 56 | 26 | 0 | 0 | 56 | 68.29% |
 | identity | 7 | 0 | 0 | 7 | 0 | 0 | 0 | 0.00% |
 | media | 15 | 0 | 3 | 12 | 0 | 0 | 3 | 20.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 12 | 9 | 0 | 0 | 12 | 57.14% |
 | route | 84 | 0 | 33 | 51 | 0 | 0 | 33 | 39.29% |
 | service | 349 | 0 | 314 | 35 | 0 | 0 | 314 | 89.97% |
-| visible_control | 446 | 0 | 29 | 417 | 0 | 0 | 29 | 6.50% |
+| visible_control | 446 | 0 | 30 | 416 | 0 | 0 | 30 | 6.73% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **33**
-- Focused visible-control contracts: **29**
+- Focused visible-control contracts: **30**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
@@ -282,7 +282,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-COMM-B16FBF4792`
 - `AIMW-COMM-C083D47BC4`
 
-### content (143)
+### content (142)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
@@ -375,7 +375,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-98918A6C27`
 - `AIMW-CONT-9BA2C255AF`
 - `AIMW-CONT-9CF12067E6`
-- `AIMW-CONT-9D5E269773`
 - `AIMW-CONT-9EDE4C1141`
 - `AIMW-CONT-9F0D652C67`
 - `AIMW-CONT-A31317B378`
