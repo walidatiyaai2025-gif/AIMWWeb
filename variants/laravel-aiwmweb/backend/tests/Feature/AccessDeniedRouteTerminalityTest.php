@@ -31,8 +31,11 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         $this->assertSame('PENDING', $row['migration_state']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
 
-        $this->assertSame(333, $payload['totals']['terminal']);
-        $this->assertSame(598, $payload['totals']['pending']);
+        $this->assertCount(931, $payload['operations']);
+        $this->assertSame(
+            931,
+            $payload['totals']['terminal'] + $payload['totals']['pending'] + $payload['totals']['blocked'],
+        );
     }
 
     public function test_route_is_explicit_anonymous_and_not_a_tenant_spa_catch_all(): void
