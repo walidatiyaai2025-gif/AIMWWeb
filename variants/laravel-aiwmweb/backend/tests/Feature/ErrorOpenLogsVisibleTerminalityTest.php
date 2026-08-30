@@ -19,13 +19,13 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-8B3518EF80';
 
-    public function test_exact_canonical_operation_is_the_pending_error_open_logs_control(): void
+    public function test_exact_canonical_operation_is_the_adapted_error_open_logs_control(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/Error', $operation['route_screen']);
