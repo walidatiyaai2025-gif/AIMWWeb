@@ -11,7 +11,7 @@ final class JobFailureGate
     public function canStart(int $siteId, string $jobType, ?CarbonImmutable $now = null): JobGateDecision
     {
         $settings = $this->settings();
-        if (! $settings['pause_after_failures']) {
+        if (!$settings['pause_after_failures']) {
             return JobGateDecision::allowed();
         }
 
@@ -26,7 +26,7 @@ final class JobFailureGate
      */
     public static function decide(Collection $recent, array $settings, CarbonImmutable $now, string $jobType): JobGateDecision
     {
-        if (! $settings['pause_after_failures']) {
+        if (!$settings['pause_after_failures']) {
             return JobGateDecision::allowed();
         }
 
