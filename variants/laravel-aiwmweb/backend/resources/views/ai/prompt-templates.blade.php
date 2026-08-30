@@ -12,6 +12,13 @@
             <h1>AI Prompt Templates</h1>
             <p>Read and update persisted prompt templates and append-only revision history for {{ $tenant->name }}.</p>
             <p>Settings managers only. Saving an existing template creates a new revision only when persisted prompt state actually changes.</p>
+            <nav aria-label="AI prompt template navigation">
+                <a
+                    href="/tenants/{{ rawurlencode($tenant->slug) }}/settings"
+                    data-canonical-operation="AIMW-AI-E1A964346F"
+                    aria-label="Back to Settings"
+                >← Settings</a>
+            </nav>
         </header>
 
         @if (session('status'))
