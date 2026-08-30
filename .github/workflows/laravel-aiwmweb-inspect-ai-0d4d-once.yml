@@ -1,0 +1,45 @@
+name: Laravel AIWMWeb Inspect AI 0D4D Once
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/laravel-aiwmweb-inspect-ai-0d4d-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extract exact canonical row
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          op = 'AIMW-AI-0D4D60320B'
+          src = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          payload = json.loads(src.read_text(encoding='utf-8'))
+          row = next((r for r in payload['operations'] if r.get('operation_id') == op), None)
+          if row is None:
+              raise SystemExit(f'{op} not found')
+          if row.get('migration_state') != 'PENDING':
+              raise SystemExit(f'{op} is no longer PENDING: {row.get("migration_state")}')
+          out = Path(f'variants/laravel-aiwmweb/docs/diagnostics/{op}.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(row, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/diagnostics/AIMW-AI-0D4D60320B.json
+          git commit -m 'chore(laravel): extract AI 0D4D canonical row'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
