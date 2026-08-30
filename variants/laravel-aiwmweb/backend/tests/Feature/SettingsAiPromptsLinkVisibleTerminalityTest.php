@@ -21,13 +21,13 @@ final class SettingsAiPromptsLinkVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-0D4D60320B';
 
-    public function test_exact_canonical_operation_is_the_pending_settings_ai_prompts_link(): void
+    public function test_exact_canonical_operation_is_the_adapted_settings_ai_prompts_link(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/settings', $operation['route_screen']);
