@@ -20,12 +20,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 403,
-    "pending": 528,
+    "adapted": 405,
+    "pending": 526,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 403,
-    "overall_parity_percent": 43.29
+    "terminal": 405,
+    "overall_parity_percent": 43.5
   },
   "visible_controls": {
     "total": 446,
@@ -98,12 +98,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 18,
-      "pending": 146,
+      "adapted": 20,
+      "pending": 144,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 18,
-      "percent": 10.98
+      "terminal": 20,
+      "percent": 12.2
     },
     "email": {
       "total": 82,
@@ -13725,21 +13725,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
+      "evidence": "Canonical About Build route provenance@ed3f8fa663b105d8b8105b56eb22fc7399baa8f4: variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php; explicit-route-contract:AIMW-CONT-81B4B20D2D; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "Canonical About Build route provenance",
+        "source_sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-81B4B20D2D",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -13796,21 +13806,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
+      "evidence": "Canonical About Build route provenance@ed3f8fa663b105d8b8105b56eb22fc7399baa8f4: variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php; explicit-route-contract:AIMW-CONT-110268CC96; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "Canonical About Build route provenance",
+        "source_sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-110268CC96",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -33080,12 +33100,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 31,
-      "pending": 53,
+      "adapted": 33,
+      "pending": 51,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 31,
-      "percent": 36.9
+      "terminal": 33,
+      "percent": 39.29
     },
     "service": {
       "total": 349,
@@ -33315,7 +33335,6 @@
       "AIMW-CONT-041B5ED720",
       "AIMW-CONT-058F41BD1B",
       "AIMW-CONT-10AFCDF334",
-      "AIMW-CONT-110268CC96",
       "AIMW-CONT-1456BE001F",
       "AIMW-CONT-16D09482D4",
       "AIMW-CONT-16D4AD8DC8",
@@ -33385,7 +33404,6 @@
       "AIMW-CONT-7EF5524637",
       "AIMW-CONT-7F2BC55FF4",
       "AIMW-CONT-80EE7CA296",
-      "AIMW-CONT-81B4B20D2D",
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-859135B2D1",
       "AIMW-CONT-86346F4C6C",
@@ -33742,6 +33760,18 @@
           "AIMW-CONT-5D18F49928",
           "AIMW-CONT-8140D785B5"
         ]
+      },
+      {
+        "label": "Canonical About Build route provenance",
+        "sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": false,
+        "explicit_operation_evidence_ids": [
+          "AIMW-CONT-110268CC96",
+          "AIMW-CONT-81B4B20D2D"
+        ]
       }
     ]
   },
@@ -33758,6 +33788,7 @@
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
       "e26a7d9a254f7df980714b778491d0f864605087",
+      "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "fb068134c2ad60111bd376f4f400c1bd247394ca"
     ],
     "unpushed_sources_counted": [],
@@ -33774,10 +33805,12 @@
       "AIMW-BACK-979DEF54FA",
       "AIMW-BILL-2FFFC55BAB",
       "AIMW-COMM-C2DDF5DAE3",
+      "AIMW-CONT-110268CC96",
       "AIMW-CONT-1DA83B9262",
       "AIMW-CONT-4A295D45D4",
       "AIMW-CONT-5D18F49928",
       "AIMW-CONT-8140D785B5",
+      "AIMW-CONT-81B4B20D2D",
       "AIMW-CONT-9B8574AA90",
       "AIMW-CONT-9B87A269F3",
       "AIMW-CONT-BB5B32880A",

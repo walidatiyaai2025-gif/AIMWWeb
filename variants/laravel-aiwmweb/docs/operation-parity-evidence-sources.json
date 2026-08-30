@@ -227,6 +227,28 @@
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
         }
       }
+    },
+    {
+      "label": "Canonical About Build route provenance",
+      "sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+      "observed_pr_head": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+      "domains": [
+        "content"
+      ],
+      "operation_evidence": {
+        "AIMW-CONT-81B4B20D2D": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-110268CC96": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        }
+      }
     }
   ],
   "excluded_sources": [],
