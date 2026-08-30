@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { AiCenterApprovalQueueLink } from './ai-center-approval-queue-link';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -22,6 +23,7 @@ export function AiCenterApprovalStatusControl({ context }: { context: FrontendCo
     const [error, setError] = useState('');
     const canRead = context.permissions.includes('ai.use');
     const endpoint = `/api/tenants/${encodeURIComponent(context.tenant.slug)}/ai-center/approval-status`;
+    const navigation = <AiCenterApprovalQueueLink context={context} />;
 
     const load = useCallback(async () => {
         if (!canRead) return;
@@ -41,35 +43,38 @@ export function AiCenterApprovalStatusControl({ context }: { context: FrontendCo
         void load();
     }, [load]);
 
-    if (!canRead) return null;
-    if (state === 'loading' && approval === null) return null;
-    if (state === 'ready' && approval === null) return null;
-    if (state === 'error' && approval === null) return null;
+    if (!canRead) return navigation;
+    if (state === 'loading' && approval === null) return navigation;
+    if (state === 'ready' && approval === null) return navigation;
+    if (state === 'error' && approval === null) return navigation;
 
     return (
-        <section className="panel ai-approval-status-control" aria-label={locale === 'ar' ? 'حالة موافقة مركز الذكاء الاصطناعي' : 'AI Center approval status'}>
-            <header className="panel-header">
-                <div>
-                    <span className="workspace-kicker">GOVERNANCE</span>
-                    <strong>{locale === 'ar' ? 'حالة الموافقة' : 'Approval state'}</strong>
-                </div>
-                <button
-                    type="button"
-                    className="btn"
-                    data-canonical-operation={AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID}
-                    disabled={state === 'loading'}
-                    onClick={() => void load()}
-                >
-                    {state === 'loading' ? (locale === 'ar' ? 'جارٍ التحديث…' : 'Refreshing…') : (locale === 'ar' ? 'تحديث الحالة' : 'Refresh state')}
-                </button>
-            </header>
-            {approval ? (
-                <div className="contract-details" data-approval-id={approval.id}>
-                    <div><dt>{locale === 'ar' ? 'الموافقة' : 'Approval'}</dt><dd>{approval.id}</dd></div>
-                    <div><dt>{locale === 'ar' ? 'الحالة' : 'Status'}</dt><dd>{approval.status}</dd></div>
-                </div>
-            ) : null}
-            {error ? <p role="alert">{error}</p> : null}
-        </section>
+        <>
+            {navigation}
+            <section className="panel ai-approval-status-control" aria-label={locale === 'ar' ? 'حالة موافقة مركز الذكاء الاصطناعي' : 'AI Center approval status'}>
+                <header className="panel-header">
+                    <div>
+                        <span className="workspace-kicker">GOVERNANCE</span>
+                        <strong>{locale === 'ar' ? 'حالة الموافقة' : 'Approval state'}</strong>
+                    </div>
+                    <button
+                        type="button"
+                        className="btn"
+                        data-canonical-operation={AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID}
+                        disabled={state === 'loading'}
+                        onClick={() => void load()}
+                    >
+                        {state === 'loading' ? (locale === 'ar' ? 'جارٍ التحديث…' : 'Refreshing…') : (locale === 'ar' ? 'تحديث الحالة' : 'Refresh state')}
+                    </button>
+                </header>
+                {approval ? (
+                    <div className="contract-details" data-approval-id={approval.id}>
+                        <div><dt>{locale === 'ar' ? 'الموافقة' : 'Approval'}</dt><dd>{approval.id}</dd></div>
+                        <div><dt>{locale === 'ar' ? 'الحالة' : 'Status'}</dt><dd>{approval.status}</dd></div>
+                    </div>
+                ) : null}
+                {error ? <p role="alert">{error}</p> : null}
+            </section>
+        </>
     );
 }
