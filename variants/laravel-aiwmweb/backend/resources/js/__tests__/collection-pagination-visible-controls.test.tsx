@@ -49,7 +49,9 @@ describe(`${COMMENT_LOAD} ${COMMENT_PREVIOUS} ${COMMENT_REFRESH}`, () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         expect(await screen.findByText('Page two')).toBeInTheDocument();
-        fireEvent.click(previous);
+        const pageTwoPrevious = screen.getByRole('button', { name: 'Previous' });
+        expect(pageTwoPrevious).toHaveAttribute('data-canonical-operation', COMMENT_PREVIOUS);
+        fireEvent.click(pageTwoPrevious);
         expect(await screen.findByText('Page one')).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/tenants/alpha/comments?page=1'));
         fireEvent.click(refresh);
