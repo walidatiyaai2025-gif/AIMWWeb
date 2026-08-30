@@ -1,0 +1,100 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-8B3518EF80",
+  "domain": "content",
+  "kind": "visible_control",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
+    "route_screen": "/Error",
+    "visible_control": "/logs -> /logs",
+    "user_visible_text": "Open logs",
+    "behavior": "The canonical error page exposes a navigation-only Open logs anchor whose source destination is /logs."
+  },
+  "laravel_adaptation": {
+    "source_route": "GET /Error",
+    "source_route_name": "canonical.error",
+    "source_controller": "App\\Http\\Controllers\\ErrorReadController",
+    "view": "resources/views/platform/error.blade.php",
+    "control_binding": "AIMW-CONT-8B3518EF80",
+    "destination_alias": "GET /tenants/{tenant}/logs",
+    "destination_alias_name": "canonical.alias.logs",
+    "destination_workspace": "GET /tenants/{tenant}/module/logs",
+    "destination_workspace_name": "canonical.workspace.logs",
+    "required_permissions": [
+      "operations.manage",
+      "diagnostics.view"
+    ],
+    "behavior": "Because the public Error route has no tenant parameter, Laravel renders Open logs only when the authenticated identity has exactly one active tenant membership authorized for both Logs permissions. The target is then generated from the existing guarded tenant Logs alias; zero or multiple eligible tenants fail closed."
+  },
+  "runtime_path": [
+    "GET /Error",
+    "ErrorReadController resolves exactly one eligible tenant from authenticated active memberships",
+    "platform.error Blade view renders AIMW-CONT-8B3518EF80 only when logsHref is authoritative",
+    "GET /tenants/{tenant}/logs",
+    "auth + tenant.context",
+    "CanonicalWorkspaceRouteController::redirect",
+    "operations.manage + diagnostics.view authorization",
+    "redirect /tenants/{tenant}/module/logs",
+    "CanonicalWorkspaceRouteController::show",
+    "real tenant Logs workspace"
+  ],
+  "authorization": {
+    "source_authentication": "anonymous route; control itself is absent for guests",
+    "source_tenant_context": "not resolved by the Error route",
+    "tenant_selection": "derived only from authenticated active memberships; exactly one Logs-authorized tenant is required",
+    "destination_authentication": "required",
+    "destination_tenant_context": "required",
+    "destination_permissions": [
+      "operations.manage",
+      "diagnostics.view"
+    ],
+    "security_result": "No caller-provided tenant/resource identifier is accepted by the control. Guest, unauthorized, ambiguous multi-tenant, and foreign-tenant paths fail closed."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "persistence": "read-only authorization over existing membership/role/permission state",
+    "external_dependency": "The canonical scanner records WordPress, but this navigation operation performs no WordPress/provider request.",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "file": "backend/tests/Feature/ErrorOpenLogsVisibleTerminalityTest.php",
+    "coverage": [
+      "exact canonical PENDING operation identity and source metadata",
+      "existing guarded tenant Logs alias and real Logs workspace are the only destination authority",
+      "one authorized tenant renders exact operation marker and tenant-qualified href",
+      "guest and missing-permission identities do not receive the control",
+      "multiple Logs-authorized tenant memberships fail closed instead of choosing arbitrarily",
+      "multiple memberships with exactly one authorized tenant resolve only that tenant",
+      "foreign tenant requests return 404 and missing destination permission returns 403",
+      "merged Back-to-dashboard operation remains present and separate",
+      "Copy error details AIMW-SYNC-89777052CB remains unimplemented and unclaimed"
+    ]
+  },
+  "implementation": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_sha": "09e544d60a768c14483380edbc8d47912b8d7ef0",
+    "worker_branch": "worker/laravel-AIMW-CONT-8B3518EF80-error-open-logs"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "sibling_back_dashboard_operation_modified": false,
+    "sibling_copy_error_details_operation_modified": false,
+    "new_global_logs_route_added": false,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "merge_performed": false
+  },
+  "ci_policy": {
+    "authority": "GitHub Actions on the exact final pushed PR head",
+    "required_before_final_handoff": true,
+    "evidence_file_does_not_embed_mutable_run_ids": true
+  },
+  "terminality": {
+    "candidate_state": "ADAPTED",
+    "basis": "Real source-equivalent navigation is bound to the canonical operation and reaches only the existing guarded tenant Logs authority when tenant selection is unambiguous and authorized. Final VERIFIED_TASK_COMPLETE additionally requires exact-head CI success."
+  }
+}
