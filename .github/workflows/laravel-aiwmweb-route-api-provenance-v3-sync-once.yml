@@ -1,0 +1,152 @@
+name: Laravel AIWMWeb Route API V3 Sync Once
+
+on:
+  push:
+    branches:
+      - manager/laravel-aiwmweb-route-api-provenance-gap-v3
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pin exact route API provenance source
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          source_sha = 'c19ba111947512de296aa73dd62e03c334bd8f43'
+          source = {
+              'label': 'Live exact route/API provenance gap closure',
+              'sha': source_sha,
+              'observed_pr_head': source_sha,
+              'domains': ['ai', 'comments', 'email', 'media', 'operations', 'platform', 'taxonomy'],
+              'supporting_only': True,
+              'route_api_provenance': {
+                  'AIMW-COMM-A16719E105': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/web.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_bound',
+                  },
+                  'AIMW-MEDI-8BADBE1261': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/web.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_bound',
+                  },
+                  'AIMW-TAXO-CDC6948A06': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/web.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_bound',
+                  },
+                  'AIMW-AI-C37F405767': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/web.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_bound',
+                  },
+                  'AIMW-EMAI-2D94EFDD53': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/api.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/LegacyNotificationReadController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_selected',
+                  },
+                  'AIMW-OPER-ABB41FC891': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/LoginReadController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_neutral',
+                  },
+                  'AIMW-PLAT-A91A2B0B11': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/api.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_selected',
+                  },
+                  'AIMW-PLAT-FAC7505B26': {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/api.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json',
+                      'security_mode': 'tenant_selected',
+                  },
+              },
+          }
+          manifest['countable_sources'] = [
+              item for item in manifest.get('countable_sources', [])
+              if item.get('label') != source['label']
+          ]
+          manifest['countable_sources'].append(source)
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Regenerate canonical 931-operation parity artifacts
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+      - name: Commit deterministic reconciliation
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Regenerate route API parity on live canonical base'
+          git push origin HEAD:manager/laravel-aiwmweb-route-api-provenance-gap-v3
