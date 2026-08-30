@@ -1,0 +1,31 @@
+{
+  "operation_id": "AIMW-AI-0D4D60320B",
+  "kind": "visible_control",
+  "domain": "ai",
+  "route_screen": "/settings",
+  "visible_control": "/settings/ai-prompts -> /settings/ai-prompts",
+  "current_source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+  "service": "",
+  "persistence": "current AIMWWeb read model / authoritative external state",
+  "background_job": "",
+  "mutation": false,
+  "external_dependency": "ai_provider and/or WordPress",
+  "approval": false,
+  "verification": "rendered/read response matches authoritative source",
+  "laravel_destination": "",
+  "native_wp_rest": false,
+  "connector_required": false,
+  "connector_scope": "",
+  "tenant_owned": true,
+  "risk": "low",
+  "migration_state": "PENDING",
+  "acceptance_test": "",
+  "evidence": "",
+  "reconciliation": {
+    "decision": "PENDING",
+    "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+    "source_label": null,
+    "source_sha": null,
+    "destination_path": null
+  }
+}
