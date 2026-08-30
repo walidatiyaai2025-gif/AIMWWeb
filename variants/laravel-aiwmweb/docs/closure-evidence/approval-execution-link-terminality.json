@@ -16,7 +16,8 @@
     "visible_control": "/module/execution -> /module/execution",
     "current_source": "src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor",
     "mutation": false,
-    "risk": "low"
+    "risk": "low",
+    "terminal_state": "ADAPTED"
   },
   "source_semantics": {
     "control": "Approval Queue exposes a visible Execution center anchor",

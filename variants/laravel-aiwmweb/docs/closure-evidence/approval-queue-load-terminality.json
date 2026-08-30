@@ -14,7 +14,8 @@
     "domain": "approvals",
     "route_screen": "/approvals",
     "visible_control": "LoadAsync [LoadAsync]",
-    "current_source": "src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor"
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor",
+    "terminal_state": "ADAPTED"
   },
   "source_semantics": {
     "initial_load": "OnInitializedAsync delegates to LoadAsync",
