@@ -291,6 +291,10 @@ function CommandPalette({ context, open, onClose }: { context: FrontendContext; 
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const allowedRoutes = useMemo(
+        () => workspaceRoutes.filter((route) => !route.hidden && resolveCapability(context, route).state === 'enabled'),
+        [context],
+    );
 
     useEffect(() => {
         if (open) {
@@ -299,19 +303,39 @@ function CommandPalette({ context, open, onClose }: { context: FrontendContext; 
         }
     }, [open]);
     if (!open) return null;
-    const matches = workspaceRoutes.filter((route) => !route.hidden && `${route.label.en} ${route.label.ar} ${route.description.en}`.toLowerCase().includes(query.toLowerCase())).slice(0, 12);
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const matches = allowedRoutes.filter((route) => [
+        route.label.en,
+        route.label.ar,
+        route.description.en,
+        route.description.ar,
+        route.path,
+        route.key,
+    ].join(' ').toLowerCase().includes(normalizedQuery)).slice(0, 12);
+
+    const runCommand = (route: WorkspaceRoute) => {
+        if (resolveCapability(context, route).state !== 'enabled') return;
+        navigate(tenantUrl(context.tenant.slug, route.path));
+        onClose();
+    };
 
     return (
         <div className="dialog-backdrop command-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-            <section className="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-title">
+            <section id="command-palette-dialog" className="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-title">
                 <header>
                     <h2 id="command-title" className="sr-only">{text(commonText.quickSearch)}</h2>
-                    <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text(commonText.quickSearch)} aria-label={text(commonText.quickSearch)} />
+                    <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text(commonText.quickSearch)} aria-label={text(commonText.quickSearch)} aria-controls="command-palette-results" />
                     <button type="button" className="btn" onClick={onClose}>Esc</button>
                 </header>
-                <div className="command-results">
-                    {matches.map((route) => (
-                        <button type="button" key={route.key} className="command-item" onClick={() => { navigate(tenantUrl(context.tenant.slug, route.path)); onClose(); }}>
+                <div id="command-palette-results" className="command-results" aria-live="polite" aria-atomic="false">
+                    {matches.length === 0 ? (
+                        <div className="command-empty" role="status">
+                            <strong>{locale === 'ar' ? 'لا توجد وجهة متاحة مطابقة' : 'No matching available destination'}</strong>
+                            <small>{locale === 'ar' ? 'جرّب اسم صفحة أو مسارًا تسمح به صلاحيات الحساب الحالية.' : 'Try a page name or route available to your current tenant permissions.'}</small>
+                        </div>
+                    ) : matches.map((route) => (
+                        <button type="button" key={route.key} className="command-item" onClick={() => runCommand(route)}>
                             <span aria-hidden="true">{route.icon}</span>
                             <span><strong>{route.label[locale]}</strong><small>{route.description[locale]}</small></span>
                             <code>{route.path}</code>
@@ -411,7 +435,17 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                         </div>
                     </div>
                     <div className="topbar-actions">
-                        <button type="button" className="command-trigger" onClick={() => setCommandOpen(true)} aria-keyshortcuts="Control+K"><span aria-hidden="true">⌕</span><span>{locale === 'ar' ? 'بحث سريع' : 'Quick search'}</span><kbd>Ctrl K</kbd></button>
+                        <button
+                            id="command-palette-trigger"
+                            type="button"
+                            className="command-trigger"
+                            onClick={() => setCommandOpen(true)}
+                            aria-label={locale === 'ar' ? 'فتح البحث السريع' : 'Open quick search'}
+                            aria-haspopup="dialog"
+                            aria-controls="command-palette-dialog"
+                            aria-expanded={commandOpen}
+                            aria-keyshortcuts="Control+K"
+                        ><span aria-hidden="true">⌕</span><span>{locale === 'ar' ? 'بحث سريع' : 'Quick search'}</span><kbd>Ctrl K</kbd></button>
                         <label className="tenant-picker">
                             <span className="sr-only">{locale === 'ar' ? 'تغيير الحساب' : 'Switch tenant'}</span>
                             <select
