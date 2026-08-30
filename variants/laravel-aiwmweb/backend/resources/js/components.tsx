@@ -476,7 +476,6 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                             id="command-palette-trigger"
                             type="button"
                             className="command-trigger"
-                            data-canonical-operation="AIMW-AI-2C653A870A"
                             onClick={() => setCommandOpen(true)}
                             aria-label={locale === 'ar' ? 'فتح البحث السريع' : 'Open quick search'}
                             aria-haspopup="dialog"
