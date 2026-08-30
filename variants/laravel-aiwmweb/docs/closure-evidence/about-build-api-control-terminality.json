@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-EBD53650BC",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "content",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor",
+    "screens": ["/about-build", "/release-notes"],
+    "control": "Open build API",
+    "target": "/api/build",
+    "new_tab": true,
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "laravel_adaptation": {
+    "page_routes": ["/tenants/{tenant}/about-build", "/tenants/{tenant}/release-notes"],
+    "page_controller": "App\\Http\\Controllers\\AboutBuildReadController",
+    "view": "resources/views/platform/about-build.blade.php",
+    "visible_control": "Open build API",
+    "control_target": "/api/build?tenant={active-tenant-slug}",
+    "new_tab": true,
+    "noopener_noreferrer": true,
+    "api_controller": "App\\Http\\Controllers\\PlatformReadController::build",
+    "authoritative_read_model": "App\\Platform\\BuildInformationReadService::snapshot",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/about-build or /tenants/{tenant}/release-notes",
+    "tenant.context activates the path tenant and AboutBuildReadController enforces tenant.view plus exact tenant slug ownership",
+    "active membership with execution.view receives the visible Open build API control",
+    "control opens /api/build?tenant={active-tenant-slug} in a new tab",
+    "PlatformReadController::build resolves only the authenticated user's active membership for the explicit tenant selector",
+    "execution.view is enforced and BuildInformationReadService::snapshot is returned as authoritative JSON"
+  ],
+  "authorization": {
+    "page": ["auth", "tenant.context", "tenant.view"],
+    "control_visibility": "execution.view on the active membership",
+    "api": ["authenticated user", "active tenant membership", "execution.view"],
+    "missing_execution_view": "page remains readable when tenant.view is allowed, but the actionable control is suppressed and direct API access is 403",
+    "guest_page": "redirects to /login",
+    "guest_api": "401"
+  },
+  "tenant_isolation": {
+    "multi_membership": "control target carries the active tenant slug explicitly, avoiding ambiguous tenant selection",
+    "tenant_a_to_tenant_b_page": "404",
+    "tenant_a_to_tenant_b_api_selector": "404",
+    "direct_idor_resistance": true,
+    "authoritative_reread": "GET /api/build?tenant=alpha returns exactly the shared BuildInformationReadService snapshot"
+  },
+  "acceptance_tests": [
+    "AboutBuildApiControlTerminalityTest::test_exact_canonical_row_is_the_pending_open_build_api_visible_control",
+    "AboutBuildApiControlTerminalityTest::test_visible_control_is_tenant_qualified_and_opens_the_authoritative_build_read",
+    "AboutBuildApiControlTerminalityTest::test_control_fails_closed_when_api_permission_is_missing",
+    "AboutBuildApiControlTerminalityTest::test_guest_and_cross_tenant_direct_access_fail_closed"
+  ],
+  "implementation_sha": "c7fb38312b0bd26d1a1a02ff5cedb6d6c321f2de",
+  "implementation_tested_sha": "c7fb38312b0bd26d1a1a02ff5cedb6d6c321f2de",
+  "implementation_exact_head_ci": {
+    "pr_plan_link": {"run_id": 33219019259, "run_number": 883, "result": "success"},
+    "cross_domain_security": {"run_id": 33219019273, "run_number": 172, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 33219019281, "run_number": 241, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_tests": "success",
+    "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests": "success",
+    "production_frontend_build": "success",
+    "runtime_artifacts": "success",
+    "production_docker_compose_runtime_smoke": "success"
+  },
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "5a3b6bc7415b1590327df351a6698024f835753c",
+    "total_operations": 931,
+    "previous_terminal": 333,
+    "new_terminal_after_this_operation": 334,
+    "previous_pending": 598,
+    "new_pending_after_this_operation": 597,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "This is the one-operation delta against the latest canonical reconciliation authority. Parallel closure evidence not yet consumed by that reconciliation is intentionally not folded into these counts."
+  },
+  "final_head_policy": "The evidence commit itself must pass the same exact-head PR Plan Link, Cross-Domain Security, and Laravel AIWMWeb Acceptance workflows before integration readiness is claimed.",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  }
+}

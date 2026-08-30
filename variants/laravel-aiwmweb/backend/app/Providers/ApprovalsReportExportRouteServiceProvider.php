@@ -13,14 +13,21 @@ final class ApprovalsReportExportRouteServiceProvider extends ServiceProvider
         Route::middleware(['web', 'tenant.context'])
             ->prefix('tenants/{tenant}')
             ->group(function (): void {
-                Route::get('/reports', [ApprovalsReportExportController::class, 'show'])
-                    ->name('tenant.reports');
-                Route::get('/module/reports', [ApprovalsReportExportController::class, 'show'])
-                    ->name('tenant.module-reports');
                 Route::get('/reports/approvals.csv', [ApprovalsReportExportController::class, 'download'])
                     ->name('tenant.reports.approvals-download');
                 Route::get('/reports/sites.csv', [ApprovalsReportExportController::class, 'downloadSites'])
                     ->name('tenant.reports.sites-download');
             });
+
+        $this->app->booted(function (): void {
+            Route::middleware(['web', 'tenant.context'])
+                ->prefix('tenants/{tenant}')
+                ->group(function (): void {
+                    Route::get('/reports', [ApprovalsReportExportController::class, 'show'])
+                        ->name('canonical.alias.reports');
+                    Route::get('/module/reports', [ApprovalsReportExportController::class, 'show'])
+                        ->name('canonical.workspace.reports');
+                });
+        });
     }
 }
