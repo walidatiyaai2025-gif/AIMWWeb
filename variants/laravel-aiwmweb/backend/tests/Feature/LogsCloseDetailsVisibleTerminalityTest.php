@@ -20,13 +20,13 @@ final class LogsCloseDetailsVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-024BB0971B';
 
-    public function test_exact_canonical_operation_is_the_pending_logs_close_details_control(): void
+    public function test_exact_canonical_operation_is_the_adapted_logs_close_details_control(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/logs | /module/logs', $operation['route_screen']);
