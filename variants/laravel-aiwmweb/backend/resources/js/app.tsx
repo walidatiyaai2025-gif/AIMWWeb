@@ -8,6 +8,7 @@ import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type Works
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
+import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
@@ -74,7 +75,14 @@ function TenantBootstrap() {
 
     const context = withApprovalQueueEndpoint(query.data);
 
-    return <ToastProvider><AppShell context={context}><Outlet context={{ context } satisfies OutletState} /></AppShell></ToastProvider>;
+    return (
+        <ToastProvider>
+            <AppShell context={context}>
+                <MainLayoutParityControls context={context} />
+                <Outlet context={{ context } satisfies OutletState} />
+            </AppShell>
+        </ToastProvider>
+    );
 }
 
 function ApprovalQueueRoute({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
