@@ -52,7 +52,7 @@ class ActionContractClosureTest extends TestCase
         $response->assertOk()->assertJsonPath('active_site.id', $alphaSite->id);
 
         $action = $response->json('actions')['seo.audit.run'];
-        $definition = config('frontend_actions.seo.audit.run');
+        $definition = config('frontend_actions', [])['seo.audit.run'];
         $this->assertSame('AIMW-BILL-3C55B3C299', $definition['operation_id']);
         $this->assertSame('AIMW-SEO-FB0F0E9067', $definition['dependency_operation_id']);
         $this->assertSame($definition['operation_id'], $action['operation_id']);
@@ -66,7 +66,7 @@ class ActionContractClosureTest extends TestCase
         $this->assertFalse($action['terminal_candidate']);
 
         $outsider = User::factory()->create();
-        $betaMembership = $this->tenantMembership($outsider, 'beta', ['tenant.view', 'seo.manage']);
+        $betaMembership = $this->tenantMembership($outsider, 'beta', ['tenant.view']);
         $beta = Tenant::query()->withoutGlobalScopes()->findOrFail($betaMembership->tenant_id);
         $betaSite = $this->siteFor($beta, 'Beta Site');
 
