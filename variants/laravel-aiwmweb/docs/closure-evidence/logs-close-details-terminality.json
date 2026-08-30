@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-024BB0971B",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/logs | /module/logs",
+    "visible_control": "CloseDetails [CloseDetails]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor",
+    "mutation": false,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "LogsAndErrors renders the CloseDetails button only while a selected log line is open.",
+    "local_transition": "CloseDetails only assigns _selectedLine = null.",
+    "side_effects": "Closing details performs no persistence, WordPress, AI-provider, queue, navigation, or success-receipt mutation."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/logs-close-details-control.tsx reads the existing authoritative tenant logs GET contract, exposes local log-detail selection, and marks only the close button with AIMW-AI-024BB0971B.",
+    "read_authority": "GET /tenants/{tenant}/admin/logs remains the existing authenticated tenant-context AdminOperationsController::logs authority and requires operations.manage; the logs workspace itself also requires diagnostics.view.",
+    "close_behavior": "The marked Close log details button changes selected React state to null and sends no additional request.",
+    "guard": "Missing operations.manage, missing diagnostics.view, mismatched tenant endpoint, failed read, malformed payload, or empty authoritative data does not fabricate a close surface."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/LogsCloseDetailsVisibleTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/logs-close-details-control.test.tsx",
+    "proofs": [
+      "exact canonical PENDING identity at implementation stage",
+      "source-equivalent local close transition",
+      "production canonical operation marker on the real close button",
+      "existing authenticated tenant-scoped logs GET authority reused",
+      "no network request occurs on close",
+      "permission, endpoint, malformed-response, and read-failure paths fail closed"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "logs_backend_modified": false,
+    "other_logs_controls_claimed": false,
+    "fake_success": false
+  }
+}
