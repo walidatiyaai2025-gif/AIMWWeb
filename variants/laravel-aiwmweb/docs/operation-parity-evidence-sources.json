@@ -113,6 +113,12 @@
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiUsageRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-usage-route-terminality.json"
+        },
+        "AIMW-APPR-A292974395": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalQueueRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/approvals-route-terminality.json"
         }
       }
     }
