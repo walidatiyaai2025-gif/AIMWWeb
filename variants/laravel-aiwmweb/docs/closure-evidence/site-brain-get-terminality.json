@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "operation": {
+    "operation_id": "AIMW-AI-0F3763FDB4",
+    "domain": "ai",
+    "kind": "service",
+    "service": "SiteBrainService.GetAsync",
+    "current_source": "src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "persistence": "ApplicationSettings keyed as SiteBrain.{siteId:N} and read AsNoTracking.",
+    "missing_or_blank": "Returns the source default SiteBrain profile.",
+    "malformed_json": "Returns the source default SiteBrain profile instead of surfacing a parse failure.",
+    "default_contract": "Arabic; Professional; General audience; Auto detect SEO/page builder; Black, white and readable gold; 1200x630; natural contextual links; clear parent/child categories; factual concise content; responsive accessible design; organic-traffic goal; two articles per week; autopilot disabled."
+  },
+  "laravel_adaptation": {
+    "destination": "backend/app/AI/SiteBrain/SiteBrainService.php",
+    "method": "SiteBrainService::getAsync",
+    "persistence": "Existing scoped_settings site scope with tenant_id, site_key, key=site_brain.profile and non-secret JSON value.",
+    "site_authority": "Site::query()->findOrFail runs under the existing tenant global scope before any setting lookup.",
+    "fail_safe": "Missing, blank, malformed, or non-object JSON resolves to the source-equivalent defaults.",
+    "stored_identity_rule": "Persisted site_id is never trusted; returned site_id is always the authoritative active-tenant Site model ID."
+  },
+  "tenant_isolation": {
+    "proof": "Focused Laravel acceptance creates Alpha and Beta tenant sites, activates Beta, and proves the Alpha site cannot be resolved through SiteBrainService::getAsync because the Site model tenant global scope raises ModelNotFoundException.",
+    "persistence_scope": "The subsequent scoped_settings read is additionally constrained by TenantContext::id(), site scope, and the authoritative site key."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SiteBrainServiceGetAsyncTerminalityTest.php",
+    "covers": [
+      "exact canonical operation identity and source semantics",
+      "source-equivalent default profile on missing persistence",
+      "valid tenant/site scoped JSON read",
+      "stored site_id spoof rejection",
+      "malformed JSON fallback",
+      "foreign-tenant site rejection"
+    ]
+  },
+  "scope": {
+    "save_async_claimed": false,
+    "separate_operation_kept_pending": "AIMW-AI-34EC6312B9",
+    "generated_reconciliation_modified_at_implementation_stage": false,
+    "new_table_created": false,
+    "external_provider_called": false
+  }
+}
