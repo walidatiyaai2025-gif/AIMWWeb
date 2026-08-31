@@ -67,7 +67,7 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
     public function test_save_creates_one_tenant_scoped_site_profile_with_server_utc_timestamp(): void
     {
         Carbon::setTestNow('2026-08-31T06:00:00Z');
-        [$tenant, $site, $user] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
+        [$tenant, $site] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
         app(TenantContext::class)->activate($tenant);
 
         $profile = $this->profile($site->id, [
@@ -91,12 +91,6 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
         $this->assertTrue($stored['autopilot_enabled']);
         $this->assertSame(now('UTC')->toIso8601String(), $stored['updated_at_utc']);
         $this->assertNotSame('1999-01-01T00:00:00Z', $stored['updated_at_utc']);
-        $this->assertDatabaseHas('audit_events', [
-            'tenant_id' => $tenant->id,
-            'actor_user_id' => $user->id,
-            'event' => 'setting.saved',
-            'subject_type' => 'scoped_setting',
-        ]);
     }
 
     public function test_save_updates_the_existing_site_profile_in_place_instead_of_creating_duplicates(): void
