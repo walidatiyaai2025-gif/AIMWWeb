@@ -5,9 +5,11 @@
     "issue": 257,
     "target_variant": "LARAVEL_AIWMWEB",
     "pcc_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
-    "canonical_base_sha": "8f84c6727867949c97da7a6d301d5fed6dd036af",
+    "canonical_base_sha": "ac47baea93b5f983c3c18974d51e547e2766d0dc",
+    "claim_base_sha": "8f84c6727867949c97da7a6d301d5fed6dd036af",
     "worker_branch": "worker/laravel-AIMW-OPER-FC4C071FAA-log-reader-read",
-    "claim_comment_id": 5476175546
+    "claim_comment_id": 5476175546,
+    "verified_complete_comment_id": 5476295495
   },
   "operation": {
     "operation_id": "AIMW-OPER-FC4C071FAA",
@@ -28,11 +30,7 @@
     "missing_allowed_file_result": "empty list",
     "outside_root_result": "InvalidArgumentException",
     "resolved_symlink_escape_result": "InvalidArgumentException",
-    "take_clamp": {
-      "minimum": 50,
-      "maximum": 5000,
-      "default": 500
-    },
+    "take_clamp": {"minimum": 50, "maximum": 5000, "default": 500},
     "read_strategy": "stream file line-by-line into a bounded SplQueue retaining only the last requested clamped number of lines",
     "returned_numbering": "1..N after tail selection",
     "level_precedence": [
@@ -61,17 +59,26 @@
     "exact_head_ci_required": true
   },
   "conflict_avoidance": {
-    "active_sibling_pr": 400,
-    "active_sibling_operation": "AIMW-OPER-85A7A01127",
-    "active_sibling_file_not_modified": "variants/laravel-aiwmweb/backend/app/Logging/LogReaderService.php"
+    "canonical_delta_since_claim_has_no_file_overlap": true,
+    "sibling_operation": "AIMW-OPER-85A7A01127",
+    "sibling_file_not_modified": "variants/laravel-aiwmweb/backend/app/Logging/LogReaderService.php"
   },
   "explicit_exclusions": [
-    "AIMW-OPER-85A7A01127 / LogReaderService.GetFiles / PR #400",
+    "AIMW-OPER-85A7A01127 / LogReaderService.GetFiles / merged PR #400",
     "AIMW-OPER-55C6982761 / application logs-directory parity / merged PR #399",
     "log-file inventory behavior",
     "log writing or logging configuration",
     "AIMW-CONT-8B3518EF80 / Error Open logs / PR #384",
     "maintenance routes and visible controls",
     "generated operation parity reconciliation artifacts"
-  ]
+  ],
+  "terminality": {
+    "state": "VERIFIED_COMPLETE",
+    "implementation_head": "e9ccb3c72140e67defde1018b0db7ad92352b3e3",
+    "ci_runs": {
+      "PR Plan Link": {"run_number": 1380, "run_id": 33376614874, "conclusion": "success"},
+      "Laravel AIWMWeb Cross-Domain Security": {"run_number": 602, "run_id": 33376614870, "conclusion": "success"},
+      "Laravel AIWMWeb Acceptance": {"run_number": 671, "run_id": 33376614845, "conclusion": "success"}
+    }
+  }
 }
