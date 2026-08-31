@@ -1,0 +1,49 @@
+name: Temporary SetLanguage test diagnostic
+
+on:
+  push:
+    branches:
+      - worker/platform-AIMW-PLAT-04D5067C61-test-diagnostic-20260831
+    paths:
+      - '.github/workflows/tmp-set-language-test-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite-diagnostic:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Run tests and capture full output
+        shell: bash
+        run: |
+          set +e
+          php artisan test --colors=never > /tmp/php-test.log 2>&1
+          rc=$?
+          cat /tmp/php-test.log
+          echo "$rc" > /tmp/php-test.rc
+          exit 0
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+      - uses: actions/upload-artifact@v4
+        with:
+          name: set-language-test-diagnostic
+          path: |
+            /tmp/php-test.log
+            /tmp/php-test.rc
