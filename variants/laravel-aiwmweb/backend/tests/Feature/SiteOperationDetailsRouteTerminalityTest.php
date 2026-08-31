@@ -98,7 +98,12 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee($correlationId);
 
-        $this->assertSame($operation->id, app(SiteOperationHistoryService::class)->getByCorrelationId($correlationId)?->id);
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+        $resolved = app(SiteOperationHistoryService::class)->getByCorrelationId($correlationId);
+        $context->forget();
+
+        $this->assertSame($operation->id, $resolved?->id);
         $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
     }
 
