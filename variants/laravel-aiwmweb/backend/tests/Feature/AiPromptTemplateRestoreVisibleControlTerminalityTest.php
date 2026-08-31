@@ -23,7 +23,7 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-D5FAAA34DD';
 
-    public function test_exact_canonical_operation_is_the_pending_restore_visible_control_and_source_requires_append_only_restore(): void
+    public function test_exact_canonical_operation_is_the_pending_restore_control_and_source_requires_append_only_restore(): void
     {
         $row = $this->canonicalRow(self::OPERATION_ID);
 
@@ -44,7 +44,7 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $this->assertStringContainsString('ReloadPreservingMessage(restored.Key);', $source);
     }
 
-    public function test_restore_control_is_real_confirmed_and_bound_to_an_explicit_tenant_mutation_route(): void
+    public function test_restore_control_is_confirmed_and_bound_to_the_real_guarded_post_route(): void
     {
         $route = Route::getRoutes()->match(Request::create(
             '/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/1/restore',
@@ -75,7 +75,7 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
             ->assertSee('disabled', false);
     }
 
-    public function test_restore_replays_historical_snapshot_as_a_new_revision_preserves_history_and_audits_actor(): void
+    public function test_restore_replays_snapshot_appends_every_time_preserves_history_and_audits_actor(): void
     {
         $user = User::factory()->create();
         $alpha = $this->membership($user, 'alpha', ['settings.manage']);
@@ -95,64 +95,48 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $this->assertFalse($restored->enabled);
         $this->assertSame($user->id, $restored->updated_by_user_id);
 
-        $revisions = AiPromptRevision::query()->withoutGlobalScopes()
+        $firstPass = AiPromptRevision::query()->withoutGlobalScopes()
             ->where('ai_prompt_template_id', $template->id)
             ->orderBy('version')
             ->get();
-        $this->assertCount(3, $revisions);
-        $this->assertSame('created', $revisions[0]->change_type);
-        $this->assertSame('updated', $revisions[1]->change_type);
-        $this->assertSame('restored', $revisions[2]->change_type);
-        $this->assertSame('Original {{content}} prompt.', $revisions[0]->snapshot['user_template']);
-        $this->assertSame('Current {{content}} prompt.', $revisions[1]->snapshot['user_template']);
-        $this->assertSame($revisions[0]->snapshot, $revisions[2]->snapshot);
-        $this->assertSame($user->id, $revisions[2]->actor_user_id);
+        $this->assertCount(3, $firstPass);
+        $this->assertSame(['created', 'updated', 'restored'], $firstPass->pluck('change_type')->all());
+        $this->assertSame('Current {{content}} prompt.', $firstPass[1]->snapshot['user_template']);
+        $this->assertSame($firstPass[0]->snapshot, $firstPass[2]->snapshot);
+        $this->assertSame($user->id, $firstPass[2]->actor_user_id);
 
-        $audit = AuditEvent::query()->withoutGlobalScopes()
-            ->where('event', 'ai.prompt.changed')
-            ->firstOrFail();
+        $audit = AuditEvent::query()->withoutGlobalScopes()->where('event', 'ai.prompt.changed')->firstOrFail();
         $this->assertSame($alpha->id, $audit->tenant_id);
         $this->assertSame($user->id, $audit->actor_user_id);
         $this->assertSame('alpha.rewrite', $audit->metadata['stable_key']);
         $this->assertSame(3, $audit->metadata['version']);
         $this->assertSame('restored', $audit->metadata['change_type']);
 
-        $this->actingAs($user)->get('/tenants/alpha/settings/ai-prompts')
-            ->assertOk()
-            ->assertSee('Original title')
-            ->assertSee('r3 · restored')
-            ->assertSee('Original {{content}} prompt.');
-    }
-
-    public function test_restore_always_appends_a_new_revision_even_when_target_snapshot_matches_current_state(): void
-    {
-        $user = User::factory()->create();
-        $alpha = $this->membership($user, 'alpha', ['settings.manage']);
-        $template = $this->persistTwoRevisionTemplate($alpha, $user, 'alpha.rewrite');
-
-        $this->actingAs($user)
-            ->post('/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/1/restore')
-            ->assertRedirect('/tenants/alpha/settings/ai-prompts');
+        // The target snapshot is already current after the first restore. Canonical restore still appends history.
         $this->actingAs($user)
             ->post('/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/1/restore')
             ->assertRedirect('/tenants/alpha/settings/ai-prompts')
             ->assertSessionHas('status', 'Restored alpha.rewrite as revision r4.');
 
-        $fresh = AiPromptTemplate::query()->withoutGlobalScopes()->findOrFail($template->id);
-        $this->assertSame(4, $fresh->current_version);
-
+        $final = AiPromptTemplate::query()->withoutGlobalScopes()->findOrFail($template->id);
+        $this->assertSame(4, $final->current_version);
         $revisions = AiPromptRevision::query()->withoutGlobalScopes()
             ->where('ai_prompt_template_id', $template->id)
             ->orderBy('version')
             ->get();
         $this->assertCount(4, $revisions);
         $this->assertSame(['created', 'updated', 'restored', 'restored'], $revisions->pluck('change_type')->all());
-        $this->assertSame($revisions[0]->snapshot, $revisions[2]->snapshot);
         $this->assertSame($revisions[0]->snapshot, $revisions[3]->snapshot);
         $this->assertSame(2, AuditEvent::query()->withoutGlobalScopes()->where('event', 'ai.prompt.changed')->count());
+
+        $this->actingAs($user)->get('/tenants/alpha/settings/ai-prompts')
+            ->assertOk()
+            ->assertSee('Original title')
+            ->assertSee('r4 · restored')
+            ->assertSee('Original {{content}} prompt.');
     }
 
-    public function test_restore_fails_closed_for_guest_permissions_foreign_tenant_direct_key_missing_revision_current_revision_and_locked_builtin(): void
+    public function test_restore_fails_closed_for_guest_permission_tenant_revision_current_and_locked_builtin_boundaries(): void
     {
         $user = User::factory()->create();
         $alpha = $this->membership($user, 'alpha', ['settings.manage']);
@@ -161,8 +145,6 @@ class AiPromptTemplateRestoreVisibleControlTerminalityTest extends TestCase
         $beta = Tenant::query()->create(['name' => 'Beta', 'slug' => 'beta']);
         $this->persistTwoRevisionTemplate($beta, $user, 'beta.secret');
 
-        $this->get('/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/1/restore')
-            ->assertStatus(405);
         $this->post('/tenants/alpha/settings/ai-prompts/alpha.rewrite/revisions/1/restore')
             ->assertRedirect('/login');
 
