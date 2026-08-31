@@ -18,8 +18,7 @@ final class LanguagePreferenceCookieWriter
     public function __construct(
         private readonly CookieFactory $cookies,
         private readonly Request $request,
-    ) {
-    }
+    ) {}
 
     public function setLanguage(string $language): void
     {
