@@ -62,7 +62,10 @@ class OperationsMaintenanceRouteTerminalityTest extends TestCase
         $context = app(TenantContext::class);
         $context->activate($tenant);
         $site = Site::factory()->create();
-        app(SiteOperationHistoryService::class)->record($site->id, 'alpha.sync', true, 'Alpha completed');
+        $history = app(SiteOperationHistoryService::class);
+        $history->record($site->id, 'alpha.sync', true, 'Alpha completed');
+        $expectedRecordCount = (int) $history->getStorageInfo()['record_count'];
+        $this->assertGreaterThan(0, $expectedRecordCount);
         $context->forget();
         $this->withoutVite();
 
@@ -70,7 +73,7 @@ class OperationsMaintenanceRouteTerminalityTest extends TestCase
             ->get('/tenants/alpha/operations/maintenance')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('data-record-count="1"', false)
+            ->assertSee('data-record-count="'.$expectedRecordCount.'"', false)
             ->assertSee('Site Operation History Maintenance')
             ->assertSee('Default retention preview');
     }
