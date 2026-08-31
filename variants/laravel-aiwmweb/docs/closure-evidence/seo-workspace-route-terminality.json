@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SEO-4CBBC7AAD9",
+  "domain": "seo",
+  "kind": "route",
+  "terminal_state": "ADAPTED",
+  "previous_state": "PENDING",
+  "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
+  "security_mode": "tenant_selected",
+  "chain": "GET /tenants/{tenant}/seo-workspace -> web+auth+tenant.context -> TenantAuthorizer tenant.view+seo.view -> server-rendered SEO hub -> real Audit/Suggestions/Approval destinations"
+}
