@@ -9,6 +9,7 @@ use App\Providers\AppServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
+use App\Providers\SiteOperationDetailsRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
 use App\Providers\SitesConnectRouteServiceProvider;
 use App\Providers\SiteSettingsRouteServiceProvider;
@@ -23,6 +24,7 @@ return [
     ApprovalQueueRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
     ErrorRouteServiceProvider::class,
+    SiteOperationDetailsRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
