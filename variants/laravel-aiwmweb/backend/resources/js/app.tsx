@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
+import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
@@ -124,6 +125,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'settings') return <><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     return <WorkspacePage context={context} route={route} />;
 }
 
