@@ -1,0 +1,59 @@
+name: One-shot SetLanguage reconciliation writeback
+
+on:
+  push:
+    branches:
+      - worker/platform-AIMW-PLAT-04D5067C61-reconcile-helper-20260831
+    paths:
+      - '.github/workflows/tmp-set-language-reconcile-writeback.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  writeback:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Regenerate authoritative reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+      - name: Persist generated artifacts and remove helper workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git rm .github/workflows/tmp-set-language-reconcile-writeback.yml
+          git commit -m 'chore: persist AIMW-PLAT-04D5067C61 reconciliation'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
