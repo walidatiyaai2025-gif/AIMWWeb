@@ -23,7 +23,7 @@ final class AiUsageLoadTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-258E431558';
 
-    public function test_exact_canonical_operation_is_the_pending_ai_usage_load_async_control(): void
+    public function test_exact_canonical_operation_is_the_adapted_ai_usage_load_async_control(): void
     {
         $document = json_decode(
             (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -34,7 +34,7 @@ final class AiUsageLoadTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('billing', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/module/ai-usage', $operation['route_screen']);
