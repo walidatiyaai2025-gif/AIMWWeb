@@ -21,12 +21,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 464,
-    "pending": 467,
+    "adapted": 465,
+    "pending": 466,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 464,
-    "overall_parity_percent": 49.84
+    "terminal": 465,
+    "overall_parity_percent": 49.95
   },
   "visible_controls": {
     "total": 446,
@@ -149,12 +149,12 @@
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 2,
-      "pending": 16,
+      "adapted": 3,
+      "pending": 15,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 2,
-      "percent": 11.11
+      "terminal": 3,
+      "percent": 16.67
     },
     "reports": {
       "total": 1,
@@ -23556,7 +23556,7 @@
       "evidence": "",
       "reconciliation": {
         "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (2 < 6).",
+        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
         "source_label": null,
         "source_sha": null,
         "destination_path": null
@@ -23576,21 +23576,27 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Platform/Localization/LanguagePreferenceCookieWriter.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetLanguagePreferenceTerminalityTest.php",
+      "evidence": "Set language preference service closure@f3ddc770f717710aa290c0790dd87b5a03550100: variants/laravel-aiwmweb/backend/app/Platform/Localization/LanguagePreferenceCookieWriter.php; token:language, token:preference, method:SetLanguage",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (2 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
+        "source_label": "Set language preference service closure",
+        "source_sha": "f3ddc770f717710aa290c0790dd87b5a03550100",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Platform/Localization/LanguagePreferenceCookieWriter.php",
+        "score": 7,
+        "signals": [
+          "token:language",
+          "token:preference",
+          "method:SetLanguage"
+        ]
       }
     },
     {
@@ -33684,12 +33690,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 315,
-      "pending": 34,
+      "adapted": 316,
+      "pending": 33,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 315,
-      "percent": 90.26
+      "terminal": 316,
+      "percent": 90.54
     },
     "visible_control": {
       "total": 446,
@@ -34084,7 +34090,6 @@
       "AIMW-OPER-FC4C071FAA"
     ],
     "platform": [
-      "AIMW-PLAT-04D5067C61",
       "AIMW-PLAT-15C5517022",
       "AIMW-PLAT-17BC7DA9E5",
       "AIMW-PLAT-17E3F2B4ED",
@@ -34312,6 +34317,15 @@
         "explicit_operation_evidence_ids": [
           "AIMW-AI-959B247B1D"
         ]
+      },
+      {
+        "label": "Set language preference service closure",
+        "sha": "f3ddc770f717710aa290c0790dd87b5a03550100",
+        "domains": [
+          "platform"
+        ],
+        "supporting_only": false,
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34331,6 +34345,7 @@
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
+      "f3ddc770f717710aa290c0790dd87b5a03550100",
       "fb068134c2ad60111bd376f4f400c1bd247394ca"
     ],
     "unpushed_sources_counted": [],
