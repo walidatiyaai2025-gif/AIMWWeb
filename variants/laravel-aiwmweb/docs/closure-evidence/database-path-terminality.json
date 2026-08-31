@@ -5,7 +5,8 @@
   "target_variant": "LARAVEL_AIWMWEB",
   "authority": {
     "issue": 257,
-    "canonical_base_sha": "970bddd7789a28f0df583be8b0962380ea9ee9b0",
+    "claim_base_sha": "970bddd7789a28f0df583be8b0962380ea9ee9b0",
+    "reconciled_base_sha": "ac47baea93b5f983c3c18974d51e547e2766d0dc",
     "pcc_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
     "claim_comment_id": 5477160966,
     "worker_branch": "worker/laravel-AIMW-PLAT-F6C1A04662-database-path"
