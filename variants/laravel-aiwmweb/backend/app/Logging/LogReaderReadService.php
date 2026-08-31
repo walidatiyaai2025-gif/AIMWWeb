@@ -33,11 +33,11 @@ final class LogReaderReadService
                 : $parent.DIRECTORY_SEPARATOR.basename($absolute);
         }
 
-        if (! $this->isInsideRoot($candidate, $root)) {
+        if ($this->isInsideRoot($candidate, $root) === false) {
             throw new InvalidArgumentException('The requested log file is outside the allowed log directory.');
         }
 
-        if (! is_file($candidate)) {
+        if (is_file($candidate) === false) {
             return [];
         }
 
@@ -62,11 +62,10 @@ final class LogReaderReadService
         }
 
         $result = [];
-        $number = 1;
 
         foreach ($lines as $text) {
             $result[] = [
-                'number' => $number++,
+                'number' => count($result) + 1,
                 'level' => $this->detectLevel($text),
                 'text' => $text,
             ];
@@ -113,7 +112,7 @@ final class LogReaderReadService
     {
         $path = str_replace('\\', '/', trim($path));
 
-        if (! preg_match('~^(?:[A-Za-z]:/|/)~', $path)) {
+        if (preg_match('~^(?:[A-Za-z]:/|/)~', $path) === 0) {
             $path = rtrim(str_replace('\\', '/', (string) getcwd()), '/').'/'.$path;
         }
 
