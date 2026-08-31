@@ -20,7 +20,8 @@
     "timestamp": "SaveAsync serializes a copy with UpdatedAtUtc overwritten by server UTC.",
     "persistence": "SingleOrDefault by the site-derived key, add when absent, SetValue when present, then SaveChangesAsync.",
     "result": "No return payload; successful completion means the upsert committed.",
-    "external_side_effect": "None. The canonical operation does not call an AI provider or WordPress."
+    "external_side_effect": "None. The canonical operation does not call an AI provider or WordPress.",
+    "audit_contract": "The canonical SaveAsync source defines no audit requirement; Laravel platform-level audit side effects are not used as terminality evidence for this operation."
   },
   "laravel_adaptation": {
     "destination_path": "variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php",
@@ -37,7 +38,7 @@
     "permission": "settings.manage",
     "authorization": "TenantAuthorizer::authorize runs before any lookup or write.",
     "tenant_isolation": "Site is loaded through the tenant-scoped Site model under the active TenantContext; a foreign tenant site ID fails with ModelNotFoundException before persistence.",
-    "actor": "The active tenant membership user_id is used by existing AdministrationService audit persistence.",
+    "actor_context": "The active tenant membership user_id is passed to the existing AdministrationService persistence path; audit behavior is incidental platform behavior rather than a canonical SaveAsync acceptance requirement.",
     "secret_storage": false,
     "cross_tenant_write": "fail closed"
   },
@@ -47,8 +48,7 @@
     "update path changes the existing row in place without duplicate settings",
     "foreign-tenant site mutation rejection",
     "missing settings.manage permission rejection before persistence",
-    "invalid typed profile rejection without partial write",
-    "existing setting.saved audit evidence for the successful mutation"
+    "invalid typed profile rejection without partial write"
   ],
   "scope": {
     "get_async_claimed": false,
