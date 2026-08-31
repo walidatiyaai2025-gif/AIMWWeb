@@ -62,20 +62,29 @@ class OperationsMaintenanceRouteTerminalityTest extends TestCase
         $context = app(TenantContext::class);
         $context->activate($tenant);
         $site = Site::factory()->create();
-        $history = app(SiteOperationHistoryService::class);
-        $history->record($site->id, 'alpha.sync', true, 'Alpha completed');
-        $expectedRecordCount = (int) $history->getStorageInfo()['record_count'];
-        $this->assertGreaterThan(0, $expectedRecordCount);
+        app(SiteOperationHistoryService::class)->record($site->id, 'alpha.sync', true, 'Alpha completed');
         $context->forget();
         $this->withoutVite();
 
-        $this->actingAs($user)
-            ->get('/tenants/alpha/operations/maintenance')
+        $response = $this->actingAs($user)->get('/tenants/alpha/operations/maintenance');
+
+        $response
             ->assertOk()
+            ->assertViewIs('operations-maintenance')
+            ->assertViewHas('storage')
+            ->assertViewHas('preview')
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('data-record-count="'.$expectedRecordCount.'"', false)
             ->assertSee('Site Operation History Maintenance')
             ->assertSee('Default retention preview');
+
+        $storage = $response->viewData('storage');
+        $preview = $response->viewData('preview');
+
+        $this->assertIsArray($storage);
+        $this->assertIsArray($preview);
+        $this->assertGreaterThan(0, (int) $storage['record_count']);
+        $this->assertSame((int) $storage['record_count'], (int) $preview['total_count']);
+        $response->assertSee('data-record-count="'.(int) $storage['record_count'].'"', false);
     }
 
     public function test_guest_missing_permission_and_cross_tenant_access_fail_closed(): void
