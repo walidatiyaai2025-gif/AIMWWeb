@@ -58,7 +58,9 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
         $this->assertStringContainsString("authorize('settings.manage')", $destination);
         $this->assertStringContainsString('Site::query()->findOrFail', $destination);
         $this->assertStringContainsString("now('UTC')->toIso8601String()", $destination);
-        $this->assertStringContainsString("saveSetting(\n                'site'", $destination);
+        $this->assertStringContainsString('saveSetting(', $destination);
+        $this->assertStringContainsString("'site',", $destination);
+        $this->assertStringContainsString('self::SETTING_KEY', $destination);
         $this->assertStringContainsString('DB::transaction', $destination);
     }
 
