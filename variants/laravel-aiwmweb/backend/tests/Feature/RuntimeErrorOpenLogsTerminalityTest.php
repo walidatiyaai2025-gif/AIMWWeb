@@ -49,11 +49,11 @@ final class RuntimeErrorOpenLogsTerminalityTest extends TestCase
         $appSource = (string) file_get_contents(resource_path('js/app.tsx'));
         $controlSource = (string) file_get_contents(resource_path('js/runtime-error-open-logs-control.tsx'));
 
-        $this->assertStringContainsString("import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';", $appSource);
+        $this->assertStringContainsString('import { RuntimeErrorOpenLogsControl } from \'./runtime-error-open-logs-control\';', $appSource);
         $this->assertStringContainsString('<RuntimeErrorOpenLogsControl />', $appSource);
         $this->assertStringContainsString(self::OPERATION_ID, $controlSource);
         $this->assertStringContainsString('Open logs', $controlSource);
-        $this->assertStringContainsString("/^\\/tenants\\/([^/]+)(?:\\/|$)/", $controlSource);
+        $this->assertStringContainsString('/^\/tenants\/([^/]+)(?:\/|$)/', $controlSource);
         $this->assertStringContainsString('`/tenants/${encodeURIComponent(tenantSlug)}/logs`', $controlSource);
         $this->assertStringNotContainsString('AIMW-CONT-8B3518EF80', $controlSource);
     }
