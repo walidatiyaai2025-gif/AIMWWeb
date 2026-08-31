@@ -70,8 +70,8 @@ class OperationsMaintenanceRouteTerminalityTest extends TestCase
             ->get('/tenants/alpha/operations/maintenance')
             ->assertOk()
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
+            ->assertSee('data-record-count="1"', false)
             ->assertSee('Site Operation History Maintenance')
-            ->assertSee('data-testid="record-count">1', false)
             ->assertSee('Default retention preview');
     }
 
