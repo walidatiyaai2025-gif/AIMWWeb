@@ -44,7 +44,8 @@ class PlatformServicesParityClosureTest extends TestCase
     ];
 
     private const STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS = [
-        'AIMW-PLAT-04D5067C61',
+        'AIMW-PLAT-04D5067C61' => 'SetLanguage',
+        'AIMW-PLAT-17E3F2B4ED' => 'GetLanguage',
     ];
 
     public function test_composed_reconciliation_never_regresses_the_frozen_backend_pending_baseline(): void
@@ -190,7 +191,9 @@ class PlatformServicesParityClosureTest extends TestCase
 
     private function hasStrictTenantNeutralBackendEvidence(array $operation): bool
     {
-        if (! in_array($operation['operation_id'] ?? null, self::STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS, true)) {
+        $operationId = $operation['operation_id'] ?? null;
+        $expectedMethod = self::STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS[$operationId] ?? null;
+        if ($expectedMethod === null) {
             return false;
         }
 
@@ -204,13 +207,13 @@ class PlatformServicesParityClosureTest extends TestCase
         }
 
         if (($operation['service'] ?? null) !== 'LanguagePreferenceService'
-            || ($operation['visible_control'] ?? null) !== 'SetLanguage') {
+            || ($operation['visible_control'] ?? null) !== $expectedMethod) {
             return false;
         }
 
         $signals = $operation['reconciliation']['signals'] ?? [];
 
-        return in_array('method:SetLanguage', $signals, true)
+        return in_array('method:'.$expectedMethod, $signals, true)
             && in_array('token:language', $signals, true)
             && in_array('token:preference', $signals, true);
     }
