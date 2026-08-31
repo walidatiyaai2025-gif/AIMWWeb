@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 final class AiUsageReadController extends Controller
 {
+    private const SOURCE_LOAD_TAKE = 10_000;
+
     public function __construct(
         private readonly AiUsageService $usage,
         private readonly TenantAuthorizer $authorizer,
@@ -32,7 +34,7 @@ final class AiUsageReadController extends Controller
         $report = $this->usage->report([
             'user_id' => (int) $request->user()->getKey(),
             'site_id' => $siteId,
-            'take' => 1000,
+            'take' => self::SOURCE_LOAD_TAKE,
         ]);
 
         $report['sites'] = Site::query()
@@ -46,7 +48,7 @@ final class AiUsageReadController extends Controller
             ->all();
 
         // Preserve the full usage dashboard payload while also publishing the
-        // generic live-resource envelope consumed by the existing React workspace.
+        // generic live-resource envelope consumed by the React workspace.
         $report['data'] = $report['recent'];
         $report['total'] = $report['summary']['total_calls'];
 
