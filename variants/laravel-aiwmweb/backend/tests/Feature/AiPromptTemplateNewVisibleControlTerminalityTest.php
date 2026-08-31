@@ -24,7 +24,7 @@ class AiPromptTemplateNewVisibleControlTerminalityTest extends TestCase
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('/settings/ai-prompts', $row['route_screen']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor', $row['current_source']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor'));
         $this->assertStringContainsString('OnClick="NewTemplateClicked"', $source);
