@@ -8,7 +8,9 @@
     @vite(['resources/css/app.css'])
 </head>
 <body>
-<main class="fatal-error" data-canonical-operation="AIMW-AI-6EF2330C99">
+<main class="fatal-error"
+      data-canonical-operation="AIMW-AI-6EF2330C99"
+      data-record-count="{{ (int) $storage['record_count'] }}">
     <section class="panel">
         <span class="workspace-kicker">STORAGE MANAGEMENT</span>
         <h1>Site Operation History Maintenance</h1>
