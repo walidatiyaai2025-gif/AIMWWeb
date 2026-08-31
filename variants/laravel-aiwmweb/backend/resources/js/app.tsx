@@ -17,6 +17,7 @@ import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
+import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
@@ -124,7 +125,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sites') return <><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'settings') return <><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
