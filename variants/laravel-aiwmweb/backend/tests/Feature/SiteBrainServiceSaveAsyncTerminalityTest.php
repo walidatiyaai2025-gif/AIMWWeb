@@ -119,7 +119,7 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
         $this->assertSame($rowId, $rows->sole()->id);
         $this->assertSame('Editorial', $stored['writing_tone']);
         $this->assertSame('laravel, wordpress', $stored['target_keywords']);
-        $this->assertSame('2026-08-31T07:30:00+00:00', $stored['updated_at_utc']);
+        $this->assertSame(now('UTC')->toIso8601String(), $stored['updated_at_utc']);
     }
 
     public function test_foreign_tenant_site_cannot_be_mutated(): void
