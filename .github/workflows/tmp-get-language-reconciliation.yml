@@ -1,0 +1,58 @@
+name: Temporary GetLanguage Reconciliation Generator
+
+on:
+  push:
+    branches:
+      - worker/laravel-AIMW-PLAT-17E3F2B4ED-get-language
+    paths:
+      - '.github/workflows/tmp-get-language-reconciliation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate canonical reconciliation artifacts
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+      - name: Commit generator-produced artifacts
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            echo 'Artifacts already current.'
+            exit 0
+          fi
+          git commit -m '[AIMW-PLAT-17E3F2B4ED] Regenerate authoritative reconciliation'
+          git push origin HEAD:worker/laravel-AIMW-PLAT-17E3F2B4ED-get-language
