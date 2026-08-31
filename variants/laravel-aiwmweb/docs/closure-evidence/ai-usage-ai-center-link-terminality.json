@@ -11,7 +11,8 @@
     "current_source": "src/AIWordPressManager.Web/Components/Pages/AIUsage.razor",
     "mutation": false,
     "tenant_owned": true,
-    "risk": "low"
+    "risk": "low",
+    "terminal_state": "ADAPTED"
   },
   "source_semantics": {
     "control": "AI Usage exposes an AI Center navigation link targeting /ai-center.",
@@ -32,10 +33,13 @@
     "id_surface": "No resource ID is accepted or emitted."
   },
   "acceptance": {
-    "implementation_source_sha": "6756eb9d27e8f9f45fba9f912f033b7d4af1e065",
+    "implementation_source_sha": "38488b30e8a92880d34770c275434b7a76c969ad",
+    "plan_link_run": 33364991638,
+    "cross_domain_security_run": 33364991599,
+    "implementation_acceptance_run": 33364991601,
     "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiUsageAiCenterLinkTerminalityTest.php",
     "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-usage-ai-center-link-control.test.tsx",
-    "ci_status": "pending exact-head GitHub Actions verification",
+    "ci_status": "all required workflows succeeded on the exact implementation source SHA",
     "proofs": [
       "exact canonical PENDING identity at implementation stage",
       "exact production canonical operation marker",
@@ -45,7 +49,9 @@
       "navigation reads do not mutate AI usage or approval persistence",
       "missing AI Usage permission fails 403 at source route",
       "foreign tenant source and target routes fail 404",
-      "reverse AI Center to AI Usage control and AI Center route ownership excluded"
+      "reverse AI Center to AI Usage control and AI Center route ownership excluded",
+      "PR Plan Link, Cross-Domain Security, and full Laravel AIWMWeb Acceptance all succeeded on the exact implementation source SHA",
+      "full Acceptance included release/census gate, Pint, SQLite, MySQL, Redis queue/scheduler, WordPress disposable runtime, real WordPress REST E2E, frontend tests/builds, runtime artifacts, and production Docker Compose build/boot/runtime smokes"
     ]
   },
   "scope": {
@@ -63,6 +69,6 @@
     "worker_branch": "worker/laravel-AIMW-AI-411CFF23F3-ai-usage-ai-center-link"
   },
   "terminality": {
-    "state": "PENDING_CI"
+    "state": "ADAPTED"
   }
 }
