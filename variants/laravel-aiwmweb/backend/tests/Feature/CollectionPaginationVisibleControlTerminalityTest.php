@@ -55,7 +55,7 @@ class CollectionPaginationVisibleControlTerminalityTest extends TestCase
 
         $limited = User::factory()->create();
         $this->membership($limited, 'limited', ['tenant.view']);
-        $this->actingAs($limited)->get('/tenants/limited/content')->assertForbidden();
+        $this->actingAs($limited)->get('/tenants/limited/module/comments')->assertForbidden();
 
         Tenant::query()->create(['name' => 'Foreign', 'slug' => 'foreign']);
         $this->actingAs($authorized)->get('/tenants/foreign/content')->assertNotFound();
