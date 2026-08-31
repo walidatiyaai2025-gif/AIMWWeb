@@ -104,9 +104,11 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderWorkspace();
-        await screen.findByText('Alpha Site');
+        const siteFilter = await screen.findByLabelText('Choose site to filter usage history');
+        expect(siteFilter).toHaveValue('');
+        expect(screen.getAllByText('Alpha Site')).toHaveLength(2);
 
-        fireEvent.change(screen.getByLabelText('Choose site to filter usage history'), { target: { value: '17' } });
+        fireEvent.change(siteFilter, { target: { value: '17' } });
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(fetchMock.mock.calls[1][0]).toBe(`${endpoint}?site=17`);
