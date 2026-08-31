@@ -130,6 +130,7 @@ final class LogReaderReadService
 
             if ($segment === '..') {
                 array_pop($segments);
+
                 continue;
             }
 
