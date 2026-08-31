@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-D5FAAA34DD",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/settings/ai-prompts",
+    "visible_control": "Restore historical prompt revision",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor",
+    "tenant_owned": true,
+    "terminal_state": "PENDING_CI"
+  },
+  "source_semantics": {
+    "history_rule": "Restoring never rewrites history; it creates a new revision from the selected historical content.",
+    "current_revision": "The Restore control is disabled for the currently selected revision.",
+    "confirmation": "Restore revision r{revision} of {key} as a new revision?",
+    "mutation": "PromptStore.Restore replays the selected historical snapshot as a new revision and then reloads the selected prompt while preserving the result message.",
+    "failure": "Restore failures are surfaced truthfully and never report success."
+  },
+  "laravel_adaptation": {
+    "view": "variants/laravel-aiwmweb/backend/resources/views/ai/prompt-templates.blade.php",
+    "route_file": "variants/laravel-aiwmweb/backend/routes/ai-prompt-restore.php",
+    "bootstrap_wiring": "variants/laravel-aiwmweb/backend/bootstrap/app.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiPromptTemplateRestoreController.php",
+    "existing_registry_primitive": "variants/laravel-aiwmweb/backend/app/AI/Platform/Services/PromptRegistryService.php::restore",
+    "append_only_fix": "Restore passes forceRevision=true so a restore always creates a new revision even when the target snapshot equals current state; normal Save deduplication is unchanged.",
+    "http_contract": "POST /tenants/{tenant}/settings/ai-prompts/{template}/revisions/{version}/restore",
+    "operation_marker": "AIMW-AI-D5FAAA34DD",
+    "confirmation": "Browser confirmation is required before the form submits.",
+    "current_revision_guard": "Current revision control is disabled in the UI and direct current-version POST returns 409."
+  },
+  "security": {
+    "required_permission": "settings.manage",
+    "middleware": ["web", "auth", "tenant.context"],
+    "tenant_slug_guard": true,
+    "template_lookup": "tenant-scoped AiPromptTemplate stable_key lookup",
+    "revision_lookup": "revision must belong to the tenant-scoped selected template",
+    "guest": "redirect to login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "cross_tenant_direct_key": "404",
+    "missing_revision": "404",
+    "locked_builtin": "validation failure with no revision or audit mutation"
+  },
+  "persistence": {
+    "history": "Existing revisions remain unchanged; restore appends change_type=restored.",
+    "actor": "The authenticated tenant member is stored as updated_by_user_id, revision actor_user_id, and audit actor_user_id.",
+    "audit_event": "ai.prompt.changed",
+    "audit_change_type": "restored",
+    "fake_success": false
+  },
+  "acceptance": {
+    "test": "variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplateRestoreVisibleControlTerminalityTest.php",
+    "ci_status": "pending exact-head GitHub Actions verification",
+    "proofs": [
+      "exact canonical operation identity and source semantics",
+      "explicit guarded POST route and controller wiring",
+      "truthful Restore control with canonical marker and confirmation",
+      "current revision disabled and direct current-version POST rejected",
+      "historical snapshot replayed as a new revision",
+      "repeated restore of an already-current snapshot still appends a new revision",
+      "prior revisions remain unchanged",
+      "authenticated actor and audit provenance persisted",
+      "guest, permission, tenant, direct-key, missing-revision, and locked-built-in boundaries fail closed",
+      "separately owned New, Save, Back, and route operations remain excluded"
+    ]
+  },
+  "scope": {
+    "claimed_operations": ["AIMW-AI-D5FAAA34DD"],
+    "excluded_operations": [
+      "AIMW-AI-825B2F5A38",
+      "AIMW-AI-79AE29D6B3",
+      "AIMW-AI-E1A964346F"
+    ],
+    "generated_parity_modified": false,
+    "aspnet_modified": false,
+    "merge_performed": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "421017c717fc32eb1a0c58468a034d29aca6c577",
+    "worker_branch": "worker/laravel-AIMW-AI-D5FAAA34DD-ai-prompts-restore",
+    "claim_comment_id": 5475703978
+  },
+  "terminality": {
+    "state": "PENDING_CI"
+  }
+}
