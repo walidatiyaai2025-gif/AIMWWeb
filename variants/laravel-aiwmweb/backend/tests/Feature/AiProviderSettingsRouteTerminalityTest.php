@@ -87,7 +87,7 @@ class AiProviderSettingsRouteTerminalityTest extends TestCase
             ->assertDontSee('DO-NOT-RENDER-SECRET-MATERIAL')
             ->assertDontSee('<form', false);
 
-        $this->assertSame('text/html; charset=UTF-8', $response->headers->get('content-type'));
+        $this->assertSame('text/html; charset=utf-8', $response->headers->get('content-type'));
     }
 
     public function test_guest_missing_permission_and_cross_tenant_access_fail_closed(): void
