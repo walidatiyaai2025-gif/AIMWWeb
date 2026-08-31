@@ -12,6 +12,7 @@ use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
 use App\Providers\SitesConnectRouteServiceProvider;
+use App\Providers\SiteOperationsMaintenanceRouteServiceProvider;
 use App\Providers\SiteSettingsRouteServiceProvider;
 
 return [
@@ -26,6 +27,7 @@ return [
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
+    SiteOperationsMaintenanceRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
     SeoVisibleControlRouteServiceProvider::class,
 ];
