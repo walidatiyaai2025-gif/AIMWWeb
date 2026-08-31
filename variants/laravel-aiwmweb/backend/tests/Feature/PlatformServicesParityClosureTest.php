@@ -43,6 +43,10 @@ class PlatformServicesParityClosureTest extends TestCase
         'AIMW-EMAI-78352CD34E',
     ];
 
+    private const STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS = [
+        'AIMW-PLAT-04D5067C61',
+    ];
+
     public function test_composed_reconciliation_never_regresses_the_frozen_backend_pending_baseline(): void
     {
         $pending = $this->pendingBackend();
@@ -104,8 +108,10 @@ class PlatformServicesParityClosureTest extends TestCase
             $this->assertNotSame('', trim((string) $operation['laravel_destination']), $operationId.' is missing a Laravel destination.');
             $this->assertNotSame('', trim((string) $operation['acceptance_test']), $operationId.' is missing test evidence.');
             $this->assertTrue(
-                (bool) $operation['tenant_owned'] || $this->hasStrictTenantSelectedApiEvidence($operation),
-                $operationId.' must remain tenant-owned or carry the strict explicit tenant-selected API security contract.',
+                (bool) $operation['tenant_owned']
+                    || $this->hasStrictTenantSelectedApiEvidence($operation)
+                    || $this->hasStrictTenantNeutralBackendEvidence($operation),
+                $operationId.' must remain tenant-owned, carry the strict explicit tenant-selected API security contract, or be an explicitly proven tenant-neutral local operation.',
             );
             $this->assertNotSame('', trim((string) ($operation['reconciliation']['source_sha'] ?? '')), $operationId.' is missing exact-SHA evidence.');
         }
@@ -180,6 +186,33 @@ class PlatformServicesParityClosureTest extends TestCase
         }
 
         return true;
+    }
+
+    private function hasStrictTenantNeutralBackendEvidence(array $operation): bool
+    {
+        if (! in_array($operation['operation_id'] ?? null, self::STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS, true)) {
+            return false;
+        }
+
+        if (($operation['tenant_owned'] ?? true) !== false
+            || ($operation['mutation'] ?? true) !== false
+            || ($operation['external_dependency'] ?? null) !== 'none'
+            || ($operation['native_wp_rest'] ?? true) !== false
+            || ($operation['connector_required'] ?? true) !== false
+            || ($operation['risk'] ?? null) !== 'low') {
+            return false;
+        }
+
+        if (($operation['service'] ?? null) !== 'LanguagePreferenceService'
+            || ($operation['visible_control'] ?? null) !== 'SetLanguage') {
+            return false;
+        }
+
+        $signals = $operation['reconciliation']['signals'] ?? [];
+
+        return in_array('method:SetLanguage', $signals, true)
+            && in_array('token:language', $signals, true)
+            && in_array('token:preference', $signals, true);
     }
 
     private function pendingBackend()
