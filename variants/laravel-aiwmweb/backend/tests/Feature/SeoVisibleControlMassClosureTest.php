@@ -22,6 +22,13 @@ final class SeoVisibleControlMassClosureTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
+
     private const IDS = [
         'AIMW-SEO-C48570747C',
         'AIMW-SEO-126222BD60',
