@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "authority": {
+    "issue": 257,
+    "target_variant": "LARAVEL_AIWMWEB",
+    "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "canonical_base_sha": "506017dafd96c8182d6d6f9505d7ef6667e93f22",
+    "claim_comment_id": 5476809997,
+    "worker_branch": "worker/laravel-AIMW-OPER-21EC1BDE45-runtime-error-open-logs"
+  },
+  "operation": {
+    "operation_id": "AIMW-OPER-21EC1BDE45",
+    "domain": "operations",
+    "kind": "visible_control",
+    "route_screen": "component:Routes",
+    "visible_control": "/logs -> /logs",
+    "current_source": "src/AIWordPressManager.Web/Components/Routes.razor",
+    "mutation": false
+  },
+  "adaptation": {
+    "state": "PENDING_CI",
+    "implementation": "variants/laravel-aiwmweb/backend/resources/js/runtime-error-open-logs-control.tsx",
+    "wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx global ErrorBoundary",
+    "source_label": "Open logs",
+    "destination_contract": "/tenants/{current-path-tenant}/logs",
+    "destination_route": "canonical.alias.logs",
+    "destination_workspace": "/tenants/{tenant}/module/logs",
+    "fail_closed": [
+      "no control outside a /tenants/{slug} path",
+      "no tenant is guessed from memberships or global state",
+      "decoded slash/backslash path escapes are rejected",
+      "malformed percent encoding is rejected"
+    ],
+    "mutation": false
+  },
+  "security": {
+    "existing_route_middleware": ["auth", "tenant.context"],
+    "existing_route_permissions": ["operations.manage", "diagnostics.view"],
+    "foreign_tenant": "404",
+    "missing_permission": "403",
+    "guest": "redirect to login"
+  },
+  "validation": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/runtime-error-open-logs-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/RuntimeErrorOpenLogsTerminalityTest.php",
+    "exact_head_ci_required": true
+  },
+  "explicit_exclusions": [
+    "AIMW-CONT-8B3518EF80 / Pages/Error.razor /Error Open logs / PR #384",
+    "AIMW-CONT-85394A0E55 / Error Back to dashboard",
+    "AIMW-SYNC-89777052CB / Error Copy details",
+    "AIMW-OPER-55C6982761 / ApplicationPathService.GetLogsDirectory / PR #399",
+    "AIMW-OPER-85A7A01127 / LogReaderService.GetFiles / PR #400",
+    "AIMW-OPER-FC4C071FAA / LogReaderService.Read / PR #401",
+    "generated operation parity reconciliation artifacts"
+  ],
+  "terminality": {
+    "state": "PENDING_CI",
+    "implementation_head": null,
+    "ci_runs": {}
+  }
+}
