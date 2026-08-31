@@ -1,0 +1,66 @@
+{
+  "authority": {
+    "repository": "walidatiyaai2025-gif/AIMWWeb",
+    "issue": 257,
+    "variant": "LARAVEL_AIWMWEB",
+    "composition_branch": "worker/laravel-aiwmweb-closure-composition",
+    "composition_sha_at_claim": "2cb0744f466501f79dec5d7cbef8b6ec5d0aeae3"
+  },
+  "operation": {
+    "operation_id": "AIMW-AI-34EC6312B9",
+    "domain": "ai",
+    "kind": "service",
+    "service": "SiteBrainService.SaveAsync",
+    "current_source": "src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "input": "A complete SiteBrainProfile whose SiteId determines the persistence key.",
+    "timestamp": "SaveAsync serializes a copy with UpdatedAtUtc overwritten by server UTC.",
+    "persistence": "SingleOrDefault by the site-derived key, add when absent, SetValue when present, then SaveChangesAsync.",
+    "result": "No return payload; successful completion means the upsert committed.",
+    "external_side_effect": "None. The canonical operation does not call an AI provider or WordPress."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteBrainServiceSaveAsyncTerminalityTest.php",
+    "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-brain-save-terminality.json",
+    "operation_marker": "AIMW-AI-34EC6312B9",
+    "method": "saveAsync(array $profile): void",
+    "storage": "Existing tenant-scoped scoped_settings row with scope=site, key=site_brain.profile and site_key=site:{site_id}.",
+    "create_or_update": "AdministrationService::saveSetting performs the existing-row update or first-row insert; SiteBrainService wraps it in a transaction.",
+    "timestamp_truth": "Caller supplied updated_at_utc is discarded and replaced with now('UTC')->toIso8601String() before persistence.",
+    "typed_profile_contract": "Canonical required string fields are type checked; canonical defaulted goal/keyword/competitor/schedule/autopilot fields retain their source defaults when omitted."
+  },
+  "security_and_tenancy": {
+    "permission": "settings.manage",
+    "authorization": "TenantAuthorizer::authorize runs before any lookup or write.",
+    "tenant_isolation": "Site is loaded through the tenant-scoped Site model under the active TenantContext; a foreign tenant site ID fails with ModelNotFoundException before persistence.",
+    "actor": "The active tenant membership user_id is used by existing AdministrationService audit persistence.",
+    "secret_storage": false,
+    "cross_tenant_write": "fail closed"
+  },
+  "acceptance": [
+    "exact canonical operation/source identity and SaveAsync source behavior",
+    "create path persists one site-scoped profile with server UTC timestamp",
+    "update path changes the existing row in place without duplicate settings",
+    "foreign-tenant site mutation rejection",
+    "missing settings.manage permission rejection before persistence",
+    "invalid typed profile rejection without partial write",
+    "existing setting.saved audit evidence for the successful mutation"
+  ],
+  "scope": {
+    "get_async_claimed": false,
+    "separate_operation_kept_out_of_scope": "AIMW-AI-0F3763FDB4",
+    "route_or_visible_control_added": false,
+    "new_table_created": false,
+    "external_provider_called": false,
+    "generated_reconciliation_modified": false,
+    "merge_requested": false
+  },
+  "ci": {
+    "exact_head_required": true,
+    "status": "pending exact-head workflow verification"
+  }
+}
