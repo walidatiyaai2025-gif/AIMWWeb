@@ -4,7 +4,8 @@
     "issue": 257,
     "target_variant": "LARAVEL_AIWMWEB",
     "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "canonical_base_sha": "506017dafd96c8182d6d6f9505d7ef6667e93f22",
+    "canonical_base_sha": "970bddd7789a28f0df583be8b0962380ea9ee9b0",
+    "claim_base_sha": "506017dafd96c8182d6d6f9505d7ef6667e93f22",
     "claim_comment_id": 5476809997,
     "worker_branch": "worker/laravel-AIMW-OPER-21EC1BDE45-runtime-error-open-logs"
   },
@@ -18,7 +19,7 @@
     "mutation": false
   },
   "adaptation": {
-    "state": "PENDING_CI",
+    "state": "ADAPTED",
     "implementation": "variants/laravel-aiwmweb/backend/resources/js/runtime-error-open-logs-control.tsx",
     "wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx global ErrorBoundary",
     "source_label": "Open logs",
@@ -55,8 +56,12 @@
     "generated operation parity reconciliation artifacts"
   ],
   "terminality": {
-    "state": "PENDING_CI",
-    "implementation_head": null,
-    "ci_runs": {}
+    "state": "VERIFIED_COMPLETE",
+    "implementation_head": "9d6cb80c5e06421b2e679d2da434bd550498fc30",
+    "ci_runs": {
+      "PR Plan Link": {"run_number": 1384, "run_id": 33381271476, "conclusion": "success"},
+      "Laravel AIWMWeb Cross-Domain Security": {"run_number": 606, "run_id": 33381271569, "conclusion": "success"},
+      "Laravel AIWMWeb Acceptance": {"run_number": 675, "run_id": 33381271486, "conclusion": "success"}
+    }
   }
 }
