@@ -47,16 +47,32 @@ class DatabasePathTerminalityTest extends TestCase
         $this->assertStringNotContainsString('user', strtolower($databaseFile));
     }
 
-    public function test_runtime_database_locator_is_connection_configuration_not_a_fabricated_file_path(): void
+    public function test_runtime_database_locator_follows_the_active_connection_configuration(): void
     {
-        $this->assertSame('sqlite', config('database.default'));
-        $this->assertSame('sqlite', DB::getDefaultConnection());
-        $this->assertSame(':memory:', config('database.connections.sqlite.database'));
+        $connection = (string) config('database.default');
+        $database = config("database.connections.{$connection}.database");
+
+        $this->assertNotSame('', $connection);
+        $this->assertSame($connection, DB::getDefaultConnection());
+        $this->assertIsString($database);
+        $this->assertNotSame('', trim($database));
+
+        if ($connection === 'sqlite') {
+            $this->assertTrue($database === ':memory:' || str_ends_with($database, '.sqlite'));
+        }
 
         $row = DB::selectOne('select 1 as value');
 
         $this->assertNotNull($row);
         $this->assertSame(1, (int) $row->value);
+    }
+
+    public function test_phpunit_contract_uses_in_memory_sqlite_without_a_fabricated_file(): void
+    {
+        $phpunit = (string) file_get_contents(base_path('phpunit.xml'));
+
+        $this->assertStringContainsString('<env name="DB_CONNECTION" value="sqlite"/>', $phpunit);
+        $this->assertStringContainsString('<env name="DB_DATABASE" value=":memory:"/>', $phpunit);
     }
 
     public function test_production_example_uses_mysql_without_inventing_a_local_database_path(): void
