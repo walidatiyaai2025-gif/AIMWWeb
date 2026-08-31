@@ -93,6 +93,12 @@
       "sha": "f3ddc770f717710aa290c0790dd87b5a03550100",
       "observed_pr_head": "f3ddc770f717710aa290c0790dd87b5a03550100",
       "domains": ["platform"]
+    },
+    {
+      "label": "Get language preference service closure",
+      "sha": "41011429295d0b5daa7a36a59824d4b45015b93e",
+      "observed_pr_head": "41011429295d0b5daa7a36a59824d4b45015b93e",
+      "domains": ["platform"]
     }
   ],
   "excluded_sources": [],
