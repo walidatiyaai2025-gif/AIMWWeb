@@ -2,8 +2,8 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "3b9a85a19a8c48ae3e373fda1cc7341670341e59",
-  "focused_closure_evidence_source_sha": "3b9a85a19a8c48ae3e373fda1cc7341670341e59",
+  "previous_reconciliation_sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+  "focused_closure_evidence_source_sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
   "countable_sources": [
     {
       "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
@@ -328,6 +328,22 @@
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
           "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "Canonical site operations maintenance route closure",
+      "sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+      "observed_pr_head": "067e401416896105f304d5b715d5ac1aa509e54f",
+      "domains": [
+        "ai"
+      ],
+      "operation_evidence": {
+        "AIMW-AI-959B247B1D": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationsMaintenanceRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operations-maintenance-route-terminality.json"
         }
       }
     }
