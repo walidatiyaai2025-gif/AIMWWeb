@@ -19,12 +19,12 @@ final class AiUsageAiCenterLinkTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-411CFF23F3';
 
-    public function test_exact_canonical_row_is_the_pending_ai_usage_to_ai_center_navigation(): void
+    public function test_exact_canonical_row_is_the_adapted_ai_usage_to_ai_center_navigation(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('ai', $row['domain']);
         $this->assertSame('/module/ai-usage', $row['route_screen']);
