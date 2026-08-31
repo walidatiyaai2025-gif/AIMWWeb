@@ -11,7 +11,8 @@
     "current_source": "src/AIWordPressManager.Web/Components/Pages/AIUsage.razor",
     "mutation": false,
     "tenant_owned": true,
-    "risk": "low"
+    "risk": "low",
+    "terminal_state": "ADAPTED"
   },
   "source_semantics": {
     "initial_load": "OnInitializedAsync delegates to LoadAsync.",
@@ -43,9 +44,13 @@
     "fake_success": false
   },
   "acceptance": {
+    "implementation_source_sha": "4005a816f2e83e3b3b9682e14314dc4fb23b2d58",
+    "plan_link_run": 33366503232,
+    "cross_domain_security_run": 33366503230,
+    "implementation_acceptance_run": 33366503347,
     "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiUsageLoadTerminalityTest.php",
     "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-usage-load-workspace.test.tsx",
-    "ci_status": "pending exact-head GitHub Actions verification",
+    "ci_status": "all required workflows succeeded on the exact implementation source SHA",
     "proofs": [
       "exact canonical PENDING operation identity",
       "initial authoritative load through the existing tenant API",
@@ -57,7 +62,9 @@
       "missing permission performs no frontend request and direct API fails 403",
       "foreign tenant site lookup fails 404",
       "read path leaves AiUsageRecord persistence unchanged",
-      "previous AI Usage link and route operations remain separately owned"
+      "previous AI Usage link and route operations remain separately owned",
+      "PR Plan Link, Cross-Domain Security, and full Laravel AIWMWeb Acceptance succeeded on implementation SHA 4005a816f2e83e3b3b9682e14314dc4fb23b2d58",
+      "full Acceptance passed release/census, Pint, SQLite, MySQL, Redis queue/scheduler, disposable WordPress, real WordPress REST E2E, frontend tests/builds, runtime artifacts, and production Docker Compose build/boot/runtime smokes"
     ]
   },
   "scope": {
@@ -76,6 +83,6 @@
     "abandoned_preimplementation_branch": "worker/laravel-AIMW-BILL-258E431558-ai-usage-load"
   },
   "terminality": {
-    "state": "PENDING_CI"
+    "state": "ADAPTED"
   }
 }
