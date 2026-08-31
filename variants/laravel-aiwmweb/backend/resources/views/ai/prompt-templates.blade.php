@@ -12,6 +12,13 @@
             <h1>AI Prompt Templates</h1>
             <p>Read the persisted prompt registry and append-only revision history for {{ $tenant->name }}.</p>
             <p>Settings managers only. This view does not create, edit, restore, or seed prompt data.</p>
+            <nav aria-label="AI prompt template navigation">
+                <a
+                    href="/tenants/{{ rawurlencode($tenant->slug) }}/settings"
+                    data-canonical-operation="AIMW-AI-E1A964346F"
+                    aria-label="Back to Settings"
+                >← Settings</a>
+            </nav>
         </header>
 
         <section aria-labelledby="template-library">
