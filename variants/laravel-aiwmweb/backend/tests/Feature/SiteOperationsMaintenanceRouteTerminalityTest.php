@@ -61,7 +61,11 @@ class SiteOperationsMaintenanceRouteTerminalityTest extends TestCase
         $tenant = $this->membership($user, 'alpha', ['execution.view']);
         $context = app(TenantContext::class);
         $context->activate($tenant);
-        $site = Site::factory()->create();
+        $site = Site::query()->create([
+            'name' => 'Alpha maintenance site',
+            'url' => 'https://alpha-maintenance.example.test',
+            'status' => 'active',
+        ]);
         app(SiteOperationHistoryService::class)->record($site->id, 'alpha.sync', true, 'Alpha completed');
         $context->forget();
         $this->withoutVite();
