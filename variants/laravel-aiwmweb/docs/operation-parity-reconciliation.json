@@ -22,12 +22,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 470,
-    "pending": 461,
+    "adapted": 471,
+    "pending": 460,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 470,
-    "overall_parity_percent": 50.48
+    "terminal": 471,
+    "overall_parity_percent": 50.59
   },
   "visible_controls": {
     "total": 446,
@@ -40,12 +40,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 57,
-      "pending": 35,
+      "adapted": 58,
+      "pending": 34,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 57,
-      "percent": 61.96
+      "terminal": 58,
+      "percent": 63.04
     },
     "approvals": {
       "total": 25,
@@ -2595,21 +2595,31 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceRouteTerminalityTest.php",
+      "evidence": "AIMW-AI-6EF2330C99 operations maintenance route closure@3e932f83ee1a9e3bcbee1159ead1fe29f8721640: variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php; explicit-route-contract:AIMW-AI-6EF2330C99; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/OperationsMaintenanceReadController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/operations-maintenance-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "AIMW-AI-6EF2330C99 operations maintenance route closure",
+        "source_sha": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/OperationsMaintenanceReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/operations-maintenance-route-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-6EF2330C99",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -33727,12 +33737,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 39,
-      "pending": 45,
+      "adapted": 40,
+      "pending": 44,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 39,
-      "percent": 46.43
+      "terminal": 40,
+      "percent": 47.62
     },
     "service": {
       "total": 349,
@@ -33772,7 +33782,6 @@
       "AIMW-AI-54BB64BB13",
       "AIMW-AI-58FABCCEDB",
       "AIMW-AI-6701FB22AE",
-      "AIMW-AI-6EF2330C99",
       "AIMW-AI-746EDAE589",
       "AIMW-AI-8205320842",
       "AIMW-AI-8EE4F9F6FC",
@@ -34406,6 +34415,18 @@
           "AIMW-AI-4C84DDBEEB"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-AI-6EF2330C99 operations maintenance route closure",
+        "sha": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+        "domains": [
+          "ai"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": [
+          "AIMW-AI-6EF2330C99"
+        ]
       }
     ]
   },
@@ -34423,6 +34444,7 @@
     "terminal_evidence_references_exist": true,
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
+      "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
@@ -34437,6 +34459,7 @@
     "explicit_route_contract_terminals": [
       "AIMW-AI-1E1BF9CEDC",
       "AIMW-AI-1E33F01F4E",
+      "AIMW-AI-6EF2330C99",
       "AIMW-AI-959B247B1D",
       "AIMW-APPR-A292974395",
       "AIMW-AUTO-1546E5BCAF",
