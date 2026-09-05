@@ -68,7 +68,6 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             $this->assertContains('tenant.context', $route->gatherMiddleware());
             $this->assertSame('execution.view', $route->defaults['workspace_permissions']);
             $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id']);
-            $this->assertArrayHasKey('operationId', $route->wheres);
         }
     }
 
@@ -127,6 +126,7 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->actingAs($allowed)->get("/tenants/beta/site-operations/{$betaCorrelationId}")->assertNotFound();
         $this->actingAs($allowed)->get("/tenants/alpha/site-operations/{$betaCorrelationId}")->assertNotFound();
         $this->actingAs($allowed)->get('/tenants/alpha/site-operations/not-a-guid')->assertNotFound();
+        $this->actingAs($allowed)->get('/tenants/alpha/operations/sites/not-a-guid')->assertNotFound();
     }
 
     private function membership(User $user, Tenant $tenant, array $permissions): TenantMembership
