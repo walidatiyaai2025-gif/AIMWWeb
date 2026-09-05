@@ -9,7 +9,9 @@ use App\Providers\AppServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
+use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
+use App\Providers\SiteOperationsMaintenanceRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
 use App\Providers\SitesConnectRouteServiceProvider;
 use App\Providers\SiteSettingsRouteServiceProvider;
@@ -22,10 +24,12 @@ return [
     AiCenterApprovalStatusRouteServiceProvider::class,
     AiPromptTemplatesRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
-    OperationsMaintenanceRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
+    OperationsMaintenanceRouteServiceProvider::class,
+    SiteOperationsMaintenanceRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
+    SeoVisibleControlRouteServiceProvider::class,
 ];
