@@ -48,6 +48,24 @@ class PlatformServicesParityClosureTest extends TestCase
         'AIMW-PLAT-17E3F2B4ED' => 'GetLanguage',
     ];
 
+    private const STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS = [
+        'AIMW-PLAT-15C5517022' => [
+            'route_screen' => 'service:ReleaseNotesService',
+            'current_source' => 'src/AIWordPressManager.Web/Services/ReleaseNotesService.cs',
+            'visible_control' => 'GetAll',
+            'destination' => 'variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-15C5517022',
+                'service:ReleaseNotesService',
+                'member:GetAll',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json',
+            ],
+        ],
+    ];
+
     private const STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS = [
         'AIMW-PLAT-18A8EE0324' => [
             'route_screen' => '/setup',
@@ -222,6 +240,28 @@ class PlatformServicesParityClosureTest extends TestCase
             return in_array('method:'.$expectedMethod, $signals, true)
                 && in_array('token:language', $signals, true)
                 && in_array('token:preference', $signals, true);
+        }
+
+        $serviceContract = self::STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS[$operationId] ?? null;
+        if ($serviceContract !== null) {
+            if (($operation['route_screen'] ?? null) !== $serviceContract['route_screen']
+                || ($operation['current_source'] ?? null) !== $serviceContract['current_source']
+                || ($operation['visible_control'] ?? null) !== $serviceContract['visible_control']
+                || ($operation['laravel_destination'] ?? null) !== $serviceContract['destination']
+                || ($operation['acceptance_test'] ?? null) !== $serviceContract['acceptance_test']
+                || ($operation['reconciliation']['evidence_mode'] ?? null) !== 'focused_service_contract'
+                || ($operation['reconciliation']['evidence_path'] ?? null) !== $serviceContract['evidence_path']) {
+                return false;
+            }
+
+            $signals = $operation['reconciliation']['signals'] ?? [];
+            foreach ($serviceContract['signals'] as $requiredSignal) {
+                if (! in_array($requiredSignal, $signals, true)) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         $routeContract = self::STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS[$operationId] ?? null;
