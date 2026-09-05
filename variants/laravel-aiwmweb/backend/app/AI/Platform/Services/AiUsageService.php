@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class AiUsageService
 {
+    private const MAX_REPORT_RECORDS = 10_000;
+
     public function record(array $data): AiUsageRecord
     {
         return AiUsageRecord::query()->create([
@@ -18,7 +20,7 @@ final class AiUsageService
     public function report(array $filters = []): array
     {
         $query = $this->query($filters);
-        $records = (clone $query)->latest('created_at')->limit(min(max((int) ($filters['take'] ?? 100), 1), 1000))->get();
+        $records = (clone $query)->latest('created_at')->limit(min(max((int) ($filters['take'] ?? 100), 1), self::MAX_REPORT_RECORDS))->get();
 
         $total = (clone $query)->count();
         $success = (clone $query)->where('status', 'succeeded')->count();

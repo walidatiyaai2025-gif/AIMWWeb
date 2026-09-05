@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SEO-4F3F2AC874",
+  "domain": "seo",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "previous_state": "PENDING",
+  "production_surface": "backend/resources/js/seo-visible-controls.tsx",
+  "acceptance_test": "backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
+  "chain": "Selected checkboxes -> applySelected -> POST existing prepareBulk -> SeoManagerService::prepareRemediation -> persisted Suggestion plus PENDING Approval -> truthful prepared/failed feedback and authoritative refresh",
+  "approval_boundary": "No WordPress mutation is claimed or performed by preparation; explicit approval remains required.",
+  "fake_success": false
+}
