@@ -13,6 +13,12 @@ final class ErrorRouteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_canonical_error_route_identity_is_exact_and_read_only(): void
     {
         $ledgerPath = base_path('../docs/operation-parity-reconciliation.json');
