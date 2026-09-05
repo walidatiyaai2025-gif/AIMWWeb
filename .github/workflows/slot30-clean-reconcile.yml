@@ -1,0 +1,133 @@
+name: Slot30 Clean Reconcile
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-4C84DDBEEB-job-failure-gate
+
+permissions:
+  contents: write
+
+jobs:
+  clean-reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Normalize generator and manifest without formatting churn
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+
+          base = '5059e73c7b64b1e56f926d589b3f0c9eab11cf5f'
+          manifest_path = 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          manifest = subprocess.check_output(['git','show',f'{base}:{manifest_path}'], text=True)
+          old_sha = '"previous_reconciliation_sha": "af67f421f2850ccb7afc8089aaad15149f7a636a"'
+          new_sha = '"previous_reconciliation_sha": "5059e73c7b64b1e56f926d589b3f0c9eab11cf5f"'
+          if old_sha not in manifest:
+              raise SystemExit('base previous_reconciliation_sha anchor missing')
+          manifest = manifest.replace(old_sha, new_sha, 1)
+          marker = '\n  ],\n  "excluded_sources":'
+          if marker not in manifest:
+              raise SystemExit('countable_sources tail anchor missing')
+          source = '''\n    ,{\n      "label": "AIMW-AI-4C84DDBEEB scoped job failure gate closure",\n      "sha": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",\n      "observed_pr_head": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",\n      "domains": ["ai"],\n      "operation_ids": ["AIMW-AI-4C84DDBEEB"]\n    }'''
+          manifest = manifest.replace(marker, source + marker, 1)
+          Path(manifest_path).write_text(manifest)
+
+          reconcile = Path('variants/laravel-aiwmweb/tools/reconcile_operation_parity.py')
+          text = reconcile.read_text()
+          old = 'aliases = set(ALIASES_BY_DOMAIN.get(str(row.get("domain")), ()))'
+          new = 'aliases = ALIASES_BY_DOMAIN.get(str(row.get("domain")), ())'
+          if old not in text:
+              raise SystemExit('alias determinism anchor missing')
+          reconcile.write_text(text.replace(old, new, 1))
+
+          evidence = Path('variants/laravel-aiwmweb/docs/evidence/AIMW-AI-4C84DDBEEB-job-failure-gate.md')
+          evidence_text = evidence.read_text()
+          old_line = '9. history is tenant-safe through the already tenant-scoped queue middleware and site-owned through `suggestions.site_id`;'
+          new_line = '9. history is tenant-safe through `Suggestion`\'s mandatory `BelongsToTenant` scope and site-owned through `suggestions.site_id`;'
+          if old_line in evidence_text:
+              evidence_text = evidence_text.replace(old_line, new_line, 1)
+          evidence.write_text(evidence_text)
+          PY
+
+      - name: Regenerate canonical parity artifacts deterministically
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Enforce exact one-row semantic delta and stable prior rows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          target = 'AIMW-AI-4C84DDBEEB'
+          base = '5059e73c7b64b1e56f926d589b3f0c9eab11cf5f'
+          rel = 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          before_payload = json.loads(subprocess.check_output(['git','show',f'{base}:{rel}'], text=True))
+          after_payload = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          before = {r['operation_id']: r for r in before_payload['operations']}
+          after = {r['operation_id']: r for r in after_payload['operations']}
+          changes = [(op, before[op]['migration_state'], after[op]['migration_state']) for op in before if before[op]['migration_state'] != after[op]['migration_state']]
+          if changes != [(target, 'PENDING', 'ADAPTED')]:
+              raise SystemExit(f'illegal state delta: {changes}')
+          expected_totals = {'total':931,'terminal':468,'pending':463,'blocked':0}
+          actual = {k: after_payload['totals'][k] for k in expected_totals}
+          if actual != expected_totals:
+              raise SystemExit(f'unexpected totals: {actual}')
+          row = after[target]
+          if row['laravel_destination'] != 'variants/laravel-aiwmweb/backend/app/Jobs/JobFailureGate.php':
+              raise SystemExit(f'unexpected destination: {row["laravel_destination"]}')
+          if row['acceptance_test'] != 'variants/laravel-aiwmweb/backend/tests/Unit/JobFailureGateTest.php':
+              raise SystemExit(f'unexpected test: {row["acceptance_test"]}')
+          signals = (row.get('reconciliation') or {}).get('signals') or []
+          if 'scoped-job:JobFailureGate' not in signals:
+              raise SystemExit(f'missing exact scoped job signal: {signals}')
+          print('SLOT30_CLEAN_DELTA=PASS')
+          PY
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+      - name: Commit clean final tree and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'walidatiyaai2025-gif'
+          git config user.email 'walidatiyaai2025@gmail.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+                  variants/laravel-aiwmweb/tools/reconcile_operation_parity.py \
+                  variants/laravel-aiwmweb/docs/evidence/AIMW-AI-4C84DDBEEB-job-failure-gate.md
+          git rm .github/workflows/slot30-clean-reconcile.yml
+          git commit -m 'Stabilize Slot30 parity reconciliation artifacts'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-4C84DDBEEB-job-failure-gate
