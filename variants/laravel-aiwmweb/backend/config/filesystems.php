@@ -26,6 +26,9 @@ return [
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
     |
+    | Canonical native-framework parity marker:
+    | AIMW-PLAT-A2624EDC66 ApplicationPathService.GetApplicationDataDirectory
+    |
     */
 
     'disks' => [

@@ -3,12 +3,17 @@
   "task_id": "AIMW-PLAT-A2624EDC66",
   "operation_id": "AIMW-PLAT-A2624EDC66",
   "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
   "authority": {
     "issue": 257,
     "canonical_base_sha": "506017dafd96c8182d6d6f9505d7ef6667e93f22",
     "pcc_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
     "claim_comment_id": 5476828480,
-    "worker_branch": "worker/laravel-AIMW-PLAT-A2624EDC66-application-data-directory"
+    "worker_branch": "worker/laravel-AIMW-PLAT-A2624EDC66-application-data-directory",
+    "merged_pr": 402,
+    "merge_commit_sha": "970bddd7789a28f0df583be8b0962380ea9ee9b0",
+    "reconciliation_recovery_base_sha": "d50d97a7207147c34e723a68c7af7720f6578ecd",
+    "reconciliation_recovery_comment_id": 5555400575
   },
   "canonical_operation": {
     "kind": "service",
@@ -18,8 +23,13 @@
     "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs",
     "mutation": false
   },
+  "service_closure_contract": {
+    "implementation_sha": "8863469d6482ec9adbd8e9487341162949f74f95",
+    "destination_path": "variants/laravel-aiwmweb/backend/config/filesystems.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationDataDirectoryTerminalityTest.php"
+  },
   "decision": "ADAPTED_NATIVE_FRAMEWORK",
-  "rationale": "Laravel already exposes a stable application-owned persistent data root through storage_path('app'). Its local and public filesystem roots are descendants of that directory, so introducing a duplicate ApplicationPathService wrapper would create dead abstraction rather than improve parity.",
+  "rationale": "Laravel already exposes a stable application-owned persistent data root through storage_path('app'). Its local and public filesystem roots are descendants of that directory, so introducing a duplicate ApplicationPathService wrapper would create dead abstraction rather than improve parity. The later strict focused-service generator can now verify that already-merged native-framework adaptation against an exact pushed provenance marker and the original focused runtime test.",
   "destination": {
     "runtime_contract": "storage_path('app')",
     "configuration": "variants/laravel-aiwmweb/backend/config/filesystems.php",
@@ -54,6 +64,7 @@
     "GetTemporaryDirectory"
   ],
   "validation": {
-    "exact_head_ci_required": true
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
   }
 }
