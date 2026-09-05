@@ -3,6 +3,7 @@
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "operation_id": "AIMW-AI-991683D92C",
+  "terminal_state": "ADAPTED",
   "operation": {
     "domain": "ai",
     "kind": "visible_control",
@@ -46,7 +47,7 @@
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterApprovalQueueLinkTerminalityTest.php",
     "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-center-approval-queue-link.test.tsx",
     "coverage": [
-      "exact canonical PENDING row identity",
+      "generator-backed ADAPTED row identity",
       "real AI Center host wiring",
       "canonical operation marker",
       "active-tenant-only URL construction and encoding",
@@ -76,24 +77,26 @@
     "generated_reconciliation_edited": false,
     "approval_backend_ownership_changed": false,
     "aspnet_product_modified": false,
-    "merge_performed": false
+    "merge_performed": true
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "claim_base_sha": "a61f644948b733e836747fa8c48e42187ebb1e41",
-    "previous_pr_head_sha": "67ddf778d2d6f19b7dcd97414e1e215431217ec0",
-    "recovery_base_sha": "8f4fe139255fdb89fca23e113f42925f0d0a5e35",
-    "recovery_note": "Recovered onto the live composition with merge ancestry preserved. The shared AI Center host keeps the newer New session and race-safe approval-status logic from composition and adds only this Approval queue navigation control.",
-    "worker_branch": "worker/laravel-AIMW-AI-991683D92C-ai-center-approvals-link",
-    "implementation_test_snapshot": "f0b5e19283a5b8f3737269730ce757968c468ee5"
+    "recovered_pr_head_sha": "f866f2100e4e59c662139cb060f469a413319e67",
+    "integration_sha": "8fa01a7de12f12ab951e1ff2109a7da139932a50",
+    "integration_note": "PR #387 was integrated concurrently during Slot 0032 with tested ancestry preserved. This evidence records the already-integrated implementation and supports only post-integration canonical reconciliation for the same operation.",
+    "reconciliation_branch": "manager/laravel-aiwmweb-post-387-reconciliation-slot32"
   },
   "ci_policy": {
     "required": [
       "PR Plan Link",
       "Laravel AIWMWeb Cross-Domain Security",
-      "Laravel AIWMWeb Acceptance"
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
     ],
     "exact_final_pushed_head_required": true,
-    "status_at_evidence_commit": "pending exact recovered-head GitHub Actions verification"
+    "status_at_evidence_commit": "pending Slot 0032 reconciliation exact-head repository validation"
   }
 }
