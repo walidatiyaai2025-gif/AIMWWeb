@@ -26,7 +26,7 @@
   "decision": "ADAPTED",
   "rationale": "The Laravel variant now has a real application-local ReleaseNotesService::getAll() contract matching the canonical source read behavior: versioned Markdown headings are parsed into release records, dash/star change lines are preserved, repeated reads may reuse an unchanged non-empty mtime cache, missing files return a truthful empty collection, and an existing-but-unreadable file fails rather than fabricating an empty success.",
   "service_closure_contract": {
-    "implementation_sha": "d1974c02d96c265ddc0fab080c84904ca6d32342",
+    "implementation_sha": "3adafbe4f23960d5e952f2aef0a9cea6d9cf5bc8",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php"
   },
