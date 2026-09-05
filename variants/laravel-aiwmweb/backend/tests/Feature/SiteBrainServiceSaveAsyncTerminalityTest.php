@@ -67,8 +67,8 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
     public function test_save_creates_one_tenant_scoped_site_profile_with_server_utc_timestamp(): void
     {
         Carbon::setTestNow('2026-08-31T06:00:00Z');
-        [$tenant, $site] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
-        app(TenantContext::class)->activate($tenant);
+        [$tenant, $site, $user, $membership] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
+        app(TenantContext::class)->activate($tenant, $membership);
 
         $profile = $this->profile($site->id, [
             'writing_tone' => 'Warm',
@@ -95,8 +95,8 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
 
     public function test_save_updates_the_existing_site_profile_in_place_instead_of_creating_duplicates(): void
     {
-        [$tenant, $site] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
-        app(TenantContext::class)->activate($tenant);
+        [$tenant, $site, $user, $membership] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
+        app(TenantContext::class)->activate($tenant, $membership);
         $service = app(SiteBrainService::class);
 
         Carbon::setTestNow('2026-08-31T06:00:00Z');
@@ -118,9 +118,9 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
 
     public function test_foreign_tenant_site_cannot_be_mutated(): void
     {
-        [$alpha] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
+        [$alpha, $alphaSite, $alphaUser, $alphaMembership] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
         [, $betaSite] = $this->tenantSiteAndUser('beta', ['settings.manage']);
-        app(TenantContext::class)->activate($alpha);
+        app(TenantContext::class)->activate($alpha, $alphaMembership);
 
         try {
             app(SiteBrainService::class)->saveAsync($this->profile($betaSite->id));
@@ -132,8 +132,8 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
 
     public function test_missing_settings_permission_fails_before_persistence(): void
     {
-        [$tenant, $site] = $this->tenantSiteAndUser('alpha', ['tenant.view']);
-        app(TenantContext::class)->activate($tenant);
+        [$tenant, $site, $user, $membership] = $this->tenantSiteAndUser('alpha', ['tenant.view']);
+        app(TenantContext::class)->activate($tenant, $membership);
 
         $this->expectException(AuthorizationException::class);
 
@@ -146,8 +146,8 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
 
     public function test_invalid_typed_profile_fails_without_partial_write(): void
     {
-        [$tenant, $site] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
-        app(TenantContext::class)->activate($tenant);
+        [$tenant, $site, $user, $membership] = $this->tenantSiteAndUser('alpha', ['settings.manage']);
+        app(TenantContext::class)->activate($tenant, $membership);
         $profile = $this->profile($site->id);
         $profile['autopilot_enabled'] = 'yes';
 
@@ -209,6 +209,6 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
         ]);
         $context->forget();
 
-        return [$tenant, $site, $user];
+        return [$tenant, $site, $user, $membership];
     }
 }
