@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\Suggestion;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 final class JobFailureGate
 {
@@ -63,7 +63,7 @@ final class JobFailureGate
      * Reuses the existing durable runtime records for the AI suggestion job. Other
      * job families remain fail-open until their own canonical stores are migrated.
      *
-     * @return  Collection<int, object>
+     * @return  Collection<int, Suggestion>
      */
     private function recentTerminalRuns(int $siteId, string $jobType, int $limit): Collection
     {
@@ -71,12 +71,12 @@ final class JobFailureGate
             return collect();
         }
 
-        return DB::table('suggestions')
+        return Suggestion::query()
             ->where('site_id', $siteId)
             ->whereIn('status', ['ready', 'failed'])
             ->orderByDesc('created_at')
             ->limit($limit)
-            ->get(['status', 'updated_at as completed_at', 'updated_at']);
+            ->get(['status', 'updated_at']);
     }
 
     /** @return array{pause_after_failures:bool,consecutive_failures_before_pause:int,failure_pause_minutes:int,auto_resume_after_pause:bool} */
