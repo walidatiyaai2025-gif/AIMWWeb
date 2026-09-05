@@ -1,0 +1,47 @@
+name: Laravel AIWMWeb Slot 0029 Commit Test Alignment
+
+on:
+  push:
+    branches:
+      - manager/laravel-aiwmweb-post-390-reconciliation
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot-0029-commit-test-alignment.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  commit-alignment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply post-reconciliation test-state alignment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php')
+          text = path.read_text(encoding='utf-8')
+          old = "        $this->assertSame('PENDING', $operation['migration_state']);\n"
+          new = "        $this->assertSame('ADAPTED', $operation['migration_state']);\n        $this->assertSame('explicit_route_api_contract', $operation['reconciliation']['evidence_mode']);\n"
+          if text.count(old) != 1:
+              raise SystemExit('expected exactly one stale PENDING assertion')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Remove temporary slot workflows and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/laravel-aiwmweb-slot-0029-test-alignment.yml
+          rm -f .github/workflows/laravel-aiwmweb-slot-0029-commit-test-alignment.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php .github/workflows
+          git commit -m "Align AI Center terminality test with reconciled parity"
+          git push origin HEAD:manager/laravel-aiwmweb-post-390-reconciliation
