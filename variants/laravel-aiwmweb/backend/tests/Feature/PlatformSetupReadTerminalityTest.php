@@ -6,6 +6,8 @@ use App\Http\Controllers\SetupReadController;
 use App\Services\DatabaseSetupPageService;
 use App\Services\DatabaseSetupReadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Mockery;
@@ -91,12 +93,16 @@ class PlatformSetupReadTerminalityTest extends TestCase
             'identity_ready' => true,
         ]);
 
-        $this->app->instance(
-            DatabaseSetupPageService::class,
-            new DatabaseSetupPageService($readService),
-        );
+        $page = new DatabaseSetupPageService($readService);
+        $request = Request::create('/setup', 'GET', [
+            'returnUrl' => 'https://evil.example/phish',
+        ]);
+        $this->app->instance('request', $request);
 
-        $this->get('/setup?returnUrl='.urlencode('https://evil.example/phish'))
-            ->assertRedirect('/');
+        $response = (new SetupReadController)($page);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertSame(url('/'), $response->getTargetUrl());
+        $this->assertStringNotContainsString('evil.example', $response->getTargetUrl());
     }
 }
