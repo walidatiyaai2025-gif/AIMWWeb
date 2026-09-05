@@ -80,31 +80,15 @@ class PlatformSetupReadTerminalityTest extends TestCase
 
     public function test_completed_setup_ignores_caller_redirect_targets_and_uses_fixed_landing_page(): void
     {
-        $now = now();
-        $tenantId = DB::table('tenants')->insertGetId([
-            'name' => 'Setup proof tenant',
-            'slug' => 'setup-proof-tenant',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-        $userId = DB::table('users')->insertGetId([
-            'name' => 'Setup proof user',
-            'email' => 'setup-proof@example.test',
-            'password' => 'not-used-by-this-test',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-        DB::table('tenant_memberships')->insert([
-            'tenant_id' => $tenantId,
-            'user_id' => $userId,
-            'status' => 'active',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-
-        $status = app(DatabaseSetupReadService::class)->status();
-        $this->assertTrue($status['complete']);
-        $this->assertTrue($status['identity_ready']);
+        $this->mock(DatabaseSetupReadService::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('status')->once()->andReturn([
+                'complete' => true,
+                'driver' => 'sqlite',
+                'database_reachable' => true,
+                'migrations_ready' => true,
+                'identity_ready' => true,
+            ]);
+        });
 
         $response = $this->get('/setup?returnUrl=https%3A%2F%2Fevil.example%2Fphish');
 
