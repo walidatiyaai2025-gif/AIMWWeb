@@ -20,12 +20,12 @@ final class AiCenterApprovalQueueLinkTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-991683D92C';
 
-    public function test_exact_canonical_row_is_the_pending_ai_center_approval_queue_navigation(): void
+    public function test_exact_canonical_row_is_the_adapted_ai_center_approval_queue_navigation(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('ai', $row['domain']);
         $this->assertSame('/ai-center', $row['route_screen']);
@@ -34,6 +34,12 @@ final class AiCenterApprovalQueueLinkTerminalityTest extends TestCase
         $this->assertFalse((bool) $row['mutation']);
         $this->assertTrue((bool) $row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
+        $this->assertSame('focused_closure_contract', $row['reconciliation']['evidence_mode']);
+        $this->assertSame('5e56f2f0265577db2186290a94bde28ff59dae40', $row['reconciliation']['source_sha']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/ai-center-approval-queue-link-terminality.json',
+            $row['reconciliation']['evidence_path'],
+        );
     }
 
     public function test_frontend_control_is_wired_to_the_real_guarded_approval_alias_only(): void
