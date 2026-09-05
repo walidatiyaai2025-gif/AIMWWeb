@@ -122,6 +122,7 @@
       "sha": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "observed_pr_head": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "domains": ["ai"],
+      "supporting_only": true,
       "operation_evidence": {
         "AIMW-AI-6EF2330C99": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/OperationsMaintenanceReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/operations-maintenance-route-terminality.json"}
       }
