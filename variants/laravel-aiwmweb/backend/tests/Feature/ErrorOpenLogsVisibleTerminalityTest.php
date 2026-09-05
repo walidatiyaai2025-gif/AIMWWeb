@@ -19,13 +19,13 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-8B3518EF80';
 
-    public function test_exact_canonical_operation_remains_pending_until_authorized_integration(): void
+    public function test_exact_canonical_operation_is_generator_backed_adapted_after_authorized_reconciliation(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/Error', $operation['route_screen']);
@@ -34,6 +34,16 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
         $this->assertSame('low', $operation['risk']);
+        $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null);
+        $this->assertSame('8fd472342e77d444d0932ea26617858d2832ef43', $operation['reconciliation']['source_sha'] ?? null);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/error-open-logs-terminality.json',
+            $operation['reconciliation']['evidence_path'] ?? null,
+        );
+        $this->assertSame(931, $ledger['totals']['total']);
+        $this->assertSame(469, $ledger['totals']['terminal']);
+        $this->assertSame(462, $ledger['totals']['pending']);
+        $this->assertSame(0, $ledger['totals']['blocked']);
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/Error.razor'));
         $view = file_get_contents(resource_path('views/platform/error.blade.php'));
