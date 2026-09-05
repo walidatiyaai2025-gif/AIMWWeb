@@ -39,7 +39,9 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
         $this->assertSame('PENDING', $operation['migration_state']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('service', $operation['kind']);
-        $this->assertSame('SiteBrainService.SaveAsync', $operation['service']);
+        $this->assertSame('SiteBrainService', $operation['service']);
+        $this->assertSame('SaveAsync', $operation['visible_control']);
+        $this->assertSame('service:SiteBrainService', $operation['route_screen']);
         $this->assertSame('src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs', $operation['current_source']);
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs'));
