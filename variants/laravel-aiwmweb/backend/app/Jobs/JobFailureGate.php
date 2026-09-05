@@ -11,7 +11,7 @@ final class JobFailureGate
     public function canStart(int $siteId, string $jobType, ?CarbonImmutable $now = null): JobGateDecision
     {
         $settings = $this->settings();
-        if (!$settings['pause_after_failures']) {
+        if (! $settings['pause_after_failures']) {
             return JobGateDecision::allowed();
         }
 
@@ -26,7 +26,7 @@ final class JobFailureGate
      */
     public static function decide(Collection $recent, array $settings, CarbonImmutable $now, string $jobType): JobGateDecision
     {
-        if (!$settings['pause_after_failures']) {
+        if (! $settings['pause_after_failures']) {
             return JobGateDecision::allowed();
         }
 
@@ -63,7 +63,7 @@ final class JobFailureGate
      * Reuses the existing durable runtime records for the AI suggestion job. Other
      * job families remain fail-open until their own canonical stores are migrated.
      *
-     * @return  Collection<int, Suggestion>
+     * @return Collection<int, Suggestion>
      */
     private function recentTerminalRuns(int $siteId, string $jobType, int $limit): Collection
     {
