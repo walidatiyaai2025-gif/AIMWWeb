@@ -12,7 +12,7 @@ import json
 import re
 import subprocess
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
@@ -145,6 +145,7 @@ class Snapshot:
     domains: set[str]
     files: list[FileEvidence]
     supporting_only: bool = False
+    operation_ids: set[str] = field(default_factory=set)
 
     @property
     def code(self) -> list[FileEvidence]:
@@ -230,6 +231,7 @@ def load_snapshot(source: dict) -> Snapshot:
         domains=set(source.get("domains", [])),
         files=files,
         supporting_only=bool(source.get("supporting_only", False)),
+        operation_ids={str(operation_id) for operation_id in source.get("operation_ids", []) if str(operation_id)},
     )
 
 
@@ -342,8 +344,11 @@ def best_code_evidence(row: dict, snapshots: list[Snapshot]) -> tuple[Snapshot, 
     domain = str(row.get("domain"))
     kind = str(row.get("kind"))
     best = None
+    operation_id = str(row.get("operation_id") or "")
     for snap in snapshots:
         if snap.supporting_only or domain not in snap.domains:
+            continue
+        if snap.operation_ids and operation_id not in snap.operation_ids:
             continue
         for file in snap.code:
             score, reasons = file_symbol_score(row, file)
@@ -354,6 +359,12 @@ def best_code_evidence(row: dict, snapshots: list[Snapshot]) -> tuple[Snapshot, 
             elif kind == "background_job":
                 if "/Jobs/" in file.path or "job" in Path(file.path).name.lower():
                     score += 2
+                if snap.operation_ids:
+                    job = str(row.get("background_job") or "")
+                    concrete_job = job[1:] if len(job) > 1 and job.startswith("I") and job[1].isupper() else job
+                    if concrete_job and Path(file.path).stem.lower() == concrete_job.lower():
+                        score += 4
+                        reasons.append(f"scoped-job:{concrete_job}")
             if best is None or score > best[2]:
                 best = (snap, file, score, reasons)
     return best

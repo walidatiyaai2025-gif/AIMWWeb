@@ -8,6 +8,7 @@ use Tests\TestCase;
 
 final class JobFailureGateTest extends TestCase
 {
+    // Canonical parity operation: AIMW-AI-4C84DDBEEB
     private array $settings = [
         'pause_after_failures' => true,
         'consecutive_failures_before_pause' => 3,

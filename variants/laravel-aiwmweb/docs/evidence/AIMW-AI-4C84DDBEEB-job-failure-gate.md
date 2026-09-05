@@ -40,3 +40,7 @@ The implementation deliberately reuses the existing durable `suggestions` lifecy
 - manual-resume mode remaining closed after the window.
 
 Exact-head CI is the authoritative execution evidence for this branch/PR. No merge is authorized by this worker.
+
+## Slot 0030 recovery hardening
+
+The recovered Laravel gate reads failure history through `Suggestion::query()` instead of a raw query builder. `Suggestion` inherits the variant's `BelongsToTenant` model contract, so the history lookup is constrained by the mandatory tenant scope in addition to the queue job's tenant context. Canonical operation: `AIMW-AI-4C84DDBEEB`.
