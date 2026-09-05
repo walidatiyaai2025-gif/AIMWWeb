@@ -12,6 +12,7 @@ use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
+use App\Providers\SiteOperationDetailsRouteServiceProvider;
 use App\Providers\SiteOperationsMaintenanceRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
 use App\Providers\SitesConnectRouteServiceProvider;
@@ -32,6 +33,7 @@ return [
     SitesConnectRouteServiceProvider::class,
     OperationsMaintenanceRouteServiceProvider::class,
     SiteOperationsMaintenanceRouteServiceProvider::class,
+    SiteOperationDetailsRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
     SeoVisibleControlRouteServiceProvider::class,
 ];
