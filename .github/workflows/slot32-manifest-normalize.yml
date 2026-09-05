@@ -1,0 +1,118 @@
+name: Slot32 Manifest Normalize
+
+on:
+  push:
+    branches:
+      - manager/laravel-aiwmweb-post-387-reconciliation-slot32
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-and-push:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      SOURCE_SHA: '5e56f2f0265577db2186290a94bde28ff59dae40'
+      PREVIOUS_RECONCILIATION_SHA: '8fa01a7de12f12ab951e1ff2109a7da139932a50'
+      OPERATION_ID: 'AIMW-AI-991683D92C'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: manager/laravel-aiwmweb-post-387-reconciliation-slot32
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore authoritative manifest formatting with narrow semantic edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANIFEST='variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          git show "$PREVIOUS_RECONCILIATION_SHA:$MANIFEST" > "$MANIFEST"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          text = path.read_text()
+          data = json.loads(text)
+          old_prev = f'"previous_reconciliation_sha": "{data["previous_reconciliation_sha"]}"'
+          old_focused = f'"focused_closure_evidence_source_sha": "{data["focused_closure_evidence_source_sha"]}"'
+          new_prev = f'"previous_reconciliation_sha": "{os.environ["PREVIOUS_RECONCILIATION_SHA"]}"'
+          new_focused = f'"focused_closure_evidence_source_sha": "{os.environ["SOURCE_SHA"]}"'
+          assert text.count(old_prev) == 1
+          assert text.count(old_focused) == 1
+          text = text.replace(old_prev, new_prev, 1).replace(old_focused, new_focused, 1)
+          parsed = json.loads(text)
+          assert parsed['previous_reconciliation_sha'] == os.environ['PREVIOUS_RECONCILIATION_SHA']
+          assert parsed['focused_closure_evidence_source_sha'] == os.environ['SOURCE_SHA']
+          path.write_text(text)
+          PY
+      - name: Regenerate canonical parity deterministically
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+      - name: Verify exact one-operation delta and narrow manifest diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "$PREVIOUS_RECONCILIATION_SHA:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/previous.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          old = json.loads(Path('/tmp/previous.json').read_text())
+          new = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          assert new['totals']['total'] == 931
+          assert new['totals']['terminal'] == 470
+          assert new['totals']['pending'] == 461
+          assert new['totals']['blocked'] == 0
+          old_map = {x['operation_id']: x['migration_state'] for x in old['operations']}
+          new_map = {x['operation_id']: x['migration_state'] for x in new['operations']}
+          changed = [(k, old_map[k], new_map[k]) for k in old_map if old_map[k] != new_map[k]]
+          assert changed == [(os.environ['OPERATION_ID'], 'PENDING', 'ADAPTED')], changed
+          row = next(x for x in new['operations'] if x['operation_id'] == os.environ['OPERATION_ID'])
+          assert row['reconciliation']['evidence_mode'] == 'focused_closure_contract'
+          assert row['reconciliation']['source_sha'] == os.environ['SOURCE_SHA']
+          PY
+          BASE=/tmp/base-manifest.json
+          git show "$PREVIOUS_RECONCILIATION_SHA:variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json" > "$BASE"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          base = json.loads(Path('/tmp/base-manifest.json').read_text())
+          cur = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json').read_text())
+          expected = dict(base)
+          expected['previous_reconciliation_sha'] = os.environ['PREVIOUS_RECONCILIATION_SHA']
+          expected['focused_closure_evidence_source_sha'] = os.environ['SOURCE_SHA']
+          assert cur == expected
+          PY
+      - name: Remove helper and commit normalized generator output
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/slot32-manifest-normalize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'Normalize Slot32 generator-backed reconciliation'
+          git push origin HEAD:manager/laravel-aiwmweb-post-387-reconciliation-slot32
