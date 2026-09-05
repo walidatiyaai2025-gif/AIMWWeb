@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Testing\TestResponse;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -102,7 +103,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $response = (new SetupReadController)($page);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
-        $this->assertSame(url('/'), $response->getTargetUrl());
+        TestResponse::fromBaseResponse($response)->assertRedirect('/');
         $this->assertStringNotContainsString('evil.example', $response->getTargetUrl());
     }
 }
