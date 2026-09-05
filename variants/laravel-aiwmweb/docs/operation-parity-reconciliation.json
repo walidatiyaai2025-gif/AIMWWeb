@@ -22,12 +22,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 472,
-    "pending": 459,
+    "adapted": 473,
+    "pending": 458,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 472,
-    "overall_parity_percent": 50.7
+    "terminal": 473,
+    "overall_parity_percent": 50.81
   },
   "visible_controls": {
     "total": 446,
@@ -150,12 +150,12 @@
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 4,
-      "pending": 14,
+      "adapted": 5,
+      "pending": 13,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 4,
-      "percent": 22.22
+      "terminal": 5,
+      "percent": 27.78
     },
     "reports": {
       "total": 1,
@@ -23772,21 +23772,33 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
+      "evidence": "AIMW-PLAT-18A8EE0324 GET setup exact provenance@0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01: variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php; explicit-route-api:AIMW-PLAT-18A8EE0324; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/platform-setup-read-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-PLAT-18A8EE0324 GET setup exact provenance",
+        "source_sha": "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/platform-setup-read-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-18A8EE0324",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
+          "middleware:web-only",
+          "tenant:neutral",
+          "route:no-parameters",
+          "redirect:safe-local-only"
+        ]
       }
     },
     {
@@ -33727,12 +33739,12 @@
     "api": {
       "total": 31,
       "ported": 0,
-      "adapted": 27,
-      "pending": 4,
+      "adapted": 28,
+      "pending": 3,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 27,
-      "percent": 87.1
+      "terminal": 28,
+      "percent": 90.32
     },
     "background_job": {
       "total": 21,
@@ -34153,7 +34165,6 @@
     "platform": [
       "AIMW-PLAT-15C5517022",
       "AIMW-PLAT-17BC7DA9E5",
-      "AIMW-PLAT-18A8EE0324",
       "AIMW-PLAT-3025C8E82B",
       "AIMW-PLAT-4BAE8344AF",
       "AIMW-PLAT-4C37AC806E",
@@ -34448,6 +34459,16 @@
         "explicit_operation_evidence_ids": [
           "AIMW-AI-3CDB30A4C2"
         ]
+      },
+      {
+        "label": "AIMW-PLAT-18A8EE0324 GET setup exact provenance",
+        "sha": "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
+        "domains": [
+          "platform"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34465,6 +34486,7 @@
     "terminal_evidence_references_exist": true,
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
+      "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
@@ -34527,11 +34549,12 @@
       "AIMW-EMAI-2D94EFDD53",
       "AIMW-MEDI-8BADBE1261",
       "AIMW-OPER-ABB41FC891",
+      "AIMW-PLAT-18A8EE0324",
       "AIMW-PLAT-A91A2B0B11",
       "AIMW-PLAT-FAC7505B26",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 9,
+    "explicit_route_api_contract_count": 10,
     "focused_closure_source_sha": "5e56f2f0265577db2186290a94bde28ff59dae40",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",

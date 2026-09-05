@@ -14,8 +14,12 @@ class PlatformSetupReadTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_canonical_setup_get_is_anonymous_and_resolves_to_real_controller(): void
+    private const OPERATION_ID = 'AIMW-PLAT-18A8EE0324';
+
+    public function test_canonical_setup_get_is_operation_linked_anonymous_and_resolves_to_real_controller(): void
     {
+        $this->assertSame('AIMW-PLAT-18A8EE0324', self::OPERATION_ID);
+
         $route = Route::getRoutes()->getByName('canonical.api.setup');
 
         $this->assertNotNull($route);
@@ -24,6 +28,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
+        $this->assertSame([], $route->parameterNames());
     }
 
     public function test_migrations_without_first_identity_remain_in_setup_mode(): void
@@ -71,5 +76,39 @@ class PlatformSetupReadTerminalityTest extends TestCase
             ->assertSee('Database reachable:')
             ->assertSee('no')
             ->assertDontSee('must-never-render');
+    }
+
+    public function test_completed_setup_ignores_caller_redirect_targets_and_uses_fixed_landing_page(): void
+    {
+        $now = now();
+        $tenantId = DB::table('tenants')->insertGetId([
+            'name' => 'Setup proof tenant',
+            'slug' => 'setup-proof-tenant',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $userId = DB::table('users')->insertGetId([
+            'name' => 'Setup proof user',
+            'email' => 'setup-proof@example.test',
+            'password' => 'not-used-by-this-test',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('tenant_memberships')->insert([
+            'tenant_id' => $tenantId,
+            'user_id' => $userId,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $status = app(DatabaseSetupReadService::class)->status();
+        $this->assertTrue($status['complete']);
+        $this->assertTrue($status['identity_ready']);
+
+        $response = $this->get('/setup?returnUrl=https%3A%2F%2Fevil.example%2Fphish');
+
+        $response->assertRedirect('/');
+        $this->assertStringNotContainsString('evil.example', (string) $response->headers->get('Location'));
     }
 }
