@@ -29,7 +29,7 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/Error', $operation['route_screen']);
-        $this->assertSame('/logs', $operation['visible_control']);
+        $this->assertSame('/logs -> /logs', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/Error.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
@@ -86,6 +86,8 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
 
     public function test_control_fails_closed_for_guest_missing_permission_and_ambiguous_authorized_tenants(): void
     {
+        $this->withoutVite();
+
         $this->get('/Error')
             ->assertOk()
             ->assertDontSee(self::OPERATION_ID)
@@ -113,6 +115,7 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
 
     public function test_multiple_memberships_with_only_one_logs_authority_resolve_only_that_tenant(): void
     {
+        $this->withoutVite();
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['operations.manage', 'diagnostics.view']);
         $this->membership($user, 'beta', ['operations.manage']);
