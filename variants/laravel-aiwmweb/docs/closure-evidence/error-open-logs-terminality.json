@@ -7,9 +7,9 @@
   "canonical_source": {
     "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
     "route_screen": "/Error",
-    "visible_control": "/logs",
+    "visible_control": "/logs -> /logs",
     "user_visible_text": "Open logs",
-    "behavior": "The canonical error page exposes a navigation-only Open logs anchor whose source destination is /logs."
+    "behavior": "The canonical error page exposes a navigation-only Open logs anchor whose source destination is /logs. The generated reconciliation encodes this control as /logs -> /logs."
   },
   "laravel_adaptation": {
     "source_route": "GET /Error",
@@ -61,7 +61,7 @@
   "acceptance_tests": {
     "file": "backend/tests/Feature/ErrorOpenLogsVisibleTerminalityTest.php",
     "coverage": [
-      "exact live canonical PENDING identity before authorized integration",
+      "exact live canonical PENDING identity including generated /logs -> /logs visible-control encoding before authorized integration",
       "existing guarded tenant Logs alias is the destination authority",
       "one authorized tenant renders the exact operation marker and tenant-qualified href",
       "authorized alias redirects to the real tenant Logs workspace and that workspace renders",
