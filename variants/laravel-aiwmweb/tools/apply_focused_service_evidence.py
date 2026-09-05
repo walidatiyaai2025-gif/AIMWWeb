@@ -48,7 +48,7 @@ def security_contract(row: dict[str, Any], test_text: str, evidence_path: Path) 
 
     if bool(row.get("tenant_owned")):
         tenant_proof = (
-            ("assertnotfound" in low or "404" in low)
+            ("assertnotfound" in low or "404" in low or "modelnotfoundexception" in low)
             and any(token in low for token in ("tenant", "foreign", "cross-tenant", "cross_tenant"))
         )
         if not tenant_proof:
