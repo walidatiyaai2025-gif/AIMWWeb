@@ -64,6 +64,21 @@ class PlatformServicesParityClosureTest extends TestCase
                 'evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json',
             ],
         ],
+        'AIMW-PLAT-57B1A0F5E3' => [
+            'route_screen' => 'service:ReleaseNotesService',
+            'current_source' => 'src/AIWordPressManager.Web/Services/ReleaseNotesService.cs',
+            'visible_control' => 'GetCurrent',
+            'destination' => 'variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetCurrentTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-current-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-57B1A0F5E3',
+                'service:ReleaseNotesService',
+                'member:GetCurrent',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetCurrentTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-current-terminality.json',
+            ],
+        ],
     ];
 
     private const STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS = [
