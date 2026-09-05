@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-PLAT-3025C8E82B",
+  "operation_id": "AIMW-PLAT-3025C8E82B",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "authority": {
+    "issue": 257,
+    "original_claim_base_sha": "e1895f4c4a19c530b15da717a0f5c6fe4647691f",
+    "intermediate_base_sha": "6f79f6db48aa0fa2949f41a7d26b939ea3988d4e",
+    "canonical_base_sha": "58192cc8f375e89c8a6d434f300917e76f625071",
+    "pcc_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
+    "claim_comment_id": 5477401265,
+    "first_base_correction_comment_id": 5477443214,
+    "final_base_correction_comment_id": 5477503098,
+    "worker_branch": "worker/laravel-AIMW-PLAT-3025C8E82B-temporary-directory-v3",
+    "superseded_worker_branches": [
+      "worker/laravel-AIMW-PLAT-3025C8E82B-temporary-directory",
+      "worker/laravel-AIMW-PLAT-3025C8E82B-temporary-directory-v2"
+    ]
+  },
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "platform",
+    "service": "ApplicationPathService",
+    "member": "GetTemporaryDirectory",
+    "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs",
+    "mutation": false,
+    "tenant_owned": false,
+    "terminal_state": "ADAPTED"
+  },
+  "decision": "ADAPTED_NATIVE_FRAMEWORK",
+  "rationale": "The desktop service exposes and ensures a stable application-owned Temp sibling beneath its application storage root. Laravel already provides the same path ownership primitive through storage_path(), so the native adaptation is storage_path('app/temp') plus the framework File directory lifecycle. A duplicate desktop-style ApplicationPathService or a competing filesystem-disk configuration would add dead abstraction; the canonical base already contains the separately closed screenshots disk without changing this temporary-path contract.",
+  "destination": {
+    "runtime_contract": "storage_path('app/temp') + File::ensureDirectoryExists",
+    "framework": "Illuminate\\Support\\Facades\\File",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php",
+    "production_file_delta_required": false
+  },
+  "runtime_behavior": {
+    "root": "storage/app/temp",
+    "directory_is_ensured": true,
+    "application_owned": true,
+    "caller_selected_path": false,
+    "tenant_selected_path": false,
+    "uses_os_global_temp": false,
+    "public_storage_link_exposed": false,
+    "probe": "ensure/create/read/locate/delete inside storage_path('app/temp')"
+  },
+  "security": {
+    "tenant_input_controls_path": false,
+    "user_input_controls_path": false,
+    "request_input_controls_path": false,
+    "public_symlink_target": false,
+    "secret_material_exposed": false
+  },
+  "acceptance": [
+    "canonical operation provenance is pinned to AIMW-PLAT-3025C8E82B",
+    "storage_path('app/temp') is stable beneath Laravel's application storage root",
+    "the path is application-owned rather than tenant-, user-, request-, or OS-temp-selected",
+    "the temporary root is not exposed by Laravel's public storage link",
+    "runtime can ensure the directory and create, read, locate, and remove a deterministic probe",
+    "full SQLite and MySQL suites, Redis runtime, WordPress runtimes, frontend builds, cross-domain security, and production Compose runtime smoke passed on the implementation head"
+  ],
+  "scope_exclusions": [
+    "AIMW-PLAT-A2624EDC66 / GetApplicationDataDirectory / #402",
+    "AIMW-PLAT-F6C1A04662 / GetDatabasePath / merged #404",
+    "AIMW-OPER-55C6982761 / GetLogsDirectory / #399",
+    "AIMW-PLAT-83994BBD03 / GetScreenshotsDirectory / merged #405",
+    "GetBackupsDirectory",
+    "GetExportsDirectory",
+    "config/filesystems.php",
+    "generated operation parity reconciliation artifacts"
+  ],
+  "validation": {
+    "state": "ADAPTED",
+    "implementation_head": "0b79718b01f3bda02f9143f7c5e77b10a74f4380",
+    "exact_head_ci_required": true,
+    "ci_runs": {
+      "pr_plan_link": {
+        "id": 33386000347,
+        "run_number": 1404,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "id": 33386000363,
+        "run_number": 624,
+        "conclusion": "success"
+      },
+      "laravel_acceptance": {
+        "id": 33386000335,
+        "run_number": 693,
+        "conclusion": "success"
+      }
+    },
+    "final_evidence_head_ci_required": true
+  }
+}

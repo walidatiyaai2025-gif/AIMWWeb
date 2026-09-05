@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "authority": {
+    "issue": 257,
+    "target_variant": "LARAVEL_AIWMWEB",
+    "canonical_base_sha": "421017c717fc32eb1a0c58468a034d29aca6c577",
+    "pcc_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
+    "claim_comment_id": 5475743330,
+    "worker_branch": "worker/laravel-AIMW-OPER-85A7A01127-get-log-files"
+  },
+  "operation": {
+    "operation_id": "AIMW-OPER-85A7A01127",
+    "domain": "operations",
+    "kind": "service",
+    "route_screen": "service:LogReaderService",
+    "visible_control": "GetFiles",
+    "current_source": "src/AIWordPressManager.Web/Services/LogReaderService.cs",
+    "mutation": false
+  },
+  "adaptation": {
+    "state": "ADAPTED",
+    "implementation": "variants/laravel-aiwmweb/backend/app/Logging/LogReaderService.php",
+    "method": "App\\Logging\\LogReaderService::getFiles",
+    "runtime_root": "storage_path('logs')",
+    "caller_selected_path": false,
+    "recursive": false,
+    "accepted_extensions": [
+      ".log",
+      ".txt"
+    ],
+    "metadata": [
+      "path",
+      "name",
+      "size",
+      "last_write_utc"
+    ],
+    "ordering": "last_write_utc descending",
+    "missing_directory_result": []
+  },
+  "validation": {
+    "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogReaderGetFilesTerminalityTest.php",
+    "proof": [
+      "exact canonical operation provenance",
+      "Laravel container resolves the service",
+      "missing logs directory returns an empty inventory",
+      "only top-level .log/.txt files are returned case-insensitively",
+      "path/name/size/UTC last-write metadata is preserved",
+      "results are newest-first",
+      "the root is application-owned and not caller-selected"
+    ],
+    "exact_head_ci_required": true
+  },
+  "explicit_exclusions": [
+    "AIMW-OPER-55C6982761 / ApplicationPathService.GetLogsDirectory / PR #399",
+    "AIMW-OPER-FC4C071FAA / LogReaderService.Read",
+    "log content reading or tailing",
+    "maintenance routes or visible controls",
+    "generated operation parity reconciliation artifacts"
+  ]
+}

@@ -2,6 +2,9 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
+import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
+import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
+import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
@@ -12,7 +15,9 @@ import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
+import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
+import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
@@ -37,7 +42,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
     render() {
         if (this.state.error) return (
             <div className="fatal-error" role="alert">
-                <section className="panel"><span className="workspace-kicker">RUNTIME ERROR</span><h1>A runtime error interrupted this screen</h1><p>{this.state.error.message}</p><button type="button" className="btn primary" onClick={() => window.location.reload()}>Hard reload</button></section>
+                <section className="panel"><span className="workspace-kicker">RUNTIME ERROR</span><h1>A runtime error interrupted this screen</h1><p>{this.state.error.message}</p><div className="d-flex gap-2 flex-wrap"><button type="button" className="btn primary" onClick={() => window.location.reload()}>Hard reload</button><RuntimeErrorOpenLogsControl /></div></section>
             </div>
         );
         return this.props.children;
@@ -120,8 +125,10 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sites') return <><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'settings') return <><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
     return <WorkspacePage context={context} route={route} />;
 }
 
