@@ -21,12 +21,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 466,
-    "pending": 465,
+    "adapted": 467,
+    "pending": 464,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 466,
-    "overall_parity_percent": 50.05
+    "terminal": 467,
+    "overall_parity_percent": 50.16
   },
   "visible_controls": {
     "total": 446,
@@ -39,12 +39,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 54,
-      "pending": 38,
+      "adapted": 55,
+      "pending": 37,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 54,
-      "percent": 58.7
+      "terminal": 55,
+      "percent": 59.78
     },
     "approvals": {
       "total": 25,
@@ -1652,21 +1652,34 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php",
+      "evidence": "Canonical AI Center route closure after PR #390 integration@af67f421f2850ccb7afc8089aaad15149f7a636a: variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php; explicit-route-api:AIMW-AI-82F795EE67; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Canonical AI Center route closure after PR #390 integration",
+        "source_sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-82F795EE67",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -33686,12 +33699,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 38,
-      "pending": 46,
+      "adapted": 39,
+      "pending": 45,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 38,
-      "percent": 45.24
+      "terminal": 39,
+      "percent": 46.43
     },
     "service": {
       "total": 349,
@@ -33735,7 +33748,6 @@
       "AIMW-AI-6EF2330C99",
       "AIMW-AI-746EDAE589",
       "AIMW-AI-8205320842",
-      "AIMW-AI-82F795EE67",
       "AIMW-AI-8EE4F9F6FC",
       "AIMW-AI-93EBFDE5A1",
       "AIMW-AI-953A6C0D98",
@@ -34340,6 +34352,15 @@
         ],
         "supporting_only": false,
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "Canonical AI Center route closure after PR #390 integration",
+        "sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
+        "domains": [
+          "ai"
+        ],
+        "supporting_only": true,
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34357,6 +34378,7 @@
     "pushed_source_shas_verified": [
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+      "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
@@ -34405,6 +34427,7 @@
     "errors": [],
     "passed": true,
     "explicit_route_api_contract_terminals": [
+      "AIMW-AI-82F795EE67",
       "AIMW-AI-C37F405767",
       "AIMW-COMM-A16719E105",
       "AIMW-EMAI-2D94EFDD53",
@@ -34414,7 +34437,7 @@
       "AIMW-PLAT-FAC7505B26",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 8,
+    "explicit_route_api_contract_count": 9,
     "focused_closure_source_sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
