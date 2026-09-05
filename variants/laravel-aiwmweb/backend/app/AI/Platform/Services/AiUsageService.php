@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class AiUsageService
 {
+    private const MAX_REPORT_RECORDS = 10_000;
+
     public function record(array $data): AiUsageRecord
     {
         return AiUsageRecord::query()->create([
@@ -18,7 +20,7 @@ final class AiUsageService
     public function report(array $filters = []): array
     {
         $query = $this->query($filters);
-        $records = (clone $query)->latest('created_at')->limit(min(max((int) ($filters['take'] ?? 100), 1), 1000))->get();
+        $records = (clone $query)->latest('created_at')->limit(min(max((int) ($filters['take'] ?? 100), 1), self::MAX_REPORT_RECORDS))->get();
 
         $total = (clone $query)->count();
         $success = (clone $query)->where('status', 'succeeded')->count();
@@ -47,6 +49,7 @@ final class AiUsageService
     private function query(array $filters): Builder
     {
         return AiUsageRecord::query()
+            ->when($filters['user_id'] ?? null, fn ($query, $value) => $query->where('user_id', $value))
             ->when($filters['provider'] ?? null, fn ($query, $value) => $query->where('provider_key', $value))
             ->when($filters['model'] ?? null, fn ($query, $value) => $query->where('model_key', $value))
             ->when($filters['workflow'] ?? null, fn ($query, $value) => $query->where('workflow', $value))
@@ -74,9 +77,12 @@ final class AiUsageService
 
     private function serialize(AiUsageRecord $record): array
     {
+        $metadata = is_array($record->metadata) ? $record->metadata : [];
+
         return [
             'id' => $record->id,
             'user_id' => $record->user_id,
+            'site_id' => isset($metadata['site_id']) ? (int) $metadata['site_id'] : null,
             'provider' => $record->provider_key,
             'model' => $record->model_key,
             'workflow' => $record->workflow,

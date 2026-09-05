@@ -1,9 +1,21 @@
 <?php
 
+use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\EmailNotificationController;
+use App\Http\Controllers\LegacyNotificationReadController;
+use App\Http\Controllers\PlatformReadController;
+use App\Http\Controllers\SeoRemediationClosureController;
 use App\Http\Controllers\SyncApiController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
+    Route::get('build', 'build')->name('canonical.api.build');
+    Route::get('dashboard', 'dashboard')->name('canonical.api.dashboard');
+});
+Route::middleware(['web', 'auth'])
+    ->get('notifications', [LegacyNotificationReadController::class, 'index'])
+    ->name('canonical.api.legacy-notifications');
 
 Route::post('v1/sync/webhooks/connector', [SyncApiController::class, 'webhook']);
 
@@ -51,9 +63,18 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::get('transfers/{transfer}', [ContentApiController::class, 'transfer']);
 });
 
+Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
+    ->middleware(['web', 'auth', 'tenant.context'])
+    ->group(function (): void {
+        Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals']);
+        Route::get('/history', [SeoRemediationClosureController::class, 'history']);
+        Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo']);
+    });
+
 Route::prefix('v1/tenants/{tenant}')
     ->middleware(['auth', 'tenant.context'])
     ->group(function (): void {
+        Route::get('/ai/usage', [AiUsageReadController::class, 'index'])->name('canonical.api.ai-usage');
         Route::get('/notifications', [EmailNotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [EmailNotificationController::class, 'unreadCount']);
         Route::post('/notifications/{notification}/read', [EmailNotificationController::class, 'markRead']);

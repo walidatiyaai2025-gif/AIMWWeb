@@ -25,6 +25,17 @@ final class SiteOperationHistoryService
         return SiteOperationHistory::query()->find($id);
     }
 
+    public function getByCorrelationId(string $correlationId): ?SiteOperationHistory
+    {
+        if (! Str::isUuid($correlationId)) {
+            return null;
+        }
+
+        return SiteOperationHistory::query()
+            ->where('correlation_id', $correlationId)
+            ->first();
+    }
+
     public function getSummary(?\DateTimeInterface $since = null): array
     {
         $query = SiteOperationHistory::query();

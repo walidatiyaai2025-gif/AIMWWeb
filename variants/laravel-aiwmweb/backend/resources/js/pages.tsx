@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import {
     ApiError,
@@ -14,6 +14,21 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
+import { prepareActionRequest } from './action-contract';
+import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
+
+const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
+const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
+
+const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previous?: string; refresh?: string }>> = {
+    comments: { load: 'AIMW-SYNC-12F15A0A80', previous: 'AIMW-SYNC-CB01197D47', refresh: 'AIMW-SYNC-DBD736FACC' },
+    media: { load: 'AIMW-SYNC-4E969573BB', previous: 'AIMW-SYNC-F340B5445A' },
+    pages: { load: 'AIMW-SYNC-112E6B9631', previous: 'AIMW-SYNC-EF652932D6' },
+    posts: { load: 'AIMW-SYNC-12C023E4CC', previous: 'AIMW-SYNC-0EDB4AB9FC' },
+    taxonomy: { load: 'AIMW-SYNC-5CF2AC6243', previous: 'AIMW-SYNC-C8C380E7F8' },
+};
+
+const CONTENT_WORKSPACE_LOAD_OPERATION_ID = 'AIMW-SYNC-CD6F1FB97B';
 
 type CollectionEnvelope = {
     data?: Array<Record<string, unknown>>;
@@ -126,13 +141,14 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
 function ResourceContent({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale, text } = useLocale();
     const { notify } = useToast();
-    const queryClient = useQueryClient();
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [sitesFilter, setSitesFilter] = useState<'all' | 'connected'>('all');
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
+    const readOperations = COLLECTION_READ_OPERATIONS[route.key];
 
     const query = useQuery({
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search],
@@ -143,17 +159,29 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const mutation = useMutation({
         mutationFn: async (payload: Record<string, string | number>) => {
             if (!dialog) throw new Error('Action contract is missing.');
-            return apiRequest(dialog.contract.endpoint, {
-                method: dialog.contract.method,
-                body: dialog.contract.method === 'DELETE' ? undefined : JSON.stringify(payload),
-            });
+            const request = prepareActionRequest(dialog.contract, context, payload);
+            return mutateThenReconcile(
+                () => apiRequest(request.endpoint, { method: request.method, body: request.body }),
+                async () => {
+                    const refreshed = await query.refetch();
+                    if (refreshed.error) throw refreshed.error;
+                },
+            );
         },
-        onSuccess: async () => {
-            notify(locale === 'ar' ? 'أكد الخادم نجاح العملية.' : 'The server confirmed the operation.', 'success');
+        onSuccess: () => {
+            notify(locale === 'ar' ? 'تم تأكيد العملية وتحديث الحالة من الخادم.' : 'The operation was confirmed and reconciled from the server.', 'success');
             setDialog(null);
-            await queryClient.invalidateQueries({ queryKey: ['workspace', context.tenant.slug, route.key] });
         },
         onError: (error) => {
+            if (error instanceof AuthoritativeReconciliationError) {
+                notify(
+                    locale === 'ar'
+                        ? 'قبل الخادم العملية، لكن تعذر تحديث الحالة الموثوقة. أعد تحميل الشاشة قبل تكرار العملية.'
+                        : error.message,
+                    'error',
+                );
+                return;
+            }
             notify(error instanceof Error ? error.message : (locale === 'ar' ? 'فشلت العملية.' : 'The operation failed.'), 'error');
         },
     });
@@ -163,6 +191,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;
 
     const collection = normalizeCollection(query.data);
+    const visibleRows = route.key === 'sites' && sitesFilter === 'connected'
+        ? collection.rows.filter((row) => String(row.status ?? '').toLowerCase() === 'active')
+        : collection.rows;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
 
     return (
@@ -174,14 +205,30 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     <button type="submit" className="btn">{text(commonText.search)}</button>
                 </form>
                 <div className="toolbar-actions">
-                    <button type="button" className="btn" onClick={() => query.refetch()}>{text(commonText.refresh)}</button>
+                    {route.key === 'sites' ? (
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={SITES_SHOW_ALL_OPERATION_ID}
+                            aria-pressed={sitesFilter === 'all'}
+                            onClick={() => setSitesFilter('all')}
+                        >{locale === 'ar' ? 'الكل' : 'All'}</button>
+                    ) : null}
+                    <button
+                        type="button"
+                        className="btn"
+                        data-canonical-operation={route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined}
+                        data-canonical-load-operation={readOperations?.load}
+                        data-canonical-refresh-operation={readOperations?.refresh}
+                        onClick={() => query.refetch()}
+                    >{text(commonText.refresh)}</button>
                     {route.controls?.map((actionKey) => <ActionButton key={actionKey} route={route} actionKey={actionKey} context={context} onAvailable={(contract) => setDialog({ key: actionKey, contract })} />)}
                 </div>
             </section>
             <section className="panel data-panel">
-                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{collection.total}</span></header>
-                {collection.rows.length ? <DataTable rows={collection.rows} /> : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
-                <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} />
+                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter === 'connected' ? visibleRows.length : collection.total}</span></header>
+                {visibleRows.length ? <DataTable rows={visibleRows} /> : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
+                <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous} />
             </section>
             <ActionDialog
                 open={Boolean(dialog)}
@@ -208,7 +255,7 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
 
     return (
         <div className="workspace-stack">
-            <section className="hero-panel"><div><span className="workspace-kicker">WORKSPACE</span><h2>{route.label[locale]}</h2><p>{route.description[locale]}</p></div><span className="tenant-badge">{context.tenant.name}</span></section>
+            <section className="hero-panel" data-canonical-operation={route.key === 'content-hub' ? CONTENT_WORKSPACE_LOAD_OPERATION_ID : undefined}><div><span className="workspace-kicker">WORKSPACE</span><h2>{route.label[locale]}</h2><p>{route.description[locale]}</p></div><span className="tenant-badge">{context.tenant.name}</span></section>
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
                     const state = resolveCapability(context, candidate);
