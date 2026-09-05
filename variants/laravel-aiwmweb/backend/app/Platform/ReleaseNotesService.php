@@ -53,6 +53,25 @@ final class ReleaseNotesService
     }
 
     /**
+     * Adaptation of canonical operation AIMW-PLAT-57B1A0F5E3
+     * (ReleaseNotesService.GetCurrent).
+     *
+     * @return array{version:string,date:?string,title:string,changes:list<string>}|null
+     */
+    public function getCurrent(string $version): ?array
+    {
+        $normalized = ltrim(trim($version), 'vV');
+
+        foreach ($this->getAll() as $release) {
+            if (strcasecmp($release['version'], $normalized) === 0) {
+                return $release;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param  list<string>  $lines
      * @return list<array{version:string,date:?string,title:string,changes:list<string>}>
      */
