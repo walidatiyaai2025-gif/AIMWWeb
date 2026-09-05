@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "8fa01a7de12f12ab951e1ff2109a7da139932a50",
+  "previous_reconciliation_sha": "fca2b1bf892c800e3ed7b7791ce75b32a21c40a0",
   "focused_closure_evidence_source_sha": "5e56f2f0265577db2186290a94bde28ff59dae40",
   "countable_sources": [
     {
@@ -99,8 +99,8 @@
       "sha": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "observed_pr_head": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "domains": ["platform"]
-    }
-    ,{
+    },
+    {
       "label": "Canonical AI Center route closure after PR #390 integration",
       "sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "observed_pr_head": "6d135cc0aaac7c367ced659538e942475e270e0e",
@@ -109,13 +109,20 @@
       "route_api_provenance": {
         "AIMW-AI-82F795EE67": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json","security_mode":"tenant_bound"}
       }
-    }
-    ,{
+    },
+    {
       "label": "AIMW-AI-4C84DDBEEB scoped job failure gate closure",
       "sha": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "observed_pr_head": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "domains": ["ai"],
       "operation_ids": ["AIMW-AI-4C84DDBEEB"]
+    },
+    {
+      "label": "AIMW-AI-34EC6312B9 SiteBrain SaveAsync scoped closure",
+      "sha": "dec5a62544563fa683f63dc206aebbb0e62fc6c3",
+      "observed_pr_head": "dec5a62544563fa683f63dc206aebbb0e62fc6c3",
+      "domains": ["ai"],
+      "operation_ids": ["AIMW-AI-34EC6312B9"]
     }
   ],
   "excluded_sources": [],
