@@ -144,9 +144,10 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $membership->load('tenant');
         $context->forget();
 
-        return $membership->fresh('tenant');
+        return $membership;
     }
 
     private function recordOperation(TenantMembership $membership, string $correlationId, string $siteName): SiteOperationHistory
