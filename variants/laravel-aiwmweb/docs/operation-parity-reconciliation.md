@@ -1,221 +1,592 @@
-{
-  "schema_version": 1,
-  "authority": "AIMWWeb Issue #257",
-  "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "classification_policy": {
-    "terminal_requires": [
-      "pushed exact-SHA source",
-      "operation-specific destination",
-      "tenant ownership evidence when tenant-owned",
-      "authorization evidence for mutations/high-risk operations",
-      "test evidence"
-    ],
-    "frontend_placeholder_policy": "not_counted",
-    "unpushed_work_policy": "not_counted",
-    "percentage_formula": "(TOTAL - PENDING) / TOTAL * 100"
-  },
-  "totals": {
-    "total": 931,
-    "ported": 0,
-    "adapted": 333,
-    "pending": 598,
-    "blocked": 0,
-    "verified_unavailable_external": 0,
-    "terminal": 333,
-    "overall_parity_percent": 35.77
-  },
-  "visible_controls": {
-    "total": 446,
-    "terminal": 0,
-    "percent": 0.0
-  },
-  "domains": {
-    "ai": {
-      "total": 92,
-      "ported": 0,
-      "adapted": 20,
-      "pending": 72,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 20,
-      "percent": 21.74
-    },
-    "approvals": {
-      "total": 25,
-      "ported": 0,
-      "adapted": 21,
-      "pending": 4,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 21,
-      "percent": 84.0
-    },
-    "automation": {
-      "total": 59,
-      "ported": 0,
-      "adapted": 18,
-      "pending": 41,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 18,
-      "percent": 30.51
-    },
-    "backup": {
-      "total": 14,
-      "ported": 0,
-      "adapted": 12,
-      "pending": 2,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 12,
-      "percent": 85.71
-    },
-    "billing": {
-      "total": 178,
-      "ported": 0,
-      "adapted": 71,
-      "pending": 107,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 71,
-      "percent": 39.89
-    },
-    "comments": {
-      "total": 8,
-      "ported": 0,
-      "adapted": 0,
-      "pending": 8,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
-    },
-    "content": {
-      "total": 164,
-      "ported": 0,
-      "adapted": 2,
-      "pending": 162,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 2,
-      "percent": 1.22
-    },
-    "email": {
-      "total": 82,
-      "ported": 0,
-      "adapted": 49,
-      "pending": 33,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 49,
-      "percent": 59.76
-    },
-    "identity": {
-      "total": 7,
-      "ported": 0,
-      "adapted": 0,
-      "pending": 7,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
-    },
-    "media": {
-      "total": 15,
-      "ported": 0,
-      "adapted": 2,
-      "pending": 13,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 2,
-      "percent": 13.33
-    },
-    "operations": {
-      "total": 5,
-      "ported": 0,
-      "adapted": 0,
-      "pending": 5,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
-    },
-    "platform": {
-      "total": 18,
-      "ported": 0,
-      "adapted": 0,
-      "pending": 18,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
-    },
-    "reports": {
-      "total": 1,
-      "ported": 0,
-      "adapted": 1,
-      "pending": 0,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 1,
-      "percent": 100.0
-    },
-    "seo": {
-      "total": 24,
-      "ported": 0,
-      "adapted": 14,
-      "pending": 10,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 14,
-      "percent": 58.33
-    },
-    "settings": {
-      "total": 1,
-      "ported": 0,
-      "adapted": 1,
-      "pending": 0,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 1,
-      "percent": 100.0
-    },
-    "sites": {
-      "total": 12,
-      "ported": 0,
-      "adapted": 9,
-      "pending": 3,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 9,
-      "percent": 75.0
-    },
-    "sync": {
-      "total": 213,
-      "ported": 0,
-      "adapted": 113,
-      "pending": 100,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 113,
-      "percent": 53.05
-    },
-    "taxonomy": {
-      "total": 13,
-      "ported": 0,
-      "adapted": 0,
-      "pending": 13,
-      "blocked": 0,
-      "verified_unavailable_external": 0,
-      "terminal": 0,
-      "percent": 0.0
-    }
-  },
-  "uncounted_work": [
-    {
-      "label": "PR #268 email integration handoff",
-      "sha": "2b54783b24834b41ed60a4ee73d7f50213b16a21",
-      "reason": "Handoff only; superseded by real Email implementation PR #276."
-    }
-  ]
-}
+# Laravel AIWMWeb 931-Operation Parity Reconciliation
+
+Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completion is inferred from file, class, route, or UI presence alone.
+
+## Exact totals
+
+| Metric | Value |
+|---|---:|
+| TOTAL | 931 |
+| PORTED | 0 |
+| ADAPTED | 472 |
+| PENDING | 459 |
+| BLOCKED | 0 |
+| VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
+| TERMINAL | 472 |
+| OVERALL_PARITY_PERCENT | 50.70% |
+
+Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
+
+## Visible controls
+
+- Total: **446**
+- Terminal: **74**
+- Pending: **372**
+- Blocked: **0**
+- Parity: **16.59%**
+
+## By domain
+
+| Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| ai | 92 | 0 | 59 | 33 | 0 | 0 | 59 | 64.13% |
+| approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
+| automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
+| backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
+| billing | 178 | 0 | 86 | 92 | 0 | 0 | 86 | 48.31% |
+| comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
+| content | 164 | 0 | 23 | 141 | 0 | 0 | 23 | 14.02% |
+| email | 82 | 0 | 57 | 25 | 0 | 0 | 57 | 69.51% |
+| identity | 7 | 0 | 0 | 7 | 0 | 0 | 0 | 0.00% |
+| media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
+| operations | 5 | 0 | 1 | 4 | 0 | 0 | 1 | 20.00% |
+| platform | 18 | 0 | 4 | 14 | 0 | 0 | 4 | 22.22% |
+| reports | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
+| seo | 24 | 0 | 22 | 2 | 0 | 0 | 22 | 91.67% |
+| settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
+| sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
+| sync | 213 | 0 | 135 | 78 | 0 | 0 | 135 | 63.38% |
+| taxonomy | 13 | 0 | 2 | 11 | 0 | 0 | 2 | 15.38% |
+
+## By kind
+
+| Kind | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| api | 31 | 0 | 27 | 4 | 0 | 0 | 27 | 87.10% |
+| background_job | 21 | 0 | 13 | 8 | 0 | 0 | 13 | 61.90% |
+| route | 84 | 0 | 41 | 43 | 0 | 0 | 41 | 48.81% |
+| service | 349 | 0 | 317 | 32 | 0 | 0 | 317 | 90.83% |
+| visible_control | 446 | 0 | 74 | 372 | 0 | 0 | 74 | 16.59% |
+
+## Reproducibility / guard results
+
+- Denominator exactly 931: **PASS**
+- Duplicate operation IDs: **0**
+- Allowed statuses only: **PASS**
+- Totals reconcile: **PASS**
+- Evidence references exist for terminal code rows: **PASS**
+- Explicit route contracts: **36**
+- Focused visible-control contracts: **74**
+- Unpushed countable sources: **0**
+- Frontend placeholder terminals: **0**
+- BLOCKED excluded from progress: **PASS**
+
+## Exact remaining PENDING operation IDs by domain
+
+### ai (33)
+
+- `AIMW-AI-0F3763FDB4`
+- `AIMW-AI-2B31C6BDAF`
+- `AIMW-AI-331ED9D5EE`
+- `AIMW-AI-34EC6312B9`
+- `AIMW-AI-387F3E5D5F`
+- `AIMW-AI-3B59F172AB`
+- `AIMW-AI-44DD850CE4`
+- `AIMW-AI-49E68B3816`
+- `AIMW-AI-4C07560F0B`
+- `AIMW-AI-4EE262C228`
+- `AIMW-AI-4F6B6584E4`
+- `AIMW-AI-54BB64BB13`
+- `AIMW-AI-58FABCCEDB`
+- `AIMW-AI-6701FB22AE`
+- `AIMW-AI-746EDAE589`
+- `AIMW-AI-8205320842`
+- `AIMW-AI-8EE4F9F6FC`
+- `AIMW-AI-93EBFDE5A1`
+- `AIMW-AI-953A6C0D98`
+- `AIMW-AI-95AC5F28A7`
+- `AIMW-AI-98F705F888`
+- `AIMW-AI-9E73ABE9CE`
+- `AIMW-AI-A746A1C3EB`
+- `AIMW-AI-B3BDED59F1`
+- `AIMW-AI-B711182657`
+- `AIMW-AI-BC89B13AF8`
+- `AIMW-AI-C2776A0F99`
+- `AIMW-AI-C5BC29CF27`
+- `AIMW-AI-CAAC427FC0`
+- `AIMW-AI-D1F233AB61`
+- `AIMW-AI-DDB072FE15`
+- `AIMW-AI-E5D089844A`
+- `AIMW-AI-E8F4848B4A`
+
+### approvals (0)
+
+- None
+
+### automation (35)
+
+- `AIMW-AUTO-035FFB3624`
+- `AIMW-AUTO-06CF784553`
+- `AIMW-AUTO-0701C84252`
+- `AIMW-AUTO-0706ECEF6C`
+- `AIMW-AUTO-0B1BC18769`
+- `AIMW-AUTO-13392A9E67`
+- `AIMW-AUTO-148B15F121`
+- `AIMW-AUTO-151800BD9D`
+- `AIMW-AUTO-1584B94390`
+- `AIMW-AUTO-22BC08CEF1`
+- `AIMW-AUTO-2B8A1146F8`
+- `AIMW-AUTO-3C8B141746`
+- `AIMW-AUTO-4C1DD607BB`
+- `AIMW-AUTO-50F3EC7087`
+- `AIMW-AUTO-647F50CC73`
+- `AIMW-AUTO-66466C8C7F`
+- `AIMW-AUTO-6EB9542C7A`
+- `AIMW-AUTO-730076001E`
+- `AIMW-AUTO-7C13E2AA0B`
+- `AIMW-AUTO-7E70C7119A`
+- `AIMW-AUTO-8836C7A28A`
+- `AIMW-AUTO-97A9F6A324`
+- `AIMW-AUTO-AFDB35513B`
+- `AIMW-AUTO-B2CDFF403F`
+- `AIMW-AUTO-C11296372B`
+- `AIMW-AUTO-C4A8DCCFEF`
+- `AIMW-AUTO-CA7398A8F6`
+- `AIMW-AUTO-CC236E83A3`
+- `AIMW-AUTO-DBF5562324`
+- `AIMW-AUTO-E4269EADC3`
+- `AIMW-AUTO-E57D5E6134`
+- `AIMW-AUTO-E587C12B37`
+- `AIMW-AUTO-EEFDAB3DF8`
+- `AIMW-AUTO-FE8B6EAC62`
+- `AIMW-AUTO-FF4812A204`
+
+### backup (0)
+
+- None
+
+### billing (92)
+
+- `AIMW-BILL-07134347F9`
+- `AIMW-BILL-092F59830B`
+- `AIMW-BILL-0938ECBF66`
+- `AIMW-BILL-0CE205B851`
+- `AIMW-BILL-0E16C6E79E`
+- `AIMW-BILL-1234961B6E`
+- `AIMW-BILL-141E898A90`
+- `AIMW-BILL-1EA01528A9`
+- `AIMW-BILL-2138CD95B2`
+- `AIMW-BILL-2805622F94`
+- `AIMW-BILL-29A4267B87`
+- `AIMW-BILL-2C2CB8CBAC`
+- `AIMW-BILL-2D6F2BC88E`
+- `AIMW-BILL-2EF6B8A27A`
+- `AIMW-BILL-34B7686F5E`
+- `AIMW-BILL-3762C05261`
+- `AIMW-BILL-39472863C8`
+- `AIMW-BILL-39BB044AF2`
+- `AIMW-BILL-3ABDE4E48F`
+- `AIMW-BILL-3BE40F2E00`
+- `AIMW-BILL-3C55B3C299`
+- `AIMW-BILL-3EAD5A351E`
+- `AIMW-BILL-42F7590F00`
+- `AIMW-BILL-452B93663B`
+- `AIMW-BILL-48E69F42EB`
+- `AIMW-BILL-4DCB58743D`
+- `AIMW-BILL-54E4003BE9`
+- `AIMW-BILL-5811B45F89`
+- `AIMW-BILL-582319B640`
+- `AIMW-BILL-5887A977D7`
+- `AIMW-BILL-5A0140C699`
+- `AIMW-BILL-5AF09ADABA`
+- `AIMW-BILL-5C15471E4B`
+- `AIMW-BILL-5DC460397B`
+- `AIMW-BILL-5DE86937F7`
+- `AIMW-BILL-5E76AD4FAE`
+- `AIMW-BILL-5E8896CD58`
+- `AIMW-BILL-602CCA4A55`
+- `AIMW-BILL-609F15BFCA`
+- `AIMW-BILL-616576D8F7`
+- `AIMW-BILL-6928C148FF`
+- `AIMW-BILL-69825FEAD5`
+- `AIMW-BILL-7101AC9489`
+- `AIMW-BILL-723BEA8F1D`
+- `AIMW-BILL-77E7F0D972`
+- `AIMW-BILL-7BD7B04B26`
+- `AIMW-BILL-7DACB1EFDF`
+- `AIMW-BILL-7ECC5F8CBA`
+- `AIMW-BILL-81D0940A0A`
+- `AIMW-BILL-84B63E3F42`
+- `AIMW-BILL-887504EDDD`
+- `AIMW-BILL-8BE4A39748`
+- `AIMW-BILL-8DD8F167D3`
+- `AIMW-BILL-8F4FA80ED6`
+- `AIMW-BILL-90CF990147`
+- `AIMW-BILL-9414B3FFEF`
+- `AIMW-BILL-94755B17E4`
+- `AIMW-BILL-9DD2652E1E`
+- `AIMW-BILL-A152D6A7DE`
+- `AIMW-BILL-A6E9CF63BC`
+- `AIMW-BILL-A8CBD94255`
+- `AIMW-BILL-AA8C2FD5B3`
+- `AIMW-BILL-AD4781C803`
+- `AIMW-BILL-B00411742F`
+- `AIMW-BILL-B26D5099F8`
+- `AIMW-BILL-B4F030B126`
+- `AIMW-BILL-B6BE029CB8`
+- `AIMW-BILL-B84663A4C0`
+- `AIMW-BILL-B86D339C12`
+- `AIMW-BILL-B9C3030764`
+- `AIMW-BILL-BC093D6418`
+- `AIMW-BILL-BC1C75CE0D`
+- `AIMW-BILL-BE4B8C3822`
+- `AIMW-BILL-C37235F06A`
+- `AIMW-BILL-C499965699`
+- `AIMW-BILL-CAFE798AA3`
+- `AIMW-BILL-D307963B59`
+- `AIMW-BILL-D4E1DA62D9`
+- `AIMW-BILL-D6B3460675`
+- `AIMW-BILL-D7D075EF3C`
+- `AIMW-BILL-DA1A53D8A1`
+- `AIMW-BILL-DD0FD9926B`
+- `AIMW-BILL-DDA412F087`
+- `AIMW-BILL-E36C3E1427`
+- `AIMW-BILL-E3C47C563B`
+- `AIMW-BILL-E747D0E843`
+- `AIMW-BILL-EE0BEAAC55`
+- `AIMW-BILL-EE42461195`
+- `AIMW-BILL-F189D80354`
+- `AIMW-BILL-F5686193FE`
+- `AIMW-BILL-F56F7955DA`
+- `AIMW-BILL-F73C7348C3`
+
+### comments (6)
+
+- `AIMW-COMM-2B682F7BEC`
+- `AIMW-COMM-843A2F029B`
+- `AIMW-COMM-85A340C8BC`
+- `AIMW-COMM-A0D005681B`
+- `AIMW-COMM-B16FBF4792`
+- `AIMW-COMM-C083D47BC4`
+
+### content (141)
+
+- `AIMW-CONT-0154E7772B`
+- `AIMW-CONT-041B5ED720`
+- `AIMW-CONT-058F41BD1B`
+- `AIMW-CONT-10AFCDF334`
+- `AIMW-CONT-1456BE001F`
+- `AIMW-CONT-16D09482D4`
+- `AIMW-CONT-16D4AD8DC8`
+- `AIMW-CONT-1A08B49164`
+- `AIMW-CONT-1C2443112C`
+- `AIMW-CONT-247E791DA7`
+- `AIMW-CONT-270F69CE9A`
+- `AIMW-CONT-2752ED9351`
+- `AIMW-CONT-276925F148`
+- `AIMW-CONT-289CEEF3BA`
+- `AIMW-CONT-2C02B7A328`
+- `AIMW-CONT-2C51372C70`
+- `AIMW-CONT-2CDC790742`
+- `AIMW-CONT-2F2E40D7F0`
+- `AIMW-CONT-3443C173C6`
+- `AIMW-CONT-346657AD9D`
+- `AIMW-CONT-349017BDF5`
+- `AIMW-CONT-371D22489E`
+- `AIMW-CONT-37B4B4BEC4`
+- `AIMW-CONT-38FC74B9DE`
+- `AIMW-CONT-3A4E69E5D8`
+- `AIMW-CONT-3C205B1901`
+- `AIMW-CONT-3D6485D903`
+- `AIMW-CONT-3FD89CE024`
+- `AIMW-CONT-40CD7F080F`
+- `AIMW-CONT-4147188AB1`
+- `AIMW-CONT-4209A8ADF4`
+- `AIMW-CONT-43AF0076B5`
+- `AIMW-CONT-44A3B8E551`
+- `AIMW-CONT-455F01DAC7`
+- `AIMW-CONT-47007EE040`
+- `AIMW-CONT-475267F150`
+- `AIMW-CONT-47C0477703`
+- `AIMW-CONT-4961F90970`
+- `AIMW-CONT-4A64732FC6`
+- `AIMW-CONT-4D6C928D75`
+- `AIMW-CONT-50DF6B23CC`
+- `AIMW-CONT-519B93F503`
+- `AIMW-CONT-553D999DDB`
+- `AIMW-CONT-55FA799054`
+- `AIMW-CONT-564636DDC9`
+- `AIMW-CONT-566A1899F1`
+- `AIMW-CONT-56873F3DD6`
+- `AIMW-CONT-5BE26C7AB5`
+- `AIMW-CONT-5CF47CBE2A`
+- `AIMW-CONT-607ACDF4D8`
+- `AIMW-CONT-6187F8DF8A`
+- `AIMW-CONT-63EDB4BA6F`
+- `AIMW-CONT-6458D3030B`
+- `AIMW-CONT-659BEF8765`
+- `AIMW-CONT-65F2819526`
+- `AIMW-CONT-6700342002`
+- `AIMW-CONT-69B5134C7E`
+- `AIMW-CONT-6AB0ED6C83`
+- `AIMW-CONT-6B051BD8C0`
+- `AIMW-CONT-6B6790BE84`
+- `AIMW-CONT-6CB3D0BE1B`
+- `AIMW-CONT-6D14B76763`
+- `AIMW-CONT-6E22D74EE0`
+- `AIMW-CONT-6EC0601E18`
+- `AIMW-CONT-6F699A5C14`
+- `AIMW-CONT-71F54E3BA6`
+- `AIMW-CONT-73E4F88038`
+- `AIMW-CONT-7957ECC794`
+- `AIMW-CONT-7D7BCD462F`
+- `AIMW-CONT-7D83B09470`
+- `AIMW-CONT-7EF5524637`
+- `AIMW-CONT-7F2BC55FF4`
+- `AIMW-CONT-80EE7CA296`
+- `AIMW-CONT-85394A0E55`
+- `AIMW-CONT-859135B2D1`
+- `AIMW-CONT-86346F4C6C`
+- `AIMW-CONT-8C19E4E3B2`
+- `AIMW-CONT-8DF93FC75E`
+- `AIMW-CONT-8EE96B77A8`
+- `AIMW-CONT-915652366F`
+- `AIMW-CONT-916E34454C`
+- `AIMW-CONT-918BE3DBF1`
+- `AIMW-CONT-932A09E4A9`
+- `AIMW-CONT-93B6E02ACF`
+- `AIMW-CONT-95341D9AB0`
+- `AIMW-CONT-966F49CDAE`
+- `AIMW-CONT-97AD37042A`
+- `AIMW-CONT-98918A6C27`
+- `AIMW-CONT-9BA2C255AF`
+- `AIMW-CONT-9CF12067E6`
+- `AIMW-CONT-9EDE4C1141`
+- `AIMW-CONT-9F0D652C67`
+- `AIMW-CONT-A31317B378`
+- `AIMW-CONT-A3A2CD23B6`
+- `AIMW-CONT-A5D88995F3`
+- `AIMW-CONT-A6867078EA`
+- `AIMW-CONT-A6EA54E66D`
+- `AIMW-CONT-A93DE991C0`
+- `AIMW-CONT-AC737C80BF`
+- `AIMW-CONT-B1024628D9`
+- `AIMW-CONT-B1E9E1D6B0`
+- `AIMW-CONT-B44DA81C28`
+- `AIMW-CONT-B60F3F750B`
+- `AIMW-CONT-B6BB292F85`
+- `AIMW-CONT-B9E6EFF3DF`
+- `AIMW-CONT-BB31987A53`
+- `AIMW-CONT-BCAD1E3A49`
+- `AIMW-CONT-BCE1211CE3`
+- `AIMW-CONT-BF5F72F4F9`
+- `AIMW-CONT-C3EC665880`
+- `AIMW-CONT-C49C37E2C9`
+- `AIMW-CONT-C6C7F24B03`
+- `AIMW-CONT-C7CB5EE184`
+- `AIMW-CONT-CA17F05024`
+- `AIMW-CONT-CA4920CBC8`
+- `AIMW-CONT-CEA27985CB`
+- `AIMW-CONT-CF4BE4EC3B`
+- `AIMW-CONT-D4607F943C`
+- `AIMW-CONT-D5FFC84EC2`
+- `AIMW-CONT-DD56664FDA`
+- `AIMW-CONT-DF6FFA9D87`
+- `AIMW-CONT-DF8B12B6DE`
+- `AIMW-CONT-E1A7A8CAA7`
+- `AIMW-CONT-E346398EAD`
+- `AIMW-CONT-E38ADF8481`
+- `AIMW-CONT-E4275AE57F`
+- `AIMW-CONT-E4D7C73D4E`
+- `AIMW-CONT-E89EDDF780`
+- `AIMW-CONT-EBD89B0642`
+- `AIMW-CONT-ED2F1E1572`
+- `AIMW-CONT-EDC262499D`
+- `AIMW-CONT-EE531AE1FC`
+- `AIMW-CONT-EE659E3F13`
+- `AIMW-CONT-F4CBF0D714`
+- `AIMW-CONT-F57B1E1503`
+- `AIMW-CONT-F90125AE87`
+- `AIMW-CONT-F9015FDB11`
+- `AIMW-CONT-F9A87DD98C`
+- `AIMW-CONT-FBA95BDC1D`
+- `AIMW-CONT-FE1F15935E`
+- `AIMW-CONT-FE6EE5740C`
+
+### email (25)
+
+- `AIMW-EMAI-00CC1272F6`
+- `AIMW-EMAI-01F5713C4F`
+- `AIMW-EMAI-0AA71A5EF6`
+- `AIMW-EMAI-10F3C44369`
+- `AIMW-EMAI-12A6FEB2FF`
+- `AIMW-EMAI-2E59E39808`
+- `AIMW-EMAI-470599356B`
+- `AIMW-EMAI-54E7EEFB15`
+- `AIMW-EMAI-62B0B8EE4C`
+- `AIMW-EMAI-77C637E3E3`
+- `AIMW-EMAI-7A54150265`
+- `AIMW-EMAI-7E1D4105B0`
+- `AIMW-EMAI-7F2D7C5921`
+- `AIMW-EMAI-8C9768BCD0`
+- `AIMW-EMAI-8E3B0AACD6`
+- `AIMW-EMAI-8E56589573`
+- `AIMW-EMAI-9EB09C490D`
+- `AIMW-EMAI-A9CB66F400`
+- `AIMW-EMAI-B2CFCF818C`
+- `AIMW-EMAI-BDF888551C`
+- `AIMW-EMAI-BFDC050625`
+- `AIMW-EMAI-E4EEF1914B`
+- `AIMW-EMAI-EC34E40629`
+- `AIMW-EMAI-F77DB6435F`
+- `AIMW-EMAI-F8E8A2BEE9`
+
+### identity (7)
+
+- `AIMW-IDEN-03760967D1`
+- `AIMW-IDEN-2387758315`
+- `AIMW-IDEN-9B043B1FAE`
+- `AIMW-IDEN-A1064E5A5E`
+- `AIMW-IDEN-BF78057C28`
+- `AIMW-IDEN-CD4ADA5087`
+- `AIMW-IDEN-FC900E61B8`
+
+### media (11)
+
+- `AIMW-MEDI-03A0D722AD`
+- `AIMW-MEDI-0694CEEBBA`
+- `AIMW-MEDI-3444B17C11`
+- `AIMW-MEDI-34B5C789D2`
+- `AIMW-MEDI-34E7DCA832`
+- `AIMW-MEDI-56F4EF0AFB`
+- `AIMW-MEDI-727FAEEB01`
+- `AIMW-MEDI-73C0DA6B3D`
+- `AIMW-MEDI-799B36D113`
+- `AIMW-MEDI-8F93BEDD59`
+- `AIMW-MEDI-F55A549341`
+
+### operations (4)
+
+- `AIMW-OPER-21EC1BDE45`
+- `AIMW-OPER-55C6982761`
+- `AIMW-OPER-85A7A01127`
+- `AIMW-OPER-FC4C071FAA`
+
+### platform (14)
+
+- `AIMW-PLAT-15C5517022`
+- `AIMW-PLAT-17BC7DA9E5`
+- `AIMW-PLAT-18A8EE0324`
+- `AIMW-PLAT-3025C8E82B`
+- `AIMW-PLAT-4BAE8344AF`
+- `AIMW-PLAT-4C37AC806E`
+- `AIMW-PLAT-57B1A0F5E3`
+- `AIMW-PLAT-57E0113F24`
+- `AIMW-PLAT-827A8F1C0D`
+- `AIMW-PLAT-83994BBD03`
+- `AIMW-PLAT-A2624EDC66`
+- `AIMW-PLAT-AF47A254FE`
+- `AIMW-PLAT-C6260410D1`
+- `AIMW-PLAT-F6C1A04662`
+
+### reports (0)
+
+- None
+
+### seo (2)
+
+- `AIMW-SEO-4CBBC7AAD9`
+- `AIMW-SEO-5F71B89C92`
+
+### settings (0)
+
+- None
+
+### sites (0)
+
+- None
+
+### sync (78)
+
+- `AIMW-SYNC-0108E40967`
+- `AIMW-SYNC-0239B0E6A3`
+- `AIMW-SYNC-078D172C71`
+- `AIMW-SYNC-0DFEE862FA`
+- `AIMW-SYNC-14DAFE7D73`
+- `AIMW-SYNC-1778E3F6B5`
+- `AIMW-SYNC-1A20057999`
+- `AIMW-SYNC-1B63FBC758`
+- `AIMW-SYNC-21483C88FA`
+- `AIMW-SYNC-246AD1A2AE`
+- `AIMW-SYNC-26F2BF8EE8`
+- `AIMW-SYNC-2A256826D2`
+- `AIMW-SYNC-2A8778C6EA`
+- `AIMW-SYNC-2C6ADCE34C`
+- `AIMW-SYNC-2E94028E4E`
+- `AIMW-SYNC-3389FB622C`
+- `AIMW-SYNC-33EE696FF7`
+- `AIMW-SYNC-38D8A24B15`
+- `AIMW-SYNC-3BFC8AF183`
+- `AIMW-SYNC-3E7DCF4C71`
+- `AIMW-SYNC-419C403EFB`
+- `AIMW-SYNC-425B82511E`
+- `AIMW-SYNC-45A3B43BB9`
+- `AIMW-SYNC-476CDB769B`
+- `AIMW-SYNC-4B986B2651`
+- `AIMW-SYNC-4E3C0156FC`
+- `AIMW-SYNC-4FDCFDA33F`
+- `AIMW-SYNC-598142307A`
+- `AIMW-SYNC-5A397204EF`
+- `AIMW-SYNC-5EE3F98A28`
+- `AIMW-SYNC-627C90DC5C`
+- `AIMW-SYNC-6766C503DA`
+- `AIMW-SYNC-68B372C9FE`
+- `AIMW-SYNC-7071DA172F`
+- `AIMW-SYNC-7A726BAF5F`
+- `AIMW-SYNC-7C77CF7F7A`
+- `AIMW-SYNC-80B81C07B8`
+- `AIMW-SYNC-8409FB077A`
+- `AIMW-SYNC-8719C812DC`
+- `AIMW-SYNC-89777052CB`
+- `AIMW-SYNC-8C35E9A7A0`
+- `AIMW-SYNC-9504A57CAE`
+- `AIMW-SYNC-9ABD7DEDBB`
+- `AIMW-SYNC-9B87CACA17`
+- `AIMW-SYNC-9DFB5B4FF9`
+- `AIMW-SYNC-AA26ED0909`
+- `AIMW-SYNC-ABE31C5C4E`
+- `AIMW-SYNC-AE16CF49C6`
+- `AIMW-SYNC-AE544B4684`
+- `AIMW-SYNC-B11D963A9E`
+- `AIMW-SYNC-B78216241F`
+- `AIMW-SYNC-B83AB5A666`
+- `AIMW-SYNC-B955324F04`
+- `AIMW-SYNC-BDBA0B4F01`
+- `AIMW-SYNC-C18ED1F753`
+- `AIMW-SYNC-C1B6FA6677`
+- `AIMW-SYNC-C43EFD36B1`
+- `AIMW-SYNC-CC2B584BC4`
+- `AIMW-SYNC-CDE0C219B5`
+- `AIMW-SYNC-D5CE5A213B`
+- `AIMW-SYNC-D805D5D9A8`
+- `AIMW-SYNC-DDC8657C2F`
+- `AIMW-SYNC-E0791EA9E9`
+- `AIMW-SYNC-E36C56A631`
+- `AIMW-SYNC-E3EB27C678`
+- `AIMW-SYNC-E51F091C0B`
+- `AIMW-SYNC-E6888B0B4D`
+- `AIMW-SYNC-EB9202408A`
+- `AIMW-SYNC-ECAB44A389`
+- `AIMW-SYNC-ED1442005E`
+- `AIMW-SYNC-EE7D7534DF`
+- `AIMW-SYNC-EEFDDFFF87`
+- `AIMW-SYNC-F0C46A9BD1`
+- `AIMW-SYNC-F135B261B2`
+- `AIMW-SYNC-F7BCCD650C`
+- `AIMW-SYNC-F7CE702C7D`
+- `AIMW-SYNC-FD27B795ED`
+- `AIMW-SYNC-FF579F0EBF`
+
+### taxonomy (11)
+
+- `AIMW-TAXO-005925568C`
+- `AIMW-TAXO-39CDD7EF81`
+- `AIMW-TAXO-5D39DA68B7`
+- `AIMW-TAXO-602DE140EB`
+- `AIMW-TAXO-770DAA668D`
+- `AIMW-TAXO-A96714F338`
+- `AIMW-TAXO-D5A5B530C7`
+- `AIMW-TAXO-D6126926AD`
+- `AIMW-TAXO-D784149312`
+- `AIMW-TAXO-EC57E21E70`
+- `AIMW-TAXO-ECDD00F787`

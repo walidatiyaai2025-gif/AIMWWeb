@@ -10,7 +10,7 @@ use Throwable;
 class DatabaseSetupReadService
 {
     /**
-     * @return array{complete: bool, driver: string, database_reachable: bool, migrations_ready: bool}
+     * @return array{complete: bool, driver: string, database_reachable: bool, migrations_ready: bool, identity_ready: bool}
      */
     public function status(): array
     {
@@ -20,12 +20,7 @@ class DatabaseSetupReadService
             DB::connection()->getPdo();
 
             if (! Schema::hasTable('migrations')) {
-                return [
-                    'complete' => false,
-                    'driver' => $driver,
-                    'database_reachable' => true,
-                    'migrations_ready' => false,
-                ];
+                return $this->incomplete($driver, true, false, false);
             }
 
             $expectedMigrations = collect(File::files(database_path('migrations')))
@@ -33,20 +28,35 @@ class DatabaseSetupReadService
                 ->map(static fn ($file): string => pathinfo($file->getFilename(), PATHINFO_FILENAME));
             $ranMigrations = DB::table('migrations')->pluck('migration');
             $migrationsReady = $expectedMigrations->diff($ranMigrations)->isEmpty();
+            $identityReady = $migrationsReady
+                && Schema::hasTable('users')
+                && Schema::hasTable('tenants')
+                && Schema::hasTable('tenant_memberships')
+                && DB::table('users')->exists()
+                && DB::table('tenants')->exists()
+                && DB::table('tenant_memberships')->exists();
         } catch (Throwable) {
-            return [
-                'complete' => false,
-                'driver' => $driver,
-                'database_reachable' => false,
-                'migrations_ready' => false,
-            ];
+            return $this->incomplete($driver, false, false, false);
         }
 
         return [
-            'complete' => $migrationsReady,
+            'complete' => $migrationsReady && $identityReady,
             'driver' => $driver,
             'database_reachable' => true,
             'migrations_ready' => $migrationsReady,
+            'identity_ready' => $identityReady,
+        ];
+    }
+
+    /** @return array{complete: bool, driver: string, database_reachable: bool, migrations_ready: bool, identity_ready: bool} */
+    private function incomplete(string $driver, bool $reachable, bool $migrationsReady, bool $identityReady): array
+    {
+        return [
+            'complete' => false,
+            'driver' => $driver,
+            'database_reachable' => $reachable,
+            'migrations_ready' => $migrationsReady,
+            'identity_ready' => $identityReady,
         ];
     }
 }

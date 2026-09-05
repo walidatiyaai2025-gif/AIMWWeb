@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-8205320842",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "visible_control": "/settings/ai-providers -> /settings/ai-providers",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-ai-providers-link-control.tsx",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "GET /tenants/{tenant}/settings/ai-providers",
+    "authorization": "settings.manage",
+    "tenant_scope": "href derives only from the authoritative FrontendContext tenant slug",
+    "operation_marker": "AIMW-AI-8205320842"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-ai-providers-link-control.test.tsx",
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsAiProvidersLinkVisibleTerminalityTest.php",
+    "proofs": [
+      "settings managers receive the exact tenant-scoped destination",
+      "users without settings.manage do not receive the control",
+      "path-like tenant input is encoded and cannot select another tenant",
+      "destination uses auth and tenant.context",
+      "destination controller independently enforces settings.manage and tenant membership"
+    ]
+  },
+  "scope": {
+    "provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false
+  }
+}

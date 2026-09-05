@@ -26,15 +26,16 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
     }
 
-    public function test_setup_redirects_to_landing_when_database_and_migrations_are_ready(): void
+    public function test_migrations_without_first_identity_remain_in_setup_mode(): void
     {
         $status = app(DatabaseSetupReadService::class)->status();
 
         $this->assertTrue($status['database_reachable']);
         $this->assertTrue($status['migrations_ready']);
-        $this->assertTrue($status['complete']);
+        $this->assertFalse($status['identity_ready']);
+        $this->assertFalse($status['complete']);
 
-        $this->get('/setup')->assertRedirect('/');
+        $this->get('/setup')->assertOk()->assertSee('Identity ready:');
     }
 
     public function test_setup_stays_incomplete_when_any_repository_migration_is_missing(): void
@@ -58,6 +59,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
                 'driver' => 'sqlite',
                 'database_reachable' => false,
                 'migrations_ready' => false,
+                'identity_ready' => false,
             ]);
         });
 

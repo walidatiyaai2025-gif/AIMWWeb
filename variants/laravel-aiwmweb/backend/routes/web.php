@@ -1,7 +1,12 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Frontend\ActionContractRegistry;
+use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminOperationsController;
+use App\Http\Controllers\AiPromptTemplateSaveController;
+use App\Http\Controllers\AiPromptTemplatesReadController;
+use App\Http\Controllers\AiProviderSettingsReadController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
@@ -19,6 +24,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
+Route::get('/access-denied', AccessDeniedReadController::class)->name('canonical.access-denied');
 Route::get('/health/live', [HealthController::class, 'live'])->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
@@ -100,7 +106,15 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
-    Route::get('/tenants/{tenant}/context', function () {
+    Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
+        ->name('tenant.settings.ai-prompts');
+    Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
+        ->name('tenant.settings.ai-prompts.save');
+    Route::get('/tenants/{tenant}/settings/ai-providers', AiProviderSettingsReadController::class)
+        ->defaults('canonical_operation_id', 'AIMW-AI-58FABCCEDB')
+        ->name('tenant.settings.ai-providers');
+
+    Route::get('/tenants/{tenant}/context', function (ActionContractRegistry $actionRegistry) {
         $context = app(TenantContext::class);
         app(TenantAuthorizer::class)->authorize('tenant.view');
 
@@ -110,7 +124,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $tenants = TenantMembership::query()->withoutGlobalScopes()->with('tenant:id,slug,name')
             ->where('user_id', request()->user()->getKey())->where('status', 'active')->get()
             ->pluck('tenant')->filter()->unique('id')->sortBy('name')->values()
-            ->map(fn ($tenant) => ['slug' => $tenant->slug, 'name' => $tenant->name]);
+            ->map(fn ($tenant) => ['id' => (int) $tenant->id, 'slug' => $tenant->slug, 'name' => $tenant->name]);
         $connectors = Connector::query()->get()->map(fn (Connector $connector) => [
             'key' => (string) $connector->identity,
             'state' => $connector->revoked_at ? 'disconnected' : ($connector->verified_at ? 'connected' : 'unknown'),
@@ -118,15 +132,21 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'protocol' => $connector->protocol_version,
             'reason' => $connector->revoked_at ? 'revoked' : null,
         ])->values();
-        $tenant = $context->tenant()->slug;
+        $tenantModel = $context->tenant();
+        $tenant = $tenantModel->slug;
         $site = null;
-        $activeSiteId = request()->session()->get('canonical_site_id');
-        if ($activeSiteId !== null) {
-            $site = Site::query()->find((int) $activeSiteId);
-            if (! $site) {
-                request()->session()->forget('canonical_site_id');
+        if (request()->has('site')) {
+            $site = Site::query()->findOrFail(request()->integer('site'));
+        } else {
+            $activeSiteId = request()->session()->get('canonical_site_id');
+            if ($activeSiteId !== null) {
+                $site = Site::query()->find((int) $activeSiteId);
+                if (! $site) {
+                    request()->session()->forget('canonical_site_id');
+                }
             }
         }
+        $actions = $actionRegistry->contracts($tenantModel, $permissions, $site);
 
         $api = [
             'sites' => "/api/tenants/{$tenant}/sites",
@@ -141,6 +161,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'logs' => "/tenants/{$tenant}/admin/logs",
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
             'backups' => "/tenants/{$tenant}/admin/backups",
+            'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
             'application-users' => "/tenants/{$tenant}/admin/members",
@@ -150,6 +171,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         if ($site) {
             $siteId = (int) $site->getKey();
             $api += [
+                'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
@@ -162,14 +184,14 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
 
         return response()->json([
             'user' => ['id' => request()->user()->getKey(), 'name' => request()->user()->name, 'email' => request()->user()->email],
-            'tenant' => ['slug' => $context->tenant()->slug, 'name' => $context->tenant()->name],
+            'tenant' => ['id' => (int) $tenantModel->id, 'slug' => $tenantModel->slug, 'name' => $tenantModel->name],
             'tenants' => $tenants,
             'permissions' => $permissions,
             'connectors' => $connectors,
-            'capabilities' => (object) [],
+            'capabilities' => $actionRegistry->capabilityStates($actions),
             'api' => $api,
             'active_site' => $site ? ['id' => (int) $site->getKey(), 'name' => $site->name, 'status' => $site->status] : null,
-            'actions' => (object) [],
+            'actions' => $actions,
         ]);
     });
 
@@ -226,10 +248,12 @@ Route::prefix('/tenants/{tenant}')
     ->controller(CanonicalWorkspaceRouteController::class)
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
+        Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
         Route::get('/module/logs', 'show')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->name('canonical.workspace.logs');
+        Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');

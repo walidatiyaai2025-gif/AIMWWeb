@@ -4,12 +4,15 @@ on:
   pull_request:
     paths:
       - 'variants/laravel-aiwmweb/tools/reconcile_operation_parity.py'
+      - 'variants/laravel-aiwmweb/tools/finalize_operation_parity.py'
+      - 'variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py'
+      - 'variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py'
+      - 'variants/laravel-aiwmweb/tools/operation_parity_delta.py'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+      - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/composed-closure-rehearsal.json'
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
-  push:
-    branches:
-      - worker/laravel-aiwmweb-parity-reconciliation
 
 permissions:
   contents: read
@@ -17,6 +20,8 @@ permissions:
 jobs:
   reconcile:
     runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,27 +34,53 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Rebuild operation-level reconciliation
+      - name: Rebuild and validate operation-level reconciliation
         run: |
-          python variants/laravel-aiwmweb/tools/reconcile_operation_parity.py \
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
             --output /tmp/operation-parity-reconciliation.json \
             --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
 
-      - name: Verify committed artifact when present
+      - name: Verify committed reconciliation artifacts
         shell: bash
         run: |
           set -euo pipefail
-          committed='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
-          if [[ -f "$committed" ]]; then
-            cmp "$committed" /tmp/operation-parity-reconciliation.json
-          else
-            echo "Committed artifact not present yet; generated artifact will be uploaded for evidence review."
-          fi
+          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/operation-parity-reconciliation.json
+          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md /tmp/operation-parity-reconciliation.md
+
+      - name: Compare with previous canonical reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous_sha="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json').read_text())
+          print(manifest['previous_reconciliation_sha'])
+          PY
+          )"
+          python variants/laravel-aiwmweb/tools/operation_parity_delta.py \
+            --current /tmp/operation-parity-reconciliation.json \
+            --previous-sha "$previous_sha"
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: laravel-aiwmweb-operation-parity-reconciliation
           path: |
             /tmp/operation-parity-reconciliation.json
+            /tmp/operation-parity-reconciliation.md
             /tmp/operation-parity-summary.json
