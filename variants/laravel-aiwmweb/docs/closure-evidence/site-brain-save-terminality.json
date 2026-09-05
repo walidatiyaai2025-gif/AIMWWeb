@@ -10,7 +10,9 @@
     "operation_id": "AIMW-AI-34EC6312B9",
     "domain": "ai",
     "kind": "service",
-    "service": "SiteBrainService.SaveAsync",
+    "service": "SiteBrainService",
+    "visible_control": "SaveAsync",
+    "canonical_signature": "SiteBrainService.SaveAsync",
     "current_source": "src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs",
     "previous_state": "PENDING",
     "terminal_state": "ADAPTED"
@@ -43,7 +45,7 @@
     "cross_tenant_write": "fail closed"
   },
   "acceptance": [
-    "exact canonical operation/source identity and SaveAsync source behavior",
+    "exact canonical class/method operation identity and SaveAsync source behavior",
     "create path persists one site-scoped profile with server UTC timestamp",
     "update path changes the existing row in place without duplicate settings",
     "foreign-tenant site mutation rejection",
