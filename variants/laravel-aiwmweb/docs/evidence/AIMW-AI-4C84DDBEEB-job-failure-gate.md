@@ -19,7 +19,7 @@ Laravel preserves the source decision semantics for the currently migrated AI su
 6. automatic resume opens the gate after the pause window;
 7. disabling auto-resume keeps the gate closed after the window;
 8. settings are clamped to the source bounds (threshold 1..20, pause minutes 1..1440);
-9. history is tenant-safe through the already tenant-scoped queue middleware and site-owned through `suggestions.site_id`;
+9. history is tenant-safe through `Suggestion`'s mandatory `BelongsToTenant` scope and site-owned through `suggestions.site_id`;
 10. an unknown/non-migrated job family fails open rather than claiming another canonical store operation.
 
 ## Runtime behavior

@@ -235,8 +235,9 @@ def load_snapshot(source: dict) -> Snapshot:
     )
 
 
-def target_aliases(domain: str, row: dict) -> set[str]:
-    values: set[str] = set()
+def target_aliases(domain: str, row: dict) -> tuple[str, ...]:
+    values: list[str] = []
+    seen: set[str] = set()
     hay = " ".join([
         str(row.get("service") or ""),
         str(row.get("background_job") or ""),
@@ -246,8 +247,11 @@ def target_aliases(domain: str, row: dict) -> set[str]:
     ])
     for key, aliases in ALIASES.get(domain, {}).items():
         if key.lower() in hay.lower():
-            values.update(aliases)
-    return values
+            for alias in aliases:
+                if alias not in seen:
+                    seen.add(alias)
+                    values.append(alias)
+    return tuple(values)
 
 
 def file_symbol_score(row: dict, file: FileEvidence) -> tuple[int, list[str]]:
