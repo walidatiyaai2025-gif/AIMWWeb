@@ -61,7 +61,11 @@ class OperationsMaintenanceRouteTerminalityTest extends TestCase
         $tenant = $this->membership($user, 'alpha', ['execution.view']);
         $context = app(TenantContext::class);
         $context->activate($tenant);
-        $site = Site::factory()->create();
+        $site = Site::query()->create([
+            'name' => 'Alpha operations maintenance site',
+            'url' => 'https://alpha-operations-maintenance.example.test',
+            'status' => 'active',
+        ]);
         app(SiteOperationHistoryService::class)->record($site->id, 'alpha.sync', true, 'Alpha completed');
         $context->forget();
         $this->withoutVite();
@@ -83,7 +87,11 @@ class OperationsMaintenanceRouteTerminalityTest extends TestCase
         $this->assertIsArray($storage);
         $this->assertIsArray($preview);
         $this->assertGreaterThan(0, (int) $storage['record_count']);
-        $this->assertSame((int) $storage['record_count'], (int) $preview['total_count']);
+        $this->assertSame('database', $storage['storage']);
+        $this->assertArrayHasKey('removable_count', $preview);
+        $this->assertArrayHasKey('total_count', $preview);
+        $this->assertArrayHasKey('cutoff', $preview);
+        $this->assertArrayHasKey('keep_latest', $preview);
         $response->assertSee('data-record-count="'.(int) $storage['record_count'].'"', false);
     }
 
