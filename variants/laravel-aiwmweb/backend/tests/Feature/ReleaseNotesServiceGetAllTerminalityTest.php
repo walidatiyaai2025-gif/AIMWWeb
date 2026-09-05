@@ -32,7 +32,7 @@ class ReleaseNotesServiceGetAllTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('platform', $operation['domain']);
         $this->assertSame('service', $operation['kind']);
         $this->assertSame('service:ReleaseNotesService', $operation['route_screen']);
