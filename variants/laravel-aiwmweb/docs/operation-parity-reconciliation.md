@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 474 |
-| PENDING | 457 |
+| ADAPTED | 475 |
+| PENDING | 456 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 474 |
-| OVERALL_PARITY_PERCENT | 50.91% |
+| TERMINAL | 475 |
+| OVERALL_PARITY_PERCENT | 51.02% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -40,7 +40,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | identity | 7 | 0 | 0 | 7 | 0 | 0 | 0 | 0.00% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
 | operations | 5 | 0 | 1 | 4 | 0 | 0 | 1 | 20.00% |
-| platform | 18 | 0 | 6 | 12 | 0 | 0 | 6 | 33.33% |
+| platform | 18 | 0 | 7 | 11 | 0 | 0 | 7 | 38.89% |
 | reports | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | seo | 24 | 0 | 22 | 2 | 0 | 0 | 22 | 91.67% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 28 | 3 | 0 | 0 | 28 | 90.32% |
 | background_job | 21 | 0 | 13 | 8 | 0 | 0 | 13 | 61.90% |
 | route | 84 | 0 | 41 | 43 | 0 | 0 | 41 | 48.81% |
-| service | 349 | 0 | 318 | 31 | 0 | 0 | 318 | 91.12% |
+| service | 349 | 0 | 319 | 30 | 0 | 0 | 319 | 91.40% |
 | visible_control | 446 | 0 | 74 | 372 | 0 | 0 | 74 | 16.59% |
 
 ## Reproducibility / guard results
@@ -67,7 +67,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **36**
 - Focused visible-control contracts: **74**
-- Focused service contracts: **1**
+- Focused service contracts: **2**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
@@ -463,13 +463,12 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-OPER-85A7A01127`
 - `AIMW-OPER-FC4C071FAA`
 
-### platform (12)
+### platform (11)
 
 - `AIMW-PLAT-17BC7DA9E5`
 - `AIMW-PLAT-3025C8E82B`
 - `AIMW-PLAT-4BAE8344AF`
 - `AIMW-PLAT-4C37AC806E`
-- `AIMW-PLAT-57B1A0F5E3`
 - `AIMW-PLAT-57E0113F24`
 - `AIMW-PLAT-827A8F1C0D`
 - `AIMW-PLAT-83994BBD03`
