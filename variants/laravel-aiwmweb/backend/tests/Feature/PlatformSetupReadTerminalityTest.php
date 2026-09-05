@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SetupReadController;
+use App\Services\DatabaseSetupPageService;
 use App\Services\DatabaseSetupReadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
 
@@ -80,15 +82,19 @@ class PlatformSetupReadTerminalityTest extends TestCase
 
     public function test_completed_setup_ignores_caller_redirect_targets_and_uses_fixed_landing_page(): void
     {
-        $this->mock(DatabaseSetupReadService::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('status')->once()->andReturn([
-                'complete' => true,
-                'driver' => 'sqlite',
-                'database_reachable' => true,
-                'migrations_ready' => true,
-                'identity_ready' => true,
-            ]);
-        });
+        $readService = Mockery::mock(DatabaseSetupReadService::class);
+        $readService->shouldReceive('status')->once()->andReturn([
+            'complete' => true,
+            'driver' => 'sqlite',
+            'database_reachable' => true,
+            'migrations_ready' => true,
+            'identity_ready' => true,
+        ]);
+
+        $this->app->instance(
+            DatabaseSetupPageService::class,
+            new DatabaseSetupPageService($readService),
+        );
 
         $this->get('/setup?returnUrl='.urlencode('https://evil.example/phish'))
             ->assertRedirect('/');
