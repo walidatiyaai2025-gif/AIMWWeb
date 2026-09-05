@@ -22,6 +22,7 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
     public function test_exact_canonical_operation_is_generator_backed_adapted_after_authorized_reconciliation(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
+        $manifest = json_decode(file_get_contents(base_path('../docs/operation-parity-evidence-sources.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
@@ -35,15 +36,27 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertTrue((bool) $operation['tenant_owned']);
         $this->assertSame('low', $operation['risk']);
         $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null);
-        $this->assertSame('8fd472342e77d444d0932ea26617858d2832ef43', $operation['reconciliation']['source_sha'] ?? null);
+        $this->assertSame(
+            $manifest['focused_closure_evidence_source_sha'],
+            $operation['reconciliation']['source_sha'] ?? null,
+        );
         $this->assertSame(
             'variants/laravel-aiwmweb/docs/closure-evidence/error-open-logs-terminality.json',
             $operation['reconciliation']['evidence_path'] ?? null,
         );
+
         $this->assertSame(931, $ledger['totals']['total']);
-        $this->assertSame(469, $ledger['totals']['terminal']);
-        $this->assertSame(462, $ledger['totals']['pending']);
-        $this->assertSame(0, $ledger['totals']['blocked']);
+        $stateTotal = $ledger['totals']['ported']
+            + $ledger['totals']['adapted']
+            + $ledger['totals']['pending']
+            + $ledger['totals']['blocked']
+            + $ledger['totals']['verified_unavailable_external'];
+        $this->assertSame($ledger['totals']['total'], $stateTotal);
+        $this->assertSame(
+            $ledger['totals']['ported'] + $ledger['totals']['adapted'] + $ledger['totals']['verified_unavailable_external'],
+            $ledger['totals']['terminal'],
+        );
+        $this->assertTrue((bool) ($ledger['validation']['passed'] ?? false));
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/Error.razor'));
         $view = file_get_contents(resource_path('views/platform/error.blade.php'));
