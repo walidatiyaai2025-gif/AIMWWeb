@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SiteOperationDetailsReadController;
+use App\Http\Controllers\SiteOperationsMaintenanceReadController;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Site;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -69,6 +71,10 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             $this->assertSame('execution.view', $route->defaults['workspace_permissions']);
             $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id']);
         }
+
+        $maintenance = Route::getRoutes()->match(Request::create('/tenants/alpha/site-operations/maintenance', 'GET'));
+        $this->assertSame(SiteOperationsMaintenanceReadController::class, ltrim($maintenance->getActionName(), '\\'));
+        $this->assertSame('canonical.workspace.site-operations-maintenance', $maintenance->getName());
     }
 
     public function test_authorized_tenant_member_reads_real_operation_by_correlation_guid_without_mutation(): void
