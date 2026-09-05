@@ -23780,12 +23780,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
-      "evidence": "AIMW-PLAT-18A8EE0324 GET setup exact provenance@3254aa0fa8d589d9fbccb24e5f0cb14fc32661de: variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php; explicit-route-api:AIMW-PLAT-18A8EE0324; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/platform-setup-read-terminality.json",
+      "evidence": "AIMW-PLAT-18A8EE0324 GET setup exact provenance@0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01: variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php; explicit-route-api:AIMW-PLAT-18A8EE0324; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/platform-setup-read-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
         "source_label": "AIMW-PLAT-18A8EE0324 GET setup exact provenance",
-        "source_sha": "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
+        "source_sha": "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
         "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
         "evidence_mode": "explicit_route_api_contract",
         "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php",
@@ -34462,7 +34462,7 @@
       },
       {
         "label": "AIMW-PLAT-18A8EE0324 GET setup exact provenance",
-        "sha": "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
+        "sha": "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
         "domains": [
           "platform"
         ],
@@ -34486,7 +34486,7 @@
     "terminal_evidence_references_exist": true,
     "missing_terminal_evidence_operation_ids": [],
     "pushed_source_shas_verified": [
-      "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
+      "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",

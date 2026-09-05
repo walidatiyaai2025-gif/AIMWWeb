@@ -429,8 +429,8 @@
     },
     {
       "label": "AIMW-PLAT-18A8EE0324 GET setup exact provenance",
-      "sha": "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
-      "observed_pr_head": "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
+      "sha": "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
+      "observed_pr_head": "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
       "domains": [
         "platform"
       ],
