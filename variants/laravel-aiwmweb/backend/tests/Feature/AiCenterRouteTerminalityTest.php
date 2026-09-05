@@ -54,6 +54,8 @@ class AiCenterRouteTerminalityTest extends TestCase
 
     public function test_route_reads_only_real_active_tenant_prompt_and_current_user_usage_state(): void
     {
+        $this->withoutVite();
+
         $alpha = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
         $beta = Tenant::query()->create(['name' => 'Beta', 'slug' => 'beta']);
         $user = User::factory()->create();
