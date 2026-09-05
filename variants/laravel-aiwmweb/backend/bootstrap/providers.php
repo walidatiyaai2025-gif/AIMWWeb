@@ -2,12 +2,14 @@
 
 use App\Providers\AboutBuildRouteServiceProvider;
 use App\Providers\AiCenterApprovalStatusRouteServiceProvider;
+use App\Providers\AiCenterRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
+use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
 use App\Providers\SiteOperationDetailsRouteServiceProvider;
@@ -21,6 +23,7 @@ return [
     ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
     AboutBuildRouteServiceProvider::class,
+    AiCenterRouteServiceProvider::class,
     AiCenterApprovalStatusRouteServiceProvider::class,
     AiPromptTemplatesRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
@@ -28,6 +31,7 @@ return [
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
+    OperationsMaintenanceRouteServiceProvider::class,
     SiteOperationsMaintenanceRouteServiceProvider::class,
     SiteOperationDetailsRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,

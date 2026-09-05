@@ -2,8 +2,8 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "d352543f2f3c52383670f2c25e3a3b7ed04fb7f8",
-  "focused_closure_evidence_source_sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+  "previous_reconciliation_sha": "66d4e42e3f0a1b751a94c38b29074c3a0c525b7f",
+  "focused_closure_evidence_source_sha": "5e56f2f0265577db2186290a94bde28ff59dae40",
   "countable_sources": [
     {
       "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
@@ -99,6 +99,33 @@
       "sha": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "observed_pr_head": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "domains": ["platform"]
+    }
+    ,{
+      "label": "Canonical AI Center route closure after PR #390 integration",
+      "sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
+      "observed_pr_head": "6d135cc0aaac7c367ced659538e942475e270e0e",
+      "domains": ["ai"],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-AI-82F795EE67": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json","security_mode":"tenant_bound"}
+      }
+    }
+    ,{
+      "label": "AIMW-AI-4C84DDBEEB scoped job failure gate closure",
+      "sha": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
+      "observed_pr_head": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
+      "domains": ["ai"],
+      "operation_ids": ["AIMW-AI-4C84DDBEEB"]
+    },
+    {
+      "label": "AIMW-AI-6EF2330C99 operations maintenance route closure",
+      "sha": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+      "observed_pr_head": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+      "domains": ["ai"],
+      "supporting_only": true,
+      "operation_evidence": {
+        "AIMW-AI-6EF2330C99": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/OperationsMaintenanceReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/operations-maintenance-route-terminality.json"}
+      }
     }
   ],
   "excluded_sources": [],
