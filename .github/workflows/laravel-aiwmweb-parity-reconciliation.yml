@@ -12,7 +12,7 @@ on:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/composed-closure-rehearsal.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/*.json'
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
