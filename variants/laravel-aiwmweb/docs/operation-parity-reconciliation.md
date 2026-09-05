@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 466 |
-| PENDING | 465 |
+| ADAPTED | 467 |
+| PENDING | 464 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 466 |
-| OVERALL_PARITY_PERCENT | 50.05% |
+| TERMINAL | 467 |
+| OVERALL_PARITY_PERCENT | 50.16% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -29,7 +29,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 54 | 38 | 0 | 0 | 54 | 58.70% |
+| ai | 92 | 0 | 55 | 37 | 0 | 0 | 55 | 59.78% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -54,7 +54,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 27 | 4 | 0 | 0 | 27 | 87.10% |
 | background_job | 21 | 0 | 12 | 9 | 0 | 0 | 12 | 57.14% |
-| route | 84 | 0 | 38 | 46 | 0 | 0 | 38 | 45.24% |
+| route | 84 | 0 | 39 | 45 | 0 | 0 | 39 | 46.43% |
 | service | 349 | 0 | 317 | 32 | 0 | 0 | 317 | 90.83% |
 | visible_control | 446 | 0 | 72 | 374 | 0 | 0 | 72 | 16.14% |
 
@@ -73,7 +73,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (38)
+### ai (37)
 
 - `AIMW-AI-0F3763FDB4`
 - `AIMW-AI-2B31C6BDAF`
@@ -94,7 +94,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-AI-6EF2330C99`
 - `AIMW-AI-746EDAE589`
 - `AIMW-AI-8205320842`
-- `AIMW-AI-82F795EE67`
 - `AIMW-AI-8EE4F9F6FC`
 - `AIMW-AI-93EBFDE5A1`
 - `AIMW-AI-953A6C0D98`

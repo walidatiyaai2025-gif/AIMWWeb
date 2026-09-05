@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "d352543f2f3c52383670f2c25e3a3b7ed04fb7f8",
+  "previous_reconciliation_sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
   "focused_closure_evidence_source_sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
   "countable_sources": [
     {
@@ -99,6 +99,16 @@
       "sha": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "observed_pr_head": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "domains": ["platform"]
+    }
+    ,{
+      "label": "Canonical AI Center route closure after PR #390 integration",
+      "sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
+      "observed_pr_head": "6d135cc0aaac7c367ced659538e942475e270e0e",
+      "domains": ["ai"],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-AI-82F795EE67": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json","security_mode":"tenant_bound"}
+      }
     }
   ],
   "excluded_sources": [],
