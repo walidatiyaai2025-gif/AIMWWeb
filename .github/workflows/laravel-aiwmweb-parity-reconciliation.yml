@@ -15,7 +15,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   reconcile:
@@ -25,7 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Fetch exact evidence refs
@@ -54,23 +53,6 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
-
-      - name: Commit exact generated reconciliation artifacts
-        if: github.actor != 'github-actions[bot]'
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          if git diff --cached --quiet; then
-            echo "Generated reconciliation already committed."
-          else
-            git commit -m "docs(laravel-aiwmweb): reconcile AIMW-AI-6EF2330C99 parity"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          fi
 
       - name: Verify committed reconciliation artifacts
         shell: bash
