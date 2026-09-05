@@ -1,0 +1,98 @@
+{
+  "totals": {
+    "total": 931,
+    "ported": 0,
+    "adapted": 469,
+    "pending": 462,
+    "blocked": 0,
+    "verified_unavailable_external": 0,
+    "terminal": 469,
+    "overall_parity_percent": 50.38
+  },
+  "changes": [
+    {
+      "operation_id": "AIMW-AI-4C84DDBEEB",
+      "before": "PENDING",
+      "after": "ADAPTED",
+      "destination": "variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php",
+      "test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
+      "reconciliation": {
+        "decision": "ADAPTED",
+        "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
+        "source_label": "AIMW-AI-4C84DDBEEB recovered job failure gate closure",
+        "source_sha": "7359222a404ca11dafd19bd42d6f3fc7d985fc2e",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php",
+        "score": 6,
+        "signals": [
+          "token:failure",
+          "token:gate",
+          "tenant:belongstotenant",
+          "tenant:tenant_id",
+          "tenant:tenantcontext"
+        ]
+      }
+    },
+    {
+      "operation_id": "AIMW-AI-4EE262C228",
+      "before": "PENDING",
+      "after": "ADAPTED",
+      "destination": "variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php",
+      "test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
+      "reconciliation": {
+        "decision": "ADAPTED",
+        "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
+        "source_label": "AIMW-AI-4C84DDBEEB recovered job failure gate closure",
+        "source_sha": "7359222a404ca11dafd19bd42d6f3fc7d985fc2e",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php",
+        "score": 11,
+        "signals": [
+          "token:failure",
+          "token:gate",
+          "symbol:JobFailureGate",
+          "tenant:belongstotenant",
+          "tenant:tenant_id",
+          "tenant:tenantcontext"
+        ]
+      }
+    }
+  ],
+  "target": {
+    "operation_id": "AIMW-AI-4C84DDBEEB",
+    "kind": "background_job",
+    "domain": "ai",
+    "route_screen": "job:IJobFailureGate",
+    "visible_control": "background execution",
+    "current_source": "src/AIWordPressManager.Application/Abstractions/Persistence/IJobFailureGate.cs",
+    "service": "",
+    "persistence": "current AIMWWeb read model / authoritative external state",
+    "background_job": "IJobFailureGate",
+    "mutation": false,
+    "external_dependency": "ai_provider and/or WordPress",
+    "approval": false,
+    "verification": "rendered/read response matches authoritative source",
+    "laravel_destination": "variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php",
+    "native_wp_rest": false,
+    "connector_required": false,
+    "connector_scope": "",
+    "tenant_owned": true,
+    "risk": "low",
+    "migration_state": "ADAPTED",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DemoVerticalSliceTest.php",
+    "evidence": "AIMW-AI-4C84DDBEEB recovered job failure gate closure@7359222a404ca11dafd19bd42d6f3fc7d985fc2e: variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php; token:failure, token:gate, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
+    "reconciliation": {
+      "decision": "ADAPTED",
+      "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
+      "source_label": "AIMW-AI-4C84DDBEEB recovered job failure gate closure",
+      "source_sha": "7359222a404ca11dafd19bd42d6f3fc7d985fc2e",
+      "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/GenerateSuggestionJob.php",
+      "score": 6,
+      "signals": [
+        "token:failure",
+        "token:gate",
+        "tenant:belongstotenant",
+        "tenant:tenant_id",
+        "tenant:tenantcontext"
+      ]
+    }
+  }
+}
