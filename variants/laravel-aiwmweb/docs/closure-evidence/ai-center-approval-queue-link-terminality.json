@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-991683D92C",
+  "operation": {
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/ai-center",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "source_intent": "Approval queue navigation to /approvals",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/ai-center-approval-queue-link.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/ai-center-approval-status-control.tsx",
+    "target": "/tenants/{activeTenant}/approvals",
+    "target_authority": "canonical.alias.approvals",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@redirect",
+    "target_permissions": [
+      "tenant.view",
+      "approvals.view"
+    ],
+    "target_redirect": "/tenants/{activeTenant}/module/approvals",
+    "backing_read": "/api/tenants/{activeTenant}/approvals",
+    "backing_read_semantics": "authoritative persisted tenant-scoped Approval Queue; no demo fallback"
+  },
+  "security": {
+    "control_visibility_permissions": [
+      "ai.use",
+      "tenant.view",
+      "approvals.view"
+    ],
+    "tenant_selector": "authoritative FrontendContext tenant slug only, URL encoded through tenantUrl",
+    "guest_destination": "401 for JSON request",
+    "missing_approvals_view": "control suppressed; direct destination/API fail 403",
+    "foreign_tenant": "destination/API fail 404",
+    "direct_resource_id": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterApprovalQueueLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-center-approval-queue-link.test.tsx",
+    "coverage": [
+      "exact canonical PENDING row identity",
+      "real AI Center host wiring",
+      "canonical operation marker",
+      "active-tenant-only URL construction and encoding",
+      "permission fail-closed visibility",
+      "explicit guarded Approval Queue route authority",
+      "authorized redirect to real Approval Queue workspace",
+      "authoritative empty persisted queue response",
+      "guest 401, missing permission 403, foreign tenant 404",
+      "sibling AI Center operations excluded"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-AI-991683D92C"
+    ],
+    "excluded_operations": [
+      "AIMW-AI-331ED9D5EE",
+      "AIMW-AI-82F795EE67",
+      "AIMW-AI-168B406674",
+      "AIMW-AI-93EBFDE5A1",
+      "AIMW-AI-DDB072FE15",
+      "AIMW-AI-C7621E276C",
+      "AIMW-AI-746EDAE589",
+      "AIMW-AI-B711182657",
+      "AIMW-AI-953A6C0D98"
+    ],
+    "generated_reconciliation_edited": false,
+    "approval_backend_ownership_changed": false,
+    "aspnet_product_modified": false,
+    "merge_performed": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "a61f644948b733e836747fa8c48e42187ebb1e41",
+    "previous_pr_head_sha": "67ddf778d2d6f19b7dcd97414e1e215431217ec0",
+    "recovery_base_sha": "8f4fe139255fdb89fca23e113f42925f0d0a5e35",
+    "recovery_note": "Recovered onto the live composition with merge ancestry preserved. The shared AI Center host keeps the newer New session and race-safe approval-status logic from composition and adds only this Approval queue navigation control.",
+    "worker_branch": "worker/laravel-AIMW-AI-991683D92C-ai-center-approvals-link",
+    "implementation_test_snapshot": "f0b5e19283a5b8f3737269730ce757968c468ee5"
+  },
+  "ci_policy": {
+    "required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Acceptance"
+    ],
+    "exact_final_pushed_head_required": true,
+    "status_at_evidence_commit": "pending exact recovered-head GitHub Actions verification"
+  }
+}
