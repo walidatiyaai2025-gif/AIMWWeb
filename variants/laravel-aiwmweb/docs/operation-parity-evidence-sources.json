@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "c36f4944e8e511704a580874d09a398ac069820e",
+  "previous_reconciliation_sha": "47df2db4652e91fbf1d9c9904fb36b667f78c6e5",
   "focused_closure_evidence_source_sha": "5e56f2f0265577db2186290a94bde28ff59dae40",
   "countable_sources": [
     {
@@ -424,6 +424,25 @@
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operation-details-route-terminality.json"
+        }
+      }
+    },
+    {
+      "label": "AIMW-PLAT-18A8EE0324 GET setup exact provenance",
+      "sha": "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
+      "observed_pr_head": "3254aa0fa8d589d9fbccb24e5f0cb14fc32661de",
+      "domains": [
+        "platform"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-PLAT-18A8EE0324": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/platform-setup-read-terminality.json",
+          "security_mode": "tenant_neutral"
         }
       }
     }
