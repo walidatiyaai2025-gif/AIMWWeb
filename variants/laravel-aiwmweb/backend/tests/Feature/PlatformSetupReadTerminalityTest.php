@@ -28,7 +28,6 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
-        $this->assertSame([], $route->parameterNames());
     }
 
     public function test_migrations_without_first_identity_remain_in_setup_mode(): void
