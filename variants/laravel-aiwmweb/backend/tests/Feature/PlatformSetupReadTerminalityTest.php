@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SetupReadController;
-use App\Services\DatabaseSetupPageService;
 use App\Services\DatabaseSetupReadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +25,7 @@ class PlatformSetupReadTerminalityTest extends TestCase
         $this->assertNotNull($route);
         $this->assertSame(SetupReadController::class, $route->getActionName());
         $this->assertContains('GET', $route->methods());
+        $this->assertSame('setup', $route->uri());
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
@@ -80,19 +80,19 @@ class PlatformSetupReadTerminalityTest extends TestCase
 
     public function test_completed_setup_ignores_caller_redirect_targets_and_uses_fixed_landing_page(): void
     {
-        $readService = $this->mock(DatabaseSetupReadService::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('status')->once()->andReturn([
-                'complete' => true,
-                'driver' => 'sqlite',
-                'database_reachable' => true,
-                'migrations_ready' => true,
-                'identity_ready' => true,
-            ]);
-        });
-        $this->app->instance(
-            DatabaseSetupPageService::class,
-            new DatabaseSetupPageService($readService),
-        );
+        $password = 'correct-horse-battery-staple';
+
+        $this->post('/setup', [
+            'tenant_name' => 'Setup proof tenant',
+            'admin_name' => 'Setup proof user',
+            'admin_email' => 'setup-proof@example.test',
+            'admin_password' => $password,
+            'admin_password_confirmation' => $password,
+        ])->assertRedirect('/');
+
+        $status = app(DatabaseSetupReadService::class)->status();
+        $this->assertTrue($status['complete']);
+        $this->assertTrue($status['identity_ready']);
 
         $response = $this->get('/setup?returnUrl=https%3A%2F%2Fevil.example%2Fphish');
 
