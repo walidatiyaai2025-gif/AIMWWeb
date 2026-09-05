@@ -1,0 +1,107 @@
+name: Slot 0037 GET Setup Re-Reconciliation
+
+on:
+  push:
+    branches:
+      - codex/laravel-issue257-platform-api-contract-18a8ee
+    paths:
+      - '.github/workflows/slot0037-get-setup-rereconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      SOURCE_SHA: '0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01'
+      PREVIOUS_SHA: '47df2db4652e91fbf1d9c9904fb36b667f78c6e5'
+      OPERATION_ID: 'AIMW-PLAT-18A8EE0324'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/laravel-issue257-platform-api-contract-18a8ee
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Advance exact provenance to deterministic test source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          op = os.environ['OPERATION_ID']
+          source_sha = os.environ['SOURCE_SHA']
+          previous_sha = os.environ['PREVIOUS_SHA']
+
+          matched = []
+          for source in manifest.get('countable_sources', []):
+              if op in (source.get('route_api_provenance') or {}):
+                  matched.append(source)
+          assert len(matched) == 1, f'expected exactly one provenance source for {op}, got {len(matched)}'
+          matched[0]['sha'] = source_sha
+          matched[0]['observed_pr_head'] = source_sha
+          manifest['previous_reconciliation_sha'] = previous_sha
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Regenerate canonical parity artifacts with repository tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          MD='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          SUMMARY='/tmp/operation-parity-summary.json'
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+
+      - name: Prove exact one-operation delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/operation_parity_delta.py --current variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --previous-sha "$PREVIOUS_SHA"
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          op = os.environ['OPERATION_ID']
+          previous_sha = os.environ['PREVIOUS_SHA']
+          current = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',f'{previous_sha}:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'], text=True))
+          assert len(current['operations']) == 931
+          assert current['totals']['terminal'] == 473, current['totals']
+          assert current['totals']['pending'] == 458, current['totals']
+          assert current['totals']['blocked'] == 0, current['totals']
+          before = {r['operation_id']: r for r in previous['operations']}
+          after = {r['operation_id']: r for r in current['operations']}
+          changed = [k for k in before if before[k]['migration_state'] != after[k]['migration_state']]
+          assert changed == [op], changed
+          assert before[op]['migration_state'] == 'PENDING'
+          assert after[op]['migration_state'] == 'ADAPTED'
+          print('SLOT0037_RERECONCILE_EXACT_DELTA=PASS')
+          PY
+
+      - name: Commit generated reconciliation and self-remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/slot0037-get-setup-rereconcile.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'docs(laravel): refresh GET setup exact provenance'
+          git push origin HEAD:codex/laravel-issue257-platform-api-contract-18a8ee
