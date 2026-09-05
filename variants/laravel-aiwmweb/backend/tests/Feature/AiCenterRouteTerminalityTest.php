@@ -28,6 +28,7 @@ class AiCenterRouteTerminalityTest extends TestCase
         $operation = collect($ledger['operations'])->firstWhere('operation_id', 'AIMW-AI-82F795EE67');
 
         $this->assertNotNull($operation);
+        // Post-integration reconciliation must preserve the generator-proven terminal contract.
         $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('explicit_route_api_contract', $operation['reconciliation']['evidence_mode']);
         $this->assertSame('route', $operation['kind']);
