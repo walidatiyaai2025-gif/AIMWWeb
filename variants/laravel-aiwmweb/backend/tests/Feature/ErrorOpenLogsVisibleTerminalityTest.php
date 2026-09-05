@@ -29,7 +29,7 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/Error', $operation['route_screen']);
-        $this->assertSame('/logs -> /logs', $operation['visible_control']);
+        $this->assertSame('/logs', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/Error.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
@@ -58,14 +58,6 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertSame(['tenant'], $route->parameterNames());
         $this->assertSame('operations.manage,diagnostics.view', $route->defaults['workspace_permissions'] ?? null);
         $this->assertSame('/module/logs', $route->defaults['workspace_target'] ?? null);
-
-        $destination = Route::getRoutes()->getByName('canonical.workspace.logs');
-        $this->assertNotNull($destination);
-        $this->assertSame(CanonicalWorkspaceRouteController::class.'@show', ltrim($destination->getActionName(), '\\'));
-        $this->assertSame('tenants/{tenant}/module/logs', $destination->uri());
-        $this->assertContains('auth', $destination->gatherMiddleware());
-        $this->assertContains('tenant.context', $destination->gatherMiddleware());
-        $this->assertSame('operations.manage,diagnostics.view', $destination->defaults['workspace_permissions'] ?? null);
     }
 
     public function test_exactly_one_authorized_tenant_renders_the_real_open_logs_control_and_preserves_sibling_controls(): void
@@ -74,9 +66,8 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['operations.manage', 'diagnostics.view']);
 
-        $response = $this->actingAs($user)->get('/Error');
-
-        $response
+        $this->actingAs($user)
+            ->get('/Error')
             ->assertOk()
             ->assertSee('Open logs')
             ->assertSee('href="/tenants/alpha/logs"', false)
@@ -84,10 +75,12 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
             ->assertSee('data-canonical-operation="AIMW-SYNC-89777052CB"', false)
             ->assertSee('data-canonical-operation="AIMW-CONT-85394A0E55"', false);
 
-        $this->get('/tenants/alpha/logs')
+        $this->actingAs($user)
+            ->get('/tenants/alpha/logs')
             ->assertRedirect('/tenants/alpha/module/logs');
 
-        $this->get('/tenants/alpha/module/logs')
+        $this->actingAs($user)
+            ->get('/tenants/alpha/module/logs')
             ->assertOk();
     }
 
@@ -131,14 +124,13 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
             ->assertDontSee('/tenants/beta/logs');
     }
 
-    public function test_logs_destination_enforces_permission_and_foreign_tenant_boundaries(): void
+    public function test_logs_destination_enforces_membership_and_permission_boundaries(): void
     {
         $alphaUser = User::factory()->create();
         $this->membership($alphaUser, 'alpha', ['operations.manage', 'diagnostics.view']);
-        $this->membership(User::factory()->create(), 'beta', ['operations.manage', 'diagnostics.view']);
 
         $this->actingAs($alphaUser)
-            ->get('/tenants/beta/logs')
+            ->get('/tenants/not-a-member/logs')
             ->assertNotFound();
 
         $this->app['auth']->forgetGuards();

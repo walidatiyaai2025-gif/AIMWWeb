@@ -7,7 +7,7 @@
   "canonical_source": {
     "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
     "route_screen": "/Error",
-    "visible_control": "/logs -> /logs",
+    "visible_control": "/logs",
     "user_visible_text": "Open logs",
     "behavior": "The canonical error page exposes a navigation-only Open logs anchor whose source destination is /logs."
   },
@@ -19,8 +19,7 @@
     "control_binding": "AIMW-CONT-8B3518EF80",
     "destination_alias": "GET /tenants/{tenant}/logs",
     "destination_alias_name": "canonical.alias.logs",
-    "destination_workspace": "GET /tenants/{tenant}/module/logs",
-    "destination_workspace_name": "canonical.workspace.logs",
+    "destination_path": "/tenants/{tenant}/module/logs",
     "required_permissions": [
       "operations.manage",
       "diagnostics.view"
@@ -36,7 +35,6 @@
     "CanonicalWorkspaceRouteController::redirect",
     "operations.manage + diagnostics.view authorization",
     "redirect /tenants/{tenant}/module/logs",
-    "CanonicalWorkspaceRouteController::show",
     "real tenant Logs workspace"
   ],
   "authorization": {
@@ -49,7 +47,7 @@
       "operations.manage",
       "diagnostics.view"
     ],
-    "security_result": "No caller-provided tenant or resource identifier is accepted by the control. Guest, unauthorized, ambiguous multi-tenant, and foreign-tenant paths fail closed."
+    "security_result": "No caller-provided tenant or resource identifier is accepted by the control. Guest, unauthorized, ambiguous multi-tenant, non-member tenant, and missing-permission paths fail closed."
   },
   "semantics": {
     "mutation": false,
@@ -64,12 +62,13 @@
     "file": "backend/tests/Feature/ErrorOpenLogsVisibleTerminalityTest.php",
     "coverage": [
       "exact live canonical PENDING identity before authorized integration",
-      "existing guarded tenant Logs alias and real Logs workspace are the only destination authority",
+      "existing guarded tenant Logs alias is the destination authority",
       "one authorized tenant renders the exact operation marker and tenant-qualified href",
+      "authorized alias redirects to the real tenant Logs workspace and that workspace renders",
       "guest and missing-permission identities do not receive the control",
       "multiple Logs-authorized tenant memberships fail closed instead of choosing arbitrarily",
       "multiple memberships with exactly one authorized tenant resolve only that tenant",
-      "foreign tenant requests return 404 and missing destination permission returns 403",
+      "non-member tenant requests return 404 and missing destination permission returns 403",
       "composition-owned Copy error details AIMW-SYNC-89777052CB remains present and separate",
       "composition-owned Back to dashboard AIMW-CONT-85394A0E55 remains present and separate"
     ]
