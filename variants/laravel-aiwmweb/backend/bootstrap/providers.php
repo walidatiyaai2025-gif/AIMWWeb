@@ -28,8 +28,8 @@ return [
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
-    SiteOperationDetailsRouteServiceProvider::class,
     SiteOperationsMaintenanceRouteServiceProvider::class,
+    SiteOperationDetailsRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
     SeoVisibleControlRouteServiceProvider::class,
 ];
