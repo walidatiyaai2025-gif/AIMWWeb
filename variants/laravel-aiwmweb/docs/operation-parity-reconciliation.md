@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 467 |
-| PENDING | 464 |
+| ADAPTED | 468 |
+| PENDING | 463 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 467 |
-| OVERALL_PARITY_PERCENT | 50.16% |
+| TERMINAL | 468 |
+| OVERALL_PARITY_PERCENT | 50.27% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -29,7 +29,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 55 | 37 | 0 | 0 | 55 | 59.78% |
+| ai | 92 | 0 | 56 | 36 | 0 | 0 | 56 | 60.87% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -53,7 +53,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | Kind | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 27 | 4 | 0 | 0 | 27 | 87.10% |
-| background_job | 21 | 0 | 12 | 9 | 0 | 0 | 12 | 57.14% |
+| background_job | 21 | 0 | 13 | 8 | 0 | 0 | 13 | 61.90% |
 | route | 84 | 0 | 39 | 45 | 0 | 0 | 39 | 46.43% |
 | service | 349 | 0 | 317 | 32 | 0 | 0 | 317 | 90.83% |
 | visible_control | 446 | 0 | 72 | 374 | 0 | 0 | 72 | 16.14% |
@@ -73,7 +73,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (37)
+### ai (36)
 
 - `AIMW-AI-0F3763FDB4`
 - `AIMW-AI-2B31C6BDAF`
@@ -85,7 +85,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-AI-44DD850CE4`
 - `AIMW-AI-49E68B3816`
 - `AIMW-AI-4C07560F0B`
-- `AIMW-AI-4C84DDBEEB`
 - `AIMW-AI-4EE262C228`
 - `AIMW-AI-4F6B6584E4`
 - `AIMW-AI-54BB64BB13`
