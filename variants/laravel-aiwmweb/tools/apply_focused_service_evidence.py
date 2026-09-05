@@ -222,11 +222,15 @@ def main() -> int:
         args.summary_output.write_text(json.dumps(compact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     markdown = finalize.render_markdown(payload)
-    explicit = len(payload.get("validation", {}).get("explicit_route_contract_terminals", []))
+    validation = payload.get("validation", {})
+    explicit = len(validation.get("explicit_route_contract_terminals", []))
+    focused_visible = len(validation.get("focused_closure_contract_terminals", []))
     needle = f"- Explicit route contracts: **{explicit}**\n"
     markdown = markdown.replace(
         needle,
-        needle + f"- Focused service contracts: **{len(applied)}**\n",
+        needle
+        + f"- Focused visible-control contracts: **{focused_visible}**\n"
+        + f"- Focused service contracts: **{len(applied)}**\n",
         1,
     )
     args.markdown_output.write_text(markdown, encoding="utf-8")
