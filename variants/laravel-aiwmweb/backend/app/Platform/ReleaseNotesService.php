@@ -84,24 +84,7 @@ final class ReleaseNotesService
             if (str_starts_with($line, '## ')) {
                 $flush();
 
-                $header = trim(substr($line, 3));
-                $matched = preg_match(
-                    '/^v?(?<version>\d+(?:\.\d+){1,3})(?:\s*[-–—]\s*(?<date>\d{4}-\d{2}-\d{2}))?(?:\s*[-–—:]\s*(?<title>.+))?$/u',
-                    $header,
-                    $matches,
-                );
-
-                if ($matched === 1) {
-                    $version = $matches['version'];
-                    $date = $this->parseDate($matches['date'] ?? '');
-                    $title = isset($matches['title']) && trim($matches['title']) !== ''
-                        ? trim($matches['title'])
-                        : null;
-                } else {
-                    $version = ltrim($header, 'vV');
-                    $date = null;
-                    $title = null;
-                }
+                [$version, $date, $title] = $this->parseHeader(trim(substr($line, 3)));
 
                 continue;
             }
@@ -114,6 +97,53 @@ final class ReleaseNotesService
         $flush();
 
         return $releases;
+    }
+
+    /**
+     * Mirrors the source grammar:
+     * v?VERSION [dash DATE] [dash-or-colon TITLE].
+     *
+     * When that grammar does not match, the source keeps the whole heading
+     * (minus a leading v/V) as the version and leaves date/title empty.
+     *
+     * @return array{0:string,1:?string,2:?string}
+     */
+    private function parseHeader(string $header): array
+    {
+        if (preg_match('/^v?(?<version>\d+(?:\.\d+){1,3})(?<suffix>.*)$/u', $header, $matches) !== 1) {
+            return [ltrim($header, 'vV'), null, null];
+        }
+
+        $version = $matches['version'];
+        $suffix = $matches['suffix'] ?? '';
+        if ($suffix === '') {
+            return [$version, null, null];
+        }
+
+        if (preg_match('/^\s*:\s*(?<title>.+)$/u', $suffix, $titleMatch) === 1) {
+            return [$version, null, trim($titleMatch['title'])];
+        }
+
+        if (preg_match('/^\s*[-–—]\s*(?<rest>.+)$/u', $suffix, $separatorMatch) !== 1) {
+            return [ltrim($header, 'vV'), null, null];
+        }
+
+        $rest = $separatorMatch['rest'];
+        if (preg_match(
+            '/^(?<date>\d{4}-\d{2}-\d{2})(?:\s*[-–—:]\s*(?<title>.+))?$/u',
+            $rest,
+            $dateMatch,
+        ) === 1) {
+            $title = isset($dateMatch['title']) && trim($dateMatch['title']) !== ''
+                ? trim($dateMatch['title'])
+                : null;
+
+            return [$version, $this->parseDate($dateMatch['date']), $title];
+        }
+
+        // If the dash-separated suffix is not exactly a date expression, the
+        // source regex treats the entire suffix as the optional title group.
+        return [$version, null, trim($rest)];
     }
 
     private function parseDate(string $value): ?string
