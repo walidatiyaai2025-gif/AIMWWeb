@@ -11,6 +11,12 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-CONT-85394A0E55';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     public function test_exact_canonical_operation_is_the_pending_error_back_to_dashboard_control(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
@@ -35,8 +41,7 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
             ->assertSee('Back to dashboard')
             ->assertSee('href="/"', false)
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertDontSee('data-canonical-operation="AIMW-CONT-8B3518EF80"', false)
-            ->assertDontSee('data-canonical-operation="AIMW-SYNC-89777052CB"', false);
+            ->assertDontSee('data-canonical-operation="AIMW-CONT-8B3518EF80"', false);
     }
 
     public function test_source_and_destination_are_real_explicit_anonymous_routes_without_direct_ids(): void

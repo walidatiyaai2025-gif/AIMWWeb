@@ -25,12 +25,12 @@
       "operations.manage",
       "diagnostics.view"
     ],
-    "behavior": "Because the public Error route has no tenant parameter, Laravel renders Open logs only when the authenticated identity has exactly one active tenant membership authorized for both Logs permissions. The target is then generated from the existing guarded tenant Logs alias; zero or multiple eligible tenants fail closed."
+    "behavior": "Because the public Error route has no tenant parameter, Laravel renders Open logs only when the authenticated identity has exactly one active tenant membership authorized for both Logs permissions. The target is generated from the existing guarded tenant Logs alias; zero or multiple eligible tenants fail closed."
   },
   "runtime_path": [
     "GET /Error",
     "ErrorReadController resolves exactly one eligible tenant from authenticated active memberships",
-    "platform.error Blade view renders AIMW-CONT-8B3518EF80 only when logsHref is authoritative",
+    "platform.error preserves the existing Copy error details and Back to dashboard controls and conditionally renders AIMW-CONT-8B3518EF80",
     "GET /tenants/{tenant}/logs",
     "auth + tenant.context",
     "CanonicalWorkspaceRouteController::redirect",
@@ -40,7 +40,7 @@
     "real tenant Logs workspace"
   ],
   "authorization": {
-    "source_authentication": "anonymous route; control itself is absent for guests",
+    "source_authentication": "anonymous route; Open logs is absent for guests",
     "source_tenant_context": "not resolved by the Error route",
     "tenant_selection": "derived only from authenticated active memberships; exactly one Logs-authorized tenant is required",
     "destination_authentication": "required",
@@ -49,7 +49,7 @@
       "operations.manage",
       "diagnostics.view"
     ],
-    "security_result": "No caller-provided tenant/resource identifier is accepted by the control. Guest, unauthorized, ambiguous multi-tenant, and foreign-tenant paths fail closed."
+    "security_result": "No caller-provided tenant or resource identifier is accepted by the control. Guest, unauthorized, ambiguous multi-tenant, and foreign-tenant paths fail closed."
   },
   "semantics": {
     "mutation": false,
@@ -57,57 +57,50 @@
     "idempotent": true,
     "retry_safe": true,
     "persistence": "read-only authorization over existing membership/role/permission state",
-    "external_dependency": "The canonical scanner records WordPress, but this navigation operation performs no WordPress/provider request.",
+    "external_dependency": "none for this navigation operation",
     "fake_success_path": "none"
   },
   "acceptance_tests": {
     "file": "backend/tests/Feature/ErrorOpenLogsVisibleTerminalityTest.php",
     "coverage": [
-      "exact canonical ADAPTED operation identity after deterministic reconciliation",
+      "exact live canonical PENDING identity before authorized integration",
       "existing guarded tenant Logs alias and real Logs workspace are the only destination authority",
-      "one authorized tenant renders exact operation marker and tenant-qualified href",
+      "one authorized tenant renders the exact operation marker and tenant-qualified href",
       "guest and missing-permission identities do not receive the control",
       "multiple Logs-authorized tenant memberships fail closed instead of choosing arbitrarily",
       "multiple memberships with exactly one authorized tenant resolve only that tenant",
       "foreign tenant requests return 404 and missing destination permission returns 403",
-      "merged Back-to-dashboard operation remains present and separate",
-      "Copy error details AIMW-SYNC-89777052CB remains a separately owned operation"
+      "composition-owned Copy error details AIMW-SYNC-89777052CB remains present and separate",
+      "composition-owned Back to dashboard AIMW-CONT-85394A0E55 remains present and separate"
     ]
   },
-  "implementation": {
-    "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "base_sha": "09e544d60a768c14483380edbc8d47912b8d7ef0",
+  "recovery": {
+    "composition_branch": "worker/laravel-aiwmweb-closure-composition",
+    "composition_sha": "8f4fe139255fdb89fca23e113f42925f0d0a5e35",
+    "previous_pr_head": "7ed5a0e1d60efa563555ba3a2a446700a31f871a",
     "worker_branch": "worker/laravel-AIMW-CONT-8B3518EF80-error-open-logs",
-    "exact_green_focused_source_sha": "c75b7605a1ddc4e89fb6d7be8b627ca1256309d6"
+    "strategy": "ancestry-preserving two-parent recovery onto the live composition tree; stale generated reconciliation edits are discarded and composition-owned Error controls are preserved"
   },
   "scope_guards": {
     "exactly_one_operation": true,
     "sibling_back_dashboard_operation_modified": false,
     "sibling_copy_error_details_operation_modified": false,
     "new_global_logs_route_added": false,
-    "generated_reconciliation_edited": true,
-    "generated_reconciliation_method": "official finalize_operation_parity.py plus apply_focused_closure_evidence.py pinned to exact green focused source c75b7605a1ddc4e89fb6d7be8b627ca1256309d6",
+    "generated_reconciliation_edited": false,
     "aspnet_current_product_modified": false,
     "merge_performed": false
   },
   "canonical_reconciliation": {
     "total": 931,
-    "terminal": 417,
-    "pending": 514,
+    "terminal": 466,
+    "pending": 465,
     "blocked": 0,
-    "overall_parity_percent": 44.79,
-    "selected_operation_state": "ADAPTED",
-    "validation": "PASS",
-    "note": "The official focused verifier also reconciled other previously existing exact-pushed focused evidence. This worker still claims and implements only AIMW-CONT-8B3518EF80."
-  },
-  "ci_policy": {
-    "authority": "GitHub Actions on the exact final pushed helper-free PR head",
-    "required_before_final_handoff": true,
-    "evidence_file_does_not_embed_mutable_run_ids": true
+    "selected_operation_state": "PENDING",
+    "note": "Canonical counts and state remain unchanged until authorized composition integration, exact-SHA evidence registration, generator regeneration, and post-integration validation."
   },
   "terminality": {
-    "state": "ADAPTED",
-    "candidate_state": "ADAPTED",
-    "basis": "Real source-equivalent navigation is bound to the canonical operation and reaches only the existing guarded tenant Logs authority when tenant selection is unambiguous and authorized. Official deterministic reconciliation marks the operation ADAPTED; final VERIFIED_TASK_COMPLETE additionally requires helper-free exact-head CI success."
+    "candidate_state_after_authorized_integration": "ADAPTED",
+    "current_canonical_state": "PENDING",
+    "basis": "The recovered branch contains source-equivalent navigation and deterministic tenant/security proof, but canonical terminality is not claimed before authorized integration and generator reconciliation."
   }
 }

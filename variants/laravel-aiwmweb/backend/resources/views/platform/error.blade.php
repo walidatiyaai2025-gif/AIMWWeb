@@ -1,9 +1,16 @@
+@php
+    $errorDetailsPayload = [
+        'errorId' => $errorId,
+        'correlationId' => $correlationId,
+    ];
+@endphp
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Unexpected error</title>
+    @vite('resources/js/error-copy-details.ts')
     <style>
         :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         body { margin: 0; background: #0b0f17; color: #f8fafc; }
@@ -17,9 +24,13 @@
         .diagnostic small { display: block; margin-bottom: 6px; color: #94a3b8; }
         .diagnostic strong { display: block; overflow-wrap: anywhere; }
         .note { padding: 14px; border-radius: 12px; background: rgba(59, 130, 246, .09); border: 1px solid rgba(96, 165, 250, .25); }
-        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-        .button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 10px; background: #2563eb; color: #fff; font-weight: 700; text-decoration: none; }
+        .actions { margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
         .button.secondary { background: #1e293b; border: 1px solid rgba(148, 163, 184, .25); }
+        .button:disabled { cursor: wait; opacity: .65; }
+        .copy-status { margin: 12px 0 0; }
+        .copy-error { margin-top: 12px; }
+        [hidden] { display: none !important; }
     </style>
 </head>
 <body>
@@ -41,11 +52,19 @@
             <div class="note">Use the Error ID or Correlation ID when reviewing server logs or requesting support.</div>
 
             <div class="actions">
+                <button class="button" type="button" data-copy-error-details data-canonical-operation="AIMW-SYNC-89777052CB" aria-busy="false">Copy error details</button>
                 @if ($logsHref !== null)
                     <a class="button secondary" href="{{ $logsHref }}" data-canonical-operation="AIMW-CONT-8B3518EF80">Open logs</a>
                 @endif
                 <a class="button" href="/" data-canonical-operation="AIMW-CONT-85394A0E55">Back to dashboard</a>
             </div>
+            <p class="copy-status" data-copy-error-success role="status" hidden>Error details copied. The browser confirmed the clipboard write.</p>
+            <div class="copy-error" data-copy-error-error role="alert" hidden>
+                <p data-copy-error-error-message>The browser did not confirm a clipboard write. No copy success was reported; you can retry.</p>
+                <button class="button" type="button" data-copy-error-retry>Retry copy</button>
+            </div>
+
+            <script id="error-details-payload" type="application/json">@json($errorDetailsPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
         </section>
     </main>
 </body>

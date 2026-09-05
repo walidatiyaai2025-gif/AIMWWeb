@@ -19,13 +19,13 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-8B3518EF80';
 
-    public function test_exact_canonical_operation_is_the_adapted_error_open_logs_control(): void
+    public function test_exact_canonical_operation_remains_pending_until_authorized_integration(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('ADAPTED', $operation['migration_state']);
+        $this->assertSame('PENDING', $operation['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/Error', $operation['route_screen']);
@@ -41,7 +41,8 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertStringContainsString('href="/logs"', $source);
         $this->assertStringContainsString('Open logs', $source);
         $this->assertStringContainsString(self::OPERATION_ID, $view);
-        $this->assertStringNotContainsString('AIMW-SYNC-89777052CB', $view);
+        $this->assertStringContainsString('AIMW-SYNC-89777052CB', $view);
+        $this->assertStringContainsString('AIMW-CONT-85394A0E55', $view);
     }
 
     public function test_open_logs_reuses_the_existing_guarded_tenant_logs_alias(): void
@@ -67,7 +68,7 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
         $this->assertSame('operations.manage,diagnostics.view', $destination->defaults['workspace_permissions'] ?? null);
     }
 
-    public function test_exactly_one_authorized_tenant_renders_the_real_open_logs_control_and_runtime_path(): void
+    public function test_exactly_one_authorized_tenant_renders_the_real_open_logs_control_and_preserves_sibling_controls(): void
     {
         $this->withoutVite();
         $user = User::factory()->create();
@@ -80,8 +81,8 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
             ->assertSee('Open logs')
             ->assertSee('href="/tenants/alpha/logs"', false)
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('data-canonical-operation="AIMW-CONT-85394A0E55"', false)
-            ->assertDontSee('AIMW-SYNC-89777052CB');
+            ->assertSee('data-canonical-operation="AIMW-SYNC-89777052CB"', false)
+            ->assertSee('data-canonical-operation="AIMW-CONT-85394A0E55"', false);
 
         $this->get('/tenants/alpha/logs')
             ->assertRedirect('/tenants/alpha/module/logs');

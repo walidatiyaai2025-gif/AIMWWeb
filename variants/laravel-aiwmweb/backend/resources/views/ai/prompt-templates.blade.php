@@ -18,15 +18,22 @@
                     data-canonical-operation="AIMW-AI-E1A964346F"
                     aria-label="Back to Settings"
                 >← Settings</a>
+                <button
+                    type="button"
+                    data-ai-prompt-new-template
+                    data-canonical-operation="AIMW-AI-825B2F5A38"
+                    aria-controls="new-template-editor"
+                    aria-expanded="false"
+                >＋ New template</button>
             </nav>
         </header>
 
         @if (session('status'))
-            <p role="status">{{ session('status') }}</p>
+            <p role="status" data-ai-prompt-transient>{{ session('status') }}</p>
         @endif
 
         @if ($errors->any())
-            <section role="alert" aria-label="Save failed">
+            <section role="alert" aria-label="Save failed" data-ai-prompt-transient>
                 <h2>Prompt save failed</h2>
                 <ul>
                     @foreach ($errors->all() as $error)
@@ -35,6 +42,40 @@
                 </ul>
             </section>
         @endif
+
+        <section
+            id="new-template-editor"
+            data-ai-prompt-new-editor
+            data-state="idle"
+            hidden
+            aria-labelledby="new-template-heading"
+        >
+            <h2 id="new-template-heading">New template</h2>
+            <p data-ai-prompt-new-status role="status" hidden></p>
+            <p>Start a new prompt template draft. No data is persisted until the separate Save operation runs.</p>
+            <p>
+                <label for="new-template-key">Template key</label>
+                <input id="new-template-key" data-ai-prompt-new-key name="new_stable_key" type="text" autocomplete="off" placeholder="content.rewrite">
+            </p>
+            <p>
+                <label for="new-template-title">Title</label>
+                <input id="new-template-title" data-ai-prompt-new-title name="new_title" type="text" maxlength="120" autocomplete="off">
+            </p>
+            <p>
+                <label for="new-template-system">System prompt</label>
+                <textarea id="new-template-system" data-ai-prompt-new-system name="new_system_template" maxlength="20000"></textarea>
+            </p>
+            <p>
+                <label for="new-template-user">User prompt</label>
+                <textarea id="new-template-user" data-ai-prompt-new-user name="new_user_template" maxlength="20000"></textarea>
+            </p>
+            <p>
+                <label>
+                    <input data-ai-prompt-new-enabled name="new_enabled" type="checkbox" checked>
+                    Enabled
+                </label>
+            </p>
+        </section>
 
         <section aria-labelledby="template-library">
             <h2 id="template-library">Template library</h2>
@@ -129,5 +170,6 @@
             @endif
         </section>
     </main>
+    <script type="module" src="/js/ai-prompt-new-template.js"></script>
 </body>
 </html>
