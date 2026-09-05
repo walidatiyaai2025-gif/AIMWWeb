@@ -1,0 +1,72 @@
+name: Laravel AIWMWeb Slot 0029 Test Alignment
+
+on:
+  push:
+    branches:
+      - manager/laravel-aiwmweb-post-390-reconciliation
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot-0029-test-alignment.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  align-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Align focused terminality assertion
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php')
+          text = path.read_text(encoding='utf-8')
+          old = "        $this->assertSame('PENDING', $operation['migration_state']);\n"
+          new = "        $this->assertSame('ADAPTED', $operation['migration_state']);\n        $this->assertSame('explicit_route_api_contract', $operation['reconciliation']['evidence_mode']);\n"
+          if text.count(old) != 1:
+              raise SystemExit('expected one pre-reconciliation PENDING assertion')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Install backend dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare focused test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run focused AI Center terminality test
+        run: php artisan test --filter=AiCenterRouteTerminalityTest
+
+      - name: Verify focused formatting
+        run: vendor/bin/pint --test tests/Feature/AiCenterRouteTerminalityTest.php
+
+      - name: Commit aligned test and remove bootstrap workflow
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/laravel-aiwmweb-slot-0029-test-alignment.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php \
+                  .github/workflows/laravel-aiwmweb-slot-0029-test-alignment.yml
+          git commit -m "Align AI Center terminality test with reconciled state"
+          git push origin HEAD:manager/laravel-aiwmweb-post-390-reconciliation
