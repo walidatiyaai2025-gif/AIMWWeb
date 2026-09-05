@@ -31,7 +31,7 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_exact_canonical_operation_is_the_pending_guid_site_operation_details_route(): void
+    public function test_exact_canonical_operation_is_the_adapted_guid_site_operation_details_route(): void
     {
         $ledger = json_decode(
             (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -42,7 +42,7 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('route', $operation['kind']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('/site-operations/{OperationId:guid}', $operation['route_screen']);

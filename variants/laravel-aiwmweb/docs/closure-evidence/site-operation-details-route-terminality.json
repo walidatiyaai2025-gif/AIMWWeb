@@ -40,7 +40,11 @@
     "the canonical history link returns to the tenant site-operations index"
   ],
   "authorization": {
-    "route_middleware": ["web", "auth", "tenant.context"],
+    "route_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
     "controller_permission": "execution.view",
     "guest": "redirect to canonical /login",
     "missing_permission": "403",
@@ -90,12 +94,21 @@
       "PR plan-link gate"
     ]
   },
-  "implementation_snapshot_sha": "52404b10d31befc534982557c65dbe4b2db3b058",
-  "exact_tested_sha": "52404b10d31befc534982557c65dbe4b2db3b058",
+  "implementation_snapshot_sha": "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
+  "exact_tested_sha": "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
   "exact_tested_sha_ci": {
-    "pr_plan_link": {"run_id": 33941762111, "run_number": 1453, "result": "success"},
-    "laravel_aiwmweb_cross_domain_security": {"run_id": 33941762113, "run_number": 669, "result": "success"},
-    "laravel_aiwmweb_acceptance": {"run_id": 33941762049, "run_number": 738, "result": "success"},
+    "pr_plan_link": {
+      "run_id": 33982887279,
+      "result": "success"
+    },
+    "laravel_aiwmweb_cross_domain_security": {
+      "run_id": 33982887247,
+      "result": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 33982887333,
+      "result": "success"
+    },
     "sqlite_full_php_suite": "success",
     "mysql_fresh_rollback_forward_and_full_php_suite": "success",
     "redis_queue_scheduler": "success",
@@ -108,15 +121,15 @@
     "production_compose_runtime": "success"
   },
   "canonical_denominator": {
-    "source": "latest generated reconciliation on authoritative closure composition head 8f4fe139255fdb89fca23e113f42925f0d0a5e35",
+    "source": "authoritative closure composition c36f4944e8e511704a580874d09a398ac069820e",
     "total": 931,
-    "current_terminal": 466,
-    "current_pending": 465,
+    "current_terminal": 471,
+    "current_pending": 460,
     "current_blocked": 0,
-    "candidate_terminal_after_authorized_integration_and_regeneration": 467,
-    "candidate_pending_after_authorized_integration_and_regeneration": 464,
+    "candidate_terminal_after_authorized_integration_and_regeneration": 472,
+    "candidate_pending_after_authorized_integration_and_regeneration": 459,
     "generated_reconciliation_modified": false,
-    "note": "Candidate delta is exactly one operation. Canonical totals do not change until this evidence-bearing branch is integrated by the authorized composition role, added to the exact-SHA evidence manifest and the generator succeeds."
+    "note": "Candidate delta is exactly one operation and is materialized only by the repository generator in this recovery wave."
   },
   "generator_contract": {
     "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
@@ -143,6 +156,6 @@
     "implementation_sha_tests_green": true,
     "evidence_recorded": true,
     "reason": "The exact route is explicit and user-reachable, backed by persisted tenant-scoped operation history, preserves read-only semantics, fails closed across authentication/RBAC/tenant/IDOR/malformed-ID boundaries, redacts secret-bearing context, preserves the static maintenance route, and the implementation snapshot passed the required repository gates including SQLite and MySQL full suites.",
-    "evidence_bearing_head_ci": "must be revalidated after this evidence-only commit; final-head CI is recorded in PR #395 because a commit cannot self-contain its own SHA without changing it"
+    "evidence_bearing_head_ci": "recovered exact head aa328fe4daabf8e5042abe568e10e7719a9d3ad4 passed Plan Link, Cross-Domain Security, and full Laravel AIWMWeb Acceptance before generator reconciliation"
   }
 }

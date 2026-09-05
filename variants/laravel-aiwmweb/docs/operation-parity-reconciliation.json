@@ -22,12 +22,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 471,
-    "pending": 460,
+    "adapted": 472,
+    "pending": 459,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 471,
-    "overall_parity_percent": 50.59
+    "terminal": 472,
+    "overall_parity_percent": 50.7
   },
   "visible_controls": {
     "total": 446,
@@ -40,12 +40,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 58,
-      "pending": 34,
+      "adapted": 59,
+      "pending": 33,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 58,
-      "percent": 63.04
+      "terminal": 59,
+      "percent": 64.13
     },
     "approvals": {
       "total": 25,
@@ -2564,21 +2564,31 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php",
+      "evidence": "AIMW-AI-3CDB30A4C2 site operation details route closure@aa328fe4daabf8e5042abe568e10e7719a9d3ad4: variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php; explicit-route-contract:AIMW-AI-3CDB30A4C2; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-operation-details-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route contract is linked to the canonical operation ID, auth+tenant authorization, a real backing action boundary, and acceptance evidence.",
+        "source_label": "AIMW-AI-3CDB30A4C2 site operation details route closure",
+        "source_sha": "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operation-details-route-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-3CDB30A4C2",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -33737,12 +33747,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 40,
-      "pending": 44,
+      "adapted": 41,
+      "pending": 43,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 40,
-      "percent": 47.62
+      "terminal": 41,
+      "percent": 48.81
     },
     "service": {
       "total": 349,
@@ -33773,7 +33783,6 @@
       "AIMW-AI-34EC6312B9",
       "AIMW-AI-387F3E5D5F",
       "AIMW-AI-3B59F172AB",
-      "AIMW-AI-3CDB30A4C2",
       "AIMW-AI-44DD850CE4",
       "AIMW-AI-49E68B3816",
       "AIMW-AI-4C07560F0B",
@@ -34427,6 +34436,18 @@
         "explicit_operation_evidence_ids": [
           "AIMW-AI-6EF2330C99"
         ]
+      },
+      {
+        "label": "AIMW-AI-3CDB30A4C2 site operation details route closure",
+        "sha": "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
+        "domains": [
+          "ai"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": [
+          "AIMW-AI-3CDB30A4C2"
+        ]
       }
     ]
   },
@@ -34447,6 +34468,7 @@
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+      "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
@@ -34459,6 +34481,7 @@
     "explicit_route_contract_terminals": [
       "AIMW-AI-1E1BF9CEDC",
       "AIMW-AI-1E33F01F4E",
+      "AIMW-AI-3CDB30A4C2",
       "AIMW-AI-6EF2330C99",
       "AIMW-AI-959B247B1D",
       "AIMW-APPR-A292974395",
