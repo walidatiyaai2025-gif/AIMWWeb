@@ -10,6 +10,7 @@ final class SiteOperationDetailsRouteServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // Canonical source route: /site-operations/{OperationId:guid}
         // Keep the path segment unconstrained at the router layer so malformed
         // operation IDs reach the controller's UUID guard and fail closed with
         // a 404 instead of falling through to the tenant SPA catch-all route.
