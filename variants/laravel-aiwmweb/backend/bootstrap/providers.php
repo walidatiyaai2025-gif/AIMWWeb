@@ -9,6 +9,7 @@ use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
+use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
 use App\Providers\SiteOperationsMaintenanceRouteServiceProvider;
@@ -29,6 +30,7 @@ return [
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
     SitesConnectRouteServiceProvider::class,
+    OperationsMaintenanceRouteServiceProvider::class,
     SiteOperationsMaintenanceRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
     SeoVisibleControlRouteServiceProvider::class,
