@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SYNC-CB01197D47",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/module/comments",
+    "visible_control": "PreviousAsync",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "read_only": "The source control reads the current tenant collection without performing a mutation."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/pages.tsx and resources/js/components.tsx bind AIMW-SYNC-CB01197D47 to the existing Pagination Previous button.",
+    "read_contract": "The control uses the existing tenant-scoped workspace query or client-side page state and preserves current search/page semantics.",
+    "mutation_boundary": "The operation remains a GET/read interaction and does not claim persistence or mutation success."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/CollectionPaginationVisibleControlTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/collection-pagination-visible-controls.test.tsx",
+    "proofs": [
+      "exact canonical operation marker on the route-specific production control",
+      "authoritative tenant collection GET behavior",
+      "content.view permission enforcement",
+      "foreign tenant returns 404",
+      "no mutation request"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  }
+}
