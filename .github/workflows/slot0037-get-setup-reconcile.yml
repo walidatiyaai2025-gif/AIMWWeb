@@ -1,0 +1,150 @@
+name: Slot 0037 GET Setup Reconciliation
+
+on:
+  push:
+    branches:
+      - codex/laravel-issue257-platform-api-contract-18a8ee
+    paths:
+      - '.github/workflows/slot0037-get-setup-reconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      SOURCE_SHA: '3254aa0fa8d589d9fbccb24e5f0cb14fc32661de'
+      PREVIOUS_SHA: '47df2db4652e91fbf1d9c9904fb36b667f78c6e5'
+      OPERATION_ID: 'AIMW-PLAT-18A8EE0324'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/laravel-issue257-platform-api-contract-18a8ee
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Register exact pushed GET setup provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          op = os.environ['OPERATION_ID']
+          source_sha = os.environ['SOURCE_SHA']
+          previous_sha = os.environ['PREVIOUS_SHA']
+
+          for source in manifest.get('countable_sources', []):
+              route_map = source.get('route_api_provenance') or {}
+              if op in route_map:
+                  raise SystemExit(f'{op} already registered by {source.get("label")}')
+
+          manifest['previous_reconciliation_sha'] = previous_sha
+          manifest['countable_sources'].append({
+              'label': 'AIMW-PLAT-18A8EE0324 GET setup exact provenance',
+              'sha': source_sha,
+              'observed_pr_head': source_sha,
+              'domains': ['platform'],
+              'supporting_only': True,
+              'route_api_provenance': {
+                  op: {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupReadController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/platform-setup-read-terminality.json',
+                      'security_mode': 'tenant_neutral'
+                  }
+              }
+          })
+
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Regenerate canonical parity artifacts with repository tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          MD='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          SUMMARY='/tmp/operation-parity-summary.json'
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output "$JSON" \
+            --summary-output "$SUMMARY" \
+            --markdown-output "$MD" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input "$JSON" \
+            --output "$JSON" \
+            --summary-output "$SUMMARY" \
+            --markdown-output "$MD" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input "$JSON" \
+            --output "$JSON" \
+            --summary-output "$SUMMARY" \
+            --markdown-output "$MD" \
+            --check-total 931
+
+      - name: Prove exact one-operation delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/operation_parity_delta.py \
+            --current variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --previous-sha "$PREVIOUS_SHA"
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          op = os.environ['OPERATION_ID']
+          previous_sha = os.environ['PREVIOUS_SHA']
+          current = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          previous = json.loads(subprocess.check_output([
+              'git', 'show', f'{previous_sha}:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          ], text=True))
+
+          assert len(current['operations']) == 931
+          assert current['totals']['terminal'] == 473, current['totals']
+          assert current['totals']['pending'] == 458, current['totals']
+          assert current['totals']['blocked'] == 0, current['totals']
+
+          before = {row['operation_id']: row for row in previous['operations']}
+          after = {row['operation_id']: row for row in current['operations']}
+          changed = [key for key in before if before[key]['migration_state'] != after[key]['migration_state']]
+          assert changed == [op], changed
+          assert before[op]['migration_state'] == 'PENDING', before[op]['migration_state']
+          assert after[op]['migration_state'] == 'ADAPTED', after[op]['migration_state']
+          print('SLOT0037_EXACT_DELTA=PASS')
+          print('TOTAL=931 TERMINAL=473 PENDING=458 BLOCKED=0')
+          PY
+
+      - name: Commit generated reconciliation and self-remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/slot0037-get-setup-reconcile.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'docs(laravel): reconcile canonical GET setup parity'
+          git push origin HEAD:codex/laravel-issue257-platform-api-contract-18a8ee
