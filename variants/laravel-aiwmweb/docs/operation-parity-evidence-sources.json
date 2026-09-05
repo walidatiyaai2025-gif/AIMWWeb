@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "8fa01a7de12f12ab951e1ff2109a7da139932a50",
+  "previous_reconciliation_sha": "66d4e42e3f0a1b751a94c38b29074c3a0c525b7f",
   "focused_closure_evidence_source_sha": "5e56f2f0265577db2186290a94bde28ff59dae40",
   "countable_sources": [
     {
@@ -116,6 +116,15 @@
       "observed_pr_head": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "domains": ["ai"],
       "operation_ids": ["AIMW-AI-4C84DDBEEB"]
+    },
+    {
+      "label": "AIMW-AI-6EF2330C99 operations maintenance route closure",
+      "sha": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+      "observed_pr_head": "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+      "domains": ["ai"],
+      "operation_evidence": {
+        "AIMW-AI-6EF2330C99": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/OperationsMaintenanceReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/operations-maintenance-route-terminality.json"}
+      }
     }
   ],
   "excluded_sources": [],
