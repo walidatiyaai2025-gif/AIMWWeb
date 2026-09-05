@@ -2,113 +2,396 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
+  "previous_reconciliation_sha": "5059e73c7b64b1e56f926d589b3f0c9eab11cf5f",
   "focused_closure_evidence_source_sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
   "countable_sources": [
     {
       "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
       "sha": "e26a7d9a254f7df980714b778491d0f864605087",
       "observed_pr_head": "e26a7d9a254f7df980714b778491d0f864605087",
-      "domains": ["ai", "approvals", "automation", "backup", "billing", "comments", "content", "email", "identity", "media", "operations", "platform", "reports", "seo", "settings", "sites", "sync", "taxonomy"],
+      "domains": [
+        "ai",
+        "approvals",
+        "automation",
+        "backup",
+        "billing",
+        "comments",
+        "content",
+        "email",
+        "identity",
+        "media",
+        "operations",
+        "platform",
+        "reports",
+        "seo",
+        "settings",
+        "sites",
+        "sync",
+        "taxonomy"
+      ],
       "operation_evidence": {
-        "AIMW-CONT-D828690844": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-EMAI-2E95AF6C05": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-EMAI-78352CD34E": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-BACK-66BFA49775": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-DF483546DA": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-FBD0368CAA": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-BB5B32880A": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-1DA83B9262": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-9B8574AA90": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-E14274269E": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-BACK-979DEF54FA": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-FB7F9189C0": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AccountProfileRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/account-profile-route-terminality.json"},
-        "AIMW-AI-1E33F01F4E": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AiPromptTemplatesRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AiPromptTemplatesReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplatesRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/ai-prompt-templates-route-terminality.json"},
-        "AIMW-AI-1E1BF9CEDC": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiUsageRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/ai-usage-route-terminality.json"},
-        "AIMW-APPR-A292974395": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/ApprovalQueueRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/ApprovalsRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/approvals-route-terminality.json"},
-        "AIMW-CONT-4A295D45D4": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-EA0DDC0ABE": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-MEDI-BF81D0B635": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-COMM-C2DDF5DAE3": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-TAXO-AEEE1025B9": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-SYNC-1C799B7D70": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-9B87A269F3": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-D76D83682F": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-AUTO-38567579D6": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-AUTO-F12BC80C1B": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-AUTO-1546E5BCAF": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-AUTO-6522502C20": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-AUTO-968FD60A95": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-BILL-2FFFC55BAB": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"}
+        "AIMW-CONT-D828690844": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-EMAI-2E95AF6C05": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-EMAI-78352CD34E": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-BACK-66BFA49775": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-DF483546DA": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-FBD0368CAA": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-BB5B32880A": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-1DA83B9262": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-9B8574AA90": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-E14274269E": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-BACK-979DEF54FA": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiTerminalityInventoryTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-FB7F9189C0": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountProfileRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-profile-route-terminality.json"
+        },
+        "AIMW-AI-1E33F01F4E": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AiPromptTemplatesRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiPromptTemplatesReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplatesRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-prompt-templates-route-terminality.json"
+        },
+        "AIMW-AI-1E1BF9CEDC": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiUsageRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-usage-route-terminality.json"
+        },
+        "AIMW-APPR-A292974395": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalQueueRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/approvals-route-terminality.json"
+        },
+        "AIMW-CONT-4A295D45D4": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-EA0DDC0ABE": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-MEDI-BF81D0B635": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-COMM-C2DDF5DAE3": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-TAXO-AEEE1025B9": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-SYNC-1C799B7D70": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-9B87A269F3": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-D76D83682F": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-AUTO-38567579D6": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-AUTO-F12BC80C1B": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-AUTO-1546E5BCAF": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-AUTO-6522502C20": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-AUTO-968FD60A95": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-BILL-2FFFC55BAB": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/VerifiedRouteProvenanceV2Test.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        }
       }
     },
     {
       "label": "Canonical reports route closure",
       "sha": "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "observed_pr_head": "fb068134c2ad60111bd376f4f400c1bd247394ca",
-      "domains": ["content"],
+      "domains": [
+        "content"
+      ],
       "operation_evidence": {
-        "AIMW-CONT-5D18F49928": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-8140D785B5": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"}
+        "AIMW-CONT-5D18F49928": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-8140D785B5": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsRouteProvenanceTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        }
       }
     },
     {
       "label": "Canonical About Build route provenance",
       "sha": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "observed_pr_head": "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
-      "domains": ["content"],
+      "domains": [
+        "content"
+      ],
       "operation_evidence": {
-        "AIMW-CONT-81B4B20D2D": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"},
-        "AIMW-CONT-110268CC96": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"}
+        "AIMW-CONT-81B4B20D2D": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        },
+        "AIMW-CONT-110268CC96": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+        }
       }
     },
     {
       "label": "Live exact route/API provenance gap closure",
       "sha": "c19ba111947512de296aa73dd62e03c334bd8f43",
       "observed_pr_head": "c19ba111947512de296aa73dd62e03c334bd8f43",
-      "domains": ["ai", "comments", "email", "media", "operations", "platform", "taxonomy"],
+      "domains": [
+        "ai",
+        "comments",
+        "email",
+        "media",
+        "operations",
+        "platform",
+        "taxonomy"
+      ],
       "supporting_only": true,
       "route_api_provenance": {
-        "AIMW-COMM-A16719E105": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_bound"},
-        "AIMW-MEDI-8BADBE1261": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_bound"},
-        "AIMW-TAXO-CDC6948A06": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_bound"},
-        "AIMW-AI-C37F405767": {"destination_path":"variants/laravel-aiwmweb/backend/routes/web.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_bound"},
-        "AIMW-EMAI-2D94EFDD53": {"destination_path":"variants/laravel-aiwmweb/backend/routes/api.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/LegacyNotificationReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_selected"},
-        "AIMW-OPER-ABB41FC891": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/LoginReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_neutral"},
-        "AIMW-PLAT-A91A2B0B11": {"destination_path":"variants/laravel-aiwmweb/backend/routes/api.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_selected"},
-        "AIMW-PLAT-FAC7505B26": {"destination_path":"variants/laravel-aiwmweb/backend/routes/api.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json","security_mode":"tenant_selected"}
+        "AIMW-COMM-A16719E105": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_bound"
+        },
+        "AIMW-MEDI-8BADBE1261": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_bound"
+        },
+        "AIMW-TAXO-CDC6948A06": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_bound"
+        },
+        "AIMW-AI-C37F405767": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_bound"
+        },
+        "AIMW-EMAI-2D94EFDD53": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/api.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/LegacyNotificationReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LegacyNotificationApiTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_selected"
+        },
+        "AIMW-OPER-ABB41FC891": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/LoginReadRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/LoginReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_neutral"
+        },
+        "AIMW-PLAT-A91A2B0B11": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/api.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_selected"
+        },
+        "AIMW-PLAT-FAC7505B26": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/api.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PlatformReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformReadApiTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/RouteApiProvenanceGapTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json",
+          "security_mode": "tenant_selected"
+        }
       }
     },
     {
       "label": "Canonical site operations maintenance route closure",
       "sha": "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "observed_pr_head": "067e401416896105f304d5b715d5ac1aa509e54f",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "operation_evidence": {
-        "AIMW-AI-959B247B1D": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/SiteOperationsMaintenanceRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/site-operations-maintenance-route-terminality.json"}
+        "AIMW-AI-959B247B1D": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationsMaintenanceRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operations-maintenance-route-terminality.json"
+        }
       }
     },
     {
       "label": "Set language preference service closure",
       "sha": "f3ddc770f717710aa290c0790dd87b5a03550100",
       "observed_pr_head": "f3ddc770f717710aa290c0790dd87b5a03550100",
-      "domains": ["platform"]
+      "domains": [
+        "platform"
+      ]
     },
     {
       "label": "Get language preference service closure",
       "sha": "41011429295d0b5daa7a36a59824d4b45015b93e",
       "observed_pr_head": "41011429295d0b5daa7a36a59824d4b45015b93e",
-      "domains": ["platform"]
-    }
-    ,{
+      "domains": [
+        "platform"
+      ]
+    },
+    {
       "label": "Canonical AI Center route closure after PR #390 integration",
       "sha": "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "observed_pr_head": "6d135cc0aaac7c367ced659538e942475e270e0e",
-      "domains": ["ai"],
+      "domains": [
+        "ai"
+      ],
       "supporting_only": true,
       "route_api_provenance": {
-        "AIMW-AI-82F795EE67": {"destination_path":"variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php","action_path":"variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php","acceptance_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","operation_link_test":"variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php","evidence_path":"variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json","security_mode":"tenant_bound"}
+        "AIMW-AI-82F795EE67": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AiCenterRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-center-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
       }
+    },
+    {
+      "label": "AIMW-AI-4C84DDBEEB scoped job failure gate closure",
+      "sha": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
+      "observed_pr_head": "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
+      "domains": [
+        "ai"
+      ],
+      "operation_ids": [
+        "AIMW-AI-4C84DDBEEB"
+      ]
     }
   ],
   "excluded_sources": [],
