@@ -18,9 +18,11 @@ jobs:
         with:
           ref: worker/laravel-AIMW-PLAT-A2624EDC66-reconciliation-recovery
       - name: Add exact tenant-neutral service closure contract
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
+
           path = Path('variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesParityClosureTest.php')
           text = path.read_text()
           needle = "    private const STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS = [\n"
@@ -45,6 +47,7 @@ jobs:
           if needle not in text:
               raise SystemExit('STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS anchor missing')
           path.write_text(text.replace(needle, needle + entry, 1))
+          PY
       - name: Commit repair only
         shell: bash
         run: |
