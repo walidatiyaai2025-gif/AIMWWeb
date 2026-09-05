@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-PLAT-15C5517022",
+  "operation_id": "AIMW-PLAT-15C5517022",
+  "terminal_state": "ADAPTED",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "authority": {
+    "issue": 257,
+    "canonical_base_sha": "9e49d7d7b113a0101b603b5810416e2f256da738",
+    "claim_comment_id": 5554835706,
+    "worker_branch": "worker/laravel-AIMW-PLAT-15C5517022-release-notes-get-all"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-PLAT-15C5517022",
+    "kind": "service",
+    "domain": "platform",
+    "service": "ReleaseNotesService",
+    "member": "GetAll",
+    "source": "src/AIWordPressManager.Web/Services/ReleaseNotesService.cs",
+    "mutation": false,
+    "external_dependency": "none",
+    "tenant_owned": false,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "decision": "ADAPTED",
+  "rationale": "The Laravel variant now has a real application-local ReleaseNotesService::getAll() contract matching the canonical source read behavior: versioned Markdown headings are parsed into release records, dash/star change lines are preserved, repeated reads may reuse an unchanged non-empty mtime cache, missing files return a truthful empty collection, and an existing-but-unreadable file fails rather than fabricating an empty success.",
+  "destination": {
+    "service": "variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php",
+    "runtime_contract": "App\\Platform\\ReleaseNotesService::getAll",
+    "default_source": "variants/laravel-aiwmweb/backend/RELEASE_NOTES.md when present",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php"
+  },
+  "runtime_behavior": {
+    "format": "Markdown ## release headings with -/* change bullets",
+    "optional_version_prefix": "v/V",
+    "optional_date": "YYYY-MM-DD; invalid dates remain null",
+    "optional_title": true,
+    "fallback_title": "Version {version}",
+    "missing_file": "empty collection",
+    "existing_unreadable_file": "truthful runtime failure",
+    "cache": "non-empty result reused only while file mtime is unchanged",
+    "cache_invalidated_when_file_missing": true
+  },
+  "security": {
+    "tenant_input_controls_path": false,
+    "user_input_controls_path": false,
+    "request_input_controls_path": false,
+    "external_provider_access": false,
+    "secret_material_exposed": false,
+    "mutation": false
+  },
+  "acceptance": [
+    "canonical operation AIMW-PLAT-15C5517022 remains the only operation claimed by this evidence",
+    "missing release-notes source returns an empty collection without sample or fabricated history",
+    "canonical version/date/title and dash/star change syntax is parsed deterministically",
+    "fallback headings preserve their version text and get the source-equivalent default title",
+    "invalid dates do not fabricate a date",
+    "an unchanged non-empty file may use the cached parsed result",
+    "mtime changes cause authoritative reread and reparse",
+    "file removal cannot return stale cached releases"
+  ],
+  "scope_exclusions": [
+    "AIMW-PLAT-57B1A0F5E3 ReleaseNotesService.GetCurrent",
+    "all /release-notes and /about-build route operations",
+    "all release-notes visible controls",
+    "release-history content invention or source-product modification",
+    "generated parity count hand edits"
+  ],
+  "validation": {
+    "focused_test_required": true,
+    "generator_reconciliation_required": true,
+    "exact_head_ci_required": true
+  }
+}
