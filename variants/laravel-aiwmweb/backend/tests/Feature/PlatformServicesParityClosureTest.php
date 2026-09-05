@@ -48,6 +48,20 @@ class PlatformServicesParityClosureTest extends TestCase
         'AIMW-PLAT-17E3F2B4ED' => 'GetLanguage',
     ];
 
+    private const STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS = [
+        'AIMW-PLAT-18A8EE0324' => [
+            'route_screen' => '/setup',
+            'destination' => 'variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php',
+            'signals' => [
+                'middleware:web-only',
+                'tenant:neutral',
+                'route:no-parameters',
+                'redirect:safe-local-only',
+            ],
+        ],
+    ];
+
     public function test_composed_reconciliation_never_regresses_the_frozen_backend_pending_baseline(): void
     {
         $pending = $this->pendingBackend();
@@ -191,31 +205,55 @@ class PlatformServicesParityClosureTest extends TestCase
 
     private function hasStrictTenantNeutralBackendEvidence(array $operation): bool
     {
+        if (! $this->hasTenantNeutralLocalSafetyShape($operation)) {
+            return false;
+        }
+
         $operationId = $operation['operation_id'] ?? null;
         $expectedMethod = self::STRICT_TENANT_NEUTRAL_BACKEND_OPERATIONS[$operationId] ?? null;
-        if ($expectedMethod === null) {
+        if ($expectedMethod !== null) {
+            if (($operation['service'] ?? null) !== 'LanguagePreferenceService'
+                || ($operation['visible_control'] ?? null) !== $expectedMethod) {
+                return false;
+            }
+
+            $signals = $operation['reconciliation']['signals'] ?? [];
+
+            return in_array('method:'.$expectedMethod, $signals, true)
+                && in_array('token:language', $signals, true)
+                && in_array('token:preference', $signals, true);
+        }
+
+        $routeContract = self::STRICT_TENANT_NEUTRAL_ROUTE_API_OPERATIONS[$operationId] ?? null;
+        if ($routeContract === null) {
             return false;
         }
 
-        if (($operation['tenant_owned'] ?? true) !== false
-            || ($operation['mutation'] ?? true) !== false
-            || ($operation['external_dependency'] ?? null) !== 'none'
-            || ($operation['native_wp_rest'] ?? true) !== false
-            || ($operation['connector_required'] ?? true) !== false
-            || ($operation['risk'] ?? null) !== 'low') {
-            return false;
-        }
-
-        if (($operation['service'] ?? null) !== 'LanguagePreferenceService'
-            || ($operation['visible_control'] ?? null) !== $expectedMethod) {
+        if (($operation['route_screen'] ?? null) !== $routeContract['route_screen']
+            || ($operation['laravel_destination'] ?? null) !== $routeContract['destination']
+            || ($operation['acceptance_test'] ?? null) !== $routeContract['acceptance_test']
+            || ($operation['reconciliation']['evidence_mode'] ?? null) !== 'explicit_route_api_contract') {
             return false;
         }
 
         $signals = $operation['reconciliation']['signals'] ?? [];
+        foreach ($routeContract['signals'] as $requiredSignal) {
+            if (! in_array($requiredSignal, $signals, true)) {
+                return false;
+            }
+        }
 
-        return in_array('method:'.$expectedMethod, $signals, true)
-            && in_array('token:language', $signals, true)
-            && in_array('token:preference', $signals, true);
+        return true;
+    }
+
+    private function hasTenantNeutralLocalSafetyShape(array $operation): bool
+    {
+        return ($operation['tenant_owned'] ?? true) === false
+            && ($operation['mutation'] ?? true) === false
+            && ($operation['external_dependency'] ?? null) === 'none'
+            && ($operation['native_wp_rest'] ?? true) === false
+            && ($operation['connector_required'] ?? true) === false
+            && ($operation['risk'] ?? null) === 'low';
     }
 
     private function pendingBackend()
