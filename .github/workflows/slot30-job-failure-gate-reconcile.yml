@@ -1,4 +1,4 @@
-name: Slot30 Job Failure Gate Reconcile
+name: Slot30 Job Failure Gate Reconcile Diagnostic
 
 on:
   push:
@@ -9,108 +9,70 @@ permissions:
   contents: write
 
 jobs:
-  reconcile:
+  reconcile-diagnostic:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Fetch exact evidence refs
-        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
-
+      - run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Register exact pushed evidence source
+      - name: Regenerate diagnostic candidate
         shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
-
           path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
           data = json.loads(path.read_text())
-          target_sha = '7359222a404ca11dafd19bd42d6f3fc7d985fc2e'
-          label = 'AIMW-AI-4C84DDBEEB recovered job failure gate closure'
           data['previous_reconciliation_sha'] = '5059e73c7b64b1e56f926d589b3f0c9eab11cf5f'
-          sources = data['countable_sources']
-          sources[:] = [s for s in sources if s.get('label') != label]
-          sources.append({
-              'label': label,
-              'sha': target_sha,
-              'observed_pr_head': target_sha,
+          data['countable_sources'].append({
+              'label': 'AIMW-AI-4C84DDBEEB recovered job failure gate closure',
+              'sha': '7359222a404ca11dafd19bd42d6f3fc7d985fc2e',
+              'observed_pr_head': '7359222a404ca11dafd19bd42d6f3fc7d985fc2e',
               'domains': ['ai'],
           })
           path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
           PY
-
-      - name: Regenerate canonical parity artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
-            --output /tmp/operation-parity-reconciliation.json \
-            --summary-output /tmp/operation-parity-summary.json \
-            --markdown-output /tmp/operation-parity-reconciliation.md \
-            --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
-            --input /tmp/operation-parity-reconciliation.json \
-            --output /tmp/operation-parity-reconciliation.json \
-            --summary-output /tmp/operation-parity-summary.json \
-            --markdown-output /tmp/operation-parity-reconciliation.md \
-            --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
-            --input /tmp/operation-parity-reconciliation.json \
-            --output /tmp/operation-parity-reconciliation.json \
-            --summary-output /tmp/operation-parity-summary.json \
-            --markdown-output /tmp/operation-parity-reconciliation.md \
-            --check-total 931
-
-      - name: Enforce exactly one legal parity delta
-        shell: bash
-        run: |
-          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output /tmp/r.json --summary-output /tmp/s.json --markdown-output /tmp/r.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input /tmp/r.json --output /tmp/r.json --summary-output /tmp/s.json --markdown-output /tmp/r.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input /tmp/r.json --output /tmp/r.json --summary-output /tmp/s.json --markdown-output /tmp/r.md --check-total 931
           python - <<'PY'
           import json, subprocess
           from pathlib import Path
-
-          target = 'AIMW-AI-4C84DDBEEB'
-          previous_sha = '5059e73c7b64b1e56f926d589b3f0c9eab11cf5f'
-          rel = 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
-          previous = json.loads(subprocess.check_output(['git','show',f'{previous_sha}:{rel}'], text=True))
-          current = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
-          before = {r['operation_id']: r['migration_state'] for r in previous['operations']}
-          after = {r['operation_id']: r['migration_state'] for r in current['operations']}
-          changes = [(op, before[op], after[op]) for op in before if before[op] != after[op]]
-          expected = [(target, 'PENDING', 'ADAPTED')]
-          if changes != expected:
-              raise SystemExit(f'illegal parity delta: {changes}')
-          totals = current['totals']
-          expected_totals = {'total': 931, 'terminal': 468, 'pending': 463, 'blocked': 0}
-          actual = {k: totals[k] for k in expected_totals}
-          if actual != expected_totals:
-              raise SystemExit(f'unexpected totals: {actual}')
-          row = next(r for r in current['operations'] if r['operation_id'] == target)
-          if row['laravel_destination'] != 'variants/laravel-aiwmweb/backend/app/Jobs/JobFailureGate.php':
-              raise SystemExit(f'unexpected destination: {row["laravel_destination"]}')
-          if row['acceptance_test'] != 'variants/laravel-aiwmweb/backend/tests/Unit/JobFailureGateTest.php':
-              raise SystemExit(f'unexpected test: {row["acceptance_test"]}')
-          print('SLOT30_DELTA=PASS')
+          previous_sha='5059e73c7b64b1e56f926d589b3f0c9eab11cf5f'
+          rel='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          previous=json.loads(subprocess.check_output(['git','show',f'{previous_sha}:{rel}'],text=True))
+          current=json.loads(Path('/tmp/r.json').read_text())
+          before={r['operation_id']:r for r in previous['operations']}
+          after={r['operation_id']:r for r in current['operations']}
+          changes=[]
+          for op,row in before.items():
+              if row['migration_state'] != after[op]['migration_state']:
+                  changes.append({
+                      'operation_id':op,
+                      'before':row['migration_state'],
+                      'after':after[op]['migration_state'],
+                      'destination':after[op].get('laravel_destination'),
+                      'test':after[op].get('acceptance_test'),
+                      'reconciliation':after[op].get('reconciliation'),
+                  })
+          target=after['AIMW-AI-4C84DDBEEB']
+          diagnostic={'totals':current['totals'],'changes':changes,'target':target}
+          out=Path('variants/laravel-aiwmweb/docs/evidence/slot30-reconcile-diagnostic.json')
+          out.write_text(json.dumps(diagnostic,indent=2,ensure_ascii=False)+'\n')
           PY
-          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-
-      - name: Commit generated evidence and remove helper
+      - name: Persist diagnostic and self-remove
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'walidatiyaai2025-gif'
           git config user.email 'walidatiyaai2025@gmail.com'
-          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
-                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
-                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git checkout -- variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json
+          git add variants/laravel-aiwmweb/docs/evidence/slot30-reconcile-diagnostic.json
           git rm .github/workflows/slot30-job-failure-gate-reconcile.yml
-          git commit -m 'Reconcile AIMW-AI-4C84DDBEEB on recovered composition'
+          git commit -m 'Capture Slot30 reconciliation diagnostic'
           git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-4C84DDBEEB-job-failure-gate
