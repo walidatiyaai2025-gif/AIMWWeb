@@ -3,15 +3,10 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SetupReadController;
-use App\Services\DatabaseSetupPageService;
 use App\Services\DatabaseSetupReadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Testing\TestResponse;
-use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
 
@@ -85,25 +80,35 @@ class PlatformSetupReadTerminalityTest extends TestCase
 
     public function test_completed_setup_ignores_caller_redirect_targets_and_uses_fixed_landing_page(): void
     {
-        $readService = Mockery::mock(DatabaseSetupReadService::class);
-        $readService->shouldReceive('status')->once()->andReturn([
-            'complete' => true,
-            'driver' => 'sqlite',
-            'database_reachable' => true,
-            'migrations_ready' => true,
-            'identity_ready' => true,
+        $now = now();
+        $tenantId = DB::table('tenants')->insertGetId([
+            'name' => 'Setup proof tenant',
+            'slug' => 'setup-proof-tenant',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $userId = DB::table('users')->insertGetId([
+            'name' => 'Setup proof user',
+            'email' => 'setup-proof@example.test',
+            'password' => 'not-used-by-this-test',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('tenant_memberships')->insert([
+            'tenant_id' => $tenantId,
+            'user_id' => $userId,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
-        $page = new DatabaseSetupPageService($readService);
-        $request = Request::create('/setup', 'GET', [
-            'returnUrl' => 'https://evil.example/phish',
-        ]);
-        $this->app->instance('request', $request);
+        $status = app(DatabaseSetupReadService::class)->status();
+        $this->assertTrue($status['complete']);
+        $this->assertTrue($status['identity_ready']);
 
-        $response = (new SetupReadController)($page);
+        $response = $this->get('/setup?returnUrl=https%3A%2F%2Fevil.example%2Fphish');
 
-        $this->assertInstanceOf(RedirectResponse::class, $response);
-        TestResponse::fromBaseResponse($response)->assertRedirect('/');
-        $this->assertStringNotContainsString('evil.example', $response->getTargetUrl());
+        $response->assertRedirect('/');
+        $this->assertStringNotContainsString('evil.example', (string) $response->headers->get('Location'));
     }
 }
