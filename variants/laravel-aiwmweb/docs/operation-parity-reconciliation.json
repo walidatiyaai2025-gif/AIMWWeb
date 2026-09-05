@@ -17,17 +17,18 @@
     "operation_scoped_source_policy": "a countable source declaring operation_ids may contribute generic evidence only to those canonical IDs; the normal code, tenant/security, and test thresholds still apply",
     "explicit_route_policy": "route rows remain pending unless an exact pushed source declares operation_evidence and the generator verifies route, auth/tenant action, test, and evidence links",
     "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected or explicitly tenant-neutral security semantics",
-    "focused_visible_control_policy": "visible-control rows remain PENDING unless an exact pushed closure evidence file, production operation-ID marker, focused operation-ID test, and applicable tenant/security assertions are all present"
+    "focused_visible_control_policy": "visible-control rows remain PENDING unless an exact pushed closure evidence file, production operation-ID marker, focused operation-ID test, and applicable tenant/security assertions are all present",
+    "focused_service_policy": "service rows remain PENDING unless an opted-in closure evidence contract names a pushed exact implementation SHA and the verifier confirms exact operation, canonical source/service/member, production path, focused test, and applicable tenant/authorization proof"
   },
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 473,
-    "pending": 458,
+    "adapted": 474,
+    "pending": 457,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 473,
-    "overall_parity_percent": 50.81
+    "terminal": 474,
+    "overall_parity_percent": 50.91
   },
   "visible_controls": {
     "total": 446,
@@ -150,12 +151,12 @@
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 5,
-      "pending": 13,
+      "adapted": 6,
+      "pending": 12,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 5,
-      "percent": 27.78
+      "terminal": 6,
+      "percent": 33.33
     },
     "reports": {
       "total": 1,
@@ -23815,21 +23816,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php",
+      "evidence": "Focused service closure@3adafbe4f23960d5e952f2aef0a9cea6d9cf5bc8: variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php; operation:AIMW-PLAT-15C5517022; test:variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-PLAT-15C5517022",
+        "source_sha": "3adafbe4f23960d5e952f2aef0a9cea6d9cf5bc8",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-15C5517022",
+          "service:ReleaseNotesService",
+          "member:GetAll",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetAllTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/release-notes-get-all-terminality.json"
+        ]
       }
     },
     {
@@ -33769,12 +33779,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 317,
-      "pending": 32,
+      "adapted": 318,
+      "pending": 31,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 317,
-      "percent": 90.83
+      "terminal": 318,
+      "percent": 91.12
     },
     "visible_control": {
       "total": 446,
@@ -34163,7 +34173,6 @@
       "AIMW-OPER-FC4C071FAA"
     ],
     "platform": [
-      "AIMW-PLAT-15C5517022",
       "AIMW-PLAT-17BC7DA9E5",
       "AIMW-PLAT-3025C8E82B",
       "AIMW-PLAT-4BAE8344AF",
@@ -34632,6 +34641,10 @@
       "AIMW-SYNC-EF652932D6",
       "AIMW-SYNC-F340B5445A"
     ],
-    "focused_closure_contract_count": 74
+    "focused_closure_contract_count": 74,
+    "focused_service_contract_terminals": [
+      "AIMW-PLAT-15C5517022"
+    ],
+    "focused_service_contract_count": 1
   }
 }
