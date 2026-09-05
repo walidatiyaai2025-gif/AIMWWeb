@@ -4,6 +4,7 @@
   "operation_id": "AIMW-CONT-8B3518EF80",
   "domain": "content",
   "kind": "visible_control",
+  "terminal_state": "ADAPTED",
   "canonical_source": {
     "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
     "route_screen": "/Error",
@@ -75,8 +76,9 @@
   },
   "recovery": {
     "composition_branch": "worker/laravel-aiwmweb-closure-composition",
-    "composition_sha": "8f4fe139255fdb89fca23e113f42925f0d0a5e35",
-    "previous_pr_head": "7ed5a0e1d60efa563555ba3a2a446700a31f871a",
+    "composition_sha": "03eec4559a16904783f1e1fe1ad085c1437c7719",
+    "previous_pr_head": "6019688d24805eb84f34a825d00f0552e856c550",
+    "recovery_merge": "161d244e3252abaa2fa88b54ee25fe4136b61685",
     "worker_branch": "worker/laravel-AIMW-CONT-8B3518EF80-error-open-logs",
     "strategy": "ancestry-preserving two-parent recovery onto the live composition tree; stale generated reconciliation edits are discarded and composition-owned Error controls are preserved"
   },
@@ -91,15 +93,16 @@
   },
   "canonical_reconciliation": {
     "total": 931,
-    "terminal": 466,
-    "pending": 465,
+    "terminal": 468,
+    "pending": 463,
     "blocked": 0,
-    "selected_operation_state": "PENDING",
-    "note": "Canonical counts and state remain unchanged until authorized composition integration, exact-SHA evidence registration, generator regeneration, and post-integration validation."
+    "selected_operation_state_before_reconciliation": "PENDING",
+    "expected_selected_operation_state_after_generator": "ADAPTED",
+    "note": "These are the authoritative composition counts before this focused operation is consumed by the canonical generator."
   },
   "terminality": {
-    "candidate_state_after_authorized_integration": "ADAPTED",
-    "current_canonical_state": "PENDING",
-    "basis": "The recovered branch contains source-equivalent navigation and deterministic tenant/security proof, but canonical terminality is not claimed before authorized integration and generator reconciliation."
+    "state": "ADAPTED",
+    "current_canonical_state_before_generator": "PENDING",
+    "basis": "The recovered exact pushed implementation contains source-equivalent navigation plus deterministic tenant/security proof. Canonical counts are changed only by the repository generator after this evidence is registered as the focused closure source."
   }
 }
