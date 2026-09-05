@@ -46,11 +46,11 @@ jobs:
 
           reconcile = Path('variants/laravel-aiwmweb/tools/reconcile_operation_parity.py')
           text = reconcile.read_text()
-          old = 'aliases = set(ALIASES_BY_DOMAIN.get(str(row.get("domain")), ()))'
-          new = 'aliases = ALIASES_BY_DOMAIN.get(str(row.get("domain")), ())'
-          if old not in text:
-              raise SystemExit('alias determinism anchor missing')
-          reconcile.write_text(text.replace(old, new, 1))
+          old_func = '''def target_aliases(domain: str, row: dict) -> set[str]:\n    values: set[str] = set()\n    hay = " ".join([\n        str(row.get("service") or ""),\n        str(row.get("background_job") or ""),\n        str(row.get("route_screen") or ""),\n        str(row.get("visible_control") or ""),\n        Path(str(row.get("current_source") or "")).stem,\n    ])\n    for key, aliases in ALIASES.get(domain, {}).items():\n        if key.lower() in hay.lower():\n            values.update(aliases)\n    return values\n'''
+          new_func = '''def target_aliases(domain: str, row: dict) -> tuple[str, ...]:\n    values: list[str] = []\n    seen: set[str] = set()\n    hay = " ".join([\n        str(row.get("service") or ""),\n        str(row.get("background_job") or ""),\n        str(row.get("route_screen") or ""),\n        str(row.get("visible_control") or ""),\n        Path(str(row.get("current_source") or "")).stem,\n    ])\n    for key, aliases in ALIASES.get(domain, {}).items():\n        if key.lower() in hay.lower():\n            for alias in aliases:\n                if alias not in seen:\n                    seen.add(alias)\n                    values.append(alias)\n    return tuple(values)\n'''
+          if old_func not in text:
+              raise SystemExit('target_aliases determinism anchor missing')
+          reconcile.write_text(text.replace(old_func, new_func, 1))
 
           evidence = Path('variants/laravel-aiwmweb/docs/evidence/AIMW-AI-4C84DDBEEB-job-failure-gate.md')
           evidence_text = evidence.read_text()
