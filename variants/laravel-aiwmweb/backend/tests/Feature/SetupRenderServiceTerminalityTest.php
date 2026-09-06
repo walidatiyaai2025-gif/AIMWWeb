@@ -20,7 +20,7 @@ class SetupRenderServiceTerminalityTest extends TestCase
 
         $this->assertNotNull($operation);
         $this->assertSame('service', $operation['kind']);
-        $this->assertSame('content', $operation['domain']);
+        $this->assertSame('backend', $operation['domain']);
         $this->assertSame('service:DatabaseSetupService', $operation['route_screen']);
         $this->assertSame('RenderPage', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Services/DatabaseSetupService.cs', $operation['current_source']);
