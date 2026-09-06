@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Services\DatabaseSetupPageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Route as RoutingRoute;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class SetupRenderServiceTerminalityTest extends TestCase
@@ -20,10 +22,16 @@ class SetupRenderServiceTerminalityTest extends TestCase
 
         $this->assertNotNull($operation);
         $this->assertSame('service', $operation['kind']);
-        $this->assertSame('backend', $operation['domain']);
+        $this->assertSame('content', $operation['domain']);
         $this->assertSame('service:DatabaseSetupService', $operation['route_screen']);
         $this->assertSame('RenderPage', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Services/DatabaseSetupService.cs', $operation['current_source']);
+
+        $evidencePath = base_path('../docs/closure-evidence/setup-render-service-terminality.json');
+        $this->assertFileExists($evidencePath);
+        $evidence = json_decode(file_get_contents($evidencePath), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame($operation['domain'], $evidence['canonical_operation']['domain']);
+        $this->assertSame($operation['kind'], $evidence['canonical_operation']['kind']);
 
         $servicePath = base_path('app/Services/DatabaseSetupPageService.php');
         $this->assertFileExists($servicePath);
@@ -80,8 +88,16 @@ class SetupRenderServiceTerminalityTest extends TestCase
             ->assertOk()
             ->assertDontSee($foreignTenant);
 
+        $registeredUris = collect(Route::getRoutes()->getRoutes())
+            ->map(static fn (RoutingRoute $route): string => $route->uri())
+            ->all();
+
+        $this->assertNotContains('tenants/{tenant}/setup', $registeredUris);
+
         $this->get('/tenants/'.$foreignTenant.'/setup')
-            ->assertNotFound();
+            ->assertRedirect()
+            ->assertDontSee('Database setup required')
+            ->assertDontSee($foreignTenant);
     }
 
     public function test_setup_get_is_composed_through_the_page_service_and_completed_installations_still_redirect(): void
