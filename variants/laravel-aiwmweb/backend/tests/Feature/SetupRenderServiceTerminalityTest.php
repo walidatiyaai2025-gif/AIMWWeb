@@ -72,6 +72,18 @@ class SetupRenderServiceTerminalityTest extends TestCase
         $this->assertStringNotContainsString('db-render-secret-never-show', $html);
     }
 
+    public function test_pre_auth_setup_renderer_has_no_foreign_tenant_addressable_surface(): void
+    {
+        $foreignTenant = 'foreign-tenant';
+
+        $this->get('/setup?tenant='.$foreignTenant)
+            ->assertOk()
+            ->assertDontSee($foreignTenant);
+
+        $this->get('/tenants/'.$foreignTenant.'/setup')
+            ->assertNotFound();
+    }
+
     public function test_setup_get_is_composed_through_the_page_service_and_completed_installations_still_redirect(): void
     {
         $this->get('/setup')
