@@ -1,0 +1,73 @@
+name: Laravel AIWMWeb Slot 0108 Diagnose V3
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0108-diagnose-v3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Print exact SQLite failure summary
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan migrate:fresh --force >/tmp/migrate.log 2>&1
+          php artisan test --compact >/tmp/tests.log 2>&1
+          status=$?
+          echo "SLOT0108_TEST_EXIT=$status"
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/tests.log').read_text(errors='replace')
+          lines=text.splitlines()
+          interesting=[]
+          for i,line in enumerate(lines):
+              low=line.lower()
+              if ('failed' in low or 'failure' in low or '⨯' in line or 'tests\\feature' in low or 'tests\\unit' in low):
+                  chunk='\n'.join(lines[max(0,i-2):min(len(lines),i+9)])
+                  if chunk not in interesting:
+                      interesting.append(chunk)
+          print('SLOT0108_FAILURE_SUMMARY_BEGIN')
+          if interesting:
+              print('\n\n---\n\n'.join(interesting)[-60000:])
+          else:
+              print('\n'.join(lines[-350:]))
+          print('SLOT0108_FAILURE_SUMMARY_END')
+          PY
+          exit 0
+      - name: Self-remove helper
+        if: always()
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-slot0108-diagnose-v3.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(ci): remove slot 0108 diagnostic v3 helper'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery
