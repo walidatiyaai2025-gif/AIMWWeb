@@ -24,6 +24,13 @@ class SetupRenderServiceTerminalityTest extends TestCase
         $this->assertSame('service:DatabaseSetupService', $operation['route_screen']);
         $this->assertSame('RenderPage', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Services/DatabaseSetupService.cs', $operation['current_source']);
+
+        $servicePath = base_path('app/Services/DatabaseSetupPageService.php');
+        $this->assertFileExists($servicePath);
+        $serviceSource = file_get_contents($servicePath);
+        $this->assertIsString($serviceSource);
+        $this->assertStringContainsString('AIMW-CONT-43AF0076B5', $serviceSource);
+        $this->assertStringContainsString('DatabaseSetupService.RenderPage', $serviceSource);
     }
 
     public function test_page_service_renders_authoritative_setup_state_and_real_submit_contract(): void
