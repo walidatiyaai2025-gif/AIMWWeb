@@ -18,7 +18,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -68,6 +68,20 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
+
+      - name: Materialize generated reconciliation artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(laravel): reconcile tenant-neutral access-denied route"
+            git push origin "HEAD:${GITHUB_HEAD_REF}"
+          fi
 
       - name: Verify committed reconciliation artifacts
         shell: bash
