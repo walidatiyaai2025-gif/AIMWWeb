@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Services\DatabaseSetupPageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Route as RoutingRoute;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class SetupRenderServiceTerminalityTest extends TestCase
@@ -24,6 +26,19 @@ class SetupRenderServiceTerminalityTest extends TestCase
         $this->assertSame('service:DatabaseSetupService', $operation['route_screen']);
         $this->assertSame('RenderPage', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Services/DatabaseSetupService.cs', $operation['current_source']);
+
+        $evidencePath = base_path('../docs/closure-evidence/setup-render-service-terminality.json');
+        $this->assertFileExists($evidencePath);
+        $evidence = json_decode(file_get_contents($evidencePath), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame($operation['domain'], $evidence['canonical_operation']['domain']);
+        $this->assertSame($operation['kind'], $evidence['canonical_operation']['kind']);
+
+        $servicePath = base_path('app/Services/DatabaseSetupPageService.php');
+        $this->assertFileExists($servicePath);
+        $serviceSource = file_get_contents($servicePath);
+        $this->assertIsString($serviceSource);
+        $this->assertStringContainsString('AIMW-CONT-43AF0076B5', $serviceSource);
+        $this->assertStringContainsString('DatabaseSetupService.RenderPage', $serviceSource);
     }
 
     public function test_page_service_renders_authoritative_setup_state_and_real_submit_contract(): void
@@ -63,6 +78,26 @@ class SetupRenderServiceTerminalityTest extends TestCase
         $this->assertStringNotContainsString('<script>alert("owned")</script>', $html);
         $this->assertStringContainsString('&lt;script&gt;alert(&quot;owned&quot;)&lt;/script&gt;', $html);
         $this->assertStringNotContainsString('db-render-secret-never-show', $html);
+    }
+
+    public function test_pre_auth_setup_renderer_has_no_foreign_tenant_addressable_surface(): void
+    {
+        $foreignTenant = 'foreign-tenant';
+
+        $this->get('/setup?tenant='.$foreignTenant)
+            ->assertOk()
+            ->assertDontSee($foreignTenant);
+
+        $registeredUris = collect(Route::getRoutes()->getRoutes())
+            ->map(static fn (RoutingRoute $route): string => $route->uri())
+            ->all();
+
+        $this->assertNotContains('tenants/{tenant}/setup', $registeredUris);
+
+        $this->get('/tenants/'.$foreignTenant.'/setup')
+            ->assertRedirect()
+            ->assertDontSee('Database setup required')
+            ->assertDontSee($foreignTenant);
     }
 
     public function test_setup_get_is_composed_through_the_page_service_and_completed_installations_still_redirect(): void
