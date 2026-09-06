@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 482,
-    "pending": 449,
+    "adapted": 483,
+    "pending": 448,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 482,
-    "overall_parity_percent": 51.77
+    "terminal": 483,
+    "overall_parity_percent": 51.88
   },
   "visible_controls": {
     "total": 446,
@@ -42,12 +42,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 62,
-      "pending": 30,
+      "adapted": 63,
+      "pending": 29,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 62,
-      "percent": 67.39
+      "terminal": 63,
+      "percent": 68.48
     },
     "approvals": {
       "total": 25,
@@ -563,21 +563,31 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Jobs/JobFailureGate.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Unit/JobFailureGateTest.php",
+      "evidence": "AIMW-AI-4EE262C228 concrete job failure gate reconciliation recovery@57308368978c1bcb1e2a7083e1ecbf540baadc8d: variants/laravel-aiwmweb/backend/app/Jobs/JobFailureGate.php; token:failure, token:gate, symbol:JobFailureGate, scoped-job:JobFailureGate, tenant:belongstotenant, tenant:tenant_id, tenant:tenantcontext",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (5 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Operation-specific pushed destination, tenancy/authorization where required, and test evidence found.",
+        "source_label": "AIMW-AI-4EE262C228 concrete job failure gate reconciliation recovery",
+        "source_sha": "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/JobFailureGate.php",
+        "score": 15,
+        "signals": [
+          "token:failure",
+          "token:gate",
+          "symbol:JobFailureGate",
+          "scoped-job:JobFailureGate",
+          "tenant:belongstotenant",
+          "tenant:tenant_id",
+          "tenant:tenantcontext"
+        ]
       }
     },
     {
@@ -33843,12 +33853,12 @@
     "background_job": {
       "total": 21,
       "ported": 0,
-      "adapted": 13,
-      "pending": 8,
+      "adapted": 14,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 13,
-      "percent": 61.9
+      "terminal": 14,
+      "percent": 66.67
     },
     "route": {
       "total": 84,
@@ -33890,7 +33900,6 @@
       "AIMW-AI-44DD850CE4",
       "AIMW-AI-49E68B3816",
       "AIMW-AI-4C07560F0B",
-      "AIMW-AI-4EE262C228",
       "AIMW-AI-4F6B6584E4",
       "AIMW-AI-54BB64BB13",
       "AIMW-AI-6701FB22AE",
@@ -34564,6 +34573,18 @@
         "supporting_only": true,
         "operation_ids": [],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-AI-4EE262C228 concrete job failure gate reconciliation recovery",
+        "sha": "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
+        "domains": [
+          "ai"
+        ],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-AI-4EE262C228"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34585,6 +34606,7 @@
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+      "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",

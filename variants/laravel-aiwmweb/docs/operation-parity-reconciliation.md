@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 482 |
-| PENDING | 449 |
+| ADAPTED | 483 |
+| PENDING | 448 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 482 |
-| OVERALL_PARITY_PERCENT | 51.77% |
+| TERMINAL | 483 |
+| OVERALL_PARITY_PERCENT | 51.88% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -29,7 +29,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 62 | 30 | 0 | 0 | 62 | 67.39% |
+| ai | 92 | 0 | 63 | 29 | 0 | 0 | 63 | 68.48% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -53,7 +53,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | Kind | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 28 | 3 | 0 | 0 | 28 | 90.32% |
-| background_job | 21 | 0 | 13 | 8 | 0 | 0 | 13 | 61.90% |
+| background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 43 | 41 | 0 | 0 | 43 | 51.19% |
 | service | 349 | 0 | 324 | 25 | 0 | 0 | 324 | 92.84% |
 | visible_control | 446 | 0 | 74 | 372 | 0 | 0 | 74 | 16.59% |
@@ -74,7 +74,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (30)
+### ai (29)
 
 - `AIMW-AI-2B31C6BDAF`
 - `AIMW-AI-331ED9D5EE`
@@ -83,7 +83,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-AI-44DD850CE4`
 - `AIMW-AI-49E68B3816`
 - `AIMW-AI-4C07560F0B`
-- `AIMW-AI-4EE262C228`
 - `AIMW-AI-4F6B6584E4`
 - `AIMW-AI-54BB64BB13`
 - `AIMW-AI-6701FB22AE`
