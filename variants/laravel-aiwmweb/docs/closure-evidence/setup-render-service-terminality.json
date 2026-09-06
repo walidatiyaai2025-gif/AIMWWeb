@@ -1,21 +1,38 @@
 {
   "schema_version": 1,
-  "authority": "AIMWWeb Issue #257",
+  "task_id": "AIMW-CONT-43AF0076B5",
+  "operation_id": "AIMW-CONT-43AF0076B5",
   "target_variant": "LARAVEL_AIWMWEB",
-  "wave": "setup-render-service-terminality",
-  "base": {
+  "terminal_state": "ADAPTED",
+  "authority": {
+    "issue": 257,
+    "recovery_from_open_ancestor_pr": 294,
+    "recovery_claim_comment_id": 5557672687,
+    "recovery_base_sha": "755a08b9e77c635ef566340aa4ac178584cc45a3",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-CONT-43AF0076B5-reconciliation-recovery"
+  },
+  "wave": "setup-render-service-reconciliation-recovery",
+  "historical_base": {
     "pull_request": 292,
     "branch": "worker/laravel-aiwmweb-setup-mutation-terminality",
     "sha": "967b71f525b4c16e9b5c996d4c586cd1e935cd0a"
   },
   "canonical_operation": {
-    "operation_id": "AIMW-CONT-43AF0076B5",
     "kind": "service",
     "domain": "content",
+    "service": "DatabaseSetupService",
+    "member": "RenderPage",
+    "source": "src/AIWordPressManager.Web/Services/DatabaseSetupService.cs",
     "route_screen": "service:DatabaseSetupService",
     "visible_control": "RenderPage",
-    "current_source": "src/AIWordPressManager.Web/Services/DatabaseSetupService.cs"
+    "mutation": false
   },
+  "service_closure_contract": {
+    "implementation_sha": "b73f6ffb84a3c8e43cccc2dc1b151ce47973e259",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Services/DatabaseSetupPageService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetupRenderServiceTerminalityTest.php"
+  },
+  "decision": "ADAPTED_PREAUTH_SETUP_RENDER_SERVICE",
   "source_semantics": {
     "summary": "Current AIMWWeb DatabaseSetupService.RenderPage owns first-run setup-page composition, setup defaults, error presentation, and the database/administrator setup form.",
     "security_property": "Dynamic error text is HTML encoded before it is emitted into the setup page.",
@@ -33,6 +50,12 @@
     "completion_semantics": "completed installations continue to redirect away from /setup rather than render first-run UI",
     "standalone_rendering": "the rendering service supplies an explicit ViewErrorBag so the page remains valid both through web middleware and when the service contract is exercised directly"
   },
+  "security": {
+    "authorization": "pre-authentication first-run setup boundary; no authenticated tenant resource is selected by RenderPage",
+    "tenant_isolation": "not applicable to page rendering before initial tenant creation; runtime status is read without accepting tenant identifiers from the page model",
+    "secret_handling": "database/provider credentials remain deployment-owned and are never read into the rendered page model",
+    "error_output": "Blade escaped interpolation prevents raw HTML/script injection and controller failures render bounded operator-safe text"
+  },
   "acceptance": {
     "test_file": "backend/tests/Feature/SetupRenderServiceTerminalityTest.php",
     "tests": [
@@ -44,42 +67,42 @@
     "existing_regression_coverage": [
       "SetupMutationTerminalityTest",
       "PlatformSetupReadTerminalityTest"
-    ]
+    ],
+    "provenance": "acceptance pins the canonical operation ID and DatabaseSetupService.RenderPage marker in the production adapter"
   },
-  "implementation_snapshot_sha": "7787b5b6130207019ac81762ddbab601daa4845b",
-  "implementation_snapshot_ci": {
-    "pr_plan_link": {
-      "conclusion": "success",
-      "run_id": 33214334693
-    },
-    "laravel_aiwmweb_cross_domain_security": {
-      "conclusion": "success",
-      "run_id": 33214334744
-    },
-    "laravel_aiwmweb_acceptance": {
-      "conclusion": "success",
-      "run_id": 33214334732,
-      "verified_jobs": [
-        "acceptance-gate",
-        "tenant-core-sqlite",
-        "mysql-production-like",
-        "redis-queue-scheduler",
-        "wordpress-real-rest-e2e",
-        "wordpress-disposable-runtime",
-        "frontend",
-        "frontend-production-build",
-        "runtime-artifacts",
-        "compose-production-runtime"
-      ]
+  "historical_implementation_snapshot": {
+    "sha": "7787b5b6130207019ac81762ddbab601daa4845b",
+    "ci": {
+      "pr_plan_link": {
+        "conclusion": "success",
+        "run_id": 33214334693
+      },
+      "laravel_aiwmweb_cross_domain_security": {
+        "conclusion": "success",
+        "run_id": 33214334744
+      },
+      "laravel_aiwmweb_acceptance": {
+        "conclusion": "success",
+        "run_id": 33214334732
+      }
     }
   },
-  "route_api_denominator_delta": 0,
-  "generated_reconciliation_modified": false,
+  "recovery": {
+    "reason": "PR #294 implementation is already an ancestor of the authoritative composition line, but the operation remained PENDING because its historical evidence predates the focused-service generator contract.",
+    "behavior_change": false,
+    "denominator_change": 0,
+    "generated_reconciliation_required": true
+  },
   "scope": {
     "allowed": "variants/laravel-aiwmweb/**",
+    "reference_source_modified": false,
     "react_modified": false,
     "aspnet_modified": false,
     "parallel_site_details_modified": false
   },
-  "current_pr_ci": "pending-final-evidence-revalidation"
+  "validation": {
+    "focused_test": "php artisan test --filter=SetupRenderServiceTerminalityTest",
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
+  }
 }
