@@ -45,8 +45,8 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         $this->assertContains('identity:no-disclosure', $row['reconciliation']['signals']);
 
         $this->assertCount(931, $payload['operations']);
-        $this->assertSame(480, $payload['totals']['terminal']);
-        $this->assertSame(451, $payload['totals']['pending']);
+        $this->assertSame(481, $payload['totals']['terminal']);
+        $this->assertSame(450, $payload['totals']['pending']);
         $this->assertSame(0, $payload['totals']['blocked']);
         $this->assertSame(
             931,
