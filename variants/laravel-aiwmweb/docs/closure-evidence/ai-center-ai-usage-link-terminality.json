@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-331ED9D5EE",
+  "terminal_state": "ADAPTED",
+  "domain": "ai",
+  "kind": "visible_control",
+  "operation": {
+    "operation_id": "AIMW-AI-331ED9D5EE",
+    "terminal_state": "ADAPTED",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/ai-center",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "source_control": "AI Usage & Cost navigation to /module/ai-usage",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_semantics": {
+    "intent": "Navigate from the authenticated AI Center to the AI Usage & Cost workspace.",
+    "side_effects": "Navigation only; no AI generation, provider call, WordPress call, persistence write, approval mutation, or usage mutation.",
+    "destination": "/module/ai-usage"
+  },
+  "laravel_runtime": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/ai-center-ai-usage-link-control.tsx",
+    "host": "variants/laravel-aiwmweb/backend/resources/js/ai-center-approval-status-control.tsx",
+    "target": "/tenants/{activeTenant}/module/ai-usage",
+    "tenant_derivation": "tenantUrl derives and URL-encodes the target solely from FrontendContext.tenant.slug",
+    "source_permissions": ["tenant.view", "ai.use"],
+    "destination_permission": "ai.viewUsage",
+    "visibility_contract": "the control renders only when tenant.view + ai.use + ai.viewUsage are all present"
+  },
+  "security": {
+    "guest_source_and_destination": "redirect to canonical /login",
+    "missing_source_permission": "403",
+    "missing_destination_permission": "403",
+    "foreign_tenant_source_and_destination": "404",
+    "caller_supplied_target_tenant": false,
+    "resource_id_surface": false,
+    "cross_tenant_destination": false,
+    "fake_success": false,
+    "server_or_wordpress_mutation": false
+  },
+  "acceptance": {
+    "implementation_source_sha": "d717cd74b0475680cafba7cbc08d52ac70bad5cd",
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterAiUsageLinkTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-center-ai-usage-link-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and generator-backed ADAPTED state",
+      "exact production operation marker",
+      "active tenant slug is URL-encoded and no caller tenant target is accepted",
+      "control is hidden unless source and destination permissions are all present",
+      "real AI Center and AI Usage routes are exercised under the authenticated tenant",
+      "guest, permission and foreign-tenant paths fail closed",
+      "navigation leaves AI usage and approval persistence unchanged"
+    ]
+  },
+  "scope": {
+    "claimed_operations": ["AIMW-AI-331ED9D5EE"],
+    "excluded_operations": ["AIMW-AI-82F795EE67", "AIMW-AI-411CFF23F3", "AIMW-AI-991683D92C"],
+    "aspnet_modified": false,
+    "backend_route_modified": false,
+    "fake_success": false,
+    "force_push": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "0913992e07e3bb570a40ea0b6f3f64bdb6651fb3",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-AI-331ED9D5EE-slot0112",
+    "claim_comment": 5559435029
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The real AI Center renders a tenant-derived permission-safe link to the existing guarded AI Usage workspace; focused frontend/backend proof covers tenant isolation, authorization and non-mutation."
+  }
+}
