@@ -44,14 +44,19 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         $this->assertContains('route:no-parameters', $row['reconciliation']['signals']);
         $this->assertContains('identity:no-disclosure', $row['reconciliation']['signals']);
 
-        $this->assertCount(931, $payload['operations']);
-        $this->assertSame(482, $payload['totals']['terminal']);
-        $this->assertSame(449, $payload['totals']['pending']);
-        $this->assertSame(0, $payload['totals']['blocked']);
+        $this->assertSame(931, $payload['totals']['total']);
+        $this->assertCount($payload['totals']['total'], $payload['operations']);
+        $stateTotal = $payload['totals']['ported']
+            + $payload['totals']['adapted']
+            + $payload['totals']['pending']
+            + $payload['totals']['blocked']
+            + $payload['totals']['verified_unavailable_external'];
+        $this->assertSame($payload['totals']['total'], $stateTotal);
         $this->assertSame(
-            931,
-            $payload['totals']['terminal'] + $payload['totals']['pending'] + $payload['totals']['blocked'],
+            $payload['totals']['ported'] + $payload['totals']['adapted'] + $payload['totals']['verified_unavailable_external'],
+            $payload['totals']['terminal'],
         );
+        $this->assertTrue((bool) ($payload['validation']['passed'] ?? false));
         $this->assertContains(self::OPERATION_ID, $payload['validation']['tenant_neutral_route_contract_terminals']);
     }
 

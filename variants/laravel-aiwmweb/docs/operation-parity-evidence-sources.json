@@ -464,6 +464,17 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-AI-4EE262C228 concrete job failure gate reconciliation recovery",
+      "sha": "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
+      "observed_pr_head": "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
+      "domains": [
+        "ai"
+      ],
+      "operation_ids": [
+        "AIMW-AI-4EE262C228"
+      ]
     }
   ],
   "excluded_sources": [],
