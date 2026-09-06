@@ -23,6 +23,7 @@ final class AiCenterApprovalQueueLinkTerminalityTest extends TestCase
     public function test_exact_canonical_row_is_the_adapted_ai_center_approval_queue_navigation(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
+        $manifest = $this->manifest();
 
         $this->assertNotNull($row);
         $this->assertSame('ADAPTED', $row['migration_state']);
@@ -35,7 +36,10 @@ final class AiCenterApprovalQueueLinkTerminalityTest extends TestCase
         $this->assertTrue((bool) $row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
         $this->assertSame('focused_closure_contract', $row['reconciliation']['evidence_mode']);
-        $this->assertSame('5e56f2f0265577db2186290a94bde28ff59dae40', $row['reconciliation']['source_sha']);
+        $this->assertSame(
+            $manifest['focused_closure_evidence_source_sha'],
+            $row['reconciliation']['source_sha'],
+        );
         $this->assertSame(
             'variants/laravel-aiwmweb/docs/closure-evidence/ai-center-approval-queue-link-terminality.json',
             $row['reconciliation']['evidence_path'],
@@ -110,6 +114,17 @@ final class AiCenterApprovalQueueLinkTerminalityTest extends TestCase
     {
         return json_decode(
             (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+    }
+
+    /** @return array<string, mixed> */
+    private function manifest(): array
+    {
+        return json_decode(
+            (string) file_get_contents(base_path('../docs/operation-parity-evidence-sources.json')),
             true,
             512,
             JSON_THROW_ON_ERROR,
