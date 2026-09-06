@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-95AC5F28A7",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "ai",
+    "source": "src/AIWordPressManager.Persistence/Sites/SiteManagementService.cs",
+    "service": "SiteManagementService",
+    "member": "GetDetailsAsync",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_semantics": [
+    "Read one exact site without mutation and return null when it does not exist.",
+    "Project Id, Name, SiteUrl, nullable HomeUrl, nullable WordPressVersion, nullable LanguageCode, ConnectionStatus, nullable LastConnectionTestAtUtc and credential UserName.",
+    "Use an empty UserName when no readable credential username exists and never return the application password."
+  ],
+  "laravel_adaptation": {
+    "route": "GET /api/tenants/{tenant}/sites/{site}",
+    "service": "App\\Sites\\SiteManagementService::getDetails",
+    "tenant_boundary": "The service performs an explicit active-tenant predicate even though the Site model is tenant-owned; foreign IDs fail closed as 404 through the controller.",
+    "authorization": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "field_mapping": {
+      "Id": "id",
+      "Name": "name",
+      "SiteUrl": "site_url with legacy url alias retained",
+      "HomeUrl": "home_url",
+      "WordPressVersion": "wordpress_version",
+      "LanguageCode": "language_code",
+      "ConnectionStatus": "connection_status",
+      "LastConnectionTestAtUtc": "last_connection_test_at_utc from last_verified_at",
+      "UserName": "user_name; empty because the Laravel pairing protocol does not persist a separately readable username"
+    },
+    "redaction": "The response is an explicit projection and excludes tenant_id, encrypted_secret, password and application_password material."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "e16441f8791341783e1363b556b7b9ed32dcfedc",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Sites/SiteManagementService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteManagementGetDetailsParityTest.php"
+  },
+  "acceptance": {
+    "focused_test": "php artisan test --filter=SiteManagementGetDetailsParityTest",
+    "proofs": [
+      "same-tenant canonical field projection including persisted nullable discovery metadata",
+      "read-only behavior",
+      "foreign-tenant and malformed identifiers fail closed",
+      "sites.view permission is required",
+      "secret/password fields are absent"
+    ]
+  },
+  "owner_only_evidence_required": false,
+  "provenance": {
+    "claim_base_sha": "b421d63815f399b4ce5fed69afed2b99b92a8197",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-AI-95AC5F28A7-slot0115",
+    "claim_comment_id": 5559761565
+  }
+}
