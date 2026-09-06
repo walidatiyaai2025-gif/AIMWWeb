@@ -64,6 +64,21 @@ class PlatformServicesParityClosureTest extends TestCase
                 'evidence:variants/laravel-aiwmweb/docs/closure-evidence/application-data-directory-terminality.json',
             ],
         ],
+        'AIMW-PLAT-3025C8E82B' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetTemporaryDirectory',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/filesystems.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-3025C8E82B',
+                'service:ApplicationPathService',
+                'member:GetTemporaryDirectory',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json',
+            ],
+        ],
         'AIMW-PLAT-15C5517022' => [
             'route_screen' => 'service:ReleaseNotesService',
             'current_source' => 'src/AIWordPressManager.Web/Services/ReleaseNotesService.cs',
