@@ -8,28 +8,28 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 483 |
-| PENDING | 448 |
+| ADAPTED | 484 |
+| PENDING | 447 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 483 |
-| OVERALL_PARITY_PERCENT | 51.88% |
+| TERMINAL | 484 |
+| OVERALL_PARITY_PERCENT | 51.99% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **74**
-- Pending: **372**
+- Terminal: **75**
+- Pending: **371**
 - Blocked: **0**
-- Parity: **16.59%**
+- Parity: **16.82%**
 
 ## By domain
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 63 | 29 | 0 | 0 | 63 | 68.48% |
+| ai | 92 | 0 | 64 | 28 | 0 | 0 | 64 | 69.57% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 43 | 41 | 0 | 0 | 43 | 51.19% |
 | service | 349 | 0 | 324 | 25 | 0 | 0 | 324 | 92.84% |
-| visible_control | 446 | 0 | 74 | 372 | 0 | 0 | 74 | 16.59% |
+| visible_control | 446 | 0 | 75 | 371 | 0 | 0 | 75 | 16.82% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **37**
-- Focused visible-control contracts: **74**
+- Focused visible-control contracts: **75**
 - Focused service contracts: **7**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
@@ -74,7 +74,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (29)
+### ai (28)
 
 - `AIMW-AI-2B31C6BDAF`
 - `AIMW-AI-331ED9D5EE`
@@ -87,7 +87,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-AI-54BB64BB13`
 - `AIMW-AI-6701FB22AE`
 - `AIMW-AI-746EDAE589`
-- `AIMW-AI-8205320842`
 - `AIMW-AI-8EE4F9F6FC`
 - `AIMW-AI-93EBFDE5A1`
 - `AIMW-AI-953A6C0D98`
