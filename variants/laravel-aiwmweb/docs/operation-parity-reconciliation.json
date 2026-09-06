@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 487,
-    "pending": 444,
+    "adapted": 488,
+    "pending": 443,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 487,
-    "overall_parity_percent": 52.31
+    "terminal": 488,
+    "overall_parity_percent": 52.42
   },
   "visible_controls": {
     "total": 446,
@@ -42,12 +42,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 66,
-      "pending": 26,
+      "adapted": 67,
+      "pending": 25,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 66,
-      "percent": 71.74
+      "terminal": 67,
+      "percent": 72.83
     },
     "approvals": {
       "total": 25,
@@ -926,21 +926,31 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Sites/SiteManagementService.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteManagementGetDetailsParityTest.php",
+      "evidence": "Focused service closure@e16441f8791341783e1363b556b7b9ed32dcfedc: variants/laravel-aiwmweb/backend/app/Sites/SiteManagementService.php; operation:AIMW-AI-95AC5F28A7; test:variants/laravel-aiwmweb/backend/tests/Feature/SiteManagementGetDetailsParityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-management-get-details-service-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-AI-95AC5F28A7",
+        "source_sha": "e16441f8791341783e1363b556b7b9ed32dcfedc",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Sites/SiteManagementService.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-management-get-details-service-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-95AC5F28A7",
+          "service:SiteManagementService",
+          "member:GetDetailsAsync",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteManagementGetDetailsParityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-management-get-details-service-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -33909,12 +33919,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 324,
-      "pending": 25,
+      "adapted": 325,
+      "pending": 24,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 324,
-      "percent": 92.84
+      "terminal": 325,
+      "percent": 93.12
     },
     "visible_control": {
       "total": 446,
@@ -33941,7 +33951,6 @@
       "AIMW-AI-8EE4F9F6FC",
       "AIMW-AI-93EBFDE5A1",
       "AIMW-AI-953A6C0D98",
-      "AIMW-AI-95AC5F28A7",
       "AIMW-AI-98F705F888",
       "AIMW-AI-9E73ABE9CE",
       "AIMW-AI-A746A1C3EB",
@@ -34801,8 +34810,9 @@
       "AIMW-CONT-43AF0076B5",
       "AIMW-AI-0F3763FDB4",
       "AIMW-AI-34EC6312B9",
+      "AIMW-AI-95AC5F28A7",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 7
+    "focused_service_contract_count": 8
   }
 }
