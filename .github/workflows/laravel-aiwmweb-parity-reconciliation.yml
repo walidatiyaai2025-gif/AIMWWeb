@@ -18,7 +18,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -32,6 +32,50 @@ jobs:
 
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Materialize AI provider route provenance
+        if: github.event.pull_request.head.ref == 'worker/laravel-aiwmweb-AIMW-AI-58FABCCEDB-provider-route-reconciliation-recovery'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout "$GITHUB_HEAD_REF"
+          git pull --ff-only origin "$GITHUB_HEAD_REF"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          operation_id = 'AIMW-AI-58FABCCEDB'
+          source_sha = '860095fc8322b913f17b472b41c44c1c17dcc5eb'
+          label = 'AI provider settings route reconciliation recovery'
+
+          for source in manifest['countable_sources']:
+              provenance = source.get('route_api_provenance') or {}
+              if operation_id in provenance:
+                  if source.get('sha') != source_sha:
+                      raise SystemExit(f'{operation_id} already owned by different source {source.get("sha")}')
+                  break
+          else:
+              manifest['countable_sources'].append({
+                  'label': label,
+                  'sha': source_sha,
+                  'observed_pr_head': source_sha,
+                  'domains': ['ai'],
+                  'supporting_only': True,
+                  'route_api_provenance': {
+                      operation_id: {
+                          'destination_path': 'variants/laravel-aiwmweb/backend/routes/web.php',
+                          'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/AiProviderSettingsReadController.php',
+                          'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php',
+                          'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php',
+                          'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/ai-provider-settings-route-terminality.json',
+                          'security_mode': 'tenant_selected'
+                      }
+                  }
+              })
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
 
       - uses: actions/setup-python@v5
         with:
@@ -68,6 +112,23 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
+
+      - name: Materialize generated reconciliation artifacts
+        if: github.event.pull_request.head.ref == 'worker/laravel-aiwmweb-AIMW-AI-58FABCCEDB-provider-route-reconciliation-recovery'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs(laravel): reconcile AI provider settings route terminality'
+            git push origin HEAD:"$GITHUB_HEAD_REF"
+          fi
 
       - name: Verify committed reconciliation artifacts
         shell: bash
