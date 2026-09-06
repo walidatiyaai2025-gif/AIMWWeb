@@ -6,6 +6,14 @@ use App\Models\Suggestion;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
+/**
+ * Canonical parity operations converging on this concrete Laravel gate:
+ * - AIMW-AI-4C84DDBEEB — IJobFailureGate.CanStartAsync
+ * - AIMW-AI-4EE262C228 — Persistence.Jobs.JobFailureGate.CanStartAsync
+ *
+ * The interface and concrete source operation intentionally share one runtime
+ * adapter; this marker adds provenance only and does not change gate behavior.
+ */
 final class JobFailureGate
 {
     public function canStart(int $siteId, string $jobType, ?CarbonImmutable $now = null): JobGateDecision

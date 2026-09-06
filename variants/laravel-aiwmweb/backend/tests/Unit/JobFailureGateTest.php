@@ -8,13 +8,24 @@ use Tests\TestCase;
 
 final class JobFailureGateTest extends TestCase
 {
-    // Canonical parity operation: AIMW-AI-4C84DDBEEB
+    // Canonical parity operations: AIMW-AI-4C84DDBEEB, AIMW-AI-4EE262C228.
     private array $settings = [
         'pause_after_failures' => true,
         'consecutive_failures_before_pause' => 3,
         'failure_pause_minutes' => 15,
         'auto_resume_after_pause' => true,
     ];
+
+    public function test_concrete_persistence_gate_provenance_is_pinned_to_the_tenant_scoped_adapter(): void
+    {
+        $source = file_get_contents(base_path('app/Jobs/JobFailureGate.php'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('AIMW-AI-4EE262C228', $source);
+        $this->assertStringContainsString('Persistence.Jobs.JobFailureGate.CanStartAsync', $source);
+        $this->assertStringContainsString('Suggestion::query()', $source);
+        $this->assertStringContainsString("->where('site_id', \$siteId)", $source);
+    }
 
     public function test_allows_when_pause_feature_is_disabled(): void
     {
