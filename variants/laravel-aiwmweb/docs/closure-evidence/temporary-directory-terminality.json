@@ -3,6 +3,7 @@
   "task_id": "AIMW-PLAT-3025C8E82B",
   "operation_id": "AIMW-PLAT-3025C8E82B",
   "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
   "authority": {
     "issue": 257,
     "original_claim_base_sha": "e1895f4c4a19c530b15da717a0f5c6fe4647691f",
@@ -16,7 +17,11 @@
     "superseded_worker_branches": [
       "worker/laravel-AIMW-PLAT-3025C8E82B-temporary-directory",
       "worker/laravel-AIMW-PLAT-3025C8E82B-temporary-directory-v2"
-    ]
+    ],
+    "merged_pr": 408,
+    "merge_commit_sha": "015a135fd8a58a3e1c0eb067700111ae3a3aad52",
+    "reconciliation_recovery_base_sha": "792d1a5484f8b5ab09d58c1c1c5560a3cbc49fde",
+    "reconciliation_recovery_comment_id": 5555888584
   },
   "canonical_operation": {
     "kind": "service",
@@ -25,16 +30,21 @@
     "member": "GetTemporaryDirectory",
     "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs",
     "mutation": false,
-    "tenant_owned": false,
-    "terminal_state": "ADAPTED"
+    "tenant_owned": false
+  },
+  "service_closure_contract": {
+    "implementation_sha": "1336a8827db8adee30817b2e805f61d9ba4b0357",
+    "destination_path": "variants/laravel-aiwmweb/backend/config/filesystems.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php"
   },
   "decision": "ADAPTED_NATIVE_FRAMEWORK",
-  "rationale": "The desktop service exposes and ensures a stable application-owned Temp sibling beneath its application storage root. Laravel already provides the same path ownership primitive through storage_path(), so the native adaptation is storage_path('app/temp') plus the framework File directory lifecycle. A duplicate desktop-style ApplicationPathService or a competing filesystem-disk configuration would add dead abstraction; the canonical base already contains the separately closed screenshots disk without changing this temporary-path contract.",
+  "rationale": "The desktop service exposes and ensures a stable application-owned Temp sibling beneath its application storage root. Laravel already provides the same path ownership primitive through storage_path(), so the native adaptation remains storage_path('app/temp') plus the framework File directory lifecycle. The reconciliation recovery adds only an exact operation/service/member marker to an existing production filesystem configuration comment so the strict focused-service generator can bind pushed production provenance without introducing a duplicate ApplicationPathService, a competing filesystem disk, or any runtime behavior change.",
   "destination": {
     "runtime_contract": "storage_path('app/temp') + File::ensureDirectoryExists",
     "framework": "Illuminate\\Support\\Facades\\File",
+    "production_provenance": "variants/laravel-aiwmweb/backend/config/filesystems.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php",
-    "production_file_delta_required": false
+    "production_runtime_delta_required": false
   },
   "runtime_behavior": {
     "root": "storage/app/temp",
@@ -59,39 +69,26 @@
     "the path is application-owned rather than tenant-, user-, request-, or OS-temp-selected",
     "the temporary root is not exposed by Laravel's public storage link",
     "runtime can ensure the directory and create, read, locate, and remove a deterministic probe",
-    "full SQLite and MySQL suites, Redis runtime, WordPress runtimes, frontend builds, cross-domain security, and production Compose runtime smoke passed on the implementation head"
+    "strict focused-service evidence binds the exact pushed production marker and focused test",
+    "canonical generator, exact-head acceptance, security, closure audit, and convergence remain required before integration"
   ],
   "scope_exclusions": [
-    "AIMW-PLAT-A2624EDC66 / GetApplicationDataDirectory / #402",
+    "AIMW-PLAT-A2624EDC66 / GetApplicationDataDirectory / merged #402 and reconciled #421",
     "AIMW-PLAT-F6C1A04662 / GetDatabasePath / merged #404",
-    "AIMW-OPER-55C6982761 / GetLogsDirectory / #399",
+    "AIMW-OPER-55C6982761 / GetLogsDirectory / merged #399",
     "AIMW-PLAT-83994BBD03 / GetScreenshotsDirectory / merged #405",
     "GetBackupsDirectory",
     "GetExportsDirectory",
-    "config/filesystems.php",
-    "generated operation parity reconciliation artifacts"
+    "all unrelated generated operation classifications"
   ],
   "validation": {
-    "state": "ADAPTED",
-    "implementation_head": "0b79718b01f3bda02f9143f7c5e77b10a74f4380",
     "exact_head_ci_required": true,
-    "ci_runs": {
-      "pr_plan_link": {
-        "id": 33386000347,
-        "run_number": 1404,
-        "conclusion": "success"
-      },
-      "cross_domain_security": {
-        "id": 33386000363,
-        "run_number": 624,
-        "conclusion": "success"
-      },
-      "laravel_acceptance": {
-        "id": 33386000335,
-        "run_number": 693,
-        "conclusion": "success"
-      }
-    },
-    "final_evidence_head_ci_required": true
+    "generator_backed_reconciliation_required": true,
+    "historical_implementation_head": "0b79718b01f3bda02f9143f7c5e77b10a74f4380",
+    "historical_ci_runs": {
+      "pr_plan_link": 33386000347,
+      "cross_domain_security": 33386000363,
+      "laravel_acceptance": 33386000335
+    }
   }
 }
