@@ -1,0 +1,88 @@
+name: Laravel AIWMWeb Slot 0108 Diagnose
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0108-diagnose.yml'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Install and prepare SQLite test runtime
+        run: |
+          set -euo pipefail
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate:fresh --force
+      - name: Capture deterministic full-suite failure summary
+        id: tests
+        shell: bash
+        run: |
+          set +e
+          php artisan test --compact > /tmp/slot0108-tests.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/slot0108-tests.log').read_text(errors='replace')
+          lines = text.splitlines()
+          interesting = []
+          for i, line in enumerate(lines):
+              low = line.lower()
+              if ('failed' in low or 'failure' in low or '⨯' in line or 'expected' in low or 'assert' in low) and line.strip():
+                  start = max(0, i - 2)
+                  end = min(len(lines), i + 5)
+                  chunk = '\n'.join(lines[start:end])
+                  if chunk not in interesting:
+                      interesting.append(chunk)
+          summary = '\n\n---\n\n'.join(interesting)
+          if not summary:
+              summary = '\n'.join(lines[-250:])
+          Path('/tmp/slot0108-summary.txt').write_text(summary[-50000:], encoding='utf-8')
+          PY
+          exit 0
+      - name: Comment diagnostic summary on PR 429
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          {
+            echo '### Slot 0108 deterministic PHP diagnostic'
+            echo
+            echo "Exit status: ${{ steps.tests.outputs.status }}"
+            echo
+            echo '```text'
+            cat /tmp/slot0108-summary.txt
+            echo '```'
+          } > /tmp/comment.md
+          gh api "repos/${GITHUB_REPOSITORY}/issues/429/comments" --input /tmp/comment.md
+      - name: Self-remove diagnostic workflow
+        if: always()
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-slot0108-diagnose.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(ci): remove slot 0108 diagnostic helper'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery
