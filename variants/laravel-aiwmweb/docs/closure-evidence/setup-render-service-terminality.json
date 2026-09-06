@@ -95,6 +95,17 @@
     "denominator_change": 0,
     "generated_reconciliation_required": true
   },
+  "generator_snapshot": {
+    "source_run_id": 34018755764,
+    "artifact_id": 9984771412,
+    "artifact_sha256": "312ce8e0f34a6b81861700a36c6278dccc09f6a35d4e9f37dc9064fecd1ec023",
+    "generated_commit": "3d477b5cbbf430066704191954643c72afb1d9a3",
+    "total": 931,
+    "terminal": 482,
+    "pending": 449,
+    "blocked": 0,
+    "overall_parity_percent": 51.77
+  },
   "scope": {
     "allowed": "variants/laravel-aiwmweb/**",
     "reference_source_modified": false,
