@@ -20,7 +20,7 @@ class TemporaryDirectoryTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('platform', $operation['domain']);
         $this->assertSame('service', $operation['kind']);
         $this->assertSame('service:ApplicationPathService', $operation['route_screen']);
@@ -31,6 +31,11 @@ class TemporaryDirectoryTerminalityTest extends TestCase
         );
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertFalse((bool) $operation['tenant_owned']);
+        $this->assertSame('focused_service_contract', $operation['reconciliation']['evidence_mode']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json',
+            $operation['reconciliation']['evidence_path'],
+        );
     }
 
     public function test_native_temporary_root_is_stable_application_owned_storage(): void
