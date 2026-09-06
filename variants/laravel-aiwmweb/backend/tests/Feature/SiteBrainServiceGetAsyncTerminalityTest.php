@@ -156,7 +156,15 @@ final class SiteBrainServiceGetAsyncTerminalityTest extends TestCase
             $actor->id,
         );
 
-        foreach (['   ', '{malformed-json', '"scalar"'] as $storedValue) {
+        // MySQL enforces the native JSON column before the service can observe corrupt bytes.
+        // Exercise portable non-object values on every engine; SQLite additionally proves the
+        // blank/raw-malformed recovery branches because its JSON column is text-backed.
+        $storedValues = ['"   "', '"scalar"'];
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            array_unshift($storedValues, '   ', '{malformed-json');
+        }
+
+        foreach ($storedValues as $storedValue) {
             DB::table('scoped_settings')
                 ->where('tenant_id', $tenant->id)
                 ->where('scope', 'site')
