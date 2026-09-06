@@ -1,0 +1,89 @@
+name: Laravel AIWMWeb Slot 0108 Diagnose V2
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0108-diagnose-v2.yml'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Run exact SQLite full suite and capture failures
+        id: tests
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan migrate:fresh --force >/tmp/slot0108-migrate.log 2>&1
+          migrate_status=$?
+          php artisan test --compact >/tmp/slot0108-tests.log 2>&1
+          test_status=$?
+          echo "migrate_status=$migrate_status" >> "$GITHUB_OUTPUT"
+          echo "test_status=$test_status" >> "$GITHUB_OUTPUT"
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/slot0108-tests.log').read_text(errors='replace')
+          lines = text.splitlines()
+          chunks=[]
+          needles=('FAILED', 'FAIL ', 'Failed asserting', 'Tests\\Feature', 'Tests\\Unit', '⨯')
+          for i,line in enumerate(lines):
+              if any(n in line for n in needles):
+                  chunk='\n'.join(lines[max(0,i-2):min(len(lines),i+8)])
+                  if chunk not in chunks:
+                      chunks.append(chunk)
+          if not chunks:
+              chunks=['\n'.join(lines[-300:])]
+          Path('/tmp/slot0108-summary.txt').write_text('\n\n---\n\n'.join(chunks)[-60000:], encoding='utf-8')
+          PY
+          exit 0
+      - name: Publish diagnostic summary on PR 429
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo '### Slot 0108 exact SQLite diagnostic v2'
+            echo
+            echo "Migration exit: ${{ steps.tests.outputs.migrate_status }}"
+            echo "Tests exit: ${{ steps.tests.outputs.test_status }}"
+            echo
+            echo '```text'
+            cat /tmp/slot0108-summary.txt
+            echo '```'
+          } >/tmp/comment.md
+          gh api "repos/${GITHUB_REPOSITORY}/issues/429/comments" --input /tmp/comment.md
+      - name: Self-remove helper
+        if: always()
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-slot0108-diagnose-v2.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(ci): remove slot 0108 diagnostic v2 helper'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery
