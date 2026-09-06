@@ -19,7 +19,7 @@
   },
   "canonical_operation": {
     "kind": "service",
-    "domain": "backend",
+    "domain": "content",
     "service": "DatabaseSetupService",
     "member": "RenderPage",
     "source": "src/AIWordPressManager.Web/Services/DatabaseSetupService.cs",
@@ -52,7 +52,7 @@
   },
   "security": {
     "authorization": "pre-authentication first-run setup boundary; no authenticated tenant resource is selected by RenderPage",
-    "tenant_isolation": "foreign tenant identifiers are not accepted as a setup-page selector or reflected into rendered output; a tenant-addressable /tenants/{foreign}/setup surface fails closed with 404",
+    "tenant_isolation": "foreign tenant identifiers are not accepted as a setup-page selector or reflected into rendered output; no tenant-addressable /tenants/{tenant}/setup route is registered, and unmatched tenant-style requests never render the setup page",
     "secret_handling": "database/provider credentials remain deployment-owned and are never read into the rendered page model",
     "error_output": "Blade escaped interpolation prevents raw HTML/script injection and controller failures render bounded operator-safe text"
   },
@@ -69,8 +69,8 @@
       "SetupMutationTerminalityTest",
       "PlatformSetupReadTerminalityTest"
     ],
-    "provenance": "acceptance pins the canonical operation ID and DatabaseSetupService.RenderPage marker in the production adapter",
-    "tenant_isolation": "focused acceptance proves a foreign tenant token cannot select or appear in the pre-auth setup renderer and that a tenant-addressable setup path is not found"
+    "provenance": "acceptance pins the canonical operation ID and DatabaseSetupService.RenderPage marker in the production adapter and asserts that focused evidence matches the canonical content/service classification",
+    "tenant_isolation": "focused acceptance proves a foreign tenant token cannot select or appear in the pre-auth setup renderer and that no tenant-addressable setup route is registered"
   },
   "historical_implementation_snapshot": {
     "sha": "7787b5b6130207019ac81762ddbab601daa4845b",
