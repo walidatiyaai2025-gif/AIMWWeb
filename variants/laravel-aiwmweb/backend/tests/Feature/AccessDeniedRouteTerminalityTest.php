@@ -14,10 +14,12 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_canonical_reconciliation_row_is_the_pending_access_denied_route(): void
+    private const OPERATION_ID = 'AIMW-CONT-8EE96B77A8';
+
+    public function test_canonical_reconciliation_row_is_generator_backed_tenant_neutral_terminal(): void
     {
         $payload = $this->reconciliation();
-        $row = collect($payload['operations'])->firstWhere('operation_id', 'AIMW-CONT-8EE96B77A8');
+        $row = collect($payload['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
         $this->assertSame('route', $row['kind']);
@@ -28,14 +30,29 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         $this->assertFalse($row['mutation']);
         $this->assertTrue($row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
+        $this->assertSame('explicit_route_contract', $row['reconciliation']['evidence_mode']);
+        $this->assertSame('tenant_neutral', $row['reconciliation']['security_mode']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/access-denied-route-terminality.json',
+            $row['reconciliation']['evidence_path'],
+        );
+        $this->assertContains('source:AllowAnonymous', $row['reconciliation']['signals']);
+        $this->assertContains('middleware:web-only', $row['reconciliation']['signals']);
+        $this->assertContains('tenant:neutral', $row['reconciliation']['signals']);
+        $this->assertContains('route:no-parameters', $row['reconciliation']['signals']);
+        $this->assertContains('identity:no-disclosure', $row['reconciliation']['signals']);
 
         $this->assertCount(931, $payload['operations']);
+        $this->assertSame(480, $payload['totals']['terminal']);
+        $this->assertSame(451, $payload['totals']['pending']);
+        $this->assertSame(0, $payload['totals']['blocked']);
         $this->assertSame(
             931,
             $payload['totals']['terminal'] + $payload['totals']['pending'] + $payload['totals']['blocked'],
         );
+        $this->assertContains(self::OPERATION_ID, $payload['validation']['tenant_neutral_route_contract_terminals']);
     }
 
     public function test_route_is_explicit_anonymous_and_not_a_tenant_spa_catch_all(): void
@@ -53,6 +70,11 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
 
     public function test_anonymous_user_receives_the_real_source_equivalent_denial_page(): void
     {
+        $source = file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AccessDeniedPage.razor'));
+
+        $this->assertStringContainsString('@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]', $source);
+        $this->assertStringContainsString('@page "/access-denied"', $source);
+
         $this->get('/access-denied')
             ->assertOk()
             ->assertSee('<title>Access denied</title>', false)
