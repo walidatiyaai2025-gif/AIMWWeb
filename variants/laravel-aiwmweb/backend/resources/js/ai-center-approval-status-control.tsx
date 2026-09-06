@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AiCenterAiUsageLinkControl } from './ai-center-ai-usage-link-control';
 import { AiCenterApprovalQueueLink } from './ai-center-approval-queue-link';
 import { apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
@@ -115,5 +116,5 @@ export function AiCenterApprovalStatusControl({ context }: { context: FrontendCo
         </section>
     ) : null;
 
-    return <><AiCenterApprovalQueueLink context={context} />{sessionControls}{approvalControls}</>;
+    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{approvalControls}</>;
 }
