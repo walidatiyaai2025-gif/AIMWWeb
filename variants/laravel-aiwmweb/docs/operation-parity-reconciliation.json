@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 480,
-    "pending": 451,
+    "adapted": 481,
+    "pending": 450,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 480,
-    "overall_parity_percent": 51.56
+    "terminal": 481,
+    "overall_parity_percent": 51.66
   },
   "visible_controls": {
     "total": 446,
@@ -42,12 +42,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 61,
-      "pending": 31,
+      "adapted": 62,
+      "pending": 30,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 61,
-      "percent": 66.3
+      "terminal": 62,
+      "percent": 67.39
     },
     "approvals": {
       "total": 25,
@@ -2022,21 +2022,34 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+      "evidence": "AI provider settings route reconciliation recovery@860095fc8322b913f17b472b41c44c1c17dcc5eb: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-AI-58FABCCEDB; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AiProviderSettingsReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/ai-provider-settings-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AI provider settings route reconciliation recovery",
+        "source_sha": "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiProviderSettingsReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-provider-settings-route-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-58FABCCEDB",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -33830,12 +33843,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 42,
-      "pending": 42,
+      "adapted": 43,
+      "pending": 41,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 42,
-      "percent": 50.0
+      "terminal": 43,
+      "percent": 51.19
     },
     "service": {
       "total": 349,
@@ -33870,7 +33883,6 @@
       "AIMW-AI-4EE262C228",
       "AIMW-AI-4F6B6584E4",
       "AIMW-AI-54BB64BB13",
-      "AIMW-AI-58FABCCEDB",
       "AIMW-AI-6701FB22AE",
       "AIMW-AI-746EDAE589",
       "AIMW-AI-8205320842",
@@ -34533,6 +34545,16 @@
         "supporting_only": true,
         "operation_ids": [],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AI provider settings route reconciliation recovery",
+        "sha": "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+        "domains": [
+          "ai"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34554,6 +34576,7 @@
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
+      "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
@@ -34613,6 +34636,7 @@
     "tenant_neutral_route_contract_count": 1,
     "tenant_neutral_route_source_sha": "a068073c908dd7e7116778e4dc947e3ce1f3d046",
     "explicit_route_api_contract_terminals": [
+      "AIMW-AI-58FABCCEDB",
       "AIMW-AI-82F795EE67",
       "AIMW-AI-C37F405767",
       "AIMW-COMM-A16719E105",
@@ -34624,7 +34648,7 @@
       "AIMW-PLAT-FAC7505B26",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 10,
+    "explicit_route_api_contract_count": 11,
     "focused_closure_source_sha": "5e56f2f0265577db2186290a94bde28ff59dae40",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",

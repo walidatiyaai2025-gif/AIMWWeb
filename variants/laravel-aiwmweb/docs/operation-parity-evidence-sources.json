@@ -445,6 +445,25 @@
           "security_mode": "tenant_neutral"
         }
       }
+    },
+    {
+      "label": "AI provider settings route reconciliation recovery",
+      "sha": "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+      "observed_pr_head": "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+      "domains": [
+        "ai"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-AI-58FABCCEDB": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiProviderSettingsReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-provider-settings-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
