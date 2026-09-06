@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 481,
-    "pending": 450,
+    "adapted": 482,
+    "pending": 449,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 481,
-    "overall_parity_percent": 51.66
+    "terminal": 482,
+    "overall_parity_percent": 51.77
   },
   "visible_controls": {
     "total": 446,
@@ -102,12 +102,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 24,
-      "pending": 140,
+      "adapted": 25,
+      "pending": 139,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 24,
-      "percent": 14.63
+      "terminal": 25,
+      "percent": 15.24
     },
     "email": {
       "total": 82,
@@ -19266,21 +19266,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Services/DatabaseSetupPageService.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetupRenderServiceTerminalityTest.php",
+      "evidence": "Focused service closure@62e3e367c71e27d6b1d7453dc06f8c93e4ae29d4: variants/laravel-aiwmweb/backend/app/Services/DatabaseSetupPageService.php; operation:AIMW-CONT-43AF0076B5; test:variants/laravel-aiwmweb/backend/tests/Feature/SetupRenderServiceTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/setup-render-service-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-CONT-43AF0076B5",
+        "source_sha": "62e3e367c71e27d6b1d7453dc06f8c93e4ae29d4",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Services/DatabaseSetupPageService.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/setup-render-service-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-43AF0076B5",
+          "service:DatabaseSetupService",
+          "member:RenderPage",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SetupRenderServiceTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/setup-render-service-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -33853,12 +33863,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 323,
-      "pending": 26,
+      "adapted": 324,
+      "pending": 25,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 323,
-      "percent": 92.55
+      "terminal": 324,
+      "percent": 92.84
     },
     "visible_control": {
       "total": 446,
@@ -34077,7 +34087,6 @@
       "AIMW-CONT-40CD7F080F",
       "AIMW-CONT-4147188AB1",
       "AIMW-CONT-4209A8ADF4",
-      "AIMW-CONT-43AF0076B5",
       "AIMW-CONT-44A3B8E551",
       "AIMW-CONT-455F01DAC7",
       "AIMW-CONT-47007EE040",
@@ -34731,10 +34740,11 @@
       "AIMW-PLAT-A2624EDC66",
       "AIMW-PLAT-15C5517022",
       "AIMW-PLAT-57B1A0F5E3",
+      "AIMW-CONT-43AF0076B5",
       "AIMW-AI-0F3763FDB4",
       "AIMW-AI-34EC6312B9",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 6
+    "focused_service_contract_count": 7
   }
 }
