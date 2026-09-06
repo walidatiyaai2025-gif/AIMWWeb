@@ -2,17 +2,17 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
-  "canonical_operation": {
+  "operation_id": "AIMW-SYNC-68B372C9FE",
+  "terminal_state": "ADAPTED",
+  "domain": "sync",
+  "kind": "visible_control",
+  "operation": {
     "operation_id": "AIMW-SYNC-68B372C9FE",
+    "terminal_state": "ADAPTED",
     "domain": "sync",
     "kind": "visible_control",
-    "previous_state": "PENDING",
-    "terminal_state": "TERMINAL",
-    "source_file": "src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor",
-    "source_routes": [
-      "/about-build",
-      "/release-notes"
-    ],
+    "route_screen": "/about-build | /release-notes",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AboutBuild.razor",
     "source_control": "Copy build report",
     "source_handlers": [
       "CopyBuildReportClickedAsync",
@@ -21,117 +21,68 @@
     "mutation": false,
     "tenant_owned": true,
     "risk": "low",
-    "verification_threshold": "rendered/read response matches authoritative source"
+    "verification": "rendered/read response matches authoritative source"
   },
-  "source_behavior": {
-    "report_contract": [
-      "AI WordPress Manager - Build Report",
-      "Version",
-      "Informational version",
-      "Branch",
-      "Commit",
-      "Build time UTC",
-      "Assembly",
-      "current authoritative release title and changes when available"
-    ],
-    "side_effect": "browser-local clipboard write only",
-    "success_rule": "success is shown only after navigator.clipboard.writeText resolves",
-    "failure_rule": "clipboard rejection or an unavailable Clipboard API produces a truthful failure and no success state",
-    "retry_rule": "the failed copy can be retried",
-    "concurrency_rule": "copy and retry are disabled while a clipboard write is in flight"
-  },
-  "laravel_adaptation": {
-    "runtime_paths": [
-      "/tenants/{tenant}/about-build",
-      "/tenants/{tenant}/release-notes"
-    ],
+  "laravel_runtime": {
     "view": "variants/laravel-aiwmweb/backend/resources/views/platform/about-build.blade.php",
     "browser_runtime": "variants/laravel-aiwmweb/backend/resources/js/about-build-copy-report.ts",
-    "vite_entry": "resources/js/about-build-copy-report.ts",
+    "routes": [
+      "GET /tenants/{tenant}/about-build",
+      "GET /tenants/{tenant}/release-notes"
+    ],
+    "operation_marker": "data-canonical-operation=AIMW-SYNC-68B372C9FE",
     "authoritative_read_model": "App\\Platform\\BuildInformationReadService::snapshot",
     "authoritative_api": "/api/build",
-    "payload_rule": "the browser report payload is server-rendered from the same BuildInformationReadService snapshot used by /api/build",
-    "release_history_rule": "no synthetic release history is invented when no authoritative release source exists",
-    "wordpress_rule": "no WordPress mutation or mock call is invented; this canonical control is read-only and its only side effect is the browser clipboard"
+    "side_effect": "browser-local clipboard write only",
+    "success_semantics": "success is rendered only after navigator.clipboard.writeText resolves",
+    "failure_semantics": "clipboard rejection or unavailable Clipboard API is reported truthfully and remains retryable",
+    "concurrency_semantics": "duplicate copy attempts are suppressed while a write is in flight"
   },
-  "authorization_and_tenant_isolation": {
-    "route_middleware": [
+  "security": {
+    "middleware": [
       "web",
       "auth",
       "tenant.context"
     ],
     "permission": "tenant.view",
-    "guest_behavior": "redirects to canonical /login",
-    "missing_permission_behavior": "403",
-    "foreign_tenant_behavior": "404",
-    "direct_id_surface": "none; the control accepts no caller-supplied resource identifier",
-    "idor_result": "no cross-tenant identifier path is exposed by this control"
+    "guest": "redirect /login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "caller_supplied_resource_id": false,
+    "cross_tenant_destination": false,
+    "server_or_wordpress_mutation": false,
+    "fake_success": false
   },
-  "runtime_semantics": {
-    "real_control": true,
-    "placeholder_or_catch_all": false,
-    "demo_or_sample_data": false,
-    "fake_success_path": false,
-    "authoritative_reread_equivalence": "the server-rendered report payload is asserted field-for-field against BuildInformationReadService::snapshot and /api/build returns that same snapshot",
-    "idempotency": "repeated successful copies only replace the local clipboard with the same authoritative report; duplicate clicks during one in-flight write are suppressed",
-    "retry_safety": "a failed browser clipboard write leaves server/domain state unchanged and can be retried safely",
-    "audit_or_server_receipt": "not applicable because mutation=false and no server/domain state changes; the UI receipt is the browser-confirmed success state"
-  },
-  "acceptance_tests": {
-    "php_feature": [
-      "CopyBuildReportVisibleControlTerminalityTest::test_exact_canonical_operation_is_the_pending_copy_build_report_visible_control",
-      "CopyBuildReportVisibleControlTerminalityTest::test_both_source_routes_render_the_real_control_with_the_authoritative_build_snapshot",
-      "CopyBuildReportVisibleControlTerminalityTest::test_control_inherits_existing_auth_permission_and_tenant_fail_closed_contract",
-      "AboutBuildRouteTerminalityTest::test_about_build_and_release_notes_alias_are_explicit_guarded_routes",
-      "AboutBuildRouteTerminalityTest::test_guest_is_redirected_to_login_for_both_source_routes",
-      "AboutBuildRouteTerminalityTest::test_both_source_routes_fail_closed_for_missing_permission_and_foreign_tenant"
-    ],
-    "browser_vitest": [
-      "formats the authoritative build snapshot using the source report contract",
-      "reports success only after the browser confirms the clipboard write and blocks duplicate clicks while busy",
-      "never emits fake success on clipboard failure and a retry can succeed",
-      "fails truthfully when the Clipboard API is unavailable"
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/CopyBuildReportVisibleControlTerminalityTest.php",
+    "browser": "variants/laravel-aiwmweb/backend/resources/js/__tests__/about-build-copy-report.test.ts",
+    "coverage": [
+      "generator-backed ADAPTED canonical row identity",
+      "exact production operation marker",
+      "both guarded source routes render the real control",
+      "authoritative build snapshot equivalence with /api/build",
+      "guest redirect, missing-permission 403 and foreign-tenant 404",
+      "clipboard confirmed-success, truthful failure, retry and busy suppression"
     ]
   },
-  "implementation_snapshot_sha": "7fa76d67d2319c9ed7ae0719dee21dded5c69173",
-  "exact_tested_sha": "7fa76d67d2319c9ed7ae0719dee21dded5c69173",
-  "exact_tested_sha_ci": {
-    "pr_plan_link": "success",
-    "laravel_aiwmweb_cross_domain_security": "success",
-    "laravel_aiwmweb_acceptance": "success",
-    "pint": "success",
-    "sqlite_migrations_and_full_php_suite": "success",
-    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
-    "redis_queue_scheduler": "success",
-    "wordpress_disposable_runtime": "success",
-    "wordpress_real_rest_e2e": "success",
-    "frontend_typecheck_tests_build": "success",
-    "frontend_production_build": "success",
-    "runtime_artifacts": "success",
-    "acceptance_gate": "success",
-    "production_compose_model_image_build_stack_boot_real_runtime_smokes_cleanup": "success"
+  "historical_provenance": {
+    "original_pr": 300,
+    "original_implementation_snapshot": "7fa76d67d2319c9ed7ae0719dee21dded5c69173",
+    "original_evidence_head": "efbe240802d4bb5d598086b5259f216ac5a56b98",
+    "original_exact_head_ci": "GREEN"
   },
-  "canonical_denominator": {
-    "source": "latest 931-operation reconciliation on closure composition head 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
-    "total": 931,
-    "previous_terminal": 358,
-    "new_terminal_after_this_one_operation": 359,
-    "previous_pending": 573,
-    "new_pending_after_this_one_operation": 572,
-    "generated_reconciliation_modified": false,
-    "note": "This worker records the defensible one-operation delta but does not manually edit the generated reconciliation owned by the reconciliation/composition flow."
-  },
-  "scope_guards": {
-    "only_operation_claimed": "AIMW-SYNC-68B372C9FE",
-    "explicitly_unclaimed_related_operation": "AIMW-CONT-EBD53650BC",
-    "second_operation_started": false,
-    "aspnet_or_current_product_modified": false,
-    "force_push": false,
-    "merge": false
+  "recovery": {
+    "slot": "0111",
+    "claim_comment": 5559326414,
+    "composition_base": "530032cc6df6d224d1796cb807c59e711c700f1a",
+    "reason": "The runtime/tests/evidence were already present in the live composition, but the canonical row remained PENDING because production lacked the exact operation marker, the focused test asserted the stale PENDING state, and the historical evidence used non-canonical TERMINAL instead of ADAPTED.",
+    "stale_pr_replayed": false,
+    "denominator_reduced": false,
+    "sibling_operation_claimed": false,
+    "owner_only_evidence_required": false
   },
   "terminality": {
-    "state": "TERMINAL",
-    "reason": "The exact canonical control is user-reachable on both real tenant routes, uses the authoritative build read model, performs a real browser clipboard write with truthful confirmed success/failure/retry semantics, is tenant/permission isolated, has deterministic PHP and browser acceptance, and the implementation snapshot completed every required repository CI gate successfully.",
-    "evidence_bearing_head_ci": "must be revalidated after this evidence-only commit; authoritative final-head CI is recorded in PR #300 and Issue #257 handoff because a Git commit cannot self-contain its own SHA without changing it"
+    "state": "ADAPTED",
+    "basis": "The real tenant-scoped About Build/Release Notes runtime exposes the exact operation-bound copy control, formats authoritative build state, performs only a browser-local clipboard write, reports success only after browser confirmation, fails truthfully, and is covered by focused tenant/security/browser acceptance."
   }
 }
