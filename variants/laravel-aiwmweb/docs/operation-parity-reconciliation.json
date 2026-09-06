@@ -23,12 +23,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 476,
-    "pending": 455,
+    "adapted": 477,
+    "pending": 454,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 476,
-    "overall_parity_percent": 51.13
+    "terminal": 477,
+    "overall_parity_percent": 51.24
   },
   "visible_controls": {
     "total": 446,
@@ -41,12 +41,12 @@
     "ai": {
       "total": 92,
       "ported": 0,
-      "adapted": 59,
-      "pending": 33,
+      "adapted": 60,
+      "pending": 32,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 59,
-      "percent": 64.13
+      "terminal": 60,
+      "percent": 65.22
     },
     "approvals": {
       "total": 25,
@@ -864,21 +864,31 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteBrainServiceSaveAsyncTerminalityTest.php",
+      "evidence": "Focused service closure@5a29702a6618241a1610eb11f415ca3993d9db5c: variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php; operation:AIMW-AI-34EC6312B9; test:variants/laravel-aiwmweb/backend/tests/Feature/SiteBrainServiceSaveAsyncTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-brain-save-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (5 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-AI-34EC6312B9",
+        "source_sha": "5a29702a6618241a1610eb11f415ca3993d9db5c",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-brain-save-terminality.json",
+        "signals": [
+          "operation:AIMW-AI-34EC6312B9",
+          "service:SiteBrainService",
+          "member:SaveAsync",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteBrainServiceSaveAsyncTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-brain-save-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -33797,12 +33807,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 320,
-      "pending": 29,
+      "adapted": 321,
+      "pending": 28,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 320,
-      "percent": 91.69
+      "terminal": 321,
+      "percent": 91.98
     },
     "visible_control": {
       "total": 446,
@@ -33820,7 +33830,6 @@
       "AIMW-AI-0F3763FDB4",
       "AIMW-AI-2B31C6BDAF",
       "AIMW-AI-331ED9D5EE",
-      "AIMW-AI-34EC6312B9",
       "AIMW-AI-387F3E5D5F",
       "AIMW-AI-3B59F172AB",
       "AIMW-AI-44DD850CE4",
@@ -34661,8 +34670,9 @@
     "focused_service_contract_terminals": [
       "AIMW-PLAT-A2624EDC66",
       "AIMW-PLAT-15C5517022",
-      "AIMW-PLAT-57B1A0F5E3"
+      "AIMW-PLAT-57B1A0F5E3",
+      "AIMW-AI-34EC6312B9"
     ],
-    "focused_service_contract_count": 3
+    "focused_service_contract_count": 4
   }
 }

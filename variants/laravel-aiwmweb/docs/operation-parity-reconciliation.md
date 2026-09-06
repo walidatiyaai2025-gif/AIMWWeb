@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 476 |
-| PENDING | 455 |
+| ADAPTED | 477 |
+| PENDING | 454 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 476 |
-| OVERALL_PARITY_PERCENT | 51.13% |
+| TERMINAL | 477 |
+| OVERALL_PARITY_PERCENT | 51.24% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -29,7 +29,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 59 | 33 | 0 | 0 | 59 | 64.13% |
+| ai | 92 | 0 | 60 | 32 | 0 | 0 | 60 | 65.22% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 28 | 3 | 0 | 0 | 28 | 90.32% |
 | background_job | 21 | 0 | 13 | 8 | 0 | 0 | 13 | 61.90% |
 | route | 84 | 0 | 41 | 43 | 0 | 0 | 41 | 48.81% |
-| service | 349 | 0 | 320 | 29 | 0 | 0 | 320 | 91.69% |
+| service | 349 | 0 | 321 | 28 | 0 | 0 | 321 | 91.98% |
 | visible_control | 446 | 0 | 74 | 372 | 0 | 0 | 74 | 16.59% |
 
 ## Reproducibility / guard results
@@ -67,19 +67,18 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **36**
 - Focused visible-control contracts: **74**
-- Focused service contracts: **3**
+- Focused service contracts: **4**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (33)
+### ai (32)
 
 - `AIMW-AI-0F3763FDB4`
 - `AIMW-AI-2B31C6BDAF`
 - `AIMW-AI-331ED9D5EE`
-- `AIMW-AI-34EC6312B9`
 - `AIMW-AI-387F3E5D5F`
 - `AIMW-AI-3B59F172AB`
 - `AIMW-AI-44DD850CE4`

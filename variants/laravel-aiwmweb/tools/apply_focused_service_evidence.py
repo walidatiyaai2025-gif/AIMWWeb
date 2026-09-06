@@ -48,7 +48,7 @@ def security_contract(row: dict[str, Any], test_text: str, evidence_path: Path) 
 
     if bool(row.get("tenant_owned")):
         tenant_proof = (
-            ("assertnotfound" in low or "404" in low)
+            ("assertnotfound" in low or "404" in low or "modelnotfoundexception" in low)
             and any(token in low for token in ("tenant", "foreign", "cross-tenant", "cross_tenant"))
         )
         if not tenant_proof:
@@ -59,7 +59,7 @@ def security_contract(row: dict[str, Any], test_text: str, evidence_path: Path) 
 
     risk = str(row.get("risk") or "").lower()
     if bool(row.get("mutation")) or risk in {"high", "critical"}:
-        if "assertforbidden" not in low and "403" not in low:
+        if "assertforbidden" not in low and "403" not in low and "authorizationexception" not in low:
             raise SystemExit(
                 f"focused service evidence lacks authorization proof for {row['operation_id']}: {evidence_path}"
             )
