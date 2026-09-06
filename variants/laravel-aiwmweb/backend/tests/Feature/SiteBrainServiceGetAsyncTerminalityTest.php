@@ -26,13 +26,13 @@ final class SiteBrainServiceGetAsyncTerminalityTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_exact_canonical_get_operation_is_pending_during_implementation_stage(): void
+    public function test_exact_canonical_get_operation_is_generator_backed_terminal(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('service', $operation['kind']);
         $this->assertSame('SiteBrainService', $operation['service']);
@@ -41,6 +41,14 @@ final class SiteBrainServiceGetAsyncTerminalityTest extends TestCase
         $this->assertSame('src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php', $operation['laravel_destination']);
+        $this->assertSame(__FILE__, base_path($operation['acceptance_test']));
+        $this->assertSame('focused_service_contract', $operation['reconciliation']['evidence_mode']);
+        $this->assertSame('a13a40888f365bd888b2fd4d19f95c94a656f985', $operation['reconciliation']['source_sha']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/site-brain-get-terminality.json',
+            $operation['reconciliation']['evidence_path'],
+        );
 
         $source = file_get_contents(base_path('../../../src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs'));
         $profileSource = file_get_contents(base_path('../../../src/AIWordPressManager.Application/SiteBrain/SiteBrainProfile.cs'));
