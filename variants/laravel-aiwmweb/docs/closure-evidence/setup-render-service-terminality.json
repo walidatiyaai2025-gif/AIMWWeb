@@ -28,7 +28,7 @@
     "mutation": false
   },
   "service_closure_contract": {
-    "implementation_sha": "b73f6ffb84a3c8e43cccc2dc1b151ce47973e259",
+    "implementation_sha": "62e3e367c71e27d6b1d7453dc06f8c93e4ae29d4",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Services/DatabaseSetupPageService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetupRenderServiceTerminalityTest.php"
   },
@@ -52,7 +52,7 @@
   },
   "security": {
     "authorization": "pre-authentication first-run setup boundary; no authenticated tenant resource is selected by RenderPage",
-    "tenant_isolation": "not applicable to page rendering before initial tenant creation; runtime status is read without accepting tenant identifiers from the page model",
+    "tenant_isolation": "foreign tenant identifiers are not accepted as a setup-page selector or reflected into rendered output; a tenant-addressable /tenants/{foreign}/setup surface fails closed with 404",
     "secret_handling": "database/provider credentials remain deployment-owned and are never read into the rendered page model",
     "error_output": "Blade escaped interpolation prevents raw HTML/script injection and controller failures render bounded operator-safe text"
   },
@@ -62,13 +62,15 @@
       "test_canonical_render_page_operation_is_the_setup_rendering_service_contract",
       "test_page_service_renders_authoritative_setup_state_and_real_submit_contract",
       "test_page_service_escapes_failure_text_and_never_reads_database_credentials_into_the_page",
+      "test_pre_auth_setup_renderer_has_no_foreign_tenant_addressable_surface",
       "test_setup_get_is_composed_through_the_page_service_and_completed_installations_still_redirect"
     ],
     "existing_regression_coverage": [
       "SetupMutationTerminalityTest",
       "PlatformSetupReadTerminalityTest"
     ],
-    "provenance": "acceptance pins the canonical operation ID and DatabaseSetupService.RenderPage marker in the production adapter"
+    "provenance": "acceptance pins the canonical operation ID and DatabaseSetupService.RenderPage marker in the production adapter",
+    "tenant_isolation": "focused acceptance proves a foreign tenant token cannot select or appear in the pre-auth setup renderer and that a tenant-addressable setup path is not found"
   },
   "historical_implementation_snapshot": {
     "sha": "7787b5b6130207019ac81762ddbab601daa4845b",
