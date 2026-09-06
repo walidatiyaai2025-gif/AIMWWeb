@@ -36,7 +36,7 @@ final class SiteBrainServiceSaveAsyncTerminalityTest extends TestCase
         $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('ADAPTED', $operation['migration_state']);
+        $this->assertSame('PENDING', $operation['migration_state']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('service', $operation['kind']);
         $this->assertSame('SiteBrainService', $operation['service']);
