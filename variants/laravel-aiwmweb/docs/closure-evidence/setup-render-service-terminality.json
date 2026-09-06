@@ -19,7 +19,7 @@
   },
   "canonical_operation": {
     "kind": "service",
-    "domain": "content",
+    "domain": "backend",
     "service": "DatabaseSetupService",
     "member": "RenderPage",
     "source": "src/AIWordPressManager.Web/Services/DatabaseSetupService.cs",
