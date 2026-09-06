@@ -6,6 +6,7 @@ use App\Authorization\TenantAuthorizer;
 use App\Models\Execution;
 use App\Models\Site;
 use App\Sites\SiteEntitlementHook;
+use App\Sites\SiteManagementService;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,22 +36,25 @@ final class SiteManagementController extends Controller
         return response()->json(Site::query()->create($data), 201);
     }
 
-    public function show(string $tenant, int|string $site, TenantAuthorizer $auth, TenantContext $context): JsonResponse
-    {
+    public function show(
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+        SiteManagementService $sites,
+    ): JsonResponse {
         $auth->authorize('tenant.view');
+        $auth->authorize('sites.view');
         abort_unless($tenant === $context->tenant()->slug, 404);
         abort_unless(is_int($site) || ctype_digit($site), 404);
 
         $siteId = (int) $site;
         abort_if($siteId < 1, 404);
 
-        $model = Site::query()
-            ->withoutGlobalScopes()
-            ->where('tenant_id', $context->id())
-            ->whereKey($siteId)
-            ->firstOrFail();
+        $details = $sites->getDetails($siteId);
+        abort_if($details === null, 404);
 
-        return response()->json($model);
+        return response()->json($details);
     }
 
     public function update(Request $request, int $site, TenantAuthorizer $auth): JsonResponse
