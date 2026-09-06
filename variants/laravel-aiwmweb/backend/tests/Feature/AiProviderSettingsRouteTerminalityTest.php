@@ -39,6 +39,29 @@ class AiProviderSettingsRouteTerminalityTest extends TestCase
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
+        $this->assertSame(
+            'variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php',
+            $operation['acceptance_test'],
+        );
+        $this->assertSame('explicit_route_api_contract', $operation['reconciliation']['evidence_mode']);
+        $this->assertSame(
+            '860095fc8322b913f17b472b41c44c1c17dcc5eb',
+            $operation['reconciliation']['source_sha'],
+        );
+        $this->assertSame(
+            'variants/laravel-aiwmweb/docs/closure-evidence/ai-provider-settings-route-terminality.json',
+            $operation['reconciliation']['evidence_path'],
+        );
+        $this->assertContains('middleware:auth', $operation['reconciliation']['signals']);
+        $this->assertContains('middleware:tenant.context', $operation['reconciliation']['signals']);
+        $this->assertContains('authorization:TenantAuthorizer', $operation['reconciliation']['signals']);
+        $this->assertContains(self::OPERATION_ID, $document['validation']['explicit_route_api_contract_terminals']);
+        $this->assertSame(931, $document['totals']['total']);
+        $this->assertSame(
+            931,
+            $document['totals']['terminal'] + $document['totals']['pending'] + $document['totals']['blocked'],
+        );
     }
 
     public function test_route_is_explicit_guarded_and_carries_operation_provenance(): void
