@@ -12,9 +12,12 @@
             <h1>AI Provider Settings</h1>
             <p>Review persisted provider configuration and runtime readiness for {{ $tenant->name }}.</p>
             <p>Settings managers only. API credentials are never rendered; only credential presence is exposed.</p>
+            <nav aria-label="AI provider settings sections">
+                <a href="#providers" data-canonical-operation="AIMW-AI-4F6B6584E4">Providers and keys</a>
+            </nav>
         </header>
 
-        <section aria-labelledby="provider-registry">
+        <section id="providers" aria-labelledby="provider-registry">
             <h2 id="provider-registry">Provider registry</h2>
             <p>{{ count($providers) }} configured {{ count($providers) === 1 ? 'provider' : 'providers' }}</p>
 
