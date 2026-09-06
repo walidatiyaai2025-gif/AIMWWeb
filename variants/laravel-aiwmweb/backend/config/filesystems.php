@@ -26,8 +26,13 @@ return [
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
     |
-    | Canonical native-framework parity marker:
+    | Canonical native-framework parity markers:
     | AIMW-PLAT-A2624EDC66 ApplicationPathService.GetApplicationDataDirectory
+    | AIMW-PLAT-3025C8E82B ApplicationPathService.GetTemporaryDirectory
+    |
+    | GetTemporaryDirectory remains the native storage_path('app/temp') plus
+    | File::ensureDirectoryExists runtime contract; this marker provides exact
+    | pushed production provenance without introducing a duplicate path service.
     |
     */
 

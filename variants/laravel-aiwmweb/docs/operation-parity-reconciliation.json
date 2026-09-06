@@ -23,12 +23,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 477,
-    "pending": 454,
+    "adapted": 478,
+    "pending": 453,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 477,
-    "overall_parity_percent": 51.24
+    "terminal": 478,
+    "overall_parity_percent": 51.34
   },
   "visible_controls": {
     "total": 446,
@@ -151,12 +151,12 @@
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 8,
-      "pending": 10,
+      "adapted": 9,
+      "pending": 9,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 8,
-      "percent": 44.44
+      "terminal": 9,
+      "percent": 50.0
     },
     "reports": {
       "total": 1,
@@ -23378,21 +23378,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/config/filesystems.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php",
+      "evidence": "Focused service closure@1336a8827db8adee30817b2e805f61d9ba4b0357: variants/laravel-aiwmweb/backend/config/filesystems.php; operation:AIMW-PLAT-3025C8E82B; test:variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-PLAT-3025C8E82B",
+        "source_sha": "1336a8827db8adee30817b2e805f61d9ba4b0357",
+        "destination_path": "variants/laravel-aiwmweb/backend/config/filesystems.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-3025C8E82B",
+          "service:ApplicationPathService",
+          "member:GetTemporaryDirectory",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/TemporaryDirectoryTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/temporary-directory-terminality.json"
+        ]
       }
     },
     {
@@ -33807,12 +33816,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 321,
-      "pending": 28,
+      "adapted": 322,
+      "pending": 27,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 321,
-      "percent": 91.98
+      "terminal": 322,
+      "percent": 92.26
     },
     "visible_control": {
       "total": 446,
@@ -34201,7 +34210,6 @@
     ],
     "platform": [
       "AIMW-PLAT-17BC7DA9E5",
-      "AIMW-PLAT-3025C8E82B",
       "AIMW-PLAT-4BAE8344AF",
       "AIMW-PLAT-4C37AC806E",
       "AIMW-PLAT-57E0113F24",
@@ -34671,8 +34679,9 @@
       "AIMW-PLAT-A2624EDC66",
       "AIMW-PLAT-15C5517022",
       "AIMW-PLAT-57B1A0F5E3",
-      "AIMW-AI-34EC6312B9"
+      "AIMW-AI-34EC6312B9",
+      "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 4
+    "focused_service_contract_count": 5
   }
 }
