@@ -1,0 +1,87 @@
+name: Laravel SiteBrain Get Reconcile Once
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-0F3763FDB4-getasync-recovery
+    paths:
+      - '.github/workflows/laravel-sitebrain-get-reconcile-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-and-commit:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate canonical parity artifacts
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Assert exact one-operation convergence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          assert p['totals']['total'] == 931, p['totals']
+          assert p['totals']['terminal'] == 479, p['totals']
+          assert p['totals']['pending'] == 452, p['totals']
+          assert p['totals']['blocked'] == 0, p['totals']
+          row = next(r for r in p['operations'] if r['operation_id'] == 'AIMW-AI-0F3763FDB4')
+          assert row['migration_state'] == 'ADAPTED', row
+          assert row['reconciliation']['evidence_mode'] == 'focused_service_contract', row
+          assert row['reconciliation']['source_sha'] == 'a13a40888f365bd888b2fd4d19f95c94a656f985', row
+          print('SITEBRAIN_GET_RECONCILIATION=PASS')
+          print('TOTAL=931 TERMINAL=479 PENDING=452 BLOCKED=0')
+          PY
+
+      - name: Commit generator output only
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            echo 'Generator output already committed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs(laravel): reconcile SiteBrain GetAsync terminality'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
