@@ -42,7 +42,7 @@ final class SiteBrainServiceGetAsyncTerminalityTest extends TestCase
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
         $this->assertSame('variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php', $operation['laravel_destination']);
-        $this->assertSame(__FILE__, base_path($operation['acceptance_test']));
+        $this->assertSame(realpath(__FILE__), realpath(base_path('../../../'.$operation['acceptance_test'])));
         $this->assertSame('focused_service_contract', $operation['reconciliation']['evidence_mode']);
         $this->assertSame('a13a40888f365bd888b2fd4d19f95c94a656f985', $operation['reconciliation']['source_sha']);
         $this->assertSame(
