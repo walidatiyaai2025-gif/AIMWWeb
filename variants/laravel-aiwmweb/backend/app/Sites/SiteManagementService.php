@@ -9,9 +9,7 @@ final class SiteManagementService
 {
     public const OPERATION_ID = 'AIMW-AI-95AC5F28A7';
 
-    public function __construct(private readonly TenantContext $context)
-    {
-    }
+    public function __construct(private readonly TenantContext $context) {}
 
     /**
      * Adaptation of canonical SiteManagementService.GetDetailsAsync.
