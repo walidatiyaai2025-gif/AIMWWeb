@@ -20,6 +20,9 @@ final class DatabaseSetupPageService
     }
 
     /**
+     * Canonical parity operation AIMW-CONT-43AF0076B5 adapts
+     * DatabaseSetupService.RenderPage to the Laravel setup-page boundary.
+     *
      * Render the first-run setup page from authoritative runtime status.
      *
      * Database/provider credentials remain deployment-owned and are never
