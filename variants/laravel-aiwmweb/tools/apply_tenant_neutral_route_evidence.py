@@ -25,6 +25,8 @@ from typing import Any
 import finalize_operation_parity as finalize
 import reconcile_operation_parity as reconcile
 
+TENANT_NEUTRAL_MANIFEST = reconcile.VARIANT / "docs" / "tenant-neutral-route-evidence.json"
+
 
 def require(condition: bool, message: str) -> None:
     if not condition:
@@ -35,9 +37,13 @@ def git_show(sha: str, path: str) -> str:
     return reconcile.run_git("show", f"{sha}:{path}", check=False)
 
 
-def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
-    source_sha = str(manifest.get("tenant_neutral_route_evidence_source_sha") or "").strip()
-    evidence_map = manifest.get("tenant_neutral_route_evidence") or {}
+def apply(
+    payload: dict[str, Any],
+    canonical_manifest: dict[str, Any],
+    neutral_manifest: dict[str, Any],
+) -> list[str]:
+    source_sha = str(neutral_manifest.get("source_sha") or "").strip()
+    evidence_map = neutral_manifest.get("routes") or {}
 
     if not evidence_map:
         return []
@@ -159,7 +165,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
         }
         applied.append(operation_id)
 
-    finalize.finalize_summary(payload, payload["operations"], manifest)
+    finalize.finalize_summary(payload, payload["operations"], canonical_manifest)
     payload["classification_policy"]["tenant_neutral_route_policy"] = (
         "explicitly anonymous canonical route rows may be terminalized only by an exact pushed "
         "tenant-neutral contract proving AllowAnonymous source semantics, explicit action wiring, "
@@ -185,6 +191,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     validation["explicit_route_contract_terminals"] = sorted(existing_explicit)
     validation["tenant_neutral_route_contract_terminals"] = sorted(applied)
     validation["tenant_neutral_route_contract_count"] = len(applied)
+    validation["tenant_neutral_route_source_sha"] = source_sha
     validation["status_totals_reconcile"] = state_total == len(payload["operations"])
     validation["terminal_excludes_blocked"] = totals["terminal"] == expected_terminal
     validation["errors"] = errors
@@ -205,13 +212,14 @@ def main() -> int:
     args = parser.parse_args()
 
     payload = json.loads(args.input.read_text(encoding="utf-8"))
-    manifest = json.loads(reconcile.MANIFEST.read_text(encoding="utf-8"))
+    canonical_manifest = json.loads(reconcile.MANIFEST.read_text(encoding="utf-8"))
+    neutral_manifest = json.loads(TENANT_NEUTRAL_MANIFEST.read_text(encoding="utf-8"))
     require(
         len(payload.get("operations", [])) == args.check_total,
         f"expected {args.check_total} canonical operations, found {len(payload.get('operations', []))}",
     )
 
-    applied = apply(payload, manifest)
+    applied = apply(payload, canonical_manifest, neutral_manifest)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.summary_output:
         compact = {key: value for key, value in payload.items() if key != "operations"}
