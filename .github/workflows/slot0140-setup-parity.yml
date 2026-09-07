@@ -1,0 +1,146 @@
+name: Slot 0140 Setup Parity
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-CONT-475267F150-slot0140
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-one:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      BASE_SHA: 62484983f7e7d593b24fa61c466ac2f08a3fbbd6
+      SOURCE_SHA: e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72
+      OPERATION_ID: AIMW-CONT-475267F150
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Install backend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Focused setup validation
+        run: |
+          python -m py_compile variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py
+          cd variants/laravel-aiwmweb/backend
+          vendor/bin/pint --test tests/Feature/SetupMutationTerminalityTest.php
+          php artisan test --filter=SetupMutationTerminalityTest
+
+      - name: Register exact pushed setup provenance
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          payload = json.loads(path.read_text())
+          op = os.environ['OPERATION_ID']
+          for source in payload['countable_sources']:
+              if op in (source.get('route_api_provenance') or {}):
+                  raise SystemExit(f'duplicate route_api_provenance for {op}')
+          payload['countable_sources'].append({
+              'label': 'AIMW-CONT-475267F150 pre-tenant setup mutation reconciliation',
+              'sha': os.environ['SOURCE_SHA'],
+              'observed_pr_head': os.environ['SOURCE_SHA'],
+              'domains': ['content'],
+              'supporting_only': True,
+              'route_api_provenance': {
+                  op: {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupMutationController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/setup-mutation-terminality.json',
+                      'security_mode': 'pre_tenant_setup_mutation'
+                  }
+              }
+          })
+          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n')
+          PY
+
+      - name: Run canonical five-stage generator
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Guard exactly one canonical transition
+        run: |
+          git show "$BASE_SHA:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/base.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          base = json.loads(Path('/tmp/base.json').read_text())
+          cur = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          b = {r['operation_id']: r for r in base['operations']}
+          c = {r['operation_id']: r for r in cur['operations']}
+          changed = sorted(k for k in b if b[k]['migration_state'] != c[k]['migration_state'])
+          op = os.environ['OPERATION_ID']
+          print('STATE_CHANGED_IDS=' + ','.join(changed))
+          if changed != [op]:
+              raise SystemExit(f'unexpected state transitions: {changed}')
+          if b[op]['migration_state'] != 'PENDING' or c[op]['migration_state'] != 'ADAPTED':
+              raise SystemExit(f'bad setup transition: {b[op]["migration_state"]} -> {c[op]["migration_state"]}')
+          totals = cur['totals']
+          if (totals['total'], totals['terminal'], totals['pending'], totals['blocked']) != (931, 493, 438, 0):
+              raise SystemExit(f'unexpected totals: {totals}')
+          print('ONE_OPERATION_GUARD=PASS')
+          print(f"TOTAL={totals['total']} TERMINAL={totals['terminal']} PENDING={totals['pending']} BLOCKED={totals['blocked']}")
+          PY
+
+      - name: Commit canonical generated artifacts
+        run: |
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'chore(laravel): reconcile canonical setup POST parity'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-CONT-475267F150-slot0140
