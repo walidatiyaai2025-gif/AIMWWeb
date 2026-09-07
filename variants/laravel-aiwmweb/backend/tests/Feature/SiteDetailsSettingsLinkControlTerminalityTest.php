@@ -88,11 +88,11 @@ class SiteDetailsSettingsLinkControlTerminalityTest extends TestCase
             ->getJson('/tenants/alpha/context?site='.$betaSite->id)
             ->assertNotFound();
 
-        // A foreign tenant namespace resolves the tenant first, then authorization rejects
-        // the non-member as 403. Both boundaries fail closed without cross-tenant data.
+        // The tenant-context middleware resolves membership for the authenticated user first.
+        // A foreign tenant namespace is therefore hidden as 404 before route permissions run.
         $this->actingAs($alphaUser)
             ->get('/tenants/beta/settings?site='.$betaSite->id)
-            ->assertForbidden();
+            ->assertNotFound();
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
