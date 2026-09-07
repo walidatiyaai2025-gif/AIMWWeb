@@ -28,12 +28,13 @@ final class SeoRemediationClosureController extends Controller
     }
 
     public function retryFailed(
-        int $site,
+        string $site,
         TenantAuthorizer $auth,
         SeoRemediationClosureService $remediation,
     ): JsonResponse {
         $auth->authorize('seo.write');
-        $siteModel = Site::query()->findOrFail($site);
+        abort_unless(ctype_digit($site) && (int) $site > 0, 404);
+        $siteModel = Site::query()->findOrFail((int) $site);
 
         return response()->json($remediation->retryFailed($siteModel), 202);
     }
