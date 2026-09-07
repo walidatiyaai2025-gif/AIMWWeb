@@ -223,7 +223,6 @@ class SyncCancellationTerminalityTest extends TestCase
             'trigger' => 'manual',
             'resources' => ['posts'],
             'lease_token' => (string) Str::uuid(),
-            'requested_at' => now(),
             'started_at' => now(),
         ]);
         app(TenantContext::class)->forget();
