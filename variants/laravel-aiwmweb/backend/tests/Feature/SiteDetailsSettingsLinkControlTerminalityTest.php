@@ -83,12 +83,16 @@ class SiteDetailsSettingsLinkControlTerminalityTest extends TestCase
             ->get('/tenants/limited/sites/'.$limitedSite->id)
             ->assertForbidden();
 
+        // A foreign site selector inside the authorized tenant namespace is hidden as 404.
         $this->actingAs($alphaUser)
             ->getJson('/tenants/alpha/context?site='.$betaSite->id)
             ->assertNotFound();
+
+        // A foreign tenant namespace resolves the tenant first, then authorization rejects
+        // the non-member as 403. Both boundaries fail closed without cross-tenant data.
         $this->actingAs($alphaUser)
             ->get('/tenants/beta/settings?site='.$betaSite->id)
-            ->assertNotFound();
+            ->assertForbidden();
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
