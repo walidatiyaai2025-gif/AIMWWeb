@@ -6,6 +6,7 @@ use App\Http\Controllers\EmailNotificationController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SeoRemediationClosureController;
+use App\Http\Controllers\SiteSyncCancellationController;
 use App\Http\Controllers\SyncApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +52,13 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
 
     Route::post('sync', [SyncApiController::class, 'start']);
     Route::get('sync', [SyncApiController::class, 'index']);
+    Route::get('sync/active', [SiteSyncCancellationController::class, 'active'])
+        ->middleware('auth')
+        ->name('api.v1.sites.sync.active');
+    Route::post('sync/cancel', [SiteSyncCancellationController::class, 'cancel'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', SiteSyncCancellationController::OPERATION_ID)
+        ->name('api.v1.sites.sync.cancel');
     Route::get('sync/runs/{run}', [SyncApiController::class, 'show']);
     Route::post('sync/runs/{run}/resume', [SyncApiController::class, 'resume']);
     Route::post('sync/items/{item}/retry', [SyncApiController::class, 'retryItem']);
