@@ -8,6 +8,7 @@ export const SEO_OPERATIONS = {
     external: 'AIMW-SEO-A4307E94C8',
     applyAllSafe: 'AIMW-SEO-C7C22677CB',
     applySelected: 'AIMW-SEO-4F3F2AC874',
+    retryFailed: 'AIMW-AI-49E68B3816',
     route: 'AIMW-SEO-5F71B89C92',
     previousPage: 'AIMW-SEO-9FE309C9AE',
     resetFilters: 'AIMW-SEO-250C53DAC5',
@@ -22,6 +23,7 @@ type SeoConfig = {
         prepare_bulk: string;
         ai_proposal: string;
         proposals: string;
+        retry_failed: string;
         presentation: string;
         execution: string;
         sites: string;
@@ -44,6 +46,12 @@ type Finding = {
 type BulkResult = {
     prepared?: Array<{ finding_id: number; suggestion_id: number; approval_id: number; status: string }>;
     failed?: Array<{ finding_id: number; error: string }>;
+};
+
+type RetryResult = {
+    queued?: number;
+    execution_ids?: number[];
+    mutated?: boolean;
 };
 
 type ProposalState = Record<number, Record<string, unknown>>;
@@ -80,6 +88,13 @@ function collectionRows(payload: unknown): Array<Record<string, unknown>> {
     return [];
 }
 
+function isRetryableFailedProposal(row: Record<string, unknown>): boolean {
+    const execution = row.execution;
+    const proposedState = row.proposed_state;
+    if (!execution || typeof execution !== 'object' || String((execution as Record<string, unknown>).status ?? '').toLowerCase() !== 'failed') return false;
+    return Boolean(proposedState && typeof proposedState === 'object' && Object.keys(proposedState as Record<string, unknown>).length > 0);
+}
+
 function deterministicProposal(finding: Finding): Record<string, unknown> | null {
     const field = String(finding.field ?? '');
     if (!WRITABLE.has(field) || finding.suggested_value === null || finding.suggested_value === undefined || finding.suggested_value === '') return null;
@@ -94,6 +109,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const [findings, setFindings] = useState<Finding[]>([]);
     const [links, setLinks] = useState<Record<string, string | null>>({});
     const [persistedProposalCount, setPersistedProposalCount] = useState(0);
+    const [failedProposalCount, setFailedProposalCount] = useState(0);
     const [proposalOverrides, setProposalOverrides] = useState<ProposalState>({});
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [query, setQuery] = useState('');
@@ -106,7 +122,9 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
 
     const loadProposals = useCallback(async () => {
         const payload = await requestJson<unknown>(config.urls.proposals);
-        setPersistedProposalCount(collectionRows(payload).length);
+        const rows = collectionRows(payload);
+        setPersistedProposalCount(rows.length);
+        setFailedProposalCount(rows.filter(isRetryableFailedProposal).length);
     }, [config.urls.proposals]);
 
     const loadAuthoritative = useCallback(async (announce = false) => {
@@ -225,6 +243,25 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         return runBulk(items, 'Safe remediation batch');
     };
 
+    const retryFailed = async () => {
+        if (busy || failedProposalCount === 0) return;
+        setBusy(true);
+        setFeedback(null);
+        try {
+            const result = await requestJson<RetryResult>(config.urls.retry_failed, { method: 'POST', body: JSON.stringify({}) });
+            const queued = Number(result.queued ?? 0);
+            await Promise.all([loadProposals(), loadAuthoritative(false)]);
+            setFeedback({
+                tone: queued > 0 ? 'success' : 'info',
+                text: `Retry failed: ${queued} failed execution(s) queued. WordPress mutation remains inside the approved execution job and authoritative re-read verification.`,
+            });
+        } catch (error) {
+            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'Failed SEO remediations could not be retried.' });
+        } finally {
+            setBusy(false);
+        }
+    };
+
     const generateAiProposal = async (finding: Finding) => {
         setBusy(true);
         try {
@@ -298,6 +335,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                 <div className="toolbar-actions">
                     <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.applySelected} disabled={busy || selected.size === 0} onClick={applySelected}>Apply selected</button>
                     <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.applyAllSafe} disabled={busy || safeCount === 0} onClick={applyAllSafe}>Apply all safe</button>
+                    <button type="button" className="btn" data-testid="seo-retry-failed" data-canonical-operation={SEO_OPERATIONS.retryFailed} disabled={busy || failedProposalCount === 0} onClick={retryFailed}>Retry failed</button>
                     <a className="btn" href={config.urls.approvals}>Open Approval Queue</a>
                 </div>
             </section>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Connector\WordPressGateway;
+use App\Jobs\ExecuteApprovedSuggestionJob;
 use App\Models\Approval;
 use App\Models\EvidenceReceipt;
 use App\Models\Execution;
@@ -88,6 +89,64 @@ final class SeoRemediationClosureService
                 ] : null,
             ];
         })->all();
+    }
+
+    /** @return array{queued:int,execution_ids:array<int,int>,mutated:bool} */
+    public function retryFailed(Site $site): array
+    {
+        $executionIds = DB::transaction(function () use ($site): array {
+            $failed = Execution::query()
+                ->where('site_id', $site->id)
+                ->where('status', 'failed')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            if ($failed->isEmpty()) {
+                return [];
+            }
+
+            $approvals = Approval::query()
+                ->whereIn('id', $failed->pluck('approval_id'))
+                ->get()
+                ->keyBy('id');
+            $queued = [];
+
+            foreach ($failed as $execution) {
+                $approval = $approvals->get($execution->approval_id);
+                $proposedState = $approval?->proposed_state;
+                if (! $approval || $approval->status !== 'APPROVED' || ! is_array($proposedState) || $proposedState === []) {
+                    continue;
+                }
+
+                $claimed = Execution::query()
+                    ->whereKey($execution->id)
+                    ->where('site_id', $site->id)
+                    ->where('status', 'failed')
+                    ->update([
+                        'status' => 'queued',
+                        'started_at' => null,
+                        'completed_at' => null,
+                        'failure' => null,
+                    ]);
+
+                if ($claimed === 1) {
+                    $queued[] = (int) $execution->id;
+                }
+            }
+
+            return $queued;
+        });
+
+        foreach ($executionIds as $executionId) {
+            ExecuteApprovedSuggestionJob::dispatch((int) $site->tenant_id, $executionId);
+        }
+
+        return [
+            'queued' => count($executionIds),
+            'execution_ids' => $executionIds,
+            'mutated' => false,
+        ];
     }
 
     /** @return array<string,mixed> */
