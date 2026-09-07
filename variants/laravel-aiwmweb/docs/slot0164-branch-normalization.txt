@@ -1,3 +1,0 @@
-operation=AIMW-AI-B711182657
-canonical_worker_branch=worker/laravel-aiwmweb-AIMW-AI-B711182657-slot0164
-discovery_branch=worker/laravel-aiwmweb-slot0164
