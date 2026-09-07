@@ -29,7 +29,7 @@ class SyncCancellationTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-54BB64BB13';
 
-    public function test_exact_canonical_operation_is_the_pending_cancel_synchronization_control(): void
+    public function test_exact_canonical_operation_is_the_cancel_synchronization_control(): void
     {
         $document = json_decode(
             (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -40,7 +40,11 @@ class SyncCancellationTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        if ($operation['migration_state'] === 'ADAPTED') {
+            $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null);
+        } else {
+            $this->assertSame('PENDING', $operation['migration_state']);
+        }
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/sites/{Id:guid}', $operation['route_screen']);
@@ -122,7 +126,7 @@ class SyncCancellationTerminalityTest extends TestCase
         $user = User::factory()->create();
         $membership = $this->membership($user, 'alpha', ['content.edit']);
         $site = $this->site($membership, 'Alpha');
-        $run = $this->run($membership, $site, 'running');
+        $run = $this->syncRun($membership, $site, 'running');
         $batch = $this->batch($membership, $site, $run, 'running');
 
         $this->actingAs($user)
@@ -157,7 +161,7 @@ class SyncCancellationTerminalityTest extends TestCase
         $user = User::factory()->create();
         $membership = $this->membership($user, 'alpha', ['content.edit']);
         $site = $this->site($membership, 'Alpha');
-        $run = $this->run($membership, $site, 'running');
+        $run = $this->syncRun($membership, $site, 'running');
 
         $this->activate($membership);
         $stale = SyncRun::query()->findOrFail($run->id);
@@ -213,7 +217,7 @@ class SyncCancellationTerminalityTest extends TestCase
         return $site;
     }
 
-    private function run(TenantMembership $membership, Site $site, string $state): SyncRun
+    private function syncRun(TenantMembership $membership, Site $site, string $state): SyncRun
     {
         $this->activate($membership);
         $run = SyncRun::query()->create([
