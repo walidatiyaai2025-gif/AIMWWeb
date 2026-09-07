@@ -7,6 +7,7 @@ import { useLocale } from './i18n';
 export const AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID = 'AIMW-AI-168B406674';
 export const AI_CENTER_NEW_SESSION_OPERATION_ID = 'AIMW-AI-C7621E276C';
 export const AI_CENTER_CLEAR_HISTORY_OPERATION_ID = 'AIMW-AI-746EDAE589';
+export const AI_CENTER_COPY_OUTPUT_OPERATION_ID = 'AIMW-AI-B711182657';
 
 type ApprovalStatus = {
     id: number;
@@ -24,20 +25,26 @@ export type AiCenterSessionHistoryEntry = {
 
 type ApprovalStatusResponse = { data: ApprovalStatus | null };
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
+type CopyState = 'idle' | 'copying' | 'success' | 'error';
 type AiCenterApprovalStatusControlProps = {
     context: FrontendContext;
     initialHistory?: AiCenterSessionHistoryEntry[];
+    initialOutput?: string;
 };
 
-export function AiCenterApprovalStatusControl({ context, initialHistory = [] }: AiCenterApprovalStatusControlProps) {
+export function AiCenterApprovalStatusControl({ context, initialHistory = [], initialOutput = '' }: AiCenterApprovalStatusControlProps) {
     const { locale } = useLocale();
     const [approval, setApproval] = useState<ApprovalStatus | null>(null);
     const [state, setState] = useState<LoadState>('idle');
     const [error, setError] = useState('');
     const [promptKey, setPromptKey] = useState('');
     const [content, setContent] = useState('');
+    const [output, setOutput] = useState(initialOutput);
     const [history, setHistory] = useState<AiCenterSessionHistoryEntry[]>(() => initialHistory.slice(0, 10));
+    const [copyState, setCopyState] = useState<CopyState>('idle');
     const readEpoch = useRef(0);
+    const copyEpoch = useRef(0);
+    const copying = useRef(false);
     const canRead = context.permissions.includes('ai.use');
     const endpoint = `/api/tenants/${encodeURIComponent(context.tenant.slug)}/ai-center/approval-status`;
 
@@ -64,8 +71,12 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [] }: 
 
     const clearSession = () => {
         readEpoch.current += 1;
+        copyEpoch.current += 1;
+        copying.current = false;
         setPromptKey('');
         setContent('');
+        setOutput('');
+        setCopyState('idle');
         setApproval(null);
         setError('');
         setState('idle');
@@ -73,6 +84,28 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [] }: 
 
     const clearHistory = () => {
         setHistory([]);
+    };
+
+    const copyOutput = async () => {
+        if (copying.current || output.trim() === '') return;
+
+        copying.current = true;
+        const epoch = ++copyEpoch.current;
+        setCopyState('copying');
+
+        try {
+            const clipboard = navigator.clipboard;
+            if (!clipboard || typeof clipboard.writeText !== 'function') {
+                throw new Error('Clipboard API unavailable');
+            }
+
+            await clipboard.writeText(output);
+            if (epoch === copyEpoch.current) setCopyState('success');
+        } catch {
+            if (epoch === copyEpoch.current) setCopyState('error');
+        } finally {
+            if (epoch === copyEpoch.current) copying.current = false;
+        }
     };
 
     if (!canRead) return null;
@@ -106,6 +139,41 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [] }: 
             </div>
         </section>
     );
+
+    const outputControls = output.trim() !== '' ? (
+        <section className="panel ai-output-panel" aria-label={locale === 'ar' ? 'القيمة المقترحة' : 'Proposed value'}>
+            <header className="panel-header">
+                <div>
+                    <span className="workspace-kicker">SUGGESTION</span>
+                    <strong>{locale === 'ar' ? 'القيمة المقترحة' : 'Proposed value'}</strong>
+                </div>
+                <button
+                    type="button"
+                    className="btn"
+                    data-canonical-operation={AI_CENTER_COPY_OUTPUT_OPERATION_ID}
+                    disabled={copyState === 'copying'}
+                    aria-busy={copyState === 'copying' ? 'true' : 'false'}
+                    onClick={() => void copyOutput()}
+                >
+                    <span aria-hidden="true">⧉</span>
+                    {copyState === 'copying'
+                        ? (locale === 'ar' ? 'جارٍ النسخ…' : 'Copying…')
+                        : (locale === 'ar' ? 'نسخ' : 'Copy')}
+                </button>
+            </header>
+            <article className="ai-generated-output">{output}</article>
+            {copyState === 'success' ? (
+                <p role="status">{locale === 'ar' ? 'تم نسخ الاقتراح.' : 'Suggestion copied.'}</p>
+            ) : null}
+            {copyState === 'error' ? (
+                <p role="alert">
+                    {locale === 'ar'
+                        ? 'لم يؤكد المتصفح نسخ الاقتراح إلى الحافظة. لم يتم الإبلاغ عن نجاح النسخ.'
+                        : 'The browser did not confirm the clipboard write. No copy success was reported.'}
+                </p>
+            ) : null}
+        </section>
+    ) : null;
 
     const historyControls = (
         <section className="panel ai-session-history" aria-label={locale === 'ar' ? 'سجل اقتراحات الجلسة' : 'Session suggestions'}>
@@ -165,5 +233,5 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [] }: 
         </section>
     ) : null;
 
-    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{historyControls}{approvalControls}</>;
+    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{outputControls}{historyControls}{approvalControls}</>;
 }
