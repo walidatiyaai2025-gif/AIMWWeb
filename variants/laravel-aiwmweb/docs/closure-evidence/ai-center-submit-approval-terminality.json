@@ -47,7 +47,7 @@
   "acceptance": {
     "implementation_source_sha": "b36742716c83e773ef19f4980cb180c3acdf53a5",
     "backend_test": "backend/tests/Feature/AiCenterSubmitApprovalTerminalityTest.php",
-    "frontend_test": "backend/resources/js/__tests__/ai-center-submit-approval.test.tsx",
+    "frontend_test": "resources/js/__tests__/ai-center-submit-approval.test.tsx",
     "focused_validation_run": 34169607498,
     "proofs": [
       "exact canonical operation identity, source route/file/handler, domain/kind, tenant ownership and PENDING-to-ADAPTED transition contract",
