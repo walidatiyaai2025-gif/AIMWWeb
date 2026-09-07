@@ -1,0 +1,152 @@
+name: Laravel AIWMWeb PHPUnit Diagnostics
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-phpunit-diagnostics.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite-diagnostics:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+      - name: Run full PHPUnit suite on SQLite with durable diagnostics
+        id: phpunit
+        shell: bash
+        continue-on-error: true
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan test --log-junit /tmp/phpunit-sqlite.xml 2>&1 | tee /tmp/phpunit-sqlite.log
+          rc=${PIPESTATUS[0]}
+          echo "exit_code=${rc}" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+      - name: Publish SQLite failure summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### SQLite PHPUnit diagnostic'
+            echo '```text'
+            tail -n 160 /tmp/phpunit-sqlite.log 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.phpunit.outcome }}" == 'failure' ]]; then
+            compact="$(tail -n 40 /tmp/phpunit-sqlite.log 2>/dev/null | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=SQLite PHPUnit failure::${compact}"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: laravel-aiwmweb-phpunit-sqlite-${{ github.sha }}
+          path: |
+            /tmp/phpunit-sqlite.log
+            /tmp/phpunit-sqlite.xml
+          if-no-files-found: warn
+      - name: Propagate SQLite PHPUnit result
+        if: always()
+        shell: bash
+        run: |
+          [[ "${{ steps.phpunit.outputs.exit_code }}" == '0' ]]
+
+  mysql-diagnostics:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4.11
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_aiwmweb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: laravel_aiwmweb
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Prepare MySQL schema
+        run: php artisan migrate:fresh --force
+      - name: Run full PHPUnit suite on MySQL with durable diagnostics
+        id: phpunit
+        shell: bash
+        continue-on-error: true
+        run: |
+          set +e
+          php artisan test --log-junit /tmp/phpunit-mysql.xml 2>&1 | tee /tmp/phpunit-mysql.log
+          rc=${PIPESTATUS[0]}
+          echo "exit_code=${rc}" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+      - name: Publish MySQL failure summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### MySQL PHPUnit diagnostic'
+            echo '```text'
+            tail -n 160 /tmp/phpunit-mysql.log 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.phpunit.outcome }}" == 'failure' ]]; then
+            compact="$(tail -n 40 /tmp/phpunit-mysql.log 2>/dev/null | tr '\n' ' ' | cut -c1-3500)"
+            echo "::error title=MySQL PHPUnit failure::${compact}"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: laravel-aiwmweb-phpunit-mysql-${{ github.sha }}
+          path: |
+            /tmp/phpunit-mysql.log
+            /tmp/phpunit-mysql.xml
+          if-no-files-found: warn
+      - name: Propagate MySQL PHPUnit result
+        if: always()
+        shell: bash
+        run: |
+          [[ "${{ steps.phpunit.outputs.exit_code }}" == '0' ]]
