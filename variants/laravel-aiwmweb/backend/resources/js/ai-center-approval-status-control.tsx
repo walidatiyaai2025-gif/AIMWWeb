@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 
 export const AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID = 'AIMW-AI-168B406674';
 export const AI_CENTER_NEW_SESSION_OPERATION_ID = 'AIMW-AI-C7621E276C';
+export const AI_CENTER_CLEAR_HISTORY_OPERATION_ID = 'AIMW-AI-746EDAE589';
 
 type ApprovalStatus = {
     id: number;
@@ -14,17 +15,28 @@ type ApprovalStatus = {
     updated_at?: string | null;
 };
 
+export type AiCenterSessionHistoryEntry = {
+    id: string;
+    title: string;
+    promptKey: string;
+    output: string;
+};
+
 type ApprovalStatusResponse = { data: ApprovalStatus | null };
-
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
+type AiCenterApprovalStatusControlProps = {
+    context: FrontendContext;
+    initialHistory?: AiCenterSessionHistoryEntry[];
+};
 
-export function AiCenterApprovalStatusControl({ context }: { context: FrontendContext }) {
+export function AiCenterApprovalStatusControl({ context, initialHistory = [] }: AiCenterApprovalStatusControlProps) {
     const { locale } = useLocale();
     const [approval, setApproval] = useState<ApprovalStatus | null>(null);
     const [state, setState] = useState<LoadState>('idle');
     const [error, setError] = useState('');
     const [promptKey, setPromptKey] = useState('');
     const [content, setContent] = useState('');
+    const [history, setHistory] = useState<AiCenterSessionHistoryEntry[]>(() => initialHistory.slice(0, 10));
     const readEpoch = useRef(0);
     const canRead = context.permissions.includes('ai.use');
     const endpoint = `/api/tenants/${encodeURIComponent(context.tenant.slug)}/ai-center/approval-status`;
@@ -59,6 +71,10 @@ export function AiCenterApprovalStatusControl({ context }: { context: FrontendCo
         setState('idle');
     };
 
+    const clearHistory = () => {
+        setHistory([]);
+    };
+
     if (!canRead) return null;
 
     const sessionControls = (
@@ -91,6 +107,39 @@ export function AiCenterApprovalStatusControl({ context }: { context: FrontendCo
         </section>
     );
 
+    const historyControls = (
+        <section className="panel ai-session-history" aria-label={locale === 'ar' ? 'سجل اقتراحات الجلسة' : 'Session suggestions'}>
+            <header className="panel-header">
+                <div>
+                    <span className="workspace-kicker">SESSION HISTORY</span>
+                    <strong>{locale === 'ar' ? 'اقتراحات الجلسة' : 'Session suggestions'}</strong>
+                </div>
+                <button
+                    type="button"
+                    className="btn"
+                    data-canonical-operation={AI_CENTER_CLEAR_HISTORY_OPERATION_ID}
+                    disabled={history.length === 0}
+                    onClick={clearHistory}
+                >
+                    {locale === 'ar' ? 'مسح السجل' : 'Clear history'}
+                </button>
+            </header>
+            {history.length === 0 ? (
+                <p className="empty-state">{locale === 'ar' ? 'لا توجد اقتراحات في هذه الجلسة بعد.' : 'No session suggestions yet.'}</p>
+            ) : (
+                <ul className="activity-list" aria-label={locale === 'ar' ? 'اقتراحات محفوظة في الجلسة' : 'In-memory session suggestions'}>
+                    {history.map((item) => (
+                        <li key={item.id} data-history-id={item.id}>
+                            <strong>{item.title}</strong>
+                            <span data-bidi="technical">{item.promptKey}</span>
+                            <p>{item.output}</p>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
+
     const approvalControls = approval ? (
         <section className="panel ai-approval-status-control" aria-label={locale === 'ar' ? 'حالة موافقة مركز الذكاء الاصطناعي' : 'AI Center approval status'}>
             <header className="panel-header">
@@ -116,5 +165,5 @@ export function AiCenterApprovalStatusControl({ context }: { context: FrontendCo
         </section>
     ) : null;
 
-    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{approvalControls}</>;
+    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{historyControls}{approvalControls}</>;
 }
