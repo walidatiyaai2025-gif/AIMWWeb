@@ -1,12 +1,9 @@
 name: Laravel AIWMWeb Slot 0168 Focused Validation
 
-# rerun: executor safety isolated from unrelated legacy controller signature
 on:
   push:
     branches:
       - worker/laravel-aiwmweb-AIMW-AI-93EBFDE5A1-slot0168
-    paths:
-      - '.github/workflows/laravel-aiwmweb-slot0168-diagnose.yml'
 
 permissions:
   contents: read
