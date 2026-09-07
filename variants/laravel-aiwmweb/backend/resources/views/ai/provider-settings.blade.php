@@ -15,7 +15,7 @@
             <nav aria-label="AI provider settings sections">
                 {{-- AIMW-AI-3B59F172AB: canonical Back to Settings navigation --}}
                 <a
-                    href="{{ url("/tenants/{$tenant->slug}/settings") }}"
+                    href="/tenants/{{ $tenant->slug }}/settings"
                     aria-label="Back to Settings"
                     data-canonical-operation="AIMW-AI-3B59F172AB"
                 >← Settings</a>
