@@ -495,6 +495,26 @@
           "security_mode": "pre_tenant_session_auth"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-270F69CE9A authenticated logout API reconciliation recovery",
+      "sha": "75ab4dcf2045786b875fc315000ca0c6de095b2e",
+      "observed_pr_head": "75ab4dcf2045786b875fc315000ca0c6de095b2e",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-270F69CE9A": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
+          "action_method": "logout",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-backend-terminality.json",
+          "security_mode": "authenticated_session_logout"
+        }
+      }
     }
   ],
   "excluded_sources": [],
