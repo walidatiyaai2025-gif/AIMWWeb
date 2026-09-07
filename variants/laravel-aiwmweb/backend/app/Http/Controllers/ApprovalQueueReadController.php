@@ -20,7 +20,9 @@ final class ApprovalQueueReadController extends Controller
         $query = Approval::query()->orderByDesc('created_at')->orderByDesc('id');
         if ($search !== '') {
             $query->where(function ($query) use ($search): void {
-                $query->where('status', 'like', '%'.$search.'%');
+                $query->where('status', 'like', '%'.$search.'%')
+                    ->orWhere('title', 'like', '%'.$search.'%')
+                    ->orWhere('operation_type', 'like', '%'.$search.'%');
                 if (ctype_digit($search)) {
                     $query->orWhereKey((int) $search)
                         ->orWhere('suggestion_id', (int) $search);
@@ -44,6 +46,13 @@ final class ApprovalQueueReadController extends Controller
                     'id' => $approval->id,
                     'status' => $approval->status,
                     'suggestion_id' => $approval->suggestion_id,
+                    'site_id' => $approval->site_id,
+                    'site_name' => $approval->site_name,
+                    'source_operation_id' => $approval->source_operation_id,
+                    'operation_type' => $approval->operation_type,
+                    'title' => $approval->title,
+                    'actor_label' => $approval->actor_label,
+                    'risk_level' => $approval->risk_level,
                     'requested_by_user_id' => $approval->actor_user_id,
                     'execution_id' => $execution?->id,
                     'execution_status' => $execution?->status,
