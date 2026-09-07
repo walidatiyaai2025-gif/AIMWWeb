@@ -8,28 +8,28 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 502 |
-| PENDING | 429 |
+| ADAPTED | 503 |
+| PENDING | 428 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 502 |
-| OVERALL_PARITY_PERCENT | 53.92% |
+| TERMINAL | 503 |
+| OVERALL_PARITY_PERCENT | 54.03% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **88**
-- Pending: **358**
+- Terminal: **89**
+- Pending: **357**
 - Blocked: **0**
-- Parity: **19.73%**
+- Parity: **19.96%**
 
 ## By domain
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 78 | 14 | 0 | 0 | 78 | 84.78% |
+| ai | 92 | 0 | 79 | 13 | 0 | 0 | 79 | 85.87% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 44 | 40 | 0 | 0 | 44 | 52.38% |
 | service | 349 | 0 | 325 | 24 | 0 | 0 | 325 | 93.12% |
-| visible_control | 446 | 0 | 88 | 358 | 0 | 0 | 88 | 19.73% |
+| visible_control | 446 | 0 | 89 | 357 | 0 | 0 | 89 | 19.96% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **37**
-- Focused visible-control contracts: **88**
+- Focused visible-control contracts: **89**
 - Focused service contracts: **8**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
@@ -74,9 +74,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (14)
+### ai (13)
 
-- `AIMW-AI-93EBFDE5A1`
 - `AIMW-AI-953A6C0D98`
 - `AIMW-AI-98F705F888`
 - `AIMW-AI-9E73ABE9CE`
