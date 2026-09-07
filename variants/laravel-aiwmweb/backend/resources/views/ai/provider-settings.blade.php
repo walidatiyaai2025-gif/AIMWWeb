@@ -25,7 +25,7 @@
         <section id="runtime" aria-labelledby="runtime-behavior">
             <h2 id="runtime-behavior">Runtime behavior</h2>
             <p>Review the active tenant's persisted provider enablement, fallback capability, and readiness before changing separate governed AI settings.</p>
-            <p>Loading this section does not change provider enablement, ordering, fallback, credentials, or models.</p>
+            <p>This section is read-only: it does not change provider enablement, ordering, fallback, credentials, or models.</p>
         </section>
 
         <section id="providers" aria-labelledby="provider-registry">
