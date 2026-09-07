@@ -68,6 +68,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}/seo/remediations')
     ->group(function (): void {
         Route::get('/proposals', [SeoRemediationClosureController::class, 'proposals']);
         Route::get('/history', [SeoRemediationClosureController::class, 'history']);
+        Route::post('/failed/retry', [SeoRemediationClosureController::class, 'retryFailed']);
         Route::post('/executions/{execution}/undo', [SeoRemediationClosureController::class, 'undo']);
     });
 
