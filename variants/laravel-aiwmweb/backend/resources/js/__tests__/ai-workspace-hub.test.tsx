@@ -56,7 +56,7 @@ describe('AIMW-AI-8EE4F9F6FC AI workspace route', () => {
         expect(screen.getByRole('link', { name: /Select Site/i })).toHaveAttribute('href', '/tenants/alpha/sites');
     });
 
-    it('preserves the source card labels and descriptions without prototype readiness content', () => {
+    it('preserves the source card labels and descriptions while keeping every canonical card actionable', () => {
         renderHub();
 
         expect(screen.getByRole('heading', { level: 3, name: 'AI Center' })).toBeInTheDocument();
@@ -67,7 +67,10 @@ describe('AIMW-AI-8EE4F9F6FC AI workspace route', () => {
         expect(screen.getByText('Manage persisted templates through the real prompt store.')).toBeInTheDocument();
         expect(screen.getByRole('heading', { level: 3, name: 'Approvals' })).toBeInTheDocument();
         expect(screen.getByText('Review execution requests that require approval.')).toBeInTheDocument();
-        expect(screen.queryByText(/readiness/i)).not.toBeInTheDocument();
+
+        const links = screen.getAllByTestId('workspace-link');
+        expect(links).toHaveLength(4);
+        for (const link of links) expect(link.tagName).toBe('A');
     });
 
     it('encodes the authoritative tenant slug in every navigation target', () => {
