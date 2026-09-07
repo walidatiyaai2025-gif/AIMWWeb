@@ -27,7 +27,6 @@ export function canonicalSiteVerifyEndpoint(detailEndpoint: string | undefined):
 }
 
 export function SiteDetailsSaveTestControl({ context }: { context: FrontendContext }) {
-    const { locale } = useLocale();
     const detailEndpoint = useMemo(() => {
         const candidates = Object.entries(context.api)
             .filter(([key]) => key.startsWith('sites.detail.'))
@@ -37,16 +36,36 @@ export function SiteDetailsSaveTestControl({ context }: { context: FrontendConte
     const verifyEndpoint = canonicalSiteVerifyEndpoint(detailEndpoint);
     const canManageConnector = context.permissions.includes('*') || context.permissions.includes('connector.manage');
 
+    if (!canManageConnector || !detailEndpoint || !verifyEndpoint) return null;
+
+    return (
+        <AuthorizedSiteDetailsSaveTestControl
+            context={context}
+            detailEndpoint={detailEndpoint}
+            verifyEndpoint={verifyEndpoint}
+        />
+    );
+}
+
+function AuthorizedSiteDetailsSaveTestControl({
+    context,
+    detailEndpoint,
+    verifyEndpoint,
+}: {
+    context: FrontendContext;
+    detailEndpoint: string;
+    verifyEndpoint: string;
+}) {
+    const { locale } = useLocale();
     const details = useQuery({
         queryKey: ['canonical-site-details-save-test', context.tenant.slug, detailEndpoint],
-        queryFn: () => apiRequest<SiteDetailsPayload>(detailEndpoint!),
-        enabled: Boolean(detailEndpoint) && canManageConnector,
+        queryFn: () => apiRequest<SiteDetailsPayload>(detailEndpoint),
         retry: false,
     });
 
     const mutation = useMutation({
         mutationFn: () => mutateThenReconcile(
-            () => apiRequest<HealthPayload>(verifyEndpoint!, { method: 'POST' }),
+            () => apiRequest<HealthPayload>(verifyEndpoint, { method: 'POST' }),
             async () => {
                 const refreshed = await details.refetch();
                 if (refreshed.error) throw refreshed.error;
@@ -54,8 +73,6 @@ export function SiteDetailsSaveTestControl({ context }: { context: FrontendConte
             },
         ),
     });
-
-    if (!canManageConnector || !detailEndpoint || !verifyEndpoint) return null;
 
     const error = mutation.error;
     const errorMessage = error instanceof AuthoritativeReconciliationError
