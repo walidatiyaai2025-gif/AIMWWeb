@@ -1,0 +1,44 @@
+name: Laravel AIWMWeb Slot 0169 Manifest Hygiene
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-93EBFDE5A1-slot0168
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0169-manifest-hygiene.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Restore canonical manifest formatting and retain exact evidence pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          path='variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          git show ff26e9d38e4e3724a7ad89fee8080bafeb543e89:"$path" > "$path"
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          text = path.read_text(encoding='utf-8')
+          old = '"focused_closure_evidence_source_sha": "7677697af77efdb0ca6f87959aa116275a09fdfd"'
+          new = '"focused_closure_evidence_source_sha": "6d5b3589e5bf2b25d0d3ed378115cd3a3c1277de"'
+          if text.count(old) != 1:
+              raise SystemExit('canonical focused evidence pin was not found exactly once')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          stats=$(git diff --numstat -- "$path")
+          test "$stats" = $'1\t1\tvariants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$path"
+          git commit -m 'docs(laravel): minimize focused evidence manifest pin diff'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
