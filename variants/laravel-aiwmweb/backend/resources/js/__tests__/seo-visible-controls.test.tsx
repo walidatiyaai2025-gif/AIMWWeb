@@ -12,6 +12,7 @@ const config = {
         prepare_bulk: '/api/tenants/alpha/sites/7/seo/remediations/bulk',
         ai_proposal: '/api/tenants/alpha/sites/7/seo/findings/__FINDING__/ai-proposal',
         proposals: '/api/v1/tenants/alpha/sites/7/seo/remediations/proposals',
+        retry_failed: '/api/v1/tenants/alpha/sites/7/seo/remediations/failed/retry',
         presentation: '/tenants/alpha/sites/7/seo/presentation',
         execution: '/tenants/alpha/module/execution',
         sites: '/tenants/alpha/sites',
@@ -35,15 +36,18 @@ function jsonResponse(payload: unknown, status = 200) {
 
 describe('SEO visible-control mass closure', () => {
     let fetchMock: ReturnType<typeof vi.fn>;
+    let proposalsPayload: Array<Record<string, unknown>>;
 
     beforeEach(() => {
         document.head.innerHTML = '<meta name="csrf-token" content="csrf-test">';
+        proposalsPayload = [];
         fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
             const url = String(input);
             if (url.endsWith('/seo/audits')) return jsonResponse({ data: [{ id: 44, status: 'succeeded' }] });
             if (url.includes('/seo/audits/44/findings')) return jsonResponse(findings);
             if (url.endsWith('/seo/presentation')) return jsonResponse({ audit_id: 44, links: { '1': 'https://alpha.test/real-content/' } });
-            if (url.includes('/seo/remediations/proposals')) return jsonResponse([]);
+            if (url.endsWith('/seo/remediations/proposals')) return jsonResponse({ data: proposalsPayload });
+            if (url.endsWith('/seo/remediations/failed/retry') && init?.method === 'POST') return jsonResponse({ queued: 1, execution_ids: [501], mutated: false }, 202);
             if (url.endsWith('/seo/remediations/bulk') && init?.method === 'POST') {
                 const body = JSON.parse(String(init.body));
                 return jsonResponse({ prepared: body.items.map((item: { finding_id: number }, index: number) => ({ finding_id: item.finding_id, suggestion_id: 100 + index, approval_id: 200 + index, status: 'pending_approval' })), failed: [] }, 201);
@@ -95,5 +99,31 @@ describe('SEO visible-control mass closure', () => {
         fireEvent.click(container.querySelector(`[data-canonical-operation="${SEO_OPERATIONS.applyAllSafe}"]`) as HTMLElement);
         await waitFor(() => expect(fetchMock.mock.calls.filter(([url, init]) => String(url).endsWith('/seo/remediations/bulk') && init?.method === 'POST').length).toBe(2));
         expect(screen.getByText(/Safe remediation batch: 12 change\(s\) prepared for approval/)).toBeInTheDocument();
+    });
+
+    it('surfaces the canonical Retry failed control only for retryable failed proposals and posts through the governed retry endpoint', async () => {
+        proposalsPayload = [
+            { proposed_state: { seo_title: 'Retry title' }, execution: { id: 501, status: 'failed', attempts: 2 } },
+            { proposed_state: {}, execution: { id: 502, status: 'failed', attempts: 1 } },
+            { proposed_state: { seo_title: 'Already done' }, execution: { id: 503, status: 'succeeded', attempts: 1 } },
+        ];
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+
+        const retryButton = screen.getByTestId('seo-retry-failed');
+        expect(retryButton).toBeEnabled();
+        expect(retryButton).toHaveAttribute('data-canonical-operation', SEO_OPERATIONS.retryFailed);
+        expect(SEO_OPERATIONS.retryFailed).toBe('AIMW-AI-49E68B3816');
+
+        fireEvent.click(retryButton);
+        await screen.findByText(/Retry failed: 1 failed execution\(s\) queued/);
+
+        const retryPost = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith('/seo/remediations/failed/retry') && init?.method === 'POST');
+        expect(retryPost).toBeTruthy();
+        expect(JSON.parse(String(retryPost?.[1]?.body))).toEqual({});
+        const headers = new Headers(retryPost?.[1]?.headers);
+        expect(headers.get('X-CSRF-TOKEN')).toBe('csrf-test');
+        expect(screen.getByText(/authoritative re-read verification/)).toBeInTheDocument();
+        await waitFor(() => expect(container.querySelector('[data-testid="seo-retry-failed"]')).toBeDisabled());
     });
 });
