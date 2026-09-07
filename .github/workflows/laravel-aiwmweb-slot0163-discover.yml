@@ -1,0 +1,31 @@
+name: Laravel AIWMWeb Slot 0163 Discover Canonical Operation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-746EDAE589-slot0163
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0163-discover.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Print exact canonical operation row
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          operation_id = 'AIMW-AI-746EDAE589'
+          payload = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text(encoding='utf-8'))
+          row = next(item for item in payload['operations'] if item['operation_id'] == operation_id)
+          print(json.dumps(row, indent=2, ensure_ascii=False, sort_keys=True))
+          PY
