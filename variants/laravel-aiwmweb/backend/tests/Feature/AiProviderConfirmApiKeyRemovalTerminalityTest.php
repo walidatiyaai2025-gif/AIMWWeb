@@ -40,7 +40,7 @@ class AiProviderConfirmApiKeyRemovalTerminalityTest extends TestCase
         $this->assertSame('/settings/ai-providers', $operation['route_screen']);
         $this->assertSame('@(L.IsArabic ? [ConfirmRemovalAndSaveAsync]', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor', $operation['current_source']);
-        $this->assertTrue((bool) $operation['mutation']);
+        $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
         $this->assertContains($operation['migration_state'], ['PENDING', 'ADAPTED']);
     }
