@@ -25,6 +25,7 @@ final class SeoRetryFailedVisibleControlTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-AI-49E68B3816';
+
     private int $nextRemoteId = 1000;
 
     protected function setUp(): void
@@ -76,7 +77,7 @@ final class SeoRetryFailedVisibleControlTerminalityTest extends TestCase
     public function test_retry_failed_fails_closed_for_guest_missing_permission_and_foreign_tenant_site(): void
     {
         $guestTenant = Tenant::query()->create(['name' => 'Guest Retry', 'slug' => 'guest-retry']);
-        $this->post('/api/v1/tenants/'.$guestTenant->slug.'/sites/1/seo/remediations/failed/retry')->assertRedirect();
+        $this->post('/api/v1/tenants/'.$guestTenant->slug.'/sites/1/seo/remediations/failed/retry')->assertUnauthorized();
 
         $limited = User::factory()->create();
         $limitedMembership = $this->membership($limited, 'limited-retry', ['tenant.view', 'seo.view']);
