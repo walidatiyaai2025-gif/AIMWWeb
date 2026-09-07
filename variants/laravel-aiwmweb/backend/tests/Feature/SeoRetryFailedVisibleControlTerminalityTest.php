@@ -25,6 +25,7 @@ final class SeoRetryFailedVisibleControlTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-AI-49E68B3816';
+    private int $nextRemoteId = 1000;
 
     protected function setUp(): void
     {
@@ -109,7 +110,7 @@ final class SeoRetryFailedVisibleControlTerminalityTest extends TestCase
         $this->assertStringContainsString('disabled={busy || failedProposalCount === 0}', $frontend);
         $this->assertStringContainsString("Route::post('/failed/retry'", $routes);
         $this->assertStringContainsString("->where('status', 'failed')", $service);
-        $this->assertStringContainsString("$approval->status !== 'APPROVED'", $service);
+        $this->assertStringContainsString('$approval->status !== \'APPROVED\'', $service);
 
         $user = User::factory()->create();
         $membership = $this->membership($user, 'config-retry', ['tenant.view', 'seo.view']);
@@ -129,7 +130,7 @@ final class SeoRetryFailedVisibleControlTerminalityTest extends TestCase
     ): Execution {
         $context = app(TenantContext::class);
         $context->activate($membership->tenant, $membership);
-        $remoteId = random_int(1000, 999999);
+        $remoteId = ++$this->nextRemoteId;
         $content = SyncedContent::query()->create([
             'site_id' => $site->id,
             'resource_type' => 'post',
