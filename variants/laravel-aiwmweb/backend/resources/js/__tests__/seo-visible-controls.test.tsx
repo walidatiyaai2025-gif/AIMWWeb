@@ -47,7 +47,10 @@ describe('SEO visible-control mass closure', () => {
             if (url.includes('/seo/audits/44/findings')) return jsonResponse(findings);
             if (url.endsWith('/seo/presentation')) return jsonResponse({ audit_id: 44, links: { '1': 'https://alpha.test/real-content/' } });
             if (url.endsWith('/seo/remediations/proposals')) return jsonResponse({ data: proposalsPayload });
-            if (url.endsWith('/seo/remediations/failed/retry') && init?.method === 'POST') return jsonResponse({ queued: 1, execution_ids: [501], mutated: false }, 202);
+            if (url.endsWith('/seo/remediations/failed/retry') && init?.method === 'POST') {
+                proposalsPayload = [];
+                return jsonResponse({ queued: 1, execution_ids: [501], mutated: false }, 202);
+            }
             if (url.endsWith('/seo/remediations/bulk') && init?.method === 'POST') {
                 const body = JSON.parse(String(init.body));
                 return jsonResponse({ prepared: body.items.map((item: { finding_id: number }, index: number) => ({ finding_id: item.finding_id, suggestion_id: 100 + index, approval_id: 200 + index, status: 'pending_approval' })), failed: [] }, 201);
