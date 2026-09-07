@@ -50,13 +50,21 @@ jobs:
         working-directory: variants/laravel-aiwmweb/backend
         run: npm ci
 
-      - name: Focused Site Details Save Test validation
+      - name: Focused Pint gate
         working-directory: variants/laravel-aiwmweb/backend
-        run: |
-          vendor/bin/pint --test tests/Feature/SiteDetailsSaveTestControlTerminalityTest.php
-          php artisan test --filter=SiteDetailsSaveTestControlTerminalityTest
-          npm test -- --run resources/js/__tests__/site-details-save-test-control.test.tsx
-          npm run typecheck
+        run: vendor/bin/pint --test tests/Feature/SiteDetailsSaveTestControlTerminalityTest.php
+
+      - name: Focused PHP gate
+        working-directory: variants/laravel-aiwmweb/backend
+        run: php artisan test --filter=SiteDetailsSaveTestControlTerminalityTest
+
+      - name: Focused frontend gate
+        working-directory: variants/laravel-aiwmweb/backend
+        run: npm test -- --run resources/js/__tests__/site-details-save-test-control.test.tsx
+
+      - name: Frontend typecheck
+        working-directory: variants/laravel-aiwmweb/backend
+        run: npm run typecheck
 
       - name: Pin focused closure source to exact pushed evidence SHA
         run: |
