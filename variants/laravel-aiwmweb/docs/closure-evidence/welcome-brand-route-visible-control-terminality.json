@@ -61,7 +61,15 @@
     }
   },
   "implementation": {
-    "baseline_composition_sha": "65df9dca149d02879ae8e4fac0ac02ea9b546e42"
+    "baseline_composition_sha": "65df9dca149d02879ae8e4fac0ac02ea9b546e42",
+    "validated_implementation_sha": "57a196f4fa8c6bd81c799e72f2ae1bf47f83aa01",
+    "validated_ci": {
+      "acceptance_run": 34134145238,
+      "parity_reconciliation_run": 34134145220,
+      "cross_domain_security_run": 34134145195,
+      "pr_plan_link_run": 34134145235,
+      "result": "PASS"
+    }
   },
   "scope_guards": {
     "exactly_one_operation": true,
