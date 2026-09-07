@@ -103,6 +103,38 @@ def security_signals(kind: str, mode: str, destination: str, action: str, accept
         ])
         return signals
 
+    if mode == "authenticated_session_logout":
+        require("auth::logout()" in action_low,
+                f"explicit authenticated-session logout API provenance lacks authoritative logout: {operation_id}")
+        require("session()->invalidate()" in action_low,
+                f"explicit authenticated-session logout API provenance lacks session invalidation: {operation_id}")
+        require("session()->regeneratetoken()" in action_low,
+                f"explicit authenticated-session logout API provenance lacks CSRF-token regeneration: {operation_id}")
+        require("assertcontains('web'" in test_low and "assertcontains('auth'" in test_low,
+                f"explicit authenticated-session logout API provenance lacks authenticated web-route acceptance: {operation_id}")
+        require("assertnotcontains('tenant.context'" in test_low,
+                f"explicit authenticated-session logout API provenance must remain tenant-resource neutral: {operation_id}")
+        require("parameternames" in test_low and "assertsame([]," in test_low,
+                f"explicit authenticated-session logout API provenance lacks zero-route-parameter acceptance: {operation_id}")
+        require("actingas" in test_low and "postjson('/api/logout')" in test_low and "assertguest()" in test_low,
+                f"explicit authenticated-session logout API provenance lacks authenticated-to-guest runtime acceptance: {operation_id}")
+        require("assertunauthorized" in test_low or "assertstatus(401)" in test_low,
+                f"explicit authenticated-session logout API provenance lacks unauthenticated fail-closed acceptance: {operation_id}")
+        require("assertexactjson(['ok' => true])" in test_low,
+                f"explicit authenticated-session logout API provenance lacks truthful success response acceptance: {operation_id}")
+        signals.extend([
+            "middleware:web",
+            "middleware:auth",
+            "tenant:resource-neutral",
+            "route:no-parameters",
+            "session:logout",
+            "session:invalidated",
+            "csrf:token-regenerated",
+            "test:authenticated-to-guest",
+            "test:unauthorized-guest",
+        ])
+        return signals
+
     if mode == "tenant_neutral":
         require("web" in route_low and "auth" not in route_low and "tenant.context" not in route_low,
                 f"explicit tenant-neutral API provenance route boundary is not neutral: {operation_id}")
@@ -174,19 +206,19 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
             action_stem = Path(action_path).stem.lower()
             require(action_stem in destination_low,
                     f"explicit route/API destination is not wired to declared action: {operation_id}")
-            if kind == "api" and mode == "pre_tenant_session_auth":
+            if kind == "api" and mode in {"pre_tenant_session_auth", "authenticated_session_logout"}:
                 action_method = str(evidence.get("action_method") or "").strip()
                 require(bool(action_method),
-                        f"explicit pre-tenant session-auth API provenance is missing action_method: {operation_id}")
+                        f"explicit session API provenance is missing action_method: {operation_id}")
                 method_low = action_method.lower()
                 require(re.search(rf"function\s+{re.escape(method_low)}\s*\(", action.lower()) is not None,
-                        f"explicit pre-tenant session-auth API provenance action method is absent: {operation_id}")
+                        f"explicit session API provenance action method is absent: {operation_id}")
                 post_binding = re.compile(
                     rf"route::post\s*\(\s*['\"][^'\"]*{re.escape(literals[-1])}[^'\"]*['\"]\s*,\s*\[\s*{re.escape(action_stem)}::class\s*,\s*['\"]{re.escape(method_low)}['\"]\s*\]",
                     re.IGNORECASE,
                 )
                 require(post_binding.search(destination) is not None,
-                        f"explicit pre-tenant session-auth API provenance lacks exact POST/action binding: {operation_id}")
+                        f"explicit session API provenance lacks exact POST/action binding: {operation_id}")
             signals = security_signals(kind, mode, destination, action, acceptance, operation_id)
 
             row["migration_state"] = "ADAPTED"
@@ -221,7 +253,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     payload["classification_policy"]["explicit_route_api_policy"] = (
         "route/API rows may be terminalized by route_api_provenance only when an exact pushed source "
         "proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, "
-        "and tenant-selected, pre-tenant session-auth, or explicitly tenant-neutral security semantics"
+        "and tenant-selected, pre-tenant session-auth, authenticated-session logout, or explicitly tenant-neutral security semantics"
     )
 
     validation = payload.setdefault("validation", {})
