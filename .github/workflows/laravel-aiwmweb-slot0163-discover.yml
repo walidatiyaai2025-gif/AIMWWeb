@@ -29,3 +29,13 @@ jobs:
           row = next(item for item in payload['operations'] if item['operation_id'] == operation_id)
           print(json.dumps(row, indent=2, ensure_ascii=False, sort_keys=True))
           PY
+      - name: Inspect existing AI Center generation and tenant route wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '--- frontend_actions matches ---'
+          grep -n -C 20 -E "ai\.generate|ai-center|AIMW-AI-" variants/laravel-aiwmweb/backend/config/frontend_actions.php || true
+          echo '--- web route matches ---'
+          grep -n -C 15 -E "ai-center|CanonicalWorkspaceRouteController" variants/laravel-aiwmweb/backend/routes/web.php || true
+          echo '--- AI controller/action matches ---'
+          grep -R -n -C 8 -E "ai\.generate|AI Center|ai-center|Generate" variants/laravel-aiwmweb/backend/app/Http/Controllers variants/laravel-aiwmweb/backend/app/Services 2>/dev/null | head -n 500 || true
