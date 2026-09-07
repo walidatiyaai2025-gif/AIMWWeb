@@ -64,8 +64,8 @@ describe(`${AI_CENTER_SUBMIT_APPROVAL_OPERATION_ID} AI Center Submit to approval
 
         const submit = await screen.findByRole('button', { name: 'Submit to approval queue' });
         expect(submit).toHaveAttribute('data-canonical-operation', AI_CENTER_SUBMIT_APPROVAL_OPERATION_ID);
-        expect(screen.getByText('Original article')).toBeInTheDocument();
-        expect(screen.getByText('Improved article')).toBeInTheDocument();
+        expect(screen.getAllByText('Original article')).toHaveLength(2);
+        expect(screen.getAllByText('Improved article')).toHaveLength(2);
 
         fireEvent.change(screen.getByLabelText('Risk level'), { target: { value: 'Critical' } });
         fireEvent.change(screen.getByLabelText('Operation type'), { target: { value: 'AI.ContentRewrite' } });
