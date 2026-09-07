@@ -1,0 +1,168 @@
+name: Laravel AIWMWeb Slot 0139 Logout Reconciliation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-CONT-270F69CE9A-slot0139
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Install focused Laravel test dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Validate verifier and focused logout acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=variants/laravel-aiwmweb
+          python -m py_compile "$ROOT/tools/apply_explicit_route_api_provenance.py"
+          cd "$ROOT/backend"
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test tests/Feature/ContentBackendTerminalityTest.php
+          php artisan test --filter ContentBackendTerminalityTest
+      - name: Register exact authenticated logout evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text())
+          operation_id = 'AIMW-CONT-270F69CE9A'
+          source_sha = '75ab4dcf2045786b875fc315000ca0c6de095b2e'
+
+          for source in manifest['countable_sources']:
+              if operation_id in (source.get('route_api_provenance') or {}):
+                  raise SystemExit(f'{operation_id} is already registered; refusing duplicate reconciliation evidence')
+
+          manifest['countable_sources'].append({
+              'label': 'AIMW-CONT-270F69CE9A authenticated logout API reconciliation recovery',
+              'sha': source_sha,
+              'observed_pr_head': source_sha,
+              'domains': ['content'],
+              'supporting_only': True,
+              'route_api_provenance': {
+                  operation_id: {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/routes/web.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php',
+                      'action_method': 'logout',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/content-backend-terminality.json',
+                      'security_mode': 'authenticated_session_logout'
+                  }
+              }
+          })
+          path.write_text(json.dumps(manifest, indent=2) + '\n')
+          PY
+      - name: Regenerate canonical 931-operation reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=variants/laravel-aiwmweb
+          cp "$ROOT/docs/operation-parity-reconciliation.json" /tmp/operation-parity-before.json
+          python "$ROOT/tools/finalize_operation_parity.py" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_tenant_neutral_route_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_explicit_route_api_provenance.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_focused_closure_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_focused_service_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+      - name: Prove exactly one intended parity transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          before = json.loads(Path('/tmp/operation-parity-before.json').read_text())
+          after = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          before_by_id = {row['operation_id']: row['migration_state'] for row in before['operations']}
+          after_by_id = {row['operation_id']: row['migration_state'] for row in after['operations']}
+          changed = sorted(op for op in before_by_id if before_by_id[op] != after_by_id[op])
+          assert changed == ['AIMW-CONT-270F69CE9A'], changed
+          totals = after['totals']
+          assert totals['total'] == 931, totals
+          assert totals['terminal'] == 492, totals
+          assert totals['pending'] == 439, totals
+          assert totals['blocked'] == 0, totals
+          assert after_by_id['AIMW-CONT-2F2E40D7F0'] == 'ADAPTED'
+          assert after_by_id['AIMW-CONT-270F69CE9A'] == 'ADAPTED'
+          assert after_by_id['AIMW-CONT-475267F150'] == 'PENDING'
+          print('STATE_CHANGED_IDS=AIMW-CONT-270F69CE9A')
+          print('EXACT_TRANSITION=AIMW-CONT-270F69CE9A:PENDING->ADAPTED')
+          print('TOTAL=931')
+          print('TERMINAL=492')
+          print('PENDING=439')
+          print('BLOCKED=0')
+          PY
+      - name: Commit canonical logout reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'docs(laravel): reconcile logout API parity'
+          git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Remove temporary reconciliation runner
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin "${GITHUB_REF_NAME}"
+          git checkout -B "${GITHUB_REF_NAME}" "origin/${GITHUB_REF_NAME}"
+          rm -f .github/workflows/laravel-aiwmweb-slot0139-reconcile-logout.yml
+          git add .github/workflows/laravel-aiwmweb-slot0139-reconcile-logout.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'ci(laravel): remove slot 0139 reconciliation runner'
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
