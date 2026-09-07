@@ -13,9 +13,16 @@
             <p>Review persisted provider configuration and runtime readiness for {{ $tenant->name }}.</p>
             <p>Settings managers only. API credentials are never rendered; only credential presence is exposed.</p>
             <nav aria-label="AI provider settings sections">
+                <a href="#runtime" data-canonical-operation="AIMW-AI-44DD850CE4">Runtime behavior</a>
                 <a href="#providers" data-canonical-operation="AIMW-AI-4F6B6584E4">Providers and keys</a>
             </nav>
         </header>
+
+        <section id="runtime" aria-labelledby="runtime-behavior">
+            <h2 id="runtime-behavior">Runtime behavior</h2>
+            <p>Review the active tenant's persisted provider enablement, fallback capability, and readiness before changing separate governed AI settings.</p>
+            <p>This section is read-only: it does not change provider enablement, ordering, fallback, credentials, or models.</p>
+        </section>
 
         <section id="providers" aria-labelledby="provider-registry">
             <h2 id="provider-registry">Provider registry</h2>
