@@ -19,6 +19,7 @@ import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
+import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
@@ -119,6 +120,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'site-details') return (
         <>
             <SiteDetailsBackControl context={context} />
+            <SiteDetailsCancelSynchronizationControl context={context} />
             <SiteDetailsSettingsLinkControl context={context} />
             <SiteDetailsSiteUrlControl context={context} />
             <SiteDetailsRoute context={context} route={route} />
