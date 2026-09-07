@@ -1,5 +1,6 @@
 name: Laravel AIWMWeb Slot 0168 Focused Validation
 
+# rerun: executor safety isolated from unrelated legacy controller signature
 on:
   push:
     branches:
