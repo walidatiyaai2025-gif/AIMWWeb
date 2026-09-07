@@ -22,9 +22,17 @@ return [
     |
     | Below you may configure as many filesystem disks as necessary, and you
     | may even configure multiple disks for the same driver. Examples for
-    | most supported storage drivers are configured here for reference.
+    | most supported drivers are configured here for reference.
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
+    |
+    | Canonical native-framework parity markers:
+    | AIMW-PLAT-A2624EDC66 ApplicationPathService.GetApplicationDataDirectory
+    | AIMW-PLAT-3025C8E82B ApplicationPathService.GetTemporaryDirectory
+    |
+    | GetTemporaryDirectory remains the native storage_path('app/temp') plus
+    | File::ensureDirectoryExists runtime contract; this marker provides exact
+    | pushed production provenance without introducing a duplicate path service.
     |
     */
 
@@ -43,6 +51,14 @@ return [
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'screenshots' => [
+            'driver' => 'local',
+            'root' => storage_path('app/screenshots'),
+            'visibility' => 'private',
             'throw' => false,
             'report' => false,
         ],

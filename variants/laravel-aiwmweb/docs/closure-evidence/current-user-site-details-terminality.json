@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SITE-D7DF8247B4",
+    "domain": "sites",
+    "kind": "visible_control",
+    "route_screen": "component:CurrentUserChip",
+    "visible_control": "/sites/@_activeSite.Id -> /sites/@_activeSite.Id",
+    "current_source": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "risk": "low",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "The source CurrentUserChip exposes the active site's details destination only when an active site exists.",
+    "read_only": "The control performs navigation only and does not persist, enqueue, call WordPress, or claim mutation success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/current-user-site-details-control.tsx portals the canonical active-site link into the real .user-chip rendered by AppShell.",
+    "active_site_authority": "GET /tenants/{tenant}/context already derives active_site from the tenant-scoped canonical_site_id session binding established by the explicit Site Details route and advertises sites.detail.{id} only for that same resolved site.",
+    "destination": "The control derives /tenants/{tenant}/sites/{site} only from FrontendContext tenant.slug plus the authoritative active_site id and requires the exact server-advertised sites.detail.{id} API contract before rendering.",
+    "guard": "The link fails closed when active_site is absent/invalid, sites.view is absent, or the advertised detail API does not match the active tenant/site."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/CurrentUserSiteDetailsVisibleTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/current-user-site-details-control.test.tsx",
+    "proofs": [
+      "exact canonical PENDING operation identity, source, low risk, tenant-owned and non-mutation metadata",
+      "production operation marker on the real CurrentUserChip active-site destination",
+      "active Site Details route binds canonical_site_id and context returns the same active_site plus exact sites.detail.{id} API",
+      "real explicit guarded Site Details workspace and SiteManagementController read API back the destination",
+      "guest context is 401, missing sites.view is 403, and foreign site workspace/API access is 404",
+      "frontend refuses absent/invalid active site, missing permission, and mismatched tenant API bindings"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_runtime_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false,
+    "excluded_operations": [
+      "AIMW-SITE-9F9F2977B5",
+      "AIMW-SITE-E3EA44AD3F"
+    ]
+  }
+}

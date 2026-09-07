@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-OPER-55C6982761",
+  "operation_id": "AIMW-OPER-55C6982761",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "kind": "service",
+    "service": "ApplicationPathService",
+    "member": "GetLogsDirectory",
+    "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs"
+  },
+  "decision": "ADAPTED_NATIVE_FRAMEWORK",
+  "rationale": "Laravel already provides the stable application-owned logs-directory primitive through storage_path('logs'). All local file log channels resolve their laravel.log path beneath that directory. Adding a duplicate path-service wrapper would create dead abstraction rather than improve parity.",
+  "destination": {
+    "runtime_contract": "storage_path('logs')",
+    "configuration": "variants/laravel-aiwmweb/backend/config/logging.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationLogsDirectoryTerminalityTest.php"
+  },
+  "acceptance": [
+    "canonical operation provenance is pinned to AIMW-OPER-55C6982761",
+    "single, daily, monthly, and emergency file channels share the stable Laravel logs directory",
+    "the directory is under the application storage root and is not caller-controlled",
+    "runtime can create, read, and remove a deterministic probe file inside the logs directory"
+  ],
+  "security": {
+    "tenant_input_controls_path": false,
+    "user_input_controls_path": false,
+    "secret_material_exposed": false
+  },
+  "scope_exclusions": [
+    "GetApplicationDataDirectory",
+    "GetDatabasePath",
+    "GetScreenshotsDirectory",
+    "GetBackupsDirectory",
+    "GetExportsDirectory",
+    "GetTemporaryDirectory"
+  ]
+}

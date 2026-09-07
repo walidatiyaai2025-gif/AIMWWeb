@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-AI-34EC6312B9",
+  "operation_id": "AIMW-AI-34EC6312B9",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
+  "authority": {
+    "issue": 257,
+    "original_claim_comment_id": 5474396798,
+    "merged_pr": 392,
+    "merge_commit_sha": "66d4e42e3f0a1b751a94c38b29074c3a0c525b7f",
+    "reconciliation_recovery_base_sha": "2cf1a78587302530323bfa031106d3238166e2e6",
+    "reconciliation_recovery_comment_id": 5555607977,
+    "reconciliation_recovery_branch": "worker/laravel-reconcile-AIMW-AI-34EC6312B9"
+  },
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "ai",
+    "service": "SiteBrainService",
+    "member": "SaveAsync",
+    "source": "src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs",
+    "mutation": true
+  },
+  "service_closure_contract": {
+    "implementation_sha": "5a29702a6618241a1610eb11f415ca3993d9db5c",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteBrainServiceSaveAsyncTerminalityTest.php"
+  },
+  "decision": "ADAPTED_TENANT_SCOPED_SERVICE",
+  "rationale": "The already-merged Laravel service preserves the canonical SaveAsync upsert semantics while enforcing tenant-scoped site lookup and settings.manage authorization. The focused acceptance test proves create/update behavior, server-owned UTC timestamping, foreign-tenant fail-closed behavior, permission rejection, and validation without partial writes. This recovery only registers that already-integrated exact pushed implementation with the canonical generator.",
+  "runtime_behavior": {
+    "persistence": "tenant-scoped scoped_settings row with scope=site, key=site_brain.profile, site_key=site:{site_id}",
+    "create_or_update": "existing setting is updated in place; absent setting is inserted",
+    "timestamp": "caller updated_at_utc is replaced with server UTC",
+    "external_provider_called": false
+  },
+  "security": {
+    "permission": "settings.manage",
+    "tenant_isolation": "foreign-tenant site ID raises ModelNotFoundException before persistence",
+    "cross_tenant_write": "fail closed",
+    "secret_storage": false
+  },
+  "acceptance": [
+    "canonical operation identity/source semantics are pinned to AIMW-AI-34EC6312B9",
+    "create persists one tenant-scoped site profile with server UTC timestamp",
+    "update modifies the existing setting without duplicates",
+    "foreign-tenant site mutation fails closed before persistence",
+    "missing settings.manage fails before persistence",
+    "invalid typed profile fails without partial write"
+  ],
+  "scope_exclusions": [
+    "SiteBrainService.GetAsync",
+    "routes or visible controls",
+    "external AI provider behavior",
+    "WordPress behavior"
+  ],
+  "validation": {
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
+  }
+}

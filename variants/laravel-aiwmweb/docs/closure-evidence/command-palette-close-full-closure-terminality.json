@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "authority": {
+    "issue": 257,
+    "target_variant": "LARAVEL_AIWMWEB"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-D3A8A100B4",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "component:MainLayout",
+    "source_file": "src/AIWordPressManager.Web/Components/Layout/MainLayout.razor",
+    "source_control": "CloseCommandPalette",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "mutation": false,
+    "tenant_owned": true,
+    "connector_required": false
+  },
+  "source_behavior": {
+    "summary": "The current AIMWWeb MainLayout renders an explicit accessible command-palette close control bound to CloseCommandPalette, closes on the overlay, advertises Escape-to-close in its dialog help, and CloseCommandPalette only transitions the local command-open state to false.",
+    "close_method": "private void CloseCommandPalette() => _commandOpen = false;",
+    "side_effects": "No persistence, queue, WordPress, provider, resource mutation, success receipt, or navigation mutation belongs to this operation."
+  },
+  "dependency_base": {
+    "pull_request": 309,
+    "branch": "worker/laravel-aiwmweb-command-palette-full-closure",
+    "sha": "2708515900be13f88c2b9c90115d3f265cbd684c",
+    "dependency_operation": "AIMW-AI-2C653A870A",
+    "dependency_state": "ADAPTED",
+    "note": "PR #309 explicitly owns OpenCommandPalette and excludes CloseCommandPalette. This worker stacks on its exact-green head rather than duplicating its behavior."
+  },
+  "canonical_composition_base": {
+    "branch": "worker/laravel-aiwmweb-closure-composition",
+    "sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "generated_reconciliation_terminal": 358,
+    "generated_reconciliation_pending": 573,
+    "generated_reconciliation_total": 931,
+    "generated_reconciliation_modified": false
+  },
+  "laravel_adaptation": {
+    "runtime_file": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+    "behavior": [
+      "The real command-palette close button carries canonical operation AIMW-AI-D3A8A100B4 and source-equivalent accessible Close search naming.",
+      "While the real dialog is open, one document Escape listener consumes Escape and invokes the real React onClose state transition.",
+      "The existing real backdrop close path remains bound to the same onClose state transition.",
+      "The exact command-palette trigger is captured through a React ref and focus is restored after every dialog close/unmount path.",
+      "OpenCommandPalette capability filtering, activation-time authorization recheck, authoritative tenant routing, and query-reset behavior from PR #309 remain unchanged."
+    ]
+  },
+  "runtime_path": {
+    "path": "authenticated tenant shell -> Quick Search/Ctrl+K -> real command dialog -> Close search button OR Escape OR backdrop -> dialog state closed -> focus restored to command-palette-trigger",
+    "real_control_binding": "data-canonical-operation=AIMW-AI-D3A8A100B4",
+    "network_request_on_close": false,
+    "route_change_on_close": false
+  },
+  "authorization": {
+    "new_permission": false,
+    "shell_contract": "GET /tenants/{tenant}/context is guarded by auth + tenant.context and authorizes tenant.view.",
+    "semantics": "The close operation has no independent server permission because it only dismisses already-rendered browser-local tenant UI. It cannot broaden the already-proven command-palette destination permissions."
+  },
+  "tenant_isolation": {
+    "direct_resource_id": false,
+    "idor_surface": false,
+    "proof": [
+      "Guest tenant context fails with 401.",
+      "Membership lacking tenant.view fails with 403.",
+      "A user without membership in the requested foreign tenant receives 404.",
+      "Authorized context returns the authoritative active tenant and its permissions.",
+      "Closing the palette sends no request and changes no tenant route or resource identifier."
+    ]
+  },
+  "acceptance_tests": {
+    "frontend_close": "variants/laravel-aiwmweb/backend/resources/js/__tests__/command-palette-close-full-closure.test.tsx",
+    "frontend_dependency_regression": "variants/laravel-aiwmweb/backend/resources/js/__tests__/command-palette-full-closure.test.tsx",
+    "laravel_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommandPaletteCloseFullClosureTest.php",
+    "proved": [
+      "Exact canonical close-button binding and accessible close name.",
+      "Explicit button close without navigation.",
+      "Escape keyboard close with the event consumed.",
+      "Real backdrop close.",
+      "Focus restoration to the exact trigger after every close path.",
+      "OpenCommandPalette dependency still opens, filters, navigates, rechecks capability, and resets its query with the updated accessible close name.",
+      "Exact canonical reconciliation identity remains PENDING before this isolated adaptation.",
+      "Guest 401, missing tenant.view 403, foreign tenant 404, and authoritative active-tenant context."
+    ]
+  },
+  "implementation": {
+    "implementation_sha": "f0816bf3331a64c187e0227330035ff16719e961",
+    "tested_sha": "f0816bf3331a64c187e0227330035ff16719e961",
+    "implementation_ci": {
+      "pr_plan_link": {
+        "run_id": 33224401172,
+        "run_number": 944,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "run_id": 33224401129,
+        "run_number": 219,
+        "conclusion": "success"
+      },
+      "laravel_acceptance": {
+        "run_id": 33224401145,
+        "run_number": 288,
+        "conclusion": "success"
+      },
+      "sub_gates": {
+        "acceptance_release_gate": "success",
+        "runtime_artifacts": "success",
+        "pint_sqlite_migrations_full_php": "success",
+        "mysql_fresh_rollback_forward_full_php": "success",
+        "redis_queue_scheduler": "success",
+        "wordpress_disposable_runtime": "success",
+        "wordpress_real_rest_e2e": "success",
+        "frontend_typecheck_tests_build": "success",
+        "frontend_production_build": "success",
+        "production_docker_compose_runtime_smoke": "success"
+      }
+    }
+  },
+  "evidence_validation": {
+    "tested_evidence_sha": "8f0ab9ab48951b24b06174bcccbb616dcd3fc60b",
+    "exact_head_ci": {
+      "pr_plan_link": {
+        "run_id": 33224568128,
+        "run_number": 948,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "run_id": 33224567816,
+        "run_number": 223,
+        "conclusion": "success"
+      },
+      "laravel_acceptance": {
+        "run_id": 33224567766,
+        "run_number": 292,
+        "conclusion": "success"
+      },
+      "sub_gates": {
+        "acceptance_release_gate": "success",
+        "runtime_artifacts": "success",
+        "pint_sqlite_migrations_full_php": "success",
+        "mysql_fresh_rollback_forward_full_php": "success",
+        "redis_queue_scheduler": "success",
+        "wordpress_disposable_runtime": "success",
+        "wordpress_real_rest_e2e": "success",
+        "frontend_typecheck_tests_build": "success",
+        "frontend_production_build": "success",
+        "production_docker_compose_runtime_smoke": "success"
+      }
+    }
+  },
+  "canonical_denominator": {
+    "generated_authority_baseline": {
+      "terminal": 358,
+      "pending": 573,
+      "total": 931
+    },
+    "dependency_stack_before_this_operation": {
+      "terminal": 359,
+      "pending": 572,
+      "note": "PR #309 contributes the immediately preceding isolated terminal operation but generated reconciliation remains intentionally untouched."
+    },
+    "after_this_operation": {
+      "terminal": 360,
+      "pending": 571,
+      "total": 931
+    },
+    "this_operation_delta": {
+      "terminal": 1,
+      "pending": -1
+    }
+  },
+  "scope": {
+    "second_operation_started": false,
+    "aspnet_modified": false,
+    "generated_931_reconciliation_modified": false,
+    "merge_performed": false,
+    "force_push_performed": false
+  },
+  "finalization": {
+    "terminal_state": "ADAPTED",
+    "integration_ready": true,
+    "exact_head_rule": "The commit containing this JSON is independently required to pass the same authoritative PR checks; its SHA and runs are recorded in PR #310 and Issue #257 because a file cannot embed the SHA of the commit that contains itself.",
+    "note": "Implementation SHA and the preceding evidence-bearing SHA are both exact-head green. The final metadata-only evidence closure commit must also be exact-head green before delivery."
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-E1A964346F",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor",
+    "route_screen": "/settings/ai-prompts",
+    "visible_control": "Settings / Back to Settings",
+    "user_visible_text": "Settings",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered navigation target matches authoritative source intent",
+    "behavior": "The AIMWWeb AI Prompt Templates toolbar exposes Administrator-only navigation back to /settings. It performs navigation only and does not create, update, restore, seed, or otherwise mutate prompt data."
+  },
+  "laravel_adaptation": {
+    "source_workspace_route": "GET /tenants/{tenant}/settings/ai-prompts",
+    "source_controller": "App\\Http\\Controllers\\AiPromptTemplatesReadController",
+    "source_permission": "settings.manage",
+    "control_binding": "data-canonical-operation=AIMW-AI-E1A964346F",
+    "visible_control": "← Settings",
+    "adapted_target": "/tenants/{tenant}/settings",
+    "destination_workspace": "generic guarded tenant SPA settings workspace",
+    "destination_permission": "tenant.view",
+    "tenant_binding": "The link target is derived from the authoritative route-resolved tenant slug and URL encoded; no caller-supplied destination tenant or resource ID is accepted.",
+    "mutation": false,
+    "fake_or_demo_data": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/settings/ai-prompts",
+    "auth + tenant.context activate the requested tenant",
+    "AiPromptTemplatesReadController authorizes settings.manage and reads the tenant-scoped prompt registry",
+    "server-rendered page exposes canonical control AIMW-AI-E1A964346F as ← Settings",
+    "the href is derived from the active route tenant slug as /tenants/{tenant}/settings",
+    "user activates the control",
+    "the guarded tenant settings workspace resolves under the same tenant context",
+    "no AI prompt template or revision persistence is mutated by the navigation"
+  ],
+  "authorization": {
+    "source_authentication": "auth",
+    "source_tenant_context": "tenant.context",
+    "source_permission": "settings.manage",
+    "destination_authentication": "auth",
+    "destination_tenant_context": "tenant.context",
+    "destination_permission": "tenant.view",
+    "guest_semantics": "source redirects to /login",
+    "missing_permission_semantics": "403 forbidden on source workspace",
+    "foreign_tenant_semantics": "404 on source and destination workspace"
+  },
+  "tenant_isolation": {
+    "proof": "Focused acceptance renders the control for Alpha and proves the target is exactly /tenants/alpha/settings, never /tenants/beta/settings; Alpha access to Beta source/destination workspaces fails 404.",
+    "active_tenant_binding": "Destination is derived only from the route-resolved Tenant model slug.",
+    "direct_id_idor": "No template, revision, user, site, or other resource ID is introduced in the control target; the only route-scoped identifier is the guarded tenant slug."
+  },
+  "semantics": {
+    "mutation": false,
+    "navigation_only": true,
+    "persistence_mutation": false,
+    "idempotent": true,
+    "retry_safe": true,
+    "audit_receipt": "not applicable; this operation performs no mutation",
+    "wordpress_runtime": "not applicable to this local settings navigation operation",
+    "provider_runtime": "not applicable",
+    "queue_runtime": "not applicable",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/AiPromptTemplatesBackToSettingsTerminalityTest.php",
+      "coverage": [
+        "exact canonical PENDING identity, domain, kind, route, source, visible-control semantics, non-mutation flag, and tenant ownership",
+        "real rendered canonical operation marker and visible ← Settings control",
+        "exact tenant-derived /tenants/alpha/settings destination",
+        "real guarded settings destination resolves for the authorized tenant member with Vite disabled only inside the PHP test environment",
+        "AI prompt template and revision row counts remain unchanged across navigation",
+        "guest redirect semantics",
+        "missing settings.manage 403 semantics",
+        "Tenant A to Tenant B source and destination 404 isolation",
+        "no caller-supplied foreign tenant, template, or revision destination surface"
+      ]
+    }
+  },
+  "implementation": {
+    "dependency_base_pr": 303,
+    "dependency_base_sha": "25c2a6e9d48fb1388fd89e2ae171ca072da96a5e",
+    "implementation_sha": "64fc67cc2449126db57d1b53edceb36b05f1b609",
+    "tested_sha": "64fc67cc2449126db57d1b53edceb36b05f1b609"
+  },
+  "implementation_head_ci": {
+    "result": "GREEN",
+    "pr_plan_link": {
+      "run_id": 33226784740,
+      "run_number": 964,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33226784674,
+      "run_number": 233,
+      "conclusion": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 33226784670,
+      "run_number": 302,
+      "conclusion": "success",
+      "note": "The first WordPress real REST job attempt had a transient empty HTTP reply after its REST index/content-read checks had passed. That failed job was re-run on the same exact SHA with no code change and passed; the workflow concluded success."
+    },
+    "acceptance_subgates": {
+      "pint": "success",
+      "sqlite_migrate_fresh_and_full_php_tests": "success",
+      "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success_after_same_sha_job_rerun",
+      "frontend_typecheck_tests_build": "success",
+      "production_frontend_build": "success",
+      "runtime_artifacts": "success",
+      "acceptance_gate": "success",
+      "production_docker_compose_model_build_boot_real_runtime_smoke_cleanup": "success",
+      "generate_parity_ledger": "skipped_by_workflow_design"
+    }
+  },
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "isolated_new_terminal": 359,
+    "previous_pending": 573,
+    "isolated_new_pending": 572,
+    "note": "This is the isolated contribution of exactly this one operation against the latest generated reconciliation authority. Parallel unmerged worker PRs are intentionally not folded into these generated-authority counts."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "new_template_operation_started": false,
+    "save_operation_started": false,
+    "restore_operation_started": false,
+    "second_operation_started": false,
+    "merge_performed": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The real server-rendered AI Prompt Templates workspace exposes the exact canonical back-to-settings control; the canonical /settings intent is adapted to the guarded tenant-qualified Laravel settings workspace; the target is derived from authoritative tenant context; no prompt data is mutated; authorization and Tenant A/B fail-closed behavior are proven; focused tests and the implementation exact head passed all authoritative repository gates. Final handoff additionally requires this evidence-bearing head itself to pass those gates."
+  }
+}
