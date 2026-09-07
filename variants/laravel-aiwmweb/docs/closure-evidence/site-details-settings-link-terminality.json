@@ -74,7 +74,15 @@
   },
   "implementation": {
     "baseline_composition_sha": "235de78bc72d7ae4d59a632758a66dcb777e766b",
-    "implementation_sha_before_evidence": "fc7535e231ebcef0a28c12d72fffb75a88991321"
+    "implementation_sha_before_evidence": "fc7535e231ebcef0a28c12d72fffb75a88991321",
+    "validated_implementation_sha": "7bccc2f7e8918069344a62058b45df5492867c33",
+    "validated_ci": {
+      "acceptance_run": 34127425734,
+      "parity_reconciliation_run": 34127426002,
+      "cross_domain_security_run": 34127425772,
+      "pr_plan_link_run": 34127425740,
+      "result": "PASS"
+    }
   },
   "scope_guards": {
     "exactly_one_operation": true,
