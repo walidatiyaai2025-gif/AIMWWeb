@@ -77,6 +77,32 @@ def security_signals(kind: str, mode: str, destination: str, action: str, accept
         signals.extend(["middleware:auth", "tenant:selected", "authorization:TenantAuthorizer", "test:401", "test:403", "test:404", "test:409/conflict"])
         return signals
 
+    if mode == "pre_tenant_session_auth":
+        require("auth::attempt" in action_low,
+                f"explicit pre-tenant session-auth API provenance lacks credential authentication: {operation_id}")
+        require("session()->regenerate()" in action_low,
+                f"explicit pre-tenant session-auth API provenance lacks session fixation protection: {operation_id}")
+        require("assertauthenticatedas" in test_low or "assertauthenticated(" in test_low,
+                f"explicit pre-tenant session-auth API provenance lacks successful authenticated-session acceptance: {operation_id}")
+        require("assertstatus(422)" in test_low and "assertguest()" in test_low,
+                f"explicit pre-tenant session-auth API provenance lacks invalid-credential fail-closed acceptance: {operation_id}")
+        require("assertcontains('web'" in test_low,
+                f"explicit pre-tenant session-auth API provenance lacks web-session middleware acceptance: {operation_id}")
+        require("assertnotcontains('auth'" in test_low and "assertnotcontains('tenant.context'" in test_low,
+                f"explicit pre-tenant session-auth API provenance does not prove anonymous pre-tenant reachability: {operation_id}")
+        require("parameternames" in test_low and "assertsame([]," in test_low,
+                f"explicit pre-tenant session-auth API provenance lacks zero-route-parameter acceptance: {operation_id}")
+        signals.extend([
+            "middleware:web",
+            "auth:credential-boundary",
+            "tenant:pre-context",
+            "route:no-parameters",
+            "session:regenerated",
+            "test:authenticated",
+            "test:invalid-credentials-422",
+        ])
+        return signals
+
     if mode == "tenant_neutral":
         require("web" in route_low and "auth" not in route_low and "tenant.context" not in route_low,
                 f"explicit tenant-neutral API provenance route boundary is not neutral: {operation_id}")
@@ -148,6 +174,19 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
             action_stem = Path(action_path).stem.lower()
             require(action_stem in destination_low,
                     f"explicit route/API destination is not wired to declared action: {operation_id}")
+            if kind == "api" and mode == "pre_tenant_session_auth":
+                action_method = str(evidence.get("action_method") or "").strip()
+                require(bool(action_method),
+                        f"explicit pre-tenant session-auth API provenance is missing action_method: {operation_id}")
+                method_low = action_method.lower()
+                require(re.search(rf"function\s+{re.escape(method_low)}\s*\(", action.lower()) is not None,
+                        f"explicit pre-tenant session-auth API provenance action method is absent: {operation_id}")
+                post_binding = re.compile(
+                    rf"route::post\s*\(\s*['\"][^'\"]*{re.escape(literals[-1])}[^'\"]*['\"]\s*,\s*\[\s*{re.escape(action_stem)}::class\s*,\s*['\"]{re.escape(method_low)}['\"]\s*\]",
+                    re.IGNORECASE,
+                )
+                require(post_binding.search(destination) is not None,
+                        f"explicit pre-tenant session-auth API provenance lacks exact POST/action binding: {operation_id}")
             signals = security_signals(kind, mode, destination, action, acceptance, operation_id)
 
             row["migration_state"] = "ADAPTED"
@@ -182,7 +221,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     payload["classification_policy"]["explicit_route_api_policy"] = (
         "route/API rows may be terminalized by route_api_provenance only when an exact pushed source "
         "proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, "
-        "and tenant-selected or explicitly tenant-neutral security semantics"
+        "and tenant-selected, pre-tenant session-auth, or explicitly tenant-neutral security semantics"
     )
 
     validation = payload.setdefault("validation", {})

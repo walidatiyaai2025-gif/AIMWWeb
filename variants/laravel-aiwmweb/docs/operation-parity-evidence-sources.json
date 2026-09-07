@@ -475,6 +475,26 @@
       "operation_ids": [
         "AIMW-AI-4EE262C228"
       ]
+    },
+    {
+      "label": "AIMW-CONT-2F2E40D7F0 pre-tenant login API reconciliation recovery",
+      "sha": "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
+      "observed_pr_head": "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-2F2E40D7F0": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
+          "action_method": "login",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-backend-terminality.json",
+          "security_mode": "pre_tenant_session_auth"
+        }
+      }
     }
   ],
   "excluded_sources": [],
