@@ -1,0 +1,49 @@
+name: Laravel AIWMWeb Slot 0164 Focused
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-slot0164
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0164-focused.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Focused Pint
+        run: vendor/bin/pint --test tests/Feature/AiCenterCopyOutputTerminalityTest.php
+      - name: Focused Laravel acceptance
+        run: php artisan test tests/Feature/AiCenterCopyOutputTerminalityTest.php
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+      - name: Install frontend dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Frontend typecheck
+        run: npm run typecheck
+      - name: Focused frontend acceptance
+        run: npm test -- --run resources/js/__tests__/ai-center-copy-output.test.tsx
+      - name: Production frontend build
+        run: npm run build
