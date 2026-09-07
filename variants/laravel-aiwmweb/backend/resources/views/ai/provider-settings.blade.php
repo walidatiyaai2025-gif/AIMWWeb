@@ -13,6 +13,12 @@
             <p>Review persisted provider configuration and runtime readiness for {{ $tenant->name }}.</p>
             <p>Settings managers only. API credentials are never rendered; only credential presence is exposed.</p>
             <nav aria-label="AI provider settings sections">
+                {{-- AIMW-AI-3B59F172AB: canonical Back to Settings navigation --}}
+                <a
+                    href="/tenants/{{ $tenant->slug }}/settings"
+                    aria-label="Back to Settings"
+                    data-canonical-operation="AIMW-AI-3B59F172AB"
+                >← Settings</a>
                 <a href="#runtime" data-canonical-operation="AIMW-AI-44DD850CE4">Runtime behavior</a>
                 <a href="#providers" data-canonical-operation="AIMW-AI-4F6B6584E4">Providers and keys</a>
             </nav>
