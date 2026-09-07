@@ -67,13 +67,17 @@ describe('AIMW-AI-387F3E5D5F Site Details Save & Test adaptation', () => {
         expect(await screen.findByText(/Status: verified/i)).toBeInTheDocument();
     });
 
-    it('fails closed when connector.manage authorization is absent', () => {
+    it('fails closed before React Query hooks when connector.manage authorization is absent', () => {
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
         const activeContext = context();
         activeContext.permissions = ['tenant.view', 'sites.view'];
 
-        renderControl(activeContext);
+        render(
+            <LocaleProvider>
+                <SiteDetailsSaveTestControl context={activeContext} />
+            </LocaleProvider>,
+        );
 
         expect(screen.queryByRole('button', { name: 'Save & test' })).not.toBeInTheDocument();
         expect(fetchMock).not.toHaveBeenCalled();
