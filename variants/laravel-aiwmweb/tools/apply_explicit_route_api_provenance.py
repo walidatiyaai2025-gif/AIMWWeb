@@ -135,6 +135,39 @@ def security_signals(kind: str, mode: str, destination: str, action: str, accept
         ])
         return signals
 
+    if mode == "pre_tenant_setup_mutation":
+        require("web" in route_low and "auth" not in route_low and "tenant.context" not in route_low,
+                f"explicit setup API provenance route is not anonymous pre-tenant web: {operation_id}")
+        require("setupmutationcontroller::class" in route_low and "->post('/setup'" in route_low,
+                f"explicit setup API provenance lacks exact POST /setup controller binding: {operation_id}")
+        require("databasesetupmutationservice" in action_low and "->apply(" in action_low,
+                f"explicit setup API provenance lacks real setup mutation service invocation: {operation_id}")
+        require("assertcontains('web'" in test_low and "assertnotcontains('auth'" in test_low and "assertnotcontains('tenant.context'" in test_low,
+                f"explicit setup API provenance lacks anonymous pre-tenant middleware acceptance: {operation_id}")
+        require("parameternames" in test_low and "assertsame([]," in test_low,
+                f"explicit setup API provenance lacks zero-route-parameter acceptance: {operation_id}")
+        require("post('/setup'" in test_low and "assertredirect('/')" in test_low,
+                f"explicit setup API provenance lacks successful runtime redirect acceptance: {operation_id}")
+        require("assertstatus(400)" in test_low and "assertdontsee($password)" in test_low,
+                f"explicit setup API provenance lacks bounded fail-closed failure acceptance: {operation_id}")
+        require("hash::check" in test_low and "owner" in test_low and "permissions()->count()" in test_low,
+                f"explicit setup API provenance lacks hashed-owner RBAC bootstrap acceptance: {operation_id}")
+        require("@csrf" in test_low and "database_credentials_deployment_owned" in test_low,
+                f"explicit setup API provenance lacks Laravel CSRF/deployment-owned credential adaptation proof: {operation_id}")
+        signals.extend([
+            "middleware:web",
+            "auth:anonymous-first-run",
+            "tenant:pre-context",
+            "route:no-parameters",
+            "setup:mutation-service",
+            "setup:hashed-owner-rbac",
+            "redirect:root-on-success",
+            "failure:html-400-bounded",
+            "csrf:retained-strengthening",
+            "database-credentials:deployment-owned",
+        ])
+        return signals
+
     if mode == "tenant_neutral":
         require("web" in route_low and "auth" not in route_low and "tenant.context" not in route_low,
                 f"explicit tenant-neutral API provenance route boundary is not neutral: {operation_id}")
@@ -253,7 +286,8 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     payload["classification_policy"]["explicit_route_api_policy"] = (
         "route/API rows may be terminalized by route_api_provenance only when an exact pushed source "
         "proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, "
-        "and tenant-selected, pre-tenant session-auth, authenticated-session logout, or explicitly tenant-neutral security semantics"
+        "and tenant-selected, pre-tenant session-auth, authenticated-session logout, pre-tenant setup-mutation, "
+        "or explicitly tenant-neutral security semantics"
     )
 
     validation = payload.setdefault("validation", {})
