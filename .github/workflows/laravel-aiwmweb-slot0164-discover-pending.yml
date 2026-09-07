@@ -1,0 +1,71 @@
+name: Laravel AIWMWeb Slot 0164 Discover Pending
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-slot0164
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0164-discover-pending.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-slot0164
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extract live pending inventory
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          data = json.loads(src.read_text(encoding='utf-8'))
+          rows = []
+
+          def walk(node):
+              if isinstance(node, dict):
+                  status = node.get('status') or node.get('state')
+                  if status == 'PENDING':
+                      rows.append(node)
+                  for value in node.values():
+                      walk(value)
+              elif isinstance(node, list):
+                  for value in node:
+                      walk(value)
+
+          walk(data)
+          seen = set()
+          output = []
+          for row in rows:
+              op_id = row.get('operation_id') or row.get('id') or row.get('task_id') or row.get('operationId')
+              if not op_id or op_id in seen:
+                  continue
+              seen.add(op_id)
+              keys = ['operation_id','id','task_id','domain','kind','source','source_path','screen','route','control','name','operation','handler','risk','risk_level','tenant_owned','mutating','status','state']
+              parts = []
+              for key in keys:
+                  value = row.get(key)
+                  if value is not None and not isinstance(value, (dict, list)):
+                      parts.append(f'{key}={value}')
+              output.append(' | '.join(parts))
+
+          out = Path('variants/laravel-aiwmweb/docs/slot0164-pending-discovery.txt')
+          out.write_text('\n'.join(output[:120]) + f'\n\nCOUNT={len(output)}\n', encoding='utf-8')
+          print(f'pending rows: {len(output)}')
+          PY
+      - name: Commit discovery output
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/slot0164-pending-discovery.txt
+          git commit -m 'chore(laravel): inspect slot0164 pending inventory'
+          git push origin HEAD:worker/laravel-aiwmweb-slot0164
