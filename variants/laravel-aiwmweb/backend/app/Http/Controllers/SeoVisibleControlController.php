@@ -32,6 +32,7 @@ final class SeoVisibleControlController extends Controller
                     'prepare_bulk' => "/api/tenants/{$tenant}/sites/{$site}/seo/remediations/bulk",
                     'ai_proposal' => "/api/tenants/{$tenant}/sites/{$site}/seo/findings/__FINDING__/ai-proposal",
                     'proposals' => "/api/v1/tenants/{$tenant}/sites/{$site}/seo/remediations/proposals",
+                    'retry_failed' => "/api/v1/tenants/{$tenant}/sites/{$site}/seo/remediations/failed/retry",
                     'presentation' => "/tenants/{$tenant}/sites/{$site}/seo/presentation",
                     'execution' => "/tenants/{$tenant}/module/execution",
                     'sites' => "/tenants/{$tenant}/sites",
