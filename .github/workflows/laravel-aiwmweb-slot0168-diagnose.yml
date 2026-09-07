@@ -1,0 +1,32 @@
+name: Laravel AIWMWeb Slot 0168 Diagnose Operation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-93EBFDE5A1-slot0168
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0168-diagnose.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Print exact canonical row
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          payload = json.loads(p.read_text(encoding='utf-8'))
+          row = next(x for x in payload['operations'] if x['operation_id'] == 'AIMW-AI-93EBFDE5A1')
+          print(json.dumps(row, indent=2, sort_keys=True))
+          PY
