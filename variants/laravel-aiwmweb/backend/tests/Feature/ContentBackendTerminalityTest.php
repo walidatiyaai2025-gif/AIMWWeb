@@ -15,6 +15,8 @@ final class ContentBackendTerminalityTest extends TestCase
 
     private const LOGIN_OPERATION_ID = 'AIMW-CONT-2F2E40D7F0';
 
+    private const LOGOUT_OPERATION_ID = 'AIMW-CONT-270F69CE9A';
+
     public function test_login_operation_is_bound_to_anonymous_pre_tenant_session_route(): void
     {
         $route = collect(Route::getRoutes())->first(
@@ -25,6 +27,20 @@ final class ContentBackendTerminalityTest extends TestCase
         $this->assertSame(DemoController::class.'@login', $route->getActionName());
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
+        $this->assertNotContains('tenant.context', $route->gatherMiddleware());
+        $this->assertSame([], $route->parameterNames());
+    }
+
+    public function test_logout_operation_is_bound_to_authenticated_session_route(): void
+    {
+        $route = collect(Route::getRoutes())->first(
+            fn ($candidate): bool => $candidate->uri() === 'api/logout' && in_array('POST', $candidate->methods(), true)
+        );
+
+        $this->assertNotNull($route, self::LOGOUT_OPERATION_ID);
+        $this->assertSame(DemoController::class.'@logout', $route->getActionName());
+        $this->assertContains('web', $route->gatherMiddleware());
+        $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame([], $route->parameterNames());
     }
@@ -72,6 +88,12 @@ final class ContentBackendTerminalityTest extends TestCase
             ->assertOk()
             ->assertExactJson(['ok' => true]);
 
+        $this->assertGuest();
+    }
+
+    public function test_aimw_cont_270f69ce9a_logout_rejects_an_unauthenticated_request(): void
+    {
+        $this->postJson('/api/logout')->assertUnauthorized();
         $this->assertGuest();
     }
 }
