@@ -19,6 +19,7 @@ final class ExecutionCreator
                 if ($existing = Execution::query()->where('approval_id', $locked->id)->first()) {
                     return [$existing, false];
                 }
+                abort_if($locked->suggestion_id === null, 409, 'This approval requires a domain-specific executor.');
                 $suggestion = Suggestion::query()->findOrFail($locked->suggestion_id);
                 $execution = Execution::query()->create([
                     'operation_id' => (string) Str::uuid(), 'request_id' => (string) Str::uuid(),
