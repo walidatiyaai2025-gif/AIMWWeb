@@ -89,8 +89,25 @@
   },
   "implementation": {
     "baseline_composition_sha": "e63e560d074849e16b4d57ed6f0a0628de9fa495",
-    "validated_implementation_sha": null,
-    "validated_ci": null
+    "validated_implementation_sha": "152faa0cd1617bf13f14e88e249582513f5b00d1",
+    "validated_ci": {
+      "acceptance": {
+        "run_id": 34152287114,
+        "conclusion": "success"
+      },
+      "parity_reconciliation": {
+        "run_id": 34152287138,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "run_id": 34152287134,
+        "conclusion": "success"
+      },
+      "pr_plan_link": {
+        "run_id": 34152287105,
+        "conclusion": "success"
+      }
+    }
   },
   "scope_guards": {
     "exactly_one_operation": true,
