@@ -5,6 +5,7 @@ import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletConte
 import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
 import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
 import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
+import { AiWorkspaceHub } from './ai-workspace-hub';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
@@ -115,6 +116,11 @@ function ApprovalQueueRoute({ context, route }: { context: FrontendContext; rout
     );
 }
 
+function AiWorkspaceRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <AiWorkspaceHub context={context} />;
+}
+
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
     if (route.key === 'site-details') return (
@@ -156,6 +162,7 @@ function AppRoutes() {
     return (
         <Routes>
             <Route path="/tenants/:tenantSlug" element={<TenantBootstrap />}>
+                <Route path="ai-workspace" element={<AiWorkspaceRoute />} />
                 {workspaceRoutes.map((route) => {
                     const relative = route.path === '/' ? undefined : route.path.replace(/^\//, '');
                     return route.path === '/'
