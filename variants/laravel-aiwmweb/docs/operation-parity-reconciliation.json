@@ -17,19 +17,19 @@
     "operation_scoped_source_policy": "a countable source declaring operation_ids may contribute generic evidence only to those canonical IDs; the normal code, tenant/security, and test thresholds still apply",
     "explicit_route_policy": "route rows remain pending unless an exact pushed source declares operation_evidence and the generator verifies route, auth/tenant action, test, and evidence links",
     "tenant_neutral_route_policy": "explicitly anonymous canonical route rows may be terminalized only by an exact pushed tenant-neutral contract proving AllowAnonymous source semantics, explicit action wiring, web-only/no-auth/no-tenant-context runtime middleware, zero route parameters, and identity-neutral multi-caller acceptance",
-    "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected or explicitly tenant-neutral security semantics",
+    "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected, pre-tenant session-auth, or explicitly tenant-neutral security semantics",
     "focused_visible_control_policy": "visible-control rows remain PENDING unless an exact pushed closure evidence file, production operation-ID marker, focused operation-ID test, and applicable tenant/security assertions are all present",
     "focused_service_policy": "service rows remain PENDING unless an opted-in closure evidence contract names a pushed exact implementation SHA and the verifier confirms exact operation, canonical source/service/member, production path, focused test, and applicable tenant/authorization proof"
   },
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 490,
-    "pending": 441,
+    "adapted": 491,
+    "pending": 440,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 490,
-    "overall_parity_percent": 52.63
+    "terminal": 491,
+    "overall_parity_percent": 52.74
   },
   "visible_controls": {
     "total": 446,
@@ -102,12 +102,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 25,
-      "pending": 139,
+      "adapted": 26,
+      "pending": 138,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 25,
-      "percent": 15.24
+      "terminal": 26,
+      "percent": 15.85
     },
     "email": {
       "total": 82,
@@ -19238,21 +19238,36 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+      "evidence": "AIMW-CONT-2F2E40D7F0 pre-tenant login API reconciliation recovery@dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-CONT-2F2E40D7F0; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-backend-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-2F2E40D7F0 pre-tenant login API reconciliation recovery",
+        "source_sha": "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-backend-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-2F2E40D7F0",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/ContentBackendTerminalityTest.php",
+          "middleware:web",
+          "auth:credential-boundary",
+          "tenant:pre-context",
+          "route:no-parameters",
+          "session:regenerated",
+          "test:authenticated",
+          "test:invalid-credentials-422"
+        ]
       }
     },
     {
@@ -33907,12 +33922,12 @@
     "api": {
       "total": 31,
       "ported": 0,
-      "adapted": 28,
-      "pending": 3,
+      "adapted": 29,
+      "pending": 2,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 28,
-      "percent": 90.32
+      "terminal": 29,
+      "percent": 93.55
     },
     "background_job": {
       "total": 21,
@@ -34140,7 +34155,6 @@
       "AIMW-CONT-2C02B7A328",
       "AIMW-CONT-2C51372C70",
       "AIMW-CONT-2CDC790742",
-      "AIMW-CONT-2F2E40D7F0",
       "AIMW-CONT-3443C173C6",
       "AIMW-CONT-346657AD9D",
       "AIMW-CONT-349017BDF5",
@@ -34642,6 +34656,16 @@
           "AIMW-AI-4EE262C228"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-2F2E40D7F0 pre-tenant login API reconciliation recovery",
+        "sha": "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34669,6 +34693,7 @@
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
+      "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
@@ -34728,6 +34753,7 @@
       "AIMW-AI-82F795EE67",
       "AIMW-AI-C37F405767",
       "AIMW-COMM-A16719E105",
+      "AIMW-CONT-2F2E40D7F0",
       "AIMW-EMAI-2D94EFDD53",
       "AIMW-MEDI-8BADBE1261",
       "AIMW-OPER-ABB41FC891",
@@ -34736,7 +34762,7 @@
       "AIMW-PLAT-FAC7505B26",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 11,
+    "explicit_route_api_contract_count": 12,
     "focused_closure_source_sha": "fce6ce5bf09c2e5c392923612affa5c9e1b5f0ce",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",

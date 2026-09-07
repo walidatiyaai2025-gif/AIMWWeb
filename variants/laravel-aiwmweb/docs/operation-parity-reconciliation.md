@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 490 |
-| PENDING | 441 |
+| ADAPTED | 491 |
+| PENDING | 440 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 490 |
-| OVERALL_PARITY_PERCENT | 52.63% |
+| TERMINAL | 491 |
+| OVERALL_PARITY_PERCENT | 52.74% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -35,7 +35,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 86 | 92 | 0 | 0 | 86 | 48.31% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
-| content | 164 | 0 | 25 | 139 | 0 | 0 | 25 | 15.24% |
+| content | 164 | 0 | 26 | 138 | 0 | 0 | 26 | 15.85% |
 | email | 82 | 0 | 57 | 25 | 0 | 0 | 57 | 69.51% |
 | identity | 7 | 0 | 0 | 7 | 0 | 0 | 0 | 0.00% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
@@ -52,7 +52,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Kind | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| api | 31 | 0 | 28 | 3 | 0 | 0 | 28 | 90.32% |
+| api | 31 | 0 | 29 | 2 | 0 | 0 | 29 | 93.55% |
 | background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 43 | 41 | 0 | 0 | 43 | 51.19% |
 | service | 349 | 0 | 325 | 24 | 0 | 0 | 325 | 93.12% |
@@ -250,7 +250,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-COMM-B16FBF4792`
 - `AIMW-COMM-C083D47BC4`
 
-### content (139)
+### content (138)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
@@ -269,7 +269,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-2C02B7A328`
 - `AIMW-CONT-2C51372C70`
 - `AIMW-CONT-2CDC790742`
-- `AIMW-CONT-2F2E40D7F0`
 - `AIMW-CONT-3443C173C6`
 - `AIMW-CONT-346657AD9D`
 - `AIMW-CONT-349017BDF5`
