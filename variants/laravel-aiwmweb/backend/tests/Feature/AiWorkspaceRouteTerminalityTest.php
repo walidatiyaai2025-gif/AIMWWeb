@@ -84,6 +84,7 @@ class AiWorkspaceRouteTerminalityTest extends TestCase
 
         $alpha = User::factory()->create();
         $this->membership($alpha, 'alpha', ['tenant.view']);
+        Tenant::query()->create(['slug' => 'beta', 'name' => 'Beta']);
         $this->actingAs($alpha)->get('/tenants/beta/ai-workspace')->assertNotFound();
     }
 
