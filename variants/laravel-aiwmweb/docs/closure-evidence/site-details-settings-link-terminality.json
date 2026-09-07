@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-2B31C6BDAF",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "route_screen": "/sites/{Id:guid}",
+    "scanner_visible_control": "@($ -> @($",
+    "resolved_control": "Site Details Settings navigation anchor",
+    "source_target": "/sites/{Id}/settings",
+    "behavior": "From the loaded Site Details workspace, the Settings control navigates to the selected site's settings while retaining the exact current site identity.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "backend/resources/js/site-details-settings-link-control.tsx",
+    "site_details_wiring": "backend/resources/js/app.tsx",
+    "control_binding": "data-canonical-operation=AIMW-AI-2B31C6BDAF",
+    "target_contract": "/tenants/{tenant}/settings?site={site}",
+    "context_contract": "GET /tenants/{tenant}/context?site={site}",
+    "adaptation_reason": "Laravel preserves the canonical Settings navigation intent inside its tenant-scoped SPA: the current positive site route identifier is encoded into the Settings selector while the active tenant slug comes only from trusted frontend context.",
+    "fake_or_demo_data": false
+  },
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "source_route_permission": "sites.view",
+    "frontend_visibility": "requires tenant.view and sites.view, or wildcard permission",
+    "missing_permission_semantics": "403 on the protected Site Details source route",
+    "foreign_tenant_or_site_semantics": "404"
+  },
+  "tenant_isolation": {
+    "proof": "The target tenant slug is derived only from authoritative frontend context, malformed/non-positive site route identifiers fail closed, foreign site selectors are hidden by tenant-scoped context lookup, and foreign tenant namespaces fail membership resolution as 404 before route permissions run.",
+    "caller_override_probe": "Route identifiers containing traversal/query syntax are rejected and the control cannot accept a caller-supplied tenant override."
+  },
+  "semantics": {
+    "persistence_mutation": false,
+    "external_dependency": "none",
+    "approval_required": false,
+    "authoritative_tenant_context": true,
+    "cross_tenant_disclosure": false,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/SiteDetailsSettingsLinkControlTerminalityTest.php",
+      "coverage": [
+        "exact canonical operation identity and source metadata",
+        "authenticated Site Details source route",
+        "same-tenant Settings boot with selected site",
+        "authoritative tenant context resolves the selected site",
+        "guest redirect",
+        "sites.view denial on the protected source route",
+        "foreign-site selector 404",
+        "foreign-tenant namespace 404"
+      ]
+    },
+    "frontend": {
+      "file": "backend/resources/js/__tests__/site-details-settings-link-control.test.tsx",
+      "coverage": [
+        "exact canonical operation marker",
+        "tenant-scoped Settings href with current site pinned",
+        "tenant slug encoding",
+        "malformed/non-positive site identifiers fail closed",
+        "permission-denied control is absent"
+      ]
+    }
+  },
+  "implementation": {
+    "baseline_composition_sha": "235de78bc72d7ae4d59a632758a66dcb777e766b",
+    "implementation_sha_before_evidence": "fc7535e231ebcef0a28c12d72fffb75a88991321"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "reference_product_modified": false,
+    "second_operation_started": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical Site Details Settings navigation is implemented as a real Laravel control bound to trusted tenant context and the current site route, with deterministic frontend/PHP coverage for permission, malformed identifier, and cross-tenant fail-closed behavior and no fabricated external evidence."
+  }
+}
