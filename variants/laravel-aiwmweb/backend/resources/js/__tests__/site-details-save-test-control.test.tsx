@@ -52,6 +52,8 @@ describe('AIMW-AI-387F3E5D5F Site Details Save & Test adaptation', () => {
         expect(button.closest('section')).toHaveAttribute('data-canonical-operation', SITE_DETAILS_SAVE_TEST_OPERATION_ID);
         expect(SITE_DETAILS_SAVE_TEST_OPERATION_ID).toBe('AIMW-AI-387F3E5D5F');
 
+        await screen.findByText(/Status: paired/i);
+        await waitFor(() => expect(button).toBeEnabled());
         fireEvent.click(button);
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
