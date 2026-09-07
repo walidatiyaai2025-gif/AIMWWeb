@@ -18,6 +18,10 @@
             </nav>
         </header>
 
+        @if (session('status'))
+            <p role="status">{{ session('status') }}</p>
+        @endif
+
         <section id="runtime" aria-labelledby="runtime-behavior">
             <h2 id="runtime-behavior">Runtime behavior</h2>
             <p>Review the active tenant's persisted provider enablement, fallback capability, and readiness before changing separate governed AI settings.</p>
@@ -47,6 +51,35 @@
                         <dt>Readiness error</dt><dd>{{ $provider['readiness_error'] ?: 'None' }}</dd>
                         <dt>API credential</dt><dd>{{ $provider['has_api_key'] ? 'Configured' : 'Not configured' }}</dd>
                     </dl>
+
+                    @if ($provider['has_api_key'])
+                        {{-- AIMW-AI-6701FB22AE: Confirm API key removal [ConfirmRemovalAndSaveAsync] --}}
+                        <details data-canonical-operation="AIMW-AI-6701FB22AE">
+                            <summary>Confirm API key removal</summary>
+                            <p>You are about to remove stored encrypted keys from provider settings.</p>
+                            <p><strong>Impact:</strong> A provider that requires a key may stop executing AI requests after this save.</p>
+                            <p><strong>Recovery:</strong> You can add a new key later, but the deleted value itself cannot be recovered from the UI.</p>
+                            <form method="post" action="{{ route('tenant.settings.ai-providers.api-key.destroy', ['tenant' => $tenant->slug, 'provider' => $provider['provider_key']]) }}">
+                                @csrf
+                                @method('DELETE')
+                                <label for="remove-api-key-{{ $provider['id'] }}">Type REMOVE to confirm</label>
+                                <input
+                                    id="remove-api-key-{{ $provider['id'] }}"
+                                    name="confirmation"
+                                    type="text"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    required
+                                    aria-describedby="remove-api-key-impact-{{ $provider['id'] }}"
+                                >
+                                <span id="remove-api-key-impact-{{ $provider['id'] }}">The stored encrypted API key will be deleted.</span>
+                                @error('confirmation')
+                                    <p role="alert">{{ $message }}</p>
+                                @enderror
+                                <button type="submit">Remove keys and save</button>
+                            </form>
+                        </details>
+                    @endif
 
                     <section aria-label="Models for {{ $provider['provider_key'] }}">
                         <h4>Models</h4>

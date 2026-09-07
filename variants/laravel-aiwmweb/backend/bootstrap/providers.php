@@ -4,6 +4,7 @@ use App\Providers\AboutBuildRouteServiceProvider;
 use App\Providers\AiCenterApprovalStatusRouteServiceProvider;
 use App\Providers\AiCenterRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
+use App\Providers\AiProviderApiKeyRemovalRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
@@ -28,6 +29,7 @@ return [
     AiCenterRouteServiceProvider::class,
     AiCenterApprovalStatusRouteServiceProvider::class,
     AiPromptTemplatesRouteServiceProvider::class,
+    AiProviderApiKeyRemovalRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
     ErrorRouteServiceProvider::class,
