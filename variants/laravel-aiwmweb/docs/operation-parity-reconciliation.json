@@ -17,19 +17,19 @@
     "operation_scoped_source_policy": "a countable source declaring operation_ids may contribute generic evidence only to those canonical IDs; the normal code, tenant/security, and test thresholds still apply",
     "explicit_route_policy": "route rows remain pending unless an exact pushed source declares operation_evidence and the generator verifies route, auth/tenant action, test, and evidence links",
     "tenant_neutral_route_policy": "explicitly anonymous canonical route rows may be terminalized only by an exact pushed tenant-neutral contract proving AllowAnonymous source semantics, explicit action wiring, web-only/no-auth/no-tenant-context runtime middleware, zero route parameters, and identity-neutral multi-caller acceptance",
-    "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected, pre-tenant session-auth, authenticated-session logout, or explicitly tenant-neutral security semantics",
+    "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected, pre-tenant session-auth, authenticated-session logout, pre-tenant setup-mutation, or explicitly tenant-neutral security semantics",
     "focused_visible_control_policy": "visible-control rows remain PENDING unless an exact pushed closure evidence file, production operation-ID marker, focused operation-ID test, and applicable tenant/security assertions are all present",
     "focused_service_policy": "service rows remain PENDING unless an opted-in closure evidence contract names a pushed exact implementation SHA and the verifier confirms exact operation, canonical source/service/member, production path, focused test, and applicable tenant/authorization proof"
   },
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 492,
-    "pending": 439,
+    "adapted": 493,
+    "pending": 438,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 492,
-    "overall_parity_percent": 52.85
+    "terminal": 493,
+    "overall_parity_percent": 52.95
   },
   "visible_controls": {
     "total": 446,
@@ -102,12 +102,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 27,
-      "pending": 137,
+      "adapted": 28,
+      "pending": 136,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 27,
-      "percent": 16.46
+      "terminal": 28,
+      "percent": 17.07
     },
     "email": {
       "total": 82,
@@ -19332,21 +19332,39 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php",
+      "evidence": "AIMW-CONT-475267F150 pre-tenant setup mutation reconciliation@e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72: variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php; explicit-route-api:AIMW-CONT-475267F150; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupMutationController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/setup-mutation-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 7).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-475267F150 pre-tenant setup mutation reconciliation",
+        "source_sha": "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupMutationController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/setup-mutation-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-475267F150",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php",
+          "middleware:web",
+          "auth:anonymous-first-run",
+          "tenant:pre-context",
+          "route:no-parameters",
+          "setup:mutation-service",
+          "setup:hashed-owner-rbac",
+          "redirect:root-on-success",
+          "failure:html-400-bounded",
+          "csrf:retained-strengthening",
+          "database-credentials:deployment-owned"
+        ]
       }
     },
     {
@@ -33939,12 +33957,12 @@
     "api": {
       "total": 31,
       "ported": 0,
-      "adapted": 30,
-      "pending": 1,
+      "adapted": 31,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 30,
-      "percent": 96.77
+      "terminal": 31,
+      "percent": 100.0
     },
     "background_job": {
       "total": 21,
@@ -34187,7 +34205,6 @@
       "AIMW-CONT-44A3B8E551",
       "AIMW-CONT-455F01DAC7",
       "AIMW-CONT-47007EE040",
-      "AIMW-CONT-475267F150",
       "AIMW-CONT-47C0477703",
       "AIMW-CONT-4961F90970",
       "AIMW-CONT-4A64732FC6",
@@ -34692,6 +34709,16 @@
         "supporting_only": true,
         "operation_ids": [],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-475267F150 pre-tenant setup mutation reconciliation",
+        "sha": "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34722,6 +34749,7 @@
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
       "e26a7d9a254f7df980714b778491d0f864605087",
+      "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
       "fb068134c2ad60111bd376f4f400c1bd247394ca"
@@ -34782,6 +34810,7 @@
       "AIMW-COMM-A16719E105",
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2F2E40D7F0",
+      "AIMW-CONT-475267F150",
       "AIMW-EMAI-2D94EFDD53",
       "AIMW-MEDI-8BADBE1261",
       "AIMW-OPER-ABB41FC891",
@@ -34790,7 +34819,7 @@
       "AIMW-PLAT-FAC7505B26",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 13,
+    "explicit_route_api_contract_count": 14,
     "focused_closure_source_sha": "fce6ce5bf09c2e5c392923612affa5c9e1b5f0ce",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",

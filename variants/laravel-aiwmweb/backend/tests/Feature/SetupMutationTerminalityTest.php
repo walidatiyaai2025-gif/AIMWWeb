@@ -17,16 +17,19 @@ class SetupMutationTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_canonical_setup_post_is_anonymous_web_mutation_with_csrf_middleware(): void
+    private const SETUP_POST_OPERATION_ID = 'AIMW-CONT-475267F150';
+
+    public function test_canonical_setup_post_is_anonymous_pre_tenant_web_mutation_with_csrf_middleware(): void
     {
         $route = Route::getRoutes()->getByName('canonical.api.setup.submit');
 
-        $this->assertNotNull($route);
+        $this->assertNotNull($route, self::SETUP_POST_OPERATION_ID);
         $this->assertSame(SetupMutationController::class, $route->getActionName());
         $this->assertContains('POST', $route->methods());
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertNotContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
+        $this->assertSame([], $route->parameterNames());
     }
 
     public function test_fresh_setup_creates_one_hashed_owner_and_real_rbac_then_redirects(): void
@@ -56,6 +59,17 @@ class SetupMutationTerminalityTest extends TestCase
         app(TenantContext::class)->forget();
 
         $this->get('/setup')->assertRedirect('/');
+    }
+
+    public function test_setup_form_keeps_database_credentials_deployment_owned_and_csrf_protected(): void
+    {
+        $view = file_get_contents(resource_path('views/setup.blade.php'));
+
+        $this->assertIsString($view, self::SETUP_POST_OPERATION_ID);
+        $this->assertStringContainsString('@csrf', $view);
+        foreach (['Provider', 'SqlitePath', 'Host', 'Port', 'Database', 'Username', 'Password'] as $sourceField) {
+            $this->assertStringNotContainsString('name="'.$sourceField.'"', $view);
+        }
     }
 
     public function test_partial_existing_identity_state_is_never_claimed_and_password_is_not_rendered(): void

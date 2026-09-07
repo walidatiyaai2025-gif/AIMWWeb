@@ -515,6 +515,25 @@
           "security_mode": "authenticated_session_logout"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-475267F150 pre-tenant setup mutation reconciliation",
+      "sha": "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
+      "observed_pr_head": "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-475267F150": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SetupRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SetupMutationController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/setup-mutation-terminality.json",
+          "security_mode": "pre_tenant_setup_mutation"
+        }
+      }
     }
   ],
   "excluded_sources": [],
