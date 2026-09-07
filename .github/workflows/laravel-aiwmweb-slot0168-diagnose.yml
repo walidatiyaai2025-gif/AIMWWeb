@@ -20,13 +20,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Print exact canonical row
+      - name: Print exact canonical row and approval implementation inventory
+        shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
           p = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
           payload = json.loads(p.read_text(encoding='utf-8'))
           row = next(x for x in payload['operations'] if x['operation_id'] == 'AIMW-AI-93EBFDE5A1')
+          print('=== CANONICAL ROW ===')
           print(json.dumps(row, indent=2, sort_keys=True))
           PY
+          echo '=== APPROVAL CREATION REFERENCES ==='
+          grep -RInE "Approval::query\(\)->create|approvals.*post|post.*approvals|approval.*submit|submit.*approval" variants/laravel-aiwmweb/backend/app variants/laravel-aiwmweb/backend/routes variants/laravel-aiwmweb/backend/tests | head -n 200 || true
+          echo '=== APPROVAL SCHEMA/MODELS ==='
+          grep -RInE "Schema::create\('approvals'|class Approval|suggestion_id|before_state|proposed_state" variants/laravel-aiwmweb/backend/app variants/laravel-aiwmweb/backend/database/migrations | head -n 200 || true
+          echo '=== AI CENTER TEST INVENTORY ==='
+          find variants/laravel-aiwmweb/backend/tests variants/laravel-aiwmweb/backend/resources/js/__tests__ -type f | grep -Ei 'AiCenter|Approval' | sort | head -n 200 || true
