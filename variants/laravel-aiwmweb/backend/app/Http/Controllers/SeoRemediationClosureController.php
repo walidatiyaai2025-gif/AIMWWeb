@@ -28,6 +28,7 @@ final class SeoRemediationClosureController extends Controller
     }
 
     public function retryFailed(
+        string $tenant,
         string $site,
         TenantAuthorizer $auth,
         SeoRemediationClosureService $remediation,
