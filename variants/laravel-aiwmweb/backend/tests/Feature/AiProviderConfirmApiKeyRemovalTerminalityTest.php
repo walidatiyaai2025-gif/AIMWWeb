@@ -215,9 +215,10 @@ class AiProviderConfirmApiKeyRemovalTerminalityTest extends TestCase
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $membership = $membership->fresh('tenant');
         $context->forget();
 
-        return $membership->fresh('tenant');
+        return $membership;
     }
 
     private function activate(TenantMembership $membership): void
