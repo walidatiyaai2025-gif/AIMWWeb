@@ -35,7 +35,7 @@ jobs:
               raise SystemExit('canonical focused evidence pin was not found exactly once')
           path.write_text(text.replace(old, new), encoding='utf-8')
           PY
-          stats=$(git diff --numstat -- "$path")
+          stats=$(git diff --numstat ff26e9d38e4e3724a7ad89fee8080bafeb543e89 -- "$path")
           test "$stats" = $'1\t1\tvariants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
