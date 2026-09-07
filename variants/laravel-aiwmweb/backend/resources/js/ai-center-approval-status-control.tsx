@@ -8,6 +8,7 @@ export const AI_CENTER_REFRESH_APPROVAL_STATUS_OPERATION_ID = 'AIMW-AI-168B40667
 export const AI_CENTER_NEW_SESSION_OPERATION_ID = 'AIMW-AI-C7621E276C';
 export const AI_CENTER_CLEAR_HISTORY_OPERATION_ID = 'AIMW-AI-746EDAE589';
 export const AI_CENTER_COPY_OUTPUT_OPERATION_ID = 'AIMW-AI-B711182657';
+export const AI_CENTER_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-AI-93EBFDE5A1';
 
 type ApprovalStatus = {
     id: number;
@@ -23,30 +24,58 @@ export type AiCenterSessionHistoryEntry = {
     output: string;
 };
 
+export type AiCenterStructuredSuggestion = {
+    before: string;
+    after: string;
+    explanation?: string;
+    confidence?: number | null;
+    affectedFields?: string[];
+    promptKey?: string;
+    model?: string;
+    siteId?: number | null;
+};
+
 type ApprovalStatusResponse = { data: ApprovalStatus | null };
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 type CopyState = 'idle' | 'copying' | 'success' | 'error';
+type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 type AiCenterApprovalStatusControlProps = {
     context: FrontendContext;
     initialHistory?: AiCenterSessionHistoryEntry[];
     initialOutput?: string;
+    initialSuggestion?: AiCenterStructuredSuggestion | null;
 };
 
-export function AiCenterApprovalStatusControl({ context, initialHistory = [], initialOutput = '' }: AiCenterApprovalStatusControlProps) {
+export function AiCenterApprovalStatusControl({
+    context,
+    initialHistory = [],
+    initialOutput = '',
+    initialSuggestion = null,
+}: AiCenterApprovalStatusControlProps) {
     const { locale } = useLocale();
     const [approval, setApproval] = useState<ApprovalStatus | null>(null);
     const [state, setState] = useState<LoadState>('idle');
     const [error, setError] = useState('');
-    const [promptKey, setPromptKey] = useState('');
-    const [content, setContent] = useState('');
-    const [output, setOutput] = useState(initialOutput);
+    const [promptKey, setPromptKey] = useState(initialSuggestion?.promptKey ?? '');
+    const [content, setContent] = useState(initialSuggestion?.before ?? '');
+    const [model] = useState(initialSuggestion?.model ?? '');
+    const [output, setOutput] = useState(initialSuggestion?.after ?? initialOutput);
+    const [suggestion, setSuggestion] = useState<AiCenterStructuredSuggestion | null>(initialSuggestion);
     const [history, setHistory] = useState<AiCenterSessionHistoryEntry[]>(() => initialHistory.slice(0, 10));
     const [copyState, setCopyState] = useState<CopyState>('idle');
+    const [submitState, setSubmitState] = useState<SubmitState>('idle');
+    const [submitError, setSubmitError] = useState('');
+    const [approvalTitle, setApprovalTitle] = useState('');
+    const [operationType, setOperationType] = useState('AI.ContentUpdate');
+    const [riskLevel, setRiskLevel] = useState('High');
     const readEpoch = useRef(0);
     const copyEpoch = useRef(0);
     const copying = useRef(false);
+    const submittingApproval = useRef(false);
     const canRead = context.permissions.includes('ai.use');
-    const endpoint = `/api/tenants/${encodeURIComponent(context.tenant.slug)}/ai-center/approval-status`;
+    const tenantSegment = encodeURIComponent(context.tenant.slug);
+    const endpoint = `/api/tenants/${tenantSegment}/ai-center/approval-status`;
+    const submitEndpoint = `/api/tenants/${tenantSegment}/ai-center/approvals`;
 
     const load = useCallback(async () => {
         if (!canRead) return;
@@ -73,10 +102,14 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [], in
         readEpoch.current += 1;
         copyEpoch.current += 1;
         copying.current = false;
+        submittingApproval.current = false;
         setPromptKey('');
         setContent('');
         setOutput('');
+        setSuggestion(null);
         setCopyState('idle');
+        setSubmitState('idle');
+        setSubmitError('');
         setApproval(null);
         setError('');
         setState('idle');
@@ -105,6 +138,46 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [], in
             if (epoch === copyEpoch.current) setCopyState('error');
         } finally {
             if (epoch === copyEpoch.current) copying.current = false;
+        }
+    };
+
+    const submitForApproval = async () => {
+        if (submittingApproval.current || suggestion === null) return;
+        if (!globalThis.crypto || typeof globalThis.crypto.randomUUID !== 'function') {
+            setSubmitError(locale === 'ar' ? 'تعذر إنشاء مفتاح طلب آمن.' : 'A secure approval request key could not be generated.');
+            setSubmitState('error');
+            return;
+        }
+
+        submittingApproval.current = true;
+        setSubmitState('submitting');
+        setSubmitError('');
+        try {
+            const payload = await apiRequest<ApprovalStatusResponse>(submitEndpoint, {
+                method: 'POST',
+                body: JSON.stringify({
+                    request_key: globalThis.crypto.randomUUID(),
+                    site_id: suggestion.siteId ?? null,
+                    operation_type: operationType.trim() || 'AI.ContentUpdate',
+                    title: approvalTitle.trim() || 'AI content proposal',
+                    risk_level: riskLevel,
+                    before_content: suggestion.before,
+                    after_content: suggestion.after,
+                    prompt_key: promptKey,
+                    model,
+                    explanation: suggestion.explanation ?? '',
+                    confidence: suggestion.confidence ?? null,
+                    affected_fields: suggestion.affectedFields ?? [],
+                }),
+            });
+            setApproval(payload.data ?? null);
+            setState('ready');
+            setSubmitState('success');
+        } catch (reason) {
+            setSubmitError(reason instanceof Error ? reason.message : (locale === 'ar' ? 'فشل إرسال الموافقة.' : 'Approval submission failed.'));
+            setSubmitState('error');
+        } finally {
+            submittingApproval.current = false;
         }
     };
 
@@ -175,6 +248,57 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [], in
         </section>
     ) : null;
 
+    const submitControls = suggestion ? (
+        <section className="panel ai-approval-box" aria-label={locale === 'ar' ? 'إرسال للموافقة' : 'Submit for approval'}>
+            <header className="panel-header">
+                <div>
+                    <span className="workspace-kicker">GOVERNANCE</span>
+                    <strong>{locale === 'ar' ? 'إرسال للموافقة' : 'Submit for approval'}</strong>
+                </div>
+            </header>
+            <div className="ai-approval-grid">
+                <label>
+                    <span>{locale === 'ar' ? 'درجة الخطورة' : 'Risk level'}</span>
+                    <select value={riskLevel} onChange={(event) => setRiskLevel(event.target.value)}>
+                        <option value="Low">{locale === 'ar' ? 'منخفض' : 'Low'}</option>
+                        <option value="Medium">{locale === 'ar' ? 'متوسط' : 'Medium'}</option>
+                        <option value="High">{locale === 'ar' ? 'مرتفع' : 'High'}</option>
+                        <option value="Critical">{locale === 'ar' ? 'حرج' : 'Critical'}</option>
+                    </select>
+                </label>
+                <label>
+                    <span>{locale === 'ar' ? 'نوع العملية' : 'Operation type'}</span>
+                    <input value={operationType} onChange={(event) => setOperationType(event.target.value)} data-bidi="technical" />
+                </label>
+                <label className="wide">
+                    <span>{locale === 'ar' ? 'عنوان طلب الموافقة' : 'Approval title'}</span>
+                    <input value={approvalTitle} onChange={(event) => setApprovalTitle(event.target.value)} />
+                </label>
+            </div>
+            <div className="ai-compare-grid">
+                <div><small>{locale === 'ar' ? 'قبل' : 'Before'}</small><pre>{suggestion.before}</pre></div>
+                <div><small>{locale === 'ar' ? 'بعد' : 'After'}</small><pre>{suggestion.after}</pre></div>
+            </div>
+            <button
+                type="button"
+                className="btn primary full"
+                data-canonical-operation={AI_CENTER_SUBMIT_APPROVAL_OPERATION_ID}
+                disabled={submitState === 'submitting'}
+                aria-busy={submitState === 'submitting' ? 'true' : 'false'}
+                onClick={() => void submitForApproval()}
+            >
+                <span aria-hidden="true">✓</span>
+                {submitState === 'submitting'
+                    ? (locale === 'ar' ? 'جارٍ الإرسال...' : 'Submitting...')
+                    : (locale === 'ar' ? 'إرسال إلى قائمة الموافقات' : 'Submit to approval queue')}
+            </button>
+            {submitState === 'success' ? (
+                <p role="status">{locale === 'ar' ? 'تم إرسال الاقتراح المنظم إلى قائمة الموافقات.' : 'Structured proposal submitted to the approval queue.'}</p>
+            ) : null}
+            {submitState === 'error' ? <p role="alert">{submitError}</p> : null}
+        </section>
+    ) : null;
+
     const historyControls = (
         <section className="panel ai-session-history" aria-label={locale === 'ar' ? 'سجل اقتراحات الجلسة' : 'Session suggestions'}>
             <header className="panel-header">
@@ -233,5 +357,5 @@ export function AiCenterApprovalStatusControl({ context, initialHistory = [], in
         </section>
     ) : null;
 
-    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{outputControls}{historyControls}{approvalControls}</>;
+    return <><AiCenterAiUsageLinkControl context={context} /><AiCenterApprovalQueueLink context={context} />{sessionControls}{outputControls}{submitControls}{historyControls}{approvalControls}</>;
 }
