@@ -1,0 +1,51 @@
+name: Laravel AIWMWeb Slot 0159 Diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-slot0159-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused-key-removal-sqlite:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Run focused parity test and capture exact PHPUnit output
+        shell: bash
+        run: |
+          set +e
+          php artisan test --filter=AiProviderConfirmApiKeyRemovalTerminalityTest > /tmp/slot0159-phpunit.log 2>&1
+          rc=$?
+          cat /tmp/slot0159-phpunit.log
+          echo "$rc" > /tmp/slot0159-exit-code.txt
+          exit "$rc"
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+      - name: Upload focused PHPUnit diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slot0159-key-removal-phpunit-${{ github.sha }}
+          path: |
+            /tmp/slot0159-phpunit.log
+            /tmp/slot0159-exit-code.txt
+          if-no-files-found: error
