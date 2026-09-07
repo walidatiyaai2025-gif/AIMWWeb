@@ -55,11 +55,18 @@ class SiteDetailsSettingsLinkControlTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('id="app"', false);
 
-        $this->actingAs($user)
+        $contextResponse = $this->actingAs($user)
             ->getJson('/tenants/alpha/context?site='.$site->id)
             ->assertOk()
-            ->assertJsonPath('active_site.id', $site->id)
-            ->assertJsonPath('api.sites.detail.'.$site->id, "/api/tenants/alpha/sites/{$site->id}");
+            ->assertJsonPath('active_site.id', $site->id);
+
+        $api = $contextResponse->json('api');
+        $this->assertIsArray($api);
+        $this->assertSame(
+            "/api/tenants/alpha/sites/{$site->id}",
+            $api['sites.detail.'.$site->id] ?? null,
+            'The tenant context must advertise the exact literal dotted Site Details API key for the selected site.',
+        );
     }
 
     public function test_source_route_and_selected_site_context_fail_closed_for_guest_permission_and_foreign_tenant_ids(): void
