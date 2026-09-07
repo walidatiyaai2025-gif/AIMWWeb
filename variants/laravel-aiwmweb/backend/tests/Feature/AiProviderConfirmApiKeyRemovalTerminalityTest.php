@@ -38,7 +38,7 @@ class AiProviderConfirmApiKeyRemovalTerminalityTest extends TestCase
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/settings/ai-providers', $operation['route_screen']);
-        $this->assertSame('Confirm API key removal', $operation['visible_control']);
+        $this->assertSame('@(L.IsArabic ? [ConfirmRemovalAndSaveAsync]', $operation['visible_control']);
         $this->assertSame('ConfirmRemovalAndSaveAsync', $operation['target']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor', $operation['current_source']);
         $this->assertTrue((bool) $operation['mutation']);
@@ -215,10 +215,9 @@ class AiProviderConfirmApiKeyRemovalTerminalityTest extends TestCase
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
-        $membership = $membership->fresh('tenant');
         $context->forget();
 
-        return $membership;
+        return $membership->fresh('tenant');
     }
 
     private function activate(TenantMembership $membership): void
