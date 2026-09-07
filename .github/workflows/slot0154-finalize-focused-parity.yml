@@ -1,0 +1,163 @@
+name: Slot 0154 Finalize Focused Parity
+
+on:
+  push:
+    paths:
+      - '.github/workflows/slot0154-finalize-focused-parity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      OPERATION_ID: 'AIMW-AI-54BB64BB13'
+      FOCUSED_SHA: '152faa0cd1617bf13f14e88e249582513f5b00d1'
+      ACCEPTANCE_RUN: '34152287114'
+      PARITY_RUN: '34152287138'
+      CROSS_DOMAIN_RUN: '34152287134'
+      PR_PLAN_RUN: '34152287105'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-AIMW-AI-54BB64BB13-cancel-sync-slot0153
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify validated focused source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          git cat-file -e "${FOCUSED_SHA}^{commit}"
+          git merge-base --is-ancestor "$FOCUSED_SHA" HEAD
+
+      - name: Pin focused evidence source and CI proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          manifest_path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(manifest_path.read_text())
+          manifest['focused_closure_evidence_source_sha'] = os.environ['FOCUSED_SHA']
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
+
+          evidence_path = Path('variants/laravel-aiwmweb/docs/closure-evidence/site-details-cancel-synchronization-visible-control-terminality.json')
+          evidence = json.loads(evidence_path.read_text())
+          evidence['implementation']['validated_implementation_sha'] = os.environ['FOCUSED_SHA']
+          evidence['implementation']['validated_ci'] = {
+              'acceptance': {'run_id': int(os.environ['ACCEPTANCE_RUN']), 'conclusion': 'success'},
+              'parity_reconciliation': {'run_id': int(os.environ['PARITY_RUN']), 'conclusion': 'success'},
+              'cross_domain_security': {'run_id': int(os.environ['CROSS_DOMAIN_RUN']), 'conclusion': 'success'},
+              'pr_plan_link': {'run_id': int(os.environ['PR_PLAN_RUN']), 'conclusion': 'success'},
+          }
+          evidence_path.write_text(json.dumps(evidence, indent=2) + '\n')
+          PY
+
+      - name: Regenerate canonical parity artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Prove exactly one legitimate parity transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from collections import Counter
+          from pathlib import Path
+
+          old = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          new = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          old_ops = {op['operation_id']: op for op in old['operations']}
+          new_ops = {op['operation_id']: op for op in new['operations']}
+          assert set(old_ops) == set(new_ops), 'generator changed operation identity/denominator'
+          transitions = []
+          for operation_id in sorted(old_ops):
+              before = old_ops[operation_id]['migration_state']
+              after = new_ops[operation_id]['migration_state']
+              if before != after:
+                  transitions.append((operation_id, before, after))
+          expected = [(os.environ['OPERATION_ID'], 'PENDING', 'ADAPTED')]
+          assert transitions == expected, f'unexpected parity transitions: {transitions!r}'
+          counts = Counter(op['migration_state'] for op in new_ops.values())
+          assert len(new_ops) == 931, len(new_ops)
+          assert counts['ADAPTED'] == 497, counts
+          assert counts['PENDING'] == 434, counts
+          assert counts['BLOCKED'] == 0, counts
+          target = new_ops[os.environ['OPERATION_ID']]
+          assert target['reconciliation']['evidence_mode'] == 'focused_closure_contract', target['reconciliation']
+          print({'total': len(new_ops), 'ADAPTED': counts['ADAPTED'], 'PENDING': counts['PENDING'], 'BLOCKED': counts['BLOCKED']})
+          PY
+
+      - name: Commit generated canonical reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+          # Re-run from the now-updated manifest and require byte-for-byte stability.
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/recheck.json \
+            --summary-output /tmp/recheck-summary.json \
+            --markdown-output /tmp/recheck.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input /tmp/recheck.json --output /tmp/recheck.json --summary-output /tmp/recheck-summary.json --markdown-output /tmp/recheck.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input /tmp/recheck.json --output /tmp/recheck.json --summary-output /tmp/recheck-summary.json --markdown-output /tmp/recheck.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input /tmp/recheck.json --output /tmp/recheck.json --summary-output /tmp/recheck-summary.json --markdown-output /tmp/recheck.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input /tmp/recheck.json --output /tmp/recheck.json --summary-output /tmp/recheck-summary.json --markdown-output /tmp/recheck.md --check-total 931
+          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/recheck.json
+          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md /tmp/recheck.md
+
+          rm .github/workflows/slot0154-finalize-focused-parity.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+                  variants/laravel-aiwmweb/docs/closure-evidence/site-details-cancel-synchronization-visible-control-terminality.json \
+                  .github/workflows/slot0154-finalize-focused-parity.yml
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'No generated reconciliation delta to commit'; exit 1; }
+          git commit -m 'docs(laravel): reconcile AIMW-AI-54BB64BB13 terminality'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-54BB64BB13-cancel-sync-slot0153
