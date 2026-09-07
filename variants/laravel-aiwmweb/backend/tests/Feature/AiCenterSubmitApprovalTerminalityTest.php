@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Execution\ExecutionCreator;
 use App\Http\Controllers\AiCenterApprovalSubmissionController;
 use App\Models\Approval;
 use App\Models\Permission;
@@ -14,6 +15,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AiCenterSubmitApprovalTerminalityTest extends TestCase
@@ -161,17 +163,24 @@ class AiCenterSubmitApprovalTerminalityTest extends TestCase
     {
         $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
         $user = User::factory()->create();
-        $this->membership($user, $tenant, ['tenant.view', 'ai.use', 'executions.manage']);
+        $membership = $this->membership($user, $tenant, ['tenant.view', 'ai.use']);
         $created = $this->actingAs($user)->postJson('/api/tenants/alpha/ai-center/approvals', $this->payload());
         $created->assertCreated();
 
         $approval = Approval::query()->withoutGlobalScopes()->findOrFail((int) $created->json('data.id'));
         $approval->update(['status' => 'APPROVED', 'decided_at' => now()]);
 
-        $this->actingAs($user)
-            ->postJson('/api/tenants/alpha/approvals/'.$approval->id.'/execute')
-            ->assertConflict()
-            ->assertSee('domain-specific executor');
+        $context = app(TenantContext::class);
+        $context->activate($tenant, $membership);
+        try {
+            app(ExecutionCreator::class)->create($approval, $user->id);
+            $this->fail('Generic AI approval unexpectedly entered the SEO suggestion executor.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame('This approval requires a domain-specific executor.', $exception->getMessage());
+        } finally {
+            $context->forget();
+        }
     }
 
     private function payload(array $overrides = []): array
