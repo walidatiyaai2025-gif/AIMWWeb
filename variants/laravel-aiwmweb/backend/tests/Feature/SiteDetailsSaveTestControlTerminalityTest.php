@@ -19,13 +19,13 @@ final class SiteDetailsSaveTestControlTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $frontend);
         $this->assertStringContainsString('SiteDetailsSaveTestControl', $wiring);
         $this->assertStringContainsString("Route::post('/sites/{site}/verify'", $routes);
-        $this->assertStringContainsString("$auth->authorize('connector.manage')", $controller);
+        $this->assertStringContainsString('$auth->authorize(\'connector.manage\')', $controller);
         $this->assertStringContainsString('Site::query()->findOrFail($site)', $controller);
-        $this->assertStringContainsString("Connector::query()->where('site_id', $site)->update(['verified_at' => now()])", $controller);
+        $this->assertStringContainsString("Connector::query()->where('site_id', \$site)->update(['verified_at' => now()])", $controller);
         $this->assertStringContainsString("#[Hidden(['encrypted_secret'])]", $connector);
         $this->assertStringContainsString("'encrypted_secret' => 'encrypted'", $connector);
         $this->assertStringNotContainsString('application_password', $frontend);
-        $this->assertStringNotContainsString('encrypted_secret', preg_replace('/expect\(JSON\.stringify.*$/m', '', $frontend) ?? $frontend);
+        $this->assertStringNotContainsString('encrypted_secret', $frontend);
     }
 
     public function test_focused_security_contract_requires_foreign_tenant_404_and_unauthorized_403_semantics(): void
