@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::table('approvals', function (Blueprint $table): void {
             $table->foreignId('suggestion_id')->nullable()->change();
             $table->foreignId('site_id')->nullable()->after('suggestion_id')->constrained()->nullOnDelete();
+            $table->string('site_name')->nullable()->after('site_id');
             $table->string('source_operation_id', 64)->nullable()->after('status');
             $table->string('operation_type', 191)->nullable()->after('source_operation_id');
             $table->string('title')->nullable()->after('operation_type');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->dropForeign(['site_id']);
             $table->dropColumn([
                 'site_id',
+                'site_name',
                 'source_operation_id',
                 'operation_type',
                 'title',
