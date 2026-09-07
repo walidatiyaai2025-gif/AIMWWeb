@@ -31,10 +31,14 @@ jobs:
           data = json.loads(src.read_text(encoding='utf-8'))
           rows = []
 
+          def contains_pending(node):
+              if isinstance(node, dict):
+                  return any(v == 'PENDING' for v in node.values())
+              return False
+
           def walk(node):
               if isinstance(node, dict):
-                  status = node.get('status') or node.get('state')
-                  if status == 'PENDING':
+                  if contains_pending(node):
                       rows.append(node)
                   for value in node.values():
                       walk(value)
@@ -44,28 +48,28 @@ jobs:
 
           walk(data)
           seen = set()
-          output = []
+          output = [f'TOP_LEVEL_KEYS={list(data.keys()) if isinstance(data, dict) else type(data).__name__}']
           for row in rows:
-              op_id = row.get('operation_id') or row.get('id') or row.get('task_id') or row.get('operationId')
-              if not op_id or op_id in seen:
+              scalars = [(k, v) for k, v in row.items() if not isinstance(v, (dict, list))]
+              op_id = None
+              for key, value in scalars:
+                  if isinstance(value, str) and value.startswith('AIMW-'):
+                      op_id = value
+                      break
+              if op_id and op_id in seen:
                   continue
-              seen.add(op_id)
-              keys = ['operation_id','id','task_id','domain','kind','source','source_path','screen','route','control','name','operation','handler','risk','risk_level','tenant_owned','mutating','status','state']
-              parts = []
-              for key in keys:
-                  value = row.get(key)
-                  if value is not None and not isinstance(value, (dict, list)):
-                      parts.append(f'{key}={value}')
-              output.append(' | '.join(parts))
+              if op_id:
+                  seen.add(op_id)
+              output.append(' | '.join(f'{k}={v}' for k, v in scalars))
 
           out = Path('variants/laravel-aiwmweb/docs/slot0164-pending-discovery.txt')
-          out.write_text('\n'.join(output[:120]) + f'\n\nCOUNT={len(output)}\n', encoding='utf-8')
-          print(f'pending rows: {len(output)}')
+          out.write_text('\n'.join(output[:160]) + f'\n\nMATCHING_DICTS={len(rows)}\nUNIQUE_IDS={len(seen)}\n', encoding='utf-8')
+          print(f'pending dicts: {len(rows)} unique ids: {len(seen)}')
           PY
       - name: Commit discovery output
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add variants/laravel-aiwmweb/docs/slot0164-pending-discovery.txt
-          git commit -m 'chore(laravel): inspect slot0164 pending inventory'
+          git commit -m 'chore(laravel): inspect slot0164 pending inventory schema'
           git push origin HEAD:worker/laravel-aiwmweb-slot0164
