@@ -6,7 +6,7 @@
     "operation_id": "AIMW-AI-98F705F888",
     "domain": "ai",
     "kind": "visible_control",
-    "route_screen": "/module/siteoperationdetails",
+    "route_screen": "/operations/sites/{OperationId:guid} | /site-operations/{OperationId:guid}",
     "visible_control": "SiteOperationDetails Execution Center navigation",
     "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor",
     "scanner_mutation_flag": false,
@@ -22,7 +22,7 @@
   },
   "laravel_adaptation": {
     "visibility": "SiteOperationDetailsReadController resolves the tenant-scoped SiteOperationHistory by correlation GUID and renders Execution Center only when a tenant-scoped Execution exists for the same site_id and correlation_id.",
-    "job_identity": "Laravel uses the existing Execution correlation relationship as the semantic equivalent of source ExecutionJobId.HasValue; the internal execution UUID, request UUID and database id are not placed in the link.",
+    "job_identity": "Laravel uses the existing Execution correlation relationship as the semantic equivalent of source ExecutionJobId.HasValue; internal execution and request UUIDs are not placed in the link.",
     "permission_alignment": "The details page keeps its existing execution.view gate. The optional link is additionally suppressed unless the current tenant membership has operations.manage, because the existing canonical Execution workspace requires both operations.manage and execution.view.",
     "target": "The link reuses the existing named canonical.workspace.execution GET workspace for the same tenant. The source siteId query context is adapted to Laravel's established ?site={id} context key consumed by TenantBootstrap; no new route or API is introduced.",
     "read_only": "No model is written and no execution action is invoked when the details page or Execution Center link is read."
@@ -32,8 +32,8 @@
     "target_permissions": ["operations.manage", "execution.view"],
     "tenant_scope": "Both SiteOperationHistory and Execution are tenant-bound models under TenantContext global scoping.",
     "correlation_scope": "An unrelated execution on the same site with a different correlation_id does not unlock the control.",
-    "cross_tenant": "A foreign-tenant execution with the same correlation_id does not unlock the control.",
-    "identifier_minimization": "The href carries only the trusted tenant slug and owned site id; execution operation_id, request_id, approval_id and database id are not exposed.",
+    "cross_tenant": "A foreign-tenant execution with the same correlation_id does not unlock the control, and a foreign-tenant detail route fails closed with 404.",
+    "identifier_minimization": "The href carries only the trusted tenant slug and owned site id; execution operation_id and request_id are not exposed.",
     "external_runtime": "This operation is navigation-only and requires no live WordPress, provider, email, payment, DNS or production mutation evidence."
   },
   "acceptance": {
@@ -44,10 +44,10 @@
       "control is absent with no correlated execution",
       "same-site execution with a different correlation does not unlock the control",
       "same-tenant same-site same-correlation execution unlocks the control",
-      "foreign-tenant execution with the same correlation does not unlock the control",
+      "foreign-tenant execution with the same correlation does not unlock the control and the foreign tenant route returns 404",
       "user lacking operations.manage may still read permitted operation details but does not receive an unusable Execution Center control",
       "existing target route remains independently guarded and denies missing operations.manage",
-      "href uses the Laravel tenant-safe ?site context and contains no internal execution identifiers",
+      "href uses the Laravel tenant-safe ?site context and contains no execution operation or request UUID",
       "details navigation is read-only across history, execution and approval rows"
     ],
     "repository_ci": "Focused validation plus normal PR-head security/parity/convergence/acceptance gates and canonical generator enrollment are required before integration; run identifiers are recorded on the PR and Issue #257 rather than invented here."
