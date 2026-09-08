@@ -1,0 +1,66 @@
+name: Laravel AIWMWeb Slot0179 Exact Reconciliation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-E8F4848B4A-slot0178
+    paths:
+      - '.github/workflows/laravel-aiwmweb-slot0179-reconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate-and-self-remove:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate canonical reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='variants/laravel-aiwmweb'
+          json="$root/docs/operation-parity-reconciliation.json"
+          md="$root/docs/operation-parity-reconciliation.md"
+          summary='/tmp/operation-parity-summary.json'
+
+          python "$root/tools/finalize_operation_parity.py" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$root/tools/apply_tenant_neutral_route_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$root/tools/apply_explicit_route_api_provenance.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$root/tools/apply_focused_closure_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$root/tools/apply_focused_service_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+
+          verify_json='/tmp/operation-parity-reconciliation.json'
+          verify_md='/tmp/operation-parity-reconciliation.md'
+          verify_summary='/tmp/operation-parity-summary-verify.json'
+          python "$root/tools/finalize_operation_parity.py" --output "$verify_json" --summary-output "$verify_summary" --markdown-output "$verify_md" --check-total 931
+          python "$root/tools/apply_tenant_neutral_route_evidence.py" --input "$verify_json" --output "$verify_json" --summary-output "$verify_summary" --markdown-output "$verify_md" --check-total 931
+          python "$root/tools/apply_explicit_route_api_provenance.py" --input "$verify_json" --output "$verify_json" --summary-output "$verify_summary" --markdown-output "$verify_md" --check-total 931
+          python "$root/tools/apply_focused_closure_evidence.py" --input "$verify_json" --output "$verify_json" --summary-output "$verify_summary" --markdown-output "$verify_md" --check-total 931
+          python "$root/tools/apply_focused_service_evidence.py" --input "$verify_json" --output "$verify_json" --summary-output "$verify_summary" --markdown-output "$verify_md" --check-total 931
+          cmp "$json" "$verify_json"
+          cmp "$md" "$verify_md"
+
+      - name: Commit exact generated artifacts and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/laravel-aiwmweb-slot0179-reconcile.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'chore(laravel): reconcile ClaimDueJobs generated parity artifacts'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
