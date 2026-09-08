@@ -24,6 +24,7 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-AI-3CDB30A4C2';
+
     private const BACK_OPERATION_ID = 'AIMW-AI-BC89B13AF8';
 
     protected function setUp(): void
