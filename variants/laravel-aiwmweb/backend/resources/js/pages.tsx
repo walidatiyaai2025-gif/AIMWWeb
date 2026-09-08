@@ -19,6 +19,7 @@ import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconci
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
+export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 
 const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previous?: string; refresh?: string }>> = {
     comments: { load: 'AIMW-SYNC-12F15A0A80', previous: 'AIMW-SYNC-CB01197D47', refresh: 'AIMW-SYNC-DBD736FACC' },
@@ -30,6 +31,15 @@ const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previou
 
 const CONTENT_WORKSPACE_LOAD_OPERATION_ID = 'AIMW-SYNC-CD6F1FB97B';
 
+type AiCenterMetadata = {
+    operation_id?: string;
+    locale?: string;
+    available_prompts?: number;
+    recent_usage_count?: number;
+    sites?: Array<{ id: number; name: string }>;
+    approval?: { id: number; status: string; decided_at?: string | null; updated_at?: string | null } | null;
+};
+
 type CollectionEnvelope = {
     data?: Array<Record<string, unknown>>;
     items?: Array<Record<string, unknown>>;
@@ -38,7 +48,7 @@ type CollectionEnvelope = {
     page?: number;
     last_page?: number;
     lastPage?: number;
-    meta?: { total?: number; current_page?: number; last_page?: number };
+    meta?: ({ total?: number; current_page?: number; last_page?: number } & AiCenterMetadata);
 };
 
 function normalizeCollection(payload: unknown) {
@@ -195,6 +205,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? collection.rows.filter((row) => String(row.status ?? '').toLowerCase() === 'active')
         : collection.rows;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
+    const aiCenterMeta = route.key === 'ai-center' && query.data && typeof query.data === 'object'
+        ? ((query.data as CollectionEnvelope).meta ?? null)
+        : null;
+    const aiCenterSites = Array.isArray(aiCenterMeta?.sites) ? aiCenterMeta.sites : [];
+    const refreshOperationId = route.key === 'ai-center'
+        ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
+        : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined);
 
     return (
         <div className="workspace-stack">
@@ -217,14 +234,36 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     <button
                         type="button"
                         className="btn"
-                        data-canonical-operation={route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined}
+                        data-canonical-operation={refreshOperationId}
                         data-canonical-load-operation={readOperations?.load}
                         data-canonical-refresh-operation={readOperations?.refresh}
-                        onClick={() => query.refetch()}
-                    >{text(commonText.refresh)}</button>
+                        disabled={route.key === 'ai-center' && query.isFetching}
+                        aria-busy={route.key === 'ai-center' && query.isFetching ? 'true' : 'false'}
+                        onClick={() => void query.refetch()}
+                    >
+                        {route.key === 'ai-center'
+                            ? (query.isFetching
+                                ? (locale === 'ar' ? 'جارٍ تحديث البيانات…' : 'Refreshing data…')
+                                : (locale === 'ar' ? 'تحديث البيانات' : 'Refresh data'))
+                            : text(commonText.refresh)}
+                    </button>
                     {route.controls?.map((actionKey) => <ActionButton key={actionKey} route={route} actionKey={actionKey} context={context} onAvailable={(contract) => setDialog({ key: actionKey, contract })} />)}
                 </div>
             </section>
+            {aiCenterMeta ? (
+                <section className="panel" data-ai-center-metadata data-canonical-operation-state={aiCenterMeta.operation_id ?? ''} aria-label={locale === 'ar' ? 'بيانات مركز الذكاء الاصطناعي' : 'AI Center metadata'}>
+                    <header className="panel-header">
+                        <div><span className="workspace-kicker">METADATA</span><strong>{locale === 'ar' ? 'الحالة الموثوقة' : 'Authoritative state'}</strong></div>
+                        <span className="tenant-badge" data-bidi="technical">{aiCenterMeta.locale ?? '—'}</span>
+                    </header>
+                    <dl className="contract-details">
+                        <div><dt>{locale === 'ar' ? 'القوالب المتاحة' : 'Available prompts'}</dt><dd>{aiCenterMeta.available_prompts ?? collection.total}</dd></div>
+                        <div><dt>{locale === 'ar' ? 'آخر استخداماتك' : 'Your recent usage'}</dt><dd>{aiCenterMeta.recent_usage_count ?? 0}</dd></div>
+                        <div><dt>{locale === 'ar' ? 'المواقع المتاحة' : 'Available sites'}</dt><dd>{aiCenterSites.length}</dd></div>
+                        <div><dt>{locale === 'ar' ? 'حالة الموافقة' : 'Approval state'}</dt><dd>{aiCenterMeta.approval?.status ?? (locale === 'ar' ? 'لا توجد' : 'None')}</dd></div>
+                    </dl>
+                </section>
+            ) : null}
             <section className="panel data-panel">
                 <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter === 'connected' ? visibleRows.length : collection.total}</span></header>
                 {visibleRows.length ? <DataTable rows={visibleRows} /> : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
