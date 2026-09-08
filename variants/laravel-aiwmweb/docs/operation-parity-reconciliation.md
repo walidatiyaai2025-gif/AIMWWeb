@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 506 |
-| PENDING | 425 |
+| ADAPTED | 507 |
+| PENDING | 424 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 506 |
-| OVERALL_PARITY_PERCENT | 54.35% |
+| TERMINAL | 507 |
+| OVERALL_PARITY_PERCENT | 54.46% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -29,7 +29,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 82 | 10 | 0 | 0 | 82 | 89.13% |
+| ai | 92 | 0 | 83 | 9 | 0 | 0 | 83 | 90.22% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 44 | 40 | 0 | 0 | 44 | 52.38% |
-| service | 349 | 0 | 326 | 23 | 0 | 0 | 326 | 93.41% |
+| service | 349 | 0 | 327 | 22 | 0 | 0 | 327 | 93.70% |
 | visible_control | 446 | 0 | 91 | 355 | 0 | 0 | 91 | 20.40% |
 
 ## Reproducibility / guard results
@@ -67,14 +67,14 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **37**
 - Focused visible-control contracts: **91**
-- Focused service contracts: **9**
+- Focused service contracts: **10**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (10)
+### ai (9)
 
 - `AIMW-AI-9E73ABE9CE`
 - `AIMW-AI-A746A1C3EB`
@@ -85,7 +85,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-AI-D1F233AB61`
 - `AIMW-AI-DDB072FE15`
 - `AIMW-AI-E5D089844A`
-- `AIMW-AI-E8F4848B4A`
 
 ### approvals (0)
 
