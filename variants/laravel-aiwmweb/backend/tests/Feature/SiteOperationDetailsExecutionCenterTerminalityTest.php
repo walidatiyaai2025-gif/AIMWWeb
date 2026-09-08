@@ -100,6 +100,10 @@ class SiteOperationDetailsExecutionCenterTerminalityTest extends TestCase
         $this->recordExecution($betaMembership, $betaOperation->site_id, $correlationId);
 
         $this->actingAs($alphaUser)
+            ->get("/tenants/beta/site-operations/{$correlationId}")
+            ->assertNotFound();
+
+        $this->actingAs($alphaUser)
             ->get("/tenants/alpha/site-operations/{$correlationId}")
             ->assertOk()
             ->assertDontSee('Execution Center');
