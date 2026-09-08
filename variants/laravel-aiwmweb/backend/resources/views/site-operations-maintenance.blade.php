@@ -13,6 +13,11 @@
         <span class="workspace-kicker">STORAGE MANAGEMENT</span>
         <h1>Site Operation History Maintenance</h1>
         <p>Review the real tenant-scoped operation-history footprint and the default retention preview. Maintenance mutations are separate canonical operations.</p>
+        <p>
+            <a class="btn"
+               data-canonical-operation="AIMW-AI-C2776A0F99"
+               href="{{ route('canonical.workspace.site-operations', ['tenant' => $tenant], false) }}">Operation history</a>
+        </p>
         @if ($canOpenOperationsHub)
             <p>
                 <a class="btn primary"
