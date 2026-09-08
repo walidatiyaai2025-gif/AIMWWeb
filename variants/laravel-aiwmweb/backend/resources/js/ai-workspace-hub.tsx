@@ -3,6 +3,7 @@ import type { FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const AI_WORKSPACE_OPERATION_ID = 'AIMW-AI-8EE4F9F6FC';
+export const AI_WORKSPACE_CARD_OPERATION_ID = 'AIMW-AI-A746A1C3EB';
 
 type WorkspaceCard = {
     key: 'ai-center' | 'ai-providers' | 'ai-prompts' | 'approvals';
@@ -10,6 +11,7 @@ type WorkspaceCard = {
     label: { en: string; ar: string };
     description: { en: string; ar: string };
     path: string;
+    requiredPermissions: readonly string[];
 };
 
 const cards: WorkspaceCard[] = [
@@ -19,6 +21,7 @@ const cards: WorkspaceCard[] = [
         label: { en: 'AI Center', ar: 'مركز الذكاء الاصطناعي' },
         description: { en: 'Open the operational AI workspace.', ar: 'افتح مساحة الذكاء الاصطناعي التشغيلية.' },
         path: '/ai-center',
+        requiredPermissions: ['tenant.view', 'ai.use'],
     },
     {
         key: 'ai-providers',
@@ -26,6 +29,7 @@ const cards: WorkspaceCard[] = [
         label: { en: 'AI Providers', ar: 'مزودو الذكاء الاصطناعي' },
         description: { en: 'Manage provider connections, keys, and models.', ar: 'إدارة اتصالات المزودين والمفاتيح والنماذج.' },
         path: '/settings/ai-providers',
+        requiredPermissions: ['settings.manage'],
     },
     {
         key: 'ai-prompts',
@@ -33,6 +37,7 @@ const cards: WorkspaceCard[] = [
         label: { en: 'Prompt Templates', ar: 'قوالب الأوامر' },
         description: { en: 'Manage persisted templates through the real prompt store.', ar: 'إدارة القوالب المحفوظة عبر مخزن القوالب الفعلي.' },
         path: '/settings/ai-prompts',
+        requiredPermissions: ['settings.manage'],
     },
     {
         key: 'approvals',
@@ -40,15 +45,20 @@ const cards: WorkspaceCard[] = [
         label: { en: 'Approvals', ar: 'الموافقات' },
         description: { en: 'Review execution requests that require approval.', ar: 'مراجعة طلبات التنفيذ التي تتطلب موافقة.' },
         path: '/approvals',
+        requiredPermissions: ['tenant.view', 'approvals.view'],
     },
 ];
 
 const tenantPath = (tenant: string, path: string): string =>
     `/tenants/${encodeURIComponent(tenant)}${path}`;
 
+const canOpen = (context: FrontendContext, card: WorkspaceCard): boolean =>
+    card.requiredPermissions.every((permission) => context.permissions.includes(permission));
+
 export function AiWorkspaceHub({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const isArabic = locale === 'ar';
+    const availableCards = cards.filter((card) => canOpen(context, card));
 
     return (
         <div
@@ -81,11 +91,12 @@ export function AiWorkspaceHub({ context }: { context: FrontendContext }) {
             </section>
 
             <div className="workspace-grid">
-                {cards.map((item) => (
+                {availableCards.map((item) => (
                     <a
                         className="card workspace-card"
                         href={tenantPath(context.tenant.slug, item.path)}
                         key={item.key}
+                        data-canonical-operation={AI_WORKSPACE_CARD_OPERATION_ID}
                         data-testid="workspace-link"
                         data-workspace-key={item.key}
                     >
