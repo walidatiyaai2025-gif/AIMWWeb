@@ -119,4 +119,4 @@ jobs:
           git commit -m 'chore(laravel): reconcile execution center navigation parity'
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      # Rerun marker: tenant-isolation proof added for AIMW-AI-98F705F888.
+      # Rerun marker: canonical route and identifier assertions repaired for AIMW-AI-98F705F888.
