@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 512 |
-| PENDING | 419 |
+| ADAPTED | 513 |
+| PENDING | 418 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 512 |
-| OVERALL_PARITY_PERCENT | 54.99% |
+| TERMINAL | 513 |
+| OVERALL_PARITY_PERCENT | 55.10% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -29,7 +29,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 | Domain | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| ai | 92 | 0 | 88 | 4 | 0 | 0 | 88 | 95.65% |
+| ai | 92 | 0 | 89 | 3 | 0 | 0 | 89 | 96.74% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 24 | 35 | 0 | 0 | 24 | 40.68% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 45 | 39 | 0 | 0 | 45 | 53.57% |
-| service | 349 | 0 | 327 | 22 | 0 | 0 | 327 | 93.70% |
+| service | 349 | 0 | 328 | 21 | 0 | 0 | 328 | 93.98% |
 | visible_control | 446 | 0 | 95 | 351 | 0 | 0 | 95 | 21.30% |
 
 ## Reproducibility / guard results
@@ -67,18 +67,17 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **38**
 - Focused visible-control contracts: **95**
-- Focused service contracts: **10**
+- Focused service contracts: **11**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
 
 ## Exact remaining PENDING operation IDs by domain
 
-### ai (4)
+### ai (3)
 
 - `AIMW-AI-C5BC29CF27`
 - `AIMW-AI-CAAC427FC0`
-- `AIMW-AI-D1F233AB61`
 - `AIMW-AI-DDB072FE15`
 
 ### approvals (0)
