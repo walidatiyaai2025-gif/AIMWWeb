@@ -9,12 +9,13 @@
     "domain": "ai",
     "source": "src/AIWordPressManager.Web/Services/ApprovalWorkflowService.cs",
     "service": "ApprovalWorkflowService.RecordExecutionFailed",
-    "mutation": true,
+    "mutation": false,
     "tenant_owned": true,
-    "risk": "high"
+    "risk": "low"
   },
   "source_semantics": {
-    "record_failure": "RecordExecutionFailed logs the approval ID, execution ID, and failure context server-side, then delegates the durable state transition to the approval service MarkFailed operation.",
+    "scanner_metadata": "The canonical generated ledger classifies this service row as mutation=false and risk=low; this evidence preserves that metadata exactly rather than rewriting the generated contract.",
+    "record_failure": "The authoritative source method nevertheless performs a durable workflow transition: RecordExecutionFailed logs the approval ID, execution ID, and failure context server-side, then delegates the approval failure transition to MarkFailed(approvalId, error). The Laravel adapter follows the actual source behavior while retaining the canonical scanner metadata above.",
     "boundary": "The canonical method does not independently mark the execution failed; execution-state ownership remains outside this service transition."
   },
   "laravel_adaptation": {
@@ -33,7 +34,7 @@
   },
   "acceptance": {
     "proofs": [
-      "exact canonical service/domain/source/mutation/tenant identity",
+      "exact canonical service/domain/source/scanner-mutation/tenant/risk metadata",
       "authorized same-tenant call marks only the approval FAILED",
       "existing execution status and failure fields remain unchanged",
       "server log includes operation/approval/execution identity and redacts a token value",
