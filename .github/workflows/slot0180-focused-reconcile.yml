@@ -1,0 +1,125 @@
+name: Slot0180 Focused Reconciliation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-9E73ABE9CE-slot0180
+    paths:
+      - '.github/workflows/slot0180-focused-reconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-generate-and-clean:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Laravel dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Focused Laravel validation
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate:fresh --force
+          vendor/bin/pint --test \
+            app/Http/Controllers/OperationsMaintenanceReadController.php \
+            app/Http/Controllers/SiteOperationsMaintenanceReadController.php \
+            tests/Feature/OperationsMaintenanceOperationsHubTerminalityTest.php
+          php artisan test \
+            tests/Feature/OperationsMaintenanceOperationsHubTerminalityTest.php \
+            tests/Feature/OperationsMaintenanceRouteTerminalityTest.php \
+            tests/Feature/SiteOperationsMaintenanceRouteTerminalityTest.php
+          php artisan view:cache
+
+      - name: Pin pushed focused evidence source
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['focused_closure_evidence_source_sha'] = '${{ github.sha }}'
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Generate canonical parity artifacts
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+      - name: Verify independent regeneration
+        run: |
+          cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/committed.json
+          cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md /tmp/committed.md
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/check.json --summary-output /tmp/check-summary.json --markdown-output /tmp/check.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/check.json --output /tmp/check.json --summary-output /tmp/check-summary.json --markdown-output /tmp/check.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/check.json --output /tmp/check.json --summary-output /tmp/check-summary.json --markdown-output /tmp/check.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/check.json --output /tmp/check.json --summary-output /tmp/check-summary.json --markdown-output /tmp/check.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/check.json --output /tmp/check.json --summary-output /tmp/check-summary.json --markdown-output /tmp/check.md --check-total 931
+          cmp /tmp/committed.json /tmp/check.json
+          cmp /tmp/committed.md /tmp/check.md
+
+      - name: Commit generated reconciliation and remove helper
+        run: |
+          git rm .github/workflows/slot0180-focused-reconcile.yml
+          git config user.name 'walidatiyaai2025-gif'
+          git config user.email 'walidatiyaai2025@gmail.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'chore(laravel): reconcile maintenance operations hub parity'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-9E73ABE9CE-slot0180
