@@ -39,8 +39,9 @@ class ApprovalWorkflowRecordExecutionFailedTerminalityTest extends TestCase
         $this->assertSame('service', $operation['kind']);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('src/AIWordPressManager.Web/Services/ApprovalWorkflowService.cs', $operation['current_source']);
-        $this->assertTrue((bool) $operation['mutation']);
+        $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('low', $operation['risk']);
         $this->assertSame(self::OPERATION_ID, ApprovalWorkflowService::RECORD_EXECUTION_FAILED_OPERATION_ID);
     }
 
