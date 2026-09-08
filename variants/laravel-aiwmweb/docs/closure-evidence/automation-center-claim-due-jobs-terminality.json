@@ -30,7 +30,7 @@
     "dispatch_boundary": "No operation_executions row is created by this adapter, preserving the canonical claim-only service boundary and keeping existing dispatchDueSchedules behavior separate."
   },
   "service_closure_contract": {
-    "implementation_sha": "467abaf4545c75cfeb381534e74784c4bd18a948",
+    "implementation_sha": "d4fa28c3d2a5be2ce038ce5db064f1b8dfd0715d",
     "destination_path": "variants/laravel-aiwmweb/backend/app/AI/Platform/Services/AutomationCenterService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationCenterClaimDueJobsTerminalityTest.php"
   },
@@ -39,7 +39,7 @@
       "exact canonical operation/service/member/source/scanner-mutation/tenant/risk metadata",
       "active tenant claims only enabled due sync and seo_audit work in deterministic due-time order",
       "future, disabled, already-running and unsupported scheduled work remains untouched",
-      "foreign-tenant due work remains untouched",
+      "foreign-tenant due work is explicitly absent from claimed results and remains untouched in persistence",
       "claimed rows transition to Running at the supplied UTC claim instant without advancing next_run_at",
       "claim operation creates no operation_executions record",
       "a second claim cannot reclaim an already-running row"
