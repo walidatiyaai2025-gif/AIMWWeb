@@ -24,6 +24,7 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-AI-3CDB30A4C2';
+    private const BACK_OPERATION_ID = 'AIMW-AI-BC89B13AF8';
 
     protected function setUp(): void
     {
@@ -47,6 +48,26 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('/site-operations/{OperationId:guid}', $operation['route_screen']);
         $this->assertSame('Open/render route', $operation['visible_control']);
+        $this->assertSame('src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor', $operation['current_source']);
+        $this->assertFalse((bool) $operation['mutation']);
+        $this->assertTrue((bool) $operation['tenant_owned']);
+    }
+
+    public function test_back_control_matches_the_canonical_visible_control_without_granting_route_credit(): void
+    {
+        $ledger = json_decode(
+            (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        $operation = collect($ledger['operations'])->firstWhere('operation_id', self::BACK_OPERATION_ID);
+
+        $this->assertNotNull($operation);
+        $this->assertSame('visible_control', $operation['kind']);
+        $this->assertSame('ai', $operation['domain']);
+        $this->assertSame('/operations/sites/{OperationId:guid} | /site-operations/{OperationId:guid}', $operation['route_screen']);
+        $this->assertSame('/site-operations -> /site-operations', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
@@ -96,12 +117,15 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             ->assertSee($correlationId)
             ->assertSee('Synced authoritative content')
             ->assertSee('[REDACTED]')
-            ->assertDontSee('never-render-this-secret');
+            ->assertDontSee('never-render-this-secret')
+            ->assertSee('data-canonical-operation="'.self::BACK_OPERATION_ID.'"', false)
+            ->assertSee('/tenants/alpha/site-operations', false);
 
         $this->actingAs($user)
             ->get("/tenants/alpha/operations/sites/{$correlationId}")
             ->assertOk()
-            ->assertSee($correlationId);
+            ->assertSee($correlationId)
+            ->assertSee('data-canonical-operation="'.self::BACK_OPERATION_ID.'"', false);
 
         $context = app(TenantContext::class);
         $context->activate($membership->tenant, $membership);

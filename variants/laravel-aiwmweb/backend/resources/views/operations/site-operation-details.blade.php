@@ -15,7 +15,7 @@
                 <p>Read-only execution history for the active tenant.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a class="btn" href="{{ $historyUrl }}">Back to site operations</a>
+                <a class="btn" data-canonical-operation="AIMW-AI-BC89B13AF8" href="{{ $historyUrl }}">Back to site operations</a>
                 @if ($executionCenterUrl)
                     <a
                         class="btn"
