@@ -14,7 +14,16 @@
                 <h1 id="site-operation-heading">Site operation details</h1>
                 <p>Read-only execution history for the active tenant.</p>
             </div>
-            <a class="btn" href="{{ $historyUrl }}">Back to site operations</a>
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn" href="{{ $historyUrl }}">Back to site operations</a>
+                @if ($executionCenterUrl)
+                    <a
+                        class="btn"
+                        data-canonical-operation="AIMW-AI-98F705F888"
+                        href="{{ $executionCenterUrl }}"
+                    >Execution Center</a>
+                @endif
+            </div>
         </section>
 
         <section class="panel" aria-labelledby="operation-summary-heading">
