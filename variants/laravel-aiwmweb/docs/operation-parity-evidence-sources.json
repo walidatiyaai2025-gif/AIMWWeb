@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "47df2db4652e91fbf1d9c9904fb36b667f78c6e5",
+  "previous_reconciliation_sha": "877762545b02a9857314f629abd758afdf371111",
   "focused_closure_evidence_source_sha": "e0d41a53fd9081b6019811ff3ebb77af9da7b0b9",
   "countable_sources": [
     {
@@ -551,6 +551,23 @@
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiWorkspaceRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/ai-workspace-route-terminality.json",
           "security_mode": "tenant_bound"
+        }
+      }
+    },
+    {
+      "label": "AIMW-AI-E5D089844A site operation details alias route closure",
+      "sha": "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
+      "observed_pr_head": "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
+      "domains": [
+        "ai"
+      ],
+      "supporting_only": true,
+      "operation_evidence": {
+        "AIMW-AI-E5D089844A": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsAliasRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operation-details-alias-route-terminality.json"
         }
       }
     }
