@@ -60,6 +60,7 @@ class AutomationCenterClaimDueJobsTerminalityTest extends TestCase
 
         $this->assertSame([$dueSync, $dueSeo], array_column($claimed, 'id'));
         $this->assertSame(['Running', 'Running'], array_column($claimed, 'last_status'));
+        $this->assertNotFoundForForeignTenant($foreign, $claimed);
 
         foreach ([$dueSync, $dueSeo] as $id) {
             $row = DB::table('scheduled_tasks')->where('id', $id)->first();
@@ -93,6 +94,12 @@ class AutomationCenterClaimDueJobsTerminalityTest extends TestCase
         $row = DB::table('scheduled_tasks')->where('id', $task)->first();
         $this->assertSame('Running', $row->last_status);
         $this->assertTrue(Carbon::parse($row->last_run_at)->equalTo($at));
+    }
+
+    /** @param array<int, array<string, mixed>> $claimed */
+    private function assertNotFoundForForeignTenant(int $foreignTenantTaskId, array $claimed): void
+    {
+        $this->assertNotContains($foreignTenantTaskId, array_column($claimed, 'id'));
     }
 
     private function insertTask(
