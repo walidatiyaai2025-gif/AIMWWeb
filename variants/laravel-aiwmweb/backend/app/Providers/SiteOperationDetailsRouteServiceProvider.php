@@ -20,10 +20,13 @@ final class SiteOperationDetailsRouteServiceProvider extends ServiceProvider
             ->defaults('canonical_operation_id', 'AIMW-AI-3CDB30A4C2')
             ->name('canonical.workspace.site-operation-details');
 
+        // Canonical source alias: /operations/sites/{OperationId:guid}
+        // This alias is a distinct canonical parity operation, while sharing
+        // the same read-only tenant-authorized controller and rendered view.
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->get('/tenants/{tenant}/operations/sites/{operationId}', SiteOperationDetailsReadController::class)
             ->defaults('workspace_permissions', 'execution.view')
-            ->defaults('canonical_operation_id', 'AIMW-AI-3CDB30A4C2')
+            ->defaults('canonical_operation_id', 'AIMW-AI-E5D089844A')
             ->name('canonical.alias.operations-site-details');
     }
 }

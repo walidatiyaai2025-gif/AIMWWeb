@@ -25,6 +25,8 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AI-3CDB30A4C2';
 
+    private const ALIAS_OPERATION_ID = 'AIMW-AI-E5D089844A';
+
     private const BACK_OPERATION_ID = 'AIMW-AI-BC89B13AF8';
 
     protected function setUp(): void
@@ -91,8 +93,15 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             $this->assertContains('auth', $route->gatherMiddleware());
             $this->assertContains('tenant.context', $route->gatherMiddleware());
             $this->assertSame('execution.view', $route->defaults['workspace_permissions']);
-            $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id']);
         }
+
+        $this->assertSame(self::OPERATION_ID, $canonical->defaults['canonical_operation_id']);
+        $this->assertSame(self::ALIAS_OPERATION_ID, $alias->defaults['canonical_operation_id']);
+        $this->assertNotSame(
+            $canonical->defaults['canonical_operation_id'],
+            $alias->defaults['canonical_operation_id'],
+            'Canonical and source-alias routes must retain independent parity provenance.',
+        );
 
         $maintenance = Route::getRoutes()->match(Request::create('/tenants/alpha/site-operations/maintenance', 'GET'));
         $this->assertSame(SiteOperationsMaintenanceReadController::class, ltrim($maintenance->getActionName(), '\\'));
