@@ -29,7 +29,7 @@
     "redaction": "Failure persistence and activity metadata redact credential-like assignments and cap the stored message at 1000 characters, preserving the Laravel variant's server-side secret boundary while keeping the source failure semantics."
   },
   "service_closure_contract": {
-    "implementation_sha": "e32669120b896a5a8105c3c36b1111c9ba160d40",
+    "implementation_sha": "843a69c0634a608d04a585feaa2115075f0c6c6a",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExternalExecutionFailureService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterFailExternalTerminalityTest.php"
   },
