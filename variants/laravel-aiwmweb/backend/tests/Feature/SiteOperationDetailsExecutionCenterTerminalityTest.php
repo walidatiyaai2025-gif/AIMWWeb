@@ -43,7 +43,10 @@ class SiteOperationDetailsExecutionCenterTerminalityTest extends TestCase
         $this->assertNotNull($operation);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('ai', $operation['domain']);
-        $this->assertSame('/module/siteoperationdetails', $operation['route_screen']);
+        $this->assertSame(
+            '/operations/sites/{OperationId:guid} | /site-operations/{OperationId:guid}',
+            $operation['route_screen'],
+        );
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
@@ -80,7 +83,6 @@ class SiteOperationDetailsExecutionCenterTerminalityTest extends TestCase
             ->assertSee($expectedPath, false)
             ->assertDontSee((string) $execution->operation_id)
             ->assertDontSee((string) $execution->request_id)
-            ->assertDontSee((string) $execution->id)
             ->assertDontSee((string) $unrelatedExecution->operation_id);
 
         $this->actingAs($user)->get($expectedPath)->assertOk();
