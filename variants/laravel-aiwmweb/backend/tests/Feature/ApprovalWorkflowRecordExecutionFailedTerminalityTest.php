@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Mockery;
 use Tests\TestCase;
@@ -52,8 +51,8 @@ class ApprovalWorkflowRecordExecutionFailedTerminalityTest extends TestCase
         $membership = $this->membership($user, $tenant, ['approvals.manage']);
         app(TenantContext::class)->activate($tenant, $membership);
 
-        $approvalId = $this->insertApproval($tenant->id, $user->id, 1001, 'APPROVED');
-        $executionRowId = $this->insertExecution($tenant->id, $user->id, $approvalId, 2001, 'running');
+        $approvalId = $this->insertApproval($tenant->id, $user->id, 'APPROVED');
+        $executionRowId = $this->insertExecution($tenant->id, $user->id, $approvalId, 'running');
         $executionId = (string) Str::uuid();
 
         Log::shouldReceive('error')->once()->with(
@@ -90,7 +89,7 @@ class ApprovalWorkflowRecordExecutionFailedTerminalityTest extends TestCase
         $user = User::factory()->create();
         $membership = $this->membership($user, $alpha, ['approvals.manage']);
         app(TenantContext::class)->activate($alpha, $membership);
-        $foreignApprovalId = $this->insertApproval($beta->id, $user->id, 1002, 'APPROVED');
+        $foreignApprovalId = $this->insertApproval($beta->id, $user->id, 'APPROVED');
 
         $this->expectException(ModelNotFoundException::class);
         app(ApprovalWorkflowService::class)->recordExecutionFailed(
@@ -106,7 +105,7 @@ class ApprovalWorkflowRecordExecutionFailedTerminalityTest extends TestCase
         $user = User::factory()->create();
         $membership = $this->membership($user, $tenant, ['approvals.view']);
         app(TenantContext::class)->activate($tenant, $membership);
-        $approvalId = $this->insertApproval($tenant->id, $user->id, 1003, 'APPROVED');
+        $approvalId = $this->insertApproval($tenant->id, $user->id, 'APPROVED');
 
         try {
             app(ApprovalWorkflowService::class)->recordExecutionFailed(
@@ -140,44 +139,42 @@ class ApprovalWorkflowRecordExecutionFailedTerminalityTest extends TestCase
         return $membership;
     }
 
-    private function insertApproval(int $tenantId, int $actorUserId, int $suggestionId, string $status): int
+    private function insertApproval(int $tenantId, int $actorUserId, string $status): int
     {
-        Schema::disableForeignKeyConstraints();
-        try {
-            return (int) DB::table('approvals')->insertGetId([
-                'tenant_id' => $tenantId,
-                'suggestion_id' => $suggestionId,
-                'actor_user_id' => $actorUserId,
-                'status' => $status,
-                'before_state' => json_encode(['title' => 'before'], JSON_THROW_ON_ERROR),
-                'proposed_state' => json_encode(['title' => 'after'], JSON_THROW_ON_ERROR),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } finally {
-            Schema::enableForeignKeyConstraints();
-        }
+        return (int) DB::table('approvals')->insertGetId([
+            'tenant_id' => $tenantId,
+            'suggestion_id' => null,
+            'actor_user_id' => $actorUserId,
+            'status' => $status,
+            'before_state' => json_encode(['title' => 'before'], JSON_THROW_ON_ERROR),
+            'proposed_state' => json_encode(['title' => 'after'], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
-    private function insertExecution(int $tenantId, int $actorUserId, int $approvalId, int $siteId, string $status): int
+    private function insertExecution(int $tenantId, int $actorUserId, int $approvalId, string $status): int
     {
-        Schema::disableForeignKeyConstraints();
-        try {
-            return (int) DB::table('executions')->insertGetId([
-                'operation_id' => (string) Str::uuid(),
-                'request_id' => (string) Str::uuid(),
-                'correlation_id' => (string) Str::uuid(),
-                'tenant_id' => $tenantId,
-                'site_id' => $siteId,
-                'approval_id' => $approvalId,
-                'actor_user_id' => $actorUserId,
-                'status' => $status,
-                'attempts' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } finally {
-            Schema::enableForeignKeyConstraints();
-        }
+        $siteId = (int) DB::table('sites')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'Approval failure fixture',
+            'url' => 'https://approval-failure-'.$tenantId.'.example.test',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return (int) DB::table('executions')->insertGetId([
+            'operation_id' => (string) Str::uuid(),
+            'request_id' => (string) Str::uuid(),
+            'correlation_id' => (string) Str::uuid(),
+            'tenant_id' => $tenantId,
+            'site_id' => $siteId,
+            'approval_id' => $approvalId,
+            'actor_user_id' => $actorUserId,
+            'status' => $status,
+            'attempts' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
