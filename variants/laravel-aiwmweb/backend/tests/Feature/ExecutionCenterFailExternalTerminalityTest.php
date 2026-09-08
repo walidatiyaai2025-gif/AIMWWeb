@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Execution\ExternalExecutionFailureService;
 use App\Models\AuditEvent;
+use App\Models\Execution;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Tenancy\TenantContext;
@@ -83,7 +84,7 @@ class ExecutionCenterFailExternalTerminalityTest extends TestCase
 
         $activity = AuditEvent::query()
             ->where('event', 'execution.failed')
-            ->where('subject_type', \App\Models\Execution::class)
+            ->where('subject_type', Execution::class)
             ->where('subject_id', (string) $executionId)
             ->firstOrFail();
 
