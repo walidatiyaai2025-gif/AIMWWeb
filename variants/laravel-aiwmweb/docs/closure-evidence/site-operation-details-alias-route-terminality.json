@@ -39,7 +39,11 @@
     "the GET performs no history mutation"
   ],
   "authorization": {
-    "route_middleware": ["web", "auth", "tenant.context"],
+    "route_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
     "controller_permission": "execution.view",
     "guest": "redirect to canonical /login",
     "missing_permission": "403",
@@ -55,18 +59,71 @@
   },
   "acceptance_tests": {
     "php_feature_file": "backend/tests/Feature/SiteOperationDetailsAliasRouteTerminalityTest.php",
+    "companion_regression_file": "backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php",
     "proofs": [
       "AIMW-AI-E5D089844A is attached to the exact operations/sites alias rather than the sibling route",
+      "the sibling /site-operations route retains AIMW-AI-3CDB30A4C2 while both routes share the hardened read implementation",
       "the alias is an explicit GET/HEAD route guarded by web + auth + tenant.context and execution.view",
       "an authorized tenant member reads a real persisted operation by correlation GUID without mutation",
       "secret-bearing context remains redacted",
       "guest, missing permission, foreign tenant, cross-tenant GUID, missing GUID and malformed GUID paths fail closed"
+    ],
+    "required_repository_gates": [
+      "SQLite full Laravel suite",
+      "MySQL fresh/rollback/forward plus full Laravel suite",
+      "Redis tenant lock plus queue worker and scheduler",
+      "WordPress disposable runtime",
+      "WordPress real REST E2E",
+      "frontend typecheck/tests/build",
+      "frontend production build",
+      "runtime artifacts",
+      "acceptance release gate",
+      "production Docker Compose runtime",
+      "cross-domain security",
+      "parity reconciliation",
+      "PR plan-link gate"
     ]
   },
-  "implementation_snapshot_sha": "b6ba96ee47642d832c2036ac255da5a6386528db",
-  "implementation_snapshot_ci": {
-    "status": "PENDING_AT_EVIDENCE_AUTHORING",
-    "note": "No CI result is manufactured here. Exact-head workflow results must be recorded/verified from GitHub before canonical reconciliation."
+  "implementation_snapshot_sha": "a20531381c2fa013d0b0a5faae75e241f24b3076",
+  "exact_tested_sha": "a20531381c2fa013d0b0a5faae75e241f24b3076",
+  "exact_tested_sha_ci": {
+    "pr_plan_link": {
+      "run_id": 34219825381,
+      "result": "success"
+    },
+    "laravel_aiwmweb_cross_domain_security": {
+      "run_id": 34219825341,
+      "result": "success"
+    },
+    "laravel_aiwmweb_parity_reconciliation": {
+      "run_id": 34219825316,
+      "result": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 34219825336,
+      "result": "success"
+    },
+    "sqlite_full_php_suite": "success",
+    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "frontend_production_build": "success",
+    "runtime_artifacts": "success",
+    "acceptance_gate": "success",
+    "production_compose_runtime": "success"
+  },
+  "canonical_denominator": {
+    "source": "authoritative closure composition 877762545b02a9857314f629abd758afdf371111",
+    "total": 931,
+    "current_terminal": 511,
+    "current_pending": 420,
+    "current_blocked": 0,
+    "candidate_terminal_after_authorized_integration_and_regeneration": 512,
+    "candidate_pending_after_authorized_integration_and_regeneration": 419,
+    "generated_reconciliation_modified": false,
+    "note": "Candidate delta is exactly one operation and is materialized only by the repository generator after this pushed exact-SHA evidence is enrolled."
   },
   "generator_contract": {
     "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
@@ -82,16 +139,18 @@
     "aspnet_or_current_product_modified": false,
     "generated_931_reconciliation_modified": false,
     "owner_only_evidence_required": false,
-    "force_push": false
+    "force_push": false,
+    "merge": false
   },
   "terminality": {
     "candidate_state": "ADAPTED",
     "fully_implemented": true,
     "runtime_wired": true,
     "security_and_tenant_enforced": true,
-    "implementation_sha_tests_green": false,
+    "implementation_sha_tests_green": true,
     "evidence_recorded": true,
     "canonical_reconciliation_pending": true,
-    "reason": "The second canonical route alias now has independent operation provenance while reusing the already hardened read-only details controller/view and preserving auth, RBAC, tenant/IDOR isolation, malformed-ID failure and secret redaction. Canonical terminality remains pending until exact-head CI and generator-authorized reconciliation succeed."
+    "reason": "The second canonical route alias has independent operation provenance while reusing the hardened read-only details controller/view. Exact tested SHA a20531381c2fa013d0b0a5faae75e241f24b3076 passed Plan Link, Cross-Domain Security, Parity Reconciliation and the complete Laravel AIWMWeb Acceptance matrix, including full SQLite and MySQL suites, while preserving RBAC, tenant/IDOR isolation, malformed-ID failure and secret redaction. Canonical terminality remains pending only until generator-authorized reconciliation succeeds.",
+    "evidence_bearing_head_ci": "exact tested head a20531381c2fa013d0b0a5faae75e241f24b3076 passed the required PR-level gates before generator reconciliation"
   }
 }
