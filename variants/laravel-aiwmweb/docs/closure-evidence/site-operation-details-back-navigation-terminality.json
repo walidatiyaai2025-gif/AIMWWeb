@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-BC89B13AF8",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor",
+    "source_route": "/operations/sites/{OperationId:guid} | /site-operations/{OperationId:guid}",
+    "source_control": "/site-operations -> /site-operations",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "SiteOperationDetails exposes a read-only navigation control that returns every detail-state variant to the site operation history collection at /site-operations.",
+    "read_semantics": "The control only navigates back to history. It performs no WordPress, provider, execution, persistence, credential, or approval mutation."
+  },
+  "laravel_adaptation": {
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/operations/site-operation-details.blade.php",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php",
+    "canonical_detail_route": "/tenants/{tenant}/site-operations/{operationId}",
+    "source_alias_route": "/tenants/{tenant}/operations/sites/{operationId}",
+    "history_destination": "/tenants/{tenant}/site-operations",
+    "control_operation_marker": "AIMW-AI-BC89B13AF8",
+    "detail_route_operation": "AIMW-AI-3CDB30A4C2",
+    "generated_reconciliation_modified_by_hand": false
+  },
+  "authorization": {
+    "detail_boundary": ["web", "auth", "tenant.context", "execution.view"],
+    "guest": "redirect to login",
+    "missing_execution_view": "403",
+    "foreign_tenant": "404",
+    "cross_tenant_operation_guid": "404",
+    "malformed_operation_guid": "404"
+  },
+  "tenant_and_security_contract": {
+    "active_tenant_source": "TenantContext established by auth + tenant.context",
+    "history_url_source": "named canonical.workspace.site-operations route using the already-validated active tenant slug",
+    "operation_lookup": "SiteOperationHistoryService::getByCorrelationId under BelongsToTenant global scoping",
+    "cross_tenant_result": "404",
+    "technical_details_redaction": "SiteOperationHistoryService redacts secret/token/password/authorization/cookie/api-key fields before persistence/rendering",
+    "mutation_surface": "none"
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php",
+    "assertions": [
+      "exact visible-control ledger provenance matches AIMW-AI-BC89B13AF8",
+      "existing canonical and alias detail routes remain execution.view guarded",
+      "authorized tenant member renders the exact back-control marker and tenant-scoped history destination",
+      "guest redirects to login and missing permission returns 403",
+      "foreign tenant, cross-tenant correlation GUID, and malformed GUID return 404",
+      "persisted technical details remain redacted and the control introduces no mutation"
+    ],
+    "repository_gates_required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ]
+  },
+  "implementation_snapshot_sha": "3a3f54172c69ae40205d24e0682c5f7aa851071c",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-BC89B13AF8",
+    "second_operation_started": false,
+    "detail_route_operation_terminalized_by_this_evidence": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "The already-live site-operation detail screen now carries exact operation provenance on its existing tenant-scoped back control, with deterministic route, authorization, tenant-isolation, and redaction tests. Generator-controlled terminal credit remains contingent on pushed exact-SHA evidence and repository CI."
+  }
+}
