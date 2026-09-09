@@ -195,6 +195,7 @@ class AiCenterGenerateTerminalityTest extends TestCase
 final class RecordingAiGenerator implements AiGenerator
 {
     public int $calls = 0;
+
     public array $request = [];
 
     public function generate(array $request): array
