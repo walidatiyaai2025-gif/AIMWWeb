@@ -178,4 +178,4 @@ jobs:
           git commit -m 'chore(ai): remove transient slot0201 closure workflow'
           git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
 
-# Retry after focused Pint repair.
+# Retry after focused React assertion repair.
