@@ -67,7 +67,7 @@ describe(`${AI_CENTER_GENERATE_OPERATION_ID} AI Center Generate suggestion`, () 
         fireEvent.change(screen.getByLabelText('Site'), { target: { value: '12' } });
         fireEvent.click(generate);
 
-        expect(await screen.findByText('Improved article')).toBeInTheDocument();
+        expect(await screen.findByTestId('ai-generated-suggestion')).toHaveTextContent('Improved article');
         expect(screen.getByText('Improved structure.')).toBeInTheDocument();
         expect(screen.getByText('93%')).toBeInTheDocument();
         expect(screen.getByText('provider-test / model-test')).toBeInTheDocument();
