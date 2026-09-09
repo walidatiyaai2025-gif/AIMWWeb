@@ -56,7 +56,7 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $this->assertSame(['tenant'], $route->parameterNames());
     }
 
-    public function test_authorized_refresh_rereads_real_tenant_scoped_storage_without_mutation(): void
+    public function test_authorized_refresh_rereads_real_tenant_scoped_storage_with_selected_policy_without_mutation(): void
     {
         $alphaUser = User::factory()->create();
         $alpha = $this->membership($alphaUser, 'alpha', ['execution.view']);
@@ -67,18 +67,43 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $this->recordOperation($beta, 'Beta maintenance site one', 'beta.preview.one');
         $this->recordOperation($beta, 'Beta maintenance site two', 'beta.preview.two');
 
-        $response = $this->actingAs($alphaUser)->getJson('/tenants/alpha/site-operations/maintenance/preview');
+        $before = now();
+        $response = $this->actingAs($alphaUser)->getJson(
+            '/tenants/alpha/site-operations/maintenance/preview?older_than_days=30&keep_latest=50',
+        );
 
         $response
             ->assertOk()
             ->assertJsonPath('data.operation_id', self::OPERATION_ID)
+            ->assertJsonPath('data.policy.older_than_days', 30)
+            ->assertJsonPath('data.policy.keep_latest', 50)
             ->assertJsonPath('data.storage.record_count', 1)
             ->assertJsonPath('data.storage.site_count', 1)
             ->assertJsonPath('data.storage.storage', 'database')
             ->assertJsonPath('data.preview.total_count', 1)
-            ->assertJsonPath('data.preview.keep_latest', 100);
+            ->assertJsonPath('data.preview.keep_latest', 50);
 
+        $cutoff = \Carbon\CarbonImmutable::parse((string) $response->json('data.preview.cutoff'));
+        $this->assertTrue($cutoff->betweenIncluded($before->copy()->subDays(30)->subSecond(), now()->subDays(30)->addSecond()));
         $this->assertDatabaseCount('site_operation_histories', 3);
+    }
+
+    public function test_refresh_policy_rejects_values_not_supported_by_the_authoritative_source(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['execution.view']);
+
+        $this->actingAs($user)
+            ->getJson('/tenants/alpha/site-operations/maintenance/preview?older_than_days=31&keep_latest=100')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['older_than_days']);
+
+        $this->actingAs($user)
+            ->getJson('/tenants/alpha/site-operations/maintenance/preview?older_than_days=90&keep_latest=51')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['keep_latest']);
+
+        $this->assertDatabaseCount('site_operation_histories', 0);
     }
 
     public function test_guest_missing_permission_and_cross_tenant_refresh_fail_closed(): void
@@ -97,7 +122,7 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $this->actingAs($alpha)->getJson('/tenants/beta/site-operations/maintenance/preview')->assertNotFound();
     }
 
-    public function test_page_exposes_only_the_selected_refresh_control_and_get_contract(): void
+    public function test_page_exposes_only_the_selected_refresh_control_and_source_policy_contract(): void
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['execution.view']);
@@ -108,6 +133,17 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
             ->assertSee('Refresh preview')
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
             ->assertSee('/tenants/alpha/site-operations/maintenance/preview', false)
+            ->assertSee('data-maintenance-policy="older_than_days"', false)
+            ->assertSee('data-maintenance-policy="keep_latest"', false)
+            ->assertSee('<option value="30">30 days</option>', false)
+            ->assertSee('<option value="60">60 days</option>', false)
+            ->assertSee('<option value="90" selected>90 days</option>', false)
+            ->assertSee('<option value="180">180 days</option>', false)
+            ->assertSee('<option value="365">365 days</option>', false)
+            ->assertSee('<option value="50">50</option>', false)
+            ->assertSee('<option value="100" selected>100</option>', false)
+            ->assertSee('<option value="250">250</option>', false)
+            ->assertSee('<option value="500">500</option>', false)
             ->assertDontSee('AIMW-AI-CAAC427FC0');
 
         $this->actingAs($user)->postJson('/tenants/alpha/site-operations/maintenance/preview')->assertMethodNotAllowed();
@@ -115,6 +151,9 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $script = (string) file_get_contents(resource_path('js/site-operations-maintenance-refresh.ts'));
         $this->assertStringContainsString(self::OPERATION_ID, $script);
         $this->assertStringContainsString("method: 'GET'", $script);
+        $this->assertStringContainsString("searchParams.set('older_than_days'", $script);
+        $this->assertStringContainsString("searchParams.set('keep_latest'", $script);
+        $this->assertStringContainsString("addEventListener('change'", $script);
         $this->assertStringContainsString('Refreshing maintenance preview', $script);
         $this->assertStringContainsString('Maintenance preview refreshed.', $script);
         $this->assertStringContainsString('Could not refresh maintenance preview.', $script);
