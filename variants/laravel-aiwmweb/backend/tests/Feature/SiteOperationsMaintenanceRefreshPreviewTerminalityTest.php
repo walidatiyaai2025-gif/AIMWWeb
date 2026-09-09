@@ -84,7 +84,12 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
             ->assertJsonPath('data.preview.keep_latest', 50);
 
         $cutoff = \Carbon\CarbonImmutable::parse((string) $response->json('data.preview.cutoff'));
-        $this->assertTrue($cutoff->betweenIncluded($before->copy()->subDays(30)->subSecond(), now()->subDays(30)->addSecond()));
+        $this->assertTrue(
+            $cutoff->betweenIncluded(
+                $before->copy()->subDays(30)->subSecond(),
+                now()->subDays(30)->addSecond(),
+            ),
+        );
         $this->assertDatabaseCount('site_operation_histories', 3);
     }
 
