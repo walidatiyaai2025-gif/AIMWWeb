@@ -177,3 +177,5 @@ jobs:
           git add .github/workflows/slot0201-ai-center-generate-closure.yml
           git commit -m 'chore(ai): remove transient slot0201 closure workflow'
           git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+
+# Retry after focused Pint repair.
