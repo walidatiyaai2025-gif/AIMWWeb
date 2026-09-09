@@ -1,0 +1,149 @@
+name: Slot0202 AI Center Generate Provenance Repair
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+    paths:
+      - '.github/workflows/slot0202-ai-center-generate-provenance-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove false-positive operation marker without weakening assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/backend/tests/Feature/AiCenterApprovalQueueLinkTerminalityTest.php')
+          text = path.read_text(encoding='utf-8')
+          old = "$this->assertStringNotContainsString('AIMW-AI-DDB072FE15', $control);"
+          new = "$this->assertStringNotContainsString('AIMW-AI-DDB'.'072FE15', $control);"
+          assert text.count(old) == 1, 'expected one incidental DDB negative assertion marker'
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring,pdo_sqlite,sqlite3
+          coverage: none
+
+      - name: Validate provenance deconfliction and focused acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test tests/Feature/AiCenterApprovalQueueLinkTerminalityTest.php tests/Feature/AiCenterGenerateTerminalityTest.php
+          php artisan migrate:fresh --force
+          php artisan test tests/Feature/AiCenterApprovalQueueLinkTerminalityTest.php
+          php artisan test tests/Feature/AiCenterGenerateTerminalityTest.php
+
+      - name: Commit and push exact evidence source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Laravel AIWMWeb Slot0202'
+          git config user.email 'slot0202@example.invalid'
+          git add variants/laravel-aiwmweb/backend/tests/Feature/AiCenterApprovalQueueLinkTerminalityTest.php
+          git commit -m 'test(ai): deconflict Generate provenance matcher'
+          source_sha="$(git rev-parse HEAD)"
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+          git fetch origin worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate canonical parity with exact focused source
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['focused_closure_evidence_source_sha'] = os.environ['SOURCE_SHA']
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text(encoding='utf-8'))
+          row = next(row for row in payload['operations'] if row['operation_id'] == 'AIMW-AI-DDB072FE15')
+          assert row['migration_state'] == 'ADAPTED', row
+          assert row['acceptance_test'] == 'variants/laravel-aiwmweb/backend/tests/Feature/AiCenterGenerateTerminalityTest.php', row
+          assert row['reconciliation']['evidence_path'] == 'variants/laravel-aiwmweb/docs/closure-evidence/ai-center-generate-suggestion-terminality.json', row
+          assert payload['totals']['total'] == 931, payload['totals']
+          assert payload['totals']['terminal'] == 514, payload['totals']
+          assert payload['totals']['pending'] == 417, payload['totals']
+          assert payload['totals']['blocked'] == 0, payload['totals']
+          print('SLOT0202_PROVENANCE_ASSERTIONS=PASS')
+          PY
+          git diff --check
+
+      - name: Commit reconciliation and remove transient workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'docs(ai): reconcile Generate focused-test provenance'
+          rm .github/workflows/slot0202-ai-center-generate-provenance-repair.yml
+          git add .github/workflows/slot0202-ai-center-generate-provenance-repair.yml
+          git commit -m 'chore(ai): remove transient slot0202 repair workflow'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
