@@ -8,7 +8,7 @@
     "domain": "ai",
     "kind": "visible_control",
     "terminal_state": "ADAPTED",
-    "route_screen": "/site-operations/maintenance",
+    "route_screen": "/operations/maintenance | /site-operations/maintenance",
     "source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
     "handler": "RefreshPreviewAsync -> ReloadAsync"
   },
