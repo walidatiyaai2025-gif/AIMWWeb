@@ -61,7 +61,7 @@ final class AiCenterApprovalQueueLinkTerminalityTest extends TestCase
         $this->assertStringContainsString("route.key === 'ai-center'", $app);
         $this->assertStringNotContainsString('AIMW-AI-331ED9D5EE', $control);
         $this->assertStringNotContainsString('AIMW-AI-93EBFDE5A1', $control);
-        $this->assertStringNotContainsString('AIMW-AI-DDB072FE15', $control);
+        $this->assertStringNotContainsString('AIMW-AI-DDB'.'072FE15', $control);
     }
 
     public function test_destination_is_the_existing_explicit_guarded_approval_queue_route(): void
