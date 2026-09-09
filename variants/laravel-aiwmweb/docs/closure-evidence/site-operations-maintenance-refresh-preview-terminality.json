@@ -1,0 +1,43 @@
+{
+  "operation_id": "AIMW-AI-C5BC29CF27",
+  "domain": "ai",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-C5BC29CF27",
+    "domain": "ai",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "route_screen": "/site-operations/maintenance",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
+    "handler": "RefreshPreviewAsync -> ReloadAsync"
+  },
+  "laravel": {
+    "page_route": "GET /tenants/{tenant}/site-operations/maintenance",
+    "refresh_route": "GET /tenants/{tenant}/site-operations/maintenance/preview",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceRefreshController.php",
+    "runtime": "App\\Sites\\SiteOperationHistoryService",
+    "ui": "variants/laravel-aiwmweb/backend/resources/views/site-operations-maintenance.blade.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/site-operations-maintenance-refresh.ts"
+  },
+  "acceptance": {
+    "source_semantics": [
+      "Refresh preview re-reads the current maintenance storage and retention preview without executing cleanup or another mutation.",
+      "The refresh control has deterministic loading, refreshed, and fail-closed error feedback.",
+      "The existing tenant-scoped SiteOperationHistoryService read runtime is reused rather than introducing a second maintenance architecture.",
+      "The response is bound to the exact selected operation and does not terminalize the separate ReloadAsync operation."
+    ],
+    "security": [
+      "web + auth + tenant.context route guards",
+      "server-side execution.view authorization",
+      "foreign tenant rejected",
+      "caller cannot supply site, history, cleanup, or retention mutation identifiers",
+      "refresh transport is GET-only and does not call cleanup or clear operations"
+    ],
+    "focused_tests": [
+      "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceRefreshPreviewTerminalityTest.php"
+    ]
+  },
+  "external_manual_evidence_required": false,
+  "denominator_change": false
+}
