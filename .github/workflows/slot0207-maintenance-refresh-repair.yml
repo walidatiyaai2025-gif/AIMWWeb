@@ -1,0 +1,108 @@
+name: Slot0207 Maintenance Refresh Repair
+
+on:
+  pull_request:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/slot0207-maintenance-refresh-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-reconcile:
+    if: github.head_ref == 'worker/laravel-aiwmweb-AIMW-AI-C5BC29CF27-slot0206'
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deterministic dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci --no-audit --no-fund
+
+      - name: Focused source-equivalent acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test app/Http/Controllers/SiteOperationsMaintenanceRefreshController.php tests/Feature/SiteOperationsMaintenanceRefreshPreviewTerminalityTest.php
+          php artisan test tests/Feature/SiteOperationsMaintenanceRefreshPreviewTerminalityTest.php
+          npm run typecheck
+          npm test -- --run
+          npm run build
+
+      - name: Regenerate canonical parity from clean implementation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha='080f074c89a2aa9bd751c8ec612e38e49fa31b47'
+          selected='AIMW-AI-C5BC29CF27'
+          unselected='AIMW-AI-CAAC427FC0'
+          manifest='variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          json='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          md='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+
+          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          git cat-file -e "${source_sha}^{commit}"
+          python - "$manifest" "$source_sha" <<'PY'
+          import json, sys
+          path=sys.argv[1]
+          source_sha=sys.argv[2]
+          payload=json.load(open(path, encoding='utf-8'))
+          payload['focused_closure_evidence_source_sha']=source_sha
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(payload, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+          PY
+
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$json" --summary-output /tmp/operation-parity-summary.json --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$json" --output "$json" --summary-output /tmp/operation-parity-summary.json --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$json" --output "$json" --summary-output /tmp/operation-parity-summary.json --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$json" --output "$json" --summary-output /tmp/operation-parity-summary.json --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$json" --output "$json" --summary-output /tmp/operation-parity-summary.json --markdown-output "$md" --check-total 931
+
+          python - "$json" "$selected" "$unselected" "$source_sha" "$manifest" <<'PY'
+          import json, sys
+          reconciliation=json.load(open(sys.argv[1], encoding='utf-8'))
+          rows={row['operation_id']: row for row in reconciliation['operations']}
+          manifest=json.load(open(sys.argv[5], encoding='utf-8'))
+          assert len(reconciliation['operations']) == 931
+          assert reconciliation['totals']['terminal'] == 515, reconciliation['totals']
+          assert reconciliation['totals']['pending'] == 416, reconciliation['totals']
+          assert reconciliation['totals']['blocked'] == 0, reconciliation['totals']
+          assert rows[sys.argv[2]]['migration_state'] == 'ADAPTED', rows[sys.argv[2]]
+          assert rows[sys.argv[3]]['migration_state'] == 'PENDING', rows[sys.argv[3]]
+          assert manifest['focused_closure_evidence_source_sha'] == sys.argv[4]
+          print('SLOT0207_REPAIR_RECONCILIATION=PASS')
+          PY
+
+          if ! git diff --quiet -- "$manifest" "$json" "$md"; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$manifest" "$json" "$md"
+            git commit -m 'chore(parity): reconcile repaired maintenance refresh'
+            git push origin HEAD:${{ github.head_ref }}
+          fi
