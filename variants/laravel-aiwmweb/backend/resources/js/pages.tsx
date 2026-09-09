@@ -14,6 +14,7 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
+import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { prepareActionRequest } from './action-contract';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
@@ -263,6 +264,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         <div><dt>{locale === 'ar' ? 'حالة الموافقة' : 'Approval state'}</dt><dd>{aiCenterMeta.approval?.status ?? (locale === 'ar' ? 'لا توجد' : 'None')}</dd></div>
                     </dl>
                 </section>
+            ) : null}
+            {route.key === 'ai-center' ? (
+                <AiCenterGenerateControl
+                    context={context}
+                    prompts={collection.rows
+                        .map((row) => ({ key: String(row.key ?? row.stable_key ?? ''), title: String(row.title ?? row.key ?? row.stable_key ?? '') }))
+                        .filter((prompt) => Boolean(prompt.key))}
+                    sites={aiCenterSites}
+                />
             ) : null}
             <section className="panel data-panel">
                 <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter === 'connected' ? visibleRows.length : collection.total}</span></header>
