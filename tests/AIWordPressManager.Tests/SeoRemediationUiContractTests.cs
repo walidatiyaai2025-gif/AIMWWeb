@@ -17,6 +17,11 @@ public sealed class SeoRemediationUiContractTests
         Assert.Contains("data-testid=\"proposal-suggested-@proposalId\"", source, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"proposal-apply-@proposalId\"", source, StringComparison.Ordinal);
         Assert.Contains("await RemediationService.GenerateAsync(Id)", source, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"seo-provider-readiness\"", source, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"seo-configure-ai-provider\"", source, StringComparison.Ordinal);
+        Assert.Contains("_providerReadiness?.State != SeoAiProviderState.Ready", source, StringComparison.Ordinal);
+        Assert.True(source.IndexOf("if (_providerReadiness.State != SeoAiProviderState.Ready)", StringComparison.Ordinal) <
+                    source.IndexOf("_remediationBusy = _generating = true", StringComparison.Ordinal));
         Assert.Contains("await RemediationService.ApplyAsync(Id, proposalId)", source, StringComparison.Ordinal);
         Assert.Contains("RemediationService.ApplySelectedAsync", source, StringComparison.Ordinal);
         Assert.Contains("RemediationService.ApplyAllSafeAsync", source, StringComparison.Ordinal);
@@ -40,6 +45,19 @@ public sealed class SeoRemediationUiContractTests
         Assert.Contains("Undo unavailable without verified audit evidence", source, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Service_blocks_direct_generation_before_target_or_provider_invocation()
+    {
+        var source = ReadService();
+        var guard = source.IndexOf("if (readiness.State != SeoAiProviderState.Ready)", StringComparison.Ordinal);
+        var blocked = source.IndexOf("return new(readiness, Array.Empty<SeoRemediationProposal>())", StringComparison.Ordinal);
+        var targets = source.IndexOf("var resolvedTargets", StringComparison.Ordinal);
+        var provider = source.IndexOf("await ai.ExecuteAsync", StringComparison.Ordinal);
+
+        Assert.True(guard >= 0 && blocked > guard && targets > blocked && provider > targets,
+            "non-ready providers must return a structured empty result before resolving targets or invoking AI");
+    }
+
     private static string ReadPage()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
@@ -47,6 +65,19 @@ public sealed class SeoRemediationUiContractTests
         {
             if (File.Exists(Path.Combine(current.FullName, "AIWordPressManager.Web.sln")))
                 return File.ReadAllText(Path.Combine(current.FullName, "src", "AIWordPressManager.Web", "Components", "Pages", "SeoManager.razor"));
+            current = current.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not locate AIMWWeb repository root from the test output directory.");
+    }
+
+    private static string ReadService()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "AIWordPressManager.Web.sln")))
+                return File.ReadAllText(Path.Combine(current.FullName, "src", "AIWordPressManager.Web", "Services", "SeoRemediationWebService.cs"));
             current = current.Parent;
         }
 

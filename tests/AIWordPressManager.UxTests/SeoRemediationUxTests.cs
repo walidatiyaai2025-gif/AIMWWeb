@@ -17,7 +17,7 @@ namespace AIWordPressManager.UxTests;
 public sealed class SeoRemediationUxTests(UxTestHost host)
 {
     [Fact]
-    public async Task Provider_unavailable_is_visible_and_never_fabricates_a_proposal()
+    public async Task Provider_not_configured_blocks_generation_without_spinner_or_proposals()
     {
         var siteId = await SeedAdminSeoSiteAsync("Provider unavailable SEO article");
         await using var context = await host.CreateContextAsync(UxRouteCatalog.Viewports[^1]);
@@ -28,21 +28,46 @@ public sealed class SeoRemediationUxTests(UxTestHost host)
         await OpenWorkspaceAsync(page, siteId);
         var generate = page.GetByTestId("seo-generate-all");
         await generate.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
-        await ClickUntilObservableAsync(page, generate, page.GetByTestId("seo-remediation-feedback"));
-
-        await Assertions.Expect(page.GetByTestId("seo-remediation-feedback"))
-            .ToContainTextAsync("provider", new() { IgnoreCase = true, Timeout = 10_000 });
+        await Assertions.Expect(page.GetByTestId("seo-provider-readiness")).ToContainTextAsync("AI Provider: Not configured");
+        await Assertions.Expect(page.GetByTestId("seo-provider-readiness")).ToContainTextAsync("Configuration required");
+        (await generate.IsDisabledAsync()).Should().BeTrue();
+        await Assertions.Expect(page.GetByTestId("seo-configure-ai-provider")).ToBeVisibleAsync();
+        (await page.GetByText("Generating suggestions...", new() { Exact = true }).CountAsync()).Should().Be(0);
         var rows = page.Locator("[data-testid^='proposal-row-']");
-        (await rows.CountAsync()).Should().BeGreaterThan(0,
-            "each attempted field must retain an explicit terminal failure instead of disappearing");
-        foreach (var suggested in await page.Locator("[data-testid^='proposal-suggested-']").AllAsync())
-            (await suggested.Locator("p").InnerTextAsync()).Should().BeNullOrWhiteSpace(
-                "an unavailable provider must not be replaced with locally fabricated suggestions");
-        foreach (var status in await page.Locator("[data-testid^='proposal-status-']").AllAsync())
-            (await status.InnerTextAsync()).Should().ContainEquivalentOf("failed");
+        (await rows.CountAsync()).Should().Be(0, "blocked generation must not create fake or failed proposal rows");
         (await page.GetByTestId("seo-apply-selected").IsEnabledAsync()).Should().BeFalse();
         (await page.GetByTestId("seo-apply-all-safe").IsEnabledAsync()).Should().BeFalse();
         pageErrors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Configured_provider_enables_generation_and_only_then_enters_generating_state()
+    {
+        var siteId = await SeedAdminSeoSiteAsync("Configured provider SEO article");
+        var keys = new[] { "AI.OpenAI.Enabled", "AI.OpenAI.Priority", "AI.OpenAI.ProtectedApiKey" };
+        var previous = await ReadSettingsAsync(keys);
+        try
+        {
+            await SetSettingAsync(keys[0], "True");
+            await SetSettingAsync(keys[1], "1");
+            await SetSettingAsync(keys[2], "configured-for-readiness-acceptance");
+            await using var context = await host.CreateContextAsync(UxRouteCatalog.Viewports[^1]);
+            var page = await context.NewPageAsync();
+
+            await OpenWorkspaceAsync(page, siteId);
+            var generate = page.GetByTestId("seo-generate-all");
+            await Assertions.Expect(page.GetByTestId("seo-provider-readiness")).ToContainTextAsync("AI Provider: OpenAI");
+            await Assertions.Expect(page.GetByTestId("seo-provider-readiness")).ToContainTextAsync("Status: Ready");
+            (await generate.IsEnabledAsync()).Should().BeTrue();
+            (await page.GetByText("Generating suggestions...", new() { Exact = true }).CountAsync()).Should().Be(0);
+
+            await generate.ClickAsync();
+            await Assertions.Expect(generate).ToContainTextAsync("Generating suggestions", new() { Timeout = 5_000 });
+        }
+        finally
+        {
+            await RestoreSettingsAsync(previous);
+        }
     }
 
     private async Task OpenWorkspaceAsync(IPage page, Guid siteId)
@@ -85,22 +110,42 @@ public sealed class SeoRemediationUxTests(UxTestHost host)
         return (AppDbContext)method!.Invoke(host, null)!;
     }
 
-    private static async Task ClickUntilObservableAsync(IPage page, ILocator action, ILocator result)
+    private async Task SetSettingAsync(string key, string value)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(8);
-        while (DateTime.UtcNow < deadline)
-        {
-            await action.ClickAsync(new() { Timeout = 2_000 });
-            try
-            {
-                await result.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 750 });
-                return;
-            }
-            catch (TimeoutException)
-            {
-                await page.WaitForTimeoutAsync(150);
-            }
-        }
-        throw new TimeoutException("The remediation action did not produce visible browser feedback.");
+        await using var db = OpenFixtureDb();
+        var setting = await db.ApplicationSettings.SingleOrDefaultAsync(x => x.Key == key);
+        if (setting is null)
+            db.ApplicationSettings.Add(new ApplicationSetting(key, value, DateTime.UtcNow));
+        else
+            setting.SetValue(key, value, DateTime.UtcNow);
+        await db.SaveChangesAsync();
     }
+
+    private async Task<Dictionary<string, string?>> ReadSettingsAsync(IEnumerable<string> keys)
+    {
+        var requested = keys.ToArray();
+        await using var db = OpenFixtureDb();
+        var stored = await db.ApplicationSettings.AsNoTracking().Where(x => requested.Contains(x.Key))
+            .ToDictionaryAsync(x => x.Key, x => x.Value);
+        return requested.ToDictionary(x => x, x => stored.GetValueOrDefault(x));
+    }
+
+    private async Task RestoreSettingsAsync(IReadOnlyDictionary<string, string?> previous)
+    {
+        await using var db = OpenFixtureDb();
+        foreach (var pair in previous)
+        {
+            var setting = await db.ApplicationSettings.SingleOrDefaultAsync(x => x.Key == pair.Key);
+            if (pair.Value is null)
+            {
+                if (setting is not null) db.ApplicationSettings.Remove(setting);
+            }
+            else if (setting is null)
+                db.ApplicationSettings.Add(new ApplicationSetting(pair.Key, pair.Value, DateTime.UtcNow));
+            else
+                setting.SetValue(pair.Key, pair.Value, DateTime.UtcNow);
+        }
+        await db.SaveChangesAsync();
+    }
+
 }

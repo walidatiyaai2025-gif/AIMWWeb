@@ -132,10 +132,19 @@ else
                     <h2>@(L.IsArabic ? "اقتراحات قابلة للمراجعة والتنفيذ" : "Reviewable, actionable suggestions")</h2>
                     <p>@(L.IsArabic ? "راجع القيمة الحالية والاقتراح قبل أي تعديل. لا يظهر النجاح إلا بعد حفظ القيمة وإعادة قراءتها من ووردبريس." : "Compare the persisted value with the suggestion before applying. Success appears only after WordPress persistence and re-read verification.")</p>
                 </div>
-                <button class="btn primary" data-testid="seo-generate-all" @onclick="GenerateSuggestionsAsync" disabled="@_remediationBusy">
+                <button class="btn primary" data-testid="seo-generate-all" @onclick="GenerateSuggestionsAsync" disabled="@(_remediationBusy || _providerReadiness?.State != SeoAiProviderState.Ready)">
                     @(_generating ? (L.IsArabic ? "جارٍ إنشاء الاقتراحات..." : "Generating suggestions...") : (L.IsArabic ? "إنشاء اقتراحات AI" : "Generate AI suggestions"))
                 </button>
             </header>
+
+            <div class="seo-remediation-toolbar" data-testid="seo-provider-readiness">
+                <span><strong>AI Provider:</strong> @(_providerReadiness?.Provider ?? "Not configured")</span>
+                <span><strong>Status:</strong> @ProviderStatus</span>
+                @if (_providerReadiness?.State != SeoAiProviderState.Ready)
+                {
+                    <a class="btn" data-testid="seo-configure-ai-provider" href="/settings/ai-providers">@(L.IsArabic ? "إعداد مزود الذكاء الاصطناعي" : "Configure AI Provider")</a>
+                }
+            </div>
 
             <div class="seo-remediation-toolbar">
                 <button class="btn primary" data-testid="seo-apply-selected" @onclick="ApplySelectedAsync" disabled="@(_remediationBusy || _selectedProposals.Count == 0)">@(L.IsArabic ? "تطبيق المحدد" : "Apply selected")</button>
@@ -352,11 +361,18 @@ else
     private string? _loadErrorMessage, _auditFeedbackMessage;
     private string? _remediationFeedback;
     private SeoRemediationBulkResult? _lastBulkResult;
+    private SeoAiProviderReadiness? _providerReadiness;
     private readonly HashSet<Guid> _selectedProposals = new();
     private readonly Dictionary<Guid, Guid> _undoAudits = new();
     private string _query = string.Empty, _type = "all", _quality = "all", _issue = "all";
     private int _page = 1, _pageSize = 10;
     private IReadOnlyList<SeoRemediationProposal> Proposals => RemediationService.GetProposals(Id);
+    private string ProviderStatus => _providerReadiness?.State switch
+    {
+        SeoAiProviderState.Ready => L.IsArabic ? "جاهز" : "Ready",
+        SeoAiProviderState.Unavailable => L.IsArabic ? "غير متاح" : "Unavailable",
+        _ => L.IsArabic ? "الإعداد مطلوب" : "Configuration required"
+    };
 
     private IEnumerable<SeoAnalysisItem> FilteredItems => (_view?.Items ?? Array.Empty<SeoAnalysisItem>()).Where(x =>
         (_quality == "all" || (_quality == "good" && x.Score >= 80) || (_quality == "warning" && x.Score is >= 50 and < 80) || (_quality == "poor" && x.Score < 50)) &&
@@ -390,6 +406,7 @@ else
         _view = await SeoService.AnalyzeAsync(Id, _query, _type);
         _history = _view is null ? Array.Empty<SeoAuditHistoryPoint>() : await AuditService.LoadHistoryAsync(Id, 12);
         _remediationHistory = _view is null ? Array.Empty<SeoRemediationAuditEntry>() : await RemediationService.GetHistoryAsync(Id);
+        _providerReadiness = _view is null ? null : await RemediationService.GetProviderReadinessAsync();
         _page = 1;
         _expanded = null;
     }
@@ -426,12 +443,21 @@ else
     private async Task GenerateSuggestionsAsync()
     {
         if (_remediationBusy) return;
+        _providerReadiness = await RemediationService.GetProviderReadinessAsync();
+        if (_providerReadiness.State != SeoAiProviderState.Ready)
+        {
+            _remediationFeedbackIsError = true;
+            _remediationFeedback = L.IsArabic ? "مزود الذكاء الاصطناعي غير مُعد. افتح إعدادات المزود للمتابعة." : "AI Provider not configured. Configure an AI provider to continue.";
+            return;
+        }
         _remediationBusy = _generating = true;
         _remediationFeedbackIsError = false;
         _remediationFeedback = L.IsArabic ? "جارٍ إنشاء اقتراحات من المحتوى المحفوظ..." : "Generating suggestions from persisted content...";
         try
         {
-            var generated = await RemediationService.GenerateAsync(Id);
+            var result = await RemediationService.GenerateAsync(Id);
+            _providerReadiness = result.Readiness;
+            var generated = result.Proposals;
             _selectedProposals.RemoveWhere(id => Proposals.All(x => x.ProposalId != id));
             var usable = generated.Count(x => x.State == SeoRemediationProposalState.AiSuggested);
             _remediationFeedbackIsError = usable == 0;
