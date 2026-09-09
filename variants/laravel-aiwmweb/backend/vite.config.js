@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/js/about-build-copy-report.ts',
                 'resources/js/error-copy-details.ts',
                 'resources/js/seo-visible-controls.tsx',
+                'resources/js/site-operations-maintenance-refresh.ts',
             ],
             refresh: true,
             fonts: [
