@@ -1,0 +1,179 @@
+name: Slot0201 AI Center Generate Closure
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+    paths:
+      - '.github/workflows/slot0201-ai-center-generate-closure.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch canonical AI Center composition points
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          core = Path('variants/laravel-aiwmweb/backend/resources/js/core.ts')
+          text = core.read_text(encoding='utf-8')
+          old = "r('ai-center', '/ai-center', 'ai', '✦', 'AI Center', 'مركز الذكاء الاصطناعي', 'Generate reviewable AI-assisted work through configured providers.', 'إنشاء عمل مدعوم بالذكاء قابل للمراجعة عبر المزودين المهيئين.', { permission: 'ai.use', controls: ['ai.generate'] }),"
+          new = "r('ai-center', '/ai-center', 'ai', '✦', 'AI Center', 'مركز الذكاء الاصطناعي', 'Generate reviewable AI-assisted work through configured providers.', 'إنشاء عمل مدعوم بالذكاء قابل للمراجعة عبر المزودين المهيئين.', { permission: 'ai.use' }),"
+          assert text.count(old) == 1, 'expected exact ai-center placeholder control registration'
+          core.write_text(text.replace(old, new), encoding='utf-8')
+
+          pages = Path('variants/laravel-aiwmweb/backend/resources/js/pages.tsx')
+          text = pages.read_text(encoding='utf-8')
+          import_anchor = "import { commonText, useLocale } from './i18n';\n"
+          import_line = "import { AiCenterGenerateControl } from './ai-center-generate-control';\n"
+          assert text.count(import_anchor) == 1, 'pages import anchor drifted'
+          assert import_line not in text, 'generate control import already present'
+          text = text.replace(import_anchor, import_anchor + import_line, 1)
+
+          panel_anchor = '            <section className="panel data-panel">\n'
+          insertion = '''            {route.key === 'ai-center' ? (\n                <AiCenterGenerateControl\n                    context={context}\n                    prompts={collection.rows\n                        .map((row) => ({ key: String(row.key ?? row.stable_key ?? ''), title: String(row.title ?? row.key ?? row.stable_key ?? '') }))\n                        .filter((prompt) => Boolean(prompt.key))}\n                    sites={aiCenterSites}\n                />\n            ) : null}\n'''
+          assert text.count(panel_anchor) == 1, 'AI Center data panel anchor drifted'
+          assert 'AiCenterGenerateControl\n                    context={context}' not in text, 'generate control already composed'
+          pages.write_text(text.replace(panel_anchor, insertion + panel_anchor, 1), encoding='utf-8')
+          PY
+          git diff --check
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring,pdo_sqlite,sqlite3
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Focused implementation validation
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          vendor/bin/pint --test \
+            app/AI/Platform/Quota/DatabaseAiQuotaGateway.php \
+            app/Http/Controllers/AiCenterGenerateController.php \
+            app/Providers/AiCenterRouteServiceProvider.php \
+            app/Providers/AppServiceProvider.php \
+            tests/Feature/AiCenterGenerateTerminalityTest.php
+          php artisan migrate:fresh --force
+          php artisan test --filter=AiCenterGenerateTerminalityTest
+          npm run typecheck
+          npm test -- --run resources/js/__tests__/ai-center-generate-control.test.tsx
+          npm run build
+
+      - name: Commit and push exact implementation evidence source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Laravel AIWMWeb Slot0201'
+          git config user.email 'slot0201@example.invalid'
+          git add variants/laravel-aiwmweb/backend/resources/js/core.ts variants/laravel-aiwmweb/backend/resources/js/pages.tsx
+          git commit -m 'feat(ai): compose Generate suggestion into AI Center'
+          source_sha="$(git rev-parse HEAD)"
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+          git fetch origin worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate canonical parity from project generator
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['focused_closure_evidence_source_sha'] = os.environ['SOURCE_SHA']
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          row = next(r for r in p['operations'] if r['operation_id'] == 'AIMW-AI-DDB072FE15')
+          assert row['migration_state'] == 'ADAPTED', row
+          assert p['totals']['total'] == 931, p['totals']
+          assert p['totals']['terminal'] == 514, p['totals']
+          assert p['totals']['pending'] == 417, p['totals']
+          assert p['totals']['blocked'] == 0, p['totals']
+          print('SLOT0201_GENERATOR_ASSERTIONS=PASS')
+          PY
+          git diff --check
+
+      - name: Commit generated reconciliation and remove transient workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'docs(ai): reconcile Generate suggestion parity'
+          rm .github/workflows/slot0201-ai-center-generate-closure.yml
+          git add .github/workflows/slot0201-ai-center-generate-closure.yml
+          git commit -m 'chore(ai): remove transient slot0201 closure workflow'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-DDB072FE15-slot0201
