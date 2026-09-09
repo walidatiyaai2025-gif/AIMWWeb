@@ -35,7 +35,7 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $this->assertNotNull($operation);
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
-        $this->assertSame('/site-operations/maintenance', $operation['route_screen']);
+        $this->assertSame('/operations/maintenance | /site-operations/maintenance', $operation['route_screen']);
         $this->assertStringContainsString('RefreshPreviewAsync', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
