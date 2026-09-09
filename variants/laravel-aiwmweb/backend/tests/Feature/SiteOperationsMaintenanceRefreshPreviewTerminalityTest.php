@@ -11,6 +11,7 @@ use App\Models\TenantMembership;
 use App\Models\User;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -83,7 +84,7 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
             ->assertJsonPath('data.preview.total_count', 1)
             ->assertJsonPath('data.preview.keep_latest', 50);
 
-        $cutoff = \Carbon\CarbonImmutable::parse((string) $response->json('data.preview.cutoff'));
+        $cutoff = CarbonImmutable::parse((string) $response->json('data.preview.cutoff'));
         $this->assertTrue(
             $cutoff->betweenIncluded(
                 $before->copy()->subDays(30)->subSecond(),
