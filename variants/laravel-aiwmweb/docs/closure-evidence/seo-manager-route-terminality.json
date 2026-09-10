@@ -7,9 +7,36 @@
   "kind": "route",
   "terminal_state": "ADAPTED",
   "previous_state": "PENDING",
+  "source_path": "src/AIWordPressManager.Web/Components/Pages/SeoManager.razor",
+  "source_route": "/sites/{Id:guid}/seo",
   "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php",
   "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
-  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
-  "security_mode": "tenant_selected",
-  "chain": "GET /tenants/{tenant}/sites/{site}/seo -> web+auth+tenant.context -> TenantAuthorizer tenant.view+seo.view -> tenant-scoped Site -> real SEO manager view"
+  "view_path": "variants/laravel-aiwmweb/backend/resources/views/seo/manager.blade.php",
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerRouteTerminalityTest.php",
+  "regression_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
+  "security_mode": "tenant_and_site_selected",
+  "chain": "GET /tenants/{tenant}/sites/{site}/seo -> web+auth+tenant.context -> TenantAuthorizer tenant.view+seo.view -> tenant-scoped Site lookup -> real SEO Manager React host with tenant/site-qualified API and navigation contracts",
+  "acceptance": [
+    "exact canonical operation identity is bound to the explicit GET route",
+    "auth and tenant.context middleware are required",
+    "tenant.view and seo.view are authorized server-side",
+    "the site is resolved only through the active tenant-scoped Site query",
+    "authorized member renders the real tenant/site-qualified SEO manager and API/navigation configuration",
+    "guest and missing-permission requests fail closed",
+    "foreign tenant membership and cross-tenant site identifiers fail closed with 404",
+    "manager GET does not mutate tenant-owned persistence or manufacture SEO findings/success",
+    "the existing merged SEO mass-closure regression evidence remains linked to this exact operation"
+  ],
+  "provenance": {
+    "historical_implementation_pr": 409,
+    "historical_merge_sha": "76425c4b89a1a927dc06322f3942f3a1d20703b6",
+    "slot": "0222",
+    "classification": "stale reconciliation/evidence enrollment of already merged implementation"
+  },
+  "scope": {
+    "source_product_modified": false,
+    "production_runtime_modified": false,
+    "denominator_reduced": false,
+    "owner_manual_evidence_required": false
+  }
 }
