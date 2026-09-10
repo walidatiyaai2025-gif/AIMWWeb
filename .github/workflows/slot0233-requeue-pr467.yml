@@ -1,0 +1,54 @@
+name: Slot0233 Requeue PR467 Required Runs
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+    paths:
+      - '.github/workflows/slot0233-requeue-pr467.yml'
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  requeue-and-self-clean:
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+          fetch-depth: 0
+      - name: Cancel and rerun PR467 exact-head required workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          ids=(34480913346 34480913353 34480913374 34480913401)
+          for id in "${ids[@]}"; do
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/cancel" || true
+          done
+          for id in "${ids[@]}"; do
+            for _ in {1..30}; do
+              status=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" --jq '.status')
+              if [[ "$status" == "completed" ]]; then break; fi
+              sleep 2
+            done
+            status=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${id}" --jq '.status')
+            if [[ "$status" != "completed" ]]; then
+              echo "Run $id did not reach completed after cancellation" >&2
+              exit 1
+            fi
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/rerun"
+          done
+      - name: Remove helper from closed branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/slot0233-requeue-pr467.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/slot0233-requeue-pr467.yml
+          git commit -m 'ci(laravel): remove Slot0233 requeue helper'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
