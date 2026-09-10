@@ -1,0 +1,36 @@
+name: Slot0232 Ubuntu 24.04 Probe
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+    paths:
+      - '.github/workflows/slot0232-ubuntu2404-probe.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe-and-self-clean:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+          fetch-depth: 0
+      - name: Prove explicit Linux runner assignment
+        shell: bash
+        run: |
+          set -euo pipefail
+          uname -a
+          echo 'UBUNTU_2404_RUNNER_ASSIGNED=YES'
+      - name: Remove probe from closed branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/slot0232-ubuntu2404-probe.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/slot0232-ubuntu2404-probe.yml
+          git commit -m 'ci(laravel): remove ubuntu-24.04 probe'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
