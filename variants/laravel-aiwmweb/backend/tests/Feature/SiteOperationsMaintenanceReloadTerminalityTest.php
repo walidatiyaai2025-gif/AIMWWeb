@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\SiteOperationsMaintenanceRefreshController;
+use App\Http\Controllers\SiteOperationsMaintenanceReloadController;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Site;
@@ -17,13 +17,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
-class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
+class SiteOperationsMaintenanceReloadTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const OPERATION_ID = 'AIMW-AI-C5BC29CF27';
+    private const OPERATION_ID = 'AIMW-AI-CAAC427FC0';
 
-    public function test_exact_canonical_refresh_preview_metadata_is_preserved(): void
+    public function test_exact_canonical_reload_metadata_is_preserved(): void
     {
         $document = json_decode(
             (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -37,18 +37,18 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $this->assertSame('ai', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/operations/maintenance | /site-operations/maintenance', $operation['route_screen']);
-        $this->assertStringContainsString('RefreshPreviewAsync', $operation['visible_control']);
+        $this->assertStringContainsString('ReloadAsync', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
     }
 
-    public function test_refresh_route_is_explicit_read_only_operation_linked_and_guarded(): void
+    public function test_reload_route_is_explicit_read_only_operation_linked_and_guarded(): void
     {
-        $route = Route::getRoutes()->match(Request::create('/tenants/alpha/site-operations/maintenance/preview', 'GET'));
+        $route = Route::getRoutes()->match(Request::create('/tenants/alpha/site-operations/maintenance/reload', 'GET'));
 
-        $this->assertSame(SiteOperationsMaintenanceRefreshController::class, ltrim($route->getActionName(), '\\'));
-        $this->assertSame('canonical.workspace.site-operations-maintenance.preview', $route->getName());
+        $this->assertSame(SiteOperationsMaintenanceReloadController::class, ltrim($route->getActionName(), '\\'));
+        $this->assertSame('canonical.workspace.site-operations-maintenance.reload', $route->getName());
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertSame('execution.view', $route->defaults['workspace_permissions'] ?? null);
         $this->assertSame(['GET', 'HEAD'], $route->methods());
@@ -57,78 +57,78 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
         $this->assertSame(['tenant'], $route->parameterNames());
     }
 
-    public function test_authorized_refresh_rereads_real_tenant_scoped_storage_with_selected_policy_without_mutation(): void
+    public function test_authorized_reload_rereads_real_tenant_scoped_snapshot_with_selected_policy_without_mutation(): void
     {
         $alphaUser = User::factory()->create();
         $alpha = $this->membership($alphaUser, 'alpha', ['execution.view']);
-        $this->recordOperation($alpha, 'Alpha maintenance site', 'alpha.preview');
+        $this->recordOperation($alpha, 'Alpha maintenance site', 'alpha.reload');
 
         $betaUser = User::factory()->create();
         $beta = $this->membership($betaUser, 'beta', ['execution.view']);
-        $this->recordOperation($beta, 'Beta maintenance site one', 'beta.preview.one');
-        $this->recordOperation($beta, 'Beta maintenance site two', 'beta.preview.two');
+        $this->recordOperation($beta, 'Beta maintenance site one', 'beta.reload.one');
+        $this->recordOperation($beta, 'Beta maintenance site two', 'beta.reload.two');
 
         $before = now();
         $response = $this->actingAs($alphaUser)->getJson(
-            '/tenants/alpha/site-operations/maintenance/preview?older_than_days=30&keep_latest=50',
+            '/tenants/alpha/site-operations/maintenance/reload?older_than_days=180&keep_latest=250',
         );
 
         $response
             ->assertOk()
             ->assertJsonPath('data.operation_id', self::OPERATION_ID)
-            ->assertJsonPath('data.policy.older_than_days', 30)
-            ->assertJsonPath('data.policy.keep_latest', 50)
+            ->assertJsonPath('data.policy.older_than_days', 180)
+            ->assertJsonPath('data.policy.keep_latest', 250)
             ->assertJsonPath('data.storage.record_count', 1)
             ->assertJsonPath('data.storage.site_count', 1)
             ->assertJsonPath('data.storage.storage', 'database')
             ->assertJsonPath('data.preview.total_count', 1)
-            ->assertJsonPath('data.preview.keep_latest', 50);
+            ->assertJsonPath('data.preview.keep_latest', 250);
 
         $cutoff = CarbonImmutable::parse((string) $response->json('data.preview.cutoff'));
         $this->assertTrue(
             $cutoff->betweenIncluded(
-                $before->copy()->subDays(30)->subSecond(),
-                now()->subDays(30)->addSecond(),
+                $before->copy()->subDays(180)->subSecond(),
+                now()->subDays(180)->addSecond(),
             ),
         );
         $this->assertDatabaseCount('site_operation_histories', 3);
     }
 
-    public function test_refresh_policy_rejects_values_not_supported_by_the_authoritative_source(): void
+    public function test_reload_policy_rejects_values_not_supported_by_the_authoritative_source(): void
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['execution.view']);
 
         $this->actingAs($user)
-            ->getJson('/tenants/alpha/site-operations/maintenance/preview?older_than_days=31&keep_latest=100')
+            ->getJson('/tenants/alpha/site-operations/maintenance/reload?older_than_days=31&keep_latest=100')
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['older_than_days']);
 
         $this->actingAs($user)
-            ->getJson('/tenants/alpha/site-operations/maintenance/preview?older_than_days=90&keep_latest=51')
+            ->getJson('/tenants/alpha/site-operations/maintenance/reload?older_than_days=90&keep_latest=51')
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['keep_latest']);
 
         $this->assertDatabaseCount('site_operation_histories', 0);
     }
 
-    public function test_guest_missing_permission_and_cross_tenant_refresh_fail_closed(): void
+    public function test_guest_missing_permission_and_cross_tenant_reload_fail_closed(): void
     {
-        $this->getJson('/tenants/alpha/site-operations/maintenance/preview')->assertUnauthorized();
+        $this->getJson('/tenants/alpha/site-operations/maintenance/reload')->assertUnauthorized();
 
         $limited = User::factory()->create();
         $this->membership($limited, 'limited', []);
-        $this->actingAs($limited)->getJson('/tenants/limited/site-operations/maintenance/preview')->assertForbidden();
+        $this->actingAs($limited)->getJson('/tenants/limited/site-operations/maintenance/reload')->assertForbidden();
 
         $alpha = User::factory()->create();
         $this->membership($alpha, 'alpha', ['execution.view']);
         $beta = User::factory()->create();
         $this->membership($beta, 'beta', ['execution.view']);
 
-        $this->actingAs($alpha)->getJson('/tenants/beta/site-operations/maintenance/preview')->assertNotFound();
+        $this->actingAs($alpha)->getJson('/tenants/beta/site-operations/maintenance/reload')->assertNotFound();
     }
 
-    public function test_page_preserves_the_refresh_preview_control_and_source_policy_contract(): void
+    public function test_page_and_frontend_bind_reload_separately_from_refresh_preview(): void
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['execution.view']);
@@ -136,37 +136,33 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
 
         $this->actingAs($user)->get('/tenants/alpha/site-operations/maintenance')
             ->assertOk()
-            ->assertSee('Refresh preview')
-            ->assertSee('data-maintenance-refresh', false)
+            ->assertSee('↻ Refresh')
+            ->assertSee('data-maintenance-reload', false)
             ->assertSee('data-maintenance-refresh-control', false)
             ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false)
-            ->assertSee('/tenants/alpha/site-operations/maintenance/preview', false)
-            ->assertSee('data-maintenance-policy="older_than_days"', false)
-            ->assertSee('data-maintenance-policy="keep_latest"', false)
-            ->assertSee('<option value="30">30 days</option>', false)
-            ->assertSee('<option value="60">60 days</option>', false)
-            ->assertSee('<option value="90" selected>90 days</option>', false)
-            ->assertSee('<option value="180">180 days</option>', false)
-            ->assertSee('<option value="365">365 days</option>', false)
-            ->assertSee('<option value="50">50</option>', false)
-            ->assertSee('<option value="100" selected>100</option>', false)
-            ->assertSee('<option value="250">250</option>', false)
-            ->assertSee('<option value="500">500</option>', false);
+            ->assertSee('/tenants/alpha/site-operations/maintenance/reload', false)
+            ->assertSee('Refresh preview')
+            ->assertSee('data-canonical-operation="AIMW-AI-C5BC29CF27"', false);
 
-        $this->actingAs($user)->postJson('/tenants/alpha/site-operations/maintenance/preview')->assertMethodNotAllowed();
+        $this->actingAs($user)->postJson('/tenants/alpha/site-operations/maintenance/reload')->assertMethodNotAllowed();
 
-        $script = (string) file_get_contents(resource_path('js/site-operations-maintenance-refresh.ts'));
-        $this->assertStringContainsString(self::OPERATION_ID, $script);
-        $this->assertStringContainsString("method: 'GET'", $script);
-        $this->assertStringContainsString("searchParams.set('older_than_days'", $script);
-        $this->assertStringContainsString("searchParams.set('keep_latest'", $script);
-        $this->assertStringContainsString("addEventListener('change'", $script);
-        $this->assertStringContainsString('Refreshing maintenance preview', $script);
-        $this->assertStringContainsString('Maintenance preview refreshed.', $script);
-        $this->assertStringContainsString('Could not refresh maintenance preview.', $script);
-        $this->assertStringNotContainsString('AIMW-AI-CAAC427FC0', $script);
-        $this->assertStringNotContainsString("method: 'POST'", $script);
-        $this->assertStringNotContainsString("method: 'DELETE'", $script);
+        $reloadScript = (string) file_get_contents(resource_path('js/site-operations-maintenance-reload.ts'));
+        $this->assertStringContainsString(self::OPERATION_ID, $reloadScript);
+        $this->assertStringContainsString('refreshMaintenanceSnapshot', $reloadScript);
+        $this->assertStringContainsString('Refreshing maintenance data', $reloadScript);
+        $this->assertStringContainsString('Maintenance data refreshed.', $reloadScript);
+        $this->assertStringContainsString('Could not refresh maintenance data.', $reloadScript);
+        $this->assertStringNotContainsString("method: 'POST'", $reloadScript);
+        $this->assertStringNotContainsString("method: 'DELETE'", $reloadScript);
+
+        $sharedScript = (string) file_get_contents(resource_path('js/site-operations-maintenance-refresh.ts'));
+        $this->assertStringContainsString('data-maintenance-refresh-control', $sharedScript);
+        $this->assertStringContainsString('payload.data?.operation_id !== expectedOperationId', $sharedScript);
+        $this->assertStringContainsString("method: 'GET'", $sharedScript);
+        $this->assertStringContainsString('Cross-origin maintenance refresh endpoint rejected', $sharedScript);
+        $this->assertStringNotContainsString(self::OPERATION_ID, $sharedScript);
+        $this->assertStringNotContainsString("method: 'POST'", $sharedScript);
+        $this->assertStringNotContainsString("method: 'DELETE'", $sharedScript);
     }
 
     private function membership(User $user, string $slug, array $permissions): Tenant
@@ -179,7 +175,7 @@ class SiteOperationsMaintenanceRefreshPreviewTerminalityTest extends TestCase
             'user_id' => $user->id,
             'status' => 'active',
         ]);
-        $role = Role::query()->create(['name' => 'maintenance-refresh-'.$slug.'-'.$user->id]);
+        $role = Role::query()->create(['name' => 'maintenance-reload-'.$slug.'-'.$user->id]);
         foreach ($permissions as $permissionName) {
             $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);

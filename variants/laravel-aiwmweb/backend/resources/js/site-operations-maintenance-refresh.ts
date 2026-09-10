@@ -12,6 +12,12 @@ type MaintenanceRefreshPayload = {
     };
 };
 
+export type MaintenanceRefreshMessages = {
+    loading: string;
+    success: string;
+    failure: string;
+};
+
 const OPERATION_ID = 'AIMW-AI-C5BC29CF27';
 
 function displayValue(value: unknown): string {
@@ -57,6 +63,14 @@ function setPolicyControlsDisabled(disabled: boolean): void {
     policyControl('keep_latest')?.toggleAttribute('disabled', disabled);
 }
 
+function setRefreshControlsDisabled(disabled: boolean): void {
+    document.querySelectorAll<HTMLButtonElement>('[data-maintenance-refresh-control]').forEach((control) => {
+        control.disabled = disabled;
+        control.setAttribute('aria-busy', disabled ? 'true' : 'false');
+    });
+    setPolicyControlsDisabled(disabled);
+}
+
 function refreshUrl(endpoint: string, policy: MaintenancePolicy): string {
     const url = new URL(endpoint, window.location.origin);
     if (url.origin !== window.location.origin) {
@@ -69,18 +83,21 @@ function refreshUrl(endpoint: string, policy: MaintenancePolicy): string {
     return url.toString();
 }
 
-export async function refreshMaintenancePreview(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
+export async function refreshMaintenanceSnapshot(
+    button: HTMLButtonElement,
+    status: HTMLElement,
+    expectedOperationId: string,
+    messages: MaintenanceRefreshMessages,
+): Promise<void> {
     const endpoint = button.dataset.refreshUrl;
     const policy = selectedPolicy();
-    if (!endpoint || !policy) {
-        status.textContent = 'Could not refresh maintenance preview. No cleanup was run.';
+    if (!endpoint || !policy || button.dataset.canonicalOperation !== expectedOperationId) {
+        status.textContent = messages.failure;
         return;
     }
 
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-    setPolicyControlsDisabled(true);
-    status.textContent = 'Refreshing maintenance preview…';
+    setRefreshControlsDisabled(true);
+    status.textContent = messages.loading;
 
     try {
         const response = await fetch(refreshUrl(endpoint, policy), {
@@ -98,7 +115,7 @@ export async function refreshMaintenancePreview(button: HTMLButtonElement, statu
         const payload = await response.json() as MaintenanceRefreshPayload;
         const acceptedPolicy = payload.data?.policy;
         if (
-            payload.data?.operation_id !== OPERATION_ID
+            payload.data?.operation_id !== expectedOperationId
             || !payload.data.storage
             || !payload.data.preview
             || acceptedPolicy?.older_than_days !== policy.older_than_days
@@ -119,14 +136,20 @@ export async function refreshMaintenancePreview(button: HTMLButtonElement, statu
         setField('total_count', preview.total_count);
         setField('keep_latest', acceptedPolicy.keep_latest);
         setField('cutoff', preview.cutoff);
-        status.textContent = 'Maintenance preview refreshed.';
+        status.textContent = messages.success;
     } catch {
-        status.textContent = 'Could not refresh maintenance preview. No cleanup was run.';
+        status.textContent = messages.failure;
     } finally {
-        button.disabled = false;
-        button.setAttribute('aria-busy', 'false');
-        setPolicyControlsDisabled(false);
+        setRefreshControlsDisabled(false);
     }
+}
+
+export async function refreshMaintenancePreview(button: HTMLButtonElement, status: HTMLElement): Promise<void> {
+    return refreshMaintenanceSnapshot(button, status, OPERATION_ID, {
+        loading: 'Refreshing maintenance preview…',
+        success: 'Maintenance preview refreshed.',
+        failure: 'Could not refresh maintenance preview. No cleanup was run.',
+    });
 }
 
 export function bindMaintenancePreviewRefresh(): void {

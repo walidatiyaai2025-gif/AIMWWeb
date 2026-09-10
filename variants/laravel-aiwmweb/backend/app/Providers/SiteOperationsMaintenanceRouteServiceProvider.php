@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Controllers\SiteOperationsMaintenanceReadController;
 use App\Http\Controllers\SiteOperationsMaintenanceRefreshController;
+use App\Http\Controllers\SiteOperationsMaintenanceReloadController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,5 +23,11 @@ final class SiteOperationsMaintenanceRouteServiceProvider extends ServiceProvide
             ->defaults('workspace_permissions', 'execution.view')
             ->defaults('canonical_operation_id', SiteOperationsMaintenanceRefreshController::OPERATION_ID)
             ->name('canonical.workspace.site-operations-maintenance.preview');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->get('/tenants/{tenant}/site-operations/maintenance/reload', SiteOperationsMaintenanceReloadController::class)
+            ->defaults('workspace_permissions', 'execution.view')
+            ->defaults('canonical_operation_id', SiteOperationsMaintenanceReloadController::OPERATION_ID)
+            ->name('canonical.workspace.site-operations-maintenance.reload');
     }
 }
