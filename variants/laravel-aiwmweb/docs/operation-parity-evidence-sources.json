@@ -589,6 +589,25 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "Slot0222 SEO manager route exact provenance",
+      "sha": "c394c3143917c6c1cbff8e136a2a8b1847929a78",
+      "observed_pr_head": "c394c3143917c6c1cbff8e136a2a8b1847929a78",
+      "domains": [
+        "seo"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-SEO-5F71B89C92": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/seo-manager-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
