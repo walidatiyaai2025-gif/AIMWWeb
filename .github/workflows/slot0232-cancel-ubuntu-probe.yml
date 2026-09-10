@@ -1,0 +1,39 @@
+name: Slot0232 Cancel Stale Ubuntu Probe
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+    paths:
+      - '.github/workflows/slot0232-cancel-ubuntu-probe.yml'
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  cancel-and-self-clean:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+          fetch-depth: 0
+      - name: Cancel stale explicit Ubuntu probe
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api -X POST "repos/${REPO}/actions/runs/34481318420/cancel" || true
+      - name: Remove helper from closed branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/slot0232-cancel-ubuntu-probe.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/slot0232-cancel-ubuntu-probe.yml
+          git commit -m 'ci(laravel): remove stale-probe cleanup helper'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
