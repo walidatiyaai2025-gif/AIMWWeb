@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark light">
     <title>Site Operation History Maintenance — AI WordPress Manager</title>
-    @vite(['resources/css/app.css', 'resources/js/site-operations-maintenance-refresh.ts'])
+    @vite(['resources/css/app.css', 'resources/js/site-operations-maintenance-refresh.ts', 'resources/js/site-operations-maintenance-reload.ts'])
 </head>
 <body>
 <main class="fatal-error" data-canonical-operation="AIMW-AI-959B247B1D">
@@ -36,22 +36,27 @@
             <button class="btn"
                     type="button"
                     data-maintenance-refresh
+                    data-maintenance-refresh-control
                     data-refresh-url="{{ route('canonical.workspace.site-operations-maintenance.preview', ['tenant' => $tenant], false) }}"
                     data-canonical-operation="AIMW-AI-C5BC29CF27">Refresh preview</button>
         </div>
         <p><span data-maintenance-refresh-status role="status" aria-live="polite">Maintenance preview is current.</span></p>
-        <p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn"
+                    type="button"
+                    data-maintenance-reload
+                    data-maintenance-refresh-control
+                    data-refresh-url="{{ route('canonical.workspace.site-operations-maintenance.reload', ['tenant' => $tenant], false) }}"
+                    data-canonical-operation="AIMW-AI-CAAC427FC0">↻ Refresh</button>
             <a class="btn"
                data-canonical-operation="AIMW-AI-C2776A0F99"
                href="{{ route('canonical.workspace.site-operations', ['tenant' => $tenant], false) }}">Operation history</a>
-        </p>
-        @if ($canOpenOperationsHub)
-            <p>
+            @if ($canOpenOperationsHub)
                 <a class="btn primary"
                    data-canonical-operation="AIMW-AI-9E73ABE9CE"
                    href="{{ route('canonical.workspace.operations', ['tenant' => $tenant], false) }}">Operations hub</a>
-            </p>
-        @endif
+            @endif
+        </div>
     </section>
 
     <section class="panel" aria-label="Operation history storage">

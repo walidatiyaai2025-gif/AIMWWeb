@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/error-copy-details.ts',
                 'resources/js/seo-visible-controls.tsx',
                 'resources/js/site-operations-maintenance-refresh.ts',
+                'resources/js/site-operations-maintenance-reload.ts',
             ],
             refresh: true,
             fonts: [

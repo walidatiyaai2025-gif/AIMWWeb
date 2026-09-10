@@ -6,9 +6,9 @@ use App\Sites\SiteOperationsMaintenanceSnapshotResponder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class SiteOperationsMaintenanceRefreshController extends Controller
+final class SiteOperationsMaintenanceReloadController extends Controller
 {
-    public const OPERATION_ID = 'AIMW-AI-C5BC29CF27';
+    public const OPERATION_ID = 'AIMW-AI-CAAC427FC0';
 
     public function __construct(
         private readonly SiteOperationsMaintenanceSnapshotResponder $snapshot,
