@@ -1,0 +1,120 @@
+name: Laravel AIWMWeb Slot 0241 Reconcile
+
+on:
+  pull_request:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - 'variants/laravel-aiwmweb/backend/resources/js/posts-execution-link-control.tsx'
+      - 'variants/laravel-aiwmweb/backend/resources/js/__tests__/posts-execution-link-control.test.tsx'
+      - 'variants/laravel-aiwmweb/backend/resources/js/app.tsx'
+      - 'variants/laravel-aiwmweb/backend/tests/Feature/PostsExecutionNavigationTerminalityTest.php'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/posts-execution-link-terminality.json'
+      - '.github/workflows/laravel-aiwmweb-slot-0241-reconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-slot-0241:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'worker/laravel-aiwmweb-AIMW-AUTO-06CF784553-slot0238'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Fetch exact pushed refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Bind focused closure evidence to exact pushed snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha="$(git rev-parse HEAD)"
+          python - "$source_sha" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          payload = json.loads(path.read_text())
+          payload['focused_closure_evidence_source_sha'] = sys.argv[1]
+          path.write_text(json.dumps(payload, indent=2) + '\n')
+          PY
+
+      - name: Regenerate canonical parity artifacts with project generators
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Verify selected operation closed and totals reconcile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          row = next(row for row in payload['operations'] if row['operation_id'] == 'AIMW-AUTO-06CF784553')
+          assert row['migration_state'] == 'ADAPTED', row
+          assert payload['totals']['total'] == 931, payload['totals']
+          assert payload['totals']['terminal'] == 523, payload['totals']
+          assert payload['totals']['pending'] == 408, payload['totals']
+          assert payload['totals']['blocked'] == 0, payload['totals']
+          assert payload['validation']['passed'] is True, payload['validation']
+          PY
+
+      - name: Commit canonical generated artifacts to the recovery branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            echo 'Canonical parity artifacts already match generator output.'
+            exit 0
+          fi
+          git commit -m 'docs(laravel): reconcile AIMW-AUTO-06CF784553 parity'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
