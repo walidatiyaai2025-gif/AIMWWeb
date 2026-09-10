@@ -1,0 +1,146 @@
+name: Slot0222 SEO Manager Reconciliation
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-SEO-5F71B89C92-slot0222
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      EVIDENCE_SHA: c394c3143917c6c1cbff8e136a2a8b1847929a78
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Focused Laravel acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set -euo pipefail
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test tests/Feature/SeoManagerRouteTerminalityTest.php tests/Feature/SeoVisibleControlMassClosureTest.php
+          php artisan migrate:fresh --force
+          php artisan test tests/Feature/SeoManagerRouteTerminalityTest.php tests/Feature/SeoVisibleControlMassClosureTest.php
+
+      - name: Enroll exact pushed route provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text())
+          operation_id = 'AIMW-SEO-5F71B89C92'
+
+          for source in data.get('countable_sources', []):
+              if operation_id in source.get('route_api_provenance', {}):
+                  raise SystemExit(f'{operation_id} already has route_api_provenance; refusing duplicate enrollment')
+
+          evidence_sha = os.environ['EVIDENCE_SHA']
+          data['countable_sources'].append({
+              'label': 'Slot0222 SEO manager route exact provenance',
+              'sha': evidence_sha,
+              'observed_pr_head': evidence_sha,
+              'domains': ['seo'],
+              'supporting_only': True,
+              'route_api_provenance': {
+                  operation_id: {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerRouteTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerRouteTerminalityTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/seo-manager-route-terminality.json',
+                      'security_mode': 'tenant_selected'
+                  }
+              }
+          })
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+      - name: Regenerate canonical reconciliation with official toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          MD='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          SUMMARY='/tmp/operation-parity-summary.json'
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+
+      - name: Assert one-operation canonical delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          data = json.loads(path.read_text())
+          rows = [row for row in data['operations'] if row['operation_id'] == 'AIMW-SEO-5F71B89C92']
+          assert len(rows) == 1, len(rows)
+          assert rows[0]['migration_state'] == 'ADAPTED', rows[0]['migration_state']
+          totals = data['totals']
+          assert totals['total'] == 931, totals
+          assert totals['terminal'] == 518, totals
+          assert totals['pending'] == 413, totals
+          assert totals['blocked'] == 0, totals
+          seo = data['by_domain']['seo']
+          assert seo['total'] == 24, seo
+          assert seo['terminal'] == 24, seo
+          assert seo['pending'] == 0, seo
+          print('SLOT0222_CANONICAL_DELTA=PASS')
+          PY
+
+      - name: Commit generated reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --quiet && { echo 'Expected reconciliation delta is missing'; exit 1; }
+          git commit -m 'chore(laravel): reconcile SEO manager route parity'
+
+      - name: Remove temporary workflow and push clean candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/slot0222-seo-manager-reconcile.yml
+          git commit -m 'chore: remove Slot0222 reconciliation workflow'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
