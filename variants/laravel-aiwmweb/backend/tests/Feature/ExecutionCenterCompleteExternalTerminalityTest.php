@@ -47,19 +47,21 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
         $this->assertSame(self::OPERATION_ID, ExecutionCenterExternalCompletionService::OPERATION_ID);
     }
 
-    public function test_complete_external_transitions_running_external_job_and_records_one_success_activity(): void
+    public function test_complete_external_uses_canonical_job_uuid_and_records_one_success_activity(): void
     {
         [$tenant, $owner] = $this->tenantWithPermission('alpha', true);
         app(TenantContext::class)->activate($tenant, $owner);
-        $executionId = $this->execution($tenant, $owner->user_id, 'running', 'External', 7, 3, 'old failure');
+        [$rowId, $jobId] = $this->execution($tenant, $owner->user_id, 'running', 'External', 7, 3, 'old failure');
 
         $completed = app(ExecutionCenterExternalCompletionService::class)->completeExternal(
-            $executionId,
+            $jobId,
             $owner->user_id,
             'token=super-secret finished successfully',
         );
 
         $this->assertNotNull($completed);
+        $this->assertSame($jobId, $completed['job_id']);
+        $this->assertSame($rowId, $completed['row_id']);
         $this->assertSame('completed', $completed['status']);
         $this->assertSame(100, $completed['progress']);
         $this->assertSame(7, $completed['total_items']);
@@ -68,7 +70,7 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
         $this->assertNotNull($completed['completed_at']);
         $this->assertNull($completed['error']);
 
-        $row = DB::table('operation_executions')->where('id', $executionId)->first();
+        $row = DB::table('operation_executions')->where('id', $rowId)->first();
         $this->assertNotNull($row);
         $this->assertSame('completed', $row->status);
         $this->assertSame(100, (int) $row->progress);
@@ -78,7 +80,7 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
         $this->assertSame(7, $payload['total_items']);
         $this->assertSame(7, $payload['processed_items']);
 
-        $logs = DB::table('operation_logs')->where('operation_execution_id', $executionId)->get();
+        $logs = DB::table('operation_logs')->where('operation_execution_id', $rowId)->get();
         $this->assertCount(1, $logs);
         $this->assertSame('success', $logs[0]->level);
         $this->assertStringContainsString('token=[REDACTED]', (string) $logs[0]->message);
@@ -92,13 +94,13 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
     {
         [$tenant, $owner] = $this->tenantWithPermission('alpha', true);
         app(TenantContext::class)->activate($tenant, $owner);
-        $executionId = $this->execution($tenant, $owner->user_id, 'running', 'External', 2, 1);
+        [$rowId, $jobId] = $this->execution($tenant, $owner->user_id, 'running', 'External', 2, 1);
         $service = app(ExecutionCenterExternalCompletionService::class);
 
-        $this->assertNotNull($service->completeExternal($executionId, $owner->user_id, 'first completion'));
-        $this->assertNull($service->completeExternal($executionId, $owner->user_id, 'duplicate completion'));
+        $this->assertNotNull($service->completeExternal($jobId, $owner->user_id, 'first completion'));
+        $this->assertNull($service->completeExternal($jobId, $owner->user_id, 'duplicate completion'));
         $this->assertSame(1, DB::table('operation_logs')
-            ->where('operation_execution_id', $executionId)
+            ->where('operation_execution_id', $rowId)
             ->where('level', 'success')
             ->count());
     }
@@ -107,16 +109,16 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
     {
         [$tenant, $owner] = $this->tenantWithPermission('alpha', true);
         app(TenantContext::class)->activate($tenant, $owner);
-        $queuedId = $this->execution($tenant, $owner->user_id, 'queued', 'External', 4, 0);
-        $trackedId = $this->execution($tenant, $owner->user_id, 'running', 'Tracked', 4, 2);
+        [$queuedRowId, $queuedJobId] = $this->execution($tenant, $owner->user_id, 'queued', 'External', 4, 0);
+        [$trackedRowId, $trackedJobId] = $this->execution($tenant, $owner->user_id, 'running', 'Tracked', 4, 2);
         $service = app(ExecutionCenterExternalCompletionService::class);
 
-        $this->assertNull($service->completeExternal(999999, $owner->user_id, 'missing'));
-        $this->assertNull($service->completeExternal($queuedId, $owner->user_id, 'not running'));
-        $this->assertNull($service->completeExternal($trackedId, $owner->user_id, 'not external'));
+        $this->assertNull($service->completeExternal('00000000-0000-0000-0000-999999999999', $owner->user_id, 'missing'));
+        $this->assertNull($service->completeExternal($queuedJobId, $owner->user_id, 'not running'));
+        $this->assertNull($service->completeExternal($trackedJobId, $owner->user_id, 'not external'));
 
-        $this->assertSame('queued', DB::table('operation_executions')->where('id', $queuedId)->value('status'));
-        $this->assertSame('running', DB::table('operation_executions')->where('id', $trackedId)->value('status'));
+        $this->assertSame('queued', DB::table('operation_executions')->where('id', $queuedRowId)->value('status'));
+        $this->assertSame('running', DB::table('operation_executions')->where('id', $trackedRowId)->value('status'));
         $this->assertSame(0, DB::table('operation_logs')->count());
     }
 
@@ -124,13 +126,13 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
     {
         [$alpha, $alphaOwner] = $this->tenantWithPermission('alpha', true);
         app(TenantContext::class)->activate($alpha, $alphaOwner);
-        $alphaExecutionId = $this->execution($alpha, $alphaOwner->user_id, 'running', 'External', 3, 1);
+        [$alphaRowId, $alphaJobId] = $this->execution($alpha, $alphaOwner->user_id, 'running', 'External', 3, 1);
 
         [, $otherOwner] = $this->tenantWithPermission('other-owner', true);
         app(TenantContext::class)->activate($alpha, $alphaOwner);
         try {
             app(ExecutionCenterExternalCompletionService::class)->completeExternal(
-                $alphaExecutionId,
+                $alphaJobId,
                 $otherOwner->user_id,
                 'wrong owner',
             );
@@ -143,18 +145,19 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
         [$beta, $betaOwner] = $this->tenantWithPermission('beta', true);
         app(TenantContext::class)->activate($beta, $betaOwner);
         $this->assertNull(app(ExecutionCenterExternalCompletionService::class)->completeExternal(
-            $alphaExecutionId,
+            $alphaJobId,
             $betaOwner->user_id,
             'foreign tenant execution',
         ));
+        $this->assertSame('running', DB::table('operation_executions')->where('id', $alphaRowId)->value('status'));
 
         app(TenantContext::class)->forget();
         [$gamma, $unprivileged] = $this->tenantWithPermission('gamma', false);
         app(TenantContext::class)->activate($gamma, $unprivileged);
-        $gammaExecutionId = $this->execution($gamma, $unprivileged->user_id, 'running', 'External', 1, 0);
+        [, $gammaJobId] = $this->execution($gamma, $unprivileged->user_id, 'running', 'External', 1, 0);
         $this->expectException(AuthorizationException::class);
         app(ExecutionCenterExternalCompletionService::class)->completeExternal(
-            $gammaExecutionId,
+            $gammaJobId,
             $unprivileged->user_id,
             'denied',
         );
@@ -164,12 +167,12 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
     {
         [$tenant, $owner] = $this->tenantWithPermission('alpha', true);
         app(TenantContext::class)->activate($tenant, $owner);
-        $executionId = $this->execution($tenant, $owner->user_id, 'running', 'External', 1, 0);
+        [$rowId, $jobId] = $this->execution($tenant, $owner->user_id, 'running', 'External', 1, 0);
         app(TenantContext::class)->forget();
 
         try {
             app(ExecutionCenterExternalCompletionService::class)->completeExternal(
-                $executionId,
+                $jobId,
                 $owner->user_id,
                 'no tenant context',
             );
@@ -178,7 +181,7 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
             $this->assertTrue(true);
         }
 
-        $this->assertSame('running', DB::table('operation_executions')->where('id', $executionId)->value('status'));
+        $this->assertSame('running', DB::table('operation_executions')->where('id', $rowId)->value('status'));
         $this->assertSame(0, DB::table('operation_logs')->count());
     }
 
@@ -206,6 +209,7 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
         return [$tenant, $membership];
     }
 
+    /** @return array{0:int,1:string} */
     private function execution(
         Tenant $tenant,
         int $ownerUserId,
@@ -214,17 +218,17 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
         int $totalItems,
         int $processedItems,
         ?string $failure = null,
-    ): int {
+    ): array {
         $sequence = DB::table('operation_executions')->count() + 1;
+        $jobId = sprintf('00000000-0000-0000-0000-%012d', 242000 + $sequence);
         $now = now();
-
-        return (int) DB::table('operation_executions')->insertGetId([
+        $rowId = (int) DB::table('operation_executions')->insertGetId([
             'tenant_id' => $tenant->id,
             'requested_by_user_id' => $ownerUserId,
             'type' => 'sync.external',
             'subject_type' => 'site',
             'subject_id' => (string) $sequence,
-            'correlation_id' => sprintf('00000000-0000-0000-0000-%012d', 242000 + $sequence),
+            'correlation_id' => $jobId,
             'status' => $status,
             'progress' => $status === 'running' ? 50 : 0,
             'attempts' => $status === 'running' ? 1 : 0,
@@ -244,5 +248,7 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+
+        return [$rowId, $jobId];
     }
 }
