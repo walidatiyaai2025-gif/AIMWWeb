@@ -11,6 +11,9 @@ permissions:
 jobs:
   focused:
     runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /tmp/slot0227.sqlite
     defaults:
       run:
         working-directory: variants/laravel-aiwmweb/backend
@@ -22,6 +25,7 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env
+      - run: touch /tmp/slot0227.sqlite
       - run: php artisan key:generate
       - run: vendor/bin/pint --test app/Execution/ExecutionCenterServiceAdapter.php tests/Feature/ExecutionCenterEnqueueTerminalityTest.php
       - run: php artisan migrate:fresh --force
