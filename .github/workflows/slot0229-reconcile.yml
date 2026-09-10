@@ -66,16 +66,18 @@ jobs:
           cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
           cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
 
-      - name: Commit generated output and remove helper
+      - name: Commit generated output and remove temporary workflows
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/slot0229-reconcile.yml
+          rm -f .github/workflows/slot0229-reconcile.yml \
+                .github/workflows/slot0227-enqueue-focused.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
                   variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
-                  .github/workflows/slot0229-reconcile.yml
+                  .github/workflows/slot0229-reconcile.yml \
+                  .github/workflows/slot0227-enqueue-focused.yml
           if git diff --cached --quiet; then
             echo 'No generated delta.'
             exit 0
