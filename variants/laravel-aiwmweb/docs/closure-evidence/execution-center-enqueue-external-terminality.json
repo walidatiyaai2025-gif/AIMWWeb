@@ -45,6 +45,8 @@
       "credential-like assignments are absent from returned job, stored payload and registration log while a one-way dedupe fingerprint remains"
     ],
     "isolation_assertion_mode": "Focused service acceptance proves foreign-tenant site and wrong-owner registration rejection plus database exclusion; authorization failure is explicit and tenant-owned external rows remain scoped to their owner.",
+    "focused_validation": "Slot0237 focused run 34527281380 succeeded on SQLite and MySQL. It passed focused Pint, migrate:fresh, ExecutionCenterEnqueueExternalTerminalityTest and sibling Enqueue/GetJobs/GetActivities regression suites.",
+    "generated_reconciliation": "Slot0237 canonical five-stage generator run 34527433905 succeeded with exact one-operation delta guard. Bot commit 1a105455e90dad40b99d77ae10e2738729d6a14d produced 931 total / 522 terminal / 409 pending / 0 blocked and removed both temporary Slot0237 workflows before PR acceptance.",
     "external_runtime": "No live WordPress/provider/email/payment/DNS/manual evidence is required because EnqueueExternal only registers tenant-local external-work metadata and never claims that an external provider executed or completed the job."
   },
   "scope": {
