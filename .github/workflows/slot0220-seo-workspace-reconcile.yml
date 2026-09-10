@@ -21,6 +21,12 @@ jobs:
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
 
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
       - name: Focused Laravel acceptance
         working-directory: variants/laravel-aiwmweb/backend
         run: |
