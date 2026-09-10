@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   reconcile-and-self-clean:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       PYTHONHASHSEED: '0'
     steps:
