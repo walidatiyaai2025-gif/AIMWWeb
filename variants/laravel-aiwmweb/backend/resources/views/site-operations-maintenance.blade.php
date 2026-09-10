@@ -5,14 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark light">
     <title>Site Operation History Maintenance — AI WordPress Manager</title>
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/site-operations-maintenance-refresh.ts'])
 </head>
 <body>
 <main class="fatal-error" data-canonical-operation="AIMW-AI-959B247B1D">
     <section class="panel">
         <span class="workspace-kicker">STORAGE MANAGEMENT</span>
         <h1>Site Operation History Maintenance</h1>
-        <p>Review the real tenant-scoped operation-history footprint and the default retention preview. Maintenance mutations are separate canonical operations.</p>
+        <p>Review the real tenant-scoped operation-history footprint and refresh the retention preview with the same policy choices as the authoritative source. Maintenance mutations are separate canonical operations.</p>
+        <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+            <label>
+                <span>Delete operations older than</span>
+                <select class="form-control" data-maintenance-policy="older_than_days">
+                    <option value="30">30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90" selected>90 days</option>
+                    <option value="180">180 days</option>
+                    <option value="365">365 days</option>
+                </select>
+            </label>
+            <label>
+                <span>Always keep the newest</span>
+                <select class="form-control" data-maintenance-policy="keep_latest">
+                    <option value="50">50</option>
+                    <option value="100" selected>100</option>
+                    <option value="250">250</option>
+                    <option value="500">500</option>
+                </select>
+            </label>
+            <button class="btn"
+                    type="button"
+                    data-maintenance-refresh
+                    data-refresh-url="{{ route('canonical.workspace.site-operations-maintenance.preview', ['tenant' => $tenant], false) }}"
+                    data-canonical-operation="AIMW-AI-C5BC29CF27">Refresh preview</button>
+        </div>
+        <p><span data-maintenance-refresh-status role="status" aria-live="polite">Maintenance preview is current.</span></p>
         <p>
             <a class="btn"
                data-canonical-operation="AIMW-AI-C2776A0F99"
@@ -30,22 +57,21 @@
     <section class="panel" aria-label="Operation history storage">
         <h2>Current storage</h2>
         <dl>
-            <dt>Total records</dt><dd data-testid="record-count">{{ (int) $storage['record_count'] }}</dd>
-            <dt>Sites represented</dt><dd>{{ (int) $storage['site_count'] }}</dd>
-            <dt>Oldest operation</dt><dd>{{ $storage['oldest_operation_at'] ?: '—' }}</dd>
-            <dt>Newest operation</dt><dd>{{ $storage['newest_operation_at'] ?: '—' }}</dd>
-            <dt>Storage</dt><dd>{{ $storage['storage'] }}</dd>
+            <dt>Total records</dt><dd data-testid="record-count" data-maintenance-field="record_count">{{ (int) $storage['record_count'] }}</dd>
+            <dt>Sites represented</dt><dd data-maintenance-field="site_count">{{ (int) $storage['site_count'] }}</dd>
+            <dt>Oldest operation</dt><dd data-maintenance-field="oldest_operation_at">{{ $storage['oldest_operation_at'] ?: '—' }}</dd>
+            <dt>Newest operation</dt><dd data-maintenance-field="newest_operation_at">{{ $storage['newest_operation_at'] ?: '—' }}</dd>
+            <dt>Storage</dt><dd data-maintenance-field="storage">{{ $storage['storage'] }}</dd>
         </dl>
     </section>
 
-    <section class="panel" aria-label="Default cleanup preview">
+    <section class="panel" aria-label="Current cleanup preview">
         <h2>Default retention preview</h2>
-        <p>90-day cutoff while retaining the newest 100 tenant-scoped records.</p>
+        <p><span data-maintenance-field="older_than_days">90</span>-day cutoff while retaining the newest <span data-maintenance-field="keep_latest">{{ (int) $preview['keep_latest'] }}</span> tenant-scoped records.</p>
         <dl>
-            <dt>Eligible for removal</dt><dd>{{ (int) $preview['removable_count'] }}</dd>
-            <dt>Total in scope</dt><dd>{{ (int) $preview['total_count'] }}</dd>
-            <dt>Keep latest</dt><dd>{{ (int) $preview['keep_latest'] }}</dd>
-            <dt>Cutoff</dt><dd>{{ $preview['cutoff'] }}</dd>
+            <dt>Eligible for removal</dt><dd data-maintenance-field="removable_count">{{ (int) $preview['removable_count'] }}</dd>
+            <dt>Total in scope</dt><dd data-maintenance-field="total_count">{{ (int) $preview['total_count'] }}</dd>
+            <dt>Cutoff</dt><dd data-maintenance-field="cutoff">{{ $preview['cutoff'] }}</dd>
         </dl>
     </section>
 </main>
