@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-97A9F6A324",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.GetActivities",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "predicate": "GetActivities reads immutable execution activity joined through its job; the owner-scoped overload requires a non-empty owner identity and returns only activity whose job OwnerUserId equals that owner.",
+    "ordering": "Activities are returned newest first by CreatedAtUtc descending.",
+    "take": "The requested row count is clamped to the inclusive range 1..1000 before the read.",
+    "mutation": "The operation is read-only and does not advance, cancel, retry, fabricate, or otherwise mutate execution or activity state."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterServiceAdapter",
+    "member": "getActivities",
+    "ledger_mapping": "Laravel already persists control-plane activity in operation_logs and approved/external execution activity in immutable audit_events. The adapter composes those existing activity stores rather than introducing duplicate persistence.",
+    "tenant_owner_scope": "Control-plane logs must join an operation_executions row constrained to both active TenantContext and requested_by_user_id. Approved/external audit events are admitted only after resolving active-tenant executions whose actor_user_id is the supplied owner, so a forged event actor cannot grant access to another owner's job.",
+    "ordering_take": "The composed activity is sorted by occurred_at descending with deterministic tie breaking and sliced only after take is clamped to 1..1000.",
+    "data_boundary": "Only execution activity metadata is projected. Credential-like assignments in log/audit messages are redacted before leaving the adapter; operation payload/result and arbitrary audit metadata are not returned.",
+    "read_only": "No execution, log, audit, approval, or other state is written by getActivities."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "ca6e12d267ce2be6645e809bc793494a63072bd1",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterServiceAdapter.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterGetActivitiesTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member/tenant/risk identity",
+      "existing Laravel activity stores are composed without creating duplicate persistence",
+      "activity is readable only through an active-tenant job owned by the supplied user",
+      "cross-tenant rows, same-tenant other-owner rows, and forged-actor audit rows are absent",
+      "results are deterministically newest first across activity stores",
+      "take is clamped fail-safe to the canonical 1..1000 range",
+      "credential-like message assignments are redacted and arbitrary payload/metadata is not exposed",
+      "the read creates no audit, log, or execution mutations",
+      "invalid owner identity is rejected before lookup and missing TenantContext fails closed"
+    ],
+    "isolation_assertion_mode": "Focused read-service acceptance proves tenant and owner isolation by strict exclusion assertions over returned activity IDs; route/model 404 semantics are not applicable to this collection-returning service.",
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/production/manual evidence is required because GetActivities is a tenant-local immutable execution-activity read."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-97A9F6A324",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

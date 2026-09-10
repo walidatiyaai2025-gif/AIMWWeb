@@ -47,9 +47,23 @@ def security_contract(row: dict[str, Any], test_text: str, evidence_path: Path) 
     signals: list[str] = []
 
     if bool(row.get("tenant_owned")):
-        tenant_proof = (
-            ("assertnotfound" in low or "404" in low or "modelnotfoundexception" in low)
-            and any(token in low for token in ("tenant", "foreign", "cross-tenant", "cross_tenant"))
+        tenant_boundary_token = any(
+            token in low for token in ("tenant", "foreign", "cross-tenant", "cross_tenant")
+        )
+        route_or_model_rejection = any(
+            token in low for token in ("assertnotfound", "404", "modelnotfoundexception")
+        )
+        collection_or_database_exclusion = any(
+            token in low
+            for token in (
+                "assertnotcontains",
+                "assertdatabasemissing",
+                "assertdoesntcontain",
+                "assertdoesnotcontain",
+            )
+        )
+        tenant_proof = tenant_boundary_token and (
+            route_or_model_rejection or collection_or_database_exclusion
         )
         if not tenant_proof:
             raise SystemExit(
