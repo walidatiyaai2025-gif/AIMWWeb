@@ -107,20 +107,27 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          path = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
-          data = json.loads(path.read_text())
+
+          data = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
           rows = [row for row in data['operations'] if row['operation_id'] == 'AIMW-SEO-5F71B89C92']
           assert len(rows) == 1, len(rows)
           assert rows[0]['migration_state'] == 'ADAPTED', rows[0]['migration_state']
+
           totals = data['totals']
+          print('TOTALS', totals)
           assert totals['total'] == 931, totals
           assert totals['terminal'] == 518, totals
           assert totals['pending'] == 413, totals
           assert totals['blocked'] == 0, totals
-          seo = data['by_domain']['seo']
-          assert seo['total'] == 24, seo
-          assert seo['terminal'] == 24, seo
-          assert seo['pending'] == 0, seo
+
+          seo_rows = [row for row in data['operations'] if row['domain'] == 'seo']
+          terminal_states = {'PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'}
+          seo_terminal = sum(row['migration_state'] in terminal_states for row in seo_rows)
+          seo_pending = sum(row['migration_state'] == 'PENDING' for row in seo_rows)
+          print('SEO', {'total': len(seo_rows), 'terminal': seo_terminal, 'pending': seo_pending})
+          assert len(seo_rows) == 24, len(seo_rows)
+          assert seo_terminal == 24, seo_terminal
+          assert seo_pending == 0, seo_pending
           print('SLOT0222_CANONICAL_DELTA=PASS')
           PY
 
