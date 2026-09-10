@@ -23,9 +23,10 @@ final class ExecutionCenterExternalCompletionService
     ) {}
 
     /** @return array<string, mixed>|null */
-    public function completeExternal(int $executionId, int $ownerUserId, string $message): ?array
+    public function completeExternal(string $jobId, int $ownerUserId, string $message): ?array
     {
-        if ($executionId <= 0 || $ownerUserId <= 0) {
+        $jobId = trim($jobId);
+        if ($jobId === '' || $ownerUserId <= 0) {
             return null;
         }
 
@@ -36,10 +37,10 @@ final class ExecutionCenterExternalCompletionService
             throw new AuthorizationException;
         }
 
-        return DB::transaction(function () use ($executionId, $ownerUserId, $tenantId, $message): ?array {
+        return DB::transaction(function () use ($jobId, $ownerUserId, $tenantId, $message): ?array {
             $execution = DB::table('operation_executions')
                 ->where('tenant_id', $tenantId)
-                ->where('id', $executionId)
+                ->where('correlation_id', $jobId)
                 ->where('requested_by_user_id', $ownerUserId)
                 ->lockForUpdate()
                 ->first();
@@ -60,7 +61,7 @@ final class ExecutionCenterExternalCompletionService
 
             $updated = DB::table('operation_executions')
                 ->where('tenant_id', $tenantId)
-                ->where('id', $executionId)
+                ->where('correlation_id', $jobId)
                 ->where('requested_by_user_id', $ownerUserId)
                 ->where('status', 'running')
                 ->update([
@@ -78,8 +79,8 @@ final class ExecutionCenterExternalCompletionService
 
             DB::table('operation_logs')->insert([
                 'tenant_id' => $tenantId,
-                'operation_execution_id' => $executionId,
-                'correlation_id' => (string) $execution->correlation_id,
+                'operation_execution_id' => (int) $execution->id,
+                'correlation_id' => $jobId,
                 'level' => 'success',
                 'message' => $safeMessage,
                 'context' => json_encode([
@@ -92,7 +93,7 @@ final class ExecutionCenterExternalCompletionService
 
             $completed = DB::table('operation_executions')
                 ->where('tenant_id', $tenantId)
-                ->where('id', $executionId)
+                ->where('correlation_id', $jobId)
                 ->where('requested_by_user_id', $ownerUserId)
                 ->first();
 
