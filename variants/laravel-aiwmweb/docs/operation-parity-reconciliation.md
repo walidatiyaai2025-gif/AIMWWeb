@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 522 |
-| PENDING | 409 |
+| ADAPTED | 523 |
+| PENDING | 408 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 522 |
-| OVERALL_PARITY_PERCENT | 56.07% |
+| TERMINAL | 523 |
+| OVERALL_PARITY_PERCENT | 56.18% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **98**
-- Pending: **348**
+- Terminal: **99**
+- Pending: **347**
 - Blocked: **0**
-- Parity: **21.97%**
+- Parity: **22.20%**
 
 ## By domain
 
@@ -31,7 +31,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | ai | 92 | 0 | 92 | 0 | 0 | 0 | 92 | 100.00% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
-| automation | 59 | 0 | 28 | 31 | 0 | 0 | 28 | 47.46% |
+| automation | 59 | 0 | 29 | 30 | 0 | 0 | 29 | 49.15% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 86 | 92 | 0 | 0 | 86 | 48.31% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 14 | 7 | 0 | 0 | 14 | 66.67% |
 | route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
 | service | 349 | 0 | 332 | 17 | 0 | 0 | 332 | 95.13% |
-| visible_control | 446 | 0 | 98 | 348 | 0 | 0 | 98 | 21.97% |
+| visible_control | 446 | 0 | 99 | 347 | 0 | 0 | 99 | 22.20% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **38**
-- Focused visible-control contracts: **98**
+- Focused visible-control contracts: **99**
 - Focused service contracts: **15**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
@@ -82,9 +82,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### automation (31)
+### automation (30)
 
-- `AIMW-AUTO-06CF784553`
 - `AIMW-AUTO-0701C84252`
 - `AIMW-AUTO-13392A9E67`
 - `AIMW-AUTO-148B15F121`
