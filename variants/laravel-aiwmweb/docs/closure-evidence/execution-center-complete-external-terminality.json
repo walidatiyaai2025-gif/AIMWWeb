@@ -30,7 +30,7 @@
     "redaction": "Credential-like assignments in the completion message are redacted before persistence."
   },
   "service_closure_contract": {
-    "implementation_sha": "74d6e153895010cbfaa4f53d36b0564176379309",
+    "implementation_sha": "74ae5cc4cf960ca99a948943663064b5cc579954",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalCompletionService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterCompleteExternalTerminalityTest.php"
   },
