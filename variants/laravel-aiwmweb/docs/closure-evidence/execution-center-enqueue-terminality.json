@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-0706ECEF6C",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.Enqueue",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "registration_only": "Enqueue/EnqueueCore registers a real tracked execution. Execution Center does not advance the row on its own; the originating runtime remains authoritative for progress, completion and failure.",
+    "validation": "The owner/site overload rejects empty identities. EnqueueCore requires nonblank title and type, trims title/type/site name, clamps totalItems to at least one, and trims optional idempotency/correlation metadata.",
+    "initial_state": "A new tracked job is Waiting with zero progress and zero processed items, null start/completion/error state, and one initial registration activity.",
+    "persistence": "The registration and initial activity are committed together so a partial job/activity registration is not accepted as success."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterServiceAdapter",
+    "member": "enqueue",
+    "ledger_mapping": "The existing operation_executions and operation_logs ledgers represent the canonical execution registration and initial activity; no competing execution persistence is introduced.",
+    "tenant_owner_site_scope": "Laravel intentionally strengthens the source boundary: an active TenantContext is mandatory, the supplied owner must be the active membership user, operations.manage is required server-side, and the supplied site must exist inside the active tenant.",
+    "state_mapping": "Canonical Waiting maps to Laravel queued. progress and processed_items remain zero, total_items is clamped to at least one, execution_mode remains Tracked, and start/completion/failure remain null.",
+    "identity_mapping": "The Laravel ledger requires a UUID correlation identifier; a supplied nonblank correlation ID is preserved and an omitted one is generated. Optional idempotency metadata is trimmed and retained in the redacted payload.",
+    "activity_mapping": "Exactly one info-level registration log is written in the same transaction and carries the canonical operation ID/source marker without claiming runtime progress or completion.",
+    "redaction": "Credential-like assignments in user-provided title/site/type text and structured payload/context are redacted before persistence or return."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "2baf6375f1f857956eb3c1f718307d723123b5dd",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterServiceAdapter.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterEnqueueTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member/tenant/risk identity and operation ID AIMW-AUTO-0706ECEF6C",
+      "title/type validation, trimming, totalItems clamp, optional idempotency and correlation semantics",
+      "one active-tenant owner/site scoped queued tracked execution is persisted with zero progress and no fabricated completion",
+      "one initial registration activity is persisted and no success/progress activity is manufactured",
+      "wrong owner, missing operations.manage permission, cross-tenant site ID and missing tenant context fail closed before an unauthorized registration can persist",
+      "credential-like assignments are redacted from returned registration data, persisted payload and registration log",
+      "existing GetJobs/GetActivities focused regression suites remain green"
+    ],
+    "isolation_assertion_mode": "Focused service acceptance proves unauthorized/cross-tenant registration attempts leave no matching operation execution rows; wrong-owner and missing-permission access raise AuthorizationException and a foreign site fails as not found.",
+    "focused_validation": "Slot0227 Enqueue Focused run 34469093407 succeeded on implementation/test head 2baf6375f1f857956eb3c1f718307d723123b5dd: Pint, SQLite migrate:fresh, Enqueue focused tests and GetJobs/GetActivities regression tests.",
+    "generated_reconciliation": "Slot0230 canonical five-stage reconciliation run 34476951586 succeeded from candidate head e95b1b15d7f30391d6089e53bd69140583cbd02a and produced generated commit c0ab6338f258874909eddcba069565308d8a2410 with 931 total / 521 terminal / 410 pending / 0 blocked; the generator removed both temporary slot workflows before integration.",
+    "queue_cleanup": "Slot0230 queue-cleanup run 34478484747 completed SUCCESS and produced self-cleaning bot commit e86987d41d7374b399ee4084619134b769f341f3. That bot-authored head caused pull_request workflows to report action_required with zero jobs; Slot0231 therefore records this exact fact in owner-authored evidence to retrigger the unchanged repository-defined acceptance gates without weakening them.",
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/manual evidence is required because Enqueue only registers tenant-local tracked work; it explicitly does not claim that the originating runtime executed or completed the work."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-0706ECEF6C",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

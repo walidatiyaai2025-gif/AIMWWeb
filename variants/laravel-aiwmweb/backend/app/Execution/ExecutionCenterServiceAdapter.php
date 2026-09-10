@@ -2,16 +2,21 @@
 
 namespace App\Execution;
 
+use App\Authorization\TenantAuthorizer;
 use App\Models\Execution;
+use App\Operations\Redactor;
 use App\Tenancy\TenantContext;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
- * Laravel adaptations of the canonical ExecutionCenterService read operations.
+ * Laravel adaptations of the canonical ExecutionCenterService operations.
  *
  * AIMWWeb keeps tracked and external work in existing tenant-owned ledgers. The Laravel
- * variant composes those stores instead of creating a competing execution/activity ledger.
+ * variant composes and writes those stores instead of creating a competing execution/activity ledger.
  */
 final class ExecutionCenterServiceAdapter
 {
@@ -19,7 +24,13 @@ final class ExecutionCenterServiceAdapter
 
     public const GET_ACTIVITIES_OPERATION_ID = 'AIMW-AUTO-97A9F6A324';
 
-    public function __construct(private readonly TenantContext $context) {}
+    public const ENQUEUE_OPERATION_ID = 'AIMW-AUTO-0706ECEF6C';
+
+    public function __construct(
+        private readonly TenantContext $context,
+        private readonly TenantAuthorizer $authorizer,
+        private readonly Redactor $redactor,
+    ) {}
 
     /**
      * Return the active tenant's jobs owned by one user, newest first.
@@ -204,6 +215,146 @@ final class ExecutionCenterServiceAdapter
         return array_slice($activities, 0, $take);
     }
 
+    /**
+     * Register one real tracked execution without manufacturing runtime progress.
+     *
+     * The canonical source has an unscoped overload, but the Laravel multi-tenant boundary
+     * intentionally exposes only an active-tenant, authenticated-owner, tenant-site form.
+     * The existing operation_executions / operation_logs plane remains authoritative.
+     *
+     * @return array<string, mixed>
+     */
+    public function enqueue(
+        int $ownerUserId,
+        int $siteId,
+        string $title,
+        string $type,
+        string $siteName,
+        int $totalItems,
+        ?string $idempotencyKey = null,
+        ?string $correlationId = null,
+    ): array {
+        if ($ownerUserId <= 0) {
+            throw new InvalidArgumentException('A valid execution owner user ID is required.');
+        }
+        if ($siteId <= 0) {
+            throw new InvalidArgumentException('A valid execution site ID is required.');
+        }
+
+        $this->authorizer->authorize('operations.manage');
+        $tenantId = $this->context->id();
+        $membership = $this->context->membership();
+        if ((int) $membership->user_id !== $ownerUserId) {
+            throw new AuthorizationException;
+        }
+
+        $siteExists = DB::table('sites')
+            ->where('tenant_id', $tenantId)
+            ->where('id', $siteId)
+            ->exists();
+        if (! $siteExists) {
+            throw (new ModelNotFoundException)->setModel('site');
+        }
+
+        $title = trim($title);
+        $type = trim($type);
+        $siteName = trim($siteName);
+        if ($title === '') {
+            throw new InvalidArgumentException('Job title is required.');
+        }
+        if ($type === '') {
+            throw new InvalidArgumentException('Job type is required.');
+        }
+
+        $totalItems = max(1, $totalItems);
+        $idempotencyKey = $this->normalizeOptional($idempotencyKey);
+        $correlationId = $this->normalizeOptional($correlationId) ?? (string) Str::uuid();
+        $safeTitle = $this->safeFailure($title) ?? '';
+        $safeSiteName = $this->safeFailure($siteName) ?? '';
+        $safeType = $this->safeFailure($type) ?? '';
+        $now = now();
+
+        return DB::transaction(function () use (
+            $tenantId,
+            $ownerUserId,
+            $siteId,
+            $safeTitle,
+            $safeType,
+            $safeSiteName,
+            $totalItems,
+            $idempotencyKey,
+            $correlationId,
+            $now,
+        ): array {
+            $payload = $this->redactor->redact([
+                'title' => $safeTitle,
+                'site_name' => $safeSiteName,
+                'total_items' => $totalItems,
+                'processed_items' => 0,
+                'execution_mode' => 'Tracked',
+                'idempotency_key' => $idempotencyKey,
+            ]);
+
+            $rowId = (int) DB::table('operation_executions')->insertGetId([
+                'tenant_id' => $tenantId,
+                'requested_by_user_id' => $ownerUserId,
+                'type' => $safeType,
+                'subject_type' => 'site',
+                'subject_id' => (string) $siteId,
+                'correlation_id' => $correlationId,
+                'status' => 'queued',
+                'progress' => 0,
+                'attempts' => 0,
+                'max_attempts' => 1,
+                'safe_to_cancel' => true,
+                'payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+                'result' => null,
+                'failure' => null,
+                'started_at' => null,
+                'completed_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::table('operation_logs')->insert([
+                'tenant_id' => $tenantId,
+                'operation_execution_id' => $rowId,
+                'correlation_id' => $correlationId,
+                'level' => 'info',
+                'message' => $this->safeFailure("Registered {$safeType} execution for {$safeSiteName}.") ?? 'Execution registered.',
+                'context' => json_encode($this->redactor->redact([
+                    'source' => 'ExecutionCenterService.Enqueue',
+                    'operation_id' => self::ENQUEUE_OPERATION_ID,
+                    'type' => $safeType,
+                    'owner_user_id' => $ownerUserId,
+                    'site_id' => $siteId,
+                ]), JSON_THROW_ON_ERROR),
+                'occurred_at' => $now,
+            ]);
+
+            return [
+                'job_id' => $correlationId,
+                'ledger' => 'operation_execution',
+                'row_id' => $rowId,
+                'owner_user_id' => $ownerUserId,
+                'site_id' => $siteId,
+                'title' => $safeTitle,
+                'type' => $safeType,
+                'site_name' => $safeSiteName,
+                'status' => 'queued',
+                'progress' => 0,
+                'total_items' => $totalItems,
+                'processed_items' => 0,
+                'execution_mode' => 'Tracked',
+                'idempotency_key' => $idempotencyKey,
+                'created_at' => (string) $now,
+                'started_at' => null,
+                'completed_at' => null,
+                'error' => null,
+            ];
+        }, 3);
+    }
+
     /** @return array<string, mixed> */
     private function decodeMetadata(mixed $value): array
     {
@@ -227,6 +378,13 @@ final class ExecutionCenterServiceAdapter
             'error', 'failed', 'failure', 'critical' => 'Error',
             default => 'Info',
         };
+    }
+
+    private function normalizeOptional(?string $value): ?string
+    {
+        $value = $value === null ? null : trim($value);
+
+        return $value === '' ? null : $value;
     }
 
     private function safeFailure(?string $failure): ?string
