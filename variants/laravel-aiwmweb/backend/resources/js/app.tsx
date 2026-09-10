@@ -16,6 +16,7 @@ import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
+import { PostsExecutionLinkControl } from './posts-execution-link-control';
 import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
@@ -133,6 +134,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
         </>
     );
     if (route.key === 'sites') return <><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
