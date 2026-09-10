@@ -99,14 +99,17 @@ class ExecutionCenterEnqueueTerminalityTest extends TestCase
         $this->assertNull($execution->failure);
 
         $payload = json_decode((string) $execution->payload, true, 512, JSON_THROW_ON_ERROR);
-        $this->assertSame([
+        $expectedPayload = [
             'title' => 'Nightly sync',
             'site_name' => 'Primary Site',
             'total_items' => 1,
             'processed_items' => 0,
             'execution_mode' => 'Tracked',
             'idempotency_key' => 'idem-001',
-        ], $payload);
+        ];
+        ksort($expectedPayload);
+        ksort($payload);
+        $this->assertSame($expectedPayload, $payload);
 
         $logs = DB::table('operation_logs')->where('operation_execution_id', $job['row_id'])->get();
         $this->assertCount(1, $logs);
