@@ -1,0 +1,28 @@
+name: Slot0227 Enqueue Focused
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-070652AEB0-slot0227
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: vendor/bin/pint --test app/Execution/ExecutionCenterServiceAdapter.php tests/Feature/ExecutionCenterEnqueueTerminalityTest.php
+      - run: php artisan migrate:fresh --force
+      - run: php artisan test tests/Feature/ExecutionCenterEnqueueTerminalityTest.php tests/Feature/ExecutionCenterGetJobsTerminalityTest.php tests/Feature/ExecutionCenterGetActivitiesTerminalityTest.php
