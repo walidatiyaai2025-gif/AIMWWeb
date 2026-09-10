@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 516,
-    "pending": 415,
+    "adapted": 517,
+    "pending": 414,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 516,
-    "overall_parity_percent": 55.42
+    "terminal": 517,
+    "overall_parity_percent": 55.53
   },
   "visible_controls": {
     "total": 446,
@@ -172,12 +172,12 @@
     "seo": {
       "total": 24,
       "ported": 0,
-      "adapted": 22,
-      "pending": 2,
+      "adapted": 23,
+      "pending": 1,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 22,
-      "percent": 91.67
+      "terminal": 23,
+      "percent": 95.83
     },
     "settings": {
       "total": 1,
@@ -24859,21 +24859,34 @@
       "external_dependency": "ai_provider and/or WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoWorkspaceRouteTerminalityTest.php",
+      "evidence": "Slot0220 SEO workspace route exact provenance@d7ed8030da65376f9d0c43380fb6c80c1ee87508: variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php; explicit-route-api:AIMW-SEO-4CBBC7AAD9; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SeoWorkspaceRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/seo-workspace-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Slot0220 SEO workspace route exact provenance",
+        "source_sha": "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/seo-workspace-route-terminality.json",
+        "signals": [
+          "operation:AIMW-SEO-4CBBC7AAD9",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SeoWorkspaceRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SeoWorkspaceRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -34192,12 +34205,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 45,
-      "pending": 39,
+      "adapted": 46,
+      "pending": 38,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 45,
-      "percent": 53.57
+      "terminal": 46,
+      "percent": 54.76
     },
     "service": {
       "total": 349,
@@ -34569,7 +34582,6 @@
     ],
     "reports": [],
     "seo": [
-      "AIMW-SEO-4CBBC7AAD9",
       "AIMW-SEO-5F71B89C92"
     ],
     "settings": [],
@@ -34932,6 +34944,16 @@
         "explicit_operation_evidence_ids": [
           "AIMW-AI-E5D089844A"
         ]
+      },
+      {
+        "label": "Slot0220 SEO workspace route exact provenance",
+        "sha": "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
+        "domains": [
+          "seo"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -34960,6 +34982,7 @@
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
+      "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "e9bf787b783b972541187ac8748ca24d7785f5d3",
@@ -35034,9 +35057,10 @@
       "AIMW-PLAT-18A8EE0324",
       "AIMW-PLAT-A91A2B0B11",
       "AIMW-PLAT-FAC7505B26",
+      "AIMW-SEO-4CBBC7AAD9",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 15,
+    "explicit_route_api_contract_count": 16,
     "focused_closure_source_sha": "c0bf6311de93ba6eb9972187aa27e7f88a3fc5f3",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
