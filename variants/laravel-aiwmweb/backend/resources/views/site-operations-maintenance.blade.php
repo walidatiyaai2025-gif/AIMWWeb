@@ -66,7 +66,7 @@
     </section>
 
     <section class="panel" aria-label="Current cleanup preview">
-        <h2>Retention preview</h2>
+        <h2>Default retention preview</h2>
         <p><span data-maintenance-field="older_than_days">90</span>-day cutoff while retaining the newest <span data-maintenance-field="keep_latest">{{ (int) $preview['keep_latest'] }}</span> tenant-scoped records.</p>
         <dl>
             <dt>Eligible for removal</dt><dd data-maintenance-field="removable_count">{{ (int) $preview['removable_count'] }}</dd>
