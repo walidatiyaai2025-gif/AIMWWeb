@@ -570,6 +570,25 @@
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operation-details-alias-route-terminality.json"
         }
       }
+    },
+    {
+      "label": "Slot0220 SEO workspace route exact provenance",
+      "sha": "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
+      "observed_pr_head": "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
+      "domains": [
+        "seo"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-SEO-4CBBC7AAD9": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SeoVisibleControlRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoWorkspaceRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SeoWorkspaceRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/seo-workspace-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
