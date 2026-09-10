@@ -25,6 +25,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
           coverage: none
 
       - name: Focused Laravel acceptance
@@ -33,7 +34,7 @@ jobs:
           cp .env.example .env
           composer install --no-interaction --prefer-dist
           php artisan key:generate
-          php artisan migrate:fresh --force
+          DB_CONNECTION=sqlite DB_DATABASE=':memory:' php artisan migrate:fresh --force
           vendor/bin/pint --test tests/Feature/SeoWorkspaceRouteTerminalityTest.php
           php artisan test tests/Feature/SeoWorkspaceRouteTerminalityTest.php
 
