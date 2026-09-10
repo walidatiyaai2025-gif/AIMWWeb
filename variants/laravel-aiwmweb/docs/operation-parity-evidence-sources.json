@@ -118,7 +118,7 @@
           "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalQueueRouteServiceProvider.php",
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalsRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/approvals-route-terminality.json"
         },
         "AIMW-CONT-4A295D45D4": {
           "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
@@ -240,13 +240,13 @@
           "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/about-build-route-terminality.json"
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
         },
         "AIMW-CONT-110268CC96": {
           "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/about-build-route-terminality.json"
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
         }
       }
     },
