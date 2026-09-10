@@ -113,18 +113,22 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          from collections import Counter
           from pathlib import Path
+
           p = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
-          rows = {row['operation_id']: row for row in p['operations']}
-          op = rows['AIMW-SEO-4CBBC7AAD9']
-          assert op['migration_state'] == 'ADAPTED', op
-          totals = p['totals']
-          assert totals['total_operations'] == 931, totals
-          assert totals['terminal'] == 517, totals
-          assert totals['pending'] == 414, totals
-          assert totals['blocked'] == 0, totals
-          assert rows['AIMW-SEO-5F71B89C92']['migration_state'] == 'PENDING'
-          print('Slot0220 generator result:', totals)
+          operations = p['operations']
+          rows = {row['operation_id']: row for row in operations}
+          states = Counter(row['migration_state'] for row in operations)
+          terminal = sum(states[state] for state in ('PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'))
+
+          assert len(operations) == 931, len(operations)
+          assert rows['AIMW-SEO-4CBBC7AAD9']['migration_state'] == 'ADAPTED', rows['AIMW-SEO-4CBBC7AAD9']
+          assert rows['AIMW-SEO-5F71B89C92']['migration_state'] == 'PENDING', rows['AIMW-SEO-5F71B89C92']
+          assert terminal == 517, (terminal, states)
+          assert states['PENDING'] == 414, states
+          assert states['BLOCKED'] == 0, states
+          print('Slot0220 generator result:', {'TOTAL': len(operations), 'TERMINAL': terminal, 'PENDING': states['PENDING'], 'BLOCKED': states['BLOCKED']})
           PY
           cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
           cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
