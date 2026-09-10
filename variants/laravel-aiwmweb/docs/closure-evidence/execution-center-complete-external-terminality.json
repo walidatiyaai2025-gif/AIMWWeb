@@ -14,6 +14,7 @@
     "risk": "low"
   },
   "source_semantics": {
+    "identity": "The canonical Guid job id maps to the existing Laravel operation_executions.correlation_id exposed by EnqueueExternal as job_id; the internal numeric row_id is never accepted as the canonical identifier.",
     "selection": "CompleteExternal selects the requested owner's ExecutionMode.External job and returns without change when it is missing or not Running.",
     "terminal_transition": "A qualifying Running External job becomes Completed, progress becomes 100, processed items become total items, CompletedAt is set, and any prior Error is cleared.",
     "activity": "Exactly one Success activity is appended with the caller-supplied completion message as part of the completion write."
@@ -22,20 +23,21 @@
     "service": "App\\Execution\\ExecutionCenterExternalCompletionService",
     "member": "completeExternal",
     "ledger_mapping": "The operation reuses the already-integrated tenant-owned operation_executions and operation_logs control plane created by ExecutionCenterService.EnqueueExternal; no second execution ledger is introduced.",
-    "tenant_owner_scope": "The active TenantContext supplies tenant identity; operations.manage is authorized server-side; the active membership user must equal ownerUserId; the row lookup repeats tenant_id and requested_by_user_id constraints under a transaction row lock.",
+    "tenant_owner_scope": "The active TenantContext supplies tenant identity; operations.manage is authorized server-side; the active membership user must equal ownerUserId; the row lookup repeats tenant_id, canonical correlation_id and requested_by_user_id constraints under a transaction row lock.",
     "external_mode_mapping": "Canonical ExecutionMode.External is preserved in the operation_executions payload as execution_mode=External and must be present before completion.",
     "state_mapping": "Canonical Running/Completed map to running/completed. progress becomes 100, payload.processed_items becomes payload.total_items, failure becomes null, and completed_at is set.",
     "activity_mapping": "A successful state transition writes exactly one success operation_log with source ExecutionCenterService.CompleteExternal and operation ID AIMW-AUTO-0701C84252; repeated or ineligible completion writes no success log.",
     "redaction": "Credential-like assignments in the completion message are redacted before persistence."
   },
   "service_closure_contract": {
-    "implementation_sha": "071435986472c56cb638cd7ac2c7e50c77eb348b",
+    "implementation_sha": "74d6e153895010cbfaa4f53d36b0564176379309",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalCompletionService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterCompleteExternalTerminalityTest.php"
   },
   "acceptance": {
     "proofs": [
       "exact canonical service/domain/source/member and operation ID AIMW-AUTO-0701C84252",
+      "canonical Guid job identity is preserved through correlation_id/job_id rather than the internal numeric row id",
       "only Running External rows transition to completed",
       "terminal state persists progress=100, processed_items=total_items, completed_at and cleared failure",
       "exactly one success activity is created and duplicate completion cannot append another",
