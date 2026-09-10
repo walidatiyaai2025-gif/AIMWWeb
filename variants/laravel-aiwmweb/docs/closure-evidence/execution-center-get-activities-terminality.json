@@ -45,6 +45,7 @@
       "the read creates no audit, log, or execution mutations",
       "invalid owner identity is rejected before lookup and missing TenantContext fails closed"
     ],
+    "isolation_assertion_mode": "Focused read-service acceptance proves tenant and owner isolation by strict exclusion assertions over returned activity IDs; route/model 404 semantics are not applicable to this collection-returning service.",
     "external_runtime": "No live WordPress/provider/email/payment/DNS/production/manual evidence is required because GetActivities is a tenant-local immutable execution-activity read."
   },
   "scope": {
