@@ -21,7 +21,7 @@ class ExecutionCenterEnqueueTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const OPERATION_ID = 'AIMW-AUTO-070652AEB0';
+    private const OPERATION_ID = 'AIMW-AUTO-0706ECEF6C';
 
     protected function tearDown(): void
     {
@@ -47,7 +47,7 @@ class ExecutionCenterEnqueueTerminalityTest extends TestCase
         $this->assertSame('Enqueue', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Services/ExecutionCenterService.cs', $operation['current_source']);
         $this->assertTrue((bool) $operation['tenant_owned']);
-        $this->assertTrue((bool) $operation['mutation']);
+        $this->assertFalse((bool) $operation['mutation']);
         $this->assertSame(self::OPERATION_ID, ExecutionCenterServiceAdapter::ENQUEUE_OPERATION_ID);
     }
 
