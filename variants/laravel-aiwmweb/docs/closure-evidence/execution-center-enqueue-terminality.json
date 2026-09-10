@@ -46,6 +46,7 @@
     ],
     "isolation_assertion_mode": "Focused service acceptance proves unauthorized/cross-tenant registration attempts leave no matching operation execution rows; wrong-owner and missing-permission access raise AuthorizationException and a foreign site fails as not found.",
     "focused_validation": "Slot0227 Enqueue Focused run 34469093407 succeeded on implementation/test head 2baf6375f1f857956eb3c1f718307d723123b5dd: Pint, SQLite migrate:fresh, Enqueue focused tests and GetJobs/GetActivities regression tests.",
+    "generated_reconciliation": "Slot0230 canonical five-stage reconciliation run 34476951586 succeeded from candidate head e95b1b15d7f30391d6089e53bd69140583cbd02a and produced generated commit c0ab6338f258874909eddcba069565308d8a2410 with 931 total / 521 terminal / 410 pending / 0 blocked; the generator removed both temporary slot workflows before integration.",
     "external_runtime": "No live WordPress/provider/email/payment/DNS/manual evidence is required because Enqueue only registers tenant-local tracked work; it explicitly does not claim that the originating runtime executed or completed the work."
   },
   "scope": {
