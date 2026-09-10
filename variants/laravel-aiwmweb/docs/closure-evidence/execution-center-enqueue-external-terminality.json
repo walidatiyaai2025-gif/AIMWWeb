@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-0B1BC18769",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.EnqueueExternal",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "idempotency": "EnqueueExternal requires a nonblank idempotency key and, for the same owner, reuses the newest existing External job whose trimmed key matches using ordinal case-insensitive semantics.",
+    "registration_only": "When no idempotent match exists, EnqueueExternal delegates to the same registration core as tracked enqueue but marks the job External; it does not manufacture execution progress or completion.",
+    "initial_state": "A new External job is Waiting with zero progress and zero processed items, totalItems clamped to at least one, null start/completion/error state, normalized correlation metadata and one initial registration activity.",
+    "duplicate_state": "An idempotent duplicate returns the existing job and does not append a duplicate job or activity."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterExternalEnqueueService",
+    "member": "enqueueExternal",
+    "ledger_mapping": "The canonical external registration is adapted onto the existing tenant-owned operation_executions and operation_logs control plane; no competing execution ledger or provider runtime is introduced.",
+    "tenant_owner_site_scope": "Laravel strengthens the source boundary by requiring an active TenantContext, the exact active membership owner, server-side operations.manage authorization, and a site that belongs to the active tenant.",
+    "idempotency_mapping": "The raw external key is normalized before matching, but persistence stores only a case-normalized SHA-256 dedupe fingerprint plus a credential-redacted display form. The tenant row is locked inside the registration transaction on MySQL so same-tenant duplicate decisions serialize; External mode and owner scope are part of the match so Tracked work and other owners cannot collide.",
+    "state_mapping": "Canonical Waiting maps to queued with progress=0, processed_items=0, total_items>=1 and null result/failure/start/completion fields. A duplicate returns the originally registered row and values.",
+    "activity_mapping": "Exactly one info registration log is created atomically with a new job and carries the canonical ExecutionCenterService.EnqueueExternal marker; duplicate calls create no extra activity.",
+    "redaction": "Credential-like assignments in title, site name and idempotency display are redacted before return or persistence; only the one-way idempotency fingerprint is retained for matching."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "7e6381b08328be8daff5a03ee4a7620b2dff0cca",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalEnqueueService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterEnqueueExternalTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member/tenant identity and operation ID AIMW-AUTO-0B1BC18769",
+      "required owner/site/title/type/idempotency validation and totalItems clamp",
+      "new external registration persists queued zero-progress state plus exactly one initial info activity without fabricated completion",
+      "same-owner external idempotency reuses the existing job across case/whitespace variations without duplicate activity",
+      "Tracked registration with the same idempotency value and another tenant owner do not collide with External dedupe",
+      "wrong owner, missing operations.manage permission, cross-tenant site and missing TenantContext fail closed before unauthorized persistence",
+      "credential-like assignments are absent from returned job, stored payload and registration log while a one-way dedupe fingerprint remains"
+    ],
+    "isolation_assertion_mode": "Focused service acceptance proves foreign-tenant site and wrong-owner registration rejection plus database exclusion; authorization failure is explicit and tenant-owned external rows remain scoped to their owner.",
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/manual evidence is required because EnqueueExternal only registers tenant-local external-work metadata and never claims that an external provider executed or completed the job."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-0B1BC18769",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}
