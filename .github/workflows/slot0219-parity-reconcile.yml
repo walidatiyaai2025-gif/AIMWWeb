@@ -1,0 +1,53 @@
+name: Slot0219 Laravel parity reconciliation repair
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AI-CAAC427FC0-slot0218
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-and-clean:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: worker/laravel-aiwmweb-AIMW-AI-CAAC427FC0-slot0218
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Regenerate canonical parity artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          json='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          md='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          summary='/tmp/operation-parity-summary.json'
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('/tmp/operation-parity-summary.json').read_text())
+          t=s['totals']; ai=s['domains']['ai']
+          assert (t['total'],t['terminal'],t['pending'],t['blocked']) == (931,516,415,0), t
+          assert (ai['total'],ai['terminal'],ai['pending'],ai['blocked']) == (92,92,0,0), ai
+          print('GENERATOR_ASSERTIONS=PASS')
+          PY
+      - name: Commit generated artifacts and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'walidatiyaai2025-gif'
+          git config user.email 'walidatiyaai2025@gmail.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git rm .github/workflows/slot0219-parity-reconcile.yml
+          git diff --cached --stat
+          git commit -m 'chore(laravel): reconcile ReloadAsync parity artifacts'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AI-CAAC427FC0-slot0218
