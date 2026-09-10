@@ -29,7 +29,7 @@
     "read_only": "No execution, log, audit, approval, or other state is written by getActivities."
   },
   "service_closure_contract": {
-    "implementation_sha": "318ae5442293198a6c067fca7682e78b603c142a",
+    "implementation_sha": "ca6e12d267ce2be6645e809bc793494a63072bd1",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterServiceAdapter.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterGetActivitiesTerminalityTest.php"
   },
