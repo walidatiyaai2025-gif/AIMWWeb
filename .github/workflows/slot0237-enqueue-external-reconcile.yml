@@ -1,0 +1,74 @@
+name: Slot0237 EnqueueExternal Reconcile
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-0B1BC18769-slot0237
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run canonical five-stage reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          out='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          md='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          summary='/tmp/operation-parity-summary.json'
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$out" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$out" --output "$out" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$out" --output "$out" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$out" --output "$out" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$out" --output "$out" --summary-output "$summary" --markdown-output "$md" --check-total 931
+      - name: Guard exact one-operation delta and totals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          totals = p['totals']
+          assert totals['total'] == 931, totals
+          assert totals['terminal'] == 522, totals
+          assert totals['pending'] == 409, totals
+          assert totals['blocked'] == 0, totals
+          row = next(r for r in p['operations'] if r['operation_id'] == 'AIMW-AUTO-0B1BC18769')
+          assert row['migration_state'] == 'ADAPTED', row
+          previous = json.loads(__import__('subprocess').check_output([
+              'git','show','2f04cb332ff3c738a2925a380d3425f62528677f:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          ], text=True))
+          before = {r['operation_id']: r['migration_state'] for r in previous['operations']}
+          after = {r['operation_id']: r['migration_state'] for r in p['operations']}
+          changed = [op for op in after if before.get(op) != after[op]]
+          assert changed == ['AIMW-AUTO-0B1BC18769'], changed
+          print('SLOT0237_DELTA_GUARD=PASS')
+          print('TOTAL=931 TERMINAL=522 PENDING=409 BLOCKED=0')
+          PY
+      - name: Commit generated artifacts and remove temporary workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/slot0237-enqueue-external-focused.yml
+          rm -f .github/workflows/slot0237-enqueue-external-reconcile.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md .github/workflows/slot0237-enqueue-external-focused.yml .github/workflows/slot0237-enqueue-external-reconcile.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(laravel): reconcile EnqueueExternal parity'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
