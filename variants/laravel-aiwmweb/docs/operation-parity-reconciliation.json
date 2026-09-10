@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 521,
-    "pending": 410,
+    "adapted": 522,
+    "pending": 409,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 521,
-    "overall_parity_percent": 55.96
+    "terminal": 522,
+    "overall_parity_percent": 56.07
   },
   "visible_controls": {
     "total": 446,
@@ -62,12 +62,12 @@
     "automation": {
       "total": 59,
       "ported": 0,
-      "adapted": 27,
-      "pending": 32,
+      "adapted": 28,
+      "pending": 31,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 27,
-      "percent": 45.76
+      "terminal": 28,
+      "percent": 47.46
     },
     "backup": {
       "total": 14,
@@ -6650,21 +6650,31 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalEnqueueService.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterEnqueueExternalTerminalityTest.php",
+      "evidence": "Focused service closure@7e6381b08328be8daff5a03ee4a7620b2dff0cca: variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalEnqueueService.php; operation:AIMW-AUTO-0B1BC18769; test:variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterEnqueueExternalTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/execution-center-enqueue-external-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-AUTO-0B1BC18769",
+        "source_sha": "7e6381b08328be8daff5a03ee4a7620b2dff0cca",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalEnqueueService.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/execution-center-enqueue-external-terminality.json",
+        "signals": [
+          "operation:AIMW-AUTO-0B1BC18769",
+          "service:ExecutionCenterService",
+          "member:EnqueueExternal",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterEnqueueExternalTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/execution-center-enqueue-external-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -34258,12 +34268,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 331,
-      "pending": 18,
+      "adapted": 332,
+      "pending": 17,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 331,
-      "percent": 94.84
+      "terminal": 332,
+      "percent": 95.13
     },
     "visible_control": {
       "total": 446,
@@ -34282,7 +34292,6 @@
     "automation": [
       "AIMW-AUTO-06CF784553",
       "AIMW-AUTO-0701C84252",
-      "AIMW-AUTO-0B1BC18769",
       "AIMW-AUTO-13392A9E67",
       "AIMW-AUTO-148B15F121",
       "AIMW-AUTO-151800BD9D",
@@ -35217,6 +35226,7 @@
       "AIMW-PLAT-A2624EDC66",
       "AIMW-AI-B3BDED59F1",
       "AIMW-AI-E8F4848B4A",
+      "AIMW-AUTO-0B1BC18769",
       "AIMW-AUTO-0706ECEF6C",
       "AIMW-AI-D1F233AB61",
       "AIMW-AUTO-97A9F6A324",
@@ -35229,6 +35239,6 @@
       "AIMW-AI-95AC5F28A7",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 14
+    "focused_service_contract_count": 15
   }
 }
