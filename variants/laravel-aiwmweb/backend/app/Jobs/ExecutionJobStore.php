@@ -18,9 +18,7 @@ final class ExecutionJobStore
 {
     public const OPERATION_ID = 'AIMW-AUTO-EEFDAB3DF8';
 
-    public function __construct(private readonly ExecutionJobConfiguration $configuration)
-    {
-    }
+    public function __construct(private readonly ExecutionJobConfiguration $configuration) {}
 
     public function start(int $siteId, string $jobType): string
     {
