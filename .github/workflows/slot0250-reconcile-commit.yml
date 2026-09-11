@@ -1,0 +1,85 @@
+name: Slot0250 Canonical Reconciliation Commit
+
+on:
+  pull_request:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - '.github/workflows/slot0250-reconcile-commit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-and-self-remove:
+    if: github.event.pull_request.head.ref == 'worker/laravel-aiwmweb-AIMW-AUTO-7E70C7119A-slot0250'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Regenerate canonical parity artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+      - name: Commit exact generated artifacts and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/slot0250-reconcile-commit.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'chore(laravel): reconcile slot0250 parity artifacts'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
