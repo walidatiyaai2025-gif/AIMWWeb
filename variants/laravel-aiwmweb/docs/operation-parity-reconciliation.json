@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 527,
-    "pending": 404,
+    "adapted": 528,
+    "pending": 403,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 527,
-    "overall_parity_percent": 56.61
+    "terminal": 528,
+    "overall_parity_percent": 56.71
   },
   "visible_controls": {
     "total": 446,
@@ -62,12 +62,12 @@
     "automation": {
       "total": 59,
       "ported": 0,
-      "adapted": 33,
-      "pending": 26,
+      "adapted": 34,
+      "pending": 25,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 33,
-      "percent": 55.93
+      "terminal": 34,
+      "percent": 57.63
     },
     "backup": {
       "total": 14,
@@ -5083,21 +5083,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Jobs/JobCancellationRegistry.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/JobCancellationRegistryParityTest.php",
+      "evidence": "Focused background-job closure@ae2d95eb5449220af649dc0b4895c7609633e0bd: variants/laravel-aiwmweb/backend/app/Jobs/JobCancellationRegistry.php; operation:AIMW-AUTO-13392A9E67; test:variants/laravel-aiwmweb/backend/tests/Feature/JobCancellationRegistryParityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/job-cancellation-registry-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (3 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed focused background-job closure is linked to the canonical operation ID in production code and focused tests with applicable tenant/fail-closed assertions.",
+        "source_label": "Focused background-job closure AIMW-AUTO-13392A9E67",
+        "source_sha": "ae2d95eb5449220af649dc0b4895c7609633e0bd",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/JobCancellationRegistry.php",
+        "evidence_mode": "focused_background_job_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/job-cancellation-registry-terminality.json",
+        "signals": [
+          "operation:AIMW-AUTO-13392A9E67",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Jobs/JobCancellationRegistry.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/JobCancellationRegistryParityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/job-cancellation-registry-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -34298,12 +34307,12 @@
     "background_job": {
       "total": 21,
       "ported": 0,
-      "adapted": 14,
-      "pending": 7,
+      "adapted": 15,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 14,
-      "percent": 66.67
+      "terminal": 15,
+      "percent": 71.43
     },
     "route": {
       "total": 84,
@@ -34340,7 +34349,6 @@
     "ai": [],
     "approvals": [],
     "automation": [
-      "AIMW-AUTO-13392A9E67",
       "AIMW-AUTO-148B15F121",
       "AIMW-AUTO-151800BD9D",
       "AIMW-AUTO-1584B94390",
@@ -35289,6 +35297,10 @@
       "AIMW-AI-95AC5F28A7",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 19
+    "focused_service_contract_count": 19,
+    "focused_background_job_contract_terminals": [
+      "AIMW-AUTO-13392A9E67"
+    ],
+    "focused_background_job_contract_count": 1
   }
 }
