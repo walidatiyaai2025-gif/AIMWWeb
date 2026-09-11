@@ -11,11 +11,11 @@ use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- * Focused real-cache contract for AIMW-AUTO-13392A9E67.
+ * Focused shared-cache contract for AIMW-AUTO-13392A9E67.
  *
- * This test is deterministic on the default test cache and is also exercised by
- * repository acceptance with CACHE_STORE=redis, proving cross-process storage
- * semantics without manufacturing an external/manual result.
+ * This deterministic test proves that the registry uses the same tenant-scoped
+ * shared-cache boundary that repository runtime acceptance separately exercises
+ * with real Redis locks plus real Redis queue-worker and scheduler semantics.
  */
 final class JobCancellationRegistryRedisParityTest extends TestCase
 {
