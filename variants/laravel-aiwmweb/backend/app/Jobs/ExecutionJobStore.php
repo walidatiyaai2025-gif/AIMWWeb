@@ -24,7 +24,8 @@ final class ExecutionJobStore
     {
         $this->configuration->validate($jobType, 'Running', 'Starting', null, 0, 1);
 
-        // Site is tenant-scoped. A site from another tenant must fail closed.
+        // Site uses the tenant global scope. Foreign tenant identifiers therefore
+        // fail exactly like missing identifiers and cannot disclose existence.
         Site::query()->findOrFail($siteId);
 
         return DB::transaction(function () use ($siteId, $jobType): string {
@@ -104,7 +105,7 @@ final class ExecutionJobStore
             $this->configuration->validate(
                 (string) $job->job_type,
                 'Failed',
-                (string) $job->current_step,
+                'Failed',
                 $safeError,
                 (int) $job->progress_percent,
                 $token,
@@ -112,6 +113,7 @@ final class ExecutionJobStore
 
             $job->forceFill([
                 'status' => 'Failed',
+                'current_step' => 'Failed',
                 'failure' => $safeError,
                 'completed_at' => now('UTC'),
                 'concurrency_token' => $token,
@@ -125,8 +127,8 @@ final class ExecutionJobStore
             $token = ((int) $job->concurrency_token) + 1;
             $this->configuration->validate(
                 (string) $job->job_type,
-                'Canceled',
-                'Canceled',
+                'Cancelled',
+                'Cancelled',
                 $job->failure === null ? null : (string) $job->failure,
                 (int) $job->progress_percent,
                 $token,
@@ -134,8 +136,8 @@ final class ExecutionJobStore
 
             $now = now('UTC');
             $job->forceFill([
-                'status' => 'Canceled',
-                'current_step' => 'Canceled',
+                'status' => 'Cancelled',
+                'current_step' => 'Cancelled',
                 'completed_at' => $now,
                 'cancelled_at' => $now,
                 'concurrency_token' => $token,
@@ -146,45 +148,64 @@ final class ExecutionJobStore
     /**
      * @return list<array{
      *     id:string,
+     *     site_id:int,
      *     site_name:string,
      *     job_type:string,
      *     status:string,
      *     progress_percent:int,
      *     current_step:string,
-     *     updated_at_utc:string,
-     *     error_details:?string
+     *     error_details:?string,
+     *     started_at_utc:string,
+     *     completed_at_utc:?string,
+     *     updated_at_utc:string
      * }>
      */
-    public function getRecent(int $take = 200): array
+    public function getRecent(?int $siteId = null, int $take = 200): array
     {
         $take = max(1, min(1000, $take));
+        $query = Execution::query()->with('site');
 
-        return Execution::query()
-            ->with('site')
+        if ($siteId !== null) {
+            $query->where('site_id', $siteId);
+        }
+
+        return $query
             ->orderByDesc('updated_at')
             ->limit($take)
             ->get()
-            ->map(static fn (Execution $job): array => [
-                'id' => (string) $job->operation_id,
-                'site_name' => (string) ($job->site?->name ?? ''),
-                'job_type' => (string) $job->job_type,
-                'status' => (string) $job->status,
-                'progress_percent' => (int) $job->progress_percent,
-                'current_step' => (string) $job->current_step,
-                'updated_at_utc' => $job->updated_at?->copy()->utc()->toIso8601String() ?? '',
-                'error_details' => $job->failure === null ? null : (string) $job->failure,
-            ])
+            ->map(fn (Execution $job): array => $this->project($job))
             ->all();
     }
 
-    public function get(string $jobId): ?Execution
+    /**
+     * @return array{
+     *     id:string,
+     *     site_id:int,
+     *     site_name:string,
+     *     job_type:string,
+     *     status:string,
+     *     progress_percent:int,
+     *     current_step:string,
+     *     error_details:?string,
+     *     started_at_utc:string,
+     *     completed_at_utc:?string,
+     *     updated_at_utc:string
+     * }|null
+     */
+    public function get(string $jobId): ?array
     {
-        return Execution::query()->where('operation_id', $jobId)->first();
+        $job = Execution::query()
+            ->with('site')
+            ->where('operation_id', $jobId)
+            ->first();
+
+        return $job === null ? null : $this->project($job);
     }
 
     /**
-     * Mutate one tenant-visible job under a row lock. Missing or cross-tenant
-     * jobs deliberately behave like the canonical store's no-op missing lookup.
+     * Mutate exactly one tenant-visible job under a row lock. The canonical
+     * source uses SingleAsync, so missing and cross-tenant identifiers must fail
+     * rather than silently turning into successful no-ops.
      *
      * @param  callable(Execution):void  $mutation
      */
@@ -194,14 +215,42 @@ final class ExecutionJobStore
             $job = Execution::query()
                 ->where('operation_id', $jobId)
                 ->lockForUpdate()
-                ->first();
-
-            if ($job === null) {
-                return;
-            }
+                ->firstOrFail();
 
             $mutation($job);
         });
+    }
+
+    /**
+     * @return array{
+     *     id:string,
+     *     site_id:int,
+     *     site_name:string,
+     *     job_type:string,
+     *     status:string,
+     *     progress_percent:int,
+     *     current_step:string,
+     *     error_details:?string,
+     *     started_at_utc:string,
+     *     completed_at_utc:?string,
+     *     updated_at_utc:string
+     * }
+     */
+    private function project(Execution $job): array
+    {
+        return [
+            'id' => (string) $job->operation_id,
+            'site_id' => (int) $job->site_id,
+            'site_name' => (string) ($job->site?->name ?? ''),
+            'job_type' => (string) $job->job_type,
+            'status' => (string) $job->status,
+            'progress_percent' => (int) $job->progress_percent,
+            'current_step' => (string) $job->current_step,
+            'error_details' => $job->failure === null ? null : (string) $job->failure,
+            'started_at_utc' => $job->started_at?->copy()->utc()->toIso8601String() ?? '',
+            'completed_at_utc' => $job->completed_at?->copy()->utc()->toIso8601String(),
+            'updated_at_utc' => $job->updated_at?->copy()->utc()->toIso8601String() ?? '',
+        ];
     }
 
     /**
