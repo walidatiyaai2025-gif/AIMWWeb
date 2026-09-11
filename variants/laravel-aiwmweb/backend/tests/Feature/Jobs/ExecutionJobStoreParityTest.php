@@ -82,27 +82,35 @@ final class ExecutionJobStoreParityTest extends TestCase
         $store->report($first, 125, 'Publishing');
         $job = $store->get($first);
         $this->assertNotNull($job);
-        $this->assertSame(100, $job->progress_percent);
-        $this->assertSame('Publishing', $job->current_step);
+        $this->assertSame(100, $job['progress_percent']);
+        $this->assertSame('Publishing', $job['current_step']);
+        $this->assertSame($site->id, $job['site_id']);
+        $this->assertSame('Alpha', $job['site_name']);
+        $this->assertNotSame('', $job['started_at_utc']);
 
         Carbon::setTestNow('2026-09-11 10:02:00 UTC');
         $store->complete($first);
         $job = $store->get($first);
         $this->assertNotNull($job);
-        $this->assertSame('Completed', $job->status);
-        $this->assertSame(100, $job->progress_percent);
-        $this->assertSame('Completed', $job->current_step);
-        $this->assertNotNull($job->completed_at);
+        $this->assertSame('Completed', $job['status']);
+        $this->assertSame(100, $job['progress_percent']);
+        $this->assertSame('Completed', $job['current_step']);
+        $this->assertNotNull($job['completed_at_utc']);
 
         Carbon::setTestNow('2026-09-11 10:03:00 UTC');
         $second = $store->start($site->id, 'MediaScan');
-        $recent = $store->getRecent(0); // Canonical clamp: minimum take is one.
+        $recent = $store->getRecent(null, 0); // Canonical clamp: minimum take is one.
 
         $this->assertCount(1, $recent);
         $this->assertSame($second, $recent[0]['id']);
+        $this->assertSame($site->id, $recent[0]['site_id']);
         $this->assertSame('Alpha', $recent[0]['site_name']);
         $this->assertSame('MediaScan', $recent[0]['job_type']);
         $this->assertSame('Running', $recent[0]['status']);
+        $this->assertNotSame('', $recent[0]['updated_at_utc']);
+
+        $filtered = $store->getRecent($site->id, 10);
+        $this->assertCount(2, $filtered);
     }
 
     public function test_failure_and_cancel_terminal_states_preserve_redaction_and_completion_evidence(): void
@@ -117,24 +125,27 @@ final class ExecutionJobStoreParityTest extends TestCase
         $failedJob = $store->get($failed);
 
         $this->assertNotNull($failedJob);
-        $this->assertSame('Failed', $failedJob->status);
-        $this->assertNotNull($failedJob->completed_at);
-        $this->assertStringNotContainsString('top-secret', (string) $failedJob->failure);
-        $this->assertStringNotContainsString('other-secret', (string) $failedJob->failure);
-        $this->assertStringContainsString('[REDACTED]', (string) $failedJob->failure);
+        $this->assertSame('Failed', $failedJob['status']);
+        $this->assertSame('Failed', $failedJob['current_step']);
+        $this->assertNotNull($failedJob['completed_at_utc']);
+        $this->assertStringNotContainsString('top-secret', (string) $failedJob['error_details']);
+        $this->assertStringNotContainsString('other-secret', (string) $failedJob['error_details']);
+        $this->assertStringContainsString('[REDACTED]', (string) $failedJob['error_details']);
 
         $cancelled = $store->start($site->id, 'CancelProbe');
         $store->cancel($cancelled);
         $cancelledJob = $store->get($cancelled);
 
         $this->assertNotNull($cancelledJob);
-        $this->assertSame('Canceled', $cancelledJob->status);
-        $this->assertSame('Canceled', $cancelledJob->current_step);
-        $this->assertNotNull($cancelledJob->completed_at);
-        $this->assertNotNull($cancelledJob->cancelled_at);
+        $this->assertSame('Cancelled', $cancelledJob['status']);
+        $this->assertSame('Cancelled', $cancelledJob['current_step']);
+        $this->assertNotNull($cancelledJob['completed_at_utc']);
+        $this->assertNotNull(
+            DB::table('executions')->where('operation_id', $cancelled)->value('cancelled_at'),
+        );
     }
 
-    public function test_invalid_and_cross_tenant_access_fail_closed_without_mutating_foreign_jobs(): void
+    public function test_invalid_missing_and_cross_tenant_access_fail_closed_without_mutating_foreign_jobs(): void
     {
         $tenantA = $this->createTenant('tenant-isolation-a');
         $tenantB = $this->createTenant('tenant-isolation-b');
@@ -150,14 +161,20 @@ final class ExecutionJobStoreParityTest extends TestCase
         } catch (InvalidArgumentException) {
             $this->addToAssertionCount(1);
         }
-        $this->assertSame(0, $store->get($jobId)?->progress_percent);
+        $this->assertSame(0, $store->get($jobId)['progress_percent'] ?? null);
 
         $this->tenantContext->activate($tenantB);
         $siteB = Site::query()->create(['name' => 'B', 'url' => 'https://b.example']);
         $this->assertNotNull($siteB);
         $this->assertNull($store->get($jobId), 'Tenant B must not read Tenant A execution jobs.');
+        $this->assertSame([], $store->getRecent($siteA->id, 10));
 
-        $store->report($jobId, 88, 'Foreign mutation must be ignored');
+        try {
+            $store->report($jobId, 88, 'Foreign mutation must fail like a missing job');
+            $this->fail('Tenant B must not mutate Tenant A execution jobs.');
+        } catch (ModelNotFoundException) {
+            $this->addToAssertionCount(1);
+        }
 
         try {
             $store->start($siteA->id, 'CrossTenantProbe');
@@ -166,15 +183,18 @@ final class ExecutionJobStoreParityTest extends TestCase
             $this->addToAssertionCount(1);
         }
 
+        try {
+            $store->cancel((string) Str::uuid());
+            $this->fail('Canonical SingleAsync mutation lookup must fail for a missing job.');
+        } catch (ModelNotFoundException) {
+            $this->addToAssertionCount(1);
+        }
+
         $this->tenantContext->activate($tenantA);
         $job = $store->get($jobId);
         $this->assertNotNull($job);
-        $this->assertSame(0, $job->progress_percent);
-        $this->assertSame('Starting', $job->current_step);
-
-        // Canonical missing-job transitions are idempotent no-ops.
-        $store->cancel((string) Str::uuid());
-        $this->addToAssertionCount(1);
+        $this->assertSame(0, $job['progress_percent']);
+        $this->assertSame('Starting', $job['current_step']);
     }
 
     private function createTenant(string $slug): int
