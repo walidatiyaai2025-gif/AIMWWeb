@@ -30,7 +30,7 @@
     "redaction": "Credential-like assignments in the completion message are redacted before persistence."
   },
   "service_closure_contract": {
-    "implementation_sha": "74ae5cc4cf960ca99a948943663064b5cc579954",
+    "implementation_sha": "e9ed124a47a0679642fcf56ac353dafb262e59b8",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterExternalCompletionService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterCompleteExternalTerminalityTest.php"
   },
@@ -43,7 +43,7 @@
       "exactly one success activity is created and duplicate completion cannot append another",
       "missing, non-Running and non-External rows safely no-op without activity",
       "wrong owner and missing operations.manage authorization fail closed",
-      "foreign-tenant row is invisible from the active tenant and remains unchanged",
+      "foreign-tenant row is explicitly absent from the active tenant execution/log view and the authoritative owner row remains unchanged",
       "missing TenantContext fails closed before persistence",
       "credential-like message assignments are redacted before the success log is stored"
     ],
