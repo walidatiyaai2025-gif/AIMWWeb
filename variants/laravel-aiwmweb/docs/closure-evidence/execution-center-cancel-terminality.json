@@ -30,7 +30,7 @@
     "activity_mapping": "A successful transition writes exactly one warning operation_log with message 'Job cancelled by user.', source ExecutionCenterService.Cancel, operation ID AIMW-AUTO-DBF5562324, and owner provenance; repeated or ineligible cancellation writes no activity."
   },
   "service_closure_contract": {
-    "implementation_sha": "1cf955dba9185e87720278ba157ba6f932f5ef99",
+    "implementation_sha": "f12730ad74dab34f07ff160d23fc9729e7f916ab",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterCancelService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterCancelTerminalityTest.php"
   },
