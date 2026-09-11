@@ -9,6 +9,7 @@ on:
       - 'variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py'
       - 'variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py'
       - 'variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py'
+      - 'variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py'
       - 'variants/laravel-aiwmweb/tools/operation_parity_delta.py'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/tenant-neutral-route-evidence.json'
@@ -18,7 +19,7 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   reconcile:
@@ -68,6 +69,30 @@ jobs:
             --summary-output /tmp/operation-parity-summary.json \
             --markdown-output /tmp/operation-parity-reconciliation.md \
             --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Persist Slot0248 generator output on its same-repository branch
+        if: github.head_ref == 'worker/laravel-aiwmweb-AIMW-AUTO-13392A9E67-slot0248' && github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          json='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          markdown='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          if cmp "$json" /tmp/operation-parity-reconciliation.json && cmp "$markdown" /tmp/operation-parity-reconciliation.md; then
+            exit 0
+          fi
+          cp /tmp/operation-parity-reconciliation.json "$json"
+          cp /tmp/operation-parity-reconciliation.md "$markdown"
+          git add "$json" "$markdown"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(laravel): regenerate parity artifacts'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
 
       - name: Verify committed reconciliation artifacts
         shell: bash
