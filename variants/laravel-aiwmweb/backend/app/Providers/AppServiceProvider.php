@@ -24,6 +24,7 @@ use App\Email\Contracts\NotificationEventSink;
 use App\Email\Services\NotificationPlatformService;
 use App\Email\Services\SymfonyEmailTransport;
 use App\Email\Services\SyncNotificationSubscriber;
+use App\Jobs\BackgroundExecutionIdentity;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
 use App\Sync\CanonicalSyncSiteGuard;
@@ -40,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(TenantContext::class, fn () => new TenantContext);
+        $this->app->scoped(BackgroundExecutionIdentity::class, fn () => new BackgroundExecutionIdentity);
         $this->app->bind(WordPressGateway::class, HttpWordPressGateway::class);
         $this->app->bind(AdvancedWordPressGateway::class, HttpWordPressGateway::class);
         $this->app->bind(AiProvider::class, HttpAiProvider::class);
