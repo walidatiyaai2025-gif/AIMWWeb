@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONHASHSEED: '0'
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
     steps:
       - uses: actions/checkout@v4
         with:
