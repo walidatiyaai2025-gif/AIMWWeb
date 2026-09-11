@@ -2,16 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Execution extends DomainModel
 {
-    protected function casts(): array
+    protected $guarded = [];
+
+    protected $casts = [
+        'metadata' => 'array',
+        'result' => 'array',
+        'progress_percent' => 'integer',
+        'concurrency_token' => 'integer',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+    ];
+
+    public function site(): BelongsTo
     {
-        return [
-            'progress_percent' => 'integer',
-            'concurrency_token' => 'integer',
-            'cancelled_at' => 'datetime',
-            'started_at' => 'datetime',
-            'completed_at' => 'datetime',
-        ];
+        return $this->belongsTo(Site::class);
     }
 }
