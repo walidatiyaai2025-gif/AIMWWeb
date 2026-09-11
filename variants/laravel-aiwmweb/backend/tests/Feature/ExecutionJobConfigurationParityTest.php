@@ -37,7 +37,11 @@ final class ExecutionJobConfigurationParityTest extends TestCase
         );
         $this->assertSame(self::OPERATION_ID, ExecutionJobConfiguration::OPERATION_ID);
         $this->assertSame('executions', ExecutionJobConfiguration::TABLE);
-        $this->assertContains(BelongsToTenant::class, class_uses_recursive(Execution::class));
+        $this->assertContains(
+            BelongsToTenant::class,
+            class_uses_recursive(Execution::class),
+            'Execution persistence must remain tenant-scoped through TenantContext-backed BelongsToTenant isolation.',
+        );
     }
 
     public function test_execution_job_schema_preserves_required_metadata_indexes_and_site_cascade(): void
@@ -116,6 +120,10 @@ final class ExecutionJobConfigurationParityTest extends TestCase
         $this->assertStringContainsString("index('status'", $migration);
         $this->assertStringContainsString("index('created_at'", $migration);
         $this->assertStringContainsString('concurrency_token', $migration);
-        $this->assertContains(BelongsToTenant::class, class_uses_recursive(Execution::class));
+        $this->assertContains(
+            BelongsToTenant::class,
+            class_uses_recursive(Execution::class),
+            'The canonical job configuration must not bypass tenant-scoped TenantContext isolation.',
+        );
     }
 }
