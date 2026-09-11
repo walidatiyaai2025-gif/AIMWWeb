@@ -5,6 +5,8 @@
   "terminal_state": "ADAPTED",
   "domain": "automation",
   "kind": "background_job",
+  "evidence_mode": "focused_background_job_contract",
+  "source_sha": "ae2d95eb5449220af649dc0b4895c7609633e0bd",
   "canonical_operation": {
     "operation_id": "AIMW-AUTO-13392A9E67",
     "source": "src/AIWordPressManager.Infrastructure/Jobs/JobCancellationRegistry.cs",
@@ -24,7 +26,7 @@
     "replacement_safe_disposal": "A stale retry registration cannot unregister a newer replacement.",
     "retry_safety": "Cancellation probes are registration-token scoped so stale retries cannot consume replacement intent.",
     "tenant_isolation": "Identical job UUIDs in two tenants have independent registry state.",
-    "queue_scheduler_semantics": "State uses Laravel's shared cache/Redis control plane so queue workers and scheduler processes observe the same tenant-scoped cancellation intent.",
+    "queue_scheduler_semantics": "State uses Laravel's shared cache/Redis control plane; repository runtime acceptance separately verifies the same tenant cache/lock boundary plus real Redis queue-worker and scheduler context semantics.",
     "bounded_lifetime": "Registrations are TTL bounded to prevent abandoned worker state from leaking indefinitely.",
     "invalid_identity": "Invalid UUIDs and invalid TTLs fail closed."
   },
