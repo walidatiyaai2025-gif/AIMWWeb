@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 528,
-    "pending": 403,
+    "adapted": 529,
+    "pending": 402,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 528,
-    "overall_parity_percent": 56.71
+    "terminal": 529,
+    "overall_parity_percent": 56.82
   },
   "visible_controls": {
     "total": 446,
@@ -62,12 +62,12 @@
     "automation": {
       "total": 59,
       "ported": 0,
-      "adapted": 34,
-      "pending": 25,
+      "adapted": 35,
+      "pending": 24,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 34,
-      "percent": 57.63
+      "terminal": 35,
+      "percent": 59.32
     },
     "backup": {
       "total": 14,
@@ -6472,21 +6472,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Jobs/BackgroundExecutionIdentity.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/BackgroundExecutionIdentityParityTest.php",
+      "evidence": "Focused background-job closure@81fa2ac6aea03deffd3c3f7625e2000e0ff01bbd: variants/laravel-aiwmweb/backend/app/Jobs/BackgroundExecutionIdentity.php; operation:AIMW-AUTO-7E70C7119A; test:variants/laravel-aiwmweb/backend/tests/Feature/BackgroundExecutionIdentityParityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/background-execution-identity-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (5 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed focused background-job closure is linked to the canonical operation ID in production code and focused tests with applicable tenant/fail-closed assertions.",
+        "source_label": "Focused background-job closure AIMW-AUTO-7E70C7119A",
+        "source_sha": "81fa2ac6aea03deffd3c3f7625e2000e0ff01bbd",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/BackgroundExecutionIdentity.php",
+        "evidence_mode": "focused_background_job_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/background-execution-identity-terminality.json",
+        "signals": [
+          "operation:AIMW-AUTO-7E70C7119A",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Jobs/BackgroundExecutionIdentity.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/BackgroundExecutionIdentityParityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/background-execution-identity-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -34307,12 +34316,12 @@
     "background_job": {
       "total": 21,
       "ported": 0,
-      "adapted": 15,
-      "pending": 6,
+      "adapted": 16,
+      "pending": 5,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 15,
-      "percent": 71.43
+      "terminal": 16,
+      "percent": 76.19
     },
     "route": {
       "total": 84,
@@ -34362,7 +34371,6 @@
       "AIMW-AUTO-6EB9542C7A",
       "AIMW-AUTO-730076001E",
       "AIMW-AUTO-7C13E2AA0B",
-      "AIMW-AUTO-7E70C7119A",
       "AIMW-AUTO-AFDB35513B",
       "AIMW-AUTO-B2CDFF403F",
       "AIMW-AUTO-C11296372B",
@@ -35299,8 +35307,9 @@
     ],
     "focused_service_contract_count": 19,
     "focused_background_job_contract_terminals": [
-      "AIMW-AUTO-13392A9E67"
+      "AIMW-AUTO-13392A9E67",
+      "AIMW-AUTO-7E70C7119A"
     ],
-    "focused_background_job_contract_count": 1
+    "focused_background_job_contract_count": 2
   }
 }
