@@ -1,0 +1,120 @@
+name: Laravel AIWMWeb Slot 0245 GetPendingExternalJobs
+
+on:
+  pull_request:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - 'variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterPendingExternalJobsService.php'
+      - 'variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterGetPendingExternalJobsTerminalityTest.php'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/execution-center-get-pending-external-jobs-terminality.json'
+      - '.github/workflows/laravel-aiwmweb-slot-0245-get-pending-external-jobs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  focused-and-reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'worker/laravel-aiwmweb-AIMW-AUTO-E587C12B37-slot0245'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Fetch pushed evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Laravel dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate:fresh --force
+
+      - name: Focused formatting and acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          vendor/bin/pint --test app/Execution/ExecutionCenterPendingExternalJobsService.php tests/Feature/ExecutionCenterGetPendingExternalJobsTerminalityTest.php
+          php artisan test tests/Feature/ExecutionCenterGetPendingExternalJobsTerminalityTest.php tests/Feature/ExecutionCenterEnqueueExternalTerminalityTest.php tests/Feature/ExecutionCenterTryStartExternalTerminalityTest.php tests/Feature/ExecutionCenterCompleteExternalTerminalityTest.php
+
+      - name: Regenerate canonical parity artifacts
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Verify exact one-operation delta
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          row = next(row for row in payload['operations'] if row['operation_id'] == 'AIMW-AUTO-E587C12B37')
+          assert row['migration_state'] == 'ADAPTED', row
+          assert row['reconciliation']['evidence_mode'] == 'focused_service_contract', row
+          assert payload['totals']['total'] == 931, payload['totals']
+          assert payload['totals']['terminal'] == 526, payload['totals']
+          assert payload['totals']['pending'] == 405, payload['totals']
+          assert payload['totals']['blocked'] == 0, payload['totals']
+          assert payload['validation']['passed'] is True, payload['validation']
+          PY
+
+      - name: Commit generator output
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            echo 'Generator output already committed.'
+            exit 0
+          fi
+          git commit -m 'docs(laravel): reconcile GetPendingExternalJobs parity'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
