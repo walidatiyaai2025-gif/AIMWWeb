@@ -149,6 +149,14 @@ final class ExecutionCenterCompleteExternalTerminalityTest extends TestCase
             $betaOwner->user_id,
             'foreign tenant execution',
         ));
+        $this->assertDatabaseMissing('operation_executions', [
+            'tenant_id' => $beta->id,
+            'correlation_id' => $alphaJobId,
+        ]);
+        $this->assertDatabaseMissing('operation_logs', [
+            'tenant_id' => $beta->id,
+            'correlation_id' => $alphaJobId,
+        ]);
         $this->assertSame('running', DB::table('operation_executions')->where('id', $alphaRowId)->value('status'));
 
         app(TenantContext::class)->forget();
