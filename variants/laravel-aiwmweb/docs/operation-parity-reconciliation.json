@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 558,
-    "pending": 373,
+    "adapted": 559,
+    "pending": 372,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 558,
-    "overall_parity_percent": 59.94
+    "terminal": 559,
+    "overall_parity_percent": 60.04
   },
   "visible_controls": {
     "total": 446,
@@ -152,12 +152,12 @@
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 9,
-      "pending": 9,
+      "adapted": 10,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 9,
-      "percent": 50.0
+      "terminal": 10,
+      "percent": 55.56
     },
     "reports": {
       "total": 1,
@@ -24072,21 +24072,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/config/database.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php",
+      "evidence": "Focused service closure@f44cc61b1654a580fe74ac1d756bbf126f26ac21: variants/laravel-aiwmweb/backend/config/database.php; operation:AIMW-PLAT-F6C1A04662; test:variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-PLAT-F6C1A04662",
+        "source_sha": "f44cc61b1654a580fe74ac1d756bbf126f26ac21",
+        "destination_path": "variants/laravel-aiwmweb/backend/config/database.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-F6C1A04662",
+          "service:ApplicationPathService",
+          "member:GetDatabasePath",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json"
+        ]
       }
     },
     {
@@ -34607,12 +34616,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 346,
-      "pending": 3,
+      "adapted": 347,
+      "pending": 2,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 346,
-      "percent": 99.14
+      "terminal": 347,
+      "percent": 99.43
     },
     "visible_control": {
       "total": 446,
@@ -34927,8 +34936,7 @@
       "AIMW-PLAT-827A8F1C0D",
       "AIMW-PLAT-83994BBD03",
       "AIMW-PLAT-AF47A254FE",
-      "AIMW-PLAT-C6260410D1",
-      "AIMW-PLAT-F6C1A04662"
+      "AIMW-PLAT-C6260410D1"
     ],
     "reports": [],
     "seo": [],
@@ -35545,6 +35553,7 @@
       "AIMW-AI-E8F4848B4A",
       "AIMW-AUTO-FE8B6EAC62",
       "AIMW-AUTO-2B8A1146F8",
+      "AIMW-PLAT-F6C1A04662",
       "AIMW-AUTO-DBF5562324",
       "AIMW-AUTO-0701C84252",
       "AIMW-AUTO-0B1BC18769",
@@ -35569,7 +35578,7 @@
       "AIMW-AUTO-1584B94390",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 29,
+    "focused_service_contract_count": 30,
     "focused_background_job_contract_terminals": [
       "AIMW-AUTO-13392A9E67",
       "AIMW-AUTO-50F3EC7087",
