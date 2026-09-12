@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AUTO-148B15F121",
+    "domain": "automation",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ExecutionCenter.razor",
+    "source_screen": "/execution-center | /module/execution",
+    "source_control": "@(L.IsArabic ? -> /sites/connect",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "Execution Center exposes a connect-site action when the authoritative current-tenant site collection is empty.",
+    "side_effect": "navigation only",
+    "mutation": false,
+    "external_dependency": "none",
+    "success_semantics": "the user is taken to the real tenant-scoped site connection workspace only after the current tenant is proven to own zero sites"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/execution-connect-site-control.tsx",
+    "runtime_wiring": "ExecutionConnectSiteControl is mounted only on the existing execution RouteElement",
+    "authoritative_sites_endpoint": "/api/tenants/{tenant}/sites",
+    "target_builder": "tenantUrl(context.tenant.slug, '/sites/connect')",
+    "target_route": "/tenants/{tenant}/sites/connect",
+    "required_client_permissions": [
+      "execution.view",
+      "sites.manage"
+    ],
+    "empty_state_only": true,
+    "malformed_or_failed_read": "fail closed; control remains hidden",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "authorization": {
+    "control_requires": [
+      "execution.view",
+      "sites.manage"
+    ],
+    "missing_permission": "control remains hidden and the authoritative sites request is not issued",
+    "sites_read": "real tenant-scoped API guarded by the existing authenticated tenant context"
+  },
+  "tenant_isolation": {
+    "tenant_source": "authoritative FrontendContext.tenant.slug and tenant-specific sites endpoint",
+    "same_tenant_sites_read": "200 for an authenticated member with required site-read permissions",
+    "foreign_tenant_sites_read": "404 for a user without membership in that tenant",
+    "direct_id_surface": "none",
+    "idor_result": "the control adds no caller-selected tenant or resource identifier and cross-tenant reads fail closed"
+  },
+  "runtime_semantics": {
+    "real_visible_control": true,
+    "real_authoritative_read": true,
+    "read_only": true,
+    "existing_site_suppresses_control": true,
+    "empty_authoritative_collection_enables_control": true,
+    "bilingual_copy": true,
+    "rtl_supported": true,
+    "idempotency": "navigation and the backing read are read-only and safe to repeat"
+  },
+  "acceptance_tests": {
+    "frontend": [
+      "execution-connect-site-control.test.tsx proves authoritative empty-site gating, tenant-qualified destination, permission fail-closed behavior, malformed/read-error fail-closed behavior, existing-site suppression, and Arabic RTL copy"
+    ],
+    "php_feature": [
+      "ExecutionConnectSiteControlTerminalityTest::test_exact_canonical_operation_metadata_matches_execution_center_connect_site_control",
+      "ExecutionConnectSiteControlTerminalityTest::test_authoritative_sites_read_is_tenant_bound_and_foreign_tenant_is_404"
+    ]
+  },
+  "implementation_pr": 480,
+  "implementation_pr_head_sha": "ee398c928c04f0988fbdc5585e9ed65bfde52ccd",
+  "integrated_composition_sha": "9ccb55529149fbdbdd44982bd8b1978372098d66",
+  "implementation_ci": {
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 34678923079,
+      "result": "success"
+    },
+    "laravel_aiwmweb_cross_domain_security": {
+      "run_id": 34678923133,
+      "result": "success"
+    },
+    "pr_plan_link": {
+      "run_id": 34678923089,
+      "result": "success"
+    }
+  },
+  "canonical_denominator": {
+    "total": 931,
+    "terminal_before_reconciliation": 531,
+    "pending_before_reconciliation": 400,
+    "generated_reconciliation_modified": false,
+    "note": "Counts are observations from the live generator before this focused closure is applied. The repository generator remains the sole authority for any resulting count change."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AUTO-148B15F121",
+    "second_operation_started": false,
+    "source_product_modified": false,
+    "manual_count_edit": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "The merged Laravel control is wired to the real Execution Center, derives its destination from authoritative tenant context, renders only after a real empty sites read, fails closed on missing permission or bad reads, and now has explicit server-side cross-tenant 404 acceptance evidence. Canonical status is still applied only by repository reconciliation tooling."
+  }
+}
