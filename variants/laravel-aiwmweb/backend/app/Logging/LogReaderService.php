@@ -5,6 +5,12 @@ namespace App\Logging;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Finder\SplFileInfo;
 
+/**
+ * Canonical parity adapter for LogReaderService.GetFiles (AIMW-OPER-85A7A01127).
+ *
+ * Inventory is deliberately constrained to Laravel's application-owned logs root;
+ * no caller or tenant may select an alternate filesystem root.
+ */
 final class LogReaderService
 {
     /**
