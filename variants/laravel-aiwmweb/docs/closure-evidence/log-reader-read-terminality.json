@@ -1,5 +1,9 @@
 {
   "schema_version": 1,
+  "task_id": "AIMW-OPER-FC4C071FAA",
+  "operation_id": "AIMW-OPER-FC4C071FAA",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
   "authority": {
     "repository": "walidatiyaai2025-gif/AIMWWeb",
     "issue": 257,
@@ -9,16 +13,26 @@
     "claim_base_sha": "8f84c6727867949c97da7a6d301d5fed6dd036af",
     "worker_branch": "worker/laravel-AIMW-OPER-FC4C071FAA-log-reader-read",
     "claim_comment_id": 5476175546,
-    "verified_complete_comment_id": 5476295495
+    "verified_complete_comment_id": 5476295495,
+    "merged_pr": 401,
+    "merge_commit_sha": "e1895f4c4a19c530b15da717a0f5c6fe4647691f",
+    "reconciliation_recovery_base_sha": "857cbaee34f24f031e02bb3c9a53b94dfdf8b3bc",
+    "reconciliation_recovery_branch": "worker/laravel-aiwmweb-AIMW-OPER-FC4C071FAA-reconcile-slot0301"
   },
-  "operation": {
-    "operation_id": "AIMW-OPER-FC4C071FAA",
-    "domain": "operations",
+  "canonical_operation": {
     "kind": "service",
-    "route_screen": "service:LogReaderService",
-    "visible_control": "Read",
-    "current_source": "src/AIWordPressManager.Web/Services/LogReaderService.cs",
-    "mutation": false
+    "domain": "operations",
+    "service": "LogReaderService",
+    "member": "Read",
+    "source": "src/AIWordPressManager.Web/Services/LogReaderService.cs",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "service_closure_contract": {
+    "implementation_sha": "577aadfae2a4819c7d7ce29dea278f9c69109f01",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Logging/LogReaderReadService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogReaderReadTerminalityTest.php"
   },
   "adaptation": {
     "state": "ADAPTED",
@@ -30,7 +44,11 @@
     "missing_allowed_file_result": "empty list",
     "outside_root_result": "InvalidArgumentException",
     "resolved_symlink_escape_result": "InvalidArgumentException",
-    "take_clamp": {"minimum": 50, "maximum": 5000, "default": 500},
+    "take_clamp": {
+      "minimum": 50,
+      "maximum": 5000,
+      "default": 500
+    },
     "read_strategy": "stream file line-by-line into a bounded SplQueue retaining only the last requested clamped number of lines",
     "returned_numbering": "1..N after tail selection",
     "level_precedence": [
@@ -41,10 +59,19 @@
       "Information: fallback"
     ]
   },
+  "security": {
+    "canonical_tenant_owned_metadata_preserved": true,
+    "caller_selectable_root": false,
+    "foreign_tenant_controlled_root_outside_application_logs_is_rejected": true,
+    "root_sibling_prefix_escape_is_rejected": true,
+    "resolved_symlink_escape_is_rejected": true,
+    "authorization_claim_invented": false,
+    "note": "The canonical source service has no tenant identifier parameter. The Laravel adaptation therefore does not invent a tenant-specific filesystem API; it preserves the application-owned log root and proves that a foreign tenant-controlled external root cannot be read."
+  },
   "validation": {
     "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/LogReaderReadTerminalityTest.php",
     "proofs": [
-      "exact canonical operation provenance",
+      "exact canonical operation provenance including tenant-owned and low-risk metadata",
       "container resolvability",
       "blank and missing-file empty semantics",
       "real filesystem tail behavior",
@@ -52,11 +79,13 @@
       "post-tail line renumbering",
       "canonical level classification precedence",
       "outside-root rejection",
+      "foreign tenant-controlled root rejection without content disclosure",
       "root-sibling prefix rejection",
       "resolved symlink escape rejection",
       "probe cleanup"
     ],
-    "exact_head_ci_required": true
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
   },
   "conflict_avoidance": {
     "canonical_delta_since_claim_has_no_file_overlap": true,
@@ -66,19 +95,42 @@
   "explicit_exclusions": [
     "AIMW-OPER-85A7A01127 / LogReaderService.GetFiles / merged PR #400",
     "AIMW-OPER-55C6982761 / application logs-directory parity / merged PR #399",
+    "AIMW-OPER-21EC1BDE45 / global Open logs operation",
     "log-file inventory behavior",
     "log writing or logging configuration",
-    "AIMW-CONT-8B3518EF80 / Error Open logs / PR #384",
     "maintenance routes and visible controls",
-    "generated operation parity reconciliation artifacts"
+    "manual parity-count edits"
   ],
   "terminality": {
-    "state": "VERIFIED_COMPLETE",
-    "implementation_head": "e9ccb3c72140e67defde1018b0db7ad92352b3e3",
-    "ci_runs": {
-      "PR Plan Link": {"run_number": 1380, "run_id": 33376614874, "conclusion": "success"},
-      "Laravel AIWMWeb Cross-Domain Security": {"run_number": 602, "run_id": 33376614870, "conclusion": "success"},
-      "Laravel AIWMWeb Acceptance": {"run_number": 671, "run_id": 33376614845, "conclusion": "success"}
-    }
+    "historical_state": "VERIFIED_COMPLETE",
+    "historical_implementation_head": "e9ccb3c72140e67defde1018b0db7ad92352b3e3",
+    "historical_ci_runs": {
+      "PR Plan Link": {
+        "run_number": 1380,
+        "run_id": 33376614874,
+        "conclusion": "success"
+      },
+      "Laravel AIWMWeb Cross-Domain Security": {
+        "run_number": 602,
+        "run_id": 33376614870,
+        "conclusion": "success"
+      },
+      "Laravel AIWMWeb Acceptance": {
+        "run_number": 671,
+        "run_id": 33376614845,
+        "conclusion": "success"
+      }
+    },
+    "current_reconciliation_implementation_sha": "577aadfae2a4819c7d7ce29dea278f9c69109f01",
+    "current_exact_head_ci_required_before_integration": true
+  },
+  "scope": {
+    "only_operation_reconciled": "AIMW-OPER-FC4C071FAA",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
   }
 }
