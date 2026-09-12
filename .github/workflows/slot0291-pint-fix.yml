@@ -1,0 +1,44 @@
+name: Slot 0291 Pint fix
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291
+    paths:
+      - '.github/workflows/slot0291-pint-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+      - working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Apply canonical Pint formatting to slot files
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          vendor/bin/pint \
+            app/Automation/SuggestedChangeService.php \
+            app/Models/SuggestedChange.php \
+            database/migrations/2026_09_12_102000_create_suggested_changes_table.php \
+            tests/Feature/SuggestedChangeExecutionStatusTerminalityTest.php
+      - name: Commit formatting and remove helper
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/slot0291-pint-fix.yml
+          git add variants/laravel-aiwmweb/backend/app/Automation/SuggestedChangeService.php \
+                  variants/laravel-aiwmweb/backend/app/Models/SuggestedChange.php \
+                  variants/laravel-aiwmweb/backend/database/migrations/2026_09_12_102000_create_suggested_changes_table.php \
+                  variants/laravel-aiwmweb/backend/tests/Feature/SuggestedChangeExecutionStatusTerminalityTest.php
+          git diff --cached --check
+          git commit -m 'style(laravel): apply Pint to suggested change closure'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291
