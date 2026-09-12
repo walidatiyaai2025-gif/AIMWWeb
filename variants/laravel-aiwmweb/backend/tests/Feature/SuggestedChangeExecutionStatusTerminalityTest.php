@@ -23,7 +23,7 @@ class SuggestedChangeExecutionStatusTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-AUTO-1584B94390';
 
-    public function test_SuggestedChangeService_SetExecutionStatusAsync_preserves_source_status_contract(): void
+    public function test_suggested_change_service_set_execution_status_async_preserves_source_status_contract(): void
     {
         [$tenant, $membership] = $this->membership(['operations.manage']);
         app(TenantContext::class)->activate($tenant, $membership);
@@ -40,7 +40,7 @@ class SuggestedChangeExecutionStatusTerminalityTest extends TestCase
         $this->assertSame(self::OPERATION_ID, SuggestedChangeService::OPERATION_ID);
     }
 
-    public function test_SuggestedChangeService_SetExecutionStatusAsync_rejects_unsupported_status(): void
+    public function test_suggested_change_service_set_execution_status_async_rejects_unsupported_status(): void
     {
         [$tenant, $membership] = $this->membership(['operations.manage']);
         app(TenantContext::class)->activate($tenant, $membership);
@@ -50,7 +50,7 @@ class SuggestedChangeExecutionStatusTerminalityTest extends TestCase
         app(SuggestedChangeService::class)->SetExecutionStatusAsync($change->change_id, 'Succeeded');
     }
 
-    public function test_SuggestedChangeService_SetExecutionStatusAsync_fails_closed_without_permission(): void
+    public function test_suggested_change_service_set_execution_status_async_fails_closed_without_permission(): void
     {
         [$tenant, $membership] = $this->membership([]);
         app(TenantContext::class)->activate($tenant, $membership);
@@ -60,7 +60,7 @@ class SuggestedChangeExecutionStatusTerminalityTest extends TestCase
         app(SuggestedChangeService::class)->SetExecutionStatusAsync($change->change_id, 'Executed');
     }
 
-    public function test_SuggestedChangeService_SetExecutionStatusAsync_cannot_mutate_foreign_tenant_change(): void
+    public function test_suggested_change_service_set_execution_status_async_cannot_mutate_foreign_tenant_change(): void
     {
         [$alpha, $alphaMembership] = $this->membership(['operations.manage'], 'alpha');
         app(TenantContext::class)->activate($alpha, $alphaMembership);
