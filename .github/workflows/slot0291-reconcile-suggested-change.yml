@@ -1,0 +1,103 @@
+name: Slot 0291 reconcile suggested change execution status
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291
+    paths:
+      - '.github/workflows/slot0291-reconcile-suggested-change.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      EVIDENCE_SHA: 'ea3789bf9a75f214468c2af403ac862f412b1661'
+      OPERATION_ID: 'AIMW-AUTO-1584B94390'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Bind focused evidence to the exact pushed snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/before.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['focused_closure_evidence_source_sha'] = os.environ['EVIDENCE_SHA']
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Run canonical parity generator pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          json=/tmp/operation-parity-reconciliation.json
+          summary=/tmp/operation-parity-summary.json
+          md=/tmp/operation-parity-reconciliation.md
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+
+      - name: Prove the generator changed only the selected canonical operation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          before = json.loads(Path('/tmp/before.json').read_text())
+          after = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          op = os.environ['OPERATION_ID']
+          assert len(before['operations']) == 931 == len(after['operations'])
+          b = {r['operation_id']: r for r in before['operations']}
+          a = {r['operation_id']: r for r in after['operations']}
+          changed = [k for k in b if b[k].get('migration_state') != a[k].get('migration_state')]
+          assert changed == [op], changed
+          assert b[op]['migration_state'] == 'PENDING', b[op]['migration_state']
+          assert a[op]['migration_state'] == 'ADAPTED', a[op]['migration_state']
+          assert before['totals']['terminal'] + 1 == after['totals']['terminal']
+          assert before['totals']['pending'] - 1 == after['totals']['pending']
+          assert before['totals']['blocked'] == after['totals']['blocked']
+          assert after['validation']['passed'] is True
+          assert op in after['validation']['focused_service_contract_terminals']
+          print('SLOT0291_GENERATOR_DELTA=PASS')
+          print('TOTAL=', len(after['operations']))
+          print('TERMINAL=', after['totals']['terminal'])
+          print('PENDING=', after['totals']['pending'])
+          print('BLOCKED=', after['totals']['blocked'])
+          PY
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+      - name: Commit generated canonical artifacts and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/slot0291-reconcile-suggested-change.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'docs(laravel): reconcile suggested change execution parity evidence'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291
