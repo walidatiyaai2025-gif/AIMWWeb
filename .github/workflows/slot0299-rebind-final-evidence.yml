@@ -1,0 +1,133 @@
+name: Rebind Slot0299 final evidence
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-BILL-07134347F9-slot0299
+    paths:
+      - '.github/workflows/slot0299-rebind-final-evidence.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      PREVIOUS_RECONCILIATION_SHA: 4dbe28edca735a9a57d5afe48eecff49e92503aa
+      FINAL_EVIDENCE_SHA: f66004d1cc10ebd06eba240a27eee39b23b3ef7b
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Bind final pushed evidence snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$FINAL_EVIDENCE_SHA" origin/worker/laravel-aiwmweb-AIMW-BILL-07134347F9-slot0299
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          doc = json.loads(path.read_text(encoding='utf-8'))
+          doc['focused_closure_evidence_source_sha'] = os.environ['FINAL_EVIDENCE_SHA']
+          doc['previous_reconciliation_sha'] = os.environ['PREVIOUS_RECONCILIATION_SHA']
+          path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Run canonical parity generator pipeline
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Prove final exact one-operation delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "$PREVIOUS_RECONCILIATION_SHA:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/previous.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          target = 'AIMW-BILL-07134347F9'
+          before = json.loads(Path('/tmp/previous.json').read_text())
+          after = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          b = {row['operation_id']: row for row in before['operations']}
+          a = {row['operation_id']: row for row in after['operations']}
+          changed = {op for op in a if a[op].get('migration_state') != b[op].get('migration_state')}
+          if changed != {target}:
+              raise SystemExit(f'exact delta violation: {sorted(changed)}')
+          if b[target]['migration_state'] != 'PENDING' or a[target]['migration_state'] != 'ADAPTED':
+              raise SystemExit(f'unexpected transition: {b[target]["migration_state"]}->{a[target]["migration_state"]}')
+          if a[target].get('reconciliation', {}).get('source_sha') != os.environ['FINAL_EVIDENCE_SHA']:
+              raise SystemExit(f'wrong evidence source: {a[target].get("reconciliation", {}).get("source_sha")}')
+          totals = after['totals']
+          if (totals['total'], totals['terminal'], totals['pending'], totals['blocked']) != (931, 554, 377, 0):
+              raise SystemExit(f'unexpected totals: {totals}')
+          billing = after['domains']['billing']
+          if (billing['total'], billing['terminal'], billing['pending'], billing['blocked']) != (178, 87, 91, 0):
+              raise SystemExit(f'unexpected billing totals: {billing}')
+          if not after.get('validation', {}).get('passed'):
+              raise SystemExit('canonical validation did not pass')
+          print('EXACT_DELTA=1')
+          print(f'FINAL_EVIDENCE_SHA={os.environ["FINAL_EVIDENCE_SHA"]}')
+          print('TOTAL=931 TERMINAL=554 PENDING=377 BLOCKED=0')
+          PY
+
+      - name: Persist final generator-owned reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/slot0299-rebind-final-evidence.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'docs(laravel): bind AIMW-BILL-07134347F9 final evidence'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-BILL-07134347F9-slot0299
