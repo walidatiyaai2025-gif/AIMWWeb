@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -34,8 +34,16 @@ function canOpen(context: FrontendContext, routeKey: string, extraPermission?: s
     return !extraPermission || hasPermission(context, extraPermission);
 }
 
-export function AutomationPhaseNavigationControls({ context, routeKey }: { context: FrontendContext; routeKey: string }) {
+function currentRouteKey(context: FrontendContext, pathname: string): string | null {
+    const tenantPrefix = `/tenants/${encodeURIComponent(context.tenant.slug)}`;
+    const relative = pathname.startsWith(tenantPrefix) ? pathname.slice(tenantPrefix.length) || '/' : pathname;
+    return workspaceRoutes.find((route) => route.path === relative)?.key ?? null;
+}
+
+export function AutomationPhaseNavigationControls({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
+    const location = useLocation();
+    const routeKey = currentRouteKey(context, location.pathname);
 
     if (routeKey === 'pages' && canOpen(context, 'execution', 'operations.manage')) {
         return <Link className="btn" data-canonical-operation={PAGES_EXECUTION_LINK_OPERATION_ID} to={tenantUrl(context.tenant.slug, '/module/execution')}>▶ {locale === 'ar' ? 'التنفيذ' : 'Execution'}</Link>;
