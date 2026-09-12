@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 530,
-    "pending": 401,
+    "adapted": 531,
+    "pending": 400,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 530,
-    "overall_parity_percent": 56.93
+    "terminal": 531,
+    "overall_parity_percent": 57.04
   },
   "visible_controls": {
     "total": 446,
@@ -62,12 +62,12 @@
     "automation": {
       "total": 59,
       "ported": 0,
-      "adapted": 36,
-      "pending": 23,
+      "adapted": 37,
+      "pending": 22,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 36,
-      "percent": 61.02
+      "terminal": 37,
+      "percent": 62.71
     },
     "backup": {
       "total": 14,
@@ -5194,21 +5194,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Jobs/ExecutionJobStore.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/Jobs/ExecutionJobStoreParityTest.php",
+      "evidence": "Focused background-job closure@9c003da2e8320a29e5e98d0a06e9374a0557e200: variants/laravel-aiwmweb/backend/app/Jobs/ExecutionJobStore.php; operation:AIMW-AUTO-EEFDAB3DF8; test:variants/laravel-aiwmweb/backend/tests/Feature/Jobs/ExecutionJobStoreParityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/execution-job-store-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed focused background-job closure is linked to the canonical operation ID in production code and focused tests with applicable tenant/fail-closed assertions.",
+        "source_label": "Focused background-job closure AIMW-AUTO-EEFDAB3DF8",
+        "source_sha": "9c003da2e8320a29e5e98d0a06e9374a0557e200",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Jobs/ExecutionJobStore.php",
+        "evidence_mode": "focused_background_job_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/execution-job-store-terminality.json",
+        "signals": [
+          "operation:AIMW-AUTO-EEFDAB3DF8",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Jobs/ExecutionJobStore.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/Jobs/ExecutionJobStoreParityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/execution-job-store-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -34325,12 +34334,12 @@
     "background_job": {
       "total": 21,
       "ported": 0,
-      "adapted": 17,
-      "pending": 4,
+      "adapted": 18,
+      "pending": 3,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 17,
-      "percent": 80.95
+      "terminal": 18,
+      "percent": 85.71
     },
     "route": {
       "total": 84,
@@ -34387,7 +34396,6 @@
       "AIMW-AUTO-CA7398A8F6",
       "AIMW-AUTO-E4269EADC3",
       "AIMW-AUTO-E57D5E6134",
-      "AIMW-AUTO-EEFDAB3DF8",
       "AIMW-AUTO-FE8B6EAC62",
       "AIMW-AUTO-FF4812A204"
     ],
@@ -35317,8 +35325,9 @@
     "focused_background_job_contract_terminals": [
       "AIMW-AUTO-13392A9E67",
       "AIMW-AUTO-7E70C7119A",
-      "AIMW-AUTO-CC236E83A3"
+      "AIMW-AUTO-CC236E83A3",
+      "AIMW-AUTO-EEFDAB3DF8"
     ],
-    "focused_background_job_contract_count": 3
+    "focused_background_job_contract_count": 4
   }
 }
