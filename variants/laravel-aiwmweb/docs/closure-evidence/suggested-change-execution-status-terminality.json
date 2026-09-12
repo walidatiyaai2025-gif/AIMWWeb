@@ -14,20 +14,21 @@
     "tenant_owned": true
   },
   "service_closure_contract": {
-    "implementation_sha": "d52ff242114e9f24cf7dc2e2ea2084e42cb700e5",
+    "implementation_sha": "6d552688b819d430e12e664f0d797d96f2987b8c",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Automation/SuggestedChangeService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SuggestedChangeExecutionStatusTerminalityTest.php"
   },
   "security": {
     "authorization": "operations.manage is checked inside the service before any read or mutation",
     "tenant_isolation": "SuggestedChange is a DomainModel and therefore uses TenantScope; foreign-tenant IDs fail with ModelNotFoundException",
-    "unsupported_status": "fails closed with InvalidArgumentException",
+    "unsupported_status": "fails closed with InvalidArgumentException after source-compatible tenant-scoped change resolution",
     "secret_disclosure_added": false
   },
   "acceptance": {
     "coverage": [
       "Executing / Executed / Failed / RolledBack transitions",
       "NotStarted no-op semantics",
+      "source-compatible change lookup before execution-status switch",
       "unsupported status rejection",
       "missing operations.manage authorization rejection",
       "foreign tenant mutation rejection"
@@ -43,7 +44,7 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "recovery_branch": "worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291",
-    "implementation_test_snapshot_sha": "d52ff242114e9f24cf7dc2e2ea2084e42cb700e5",
+    "implementation_test_snapshot_sha": "6d552688b819d430e12e664f0d797d96f2987b8c",
     "formatted_verification_head_sha": "fc0465790cb521c6cd21bd63c169ab720e966611"
   }
 }
