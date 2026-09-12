@@ -15,6 +15,7 @@ use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\PublicWelcomeRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
+use App\Providers\SiteEmailSettingsRouteServiceProvider;
 use App\Providers\SiteOperationDetailsRouteServiceProvider;
 use App\Providers\SiteOperationsMaintenanceRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
@@ -40,6 +41,7 @@ return [
     OperationsMaintenanceRouteServiceProvider::class,
     SiteOperationsMaintenanceRouteServiceProvider::class,
     SiteOperationDetailsRouteServiceProvider::class,
+    SiteEmailSettingsRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
     SeoVisibleControlRouteServiceProvider::class,
 ];
