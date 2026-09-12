@@ -31,6 +31,8 @@ class LogReaderReadTerminalityTest extends TestCase
             $operation['current_source'],
         );
         $this->assertFalse((bool) $operation['mutation']);
+        $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('low', $operation['risk']);
     }
 
     public function test_service_is_container_resolvable_and_blank_or_missing_allowed_files_are_empty(): void
@@ -99,6 +101,26 @@ class LogReaderReadTerminalityTest extends TestCase
             $this->assertStringContainsString('outside the allowed log directory', $exception->getMessage());
         } finally {
             File::delete($outside);
+        }
+    }
+
+    public function test_tenant_owned_foreign_log_root_is_rejected_without_disclosing_foreign_lines(): void
+    {
+        File::ensureDirectoryExists(storage_path('logs'));
+        $foreignTenantDirectory = storage_path('tenant-beta-logs');
+        $foreignTenantPath = $foreignTenantDirectory.DIRECTORY_SEPARATOR.'beta.log';
+        File::ensureDirectoryExists($foreignTenantDirectory);
+        File::put($foreignTenantPath, 'beta-tenant-secret');
+        $returned = [];
+
+        try {
+            $returned = app(LogReaderReadService::class)->read($foreignTenantPath);
+            $this->fail('A foreign tenant-controlled log root must not be readable.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('outside the allowed log directory', $exception->getMessage());
+            $this->assertNotContains('beta-tenant-secret', array_column($returned, 'text'));
+        } finally {
+            File::deleteDirectory($foreignTenantDirectory);
         }
     }
 
