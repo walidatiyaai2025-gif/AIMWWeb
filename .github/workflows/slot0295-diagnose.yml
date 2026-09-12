@@ -1,0 +1,49 @@
+name: Slot 0295 focused diagnosis
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-AUTO-22BC08CEF1-slot0295
+    paths:
+      - '.github/workflows/slot0295-diagnose.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Run focused Slot0295 test and capture output
+        id: focused
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan test tests/Feature/ContentExplorerExecutionLinkTerminalityTest.php --testdox > "$GITHUB_WORKSPACE/slot0295-test-output.txt" 2>&1
+          rc=$?
+          cat "$GITHUB_WORKSPACE/slot0295-test-output.txt"
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: slot0295-test-output
+          path: slot0295-test-output.txt
+          if-no-files-found: error
