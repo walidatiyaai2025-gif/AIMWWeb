@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-1584B94390",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "domain": "automation",
+    "kind": "service",
+    "source": "src/AIWordPressManager.Persistence/Changes/SuggestedChangeService.cs",
+    "service": "SuggestedChangeService",
+    "member": "SetExecutionStatusAsync",
+    "mutation": true,
+    "tenant_owned": true
+  },
+  "service_closure_contract": {
+    "implementation_sha": "6d552688b819d430e12e664f0d797d96f2987b8c",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Automation/SuggestedChangeService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SuggestedChangeExecutionStatusTerminalityTest.php"
+  },
+  "security": {
+    "authorization": "operations.manage is checked inside the service before any read or mutation",
+    "tenant_isolation": "SuggestedChange is a DomainModel and therefore uses TenantScope; foreign-tenant IDs fail with ModelNotFoundException",
+    "unsupported_status": "fails closed with InvalidArgumentException after source-compatible tenant-scoped change resolution",
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "coverage": [
+      "Executing / Executed / Failed / RolledBack transitions",
+      "NotStarted no-op semantics",
+      "source-compatible change lookup before execution-status switch",
+      "unsupported status rejection",
+      "missing operations.manage authorization rejection",
+      "foreign tenant mutation rejection"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-AUTO-1584B94390"],
+    "sibling_operations_claimed": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291",
+    "implementation_test_snapshot_sha": "6d552688b819d430e12e664f0d797d96f2987b8c",
+    "formatted_verification_head_sha": "fc0465790cb521c6cd21bd63c169ab720e966611",
+    "generator_sync_head_sha": "4ccf7831fc696372e0be021ad32a04be00c42807"
+  }
+}

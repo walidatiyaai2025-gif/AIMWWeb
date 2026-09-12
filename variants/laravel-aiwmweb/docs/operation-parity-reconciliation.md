@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 533 |
-| PENDING | 398 |
+| ADAPTED | 534 |
+| PENDING | 397 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 533 |
-| OVERALL_PARITY_PERCENT | 57.25% |
+| TERMINAL | 534 |
+| OVERALL_PARITY_PERCENT | 57.36% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -31,7 +31,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | ai | 92 | 0 | 92 | 0 | 0 | 0 | 92 | 100.00% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
-| automation | 59 | 0 | 39 | 20 | 0 | 0 | 39 | 66.10% |
+| automation | 59 | 0 | 40 | 19 | 0 | 0 | 40 | 67.80% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 86 | 92 | 0 | 0 | 86 | 48.31% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 18 | 3 | 0 | 0 | 18 | 85.71% |
 | route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
-| service | 349 | 0 | 336 | 13 | 0 | 0 | 336 | 96.28% |
+| service | 349 | 0 | 337 | 12 | 0 | 0 | 337 | 96.56% |
 | visible_control | 446 | 0 | 101 | 345 | 0 | 0 | 101 | 22.65% |
 
 ## Reproducibility / guard results
@@ -67,7 +67,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **38**
 - Focused visible-control contracts: **101**
-- Focused service contracts: **19**
+- Focused service contracts: **20**
 - Focused background-job contracts: **4**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
@@ -83,9 +83,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### automation (20)
+### automation (19)
 
-- `AIMW-AUTO-1584B94390`
 - `AIMW-AUTO-22BC08CEF1`
 - `AIMW-AUTO-2B8A1146F8`
 - `AIMW-AUTO-3C8B141746`
