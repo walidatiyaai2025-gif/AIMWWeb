@@ -6,7 +6,7 @@ import {
 } from '../dashboard-execution-link-control';
 import { workspaceRoutes, type FrontendContext } from '../core';
 
-const context = (permissions: string[] = ['tenant.view', 'execution.view']): FrontendContext => ({
+const context = (permissions: string[] = ['tenant.view', 'execution.view', 'operations.manage']): FrontendContext => ({
     user: { id: 1, name: 'Operator', email: 'operator@example.test' },
     tenant: { slug: 'alpha workspace', name: 'Alpha' },
     tenants: [{ slug: 'alpha workspace', name: 'Alpha' }],
@@ -35,8 +35,11 @@ describe('canonical Home execution visible control', () => {
         expect(href).toContain('/tenants/alpha%20workspace/');
     });
 
-    it('fails closed when the active membership lacks execution.view', () => {
+    it('fails closed unless the active membership has both execution permissions', () => {
         expect(canOpenDashboardExecution(context(['tenant.view']))).toBe(false);
+        expect(canOpenDashboardExecution(context(['tenant.view', 'execution.view']))).toBe(false);
+        expect(canOpenDashboardExecution(context(['tenant.view', 'operations.manage']))).toBe(false);
         expect(canOpenDashboardExecution(context())).toBe(true);
+        expect(canOpenDashboardExecution(context(['*']))).toBe(true);
     });
 });
