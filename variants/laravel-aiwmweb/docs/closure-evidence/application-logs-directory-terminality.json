@@ -3,36 +3,75 @@
   "task_id": "AIMW-OPER-55C6982761",
   "operation_id": "AIMW-OPER-55C6982761",
   "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
+  "authority": {
+    "issue": 257,
+    "historical_pr": 399,
+    "historical_merge_commit_sha": "8f84c6727867949c97da7a6d301d5fed6dd036af",
+    "reconciliation_recovery_base_sha": "7b07b9a3c23cd3d426a091a4cf2182db4c2f85f4",
+    "reconciliation_recovery_branch": "worker/laravel-aiwmweb-AIMW-OPER-55C6982761-reconcile-slot0302"
+  },
   "canonical_operation": {
     "kind": "service",
+    "domain": "operations",
     "service": "ApplicationPathService",
     "member": "GetLogsDirectory",
-    "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs"
+    "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "service_closure_contract": {
+    "implementation_sha": "0dd519410b05aff665b4da1e44412d25cc6503c8",
+    "destination_path": "variants/laravel-aiwmweb/backend/config/logging.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationLogsDirectoryTerminalityTest.php"
   },
   "decision": "ADAPTED_NATIVE_FRAMEWORK",
-  "rationale": "Laravel already provides the stable application-owned logs-directory primitive through storage_path('logs'). All local file log channels resolve their laravel.log path beneath that directory. Adding a duplicate path-service wrapper would create dead abstraction rather than improve parity.",
+  "rationale": "Laravel already provides the stable application-owned logs-directory primitive through storage_path('logs'). The single, daily, monthly, and emergency file channels all resolve under that fixed root. The current focused-service verifier is satisfied by binding the already-correct production configuration to the exact canonical operation and strengthening deterministic tenant-boundary proof; no duplicate ApplicationPathService wrapper is introduced.",
   "destination": {
     "runtime_contract": "storage_path('logs')",
     "configuration": "variants/laravel-aiwmweb/backend/config/logging.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationLogsDirectoryTerminalityTest.php"
   },
   "acceptance": [
-    "canonical operation provenance is pinned to AIMW-OPER-55C6982761",
+    "exact canonical operation provenance including tenant-owned and low-risk metadata",
     "single, daily, monthly, and emergency file channels share the stable Laravel logs directory",
-    "the directory is under the application storage root and is not caller-controlled",
+    "the logs root remains application-owned under storage_path('logs') rather than tenant/user/caller selected",
+    "focused proof rejects tenant-scoped candidate roots as the canonical logs directory",
     "runtime can create, read, and remove a deterministic probe file inside the logs directory"
   ],
   "security": {
+    "canonical_tenant_owned_metadata_preserved": true,
     "tenant_input_controls_path": false,
     "user_input_controls_path": false,
-    "secret_material_exposed": false
+    "caller_selectable_root": false,
+    "secret_material_exposed": false,
+    "authorization_claim_invented": false,
+    "note": "The canonical method accepts no tenant identifier or path argument. Laravel therefore preserves one application-owned logs root and proves that tenant-scoped candidate roots cannot replace it instead of inventing a tenant-specific filesystem API."
   },
   "scope_exclusions": [
+    "AIMW-OPER-85A7A01127 / LogReaderService.GetFiles",
+    "AIMW-OPER-FC4C071FAA / LogReaderService.Read",
     "GetApplicationDataDirectory",
     "GetDatabasePath",
     "GetScreenshotsDirectory",
     "GetBackupsDirectory",
     "GetExportsDirectory",
-    "GetTemporaryDirectory"
-  ]
+    "GetTemporaryDirectory",
+    "manual parity-count edits"
+  ],
+  "validation": {
+    "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationLogsDirectoryTerminalityTest.php",
+    "generator_backed_reconciliation_required": true,
+    "exact_head_ci_required": true
+  },
+  "scope": {
+    "only_operation_reconciled": "AIMW-OPER-55C6982761",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
 }
