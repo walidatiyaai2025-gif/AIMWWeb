@@ -11,6 +11,7 @@ import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
+import { DashboardExecutionLinkControl } from './dashboard-execution-link-control';
 import { ExecutionConnectSiteControl } from './execution-connect-site-control';
 import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
@@ -134,6 +135,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
             <SiteDetailsRoute context={context} route={route} />
         </>
     );
+    if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
