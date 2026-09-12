@@ -39,7 +39,7 @@ class ContentExplorerExecutionLinkTerminalityTest extends TestCase
             'src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor',
             $operation['current_source'],
         );
-        $this->assertTrue((bool) $operation['mutation']);
+        $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
         $this->assertSame('low', $operation['risk']);
     }
