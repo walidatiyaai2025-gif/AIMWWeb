@@ -91,7 +91,7 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
         $this->assertStringNotContainsString('to="/module/execution"', $controlSource);
     }
 
-    private function membership(User $user, string $slug, array $permissions): TenantMembership
+    private function membership(User $user, string $slug, array $permissions): void
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
         $context = app(TenantContext::class);
@@ -112,7 +112,5 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
 
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $context->forget();
-
-        return $membership->fresh('tenant');
     }
 }
