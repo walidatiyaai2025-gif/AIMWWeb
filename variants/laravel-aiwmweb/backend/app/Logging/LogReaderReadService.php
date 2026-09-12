@@ -5,6 +5,12 @@ namespace App\Logging;
 use InvalidArgumentException;
 use SplQueue;
 
+/**
+ * Canonical parity adapter for LogReaderService.Read (AIMW-OPER-FC4C071FAA).
+ *
+ * Reads are deliberately constrained to Laravel's application-owned logs root;
+ * no caller may select or escape to a different filesystem root.
+ */
 final class LogReaderReadService
 {
     /**
