@@ -1,3 +1,4 @@
+# rerun after focused Vite isolation fix
 name: Validate Automation phase PHP closure
 
 on:
