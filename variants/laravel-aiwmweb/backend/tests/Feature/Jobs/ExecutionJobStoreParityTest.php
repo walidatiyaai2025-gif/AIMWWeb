@@ -5,6 +5,7 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\ExecutionJobConfiguration;
 use App\Jobs\ExecutionJobStore;
 use App\Models\Site;
+use App\Models\Tenant;
 use App\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,7 +32,7 @@ final class ExecutionJobStoreParityTest extends TestCase
     protected function tearDown(): void
     {
         Carbon::setTestNow();
-        $this->tenantContext->clear();
+        $this->tenantContext->forget();
         parent::tearDown();
     }
 
@@ -59,7 +60,7 @@ final class ExecutionJobStoreParityTest extends TestCase
     public function test_start_report_complete_and_recent_projection_match_canonical_lifecycle(): void
     {
         $tenantId = $this->createTenant('tenant-a');
-        $this->tenantContext->activate($tenantId);
+        $this->tenantContext->activate(Tenant::query()->findOrFail($tenantId));
         $site = Site::query()->create(['name' => 'Alpha', 'url' => 'https://alpha.example']);
         $store = app(ExecutionJobStore::class);
 
@@ -116,7 +117,7 @@ final class ExecutionJobStoreParityTest extends TestCase
     public function test_failure_and_cancel_terminal_states_preserve_redaction_and_completion_evidence(): void
     {
         $tenantId = $this->createTenant('tenant-terminal');
-        $this->tenantContext->activate($tenantId);
+        $this->tenantContext->activate(Tenant::query()->findOrFail($tenantId));
         $site = Site::query()->create(['name' => 'Terminal', 'url' => 'https://terminal.example']);
         $store = app(ExecutionJobStore::class);
 
@@ -150,7 +151,7 @@ final class ExecutionJobStoreParityTest extends TestCase
         $tenantA = $this->createTenant('tenant-isolation-a');
         $tenantB = $this->createTenant('tenant-isolation-b');
 
-        $this->tenantContext->activate($tenantA);
+        $this->tenantContext->activate(Tenant::query()->findOrFail($tenantA));
         $siteA = Site::query()->create(['name' => 'A', 'url' => 'https://a.example']);
         $store = app(ExecutionJobStore::class);
         $jobId = $store->start($siteA->id, 'IsolationProbe');
@@ -163,7 +164,7 @@ final class ExecutionJobStoreParityTest extends TestCase
         }
         $this->assertSame(0, $store->get($jobId)['progress_percent'] ?? null);
 
-        $this->tenantContext->activate($tenantB);
+        $this->tenantContext->activate(Tenant::query()->findOrFail($tenantB));
         $siteB = Site::query()->create(['name' => 'B', 'url' => 'https://b.example']);
         $this->assertNotNull($siteB);
         $this->assertNull($store->get($jobId), 'Tenant B must not read Tenant A execution jobs.');
@@ -190,7 +191,7 @@ final class ExecutionJobStoreParityTest extends TestCase
             $this->addToAssertionCount(1);
         }
 
-        $this->tenantContext->activate($tenantA);
+        $this->tenantContext->activate(Tenant::query()->findOrFail($tenantA));
         $job = $store->get($jobId);
         $this->assertNotNull($job);
         $this->assertSame(0, $job['progress_percent']);
