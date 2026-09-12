@@ -20,7 +20,7 @@ final class RuntimeErrorOpenLogsTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-OPER-21EC1BDE45';
 
-    public function test_exact_canonical_operation_is_the_pending_global_runtime_error_open_logs_control(): void
+    public function test_exact_canonical_operation_is_the_global_runtime_error_open_logs_control(): void
     {
         $document = json_decode(
             (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
@@ -31,13 +31,14 @@ final class RuntimeErrorOpenLogsTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
         $this->assertSame('operations', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('component:Routes', $operation['route_screen']);
         $this->assertSame('/logs -> /logs', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Routes.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
+        $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('low', $operation['risk']);
 
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Routes.razor'));
         $this->assertStringContainsString('<a class="btn" href="/logs">', $source);
