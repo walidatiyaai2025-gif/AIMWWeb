@@ -1,0 +1,73 @@
+name: Validate Automation phase PHP closure
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-automation-phase-closure
+    paths:
+      - '.github/workflows/automation-phase-php-validate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Apply Pint to phase files
+        run: |
+          vendor/bin/pint \
+            app/Jobs/AutomationBackgroundContracts.php \
+            app/Automation/BulkStatusExecutionService.php \
+            app/Automation/BulkTrashExecutionService.php \
+            app/Automation/ExecutionCenterService.php \
+            app/Automation/ExecutionCenterUserCommandService.php \
+            tests/Feature/AutomationPhaseServiceTerminalityTest.php \
+            tests/Feature/AutomationPhaseBackgroundContractsTest.php \
+            tests/Feature/AutomationPhaseVisibleControlsTerminalityTest.php
+      - name: Run focused Automation phase tests
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          php artisan test \
+            tests/Feature/AutomationPhaseServiceTerminalityTest.php \
+            tests/Feature/AutomationPhaseBackgroundContractsTest.php \
+            tests/Feature/AutomationPhaseVisibleControlsTerminalityTest.php
+      - name: Commit formatting and remove helper
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/automation-phase-php-validate.yml
+          git add variants/laravel-aiwmweb/backend/app/Jobs/AutomationBackgroundContracts.php \
+                  variants/laravel-aiwmweb/backend/app/Automation/BulkStatusExecutionService.php \
+                  variants/laravel-aiwmweb/backend/app/Automation/BulkTrashExecutionService.php \
+                  variants/laravel-aiwmweb/backend/app/Automation/ExecutionCenterService.php \
+                  variants/laravel-aiwmweb/backend/app/Automation/ExecutionCenterUserCommandService.php \
+                  variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseServiceTerminalityTest.php \
+                  variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseBackgroundContractsTest.php \
+                  variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseVisibleControlsTerminalityTest.php
+          git diff --cached --check
+          git commit -m 'style(laravel): normalize Automation phase closure'
+          git pull --rebase origin worker/laravel-aiwmweb-automation-phase-closure
+          git push origin HEAD:worker/laravel-aiwmweb-automation-phase-closure
