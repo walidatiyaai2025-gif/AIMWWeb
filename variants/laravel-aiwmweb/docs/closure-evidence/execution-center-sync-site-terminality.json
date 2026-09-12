@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AUTO-B2CDFF403F",
+    "domain": "automation",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "tenant_owned": true
+  },
+  "acceptance": {
+    "production_marker": "variants/laravel-aiwmweb/backend/resources/js/automation-phase-controls.tsx",
+    "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseVisibleControlsTerminalityTest.php",
+    "proofs": [
+      "exact operation identity",
+      "tenant-derived navigation/action binding",
+      "foreign-tenant fail-closed assertion"
+    ]
+  },
+  "scope": {
+    "generated_reconciliation_modified": false,
+    "fake_success": false
+  }
+}

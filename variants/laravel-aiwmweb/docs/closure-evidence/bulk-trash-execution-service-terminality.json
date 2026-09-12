@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-2B8A1146F8",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "domain": "automation",
+    "kind": "service",
+    "source": "src/AIWordPressManager.Web/Services/BulkTrashExecutionService.cs",
+    "service": "BulkTrashExecutionService",
+    "member": "RunAsync"
+  },
+  "service_closure_contract": {
+    "implementation_sha": "__SOURCE_SHA__",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Automation/BulkTrashExecutionService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseServiceTerminalityTest.php"
+  },
+  "security": {
+    "tenant_isolation": "focused cross-tenant ModelNotFound proof",
+    "fake_success": false
+  }
+}

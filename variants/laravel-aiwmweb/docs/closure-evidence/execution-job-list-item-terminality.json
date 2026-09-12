@@ -3,11 +3,11 @@
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "evidence_mode": "focused_background_job_contract",
-  "operation_id": "AIMW-AUTO-50F3EC7087",
+  "operation_id": "AIMW-AUTO-CA7398A8F6",
   "domain": "automation",
   "terminal_state": "ADAPTED",
   "source_sha": "__SOURCE_SHA__",
-  "canonical_identity": "IExecutionJobStore",
+  "canonical_identity": "ExecutionJobListItem",
   "laravel": {
     "destination": "variants/laravel-aiwmweb/backend/app/Jobs/AutomationBackgroundContracts.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseBackgroundContractsTest.php"
