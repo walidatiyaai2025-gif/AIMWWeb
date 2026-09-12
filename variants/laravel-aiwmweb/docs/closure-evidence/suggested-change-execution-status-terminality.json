@@ -43,6 +43,7 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "recovery_branch": "worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291",
-    "implementation_test_snapshot_sha": "d52ff242114e9f24cf7dc2e2ea2084e42cb700e5"
+    "implementation_test_snapshot_sha": "d52ff242114e9f24cf7dc2e2ea2084e42cb700e5",
+    "formatted_verification_head_sha": "fc0465790cb521c6cd21bd63c169ab720e966611"
   }
 }
