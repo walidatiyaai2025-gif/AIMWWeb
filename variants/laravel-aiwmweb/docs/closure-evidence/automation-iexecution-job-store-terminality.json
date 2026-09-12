@@ -6,7 +6,7 @@
   "operation_id": "AIMW-AUTO-50F3EC7087",
   "domain": "automation",
   "terminal_state": "ADAPTED",
-  "source_sha": "__SOURCE_SHA__",
+  "source_sha": "96ec87c87398e91404b445c49568bb3ebe563b34",
   "canonical_identity": "IExecutionJobStore",
   "laravel": {
     "destination": "variants/laravel-aiwmweb/backend/app/Jobs/AutomationBackgroundContracts.php",

@@ -12,7 +12,7 @@
     "member": "Pause"
   },
   "service_closure_contract": {
-    "implementation_sha": "__SOURCE_SHA__",
+    "implementation_sha": "96ec87c87398e91404b445c49568bb3ebe563b34",
     "destination_path": "variants/laravel-aiwmweb/backend/app/Automation/ExecutionCenterUserCommandService.php",
     "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseServiceTerminalityTest.php"
   },

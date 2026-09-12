@@ -6,7 +6,7 @@
   "operation_id": "AIMW-AUTO-AFDB35513B",
   "domain": "automation",
   "terminal_state": "ADAPTED",
-  "source_sha": "__SOURCE_SHA__",
+  "source_sha": "96ec87c87398e91404b445c49568bb3ebe563b34",
   "canonical_identity": "IJobCancellationRegistry",
   "laravel": {
     "destination": "variants/laravel-aiwmweb/backend/app/Jobs/AutomationBackgroundContracts.php",
