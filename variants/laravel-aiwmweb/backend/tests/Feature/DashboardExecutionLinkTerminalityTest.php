@@ -83,12 +83,12 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
         $appSource = (string) file_get_contents(resource_path('js/app.tsx'));
         $controlSource = (string) file_get_contents(resource_path('js/dashboard-execution-link-control.tsx'));
 
-        $this->assertStringContainsString("route.key === 'dashboard'", $appSource);
+        $this->assertStringContainsString('route.key === \'dashboard\'', $appSource);
         $this->assertStringContainsString('DashboardExecutionLinkControl context={context}', $appSource);
         $this->assertStringContainsString(self::OPERATION_ID, $controlSource);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/module/execution')", $controlSource);
-        $this->assertStringContainsString("context.permissions.includes(executionRoute.permission)", $controlSource);
-        $this->assertStringNotContainsString("to=\"/module/execution\"", $controlSource);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, \'/module/execution\')', $controlSource);
+        $this->assertStringContainsString('context.permissions.includes(executionRoute.permission)', $controlSource);
+        $this->assertStringNotContainsString('to="/module/execution"', $controlSource);
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
