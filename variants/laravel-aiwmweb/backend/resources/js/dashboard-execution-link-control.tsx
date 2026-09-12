@@ -9,9 +9,16 @@ export function dashboardExecutionHref(context: FrontendContext): string {
     return tenantUrl(context.tenant.slug, '/module/execution');
 }
 
+function hasPermission(context: FrontendContext, permission: string): boolean {
+    return context.permissions.includes('*') || context.permissions.includes(permission);
+}
+
 export function canOpenDashboardExecution(context: FrontendContext): boolean {
     const executionRoute = workspaceRoutes.find((route) => route.key === 'execution');
-    return Boolean(executionRoute && (!executionRoute.permission || context.permissions.includes(executionRoute.permission)));
+    if (!executionRoute) return false;
+
+    const canViewExecution = !executionRoute.permission || hasPermission(context, executionRoute.permission);
+    return canViewExecution && hasPermission(context, 'operations.manage');
 }
 
 export function DashboardExecutionLinkControl({ context }: { context: FrontendContext }) {
