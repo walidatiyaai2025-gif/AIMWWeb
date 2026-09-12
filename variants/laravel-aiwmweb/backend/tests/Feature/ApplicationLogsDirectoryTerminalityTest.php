@@ -29,6 +29,8 @@ class ApplicationLogsDirectoryTerminalityTest extends TestCase
             $operation['current_source'],
         );
         $this->assertFalse((bool) $operation['mutation']);
+        $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('low', $operation['risk']);
     }
 
     public function test_laravel_native_logging_contract_uses_one_stable_logs_directory(): void
@@ -55,6 +57,18 @@ class ApplicationLogsDirectoryTerminalityTest extends TestCase
         $this->assertStringNotContainsString('user', strtolower($logsDirectory));
     }
 
+    public function test_tenant_owned_metadata_does_not_make_the_logs_root_tenant_selectable(): void
+    {
+        $logsDirectory = storage_path('logs');
+        $tenantScopedCandidates = [
+            storage_path('tenants/alpha/logs'),
+            storage_path('tenants/beta/logs'),
+        ];
+
+        $this->assertNotContains($logsDirectory, $tenantScopedCandidates);
+        $this->assertSame(storage_path('logs'), $logsDirectory);
+    }
+
     public function test_runtime_can_write_and_remove_a_probe_inside_the_canonical_logs_directory(): void
     {
         $logsDirectory = storage_path('logs');
@@ -62,7 +76,7 @@ class ApplicationLogsDirectoryTerminalityTest extends TestCase
         $probe = $logsDirectory.DIRECTORY_SEPARATOR.'aimw-logs-directory-parity-probe.tmp';
 
         try {
-            File::put($probe, 'AIMW-OPER-55C6982761');
+            File::put($probe, self::OPERATION_ID);
 
             $this->assertFileExists($probe);
             $this->assertSame(self::OPERATION_ID, File::get($probe));
