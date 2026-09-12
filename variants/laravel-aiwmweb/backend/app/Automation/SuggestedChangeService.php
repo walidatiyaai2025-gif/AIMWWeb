@@ -24,13 +24,13 @@ final class SuggestedChangeService
     {
         $this->authorizer->authorize('operations.manage');
 
-        if (! in_array($status, self::EXECUTION_STATUSES, true)) {
-            throw new InvalidArgumentException("Unsupported execution status: {$status}");
-        }
-
         $change = SuggestedChange::query()
             ->where('change_id', $changeId)
             ->firstOrFail();
+
+        if (! in_array($status, self::EXECUTION_STATUSES, true)) {
+            throw new InvalidArgumentException("Unsupported execution status: {$status}");
+        }
 
         if ($status !== 'NotStarted') {
             $change->execution_status = $status;
