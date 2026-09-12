@@ -1,3 +1,4 @@
+# current-head retry after concurrent service/test commits
 name: Apply Automation phase UI parity bindings
 
 on:
