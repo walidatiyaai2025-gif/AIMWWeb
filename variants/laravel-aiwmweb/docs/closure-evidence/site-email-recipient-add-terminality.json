@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-BILL-07134347F9",
+    "domain": "billing",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "tenant_owned": true,
+    "mutation": true
+  },
+  "acceptance": {
+    "production_marker": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
+    "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailRecipientAddTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation identity and AddAsync source handler binding",
+      "real tenant-scoped recipient persistence with normalized duplicate protection",
+      "email.siteRecipients.max plan limit enforcement before persistence",
+      "foreign-tenant site access fails closed with 404",
+      "missing settings.manage authorization fails closed with 403"
+    ]
+  },
+  "scope": {
+    "generated_reconciliation_modified": false,
+    "fake_success": false,
+    "sibling_recipient_operations_claimed": false
+  }
+}
