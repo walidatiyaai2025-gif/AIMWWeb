@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-1584B94390",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "domain": "automation",
+    "kind": "service",
+    "source": "src/AIWordPressManager.Persistence/Changes/SuggestedChangeService.cs",
+    "service": "SuggestedChangeService",
+    "member": "SetExecutionStatusAsync",
+    "mutation": true,
+    "tenant_owned": true
+  },
+  "service_closure_contract": {
+    "implementation_sha": "d52ff242114e9f24cf7dc2e2ea2084e42cb700e5",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Automation/SuggestedChangeService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SuggestedChangeExecutionStatusTerminalityTest.php"
+  },
+  "security": {
+    "authorization": "operations.manage is checked inside the service before any read or mutation",
+    "tenant_isolation": "SuggestedChange is a DomainModel and therefore uses TenantScope; foreign-tenant IDs fail with ModelNotFoundException",
+    "unsupported_status": "fails closed with InvalidArgumentException",
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "coverage": [
+      "Executing / Executed / Failed / RolledBack transitions",
+      "NotStarted no-op semantics",
+      "unsupported status rejection",
+      "missing operations.manage authorization rejection",
+      "foreign tenant mutation rejection"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-AUTO-1584B94390"],
+    "sibling_operations_claimed": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-AUTO-1584B94390-slot0291",
+    "implementation_test_snapshot_sha": "d52ff242114e9f24cf7dc2e2ea2084e42cb700e5"
+  }
+}
