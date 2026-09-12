@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 530 |
-| PENDING | 401 |
+| ADAPTED | 531 |
+| PENDING | 400 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 530 |
-| OVERALL_PARITY_PERCENT | 56.93% |
+| TERMINAL | 531 |
+| OVERALL_PARITY_PERCENT | 57.04% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -31,7 +31,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | ai | 92 | 0 | 92 | 0 | 0 | 0 | 92 | 100.00% |
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
-| automation | 59 | 0 | 36 | 23 | 0 | 0 | 36 | 61.02% |
+| automation | 59 | 0 | 37 | 22 | 0 | 0 | 37 | 62.71% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 86 | 92 | 0 | 0 | 86 | 48.31% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
@@ -53,7 +53,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | Kind | Total | Ported | Adapted | Pending | Blocked | VUE | Terminal | % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
-| background_job | 21 | 0 | 17 | 4 | 0 | 0 | 17 | 80.95% |
+| background_job | 21 | 0 | 18 | 3 | 0 | 0 | 18 | 85.71% |
 | route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
 | service | 349 | 0 | 336 | 13 | 0 | 0 | 336 | 96.28% |
 | visible_control | 446 | 0 | 99 | 347 | 0 | 0 | 99 | 22.20% |
@@ -68,7 +68,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Explicit route contracts: **38**
 - Focused visible-control contracts: **99**
 - Focused service contracts: **19**
-- Focused background-job contracts: **3**
+- Focused background-job contracts: **4**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
 - BLOCKED excluded from progress: **PASS**
@@ -83,7 +83,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### automation (23)
+### automation (22)
 
 - `AIMW-AUTO-148B15F121`
 - `AIMW-AUTO-151800BD9D`
@@ -105,7 +105,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-AUTO-CA7398A8F6`
 - `AIMW-AUTO-E4269EADC3`
 - `AIMW-AUTO-E57D5E6134`
-- `AIMW-AUTO-EEFDAB3DF8`
 - `AIMW-AUTO-FE8B6EAC62`
 - `AIMW-AUTO-FF4812A204`
 

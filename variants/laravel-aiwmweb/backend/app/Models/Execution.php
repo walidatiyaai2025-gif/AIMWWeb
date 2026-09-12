@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Execution extends DomainModel
 {
     protected function casts(): array
@@ -13,5 +15,10 @@ class Execution extends DomainModel
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
+    }
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
     }
 }
