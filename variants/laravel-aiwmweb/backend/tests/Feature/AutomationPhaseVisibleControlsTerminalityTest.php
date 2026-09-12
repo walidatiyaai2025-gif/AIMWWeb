@@ -51,6 +51,8 @@ class AutomationPhaseVisibleControlsTerminalityTest extends TestCase
 
     public function test_automation_workspaces_are_tenant_scoped_and_foreign_tenant_returns_not_found(): void
     {
+        $this->withoutVite();
+
         $alphaUser = User::factory()->create();
         $this->membership($alphaUser, 'tenant-a', [
             'automation.view', 'automation.manage', 'execution.view', 'operations.manage',
