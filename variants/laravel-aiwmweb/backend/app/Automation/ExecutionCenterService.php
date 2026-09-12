@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 final class ExecutionCenterService
 {
     public const PAUSE_OPERATION_ID = 'AIMW-AUTO-FF4812A204';
+
     public const RESUME_OPERATION_ID = 'AIMW-AUTO-E57D5E6134';
 
     public function __construct(private readonly TenantContext $context) {}

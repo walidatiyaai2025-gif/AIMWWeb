@@ -9,6 +9,7 @@ use InvalidArgumentException;
 final class ExecutionCenterUserCommandService
 {
     public const PAUSE_OPERATION_ID = 'AIMW-AUTO-730076001E';
+
     public const RESUME_OPERATION_ID = 'AIMW-AUTO-4C1DD607BB';
 
     public function __construct(

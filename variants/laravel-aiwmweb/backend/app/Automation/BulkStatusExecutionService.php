@@ -19,7 +19,7 @@ final class BulkStatusExecutionService
     /**
      * Laravel adaptation of BulkStatusExecutionService.RunAsync.
      *
-     * @param list<array{content_type:string,wordpress_id:int}> $targets
+     * @param  list<array{content_type:string,wordpress_id:int}>  $targets
      * @return array{operation_id:string,succeeded:int,failed:int,errors:list<string>}
      */
     public function runAsync(int $siteId, array $targets, string $status): array
@@ -49,6 +49,7 @@ final class BulkStatusExecutionService
 
             if (strtolower((string) $item->status) === $status) {
                 $succeeded++;
+
                 continue;
             }
 

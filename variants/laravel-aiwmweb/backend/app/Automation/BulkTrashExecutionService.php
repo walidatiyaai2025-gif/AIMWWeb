@@ -19,7 +19,7 @@ final class BulkTrashExecutionService
     /**
      * Laravel adaptation of BulkTrashExecutionService.RunAsync.
      *
-     * @param list<array{content_type:string,wordpress_id:int}> $targets
+     * @param  list<array{content_type:string,wordpress_id:int}>  $targets
      * @return array{operation_id:string,succeeded:int,failed:int,errors:list<string>}
      */
     public function runAsync(int $siteId, array $targets): array
@@ -44,6 +44,7 @@ final class BulkTrashExecutionService
 
             if (strtolower((string) $item->status) === 'trash') {
                 $succeeded++;
+
                 continue;
             }
 
