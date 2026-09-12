@@ -6,6 +6,10 @@ on:
       - worker/laravel-aiwmweb-automation-phase-closure
     paths:
       - '.github/workflows/automation-phase-reconcile.yml'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/automation-iexecution-job-store-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/automation-ijob-cancellation-registry-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/execution-job-store-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/job-cancellation-registry-terminality.json'
 
 permissions:
   contents: write
