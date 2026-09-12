@@ -51,6 +51,8 @@ class LogReaderGetFilesTerminalityTest extends TestCase
             $operation['current_source'],
         );
         $this->assertFalse((bool) $operation['mutation']);
+        $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('low', $operation['risk']);
     }
 
     public function test_missing_logs_directory_returns_an_empty_inventory(): void
@@ -98,6 +100,25 @@ class LogReaderGetFilesTerminalityTest extends TestCase
         $this->assertNotContains('nested.log', array_column($files, 'name'));
     }
 
+    public function test_tenant_owned_foreign_log_root_is_not_enumerated(): void
+    {
+        $logsDirectory = storage_path('logs');
+        $foreignTenantDirectory = storage_path('tenant-beta-logs');
+        File::ensureDirectoryExists($logsDirectory);
+        File::ensureDirectoryExists($foreignTenantDirectory);
+
+        $localPath = $logsDirectory.DIRECTORY_SEPARATOR.'alpha.log';
+        $foreignPath = $foreignTenantDirectory.DIRECTORY_SEPARATOR.'beta.log';
+        File::put($localPath, 'alpha');
+        File::put($foreignPath, 'beta-tenant-secret');
+
+        $files = $this->app->make(LogReaderService::class)->getFiles();
+
+        $this->assertSame(['alpha.log'], array_column($files, 'name'));
+        $this->assertNotContains('beta.log', array_column($files, 'name'));
+        $this->assertNotContains($foreignPath, array_column($files, 'path'));
+    }
+
     public function test_inventory_root_is_application_owned_and_has_no_caller_selected_path(): void
     {
         $service = $this->app->make(LogReaderService::class);
@@ -105,5 +126,7 @@ class LogReaderGetFilesTerminalityTest extends TestCase
 
         $this->assertNull($constructor);
         $this->assertStringEndsWith(DIRECTORY_SEPARATOR.'logs', storage_path('logs'));
+        $this->assertNotSame(storage_path('tenant-alpha-logs'), storage_path('logs'));
+        $this->assertNotSame(storage_path('tenant-beta-logs'), storage_path('logs'));
     }
 }
