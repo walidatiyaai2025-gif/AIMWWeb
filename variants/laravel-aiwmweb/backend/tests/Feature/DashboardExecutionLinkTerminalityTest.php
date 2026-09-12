@@ -57,13 +57,13 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
     public function test_execution_workspace_enforces_permission_and_tenant_isolation(): void
     {
         $alphaUser = User::factory()->create();
-        $this->membership($alphaUser, 'alpha', ['tenant.view', 'execution.view']);
+        $this->membership($alphaUser, 'alpha', ['tenant.view', 'execution.view', 'operations.manage']);
 
         $betaUser = User::factory()->create();
-        $this->membership($betaUser, 'beta', ['tenant.view', 'execution.view']);
+        $this->membership($betaUser, 'beta', ['tenant.view', 'execution.view', 'operations.manage']);
 
         $restrictedUser = User::factory()->create();
-        $this->membership($restrictedUser, 'restricted', ['tenant.view']);
+        $this->membership($restrictedUser, 'restricted', ['tenant.view', 'execution.view']);
 
         $this->actingAs($alphaUser)
             ->get('/tenants/alpha/module/execution')
@@ -87,7 +87,8 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
         $this->assertStringContainsString('DashboardExecutionLinkControl context={context}', $appSource);
         $this->assertStringContainsString(self::OPERATION_ID, $controlSource);
         $this->assertStringContainsString('tenantUrl(context.tenant.slug, \'/module/execution\')', $controlSource);
-        $this->assertStringContainsString('context.permissions.includes(executionRoute.permission)', $controlSource);
+        $this->assertStringContainsString("hasPermission(context, 'operations.manage')", $controlSource);
+        $this->assertStringContainsString('hasPermission(context, executionRoute.permission)', $controlSource);
         $this->assertStringNotContainsString('to="/module/execution"', $controlSource);
     }
 
