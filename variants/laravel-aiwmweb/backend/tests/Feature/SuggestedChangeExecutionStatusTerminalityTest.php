@@ -50,6 +50,15 @@ class SuggestedChangeExecutionStatusTerminalityTest extends TestCase
         app(SuggestedChangeService::class)->SetExecutionStatusAsync($change->change_id, 'Succeeded');
     }
 
+    public function test_suggested_change_service_set_execution_status_async_resolves_change_before_status_switch(): void
+    {
+        [$tenant, $membership] = $this->membership(['operations.manage']);
+        app(TenantContext::class)->activate($tenant, $membership);
+
+        $this->expectException(ModelNotFoundException::class);
+        app(SuggestedChangeService::class)->SetExecutionStatusAsync((string) Str::uuid(), 'Succeeded');
+    }
+
     public function test_suggested_change_service_set_execution_status_async_fails_closed_without_permission(): void
     {
         [$tenant, $membership] = $this->membership([]);
