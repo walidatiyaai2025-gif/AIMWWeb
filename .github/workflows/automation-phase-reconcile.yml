@@ -1,0 +1,191 @@
+name: Reconcile final Automation phase
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-automation-phase-closure
+    paths:
+      - '.github/workflows/automation-phase-reconcile.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      PREVIOUS_RECONCILIATION_SHA: c658837a8a9d4659e9c8212a7cd69eddb40b666e
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bind exact pushed snapshot to final Automation evidence
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          source_sha = os.environ['SOURCE_SHA']
+          previous_sha = os.environ['PREVIOUS_RECONCILIATION_SHA']
+          root = Path('variants/laravel-aiwmweb')
+          manifest_path = root / 'docs/operation-parity-evidence-sources.json'
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          manifest['focused_closure_evidence_source_sha'] = source_sha
+          manifest['previous_reconciliation_sha'] = previous_sha
+          manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          target_ids = {
+              'AIMW-AUTO-2B8A1146F8','AIMW-AUTO-3C8B141746','AIMW-AUTO-4C1DD607BB',
+              'AIMW-AUTO-50F3EC7087','AIMW-AUTO-647F50CC73','AIMW-AUTO-66466C8C7F',
+              'AIMW-AUTO-6EB9542C7A','AIMW-AUTO-730076001E','AIMW-AUTO-7C13E2AA0B',
+              'AIMW-AUTO-AFDB35513B','AIMW-AUTO-B2CDFF403F','AIMW-AUTO-C11296372B',
+              'AIMW-AUTO-C4A8DCCFEF','AIMW-AUTO-CA7398A8F6','AIMW-AUTO-E4269EADC3',
+              'AIMW-AUTO-E57D5E6134','AIMW-AUTO-FE8B6EAC62','AIMW-AUTO-FF4812A204',
+          }
+          evidence_dir = root / 'docs/closure-evidence'
+          patched_service = 0
+          patched_background = 0
+          visible = 0
+          found = set()
+          for path in sorted(evidence_dir.glob('*.json')):
+              try:
+                  doc = json.loads(path.read_text(encoding='utf-8'))
+              except json.JSONDecodeError:
+                  continue
+              text = json.dumps(doc)
+              hits = target_ids.intersection(op for op in target_ids if op in text)
+              if not hits:
+                  continue
+              if len(hits) != 1:
+                  raise SystemExit(f'evidence file owns multiple target operations: {path}: {sorted(hits)}')
+              op = next(iter(hits))
+              if op in found:
+                  raise SystemExit(f'duplicate target evidence ownership: {op}')
+              found.add(op)
+              if isinstance(doc.get('service_closure_contract'), dict):
+                  if doc['service_closure_contract'].get('implementation_sha') != '__SOURCE_SHA__':
+                      raise SystemExit(f'unexpected service SHA placeholder state: {path}')
+                  doc['service_closure_contract']['implementation_sha'] = source_sha
+                  patched_service += 1
+              elif doc.get('evidence_mode') == 'focused_background_job_contract':
+                  if doc.get('source_sha') != '__SOURCE_SHA__':
+                      raise SystemExit(f'unexpected background SHA placeholder state: {path}')
+                  doc['source_sha'] = source_sha
+                  patched_background += 1
+              elif (doc.get('operation') or {}).get('kind') == 'visible_control':
+                  visible += 1
+              else:
+                  raise SystemExit(f'unrecognized target evidence contract: {path}')
+              path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          if found != target_ids:
+              raise SystemExit(f'target evidence mismatch missing={sorted(target_ids-found)} extra={sorted(found-target_ids)}')
+          if (patched_service, patched_background, visible) != (6, 3, 9):
+              raise SystemExit(f'contract distribution mismatch: service={patched_service} background={patched_background} visible={visible}')
+          print(f'EXACT_SOURCE_SHA={source_sha}')
+          print('TARGET_EVIDENCE=18')
+          PY
+      - name: Run canonical parity generator pipeline
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+      - name: Prove exact 18-operation Automation delta and full domain closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "$PREVIOUS_RECONCILIATION_SHA:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/previous.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          target = {
+              'AIMW-AUTO-2B8A1146F8','AIMW-AUTO-3C8B141746','AIMW-AUTO-4C1DD607BB',
+              'AIMW-AUTO-50F3EC7087','AIMW-AUTO-647F50CC73','AIMW-AUTO-66466C8C7F',
+              'AIMW-AUTO-6EB9542C7A','AIMW-AUTO-730076001E','AIMW-AUTO-7C13E2AA0B',
+              'AIMW-AUTO-AFDB35513B','AIMW-AUTO-B2CDFF403F','AIMW-AUTO-C11296372B',
+              'AIMW-AUTO-C4A8DCCFEF','AIMW-AUTO-CA7398A8F6','AIMW-AUTO-E4269EADC3',
+              'AIMW-AUTO-E57D5E6134','AIMW-AUTO-FE8B6EAC62','AIMW-AUTO-FF4812A204',
+          }
+          before = json.loads(Path('/tmp/previous.json').read_text())
+          after = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          b = {r['operation_id']: r for r in before['operations']}
+          a = {r['operation_id']: r for r in after['operations']}
+          changed = {op for op in a if a[op].get('migration_state') != b[op].get('migration_state')}
+          if changed != target:
+              raise SystemExit(f'exact delta violation missing={sorted(target-changed)} extra={sorted(changed-target)}')
+          for op in target:
+              if b[op]['migration_state'] != 'PENDING' or a[op]['migration_state'] != 'ADAPTED':
+                  raise SystemExit(f'non PENDING->ADAPTED transition: {op}: {b[op]["migration_state"]}->{a[op]["migration_state"]}')
+          totals = after['totals']
+          if (totals['total'], totals['terminal'], totals['pending'], totals['blocked']) != (931, 553, 378, 0):
+              raise SystemExit(f'unexpected totals: {totals}')
+          auto = after['by_domain']['automation']
+          if (auto['total'], auto['terminal'], auto['pending'], auto['blocked']) != (59, 59, 0, 0):
+              raise SystemExit(f'Automation domain not closed: {auto}')
+          if not after.get('validation', {}).get('passed'):
+              raise SystemExit('canonical validation did not pass')
+          print('EXACT_DELTA=18')
+          print('AUTOMATION=59/59')
+          print('PENDING_AUTOMATION=0')
+          print('BLOCKED=0')
+          PY
+      - name: Persist generator-owned canonical reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/automation-phase-reconcile.yml
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/closure-evidence \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'docs(laravel): close Automation parity phase 59 of 59'
+          git pull --rebase origin worker/laravel-aiwmweb-automation-phase-closure
+          git push origin HEAD:worker/laravel-aiwmweb-automation-phase-closure
