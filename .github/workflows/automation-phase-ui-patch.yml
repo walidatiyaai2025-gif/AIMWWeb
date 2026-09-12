@@ -16,6 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebase onto latest branch head before patching
+        run: |
+          git fetch origin worker/laravel-aiwmweb-automation-phase-closure
+          git rebase origin/worker/laravel-aiwmweb-automation-phase-closure
       - name: Apply exact UI bindings
         shell: bash
         run: |
@@ -92,4 +98,5 @@ jobs:
                   variants/laravel-aiwmweb/backend/resources/js/dashboard-execution-link-control.tsx
           git diff --cached --check
           git commit -m 'feat(laravel): bind final Automation visible controls'
+          git pull --rebase origin worker/laravel-aiwmweb-automation-phase-closure
           git push origin HEAD:worker/laravel-aiwmweb-automation-phase-closure
