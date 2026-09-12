@@ -11,6 +11,7 @@ import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
+import { ExecutionConnectSiteControl } from './execution-connect-site-control';
 import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
@@ -136,6 +137,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sites') return <><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
+    if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
