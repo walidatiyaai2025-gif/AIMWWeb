@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-151800BD9D",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "automation",
+    "kind": "visible_control",
+    "route_screen": "/",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Home.razor",
+    "source_intent": "Home execution navigation to /module/execution",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/dashboard-execution-link-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "target": "/tenants/{activeTenant}/module/execution",
+    "target_authority": "canonical.workspace.execution",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController",
+    "control_permissions": [
+      "execution.view",
+      "operations.manage"
+    ],
+    "target_middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "target_semantics": "existing guarded Execution Center workspace using authoritative tenant context"
+  },
+  "security": {
+    "control_visibility_permissions": [
+      "execution.view",
+      "operations.manage"
+    ],
+    "tenant_selector": "authoritative FrontendContext tenant slug only, URL encoded through tenantUrl",
+    "missing_operations_manage": "control suppressed; direct destination fails 403",
+    "foreign_tenant": "direct destination fails 404",
+    "direct_resource_id": false,
+    "server_mutation": false,
+    "provider_mutation": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardExecutionLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-execution-link-control.test.ts",
+    "coverage": [
+      "exact canonical operation identity",
+      "active-tenant-only URL construction through tenantUrl",
+      "execution.view plus operations.manage visibility contract",
+      "wildcard permission semantics",
+      "existing canonical Execution Center route authority",
+      "authorized same-tenant access",
+      "missing-operations.manage 403 and foreign-tenant 404 fail-closed behavior",
+      "no mutation or fake success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-AUTO-151800BD9D"
+    ],
+    "provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-AUTO-151800BD9D-slot0283",
+    "pull_request": 483,
+    "implementation_test_snapshot_sha": "1580123ec450d4d4471f2ba4408020fc2b09f989",
+    "recovery_reason": "existing parity PR required task-local authorization alignment and generator-backed closure evidence before integration"
+  },
+  "ci_policy": {
+    "required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ],
+    "exact_final_pushed_head_required": true,
+    "status_at_evidence_commit": "pending generator-backed reconciliation and exact-head repository validation"
+  }
+}
