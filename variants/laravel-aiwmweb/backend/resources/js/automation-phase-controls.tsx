@@ -37,10 +37,6 @@ function canOpen(context: FrontendContext, routeKey: string, extraPermission?: s
 export function AutomationPhaseNavigationControls({ context, routeKey }: { context: FrontendContext; routeKey: string }) {
     const { locale } = useLocale();
 
-    if (routeKey === 'dashboard' && canOpen(context, 'execution', 'operations.manage')) {
-        return <Link className="btn" data-canonical-operation={HOME_EXECUTION_LINK_OPERATION_ID} to={tenantUrl(context.tenant.slug, '/module/execution')}>▶ {locale === 'ar' ? 'مركز التنفيذ' : 'Execution Center'}</Link>;
-    }
-
     if (routeKey === 'pages' && canOpen(context, 'execution', 'operations.manage')) {
         return <Link className="btn" data-canonical-operation={PAGES_EXECUTION_LINK_OPERATION_ID} to={tenantUrl(context.tenant.slug, '/module/execution')}>▶ {locale === 'ar' ? 'التنفيذ' : 'Execution'}</Link>;
     }
