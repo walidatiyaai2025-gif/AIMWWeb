@@ -34,7 +34,7 @@ class SiteEmailRecipientAddTerminalityTest extends TestCase
         $this->assertNotNull($operation);
         $this->assertSame('billing', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
-        $this->assertTrue((bool) $operation['mutation']);
+        $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
         $this->assertSame(
             'src/AIWordPressManager.Web/Components/Pages/SiteEmailSettings.razor',
