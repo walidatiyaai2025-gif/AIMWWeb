@@ -166,7 +166,7 @@ jobs:
           totals = after['totals']
           if (totals['total'], totals['terminal'], totals['pending'], totals['blocked']) != (931, 553, 378, 0):
               raise SystemExit(f'unexpected totals: {totals}')
-          auto = after['by_domain']['automation']
+          auto = after['domains']['automation']
           if (auto['total'], auto['terminal'], auto['pending'], auto['blocked']) != (59, 59, 0, 0):
               raise SystemExit(f'Automation domain not closed: {auto}')
           if not after.get('validation', {}).get('passed'):
