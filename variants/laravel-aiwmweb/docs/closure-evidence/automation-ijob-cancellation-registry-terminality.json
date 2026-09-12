@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "evidence_mode": "focused_background_job_contract",
+  "operation_id": "AIMW-AUTO-AFDB35513B",
+  "domain": "automation",
+  "terminal_state": "ADAPTED",
+  "source_sha": "__SOURCE_SHA__",
+  "canonical_identity": "IJobCancellationRegistry",
+  "laravel": {
+    "destination": "variants/laravel-aiwmweb/backend/app/Jobs/AutomationBackgroundContracts.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseBackgroundContractsTest.php"
+  },
+  "security": {
+    "tenant_isolation": "focused tenant A/B partition proof",
+    "stale_identity": "registration-id stale safety proof"
+  }
+}
