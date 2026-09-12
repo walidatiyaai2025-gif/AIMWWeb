@@ -1,4 +1,4 @@
-name: Slot 0295 focused diagnosis
+name: Slot 0295 full diagnosis
 
 on:
   push:
@@ -26,8 +26,7 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.example .env
       - run: php artisan key:generate
-      - name: Run focused Slot0295 test and capture output
-        id: focused
+      - name: Run full PHP suite and capture output
         shell: bash
         env:
           DB_CONNECTION: sqlite
@@ -37,13 +36,27 @@ jobs:
           QUEUE_CONNECTION: sync
         run: |
           set +e
-          php artisan test tests/Feature/ContentExplorerExecutionLinkTerminalityTest.php --testdox > "$GITHUB_WORKSPACE/slot0295-test-output.txt" 2>&1
+          php artisan test --testdox > "$GITHUB_WORKSPACE/slot0295-full-test-output.txt" 2>&1
           rc=$?
-          cat "$GITHUB_WORKSPACE/slot0295-test-output.txt"
-          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_WORKSPACE/slot0295-full-test-output.txt"
+          printf '%s\n' "$rc" > "$GITHUB_WORKSPACE/slot0295-full-test-exit-code.txt"
           exit 0
+      - name: Export exact remaining Automation rows
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('../docs/operation-parity-reconciliation.json')
+          data = json.loads(p.read_text())
+          rows = [r for r in data['operations'] if r.get('domain') == 'automation' and r.get('migration_state') == 'PENDING']
+          Path('../../../slot0295-pending-automation.json').write_text(json.dumps(rows, indent=2), encoding='utf-8')
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: slot0295-test-output
-          path: slot0295-test-output.txt
+          name: slot0295-diagnosis
+          path: |
+            slot0295-full-test-output.txt
+            slot0295-full-test-exit-code.txt
+            slot0295-pending-automation.json
           if-no-files-found: error
