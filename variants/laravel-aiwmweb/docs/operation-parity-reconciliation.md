@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 555 |
-| PENDING | 376 |
+| ADAPTED | 556 |
+| PENDING | 375 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 555 |
-| OVERALL_PARITY_PERCENT | 59.61% |
+| TERMINAL | 556 |
+| OVERALL_PARITY_PERCENT | 59.72% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -39,7 +39,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | email | 82 | 0 | 57 | 25 | 0 | 0 | 57 | 69.51% |
 | identity | 7 | 0 | 0 | 7 | 0 | 0 | 0 | 0.00% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
-| operations | 5 | 0 | 2 | 3 | 0 | 0 | 2 | 40.00% |
+| operations | 5 | 0 | 3 | 2 | 0 | 0 | 3 | 60.00% |
 | platform | 18 | 0 | 9 | 9 | 0 | 0 | 9 | 50.00% |
 | reports | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
-| service | 349 | 0 | 344 | 5 | 0 | 0 | 344 | 98.57% |
+| service | 349 | 0 | 345 | 4 | 0 | 0 | 345 | 98.85% |
 | visible_control | 446 | 0 | 112 | 334 | 0 | 0 | 112 | 25.11% |
 
 ## Reproducibility / guard results
@@ -67,7 +67,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **38**
 - Focused visible-control contracts: **112**
-- Focused service contracts: **27**
+- Focused service contracts: **28**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
@@ -385,10 +385,9 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-MEDI-8F93BEDD59`
 - `AIMW-MEDI-F55A549341`
 
-### operations (3)
+### operations (2)
 
 - `AIMW-OPER-21EC1BDE45`
-- `AIMW-OPER-55C6982761`
 - `AIMW-OPER-85A7A01127`
 
 ### platform (9)
