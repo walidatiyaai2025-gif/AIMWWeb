@@ -5,6 +5,7 @@ import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletConte
 import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
 import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
 import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
+import { AutomationPhaseNavigationControls } from './automation-phase-controls';
 import { AiWorkspaceHub } from './ai-workspace-hub';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
@@ -96,6 +97,7 @@ function TenantBootstrap() {
             <AppShell context={context}>
                 <CurrentUserSiteDetailsControl context={context} />
                 <MainLayoutParityControls context={context} />
+                <AutomationPhaseNavigationControls context={context} />
                 <Outlet context={{ context } satisfies OutletState} />
             </AppShell>
         </ToastProvider>

@@ -4,6 +4,7 @@ import { tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const DASHBOARD_EXECUTION_LINK_OPERATION_ID = 'AIMW-AUTO-151800BD9D';
+export const HOME_EXECUTION_LINK_OPERATION_ID = 'AIMW-AUTO-66466C8C7F';
 
 export function dashboardExecutionHref(context: FrontendContext): string {
     return tenantUrl(context.tenant.slug, '/module/execution');
@@ -36,6 +37,7 @@ export function DashboardExecutionLinkControl({ context }: { context: FrontendCo
                 <Link
                     className="btn"
                     data-canonical-operation={DASHBOARD_EXECUTION_LINK_OPERATION_ID}
+                    data-home-canonical-operation={HOME_EXECUTION_LINK_OPERATION_ID}
                     to={dashboardExecutionHref(context)}
                 >
                     ▶ {locale === 'ar' ? 'التنفيذ' : 'Execution'}

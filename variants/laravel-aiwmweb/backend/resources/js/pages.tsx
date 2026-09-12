@@ -16,6 +16,7 @@ import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StateP
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { prepareActionRequest } from './action-contract';
+import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
@@ -210,9 +211,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? ((query.data as CollectionEnvelope).meta ?? null)
         : null;
     const aiCenterSites = Array.isArray(aiCenterMeta?.sites) ? aiCenterMeta.sites : [];
-    const refreshOperationId = route.key === 'ai-center'
-        ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
-        : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined);
+    const refreshOperationId = AUTOMATION_PHASE_REFRESH_OPERATIONS[route.key]
+        ?? (route.key === 'ai-center'
+            ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
+            : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined));
 
     return (
         <div className="workspace-stack">
@@ -248,7 +250,23 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 : (locale === 'ar' ? 'تحديث البيانات' : 'Refresh data'))
                             : text(commonText.refresh)}
                     </button>
-                    {route.controls?.map((actionKey) => <ActionButton key={actionKey} route={route} actionKey={actionKey} context={context} onAvailable={(contract) => setDialog({ key: actionKey, contract })} />)}
+                    {route.controls?.map((actionKey) => {
+                        const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
+                        return (
+                            <span key={actionKey} data-canonical-operation={canonicalOperation}>
+                                <ActionButton route={route} actionKey={actionKey} context={context} onAvailable={(contract) => setDialog({ key: actionKey, contract })} />
+                            </span>
+                        );
+                    })}
+                    {route.key === 'schedules' ? (
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={SCHEDULE_CANCEL_EDIT_OPERATION_ID}
+                            disabled={!dialog}
+                            onClick={() => setDialog(null)}
+                        >{locale === 'ar' ? 'إلغاء التعديل' : 'Cancel edit'}</button>
+                    ) : null}
                 </div>
             </section>
             {aiCenterMeta ? (
