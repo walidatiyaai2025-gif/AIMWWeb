@@ -8,7 +8,7 @@
     "kind": "visible_control",
     "terminal_state": "ADAPTED",
     "tenant_owned": true,
-    "mutation": true
+    "mutation": false
   },
   "acceptance": {
     "production_marker": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
