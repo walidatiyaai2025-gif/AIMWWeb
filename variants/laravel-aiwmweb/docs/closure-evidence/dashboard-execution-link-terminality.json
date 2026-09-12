@@ -73,6 +73,9 @@
     "recovery_branch": "worker/laravel-aiwmweb-AIMW-AUTO-151800BD9D-slot0283",
     "pull_request": 483,
     "implementation_test_snapshot_sha": "1580123ec450d4d4471f2ba4408020fc2b09f989",
+    "focused_closure_evidence_source_sha": "6abcdaf40002c1500241fb943d9cd6618118d61b",
+    "generator_reconciliation_snapshot_sha": "e3203620fd49cb7d89b73ddd108ec9e44b2f3cde",
+    "generator_result": "931 TOTAL / 533 TERMINAL / 398 PENDING / 0 BLOCKED; only AIMW-AUTO-151800BD9D changed migration_state from PENDING to ADAPTED",
     "recovery_reason": "existing parity PR required task-local authorization alignment and generator-backed closure evidence before integration"
   },
   "ci_policy": {
@@ -85,6 +88,6 @@
       "Laravel AIWMWeb Convergence Preflight"
     ],
     "exact_final_pushed_head_required": true,
-    "status_at_evidence_commit": "pending generator-backed reconciliation and exact-head repository validation"
+    "status_at_evidence_commit": "generator-backed reconciliation complete; exact-final-head repository validation required before merge"
   }
 }
