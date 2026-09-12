@@ -30,7 +30,7 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('automation', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/', $operation['route_screen']);
@@ -56,6 +56,8 @@ class DashboardExecutionLinkTerminalityTest extends TestCase
 
     public function test_execution_workspace_enforces_permission_and_tenant_isolation(): void
     {
+        $this->withoutVite();
+
         $alphaUser = User::factory()->create();
         $this->membership($alphaUser, 'alpha', ['tenant.view', 'execution.view', 'operations.manage']);
 
