@@ -1,0 +1,66 @@
+name: Laravel AIWMWeb Slot0469 Materialize Sign-out Evidence
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.pull_request.number == 495 && github.head_ref == 'worker/laravel-iden-bf78057c28-signout'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-iden-bf78057c28-signout
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Advance exact focused evidence source
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['focused_closure_evidence_source_sha'] = '188e8bf867d6c6d75e387d70f126f804d1e59f15'
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+      - name: Generate canonical reconciliation
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+      - name: Assert exact one-operation delta
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json', encoding='utf-8'))
+          r=next(x for x in p['operations'] if x['operation_id']=='AIMW-IDEN-BF78057C28')
+          assert r['migration_state']=='ADAPTED', r
+          assert r['reconciliation']['evidence_mode']=='focused_closure_contract', r
+          assert p['totals']['total']==931, p['totals']
+          assert p['totals']['terminal']==562, p['totals']
+          assert p['totals']['pending']==369, p['totals']
+          assert p['totals']['blocked']==0, p['totals']
+          assert p['domains']['identity']['terminal']==1, p['domains']['identity']
+          PY
+      - name: Commit durable generated outputs
+        run: |
+          rm .github/workflows/laravel-aiwmweb-slot0469-source-materialize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md .github/workflows/laravel-aiwmweb-slot0469-source-materialize.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'docs(laravel): terminalize AIMW-IDEN-BF78057C28 via generator'
+          git push origin HEAD:worker/laravel-iden-bf78057c28-signout
