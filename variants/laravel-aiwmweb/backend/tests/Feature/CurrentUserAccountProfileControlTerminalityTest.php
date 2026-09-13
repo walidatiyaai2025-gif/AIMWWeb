@@ -74,11 +74,16 @@ class CurrentUserAccountProfileControlTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('id="app"', false);
 
-        $this->actingAs($user)
+        $context = $this->actingAs($user)
             ->getJson('/tenants/alpha/context')
             ->assertOk()
-            ->assertJsonPath('tenant.slug', 'alpha')
-            ->assertJsonPath('api.account.profile', '/tenants/alpha/route-api/account-profile');
+            ->json();
+
+        $this->assertSame('alpha', data_get($context, 'tenant.slug'));
+        $this->assertSame(
+            '/tenants/alpha/route-api/account-profile',
+            $context['api']['account.profile'] ?? null,
+        );
 
         $this->actingAs($user)
             ->getJson('/tenants/alpha/route-api/account-profile')
