@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 560,
-    "pending": 371,
+    "adapted": 561,
+    "pending": 370,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 560,
-    "overall_parity_percent": 60.15
+    "terminal": 561,
+    "overall_parity_percent": 60.26
   },
   "visible_controls": {
     "total": 446,
@@ -82,12 +82,12 @@
     "billing": {
       "total": 178,
       "ported": 0,
-      "adapted": 87,
-      "pending": 91,
+      "adapted": 88,
+      "pending": 90,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 87,
-      "percent": 48.88
+      "terminal": 88,
+      "percent": 49.44
     },
     "comments": {
       "total": 8,
@@ -9617,21 +9617,31 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Services/InternalLinkSuggestionService.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/InternalLinkSuggestionServiceTerminalityTest.php",
+      "evidence": "Focused service closure@b5b678a32bcb2bf896ba58155a31c2e554e4c71b: variants/laravel-aiwmweb/backend/app/Services/InternalLinkSuggestionService.php; operation:AIMW-BILL-90CF990147; test:variants/laravel-aiwmweb/backend/tests/Feature/InternalLinkSuggestionServiceTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/internal-link-suggestion-generate-async-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (5 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-BILL-90CF990147",
+        "source_sha": "b5b678a32bcb2bf896ba58155a31c2e554e4c71b",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Services/InternalLinkSuggestionService.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/internal-link-suggestion-generate-async-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-90CF990147",
+          "service:InternalLinkSuggestionService",
+          "member:GenerateAsync",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/InternalLinkSuggestionServiceTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/internal-link-suggestion-generate-async-terminality.json",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -34625,12 +34635,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 348,
-      "pending": 1,
+      "adapted": 349,
+      "pending": 0,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 348,
-      "percent": 99.71
+      "terminal": 349,
+      "percent": 100.0
     },
     "visible_control": {
       "total": 446,
@@ -34702,7 +34712,6 @@
       "AIMW-BILL-8BE4A39748",
       "AIMW-BILL-8DD8F167D3",
       "AIMW-BILL-8F4FA80ED6",
-      "AIMW-BILL-90CF990147",
       "AIMW-BILL-9414B3FFEF",
       "AIMW-BILL-94755B17E4",
       "AIMW-BILL-9DD2652E1E",
@@ -35575,6 +35584,7 @@
       "AIMW-AUTO-8836C7A28A",
       "AIMW-AUTO-730076001E",
       "AIMW-AUTO-4C1DD607BB",
+      "AIMW-BILL-90CF990147",
       "AIMW-OPER-85A7A01127",
       "AIMW-OPER-FC4C071FAA",
       "AIMW-PLAT-15C5517022",
@@ -35587,7 +35597,7 @@
       "AIMW-AUTO-1584B94390",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 31,
+    "focused_service_contract_count": 32,
     "focused_background_job_contract_terminals": [
       "AIMW-AUTO-13392A9E67",
       "AIMW-AUTO-50F3EC7087",
