@@ -18,7 +18,7 @@ class CurrentUserSignOutTerminalityTest extends TestCase
     public function test_exact_canonical_operation_is_the_pending_current_user_sign_out_control(): void
     {
         $document = json_decode(
-            (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
+            (string) file_get_contents(base_path('../docs/capability-parity-ledger.json')),
             true,
             512,
             JSON_THROW_ON_ERROR,
