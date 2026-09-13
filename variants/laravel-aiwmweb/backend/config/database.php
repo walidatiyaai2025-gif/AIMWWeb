@@ -32,6 +32,11 @@ return [
 
     'connections' => [
 
+        /*
+         * Canonical parity adapter for ApplicationPathService.GetDatabasePath
+         * (AIMW-PLAT-F6C1A04662). Laravel resolves the database locator from
+         * application configuration; the SQLite fallback remains application-owned.
+         */
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
