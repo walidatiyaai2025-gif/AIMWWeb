@@ -1,0 +1,149 @@
+{
+  "schema_version": 2,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "wave": "route-release-notes-convergence",
+  "integration_base": "codex/laravel-issue257-route-api-next-discovery",
+  "integration_base_sha": "1d290c243a3ec22d7ac54d955351930b1c11144d",
+  "implementation_branch": "worker/laravel-aiwmweb-release-notes-route-terminality",
+  "implementation_snapshot_sha": "e0f62ed865a2d4ed1177d19c0891e3600ea759e6",
+  "inventory": {
+    "pending_route_api_rows_found": 92,
+    "pending_routes_found": 84,
+    "pending_apis_found": 8,
+    "terminalized_by_implementation_snapshot": 38,
+    "still_pending_after_this_snapshot": 54,
+    "generated_reconciliation_modified": false
+  },
+  "terminalized_by_domain": {
+    "ai": 1,
+    "automation": 5,
+    "backup": 2,
+    "billing": 1,
+    "comments": 2,
+    "content": 16,
+    "email": 3,
+    "media": 2,
+    "operations": 1,
+    "platform": 2,
+    "sync": 1,
+    "taxonomy": 2
+  },
+  "operations": [
+    {"operation_id":"AIMW-CONT-D828690844","source_route":"/sites","canonical_route":"/tenants/{tenant}/sites","proof":"explicit guarded workspace + tenant-scoped SiteManagementController::index"},
+    {"operation_id":"AIMW-EMAI-2E95AF6C05","source_route":"/notifications","canonical_route":"/tenants/{tenant}/notifications","proof":"explicit guarded workspace + tenant/user-scoped notification API"},
+    {"operation_id":"AIMW-EMAI-78352CD34E","source_route":"/email/history","canonical_route":"/tenants/{tenant}/email/history","proof":"explicit guarded workspace + tenant-scoped email delivery history API"},
+    {"operation_id":"AIMW-BACK-66BFA49775","source_route":"/module/backups","canonical_route":"/tenants/{tenant}/module/backups","proof":"explicit guarded workspace + persisted tenant backup API"},
+    {"operation_id":"AIMW-CONT-DF483546DA","source_route":"/module/logs","canonical_route":"/tenants/{tenant}/module/logs","proof":"explicit guarded workspace + tenant-scoped operations log API"},
+    {"operation_id":"AIMW-CONT-FBD0368CAA","source_route":"/operations","canonical_route":"/tenants/{tenant}/operations","proof":"explicit guarded workspace + tenant-scoped operations API"},
+    {"operation_id":"AIMW-CONT-BB5B32880A","source_route":"/admin/application-users","canonical_route":"/tenants/{tenant}/admin/application-users","proof":"authorized legacy redirect to guarded application users workspace"},
+    {"operation_id":"AIMW-CONT-1DA83B9262","source_route":"/settings/sessions","canonical_route":"/tenants/{tenant}/settings/sessions","proof":"authorized legacy redirect to guarded session workspace"},
+    {"operation_id":"AIMW-CONT-9B8574AA90","source_route":"/logs","canonical_route":"/tenants/{tenant}/logs","proof":"authorized legacy redirect to guarded logs workspace"},
+    {"operation_id":"AIMW-CONT-E14274269E","source_route":"/operations/hub","canonical_route":"/tenants/{tenant}/operations/hub","proof":"authorized legacy redirect to guarded operations workspace"},
+    {"operation_id":"AIMW-BACK-979DEF54FA","source_route":"/backups","canonical_route":"/tenants/{tenant}/backups","proof":"authorized legacy redirect to guarded backups workspace"},
+    {"operation_id":"AIMW-CONT-4A295D45D4","source_route":"/module/posts","canonical_route":"/tenants/{tenant}/module/posts","proof":"explicit guarded site-bound workspace; active tenant-owned Site is resolved before rendering and API discovery"},
+    {"operation_id":"AIMW-CONT-EA0DDC0ABE","source_route":"/module/pages","canonical_route":"/tenants/{tenant}/module/pages","proof":"explicit guarded site-bound workspace; active tenant-owned Site is resolved before rendering and API discovery"},
+    {"operation_id":"AIMW-MEDI-BF81D0B635","source_route":"/module/media","canonical_route":"/tenants/{tenant}/module/media","proof":"explicit guarded site-bound workspace with bound media API"},
+    {"operation_id":"AIMW-COMM-C2DDF5DAE3","source_route":"/module/comments","canonical_route":"/tenants/{tenant}/module/comments","proof":"explicit guarded site-bound workspace with bound comments API"},
+    {"operation_id":"AIMW-TAXO-AEEE1025B9","source_route":"/module/taxonomy","canonical_route":"/tenants/{tenant}/module/taxonomy","proof":"explicit guarded site-bound workspace with bound taxonomy API"},
+    {"operation_id":"AIMW-SYNC-1C799B7D70","source_route":"/module/sync","canonical_route":"/tenants/{tenant}/module/sync","proof":"explicit guarded site-bound workspace with bound sync API"},
+    {"operation_id":"AIMW-COMM-A16719E105","source_route":"/sites/{SiteId:guid}/comments","canonical_route":"/tenants/{tenant}/sites/{site}/comments","proof":"tenant-scoped site lookup fails closed before redirecting to bound comments workspace"},
+    {"operation_id":"AIMW-MEDI-8BADBE1261","source_route":"/sites/{SiteId:guid}/media","canonical_route":"/tenants/{tenant}/sites/{site}/media","proof":"tenant-scoped site lookup fails closed before redirecting to bound media workspace"},
+    {"operation_id":"AIMW-TAXO-CDC6948A06","source_route":"/sites/{SiteId:guid}/taxonomy","canonical_route":"/tenants/{tenant}/sites/{site}/taxonomy","proof":"tenant-scoped site lookup fails closed before redirecting to bound taxonomy workspace"},
+    {"operation_id":"AIMW-AI-C37F405767","source_route":"/sites/{Id:guid}","canonical_route":"/tenants/{tenant}/sites/{site}","proof":"explicit guarded site-details workspace performs tenant-scoped Site lookup before rendering, binds the site into session context, publishes sites.detail.<id> to the real SiteManagementController::show endpoint, and foreign site ids fail closed"},
+    {"operation_id":"AIMW-CONT-5D18F49928","source_route":"/module/reports","canonical_route":"/tenants/{tenant}/module/reports","proof":"explicit reports workspace + GET collection adapter over persisted report operations"},
+    {"operation_id":"AIMW-CONT-8140D785B5","source_route":"/reports","canonical_route":"/tenants/{tenant}/reports","proof":"authorized alias to guarded reports workspace backed by GET report collection adapter"},
+    {"operation_id":"AIMW-CONT-9B87A269F3","source_route":"/site-operations","canonical_route":"/tenants/{tenant}/site-operations","proof":"explicit guarded workspace + tenant-scoped site operation history adapter"},
+    {"operation_id":"AIMW-CONT-D76D83682F","source_route":"/operations/sites","canonical_route":"/tenants/{tenant}/operations/sites","proof":"authorized alias to guarded site-operations workspace"},
+    {"operation_id":"AIMW-AUTO-38567579D6","source_route":"/automation-center","canonical_route":"/tenants/{tenant}/automation-center","proof":"explicit guarded workspace + real tenant automation service"},
+    {"operation_id":"AIMW-AUTO-F12BC80C1B","source_route":"/automation-schedules","canonical_route":"/tenants/{tenant}/automation-schedules","proof":"authorized alias to guarded schedules workspace"},
+    {"operation_id":"AIMW-AUTO-1546E5BCAF","source_route":"/module/schedules","canonical_route":"/tenants/{tenant}/module/schedules","proof":"explicit guarded workspace + persisted schedule API"},
+    {"operation_id":"AIMW-AUTO-6522502C20","source_route":"/execution-center","canonical_route":"/tenants/{tenant}/execution-center","proof":"authorized alias to guarded execution workspace"},
+    {"operation_id":"AIMW-AUTO-968FD60A95","source_route":"/module/execution","canonical_route":"/tenants/{tenant}/module/execution","proof":"explicit guarded workspace + tenant-scoped operations API"},
+    {"operation_id":"AIMW-BILL-2FFFC55BAB","source_route":"/account/billing","canonical_route":"/tenants/{tenant}/account/billing","proof":"explicit guarded billing workspace + GET collection-shaped billing overview adapter for subscription, entitlements and usage"},
+    {"operation_id":"AIMW-CONT-FB7F9189C0","source_route":"/account/profile","canonical_route":"/tenants/{tenant}/account/profile","proof":"explicit guarded account workspace + current tenant membership profile adapter"},
+    {"operation_id":"AIMW-PLAT-A91A2B0B11","source_route":"/api/build","canonical_route":"/api/build","proof":"authenticated PlatformReadController build metadata response with execution.view authorization and fail-closed tenant selection"},
+    {"operation_id":"AIMW-PLAT-FAC7505B26","source_route":"/api/dashboard","canonical_route":"/api/dashboard","proof":"authenticated PlatformReadController dashboard over real tenant-scoped Site, ContentItem, MediaItem and Execution persistence with fail-closed tenant selection"},
+    {"operation_id":"AIMW-EMAI-2D94EFDD53","source_route":"/api/notifications","canonical_route":"/api/notifications","proof":"authenticated legacy notification adapter ignores caller userId, enforces execution.view, binds a safe active tenant and returns only persisted current-user notifications"},
+    {"operation_id":"AIMW-OPER-ABB41FC891","source_route":"/login","canonical_route":"/login","proof":"explicit anonymous LoginReadController renders the canonical sign-in entry page, escapes caller-supplied error text, constrains returnUrl to safe local paths, and redirects authenticated users only to a validated local path or the landing page"},
+    {"operation_id":"AIMW-CONT-81B4B20D2D","source_route":"/about-build","canonical_route":"/tenants/{tenant}/about-build","proof":"explicit auth and tenant-context AboutBuildReadController renders live build metadata from the same BuildInformationReadService used by /api/build, exposes the source /release-notes alias, reports an honest empty release-notes state when no authoritative history source is available, and fails closed on tenant or permission mismatch"},
+    {"operation_id":"AIMW-CONT-110268CC96","source_route":"/release-notes","canonical_route":"/tenants/{tenant}/release-notes","proof":"distinct canonical source route resolves to the explicit auth and tenant-context AboutBuildReadController rather than the generic tenant fallback, renders the same authoritative build snapshot and truthful release-history state as /about-build, and fails closed for missing tenant.view or foreign tenant access"}
+  ],
+  "acceptance_evidence": {
+    "inventory_test": "RouteApiTerminalityInventoryTest::test_live_reconciliation_inventory_and_both_passes_claim_only_real_pending_rows",
+    "route_order_test": "RouteApiTerminalityInventoryTest::test_artisan_route_list_contains_explicit_guarded_canonical_routes_before_fallback",
+    "controller_binding_test": "RouteApiTerminalityInventoryTest::test_backing_routes_resolve_to_real_controllers_and_are_tenant_guarded",
+    "site_binding_tests": [
+      "RouteApiTerminalityInventoryTest::test_site_bound_workspaces_publish_fully_bound_real_api_contracts",
+      "RouteApiTerminalityInventoryTest::test_site_binding_fails_closed_for_missing_ambiguous_foreign_invalid_and_stale_sites",
+      "RouteApiTerminalityInventoryTest::test_site_specific_aliases_validate_site_ownership_before_redirecting"
+    ],
+    "site_details_route_tests": [
+      "SiteDetailsRouteTerminalityTest::test_site_details_route_is_explicit_guarded_and_precedes_spa_fallback",
+      "SiteDetailsRouteTerminalityTest::test_opening_site_details_binds_real_detail_api_for_the_same_tenant_site",
+      "SiteDetailsRouteTerminalityTest::test_site_details_fails_closed_for_foreign_site_and_missing_site_view_permission"
+    ],
+    "response_semantics_test": "RouteApiTerminalityInventoryTest::test_second_pass_read_routes_use_real_services_and_preserve_response_semantics",
+    "authorization_test": "RouteApiTerminalityInventoryTest::test_routes_fail_closed_for_wrong_tenant_or_missing_view_and_service_permissions",
+    "platform_read_api_tests": [
+      "PlatformReadApiTerminalityTest::test_canonical_platform_reads_require_authentication_and_resolve_to_real_controller",
+      "PlatformReadApiTerminalityTest::test_single_tenant_build_and_dashboard_return_real_scoped_state",
+      "PlatformReadApiTerminalityTest::test_multi_tenant_requests_fail_closed_until_explicit_tenant_is_selected",
+      "PlatformReadApiTerminalityTest::test_platform_reads_require_the_operations_read_equivalent_permission"
+    ],
+    "legacy_notification_api_tests": [
+      "LegacyNotificationApiTerminalityTest::test_legacy_notification_read_requires_auth_and_resolves_to_real_controller",
+      "LegacyNotificationApiTerminalityTest::test_caller_supplied_user_id_is_ignored_and_filters_apply_to_current_user_only",
+      "LegacyNotificationApiTerminalityTest::test_multi_tenant_legacy_reads_fail_closed_and_explicit_selection_is_isolated",
+      "LegacyNotificationApiTerminalityTest::test_legacy_notification_read_requires_operations_read_equivalent_permission"
+    ],
+    "login_read_api_tests": [
+      "LoginReadApiTerminalityTest::test_canonical_row_is_the_pending_low_risk_get_login_contract",
+      "LoginReadApiTerminalityTest::test_login_get_is_anonymous_and_resolves_to_a_real_controller",
+      "LoginReadApiTerminalityTest::test_anonymous_login_renders_real_form_and_escapes_read_inputs",
+      "LoginReadApiTerminalityTest::test_authenticated_login_redirects_only_to_safe_local_paths"
+    ],
+    "about_build_route_tests": [
+      "AboutBuildRouteTerminalityTest::test_canonical_reconciliation_row_is_the_pending_about_build_route",
+      "AboutBuildRouteTerminalityTest::test_canonical_reconciliation_row_is_the_distinct_pending_release_notes_route",
+      "AboutBuildRouteTerminalityTest::test_about_build_and_release_notes_alias_are_explicit_guarded_routes",
+      "AboutBuildRouteTerminalityTest::test_guest_is_redirected_to_login_for_both_source_routes",
+      "AboutBuildRouteTerminalityTest::test_authorized_tenant_member_sees_live_build_metadata_and_truthful_release_empty_state",
+      "AboutBuildRouteTerminalityTest::test_both_source_routes_fail_closed_for_missing_permission_and_foreign_tenant"
+    ],
+    "parent_snapshot_ci": {
+      "snapshot": "1d290c243a3ec22d7ac54d955351930b1c11144d",
+      "laravel_aiwmweb_acceptance": "success",
+      "laravel_aiwmweb_cross_domain_security": "success",
+      "pr_plan_link": "success",
+      "sqlite_full_suite": "success",
+      "mysql_full_suite": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest": "success",
+      "frontend": "success",
+      "production_compose_smoke": "success"
+    },
+    "current_pr_ci": "pending"
+  },
+  "remaining_blockers": {
+    "parallel_owned_api_rows": ["AIMW-CONT-2F2E40D7F0", "AIMW-CONT-270F69CE9A"],
+    "unsafe_or_missing_api_contracts": ["AIMW-CONT-475267F150", "AIMW-PLAT-18A8EE0324"],
+    "route_conflicts_with_existing_json_api": ["AIMW-CONT-6B051BD8C0", "AIMW-CONT-9CF12067E6"],
+    "unclaimed_route_rows": "The implementation snapshot intentionally leaves every route/API row not present in operations[] unclaimed; downstream reconciliation must derive the exact remaining 54 rows from the canonical operation reconciliation rather than infer completion from the generic tenant fallback."
+  },
+  "notes": [
+    "This evidence cumulatively converges the prior 37 terminal Route/API operations plus the distinct canonical /release-notes route from the current wave.",
+    "No visible_control row is claimed by this evidence file; AIMW-CONT-EBD53650BC and AIMW-SYNC-68B372C9FE remain explicitly unclaimed.",
+    "No generated canonical reconciliation output is edited by this worker.",
+    "The source /about-build and /release-notes directives share the same authoritative AboutBuild.razor page; Laravel preserves that relationship by routing both tenant-scoped paths to the same guarded AboutBuildReadController and shared read model.",
+    "No synthetic release history is emitted when an authoritative release-notes source is unavailable; the rendered empty state matches the source behavior.",
+    "The existing /api/build authorization and tenant-selection contract remains unchanged.",
+    "The GET /login source contract remains anonymous and read-only; this wave does not alter authentication mutations.",
+    "The source GUID site-details route is adapted to the Laravel tenant-owned integer Site key already used consistently by the target variant; no cross-tenant identifier translation is performed.",
+    "Tenant-less canonical APIs fail closed when the authenticated user has multiple active tenant memberships and no explicit tenant selector where tenant selection is required.",
+    "The legacy notification userId query parameter is compatibility-only and is never an ownership selector.",
+    "A generic tenant fallback by itself is explicitly insufficient for terminality.",
+    "Counts are evidence-backed for implementation snapshot e0f62ed865a2d4ed1177d19c0891e3600ea759e6; later implementation movement requires revalidation."
+  ]
+}

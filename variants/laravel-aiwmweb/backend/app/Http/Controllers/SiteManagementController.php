@@ -6,8 +6,11 @@ use App\Authorization\TenantAuthorizer;
 use App\Models\Execution;
 use App\Models\Site;
 use App\Sites\SiteEntitlementHook;
+use App\Sites\SiteManagementService;
+use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class SiteManagementController extends Controller
@@ -33,11 +36,25 @@ final class SiteManagementController extends Controller
         return response()->json(Site::query()->create($data), 201);
     }
 
-    public function show(int $site, TenantAuthorizer $auth): JsonResponse
-    {
+    public function show(
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+        SiteManagementService $sites,
+    ): JsonResponse {
         $auth->authorize('tenant.view');
+        $auth->authorize('sites.view');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
 
-        return response()->json(Site::query()->findOrFail($site));
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+
+        $details = $sites->getDetails($siteId);
+        abort_if($details === null, 404);
+
+        return response()->json($details);
     }
 
     public function update(Request $request, int $site, TenantAuthorizer $auth): JsonResponse
@@ -65,5 +82,42 @@ final class SiteManagementController extends Controller
         $model->delete();
 
         return response()->json([], 204);
+    }
+
+    public function bulkDestroy(Request $request, string $tenant, TenantAuthorizer $auth, TenantContext $context): JsonResponse
+    {
+        $auth->authorize('sites.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['required', 'integer', 'min:1', 'distinct'],
+        ]);
+        $ids = array_values(array_map('intval', $data['ids']));
+
+        $sites = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        abort_unless($sites->count() === count($ids), 404, 'One or more selected sites do not belong to the active tenant.');
+
+        $activeExecutionExists = Execution::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereIn('site_id', $ids)
+            ->whereIn('status', ['queued', 'running'])
+            ->exists();
+        abort_if($activeExecutionExists, 409, 'Active execution prevents bulk deletion.');
+
+        DB::transaction(function () use ($sites): void {
+            foreach ($sites as $site) {
+                $site->delete();
+            }
+        });
+
+        return response()->json(['deleted' => count($ids), 'ids' => $ids]);
     }
 }

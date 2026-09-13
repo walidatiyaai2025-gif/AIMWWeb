@@ -22,9 +22,19 @@ final class GenerateSuggestionJob extends TenantAwareJob
         return "tenant:{$this->tenantId}:suggestion:{$this->suggestionId}";
     }
 
-    public function handle(AiProvider $provider): void
+    public function handle(AiProvider $provider, JobFailureGate $failureGate): void
     {
         $suggestion = Suggestion::query()->findOrFail($this->suggestionId);
+        $gate = $failureGate->canStart((int) $suggestion->site_id, self::class);
+        if (! $gate->canRun) {
+            $delaySeconds = $gate->resumeAtUtc === null
+                ? 60
+                : max(60, now('UTC')->diffInSeconds($gate->resumeAtUtc, false));
+            $this->release($delaySeconds);
+
+            return;
+        }
+
         $suggestion->update(['status' => 'running', 'failure' => null]);
         try {
             $config = AiProviderConfig::query()->where('enabled', true)->firstOrFail();

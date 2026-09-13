@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-B711182657",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/ai-center",
+    "visible_control": "@(L.IsArabic ? [CopyOutputClickedAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "visibility": "The AI Center Proposed value panel renders Copy only while _output is non-empty/non-whitespace.",
+    "control": "CopyOutputClickedAsync delegates directly to CopyOutputAsync().",
+    "clipboard_transition": "CopyOutputAsync awaits navigator.clipboard.writeText with the exact current _output value and only after that awaited browser operation succeeds raises the localized Suggestion copied notification.",
+    "failure_boundary": "If the browser clipboard write fails, source execution does not reach the success notification.",
+    "side_effects": "Copy output is browser-session-only behavior: it performs no persistence, server mutation, approval mutation, AI-provider call, WordPress call, queue operation, navigation, or fabricated external success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/ai-center-approval-status-control.tsx extends the existing guarded AI Center host with an AIMW-AI-B711182657 Copy control inside a source-equivalent Proposed value panel.",
+    "visibility": "The control is absent while the component-local current output is empty/whitespace and appears only for a non-empty current output value.",
+    "clipboard": "The handler requires navigator.clipboard.writeText, passes the exact unmodified current output, awaits the returned promise, prevents duplicate concurrent writes, and enters success state only after the promise resolves.",
+    "truthful_failure": "Rejected writes or an unavailable Clipboard API render a failure state and never render Suggestion copied success.",
+    "network_boundary": "The Copy click performs no apiRequest/fetch, carries no tenant/site/provider/approval/resource identifier, and advertises no server mutation action contract.",
+    "authorization": "The control exists only inside the current AI Center host when FrontendContext includes ai.use; missing ai.use fails closed.",
+    "sibling_boundaries": "This operation does not claim Generate. Focused acceptance supplies current output as component-local state, proves Clear history preserves it, and proves the already-terminal New session transition clears it as the source Clear() contract requires."
+  },
+  "tenant_isolation": {
+    "render_boundary": "The AI Center host is reached through the authenticated tenant shell and authoritative /tenants/{tenant}/context contract.",
+    "cross_tenant_boundary": "Focused Laravel acceptance proves an Alpha-only authenticated member receives 404 for Beta AI Center/context routes.",
+    "id_surface": "The clipboard handler accepts no tenant, approval, site, content, provider, or other caller-supplied resource identifier and creates no direct-ID/IDOR surface."
+  },
+  "acceptance": {
+    "implementation_source_sha": "05b7c270a653dd286b4641861abe1104dcd6d044",
+    "backend_test": "backend/tests/Feature/AiCenterCopyOutputTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/ai-center-copy-output.test.tsx",
+    "proofs": [
+      "exact canonical PENDING/ADAPTED identity, AI domain, visible-control kind, source file, route, CopyOutputClickedAsync marker, low risk, non-mutation flag, and tenant ownership",
+      "exact production canonical operation marker on conditional Copy output control",
+      "control is hidden for empty/whitespace output and suppressed entirely without ai.use",
+      "exact current output string is passed unchanged to navigator.clipboard.writeText",
+      "duplicate concurrent Copy clicks produce one browser clipboard write",
+      "Suggestion copied success is absent while the clipboard promise is pending and appears only after browser confirmation",
+      "clipboard rejection or unavailable Clipboard API produces truthful failure and no success",
+      "Copy emits no additional network request, mutation method, request body, provider call, WordPress call, queue operation, persistence action, or navigation",
+      "Clear history preserves current output while the already-terminal New session transition removes it",
+      "no ai.copy-output server action contract is advertised",
+      "guest tenant shell redirects to login and foreign tenant access returns 404",
+      "approval and AI-usage persistence counts remain unchanged across server-side AI Center/context reads"
+    ],
+    "ci": "Exact pushed implementation/evidence CI and canonical generator-backed reconciliation must pass before integration; run identifiers are recorded on the PR and issue #257 rather than manufactured here."
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "other_ai_center_controls_claimed": false,
+    "generate_claimed": false,
+    "submit_for_approval_claimed": false,
+    "load_metadata_claimed": false,
+    "backend_endpoint_added": false,
+    "server_persistence_added": false,
+    "generated_parity_modified_manually": false,
+    "fake_clipboard_success": false
+  }
+}

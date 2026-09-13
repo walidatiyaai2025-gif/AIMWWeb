@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-BILL-B9162DF5EF",
+    "domain": "billing",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "tenant_owned": true
+  },
+  "laravel_adaptation": {
+    "production_contract": "backend/config/frontend_actions.php",
+    "runtime_wiring": "ActionContractRegistry exposes the permission-gated contract to pages.tsx, which prepares and executes the discovered request.",
+    "request_semantics": "GET tenant logs collection"
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/FocusedActionContractTerminalityTest.php",
+    "frontend_test": "backend/resources/js/__tests__/focused-action-contract-terminality.test.ts",
+    "proofs": [
+      "exact operation identity and request wiring",
+      "tenant/site context fails closed",
+      "mutation permission gates remain enforced"
+    ]
+  },
+  "scope": {
+    "generated_reconciliation_modified": false,
+    "fake_success": false
+  }
+}

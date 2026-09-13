@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "integration_base": {
+    "pull_request": 277,
+    "branch": "lead/laravel-aiwmweb-final-convergence",
+    "head_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6"
+  },
+  "worker_branch": "worker/laravel-aiwmweb-platform-services-final-closure",
+  "verification_commit": "5d0ca7f2b0926e8dbcd086429ad1022cd31f78af",
+  "pending_rows_inspected": 282,
+  "operations_terminalized": 0,
+  "terminalized_operations": [],
+  "terminalized_by_domain": {
+    "billing": 0,
+    "ai": 0,
+    "approvals": 0,
+    "email": 0,
+    "identity": 0,
+    "automation": 0,
+    "settings": 0,
+    "platform": 0
+  },
+  "live_reconciliation_snapshot": {
+    "total_operations": 931,
+    "terminal_operations": 333,
+    "pending_operations": 598,
+    "owned_domains": {
+      "billing": {
+        "total": 178,
+        "terminal": 71,
+        "pending": 107
+      },
+      "ai": {
+        "total": 92,
+        "terminal": 20,
+        "pending": 72
+      },
+      "approvals": {
+        "total": 25,
+        "terminal": 21,
+        "pending": 4
+      },
+      "email": {
+        "total": 82,
+        "terminal": 49,
+        "pending": 33
+      },
+      "identity": {
+        "total": 7,
+        "terminal": 0,
+        "pending": 7
+      },
+      "automation": {
+        "total": 59,
+        "terminal": 18,
+        "pending": 41
+      },
+      "settings": {
+        "total": 1,
+        "terminal": 1,
+        "pending": 0
+      },
+      "platform": {
+        "total": 18,
+        "terminal": 0,
+        "pending": 18
+      }
+    }
+  },
+  "closure_finding": {
+    "backend_pending_operations": 0,
+    "remaining_owned_domain_pending_rows": 282,
+    "remaining_pending_kinds": [
+      "route",
+      "visible_control"
+    ],
+    "ownership": "Worker 1 frontend / visible-control closure; no service, api, or background_job PENDING row remains in the requested platform-services domains in the current canonical reconciliation.",
+    "scope_decision": "No production backend mutation was made because it would not terminalize a canonical backend PENDING operation and would overlap already-terminalized implementation from PRs #264, #266, #267, and #276."
+  },
+  "verification": {
+    "test": "tests/Feature/PlatformServicesParityClosureTest.php",
+    "assertions": [
+      "No PENDING service/api/background_job row exists in billing, ai, approvals, email, identity, automation, settings, or platform.",
+      "Every terminal backend operation in those domains retains a Laravel destination, acceptance-test evidence, tenant ownership, and exact source SHA.",
+      "Any remaining PENDING row in those domains is limited to canonical route/visible_control kinds."
+    ],
+    "canonical_generated_files_modified": false,
+    "shared_route_files_modified": false,
+    "frontend_files_modified": false,
+    "worker_2_domains_modified": false
+  },
+  "exact_blockers": [
+    "The 282 canonical PENDING rows in the requested domains are route/visible_control operations and therefore belong to the frontend/visible-control closure worker under the parallel ownership rules.",
+    "The committed reconciliation evidence source snapshot predates the last five PR #277 composition commits; generated reconciliation artifacts were intentionally not edited by this worker."
+  ],
+  "expected_parity_delta": 0
+}

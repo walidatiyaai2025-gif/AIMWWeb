@@ -1,0 +1,47 @@
+{
+  "operation_id": "AIMW-AI-C5BC29CF27",
+  "domain": "ai",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-C5BC29CF27",
+    "domain": "ai",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "route_screen": "/operations/maintenance | /site-operations/maintenance",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
+    "handler": "RefreshPreviewAsync -> ReloadAsync"
+  },
+  "laravel": {
+    "page_route": "GET /tenants/{tenant}/site-operations/maintenance",
+    "refresh_route": "GET /tenants/{tenant}/site-operations/maintenance/preview?older_than_days={source-supported-value}&keep_latest={source-supported-value}",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceRefreshController.php",
+    "runtime": "App\\Sites\\SiteOperationHistoryService",
+    "ui": "variants/laravel-aiwmweb/backend/resources/views/site-operations-maintenance.blade.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/site-operations-maintenance-refresh.ts"
+  },
+  "acceptance": {
+    "source_semantics": [
+      "RefreshPreviewAsync delegates to ReloadAsync using the currently selected older-than-days and keep-latest policy values.",
+      "Laravel exposes the same source policy choices: older than 30, 60, 90, 180, or 365 days and keep latest 50, 100, 250, or 500 records.",
+      "Changing either policy selector or pressing Refresh preview re-reads tenant-scoped storage and preview data without executing cleanup or another mutation.",
+      "The refresh control has deterministic loading, refreshed, and fail-closed error feedback.",
+      "The existing tenant-scoped SiteOperationHistoryService read runtime is reused rather than introducing a second maintenance architecture.",
+      "The response is bound to the exact selected operation and accepted policy and does not terminalize the separate ReloadAsync operation."
+    ],
+    "security": [
+      "web + auth + tenant.context route guards",
+      "server-side execution.view authorization",
+      "foreign tenant rejected",
+      "caller cannot supply site, history, cleanup, or retention mutation identifiers",
+      "older_than_days and keep_latest are allowlisted to the authoritative source choices and invalid values fail with validation errors",
+      "refresh transport is GET-only and does not call cleanup or clear operations",
+      "frontend rejects cross-origin refresh destinations and mismatched operation or policy responses"
+    ],
+    "focused_tests": [
+      "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceRefreshPreviewTerminalityTest.php"
+    ]
+  },
+  "external_manual_evidence_required": false,
+  "denominator_change": false
+}

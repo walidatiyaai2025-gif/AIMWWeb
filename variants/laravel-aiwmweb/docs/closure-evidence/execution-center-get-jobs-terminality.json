@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-035FFB3624",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.GetJobs",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "predicate": "GetJobs reads the execution-center ledger; the owner-scoped overload requires a non-empty owner identity and returns only rows whose OwnerUserId equals that owner.",
+    "ordering": "Rows are returned newest first by CreatedAtUtc descending.",
+    "mutation": "The operation is read-only and does not advance, cancel, retry, fabricate, or otherwise mutate execution state."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterServiceAdapter",
+    "member": "getJobs",
+    "ledger_mapping": "Laravel already persists control-plane work in operation_executions and approved/external work in executions. The adapter composes both authoritative stores rather than introducing a duplicate execution ledger.",
+    "tenant_owner_scope": "Every query is constrained to the active TenantContext and the supplied owner identity: requested_by_user_id for operation_executions and actor_user_id for executions. The source's unscoped overload is not exposed across the multi-tenant Laravel boundary.",
+    "ordering": "The composed rows are sorted by created_at descending with deterministic row-id tie breaking.",
+    "data_boundary": "Only execution-center metadata is projected. Raw operation payload/result bodies are not returned, and credential-like assignments in failure text are redacted before leaving the service.",
+    "read_only": "No state or audit row is written by getJobs."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "c450920228eb1f02b7e20a56920a96ac67fd630f",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterServiceAdapter.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterGetJobsTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member/tenant/risk identity",
+      "both existing Laravel execution ledgers are composed without creating duplicate persistence",
+      "only active-tenant rows owned by the supplied user are returned",
+      "cross-tenant rows and same-tenant other-owner rows are 404-equivalent absent",
+      "results are deterministically newest first across both ledgers",
+      "raw payload/result bodies are excluded and credential-like failure assignments are redacted",
+      "the read creates no audit or execution mutations",
+      "invalid owner identity is rejected before lookup and missing TenantContext fails closed"
+    ],
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/production/manual evidence is required because GetJobs is a tenant-local execution-ledger read."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-035FFB3624",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

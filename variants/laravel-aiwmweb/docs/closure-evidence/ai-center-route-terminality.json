@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-82F795EE67",
+    "domain": "ai",
+    "kind": "route",
+    "route_screen": "/ai-center",
+    "visible_control": "Open/render route",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "route": "The canonical source exposes @page /ai-center as an authenticated AI workspace.",
+    "authoritative_reads": "The source metadata load reads the prompt registry and the current user's recent AI usage before rendering the AI Center summary and prompt library.",
+    "scope_boundary": "Generate, Submit for approval, Refresh state, Usage link, Approval Queue link, New session, Copy output, prompt selection and history controls are separate canonical operations and are not claimed here."
+  },
+  "laravel_adaptation": {
+    "workspace_route": "GET /tenants/{tenant}/ai-center is an explicit CanonicalWorkspaceRouteController::show route under web + auth + tenant.context with tenant.view and ai.use authorization.",
+    "read_contract": "GET /api/tenants/{tenant}/ai-center is GET-only, authorizes ai.use, reads enabled tenant-scoped AiPromptTemplate rows and counts up to the latest 100 AiUsageRecord rows belonging to the authenticated user.",
+    "frontend_wiring": "The existing frontend context normalization publishes the tenant-qualified ai-center API contract without replacing any server-advertised endpoint; the existing workspaceRoutes ai-center resource therefore leaves pending_integration and renders authoritative backend rows.",
+    "truthful_empty_state": "If the active tenant has no enabled prompt templates or the authenticated user has no usage records, the endpoint returns an empty collection and zero counts; it never seeds demo prompts or synthetic usage."
+  },
+  "tenant_isolation": {
+    "prompt_scope": "AiPromptTemplate uses the existing BelongsToTenant global scope after tenant.context activation.",
+    "usage_scope": "AiUsageRecord is tenant-scoped and is additionally filtered by authenticated user_id.",
+    "route_boundary": "Foreign tenant workspace/API requests fail 404 through tenant.context; missing ai.use fails 403; guests fail closed before any tenant data is read.",
+    "id_surface": "The route/read operation accepts no prompt, usage, site, approval, or user resource identifier from the caller."
+  },
+  "acceptance": {
+    "implementation_source_sha": "cfe4a3682952a6c059313e8d6dcdaa4bedecc7ac",
+    "backend_test": "backend/tests/Feature/AiCenterRouteTerminalityTest.php",
+    "frontend_test": "backend/resources/js/__tests__/ai-center-route-contract.test.ts",
+    "proofs": [
+      "exact canonical PENDING route identity and source metadata",
+      "explicit named workspace and API route/controller binding",
+      "auth + tenant.context + tenant.view + ai.use workspace enforcement",
+      "GET-only ai.use read contract",
+      "enabled active-tenant prompts are read from persistence",
+      "usage metadata is restricted to the authenticated user",
+      "disabled and foreign-tenant prompts are not disclosed",
+      "guest, permission-denied and foreign-tenant requests fail closed",
+      "read requests leave prompt and usage persistence counts unchanged",
+      "frontend endpoint is tenant-qualified and preserves a server-advertised authority",
+      "no sibling AI Center operation or mutation contract is claimed"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "other_ai_center_controls_claimed": false,
+    "generated_parity_modified": false,
+    "fake_success": false,
+    "runtime_mutation_added": false
+  }
+}

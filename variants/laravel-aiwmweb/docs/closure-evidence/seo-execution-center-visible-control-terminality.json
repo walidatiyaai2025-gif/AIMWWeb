@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SEO-C48570747C",
+  "domain": "seo",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "previous_state": "PENDING",
+  "production_surface": "backend/resources/js/seo-visible-controls.tsx",
+  "acceptance_test": "backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
+  "chain": "Execution Center link -> tenant-qualified /module/execution -> guarded Laravel execution workspace -> visible execution state",
+  "fake_success": false
+}

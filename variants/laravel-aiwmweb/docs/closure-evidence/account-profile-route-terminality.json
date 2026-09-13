@@ -1,0 +1,87 @@
+{
+  "operation_id": "AIMW-CONT-FB7F9189C0",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AccountProfile.razor",
+    "route_screen": "/account/profile",
+    "behavior": "Open/render the authenticated account profile route for the current tenant member."
+  },
+  "laravel_adaptation": {
+    "workspace_route": "GET /tenants/{tenant}/account/profile",
+    "route_name": "canonical.workspace.account-profile",
+    "controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@show",
+    "frontend_route": "/account/profile",
+    "frontend_api_key": "account.profile",
+    "profile_api": "GET /tenants/{tenant}/route-api/account-profile",
+    "profile_api_handler": "App\\Http\\Controllers\\RouteApiAdapterController::accountProfile",
+    "behavior": "The explicit guarded workspace renders the production React shell, whose authoritative tenant context binds account.profile to the real profile API. The API rereads the active persisted TenantMembership, persisted User, and tenant-scoped roles."
+  },
+  "runtime_path": [
+    "/tenants/{tenant}/account/profile",
+    "CanonicalWorkspaceRouteController@show",
+    "React route account-profile",
+    "FrontendContext api[account.profile]",
+    "/tenants/{tenant}/route-api/account-profile",
+    "RouteApiAdapterController::accountProfile",
+    "persisted TenantMembership + User + tenant-scoped Role reread"
+  ],
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permission": "tenant.view",
+    "anonymous_semantics": "workspace redirects guest to canonical login",
+    "missing_permission_semantics": "workspace and profile API fail 403",
+    "direct_id_surface": "none; only the tenant route parameter is caller supplied"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "proof": "An authenticated Tenant A member cannot resolve Tenant B workspace or profile API; both fail 404. Profile data comes from the TenantContext active membership, not a caller supplied user or membership identifier."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "authoritative_reread": true,
+    "mutation_receipt": "not applicable",
+    "audit_mutation": "not applicable",
+    "wordpress_runtime": "not applicable to this account-profile route operation",
+    "provider_runtime": "not applicable"
+  },
+  "acceptance_tests": [
+    "Tests\\Feature\\AccountProfileRouteTerminalityTest::test_exact_canonical_operation_is_the_pending_account_profile_route",
+    "Tests\\Feature\\AccountProfileRouteTerminalityTest::test_route_is_explicit_guarded_and_not_the_tenant_spa_catch_all",
+    "Tests\\Feature\\AccountProfileRouteTerminalityTest::test_authorized_user_renders_workspace_and_profile_api_authoritatively_rereads_persisted_membership",
+    "Tests\\Feature\\AccountProfileRouteTerminalityTest::test_guest_missing_permission_and_cross_tenant_direct_access_fail_closed",
+    "Tests\\Feature\\AccountProfileRouteTerminalityTest::test_route_has_no_caller_supplied_user_or_membership_id_surface"
+  ],
+  "implementation_sha": "c22a4b2eb5d27ed13accffdacdd78b65bb682dcb",
+  "tested_sha": "c22a4b2eb5d27ed13accffdacdd78b65bb682dcb",
+  "implementation_ci": {
+    "pr_plan_link": {"run_id": 33224553793, "run_number": 947, "result": "GREEN"},
+    "cross_domain_security": {"run_id": 33224553789, "run_number": 222, "result": "GREEN"},
+    "laravel_acceptance": {"run_id": 33224553809, "run_number": 291, "result": "GREEN"},
+    "acceptance_gates": [
+      "Pint",
+      "SQLite migrate:fresh + full PHP tests",
+      "MySQL fresh/rollback/forward + full PHP tests",
+      "Redis tenant lock + real queue worker + scheduler",
+      "WordPress disposable runtime",
+      "WordPress real REST E2E",
+      "frontend typecheck/tests/build",
+      "production frontend build",
+      "runtime artifacts",
+      "acceptance release gate",
+      "production Docker Compose model/build/boot/real runtime smoke/cleanup"
+    ]
+  },
+  "reconciliation_authority": {
+    "source_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total_operations": 931,
+    "generated_reconciliation_edited": false
+  },
+  "notes": "No redundant route, controller, API, model, or frontend architecture was introduced: the exact base already contained the complete real runtime adaptation. This closure adds operation-specific deterministic terminal acceptance and evidence for the canonical PENDING route operation. Final evidence-bearing SHA and its CI are recorded in PR #311 after this evidence commit passes exact-head gates."
+}

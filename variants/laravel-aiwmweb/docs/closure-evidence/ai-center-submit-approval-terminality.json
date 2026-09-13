@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-93EBFDE5A1",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/ai-center",
+    "visible_control": "SubmitForApprovalClickedAsync / Submit to approval queue",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "scanner_mutation_flag": false,
+    "source_behavior_mutates_governance_state": true,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "visibility": "The source governance submit surface is meaningful only while a structured AI suggestion exists and disables the submit action while an approval submission is in progress.",
+    "defaults": "Blank operation type becomes AI.ContentUpdate, blank approval title becomes AI content proposal, and risk defaults to High.",
+    "proposal": "The source submits an approval containing optional selected site identity/name, exact before content, exact proposed after content, prompt key, model, affected fields, explanation, confidence, authenticated actor label, risk level, and a unique request key.",
+    "result": "After the approval service returns, the source stores the new approval ID/status and reports Structured proposal submitted to the approval queue.",
+    "scanner_note": "The generated visible-control row carries mutation=false as scanner metadata, but the authoritative source handler performs a real governance persistence transition. This adaptation follows the source handler rather than treating the coarse scanner flag as permission to implement a fake/no-op control."
+  },
+  "laravel_adaptation": {
+    "frontend": "backend/resources/js/ai-center-approval-status-control.tsx renders AIMW-AI-93EBFDE5A1 only for a structured suggestion, exposes source-equivalent risk/operation/title/before-after governance controls, disables while submitting, and reports success only after the server confirms persisted creation.",
+    "endpoint": "POST /api/tenants/{tenant}/ai-center/approvals is explicitly registered under web + auth + tenant.context and authorizes ai.use in AiCenterApprovalSubmissionController.",
+    "persistence": "A direct AI approval is persisted in the existing tenant-scoped approvals table with nullable legacy suggestion_id plus source_operation_id, optional site snapshot, operation type, title, actor label, risk, request key, structured before_state, structured proposed_state, actor_user_id, and PENDING status.",
+    "legacy_compatibility": "Existing SEO suggestion approvals retain suggestion_id semantics. The migration is fresh/rollback/forward tested and its down path refuses destructive rollback while direct AI approvals exist.",
+    "actor_boundary": "actor_user_id and actor_label come only from the authenticated server-side user; the browser cannot submit an arbitrary actor.",
+    "tenant_boundary": "Optional site_id resolves through the active TenantContext global scope. A foreign site ID fails 404, and a member of Alpha cannot submit into Beta.",
+    "idempotency": "A browser-generated UUID request_key is unique per tenant. Repeating the same request key returns the existing approval rather than creating a duplicate; the database unique constraint closes the concurrent race.",
+    "truthful_failure": "Validation/authorization/server rejection renders failure and never reports submission success or fabricates a PENDING approval.",
+    "execution_boundary": "Direct generic AI approvals cannot enter the SEO suggestion executor. ExecutionCreator fails closed with 409 when suggestion_id is null, preserving existing SEO execution semantics until a domain-specific AI executor is separately implemented and claimed.",
+    "queue_read": "The existing approval queue read contract now returns direct-AI metadata while preserving legacy fields and execution linkage."
+  },
+  "tenant_and_security": {
+    "permission": "ai.use",
+    "guest": "401 on JSON submit endpoint",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "foreign_site": "404",
+    "caller_tenant_override": "No tenant field is accepted in the request body; frontend endpoint is derived solely from encoded FrontendContext.tenant.slug.",
+    "secret_surface": "No provider credential, WordPress credential, token, or secret is accepted or returned.",
+    "external_runtime": "Submitting the governance proposal requires no live provider or WordPress mutation. No provider/WordPress/production evidence is manufactured by this operation."
+  },
+  "acceptance": {
+    "implementation_source_sha": "b36742716c83e773ef19f4980cb180c3acdf53a5",
+    "backend_test": "backend/tests/Feature/AiCenterSubmitApprovalTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/ai-center-submit-approval.test.tsx",
+    "focused_validation_run": 34169607498,
+    "proofs": [
+      "exact canonical operation identity, source route/file/handler, domain/kind, tenant ownership and PENDING-to-ADAPTED transition contract",
+      "explicit POST route with exact canonical operation provenance under auth and tenant context",
+      "authorized user persists an exact structured PENDING direct AI approval and the approval queue rereads it",
+      "source defaults for operation type, approval title and risk",
+      "same tenant request_key replay is idempotent and creates one approval",
+      "guest 401, missing ai.use 403, foreign tenant 404 and foreign site 404 with zero unauthorized approval creation",
+      "generic direct AI approval fails closed before SEO-specific execution",
+      "Pint passes across 426 files",
+      "SQLite migrate:fresh plus rollback/forward migration pass",
+      "10 focused PHP tests pass with 85 assertions",
+      "TypeScript typecheck passes",
+      "13 focused frontend tests pass across submit, status, and copy controls",
+      "production frontend build passes",
+      "canonical Before and After values are rendered both in active content/output and in the governance comparison surface",
+      "server rejection never renders optimistic approval success"
+    ],
+    "repository_ci": "Normal PR-head security/parity/acceptance gates and canonical generator enrollment are required before integration; run identifiers are recorded on the PR and Issue #257 rather than invented here."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AI-93EBFDE5A1",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "other_ai_center_controls_claimed": false,
+    "approval_decision_claimed": false,
+    "approval_execution_claimed": false,
+    "provider_or_wordpress_execution_claimed": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

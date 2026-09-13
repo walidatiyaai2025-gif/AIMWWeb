@@ -1,0 +1,86 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-89777052CB",
+  "domain": "sync",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_candidate_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
+    "route_screen": "/Error",
+    "visible_control": "CopyAsync [CopyAsync]",
+    "user_visible_text": "Copy error details",
+    "behavior": "The source button formats AI WordPress Manager Error, Error ID, Correlation ID and copy-time, then awaits navigator.clipboard.writeText. It does not mutate server, tenant, WordPress or provider state."
+  },
+  "laravel_adaptation": {
+    "source_route": "GET /Error",
+    "source_controller": "App\\Http\\Controllers\\ErrorReadController",
+    "view": "resources/views/platform/error.blade.php",
+    "browser_runtime": "resources/js/error-copy-details.ts",
+    "control_binding": "button[data-copy-error-details][data-canonical-operation=AIMW-SYNC-89777052CB]",
+    "payload": ["errorId", "correlationId"],
+    "behavior": "The real Error surface renders only already-sanitized request/correlation IDs into an escaped application/json payload. Browser runtime adds copy-time at invocation and writes the source-equivalent report to Clipboard. Success is exposed only after writeText resolves; rejection/unavailable Clipboard produces a truthful retryable failure state; duplicate in-flight copies are suppressed."
+  },
+  "runtime_path": [
+    "GET /Error",
+    "RequestCorrelation middleware sanitizes or generates tracking IDs",
+    "ErrorReadController",
+    "platform.error Blade view",
+    "canonical Copy error details button AIMW-SYNC-89777052CB",
+    "error-copy-details.ts",
+    "navigator.clipboard.writeText",
+    "confirmed success or truthful retryable failure"
+  ],
+  "security": {
+    "authentication": "anonymous by canonical Error route contract",
+    "tenant_context": "not resolved",
+    "server_mutation": false,
+    "direct_id_surface": false,
+    "safe_payload_only": true,
+    "proof": "Feature coverage verifies malicious caller tracking headers are rejected by existing correlation middleware and do not enter the clipboard payload; exception/query secrets, stack traces and exception messages remain absent."
+  },
+  "semantics": {
+    "mutation": false,
+    "browser_local_side_effect": "clipboard write only",
+    "success_requires_browser_confirmation": true,
+    "failure_is_truthful": true,
+    "retry_supported": true,
+    "duplicate_in_flight_suppressed": true,
+    "wordpress_runtime": "not applicable",
+    "provider_runtime": "not applicable",
+    "fake_success_path": "none"
+  },
+  "automated_tests": {
+    "php": "backend/tests/Feature/ErrorCopyDetailsTerminalityTest.php",
+    "frontend": "backend/resources/js/__tests__/error-copy-details.test.ts",
+    "coverage": [
+      "exact canonical PENDING identity/domain/kind/source/control",
+      "real rendered canonical button and escaped safe payload",
+      "existing anonymous Error route and zero direct-ID/tenant route surface",
+      "malicious tracking-header non-exposure",
+      "source-equivalent report formatting",
+      "confirmed Clipboard success",
+      "duplicate-click suppression while write is pending",
+      "truthful Clipboard rejection/unavailable handling",
+      "retry after failure",
+      "invalid payload fail-closed behavior"
+    ]
+  },
+  "implementation": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_sha": "09e544d60a768c14483380edbc8d47912b8d7ef0",
+    "implementation_snapshot_sha": "dd6ed0a8c7394998b96e2a64cce8e1695ff17386",
+    "exact_head_policy": "Terminal handoff is valid only when PR Plan Link, Laravel AIWMWeb Cross-Domain Security and Laravel AIWMWeb Acceptance all succeed on the final PR head. Exact run IDs are recorded in Issue #257 handoff rather than predeclared in this source artifact."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "open_logs_operation_modified": false,
+    "back_dashboard_operation_reimplemented": false,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "server_or_wordpress_mutation_added": false,
+    "merge_performed": false,
+    "force_push_performed": false
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-1C0C5D3B7B",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "source_screen": "/sites/{Id:guid}",
+    "source_control": "/sites -> /sites",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "The current Site Details page exposes a visible Back/BackToSites anchor that returns the user to the Sites collection.",
+    "side_effect": "navigation only",
+    "mutation": false,
+    "wordpress_behavior": "none; this control does not call or mutate WordPress",
+    "success_semantics": "browser navigation reaches the real Sites workspace; no synthetic success state exists"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/sites/{site}",
+    "source_route_name": "canonical.site.details",
+    "source_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::showSite",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/site-details-back-control.tsx",
+    "runtime_wiring": "SiteDetailsBackControl is rendered only by the existing React site-details RouteElement",
+    "target_builder": "tenantUrl(context.tenant.slug, '/sites')",
+    "target_route": "/tenants/{tenant}/sites",
+    "target_route_name": "canonical.workspace.sites",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "target_backing_api": "/api/tenants/{tenant}/sites",
+    "target_backing_data": "real tenant-scoped Site collection",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/sites/{site}",
+    "auth + tenant.context activate the tenant membership and the explicit Site Details route authorizes tenant.view and sites.view",
+    "the selected Site is resolved under the active TenantContext and existing foreign-site IDOR guards",
+    "React renders SiteDetailsBackControl next to the existing SiteDetailsRoute runtime",
+    "the control derives /tenants/{activeTenant}/sites from FrontendContext.tenant.slug through tenantUrl",
+    "activating the link reaches the explicit canonical.workspace.sites route rather than the SPA catch-all",
+    "the destination authorizes tenant.view and sites.view and its real backing API returns the tenant-scoped Site collection"
+  ],
+  "authorization": {
+    "source_route": ["auth", "tenant.context", "tenant.view", "sites.view"],
+    "target_route": ["auth", "tenant.context", "tenant.view", "sites.view"],
+    "guest_source": "redirects to canonical login",
+    "guest_target": "redirects to canonical login",
+    "missing_sites_view_source": "403",
+    "missing_sites_view_target": "403"
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "authoritative active FrontendContext.tenant.slug, not a caller-entered tenant value",
+    "source_site_scope": "existing Site Details route resolves the site in TenantContext; foreign site IDs are 404",
+    "foreign_tenant_destination": "404 for a user without membership in that tenant",
+    "destination_direct_id_surface": "none; the navigation target contains no site/resource ID",
+    "idor_result": "the control adds no new direct-ID surface and cannot be used to escape the active tenant"
+  },
+  "runtime_semantics": {
+    "real_visible_control": true,
+    "real_explicit_source_route": true,
+    "real_explicit_destination_route": true,
+    "read_only": true,
+    "mutation_confirmation": "not applicable",
+    "authoritative_reread": "the destination Sites workspace reads the real tenant-scoped Site collection through the existing backing API",
+    "idempotency": "repeated navigation is read-only and does not change server/domain state",
+    "retry_safety": "navigation can be repeated without side effects",
+    "audit_or_receipt": "not applicable because the canonical operation is navigation-only"
+  },
+  "acceptance_tests": {
+    "frontend": [
+      "canonical Site Details back control renders the exact canonical visible control to the active tenant Sites workspace",
+      "canonical Site Details back control derives the destination only from active context and safely encodes the tenant slug"
+    ],
+    "php_feature": [
+      "SiteDetailsBackControlTerminalityTest::test_exact_canonical_operation_is_the_pending_site_details_back_control",
+      "SiteDetailsBackControlTerminalityTest::test_source_and_destination_are_real_explicit_routes_with_matching_permissions",
+      "SiteDetailsBackControlTerminalityTest::test_authorized_user_can_open_real_site_details_and_real_sites_destination",
+      "SiteDetailsBackControlTerminalityTest::test_guest_permission_and_cross_tenant_paths_fail_closed"
+    ]
+  },
+  "implementation_snapshot_sha": "afb0d017ed9b36a2db115ca47b5643dc2f700288",
+  "exact_tested_sha": "afb0d017ed9b36a2db115ca47b5643dc2f700288",
+  "exact_tested_sha_ci": {
+    "pr_plan_link": {"run_id": 33222559681, "run_number": 923, "result": "success"},
+    "laravel_aiwmweb_cross_domain_security": {"run_id": 33222559648, "run_number": 203, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 33222559661, "run_number": 272, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_suite": "success",
+    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "frontend_production_build": "success",
+    "runtime_artifacts": "success",
+    "acceptance_gate": "success",
+    "production_compose_model_image_build_stack_boot_real_runtime_smokes_cleanup": "success"
+  },
+  "canonical_denominator": {
+    "source": "latest generated 931-operation reconciliation on closure composition head 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal_after_this_one_operation": 359,
+    "previous_pending": 573,
+    "new_pending_after_this_one_operation": 572,
+    "generated_reconciliation_modified": false,
+    "note": "This is this worker's isolated one-operation contribution. Parallel unmerged closure contributions are intentionally not folded into these counts."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-1C0C5D3B7B",
+    "other_site_details_controls_claimed": false,
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_931_reconciliation_modified": false,
+    "force_push": false,
+    "merge": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "reason": "The exact canonical navigation control is visibly rendered on the real Site Details runtime, derives a tenant-qualified real Sites destination from authoritative context, both routes are explicitly guarded, cross-tenant and foreign-site paths fail closed, no fake/demo/mutation behavior was introduced, and the implementation snapshot passed every required repository gate.",
+    "evidence_bearing_head_ci": "must be independently revalidated after this evidence-only commit; final-head CI is recorded in PR #307 because a Git commit cannot self-contain its own SHA without changing it"
+  }
+}

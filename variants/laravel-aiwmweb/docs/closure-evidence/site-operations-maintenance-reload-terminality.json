@@ -1,0 +1,49 @@
+{
+  "operation_id": "AIMW-AI-CAAC427FC0",
+  "domain": "ai",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-CAAC427FC0",
+    "domain": "ai",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "route_screen": "/operations/maintenance | /site-operations/maintenance",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
+    "handler": "ReloadAsync / top-level Refresh"
+  },
+  "laravel": {
+    "page_route": "GET /tenants/{tenant}/site-operations/maintenance",
+    "reload_route": "GET /tenants/{tenant}/site-operations/maintenance/reload?older_than_days={source-supported-value}&keep_latest={source-supported-value}",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationsMaintenanceReloadController.php",
+    "snapshot_responder": "variants/laravel-aiwmweb/backend/app/Sites/SiteOperationsMaintenanceSnapshotResponder.php",
+    "runtime": "App\\Sites\\SiteOperationHistoryService",
+    "ui": "variants/laravel-aiwmweb/backend/resources/views/site-operations-maintenance.blade.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/site-operations-maintenance-reload.ts"
+  },
+  "acceptance": {
+    "source_semantics": [
+      "ReloadAsync performs a read-only authoritative maintenance snapshot using the currently selected older-than-days and keep-latest policy values.",
+      "The top-level Refresh control is a distinct canonical operation from RefreshPreviewAsync while both use the same source snapshot behavior.",
+      "Laravel returns the same tenant-scoped storage and cleanup-preview snapshot through the existing SiteOperationHistoryService read runtime.",
+      "Both maintenance refresh controls share one busy boundary so concurrent reload/preview requests cannot race through the UI.",
+      "The existing maintenance snapshot path is reused rather than introducing a competing maintenance architecture.",
+      "The response is bound to AIMW-AI-CAAC427FC0 and the selected policy; AIMW-AI-C5BC29CF27 remains a separate terminal operation."
+    ],
+    "security": [
+      "web + auth + tenant.context route guards",
+      "server-side execution.view authorization",
+      "foreign tenant rejected",
+      "caller cannot supply site, history, cleanup, or retention mutation identifiers",
+      "older_than_days and keep_latest are allowlisted to the authoritative source choices and invalid values fail with validation errors",
+      "reload transport is GET-only and does not call cleanup or clear operations",
+      "frontend rejects cross-origin reload destinations, mismatched canonical operation identity, and mismatched policy responses"
+    ],
+    "focused_tests": [
+      "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceReloadTerminalityTest.php",
+      "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsMaintenanceRefreshPreviewTerminalityTest.php"
+    ]
+  },
+  "external_manual_evidence_required": false,
+  "denominator_change": false
+}

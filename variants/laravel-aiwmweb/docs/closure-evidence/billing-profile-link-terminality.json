@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-67B6CF3962",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AccountBilling.razor",
+    "source_screen": "/account/billing",
+    "source_control": "My Account / حسابي -> /account/profile",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered navigation reaches explicit guarded account profile workspace and real persisted profile read"
+  },
+  "source_behavior": {
+    "summary": "The current Subscription & Billing workspace exposes a visible My Account/back action that returns the authenticated user to the account profile workspace.",
+    "side_effect": "navigation only",
+    "mutation": false,
+    "wordpress_behavior": "none; this canonical control does not call or mutate WordPress",
+    "billing_provider_behavior": "none; this canonical control does not call a billing provider or claim billing success",
+    "success_semantics": "browser navigation reaches the real Account Profile workspace; no synthetic success state exists"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/account/billing",
+    "source_route_name": "canonical.workspace.account-billing",
+    "source_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "source_backing_api": "/tenants/{tenant}/route-api/billing-overview",
+    "source_backing_data": "real tenant-scoped subscription, entitlements and usage snapshot",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/billing-profile-link.tsx",
+    "runtime_wiring": "BillingProfileLink is rendered only by the existing React account-billing RouteElement before the real WorkspacePage",
+    "target_builder": "tenantUrl(context.tenant.slug, '/account/profile')",
+    "target_route": "/tenants/{tenant}/account/profile",
+    "target_route_name": "canonical.workspace.account-profile",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "target_backing_api": "/tenants/{tenant}/route-api/account-profile",
+    "target_backing_data": "real persisted current User and active TenantMembership read",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/account/billing",
+    "auth + tenant.context activate the tenant membership and the explicit Account Billing route authorizes billing.view",
+    "the Account Billing workspace reads its real billing overview contract",
+    "React renders BillingProfileLink only on the account-billing route",
+    "the control derives /tenants/{activeTenant}/account/profile from authoritative FrontendContext.tenant.slug through tenantUrl",
+    "activating the control reaches the explicit canonical.workspace.account-profile route rather than the SPA catch-all",
+    "the destination authorizes tenant.view and its real account-profile API rereads the persisted current user and active tenant membership"
+  ],
+  "authorization": {
+    "source_route": ["auth", "tenant.context", "billing.view"],
+    "source_api": ["auth", "tenant.context", "billing.view"],
+    "target_route": ["auth", "tenant.context", "tenant.view"],
+    "target_api": ["auth", "tenant.context", "tenant.view"],
+    "guest_source": "redirects to canonical login",
+    "guest_target": "redirects to canonical login",
+    "missing_billing_view_source": "403",
+    "missing_billing_view_source_api": "403"
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "authoritative active FrontendContext.tenant.slug, not a caller-entered tenant value",
+    "tenant_url_encoding": "tenantUrl URL-encodes the active tenant slug; a path-fragment value cannot synthesize a foreign tenant destination",
+    "foreign_tenant_source_route": "404 for a user without membership in that tenant",
+    "foreign_tenant_target_route": "404 for a user without membership in that tenant",
+    "foreign_tenant_source_api": "404 for a user without membership in that tenant",
+    "foreign_tenant_target_api": "404 for a user without membership in that tenant",
+    "destination_direct_id_surface": "none; the navigation target contains no user, membership, billing, or resource ID",
+    "idor_result": "the control introduces no new direct-ID surface and cannot escape the active tenant"
+  },
+  "runtime_semantics": {
+    "real_visible_control": true,
+    "real_explicit_source_route": true,
+    "real_explicit_destination_route": true,
+    "read_only": true,
+    "real_persisted_data": true,
+    "truthful_empty_state": "billing overview reports a null subscription state when no subscription exists while still returning real entitlements and usage sections",
+    "mutation_confirmation": "not applicable",
+    "authoritative_reread": "the destination account-profile API rereads the persisted current User and active TenantMembership after navigation",
+    "idempotency": "repeated navigation is read-only and does not change billing, account, provider, queue, or WordPress state",
+    "retry_safety": "navigation can be repeated without side effects",
+    "audit_or_receipt": "not applicable because the canonical operation is navigation-only"
+  },
+  "acceptance_tests": {
+    "frontend": [
+      "AIMW-BILL-67B6CF3962 renders the real My Account control with the exact canonical marker and /tenants/alpha/account/profile target",
+      "the control safely encodes the authoritative tenant slug instead of allowing a cross-tenant path fragment"
+    ],
+    "php_feature": [
+      "BillingProfileLinkTerminalityTest::test_exact_canonical_operation_is_the_pending_billing_profile_visible_control",
+      "BillingProfileLinkTerminalityTest::test_source_and_destination_are_explicit_guarded_routes_not_the_spa_catch_all",
+      "BillingProfileLinkTerminalityTest::test_authorized_user_reaches_real_billing_state_and_authoritative_profile_reread",
+      "BillingProfileLinkTerminalityTest::test_runtime_binding_uses_the_active_tenant_and_exact_canonical_operation_marker",
+      "BillingProfileLinkTerminalityTest::test_guest_missing_permission_and_cross_tenant_access_fail_closed"
+    ]
+  },
+  "implementation_snapshot_sha": "75d13157b3101cc83f22e86195fd859014d68e17",
+  "exact_tested_sha": "75d13157b3101cc83f22e86195fd859014d68e17",
+  "exact_tested_sha_ci": {
+    "pr_plan_link": {"run_id": 33223401157, "run_number": 936, "result": "success"},
+    "laravel_aiwmweb_cross_domain_security": {"run_id": 33223401147, "run_number": 213, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 33223401146, "run_number": 282, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_suite": "success",
+    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "frontend_production_build": "success",
+    "runtime_artifacts": "success",
+    "acceptance_gate": "success",
+    "production_compose_model_image_build_stack_boot_real_runtime_smokes_cleanup": "success"
+  },
+  "canonical_denominator": {
+    "source": "latest generated 931-operation reconciliation on closure composition head 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal_after_this_one_operation": 359,
+    "previous_pending": 573,
+    "new_pending_after_this_one_operation": 572,
+    "generated_reconciliation_modified": false,
+    "note": "This is this worker's isolated one-operation contribution. Parallel unmerged closure contributions are intentionally not folded into these counts."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-67B6CF3962",
+    "other_billing_controls_claimed": false,
+    "billing_route_operation_claimed": false,
+    "account_profile_route_operation_claimed": false,
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_931_reconciliation_modified": false,
+    "force_push": false,
+    "merge": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "reason": "The exact canonical My Account control is visibly rendered on the real Account Billing runtime, derives a tenant-qualified real Account Profile destination from authoritative context, source and destination are explicit guarded routes backed by real persisted reads, missing permission and foreign-tenant paths fail closed, no fake/demo/mutation/provider behavior was introduced, and the implementation snapshot passed every required repository gate.",
+    "evidence_bearing_head_ci": "must be independently revalidated after this evidence-only commit; final-head CI is recorded in PR #308 because a Git commit cannot self-contain its own SHA without changing it"
+  }
+}

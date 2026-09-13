@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-AI-0F3763FDB4",
+  "operation_id": "AIMW-AI-0F3763FDB4",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
+  "authority": {
+    "issue": 257,
+    "recovery_from_closed_unmerged_pr": 378,
+    "recovery_claim_comment_id": 5556408196,
+    "recovery_base_sha": "0e540e4b55d972048dbfd66ec1fc8f817336804e",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-AI-0F3763FDB4-getasync-recovery"
+  },
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "ai",
+    "service": "SiteBrainService",
+    "member": "GetAsync",
+    "source": "src/AIWordPressManager.Persistence/SiteBrain/SiteBrainService.cs",
+    "mutation": false
+  },
+  "service_closure_contract": {
+    "implementation_sha": "a13a40888f365bd888b2fd4d19f95c94a656f985",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/AI/SiteBrain/SiteBrainService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteBrainServiceGetAsyncTerminalityTest.php"
+  },
+  "decision": "ADAPTED_TENANT_SCOPED_SERVICE",
+  "rationale": "The recovered Laravel service preserves canonical GetAsync read/fallback behavior while adapting desktop application settings to the existing tenant-scoped site settings store. Site resolution is tenant-scoped before persistence access, the settings query repeats tenant and site authority, malformed or absent persisted values fail safe to source-equivalent defaults, and persisted site_id cannot override the authoritative tenant-owned Site model. The already-integrated SaveAsync implementation remains unchanged in behavior and ownership.",
+  "runtime_behavior": {
+    "persistence": "tenant-scoped scoped_settings row with scope=site, key=site_brain.profile, site_key=site:{site_id}, is_secret=false",
+    "read_only": true,
+    "missing_blank_malformed_non_object": "returns source-equivalent default SiteBrain profile",
+    "stored_profile": "known typed fields are normalized onto source defaults and authoritative site_id is restored from the tenant-scoped Site model",
+    "external_provider_called": false
+  },
+  "security": {
+    "authorization": "read operation requires an active tenant context and tenant-owned Site resolution; no mutating settings.manage grant is introduced for canonical read parity",
+    "tenant_isolation": "foreign-tenant site ID raises ModelNotFoundException before scoped_settings access",
+    "persistence_scope": "tenant_id + site scope + authoritative site_key + canonical setting key + non-secret row",
+    "cross_tenant_read": "fail closed",
+    "stored_site_id_trusted": false,
+    "secret_storage": false
+  },
+  "acceptance": [
+    "canonical operation identity, source member, read-only semantics, and default-profile source are pinned to AIMW-AI-0F3763FDB4",
+    "missing profile returns the source-equivalent SiteBrain defaults with server UTC updated_at_utc",
+    "valid tenant/site scoped persisted JSON is read without trusting a stored site_id",
+    "blank, malformed, and non-object persisted values fail safe to defaults",
+    "foreign-tenant site lookup fails closed with ModelNotFoundException",
+    "existing AIMW-AI-34EC6312B9 SaveAsync implementation remains present and independently terminal"
+  ],
+  "scope_exclusions": [
+    "SiteBrainService.SaveAsync",
+    "routes or visible UI controls",
+    "external AI provider behavior",
+    "WordPress behavior"
+  ],
+  "validation": {
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-BILL-337E4FF969",
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "@(L.IsArabic ? [ConfirmBulkDeleteAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "risk": "critical",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "selection": "The Sites workspace selects visible site profiles with a maximum of 100 IDs per bulk operation.",
+    "confirmation": "ConfirmBulkDeleteAsync runs only after an explicit destructive confirmation dialog.",
+    "authoritative_mutation": "SiteWebService.DeleteSitesAsync validates the complete selected ownership set before deleting any site and preserves the existing active-execution deletion guard.",
+    "post_mutation": "The source clears selection and reloads authoritative site state after successful deletion."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/sites-bulk-delete-control.tsx renders real tenant site rows, checkbox selection capped at 100, an explicit confirmation dialog, canonical operation marker, DELETE mutation, and authoritative reconciliation.",
+    "endpoint": "DELETE /api/tenants/{tenant}/sites",
+    "route_name": "canonical.api.sites.bulk-delete",
+    "controller": "App\\Http\\Controllers\\SiteManagementController::bulkDestroy",
+    "middleware": ["web", "auth", "tenant.context"],
+    "authorization": "sites.manage",
+    "tenant_preflight": "The complete ID set is reread without global scopes but constrained to the active TenantContext tenant; any missing or foreign ID returns 404 before mutation.",
+    "execution_preflight": "Any queued or running execution for a selected owned site returns 409 before mutation.",
+    "atomicity": "Only a fully validated set reaches the database transaction; every selected Site model is deleted inside that transaction.",
+    "limit": 100,
+    "reconciliation": "The frontend rereads the bulk selector collection and invalidates the existing Sites workspace query after mutation; no optimistic success rows are synthesized."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesConfirmBulkDeleteTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation identity and critical tenant-owned classification",
+      "production canonical operation marker on the destructive confirmation control",
+      "explicit guarded route and real controller binding",
+      "missing sites.manage returns 403",
+      "mixed owned and foreign site IDs return 404 before any owned site is deleted",
+      "active execution returns 409 before any selected site is deleted",
+      "valid owned selection deletes as one governed batch and authoritative GET reread is empty",
+      "more than 100 IDs returns 422"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "parallel_site_operations_modified": false,
+    "fake_success": false,
+    "demo_rows": false
+  }
+}
