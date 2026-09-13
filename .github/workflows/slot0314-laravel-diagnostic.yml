@@ -1,0 +1,53 @@
+name: Slot 0314 Laravel Diagnostic
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-PLAT-F6C1A04662-reconcile-slot0306
+    paths:
+      - '.github/workflows/slot0314-laravel-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite-first-failure:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Reproduce first full-suite failure
+        id: reproduce
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan test --stop-on-failure > /tmp/slot0314-sqlite.log 2>&1
+          status=$?
+          set -e
+          printf 'exit_code=%s\n' "$status" > /tmp/slot0314-summary.txt
+          tail -n 400 /tmp/slot0314-sqlite.log >> /tmp/slot0314-summary.txt
+          cat /tmp/slot0314-summary.txt
+          exit 0
+      - name: Upload diagnostic log
+        uses: actions/upload-artifact@v4
+        with:
+          name: slot0314-sqlite-first-failure
+          path: /tmp/slot0314-summary.txt
+          if-no-files-found: error
+          retention-days: 1
