@@ -45,7 +45,7 @@ jobs:
                 'evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
             ],
         ],
-"""
+          """
           if text.count(needle) != 1:
               raise SystemExit('strict contract insertion anchor is not unique')
           path.write_text(text.replace(needle, needle + block, 1))
