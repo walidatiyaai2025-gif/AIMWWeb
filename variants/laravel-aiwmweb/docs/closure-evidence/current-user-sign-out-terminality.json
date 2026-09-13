@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-BF78057C28",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "button control 10",
+    "target": "current authenticated application session",
+    "new_tab": false,
+    "mutation": false,
+    "tenant_owned": false,
+    "risk": "security-sensitive session termination",
+    "external_dependency": "none",
+    "verification": "authenticated user can end only the current session and receives server-confirmed completion"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-sign-out-control.tsx",
+    "visible_control": "Sign out / تسجيل الخروج",
+    "dom_target": ".topbar-actions",
+    "operation_marker": "AIMW-IDEN-BF78057C28",
+    "request": "POST /api/logout",
+    "route_middleware": ["auth"],
+    "controller": "App\\Http\\Controllers\\DemoController::logout",
+    "session_termination": ["Auth::logout", "session.invalidate", "session.regenerateToken"],
+    "csrf_transport": "existing apiRequest X-CSRF-TOKEN header from the page csrf-token meta value",
+    "credentials": "same-origin",
+    "server_confirmation": "response.ok must be true before navigation",
+    "failure_behavior": "fail closed, expose an alert, and keep the control retryable",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated current-user runtime renders CurrentUserSignOutControl into .topbar-actions",
+    "user activates Sign out / تسجيل الخروج",
+    "apiRequest posts to /api/logout with same-origin credentials and the CSRF header",
+    "auth middleware requires a current authenticated session",
+    "DemoController::logout logs out the current principal, invalidates that session, and regenerates the CSRF token",
+    "the client navigates away only after the server confirms ok=true; failures remain visible and retryable"
+  ],
+  "authorization": {
+    "endpoint": ["auth"],
+    "guest_api": "401",
+    "tenant_impersonation_or_selector": "none",
+    "direct_object_identifier": "none",
+    "current_session_only": true
+  },
+  "acceptance_tests": [
+    "CurrentUserSignOutTerminalityTest::test_exact_canonical_operation_is_the_pending_current_user_sign_out_control",
+    "CurrentUserSignOutTerminalityTest::test_logout_reuses_the_real_session_route_and_is_auth_guarded_without_tenant_impersonation",
+    "CurrentUserSignOutTerminalityTest::test_authenticated_logout_invalidates_the_current_session_and_rotates_the_csrf_token",
+    "CurrentUserSignOutTerminalityTest::test_guest_cannot_invoke_the_session_logout_endpoint",
+    "CurrentUserSignOutTerminalityTest::test_runtime_binding_uses_the_exact_operation_marker_real_endpoint_and_csrf_aware_client",
+    "current-user-sign-out-control.test.tsx renders the exact operation marker into the authenticated topbar",
+    "current-user-sign-out-control.test.tsx posts through the CSRF-aware real endpoint and waits for server confirmation",
+    "current-user-sign-out-control.test.tsx fails closed and remains retryable when logout fails"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "claim_comment_id": 5655291030,
+    "canonical_base_sha": "a9d33ec3b4f37a130db1db5c24f2bef663268fd2",
+    "worker_branch": "worker/laravel-iden-bf78057c28-signout",
+    "pull_request": 495
+  },
+  "implementation_sha": "712c193647ff124af64878b8b0245609b677bd96",
+  "implementation_tested_sha": "712c193647ff124af64878b8b0245609b677bd96",
+  "implementation_exact_head_ci": {
+    "pr_plan_link": {"run_id": 34776198565, "run_number": 2093, "result": "success"},
+    "cross_domain_security": {"run_id": 34776198543, "run_number": 1243, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 34776198524, "run_number": 1312, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_tests": "success",
+    "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests": "success",
+    "production_frontend_build": "success",
+    "runtime_artifacts": "success",
+    "production_docker_compose_runtime_smoke": "success"
+  },
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "a9d33ec3b4f37a130db1db5c24f2bef663268fd2",
+    "total_operations": 931,
+    "previous_terminal": 561,
+    "new_terminal_after_this_operation": 562,
+    "previous_pending": 370,
+    "new_pending_after_this_operation": 369,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "This is the single-operation delta against the unchanged live composition authority; generated reconciliation remains authoritative and must independently accept the evidence."
+  },
+  "final_head_policy": "The evidence-bearing and generator-materialized PR head must pass the required exact-head workflows before integration readiness is claimed.",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no change to the ASP.NET/reference product",
+    "no new authentication or session backend",
+    "no tenant selector or cross-tenant action",
+    "no fabricated owner/manual/live-production evidence",
+    "no manual edit of generated reconciliation counts"
+  ]
+}
