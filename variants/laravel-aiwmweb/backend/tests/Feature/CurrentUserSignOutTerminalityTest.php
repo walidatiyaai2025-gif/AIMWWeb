@@ -36,6 +36,8 @@ class CurrentUserSignOutTerminalityTest extends TestCase
             $operation['current_source'],
         );
         $this->assertFalse((bool) $operation['mutation']);
+        $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertSame('low', $operation['risk']);
         $this->assertSame('none', $operation['external_dependency']);
     }
 
@@ -51,6 +53,15 @@ class CurrentUserSignOutTerminalityTest extends TestCase
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame([], $route->parameterNames());
+    }
+
+    public function test_foreign_tenant_qualified_logout_surface_is_not_exposed(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $this->postJson('/api/tenants/foreign-tenant/logout')->assertNotFound();
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_authenticated_logout_invalidates_the_current_session_and_rotates_the_csrf_token(): void
