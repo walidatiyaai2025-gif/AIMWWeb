@@ -1,0 +1,97 @@
+name: Slot 0316 Screenshots Reconcile
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-PLAT-83994BBD03-reconcile-slot0316
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rebuild canonical reconciliation
+        run: |
+          set -euo pipefail
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+
+      - name: Prove exactly one canonical transition
+        run: |
+          set -euo pipefail
+          git show origin/worker/laravel-aiwmweb-closure-composition:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json > /tmp/base.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          before = json.loads(Path('/tmp/base.json').read_text())
+          after = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          b = {x['operation_id']: x for x in before['operations']}
+          a = {x['operation_id']: x for x in after['operations']}
+          changed = [(op, b[op]['migration_state'], a[op]['migration_state']) for op in b if b[op]['migration_state'] != a[op]['migration_state']]
+          expected = [('AIMW-PLAT-83994BBD03', 'PENDING', 'ADAPTED')]
+          if changed != expected:
+              raise SystemExit(f'Unexpected canonical state delta: {changed!r}')
+          totals = after['totals']
+          expected_totals = {'total': 931, 'terminal': 560, 'pending': 371, 'blocked': 0}
+          actual = {k: totals[k] for k in expected_totals}
+          if actual != expected_totals:
+              raise SystemExit(f'Unexpected totals: {actual!r}')
+          op = a['AIMW-PLAT-83994BBD03']
+          if op.get('reconciliation', {}).get('evidence_mode') != 'focused_service_contract':
+              raise SystemExit(f"Unexpected evidence mode: {op.get('reconciliation', {}).get('evidence_mode')!r}")
+          print('isolated delta:', changed)
+          print('totals:', actual)
+          PY
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, sqlite3
+          coverage: none
+
+      - name: Focused Laravel validation
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          set -euo pipefail
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test --filter=ScreenshotsDirectoryTerminalityTest
+          php artisan test --filter=PlatformServicesParityClosureTest
+
+      - name: Commit generator-owned reconciliation
+        run: |
+          set -euo pipefail
+          git status --short
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          if git diff --cached --quiet; then
+            echo 'No generated reconciliation change.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(laravel): reconcile screenshots service terminality'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-PLAT-83994BBD03-reconcile-slot0316
