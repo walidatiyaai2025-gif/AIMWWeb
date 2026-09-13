@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-9B043B1FAE",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "/account/profile -> /account/profile",
+    "target": "current authenticated tenant account profile",
+    "new_tab": false,
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency": "none",
+    "verification": "rendered navigation reaches the authoritative current-tenant profile workspace and persisted profile read"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-account-profile-control.tsx",
+    "visible_control": "My account / حسابي",
+    "dom_target": ".topbar-actions",
+    "operation_marker": "AIMW-IDEN-9B043B1FAE",
+    "destination": "/tenants/{activeTenant}/account/profile",
+    "destination_route": "canonical.workspace.account-profile",
+    "destination_middleware": ["auth", "tenant.context"],
+    "destination_permission": "tenant.view",
+    "authoritative_read": "/tenants/{activeTenant}/route-api/account-profile",
+    "availability_contract": "render only when tenant.view is present and context api.account.profile exactly matches the active-tenant route-api contract",
+    "tenant_derivation": "FrontendContext.tenant.slug through tenantUrl; caller cannot supply a different tenant destination",
+    "direct_object_identifier": "none",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap loads the authoritative FrontendContext",
+    "CurrentUserSiteDetailsControl composes CurrentUserAccountProfileControl",
+    "the control verifies tenant.view and the exact active-tenant account.profile API contract before rendering",
+    "the user activates My account / حسابي",
+    "navigation targets /tenants/{activeTenant}/account/profile derived only from context.tenant.slug",
+    "auth + tenant.context + tenant.view guard the explicit workspace and the route-api rereads current persisted profile state"
+  ],
+  "authorization": {
+    "workspace": ["auth", "tenant.context", "tenant.view"],
+    "guest_workspace": "redirect /login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "tenant_impersonation_or_selector": "none",
+    "direct_user_or_membership_identifier": "none",
+    "cross_tenant_destination_synthesis": "tenant slug is URL-encoded and derived only from authoritative frontend context"
+  },
+  "acceptance_tests": [
+    "CurrentUserAccountProfileControlTerminalityTest::test_exact_canonical_operation_is_the_pending_current_user_profile_control",
+    "CurrentUserAccountProfileControlTerminalityTest::test_destination_reuses_the_real_guarded_account_profile_workspace",
+    "CurrentUserAccountProfileControlTerminalityTest::test_authorized_current_user_can_follow_the_control_to_authoritative_profile_state",
+    "CurrentUserAccountProfileControlTerminalityTest::test_guest_missing_permission_and_cross_tenant_profile_navigation_fail_closed",
+    "CurrentUserAccountProfileControlTerminalityTest::test_runtime_binding_uses_exact_operation_marker_and_authoritative_tenant_contract",
+    "current-user-account-profile-control.test.tsx renders the exact canonical My account control for the active tenant",
+    "current-user-account-profile-control.test.tsx URL-encodes authoritative tenant identity and cannot synthesize a foreign tenant path",
+    "current-user-account-profile-control.test.tsx fails closed when tenant.view or the exact profile API contract is absent"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "claim_comment_id": 5655584169,
+    "canonical_base_sha": "2af593564b99cc2abcae687cbd0757338b84c489",
+    "worker_branch": "worker/laravel-iden-9b043b1fae-account-profile",
+    "pull_request": 496
+  },
+  "implementation_sha": "f040e859cd1f097a7a4ea7f78e7742d41a4df257",
+  "implementation_tested_sha": "f040e859cd1f097a7a4ea7f78e7742d41a4df257",
+  "implementation_exact_head_ci": {
+    "pr_plan_link": {"run_id": 34778283599, "run_number": 2108, "result": "success"},
+    "cross_domain_security": {"run_id": 34778283409, "run_number": 1257, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 34778283375, "run_number": 1326, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_tests": "success",
+    "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests": "success",
+    "production_frontend_build": "success",
+    "runtime_artifacts": "success",
+    "production_docker_compose_runtime_smoke": "success"
+  },
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "2af593564b99cc2abcae687cbd0757338b84c489",
+    "total_operations": 931,
+    "previous_terminal": 562,
+    "new_terminal_after_this_operation": 563,
+    "previous_pending": 369,
+    "new_pending_after_this_operation": 368,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "This is the single-operation delta against the unchanged live composition authority; the canonical generator must independently accept this evidence before integration."
+  },
+  "final_head_policy": "The evidence-bearing and generator-materialized PR head must pass the required exact-head workflows before integration readiness is claimed.",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no change to the ASP.NET/reference product",
+    "no new profile route or profile backend",
+    "no caller-supplied tenant/user/membership identifier",
+    "no fabricated owner/manual/live-production evidence",
+    "no manual edit of generated reconciliation counts"
+  ]
+}
