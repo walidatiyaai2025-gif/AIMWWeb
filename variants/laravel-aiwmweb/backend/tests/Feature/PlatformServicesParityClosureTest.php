@@ -49,6 +49,21 @@ class PlatformServicesParityClosureTest extends TestCase
     ];
 
     private const STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS = [
+        'AIMW-PLAT-F6C1A04662' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetDatabasePath',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/database.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-F6C1A04662',
+                'service:ApplicationPathService',
+                'member:GetDatabasePath',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
+            ],
+        ],
         'AIMW-PLAT-A2624EDC66' => [
             'route_screen' => 'service:ApplicationPathService',
             'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
