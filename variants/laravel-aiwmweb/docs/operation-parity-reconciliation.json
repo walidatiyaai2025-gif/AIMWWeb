@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 559,
-    "pending": 372,
+    "adapted": 560,
+    "pending": 371,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 559,
-    "overall_parity_percent": 60.04
+    "terminal": 560,
+    "overall_parity_percent": 60.15
   },
   "visible_controls": {
     "total": 446,
@@ -152,12 +152,12 @@
     "platform": {
       "total": 18,
       "ported": 0,
-      "adapted": 10,
-      "pending": 8,
+      "adapted": 11,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 10,
-      "percent": 55.56
+      "terminal": 11,
+      "percent": 61.11
     },
     "reports": {
       "total": 1,
@@ -24112,21 +24112,30 @@
       "external_dependency": "none",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/config/filesystems.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": false,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php",
+      "evidence": "Focused service closure@aa87a02f7ba9c20328d19b523308f7a93f16927a: variants/laravel-aiwmweb/backend/config/filesystems.php; operation:AIMW-PLAT-83994BBD03; test:variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "No operation-specific destination met evidence threshold (4 < 6).",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed service implementation is linked to the canonical operation ID, canonical service/member/source metadata, focused acceptance, and applicable security proof.",
+        "source_label": "Focused service closure AIMW-PLAT-83994BBD03",
+        "source_sha": "aa87a02f7ba9c20328d19b523308f7a93f16927a",
+        "destination_path": "variants/laravel-aiwmweb/backend/config/filesystems.php",
+        "evidence_mode": "focused_service_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json",
+        "signals": [
+          "operation:AIMW-PLAT-83994BBD03",
+          "service:ApplicationPathService",
+          "member:GetScreenshotsDirectory",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json"
+        ]
       }
     },
     {
@@ -34616,12 +34625,12 @@
     "service": {
       "total": 349,
       "ported": 0,
-      "adapted": 347,
-      "pending": 2,
+      "adapted": 348,
+      "pending": 1,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 347,
-      "percent": 99.43
+      "terminal": 348,
+      "percent": 99.71
     },
     "visible_control": {
       "total": 446,
@@ -34934,7 +34943,6 @@
       "AIMW-PLAT-4C37AC806E",
       "AIMW-PLAT-57E0113F24",
       "AIMW-PLAT-827A8F1C0D",
-      "AIMW-PLAT-83994BBD03",
       "AIMW-PLAT-AF47A254FE",
       "AIMW-PLAT-C6260410D1"
     ],
@@ -35571,6 +35579,7 @@
       "AIMW-OPER-FC4C071FAA",
       "AIMW-PLAT-15C5517022",
       "AIMW-PLAT-57B1A0F5E3",
+      "AIMW-PLAT-83994BBD03",
       "AIMW-CONT-43AF0076B5",
       "AIMW-AI-0F3763FDB4",
       "AIMW-AI-34EC6312B9",
@@ -35578,7 +35587,7 @@
       "AIMW-AUTO-1584B94390",
       "AIMW-PLAT-3025C8E82B"
     ],
-    "focused_service_contract_count": 30,
+    "focused_service_contract_count": 31,
     "focused_background_job_contract_terminals": [
       "AIMW-AUTO-13392A9E67",
       "AIMW-AUTO-50F3EC7087",
