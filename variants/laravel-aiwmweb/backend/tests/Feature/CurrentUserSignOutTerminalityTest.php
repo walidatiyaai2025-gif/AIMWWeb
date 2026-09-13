@@ -87,7 +87,7 @@ class CurrentUserSignOutTerminalityTest extends TestCase
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString("apiRequest<LogoutResponse>('/api/logout', { method: 'POST' })", $control);
         $this->assertStringContainsString("document.querySelector<HTMLElement>('.topbar-actions')", $control);
-        $this->assertStringContainsString("meta[name=\"csrf-token\"]", $core);
+        $this->assertStringContainsString('meta[name="csrf-token"]', $core);
         $this->assertStringContainsString("headers.set('X-CSRF-TOKEN', csrf)", $core);
         $this->assertStringContainsString("credentials: 'same-origin'", $core);
     }
