@@ -1,0 +1,82 @@
+name: Slot 0314 Apply Repair
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-AIMW-PLAT-F6C1A04662-reconcile-slot0306
+    paths:
+      - '.github/workflows/slot0314-apply-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-AIMW-PLAT-F6C1A04662-reconcile-slot0306
+          fetch-depth: 0
+      - name: Add exact strict tenant-neutral focused-service contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesParityClosureTest.php')
+          text = path.read_text()
+          op = "AIMW-PLAT-F6C1A04662"
+          if f"'{op}' => [" in text:
+              raise SystemExit('contract already present')
+          needle = "    private const STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS = [\n"
+          block = """        'AIMW-PLAT-F6C1A04662' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetDatabasePath',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/database.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-F6C1A04662',
+                'service:ApplicationPathService',
+                'member:GetDatabasePath',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
+            ],
+        ],
+"""
+          if text.count(needle) != 1:
+              raise SystemExit('strict contract insertion anchor is not unique')
+          path.write_text(text.replace(needle, needle + block, 1))
+          PY
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Validate focused repair
+        working-directory: variants/laravel-aiwmweb/backend
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test
+          php artisan test tests/Feature/PlatformServicesParityClosureTest.php tests/Feature/DatabasePathTerminalityTest.php
+      - name: Commit scoped repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesParityClosureTest.php
+          git diff --cached --check
+          git commit -m 'test(laravel): govern GetDatabasePath tenant-neutral evidence'
+          git push origin HEAD:worker/laravel-aiwmweb-AIMW-PLAT-F6C1A04662-reconcile-slot0306
