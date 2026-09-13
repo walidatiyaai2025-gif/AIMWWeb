@@ -3,12 +3,18 @@
   "task_id": "AIMW-PLAT-83994BBD03",
   "operation_id": "AIMW-PLAT-83994BBD03",
   "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
   "authority": {
     "issue": 257,
     "canonical_base_sha": "e1895f4c4a19c530b15da717a0f5c6fe4647691f",
     "pcc_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
     "claim_comment_id": 5477347334,
-    "worker_branch": "worker/laravel-AIMW-PLAT-83994BBD03-screenshots-directory"
+    "worker_branch": "worker/laravel-AIMW-PLAT-83994BBD03-screenshots-directory",
+    "merged_pr": 405,
+    "merge_commit_sha": "58192cc8f375e89c8a6d434f300917e76f625071",
+    "reconciliation_recovery_base_sha": "772fc6081d3973fa0fa5380db4e8f1355c15c243",
+    "reconciliation_recovery_branch": "worker/laravel-aiwmweb-AIMW-PLAT-83994BBD03-reconcile-slot0316",
+    "reconciliation_recovery_claim_comment_id": 5649862954
   },
   "canonical_operation": {
     "kind": "service",
@@ -18,8 +24,13 @@
     "source": "src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs",
     "mutation": false
   },
+  "service_closure_contract": {
+    "implementation_sha": "aa87a02f7ba9c20328d19b523308f7a93f16927a",
+    "destination_path": "variants/laravel-aiwmweb/backend/config/filesystems.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php"
+  },
   "decision": "ADAPTED_NATIVE_FRAMEWORK",
-  "rationale": "The desktop service exposes a stable application-owned screenshots directory. Laravel expresses the equivalent storage boundary as a named private local filesystem disk rooted at storage_path('app/screenshots'), avoiding a desktop-specific path-service wrapper while preserving a real reusable runtime contract.",
+  "rationale": "The desktop service exposes a stable application-owned screenshots directory. Laravel expresses the equivalent storage boundary as the existing named private local screenshots disk rooted at storage_path('app/screenshots'). The strict focused-service contract now links that already-merged native-framework adaptation to an exact pushed implementation SHA and the original real I/O acceptance test without adding a duplicate desktop-style path service.",
   "destination": {
     "runtime_contract": "Storage::disk('screenshots')",
     "root": "storage_path('app/screenshots')",
@@ -37,6 +48,7 @@
   },
   "security": {
     "tenant_input_controls_path": false,
+    "request_input_controls_path": false,
     "user_input_controls_path": false,
     "public_visibility": false,
     "public_symlink_target": false,
@@ -46,21 +58,24 @@
     "canonical operation provenance is pinned to AIMW-PLAT-83994BBD03",
     "the screenshots disk is a private local Laravel filesystem contract",
     "the fixed screenshots root is storage/app/screenshots under the application data root",
-    "the screenshots root is not tenant-, user-, or caller-selected",
+    "the screenshots root is not tenant-, request-, user-, or caller-selected",
     "the screenshots root is not exposed through Laravel's public storage link",
     "runtime can create, read, locate, and remove a deterministic probe through Storage::disk('screenshots')"
   ],
   "scope_exclusions": [
-    "GetApplicationDataDirectory",
-    "GetDatabasePath",
-    "GetLogsDirectory",
+    "AIMW-PLAT-A2624EDC66 / GetApplicationDataDirectory",
+    "AIMW-PLAT-F6C1A04662 / GetDatabasePath",
+    "AIMW-OPER-55C6982761 / GetLogsDirectory",
     "GetBackupsDirectory",
     "GetExportsDirectory",
     "GetTemporaryDirectory",
     "screenshot capture or browser automation",
-    "tenant-specific screenshot resource modeling"
+    "tenant-specific screenshot resource modeling",
+    "generated operation parity reconciliation artifacts"
   ],
   "validation": {
-    "exact_head_ci_required": true
+    "focused_test": "ScreenshotsDirectoryTerminalityTest",
+    "exact_head_ci_required": true,
+    "generator_backed_reconciliation_required": true
   }
 }
