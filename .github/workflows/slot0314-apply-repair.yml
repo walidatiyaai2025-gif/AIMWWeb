@@ -19,37 +19,8 @@ jobs:
         with:
           ref: worker/laravel-aiwmweb-AIMW-PLAT-F6C1A04662-reconcile-slot0306
           fetch-depth: 0
-      - name: Add exact strict tenant-neutral focused-service contract
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('variants/laravel-aiwmweb/backend/tests/Feature/PlatformServicesParityClosureTest.php')
-          text = path.read_text()
-          op = "AIMW-PLAT-F6C1A04662"
-          if f"'{op}' => [" in text:
-              raise SystemExit('contract already present')
-          needle = "    private const STRICT_TENANT_NEUTRAL_FOCUSED_SERVICE_OPERATIONS = [\n"
-          block = """        'AIMW-PLAT-F6C1A04662' => [
-            'route_screen' => 'service:ApplicationPathService',
-            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
-            'visible_control' => 'GetDatabasePath',
-            'destination' => 'variants/laravel-aiwmweb/backend/config/database.php',
-            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
-            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
-            'signals' => [
-                'operation:AIMW-PLAT-F6C1A04662',
-                'service:ApplicationPathService',
-                'member:GetDatabasePath',
-                'test:variants/laravel-aiwmweb/backend/tests/Feature/DatabasePathTerminalityTest.php',
-                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
-            ],
-        ],
-          """
-          if text.count(needle) != 1:
-              raise SystemExit('strict contract insertion anchor is not unique')
-          path.write_text(text.replace(needle, needle + block, 1))
-          PY
+      - name: Apply exact strict tenant-neutral focused-service contract
+        run: python .github/slot0314_apply_repair.py
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -57,7 +28,6 @@ jobs:
           coverage: none
       - name: Validate focused repair
         working-directory: variants/laravel-aiwmweb/backend
-        shell: bash
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
@@ -71,7 +41,6 @@ jobs:
           vendor/bin/pint --test
           php artisan test tests/Feature/PlatformServicesParityClosureTest.php tests/Feature/DatabasePathTerminalityTest.php
       - name: Commit scoped repair
-        shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
