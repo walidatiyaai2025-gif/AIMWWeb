@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 560 |
-| PENDING | 371 |
+| ADAPTED | 561 |
+| PENDING | 370 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 560 |
-| OVERALL_PARITY_PERCENT | 60.15% |
+| TERMINAL | 561 |
+| OVERALL_PARITY_PERCENT | 60.26% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -33,7 +33,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 59 | 0 | 0 | 0 | 59 | 100.00% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
-| billing | 178 | 0 | 87 | 91 | 0 | 0 | 87 | 48.88% |
+| billing | 178 | 0 | 88 | 90 | 0 | 0 | 88 | 49.44% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
 | content | 164 | 0 | 28 | 136 | 0 | 0 | 28 | 17.07% |
 | email | 82 | 0 | 57 | 25 | 0 | 0 | 57 | 69.51% |
@@ -55,7 +55,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
-| service | 349 | 0 | 348 | 1 | 0 | 0 | 348 | 99.71% |
+| service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
 | visible_control | 446 | 0 | 113 | 333 | 0 | 0 | 113 | 25.34% |
 
 ## Reproducibility / guard results
@@ -67,7 +67,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **38**
 - Focused visible-control contracts: **113**
-- Focused service contracts: **31**
+- Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
 - Frontend placeholder terminals: **0**
@@ -91,7 +91,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### billing (91)
+### billing (90)
 
 - `AIMW-BILL-092F59830B`
 - `AIMW-BILL-0938ECBF66`
@@ -146,7 +146,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-BILL-8BE4A39748`
 - `AIMW-BILL-8DD8F167D3`
 - `AIMW-BILL-8F4FA80ED6`
-- `AIMW-BILL-90CF990147`
 - `AIMW-BILL-9414B3FFEF`
 - `AIMW-BILL-94755B17E4`
 - `AIMW-BILL-9DD2652E1E`
