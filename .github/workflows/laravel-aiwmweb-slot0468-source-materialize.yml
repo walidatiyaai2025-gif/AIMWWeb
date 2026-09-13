@@ -1,0 +1,52 @@
+name: Laravel AIWMWeb Slot0468 Advance Focused Evidence Source
+
+on:
+  pull_request:
+    types: [reopened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.pull_request.number == 495 && github.head_ref == 'worker/laravel-iden-bf78057c28-signout'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-iden-bf78057c28-signout
+          fetch-depth: 0
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Advance exact focused evidence source
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['focused_closure_evidence_source_sha'] = 'a3210192670e8b1b8155417102845ac7dd03cdd8'
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+      - name: Generate canonical reconciliation
+        run: |
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md --check-total 931
+      - name: Commit durable evidence source and generated outputs
+        run: |
+          rm .github/workflows/laravel-aiwmweb-slot0468-source-materialize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md .github/workflows/laravel-aiwmweb-slot0468-source-materialize.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'docs(laravel): advance focused evidence source for AIMW-IDEN-BF78057C28'
+          git push origin HEAD:worker/laravel-iden-bf78057c28-signout
