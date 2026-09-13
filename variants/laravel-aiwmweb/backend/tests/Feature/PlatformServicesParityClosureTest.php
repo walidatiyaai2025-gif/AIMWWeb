@@ -64,6 +64,21 @@ class PlatformServicesParityClosureTest extends TestCase
                 'evidence:variants/laravel-aiwmweb/docs/closure-evidence/database-path-terminality.json',
             ],
         ],
+        'AIMW-PLAT-83994BBD03' => [
+            'route_screen' => 'service:ApplicationPathService',
+            'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
+            'visible_control' => 'GetScreenshotsDirectory',
+            'destination' => 'variants/laravel-aiwmweb/backend/config/filesystems.php',
+            'acceptance_test' => 'variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php',
+            'evidence_path' => 'variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json',
+            'signals' => [
+                'operation:AIMW-PLAT-83994BBD03',
+                'service:ApplicationPathService',
+                'member:GetScreenshotsDirectory',
+                'test:variants/laravel-aiwmweb/backend/tests/Feature/ScreenshotsDirectoryTerminalityTest.php',
+                'evidence:variants/laravel-aiwmweb/docs/closure-evidence/screenshots-directory-terminality.json',
+            ],
+        ],
         'AIMW-PLAT-A2624EDC66' => [
             'route_screen' => 'service:ApplicationPathService',
             'current_source' => 'src/AIWordPressManager.Infrastructure/Paths/ApplicationPathService.cs',
