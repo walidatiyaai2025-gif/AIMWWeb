@@ -78,11 +78,12 @@ class CurrentUserSignOutTerminalityTest extends TestCase
 
     public function test_runtime_binding_uses_the_exact_operation_marker_real_endpoint_and_csrf_aware_client(): void
     {
-        $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $runtime = (string) file_get_contents(resource_path('js/current-user-site-details-control.tsx'));
         $control = (string) file_get_contents(resource_path('js/current-user-sign-out-control.tsx'));
         $core = (string) file_get_contents(resource_path('js/core.ts'));
 
-        $this->assertStringContainsString('<CurrentUserSignOutControl />', $app);
+        $this->assertStringContainsString("import { CurrentUserSignOutControl } from './current-user-sign-out-control';", $runtime);
+        $this->assertStringContainsString('<CurrentUserSignOutControl />', $runtime);
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString("apiRequest<LogoutResponse>('/api/logout', { method: 'POST' })", $control);
         $this->assertStringContainsString("document.querySelector<HTMLElement>('.topbar-actions')", $control);
