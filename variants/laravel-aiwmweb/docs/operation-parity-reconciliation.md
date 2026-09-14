@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 566 |
-| PENDING | 365 |
+| ADAPTED | 567 |
+| PENDING | 364 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 566 |
-| OVERALL_PARITY_PERCENT | 60.79% |
+| TERMINAL | 567 |
+| OVERALL_PARITY_PERCENT | 60.90% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **118**
-- Pending: **328**
+- Terminal: **119**
+- Pending: **327**
 - Blocked: **0**
-- Parity: **26.46%**
+- Parity: **26.68%**
 
 ## By domain
 
@@ -40,7 +40,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | identity | 7 | 0 | 3 | 4 | 0 | 0 | 3 | 42.86% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
 | operations | 5 | 0 | 5 | 0 | 0 | 0 | 5 | 100.00% |
-| platform | 18 | 0 | 13 | 5 | 0 | 0 | 13 | 72.22% |
+| platform | 18 | 0 | 14 | 4 | 0 | 0 | 14 | 77.78% |
 | reports | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 118 | 328 | 0 | 0 | 118 | 26.46% |
+| visible_control | 446 | 0 | 119 | 327 | 0 | 0 | 119 | 26.68% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **38**
-- Focused visible-control contracts: **118**
+- Focused visible-control contracts: **119**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -385,13 +385,12 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### platform (5)
+### platform (4)
 
 - `AIMW-PLAT-4BAE8344AF`
 - `AIMW-PLAT-57E0113F24`
 - `AIMW-PLAT-827A8F1C0D`
 - `AIMW-PLAT-AF47A254FE`
-- `AIMW-PLAT-C6260410D1`
 
 ### reports (0)
 
