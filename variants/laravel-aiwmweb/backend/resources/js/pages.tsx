@@ -18,6 +18,7 @@ import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
+import { CurrentUserLogsControl } from './current-user-logs-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
@@ -200,7 +201,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
 
     if (state.state !== 'enabled') return <Unavailable route={route} context={context} state={state} />;
     if (query.isLoading) return <LoadingState />;
-    if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;
+    if (query.error) return (
+        <div className="workspace-stack">
+            <QueryError error={query.error} retry={() => query.refetch()} />
+            <CurrentUserLogsControl context={context} />
+        </div>
+    );
 
     const collection = normalizeCollection(query.data);
     const visibleRows = route.key === 'sites' && sitesFilter === 'connected'
