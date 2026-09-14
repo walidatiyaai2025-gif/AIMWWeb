@@ -15,7 +15,7 @@ function ThrowOnce({ state }: { state: { shouldThrow: boolean } }) {
     return <div>Recovered application tree</div>;
 }
 
-function AlwaysThrows() {
+function AlwaysThrows(): React.JSX.Element {
     throw new Error('persistent runtime failure');
 }
 
