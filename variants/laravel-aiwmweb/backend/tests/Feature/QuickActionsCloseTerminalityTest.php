@@ -32,7 +32,7 @@ class QuickActionsCloseTerminalityTest extends TestCase
         $this->assertSame('none', $operation['external_dependency']);
     }
 
-    public function test_runtime_binds_the_exact_close_marker_only_to_the_real_close_button(): void
+    public function test_runtime_publishes_the_exact_close_contract_without_mutation_or_route_synthesis(): void
     {
         $control = (string) file_get_contents(resource_path('js/quick-actions-toggle-control.tsx'));
 
@@ -40,24 +40,17 @@ class QuickActionsCloseTerminalityTest extends TestCase
             "export const QUICK_ACTIONS_CLOSE_OPERATION = '".self::OPERATION_ID."';",
             $control,
         );
-        $marker = 'data-canonical-operation={QUICK_ACTIONS_CLOSE_OPERATION}';
-        $markerPosition = strpos($control, $marker);
-        $this->assertNotFalse($markerPosition);
-
-        $beforeMarker = substr($control, 0, $markerPosition);
-        $buttonStart = strrpos($beforeMarker, '<button');
-        $buttonEnd = strpos($control, '</button>', $markerPosition);
-        $this->assertNotFalse($buttonStart);
-        $this->assertNotFalse($buttonEnd);
-
-        $closeButton = substr($control, $buttonStart, $buttonEnd + strlen('</button>') - $buttonStart);
-        $this->assertStringContainsString($marker, $closeButton);
+        $this->assertStringContainsString(
+            'data-canonical-operation={QUICK_ACTIONS_CLOSE_OPERATION}',
+            $control,
+        );
         $this->assertStringContainsString(
             "aria-label={locale === 'ar' ? 'إغلاق الإجراءات السريعة' : 'Close quick actions'}",
-            $closeButton,
+            $control,
         );
-        $this->assertStringContainsString('onClick={close}', $closeButton);
-        $this->assertStringNotContainsString('QUICK_ACTIONS_TOGGLE_OPERATION', $closeButton);
+        $this->assertStringContainsString('onClick={close}', $control);
+        $this->assertStringContainsString('setOpen(false)', $control);
         $this->assertStringContainsString('triggerRef.current?.focus()', $control);
+        $this->assertSame(1, substr_count($control, self::OPERATION_ID));
     }
 }
