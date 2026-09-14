@@ -21,7 +21,7 @@ import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { PostsExecutionLinkControl } from './posts-execution-link-control';
-import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
+import { RuntimeErrorBoundary } from './runtime-error-boundary';
 import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
@@ -40,22 +40,6 @@ const queryClient = new QueryClient({
         mutations: { retry: false },
     },
 });
-
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
-    state: { error: Error | null } = { error: null };
-    static getDerivedStateFromError(error: Error) { return { error }; }
-    componentDidCatch(error: Error, info: React.ErrorInfo) {
-        console.error('Laravel AIWMWeb frontend error', error, info.componentStack);
-    }
-    render() {
-        if (this.state.error) return (
-            <div className="fatal-error" role="alert">
-                <section className="panel"><span className="workspace-kicker">RUNTIME ERROR</span><h1>A runtime error interrupted this screen</h1><p>{this.state.error.message}</p><div className="d-flex gap-2 flex-wrap"><button type="button" className="btn primary" onClick={() => window.location.reload()}>Hard reload</button><RuntimeErrorOpenLogsControl /></div></section>
-            </div>
-        );
-        return this.props.children;
-    }
-}
 
 type OutletState = { context: FrontendContext };
 
@@ -188,13 +172,13 @@ function AppRoutes() {
 
 export function App() {
     return (
-        <ErrorBoundary>
+        <RuntimeErrorBoundary>
             <QueryClientProvider client={queryClient}>
                 <LocaleProvider>
                     <BrowserRouter><AppRoutes /></BrowserRouter>
                 </LocaleProvider>
             </QueryClientProvider>
-        </ErrorBoundary>
+        </RuntimeErrorBoundary>
     );
 }
 
