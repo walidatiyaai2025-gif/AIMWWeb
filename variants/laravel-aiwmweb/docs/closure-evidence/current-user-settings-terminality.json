@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-A1064E5A5E",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "/settings -> /settings",
+    "target": "current authenticated tenant settings workspace",
+    "new_tab": false,
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency": "none",
+    "verification": "rendered navigation reaches the existing authenticated current-tenant settings SPA route"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-settings-control.tsx",
+    "visible_control": "Settings / الإعدادات",
+    "dom_target": ".topbar-actions",
+    "operation_marker": "AIMW-IDEN-A1064E5A5E",
+    "destination": "/tenants/{activeTenant}/settings",
+    "destination_route_contract": "workspaceRoutes.settings",
+    "destination_middleware": ["auth", "tenant.context"],
+    "destination_permission": "tenant.view",
+    "availability_contract": "render only when tenant.view is present and the registered settings route remains /settings with tenant.view permission",
+    "tenant_derivation": "FrontendContext.tenant.slug through tenantUrl; caller cannot supply a different tenant destination",
+    "direct_object_identifier": "none",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap loads the authoritative FrontendContext",
+    "CurrentUserSiteDetailsControl composes CurrentUserSettingsControl",
+    "the control verifies tenant.view plus the registered settings route path and permission before rendering",
+    "the user activates Settings / الإعدادات",
+    "navigation targets /tenants/{activeTenant}/settings derived only from context.tenant.slug",
+    "the existing authenticated tenant SPA catch-all re-applies tenant.context and tenant.view before rendering the settings workspace route"
+  ],
+  "authorization": {
+    "workspace": ["auth", "tenant.context", "tenant.view"],
+    "guest_workspace": "redirect /login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "tenant_impersonation_or_selector": "none",
+    "direct_user_or_membership_identifier": "none",
+    "cross_tenant_destination_synthesis": "tenant slug is URL-encoded and derived only from authoritative frontend context"
+  },
+  "acceptance_tests": [
+    "CurrentUserSettingsControlTerminalityTest::test_exact_canonical_operation_is_the_pending_current_user_settings_control",
+    "CurrentUserSettingsControlTerminalityTest::test_authorized_current_user_can_follow_the_control_to_the_real_tenant_settings_workspace",
+    "CurrentUserSettingsControlTerminalityTest::test_guest_missing_permission_and_cross_tenant_settings_navigation_fail_closed",
+    "CurrentUserSettingsControlTerminalityTest::test_runtime_binding_uses_exact_operation_marker_and_authoritative_tenant_route",
+    "current-user-settings-control.test.tsx renders the exact canonical Settings control for the active tenant",
+    "current-user-settings-control.test.tsx URL-encodes authoritative tenant identity and cannot synthesize a foreign tenant path",
+    "current-user-settings-control.test.tsx fails closed when tenant.view is absent"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "claim_comment_id": 5658311851,
+    "canonical_base_sha": "0caa79c7b1c1b58fae5bfce96a42654ac50a724b",
+    "worker_branch": "worker/laravel-iden-a1064e5a5e-settings-control",
+    "pull_request": 497
+  },
+  "implementation_sha": "e048c13f8e829bc7642f25dfaa672d0422884d9c",
+  "implementation_tested_sha": "e048c13f8e829bc7642f25dfaa672d0422884d9c",
+  "implementation_exact_head_ci": {
+    "pr_plan_link": {"run_id": 34800675297, "run_number": 2115, "result": "success"},
+    "cross_domain_security": {"run_id": 34800675215, "run_number": 1263, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 34800675295, "run_number": 1332, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_tests": "success",
+    "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests": "success",
+    "production_frontend_build": "success",
+    "runtime_artifacts": "success",
+    "production_docker_compose_runtime_smoke": "success"
+  },
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "0caa79c7b1c1b58fae5bfce96a42654ac50a724b",
+    "total_operations": 931,
+    "previous_terminal": 563,
+    "new_terminal_after_this_operation": 564,
+    "previous_pending": 368,
+    "new_pending_after_this_operation": 367,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "This is the single-operation delta against the unchanged live composition authority; the canonical generator must independently accept this evidence before integration."
+  },
+  "final_head_policy": "The evidence-bearing and generator-materialized PR head must pass the required exact-head workflows before integration readiness is claimed.",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no change to the ASP.NET/reference product",
+    "no new settings route, settings persistence, settings mutation API, or provider integration",
+    "no claim that unrelated Settings workspace content operations are terminal",
+    "no caller-supplied tenant/user/membership identifier",
+    "no fabricated owner/manual/live-production evidence",
+    "no manual edit of generated reconciliation counts"
+  ]
+}
