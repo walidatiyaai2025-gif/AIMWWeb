@@ -6,13 +6,15 @@ import {
     QUICK_ACTIONS_TOGGLE_OPERATION,
     QuickActionsToggleControl,
 } from '../quick-actions-toggle-control';
-import type { FrontendContext } from '../core';
+import type { CapabilityContract, FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 
 const context = (
     slug = 'alpha',
     permissions: string[] = ['tenant.view', 'content.view'],
-    capabilities: Record<string, boolean> = { 'feature.content_planner': true },
+    capabilities: Record<string, CapabilityContract> = {
+        'feature.content_planner': { state: 'enabled' },
+    },
 ): FrontendContext => ({
     user: { id: 10, name: 'Alpha Owner', email: 'alpha@example.test' },
     tenant: { slug, name: 'Alpha' },
