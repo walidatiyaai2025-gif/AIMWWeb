@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-CD4ADA5087",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "Open logs",
+    "target": "/logs",
+    "new_tab": false,
+    "mutation": false,
+    "external_dependency": "none",
+    "verification": "reference exposes Open logs only as a diagnostic escape path when trusted workspace/site loading fails"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/pages.tsx",
+    "production_control": "resources/js/current-user-logs-control.tsx",
+    "visible_control": "Open logs",
+    "operation_marker": "AIMW-IDEN-CD4ADA5087",
+    "authorization_contract": "trusted FrontendContext + diagnostics.view + operations.manage + exact logs route + exact active-tenant logs API; backend independently enforces auth, tenant.context and operations.manage",
+    "direct_object_identifier": "none",
+    "caller_supplied_tenant_selector": "none",
+    "network_request": false,
+    "persistence_mutation": false,
+    "success_message": false,
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false,
+    "fail_closed_behavior": "control is absent when trust, either permission, exact route metadata, exact active-tenant API advertisement or capability availability is missing; foreign tenant endpoint requests are rejected"
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap resolves FrontendContext through /tenants/{tenant}/context under auth + tenant.context and tenant.view",
+    "ResourceContent executes only after trusted server context exists and exposes Open logs only when its real resource query fails",
+    "CurrentUserLogsControl requires diagnostics.view, operations.manage, exact logs workspace metadata, enabled capability state and exact server-advertised active-tenant logs API",
+    "destination is derived exclusively from FrontendContext.tenant.slug and fixed /module/logs; browser pathname and direct object identifiers cannot select another tenant",
+    "logs workspace reads /tenants/{tenant}/admin/logs under auth + tenant.context",
+    "AdminOperationsController::logs re-authorizes operations.manage before tenant-scoped operation_logs retrieval",
+    "selected operation is read-only navigation: no mutation, CSRF write, persistence success claim, idempotency token, retry queue or cancellation lifecycle"
+  ],
+  "security_boundary": {
+    "auth_session": "trusted context and logs API are behind authenticated Laravel session middleware",
+    "active_tenant_resolution": "server-provided FrontendContext tenant drives navigation and TenantContext rejects foreign membership",
+    "permission_checks": "UI fails closed unless diagnostics.view and operations.manage are present; backend independently requires operations.manage",
+    "foreign_tenant_rejection": "focused HTTP acceptance plants a real beta-only log and proves an authenticated alpha member cannot read the beta route",
+    "direct_id_rejection": "not applicable: control and endpoint accept no resource identifier",
+    "validation": "selected navigation sends no user payload; existing log filters remain server-owned",
+    "csrf": "not applicable: selected operation and logs endpoint are GET/read-only and perform no mutation",
+    "server_derived_identity_and_ownership": "authenticated user and active tenant membership are resolved server-side and never supplied by the control",
+    "secret_non_exposure": "no credential material is rendered or serialized; control consumes only server-advertised route/capability metadata",
+    "authoritative_persistence_reread": "not applicable because there is no persistence mutation or persisted-success claim",
+    "idempotency_retry_cancellation": "not applicable to read-only navigation; resource-query Retry is separate and repeated navigation has no mutation side effect",
+    "truthful_success": "the control only navigates; real log data appears only after protected backend success",
+    "fail_closed": "missing trust, permission, API contract, enabled capability or tenant membership removes or rejects the path instead of synthesizing diagnostics"
+  },
+  "acceptance_tests": [
+    "CurrentUserLogsSecurityTest::test_guest_cannot_read_tenant_logs",
+    "CurrentUserLogsSecurityTest::test_diagnostics_only_member_fails_closed_at_the_actual_logs_endpoint",
+    "CurrentUserLogsSecurityTest::test_foreign_tenant_route_is_rejected_before_logs_are_read",
+    "CurrentUserLogsSecurityTest::test_authorized_member_reads_only_active_tenant_logs_and_never_foreign_rows",
+    "current-user-logs-control.test.tsx exact marker, trusted tenant derivation, encoded tenant safety, dual-permission fail-closed and foreign API-contract fail-closed"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "canonical_base_sha": "31df348e4af6a4aa4f1bb30a3b674e46269c94c7",
+    "worker_branch": "worker/laravel-iden-cd4ada5087-current-user-logs"
+  },
+  "implementation_sha": "042b97508071158de2f612d0a2efb7e0db5c0cbd",
+  "implementation_tested_sha": "042b97508071158de2f612d0a2efb7e0db5c0cbd",
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "31df348e4af6a4aa4f1bb30a3b674e46269c94c7",
+    "total_operations": 931,
+    "previous_terminal": 567,
+    "expected_terminal_after_this_operation": 568,
+    "previous_pending": 364,
+    "expected_pending_after_this_operation": 363,
+    "previous_blocked": 0,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "Official generator must independently validate this exact one-operation delta."
+  },
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "focused_tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "generator_backed_reconciliation_passed": false,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no ASP.NET/reference-product modification",
+    "no always-visible Logs action outside a real trusted resource failure",
+    "no caller-supplied tenant destination or direct object identifier",
+    "no permission weakening or endpoint bypass",
+    "no secret or credential exposure",
+    "no persistence mutation or fabricated success",
+    "no sample/demo/fake diagnostic data",
+    "no manual generated parity-count edit"
+  ]
+}
