@@ -80,7 +80,7 @@
     "previous_blocked": 0,
     "delta_terminal": 1,
     "delta_pending": -1,
-    "scope_note": "Official generator must independently validate this exact one-operation delta."
+    "scope_note": "Official generator independently validated this exact one-operation delta."
   },
   "terminality": {
     "fully_implemented": true,
@@ -89,7 +89,7 @@
     "focused_tests_green_on_implementation_sha": true,
     "evidence_recorded": true,
     "generator_backed_reconciliation_required": true,
-    "generator_backed_reconciliation_passed": false,
+    "generator_backed_reconciliation_passed": true,
     "final_exact_head_ci_required": true,
     "state": "ADAPTED"
   },
