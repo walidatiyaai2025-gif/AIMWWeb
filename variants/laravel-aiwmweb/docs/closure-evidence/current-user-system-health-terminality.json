@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-FC900E61B8",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "/system-health -> /system-health",
+    "target": "current authenticated tenant system-health workspace",
+    "new_tab": false,
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency": "none",
+    "verification": "localized read-only navigation reaches the existing tenant system-health workspace only when both tenant.view and diagnostics.view are authoritative"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-system-health-control.tsx",
+    "server_route": "routes/web.php",
+    "visible_control": "System health / صحة النظام",
+    "details": "Services and database status / فحص الخدمات وقاعدة البيانات",
+    "dom_target": ".topbar-actions",
+    "operation_marker": "AIMW-IDEN-FC900E61B8",
+    "destination": "/tenants/{activeTenant}/system-health",
+    "destination_route_contract": "workspaceRoutes.system-health",
+    "destination_middleware": ["auth", "tenant.context"],
+    "destination_permissions": ["tenant.view", "diagnostics.view"],
+    "availability_contract": "render only when both required permissions are present and the registered system-health route remains /system-health with diagnostics.view permission",
+    "tenant_derivation": "FrontendContext.tenant.slug through tenantUrl; caller cannot supply a different tenant destination",
+    "direct_object_identifier": "none",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap loads authoritative FrontendContext",
+    "CurrentUserSiteDetailsControl composes CurrentUserSystemHealthControl",
+    "the control fail-closes unless tenant.view and diagnostics.view are both present and the workspace route contract is unchanged",
+    "the user activates System health / صحة النظام",
+    "navigation targets /tenants/{activeTenant}/system-health derived only from context.tenant.slug",
+    "the explicit Laravel route re-applies auth, tenant.context, tenant.view and diagnostics.view before rendering the SPA workspace"
+  ],
+  "authorization": {
+    "workspace": ["auth", "tenant.context", "tenant.view", "diagnostics.view"],
+    "guest_workspace": "redirect /login",
+    "missing_diagnostics_permission": "403",
+    "foreign_tenant": "404",
+    "tenant_impersonation_or_selector": "none",
+    "direct_user_or_membership_identifier": "none",
+    "cross_tenant_destination_synthesis": "tenant slug is URL-encoded and derived only from authoritative frontend context"
+  },
+  "read_only_and_safety": {
+    "mutation": false,
+    "csrf_write_surface": "none",
+    "queue_or_scheduler_change": "none",
+    "cache_change": "none",
+    "secret_read_or_write": "none",
+    "wordpress_or_connector_write": "none",
+    "ai_or_provider_call": "none",
+    "success_semantics": "link is shown only when the authoritative permission and route contract are valid; the server independently authorizes navigation"
+  },
+  "acceptance_tests": [
+    "CurrentUserSystemHealthControlTerminalityTest::test_canonical_operation_contract_matches_current_user_system_health_source_semantics",
+    "CurrentUserSystemHealthControlTerminalityTest::test_authorized_user_can_open_real_system_health_workspace_and_context_exposes_required_permissions",
+    "CurrentUserSystemHealthControlTerminalityTest::test_guest_missing_permission_and_cross_tenant_system_health_navigation_fail_closed",
+    "CurrentUserSystemHealthControlTerminalityTest::test_runtime_binding_is_tenant_derived_and_server_route_enforces_same_permission_contract",
+    "current-user-system-health-control.test.tsx renders the exact canonical control and source details",
+    "current-user-system-health-control.test.tsx URL-encodes authoritative tenant identity and cannot synthesize a foreign tenant path",
+    "current-user-system-health-control.test.tsx fails closed independently for missing diagnostics.view and tenant.view"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "claim_comment_id": 5671060432,
+    "canonical_base_sha": "897358223fda722e49be5780fdc9b54809884de3",
+    "worker_branch": "worker/laravel-iden-fc900e61b8-system-health"
+  },
+  "implementation_sha": "d198576a76fae4556c18c7a93577b7511a0e9d6a",
+  "validation_state": "required focused tests, official reconciliation and PR exact-head CI must pass before integration",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced_in_code": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no change to the ASP.NET/reference product",
+    "no claim that the separate canonical route operation is terminal",
+    "no mutation, provider, connector, WordPress, AI, queue, scheduler, cache or secret behavior",
+    "no caller-supplied tenant/user/membership identifier",
+    "no fabricated owner/manual/live-production evidence",
+    "no manual edit of generated reconciliation counts"
+  ]
+}
