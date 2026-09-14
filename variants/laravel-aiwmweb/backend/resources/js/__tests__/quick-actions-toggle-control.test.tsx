@@ -1,5 +1,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
     QUICK_ACTIONS_TOGGLE_OPERATION,
@@ -11,22 +12,25 @@ import { LocaleProvider } from '../i18n';
 const context = (
     slug = 'alpha',
     permissions: string[] = ['tenant.view', 'content.view'],
+    capabilities: Record<string, boolean> = { 'feature.content_planner': true },
 ): FrontendContext => ({
     user: { id: 10, name: 'Alpha Owner', email: 'alpha@example.test' },
     tenant: { slug, name: 'Alpha' },
     tenants: [{ slug, name: 'Alpha' }],
     permissions,
     connectors: [],
-    capabilities: {},
+    capabilities,
     api: {},
     actions: {},
 });
 
 function renderControl(value: FrontendContext) {
     return render(
-        <LocaleProvider>
-            <QuickActionsToggleControl context={value} />
-        </LocaleProvider>,
+        <MemoryRouter>
+            <LocaleProvider>
+                <QuickActionsToggleControl context={value} />
+            </LocaleProvider>
+        </MemoryRouter>,
     );
 }
 
@@ -77,7 +81,7 @@ describe('AIMW-PLAT-4C37AC806E Quick Actions toggle', () => {
     });
 
     it('shows a truthful empty state instead of inventing unauthorized actions', () => {
-        renderControl(context('alpha', ['tenant.view']));
+        renderControl(context('alpha', ['tenant.view'], {}));
         fireEvent.click(screen.getByRole('button', { name: /Open quick actions/i }));
 
         expect(screen.getByRole('status')).toHaveTextContent(/No quick actions are available/i);
