@@ -11,6 +11,7 @@ import {
 import { useLocale } from './i18n';
 
 export const QUICK_ACTIONS_TOGGLE_OPERATION = 'AIMW-PLAT-4C37AC806E';
+export const QUICK_ACTIONS_CLOSE_OPERATION = 'AIMW-PLAT-17BC7DA9E5';
 
 const SOURCE_QUICK_ACTION_PATHS = [
     '/sites/connect',
@@ -116,6 +117,7 @@ export function QuickActionsToggleControl({ context }: { context: FrontendContex
                     <button
                         type="button"
                         className="icon-button"
+                        data-canonical-operation={QUICK_ACTIONS_CLOSE_OPERATION}
                         aria-label={locale === 'ar' ? 'إغلاق الإجراءات السريعة' : 'Close quick actions'}
                         onClick={close}
                     >×</button>
