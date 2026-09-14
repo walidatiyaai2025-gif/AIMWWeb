@@ -1,0 +1,187 @@
+name: Laravel AIWMWeb CurrentUser Logs Focused Closure
+
+on:
+  push:
+    branches:
+      - worker/laravel-iden-cd4ada5087-current-user-logs
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-record:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-iden-cd4ada5087-current-user-logs
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Wire diagnostic control only into trusted resource failure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/backend/resources/js/pages.tsx')
+          text = path.read_text(encoding='utf-8')
+          anchor = "import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';\n"
+          insertion = anchor + "import { CurrentUserLogsControl } from './current-user-logs-control';\n"
+          assert text.count(anchor) == 1, 'pages import anchor changed'
+          assert "from './current-user-logs-control'" not in text, 'logs control already wired unexpectedly'
+          text = text.replace(anchor, insertion, 1)
+          old = "if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;"
+          occurrences = text.count(old)
+          assert occurrences >= 2, f'expected dashboard + resource query error anchors, got {occurrences}'
+          replacement = "if (query.error) return (\n        <div className=\"workspace-stack\">\n            <QueryError error={query.error} retry={() => query.refetch()} />\n            <CurrentUserLogsControl context={context} />\n        </div>\n    );"
+          first = text.find(old)
+          second = text.find(old, first + len(old))
+          assert second != -1, 'resource query error anchor missing'
+          text = text[:second] + replacement + text[second + len(old):]
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Focused PHP and frontend validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd variants/laravel-aiwmweb/backend
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate:fresh --force
+          vendor/bin/pint --test tests/Feature/CurrentUserLogsSecurityTest.php
+          php artisan test tests/Feature/CurrentUserLogsSecurityTest.php
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test -- --run resources/js/__tests__/current-user-logs-control.test.tsx
+          npm run build
+      - name: Commit tested runtime wiring and machine-readable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/resources/js/pages.tsx
+          git commit -m 'feat(laravel): wire secure current-user Open logs diagnostic'
+          implementation_sha="$(git rev-parse HEAD)"
+          cat > variants/laravel-aiwmweb/docs/closure-evidence/current-user-logs-terminality.json <<EOF
+          {
+            "schema_version": 1,
+            "authority": "AIMWWeb Issue #257",
+            "target_variant": "LARAVEL_AIWMWEB",
+            "operation_id": "AIMW-IDEN-CD4ADA5087",
+            "previous_state": "PENDING",
+            "terminal_state": "ADAPTED",
+            "domain": "identity",
+            "kind": "visible_control",
+            "source": {
+              "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+              "screens": ["component:CurrentUserChip"],
+              "control": "Open logs",
+              "target": "/logs",
+              "new_tab": false,
+              "mutation": false,
+              "external_dependency": "none",
+              "verification": "reference exposes Open logs only as a diagnostic escape path when trusted workspace/site loading fails"
+            },
+            "laravel_adaptation": {
+              "runtime_composition": "resources/js/pages.tsx",
+              "production_control": "resources/js/current-user-logs-control.tsx",
+              "visible_control": "Open logs",
+              "operation_marker": "AIMW-IDEN-CD4ADA5087",
+              "authorization_contract": "trusted FrontendContext + diagnostics.view + operations.manage + exact logs route + server-advertised logs API; backend independently enforces auth, tenant.context and operations.manage",
+              "direct_object_identifier": "none",
+              "caller_supplied_tenant_selector": "none",
+              "network_request": false,
+              "persistence_mutation": false,
+              "success_message": false,
+              "fake_or_demo_data": false,
+              "generated_reconciliation_modified": false,
+              "fail_closed_behavior": "control is absent when trust, permission, exact route metadata or server API advertisement is missing; foreign tenant endpoint requests are rejected"
+            },
+            "runtime_path": [
+              "authenticated tenant bootstrap resolves FrontendContext through /tenants/{tenant}/context under auth + tenant.context and tenant.view",
+              "ResourceContent executes only after trusted server context exists and exposes Open logs only when its real resource query fails",
+              "CurrentUserLogsControl requires diagnostics.view, operations.manage, the exact logs workspace contract and the server-advertised logs API",
+              "destination is derived exclusively from FrontendContext.tenant.slug and fixed /module/logs; browser pathname and direct object identifiers cannot select another tenant",
+              "logs workspace reads /tenants/{tenant}/admin/logs under auth + tenant.context",
+              "AdminOperationsController::logs re-authorizes operations.manage before tenant-scoped retrieval",
+              "selected operation is read-only navigation: no mutation, CSRF write, persistence success claim, idempotency token, retry queue or cancellation lifecycle"
+            ],
+            "security_boundary": {
+              "auth_session": "trusted context and logs API are both behind authenticated Laravel session middleware",
+              "active_tenant_resolution": "server-provided FrontendContext tenant drives navigation and TenantContext rejects foreign membership",
+              "permission_checks": "UI fails closed unless diagnostics.view and operations.manage are both present; backend independently requires operations.manage",
+              "foreign_tenant_rejection": "focused HTTP acceptance proves an authenticated alpha member cannot read beta logs",
+              "direct_id_rejection": "not applicable: control and endpoint accept no resource identifier",
+              "validation": "selected navigation sends no user payload; existing log filters remain server-owned",
+              "csrf": "not applicable: selected operation and logs endpoint are GET/read-only and perform no mutation",
+              "server_derived_identity_and_ownership": "authenticated user and active tenant membership are resolved server-side and never supplied by the control",
+              "secret_non_exposure": "no credential material is rendered or serialized; the control consumes only server-advertised route/capability metadata",
+              "authoritative_persistence_reread": "not applicable because there is no persistence mutation or persisted-success claim",
+              "idempotency_retry_cancellation": "not applicable to read-only navigation; resource-query Retry remains a distinct control and repeated navigation has no mutation side effect",
+              "truthful_success": "the control only navigates; log data appears only after the protected backend succeeds",
+              "fail_closed": "missing trust, permission, API contract or tenant membership removes or rejects the path instead of synthesizing diagnostics"
+            },
+            "acceptance_tests": [
+              "CurrentUserLogsSecurityTest::test_guest_cannot_read_tenant_logs",
+              "CurrentUserLogsSecurityTest::test_diagnostics_only_member_fails_closed_at_the_actual_logs_endpoint",
+              "CurrentUserLogsSecurityTest::test_foreign_tenant_route_is_rejected_before_logs_are_read",
+              "CurrentUserLogsSecurityTest::test_authorized_member_reads_only_the_active_tenant_logs_contract",
+              "current-user-logs-control.test.tsx: exact marker, trusted tenant derivation, encoded tenant safety, dual-permission fail-closed and API-contract fail-closed"
+            ],
+            "authority_metadata": {
+              "issue": 257,
+              "canonical_base_sha": "31df348e4af6a4aa4f1bb30a3b674e46269c94c7",
+              "worker_branch": "worker/laravel-iden-cd4ada5087-current-user-logs"
+            },
+            "implementation_sha": "${implementation_sha}",
+            "implementation_tested_sha": "${implementation_sha}",
+            "canonical_denominator_contribution": {
+              "authority_snapshot_sha": "31df348e4af6a4aa4f1bb30a3b674e46269c94c7",
+              "total_operations": 931,
+              "previous_terminal": 567,
+              "expected_terminal_after_this_operation": 568,
+              "previous_pending": 364,
+              "expected_pending_after_this_operation": 363,
+              "previous_blocked": 0,
+              "delta_terminal": 1,
+              "delta_pending": -1,
+              "scope_note": "The official generator must independently validate this exact one-operation delta."
+            },
+            "terminality": {
+              "fully_implemented": true,
+              "runtime_wired": true,
+              "security_enforced": true,
+              "tests_green_on_implementation_sha": true,
+              "evidence_recorded": true,
+              "generator_backed_reconciliation_required": true,
+              "generator_backed_reconciliation_passed": false,
+              "final_exact_head_ci_required": true,
+              "state": "ADAPTED"
+            },
+            "scope_exclusions": [
+              "no ASP.NET/reference-product modification",
+              "no always-visible Logs action outside a real trusted resource failure",
+              "no caller-supplied tenant destination or direct object identifier",
+              "no permission weakening or endpoint bypass",
+              "no secret or credential exposure",
+              "no persistence mutation or fabricated success",
+              "no sample/demo/fake diagnostic data",
+              "no manual generated parity-count edit"
+            ]
+          }
+          EOF
+          git add variants/laravel-aiwmweb/docs/closure-evidence/current-user-logs-terminality.json
+          git commit -m 'docs(laravel): record secure current-user logs closure evidence'
+          git push origin HEAD:worker/laravel-iden-cd4ada5087-current-user-logs
