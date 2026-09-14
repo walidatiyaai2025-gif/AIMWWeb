@@ -87,7 +87,13 @@ class QuickActionsToggleTerminalityTest extends TestCase
         $this->assertStringContainsString("'/module/posts'", $control);
         $this->assertStringNotContainsString('tenant=', $control);
         $this->assertSame(1, substr_count($control, self::OPERATION_ID));
-        $this->assertStringNotContainsString('AIMW-PLAT-17BC7DA9E5', $control);
+        $this->assertStringContainsString(
+            "export const QUICK_ACTIONS_CLOSE_OPERATION = 'AIMW-PLAT-17BC7DA9E5';",
+            $control,
+        );
+        $this->assertSame(1, substr_count($control, 'AIMW-PLAT-17BC7DA9E5'));
+        $this->assertSame(1, substr_count($control, 'data-canonical-operation={QUICK_ACTIONS_TOGGLE_OPERATION}'));
+        $this->assertSame(1, substr_count($control, 'data-canonical-operation={QUICK_ACTIONS_CLOSE_OPERATION}'));
     }
 
     private function membership(User $user, string $slug, array $permissions, string $roleName): TenantMembership
