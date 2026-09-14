@@ -16,6 +16,8 @@ class CurrentUserLogsSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const OPERATION_ID = 'AIMW-IDEN-CD4ADA5087';
+
     public function test_guest_cannot_read_tenant_logs(): void
     {
         $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
@@ -34,6 +36,7 @@ class CurrentUserLogsSecurityTest extends TestCase
 
     public function test_foreign_tenant_route_is_rejected_before_logs_are_read(): void
     {
+        $this->assertSame('AIMW-IDEN-CD4ADA5087', self::OPERATION_ID);
         [, $alpha] = $this->tenantMember('alpha', ['tenant.view', 'diagnostics.view', 'operations.manage']);
         [$beta] = $this->tenantMember('beta', ['tenant.view', 'diagnostics.view', 'operations.manage']);
         DB::table('operation_logs')->insert([
