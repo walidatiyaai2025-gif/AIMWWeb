@@ -1,0 +1,45 @@
+name: PR498 Quick Actions Diagnostic
+
+on:
+  push:
+    branches:
+      - worker/laravel-plat-4c37ac806e-quick-actions-toggle
+
+permissions:
+  contents: read
+
+jobs:
+  focused-php:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: php artisan migrate:fresh --force
+      - name: Run focused test and capture output
+        id: focused
+        shell: bash
+        run: |
+          set +e
+          php artisan test tests/Feature/QuickActionsToggleTerminalityTest.php --colors=never 2>&1 | tee /tmp/pr498-focused-php.log
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr498-focused-php-${{ github.sha }}
+          path: /tmp/pr498-focused-php.log
+          if-no-files-found: error
+      - name: Preserve focused result
+        if: always()
+        run: exit ${{ steps.focused.outputs.status }}
