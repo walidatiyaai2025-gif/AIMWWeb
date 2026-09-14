@@ -1,0 +1,56 @@
+name: Laravel AIWMWeb Wire Runtime Recover
+
+on:
+  push:
+    branches:
+      - worker/laravel-plat-c6260410d1-runtime-recover
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-plat-c6260410d1-runtime-recover
+          fetch-depth: 0
+      - name: Wire extracted runtime error boundary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/backend/resources/js/app.tsx')
+          text = path.read_text(encoding='utf-8')
+          old_import = "import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';"
+          new_import = "import { RuntimeErrorBoundary } from './runtime-error-boundary';"
+          if old_import not in text:
+              raise SystemExit('expected runtime-error-open-logs import not found')
+          text = text.replace(old_import, new_import, 1)
+
+          start_marker = 'class ErrorBoundary extends React.Component'
+          end_marker = 'type OutletState = { context: FrontendContext };'
+          start = text.find(start_marker)
+          end = text.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit('expected inline ErrorBoundary block not found')
+          text = text[:start] + text[end:]
+
+          if text.count('<ErrorBoundary>') != 1 or text.count('</ErrorBoundary>') != 1:
+              raise SystemExit('unexpected ErrorBoundary composition count')
+          text = text.replace('<ErrorBoundary>', '<RuntimeErrorBoundary>', 1)
+          text = text.replace('</ErrorBoundary>', '</RuntimeErrorBoundary>', 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Remove one-shot workflow and commit wiring
+        run: |
+          rm .github/workflows/laravel-aiwmweb-c6260410d1-wire.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/resources/js/app.tsx .github/workflows/laravel-aiwmweb-c6260410d1-wire.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat(laravel): wire runtime error recover boundary'
+          git push origin HEAD:worker/laravel-plat-c6260410d1-runtime-recover
