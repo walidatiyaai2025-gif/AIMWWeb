@@ -4,6 +4,7 @@ import { CurrentUserAccountProfileControl } from './current-user-account-profile
 import { CurrentUserConnectSiteControl } from './current-user-connect-site-control';
 import { CurrentUserSettingsControl } from './current-user-settings-control';
 import { CurrentUserSignOutControl } from './current-user-sign-out-control';
+import { CurrentUserSystemHealthControl } from './current-user-system-health-control';
 import { QuickActionsToggleControl } from './quick-actions-toggle-control';
 import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
@@ -75,6 +76,7 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
             <CurrentUserConnectSiteControl context={context} />
             <CurrentUserAccountProfileControl context={context} />
             <CurrentUserSettingsControl context={context} />
+            <CurrentUserSystemHealthControl context={context} />
             <QuickActionsToggleControl context={context} />
             <CurrentUserSignOutControl />
             {details}
