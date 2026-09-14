@@ -97,17 +97,32 @@
     "runtime_artifacts": "success",
     "production_docker_compose_runtime_smoke": "success"
   },
+  "generator_materialization": {
+    "evidence_source_sha": "8d40a38bf3c911c1ad4c9097c26c53837e3ac637",
+    "materialized_sha": "12172e7a7a86f5d6b750f6dad34548605a0db1db",
+    "run_id": 34808364206,
+    "result": "success",
+    "asserted_total": 931,
+    "asserted_terminal": 565,
+    "asserted_pending": 366,
+    "asserted_blocked": 0,
+    "platform_terminal": 12,
+    "platform_pending": 6,
+    "visible_control_terminal": 117,
+    "visible_control_pending": 329,
+    "overall_parity_percent": 60.69
+  },
   "canonical_denominator_contribution": {
     "authority_snapshot_sha": "8a768a5148abcb4d8d7acb21524155e893b577eb",
     "total_operations": 931,
     "previous_terminal": 564,
-    "expected_terminal_after_this_operation": 565,
+    "new_terminal_after_this_operation": 565,
     "previous_pending": 367,
-    "expected_pending_after_this_operation": 366,
-    "previous_blocked": 0,
+    "new_pending_after_this_operation": 366,
+    "blocked": 0,
     "delta_terminal": 1,
     "delta_pending": -1,
-    "scope_note": "The official generator must independently validate this exact one-operation delta against the unchanged live composition authority."
+    "scope_note": "The official generator independently accepted this exact one-operation delta against the unchanged live composition authority."
   },
   "final_head_policy": "The evidence-bearing, generator-materialized PR head must pass all required exact-head workflows before integration readiness is claimed.",
   "terminality": {
@@ -117,7 +132,7 @@
     "tests_green_on_implementation_sha": true,
     "evidence_recorded": true,
     "generator_backed_reconciliation_required": true,
-    "generator_backed_reconciliation_passed": false,
+    "generator_backed_reconciliation_passed": true,
     "final_exact_head_ci_required": true,
     "state": "ADAPTED"
   },
