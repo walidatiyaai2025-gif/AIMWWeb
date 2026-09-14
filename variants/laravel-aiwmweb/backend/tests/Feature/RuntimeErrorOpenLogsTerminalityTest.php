@@ -47,11 +47,11 @@ final class RuntimeErrorOpenLogsTerminalityTest extends TestCase
 
     public function test_global_error_boundary_wires_only_this_operation_to_the_existing_tenant_logs_alias(): void
     {
-        $appSource = (string) file_get_contents(resource_path('js/app.tsx'));
+        $boundarySource = (string) file_get_contents(resource_path('js/runtime-error-boundary.tsx'));
         $controlSource = (string) file_get_contents(resource_path('js/runtime-error-open-logs-control.tsx'));
 
-        $this->assertStringContainsString('import { RuntimeErrorOpenLogsControl } from \'./runtime-error-open-logs-control\';', $appSource);
-        $this->assertStringContainsString('<RuntimeErrorOpenLogsControl />', $appSource);
+        $this->assertStringContainsString('import { RuntimeErrorOpenLogsControl } from \'./runtime-error-open-logs-control\';', $boundarySource);
+        $this->assertStringContainsString('<RuntimeErrorOpenLogsControl />', $boundarySource);
         $this->assertStringContainsString(self::OPERATION_ID, $controlSource);
         $this->assertStringContainsString('Open logs', $controlSource);
         $this->assertStringContainsString('/^\/tenants\/([^/]+)(?:\/|$)/', $controlSource);
