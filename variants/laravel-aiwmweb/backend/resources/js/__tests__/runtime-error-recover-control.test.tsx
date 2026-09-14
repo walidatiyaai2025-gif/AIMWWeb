@@ -6,9 +6,8 @@ import {
     RuntimeErrorBoundary,
 } from '../runtime-error-boundary';
 
-function ThrowOnce({ state }: { state: { shouldThrow: boolean } }) {
+function ThrowUntilRecovered({ state }: { state: { shouldThrow: boolean } }) {
     if (state.shouldThrow) {
-        state.shouldThrow = false;
         throw new Error('recoverable runtime failure');
     }
 
@@ -52,11 +51,12 @@ describe('AIMW-PLAT-C6260410D1 runtime error Recover control', () => {
 
         render(
             <RuntimeErrorBoundary>
-                <ThrowOnce state={state} />
+                <ThrowUntilRecovered state={state} />
             </RuntimeErrorBoundary>,
         );
 
-        expect(screen.getByRole('alert')).toHaveTextContent('recoverable runtime failure');
+        expect(await screen.findByRole('alert')).toHaveTextContent('recoverable runtime failure');
+        state.shouldThrow = false;
         fireEvent.click(screen.getByRole('button', { name: 'Try to recover' }));
 
         await waitFor(() => expect(screen.getByText('Recovered application tree')).toBeInTheDocument());
