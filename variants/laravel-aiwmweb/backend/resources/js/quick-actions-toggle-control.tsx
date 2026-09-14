@@ -122,12 +122,14 @@ export function QuickActionsToggleControl({ context }: { context: FrontendContex
                 </header>
 
                 {actions.length > 0 ? (
-                    <div className="main-layout-theme-grid" role="list">
+                    <nav
+                        className="main-layout-theme-grid"
+                        aria-label={locale === 'ar' ? 'وجهات الإجراءات السريعة' : 'Quick action destinations'}
+                    >
                         {actions.map((route) => (
                             <Link
                                 key={route.key}
                                 className="main-layout-theme-option"
-                                role="listitem"
                                 to={tenantUrl(context.tenant.slug, route.path)}
                                 onClick={close}
                             >
@@ -138,7 +140,7 @@ export function QuickActionsToggleControl({ context }: { context: FrontendContex
                                 </span>
                             </Link>
                         ))}
-                    </div>
+                    </nav>
                 ) : (
                     <p role="status">
                         {locale === 'ar'
