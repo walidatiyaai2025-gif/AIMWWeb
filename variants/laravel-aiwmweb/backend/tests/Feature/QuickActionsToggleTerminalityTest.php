@@ -38,7 +38,7 @@ class QuickActionsToggleTerminalityTest extends TestCase
             $operation['current_source'],
         );
         $this->assertFalse((bool) $operation['mutation']);
-        $this->assertTrue((bool) $operation['tenant_owned']);
+        $this->assertFalse((bool) $operation['tenant_owned']);
     }
 
     public function test_authenticated_tenant_context_is_required_before_the_toggle_can_receive_authoritative_routes(): void
