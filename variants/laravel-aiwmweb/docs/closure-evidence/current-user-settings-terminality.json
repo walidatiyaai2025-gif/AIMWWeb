@@ -85,6 +85,17 @@
     "runtime_artifacts": "success",
     "production_docker_compose_runtime_smoke": "success"
   },
+  "generator_materialization": {
+    "materialized_sha": "84d07ce08fe90271972f2718c4f799701ff80396",
+    "run_id": 34800942860,
+    "result": "success",
+    "asserted_total": 931,
+    "asserted_terminal": 564,
+    "asserted_pending": 367,
+    "asserted_blocked": 0,
+    "identity_terminal": 3,
+    "identity_pending": 4
+  },
   "canonical_denominator_contribution": {
     "authority_snapshot_sha": "0caa79c7b1c1b58fae5bfce96a42654ac50a724b",
     "total_operations": 931,
@@ -94,7 +105,7 @@
     "new_pending_after_this_operation": 367,
     "delta_terminal": 1,
     "delta_pending": -1,
-    "scope_note": "This is the single-operation delta against the unchanged live composition authority; the canonical generator must independently accept this evidence before integration."
+    "scope_note": "This is the single-operation delta against the unchanged live composition authority; the canonical generator independently accepted this evidence."
   },
   "final_head_policy": "The evidence-bearing and generator-materialized PR head must pass the required exact-head workflows before integration readiness is claimed.",
   "terminality": {
@@ -104,6 +115,7 @@
     "tests_green_on_implementation_sha": true,
     "evidence_recorded": true,
     "generator_backed_reconciliation_required": true,
+    "generator_backed_reconciliation_passed": true,
     "final_exact_head_ci_required": true,
     "state": "ADAPTED"
   },
