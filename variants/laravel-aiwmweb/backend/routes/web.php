@@ -259,6 +259,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
+        Route::get('/system-health', 'show')->defaults('workspace_permissions', 'tenant.view,diagnostics.view')->name('canonical.workspace.system-health');
 
         Route::get('/module/posts', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.posts');
         Route::get('/module/pages', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
