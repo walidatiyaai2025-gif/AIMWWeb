@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-PLAT-4C37AC806E",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "platform",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/QuickActions.razor",
+    "screens": ["component:QuickActions"],
+    "control": "Toggle",
+    "target": "permission-filtered Quick Actions dialog and source-equivalent application workflows",
+    "new_tab": false,
+    "mutation": false,
+    "tenant_owned": false,
+    "risk": "low",
+    "external_dependency": "none",
+    "verification": "authenticated users can toggle the dialog; only authoritative permission/capability-enabled routes are exposed and destinations are derived from the active tenant context"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/quick-actions-toggle-control.tsx",
+    "visible_control": "Quick action / إجراء سريع",
+    "dom_target": ".topbar-actions",
+    "operation_marker": "AIMW-PLAT-4C37AC806E",
+    "source_action_paths": [
+      "/sites/connect",
+      "/module/posts",
+      "/ai-center",
+      "/content-planner",
+      "/automation-center",
+      "/module/execution",
+      "/module/sync",
+      "/module/seo-audit",
+      "/notifications",
+      "/module/reports"
+    ],
+    "availability_contract": "workspaceRoutes plus resolveCapability must report enabled before an action is rendered",
+    "tenant_derivation": "FrontendContext.tenant.slug through tenantUrl; caller cannot supply a different tenant destination",
+    "authorization_contract": "authoritative FrontendContext permissions, capability state, connector/API contracts and tenant context fail closed before destinations are exposed",
+    "direct_object_identifier": "none",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false,
+    "accessibility": "native link semantics are preserved inside a labeled navigation region; toggle and close controls expose dialog state and accessible names"
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap loads authoritative FrontendContext",
+    "CurrentUserSiteDetailsControl composes QuickActionsToggleControl",
+    "the canonical toggle opens or closes the dialog without mutation",
+    "availableSourceActions intersects source-equivalent paths with workspaceRoutes",
+    "resolveCapability filters out unauthorized, unavailable, disconnected, unintegrated or otherwise disabled destinations",
+    "tenantUrl derives every rendered destination from context.tenant.slug and URL-encodes the authoritative tenant identity",
+    "navigation proceeds only to an already integrated tenant-qualified route"
+  ],
+  "authorization": {
+    "context_endpoint": ["auth", "tenant.context", "tenant.view"],
+    "guest_context": "redirect /login",
+    "missing_context_permission": "403",
+    "foreign_tenant_context": "404",
+    "caller_supplied_tenant_selector": "none",
+    "cross_tenant_destination_synthesis": "tenant slug is URL-encoded and derived only from authoritative frontend context",
+    "fail_closed": "routes without the required permission/capability/API/connector contract are not rendered"
+  },
+  "acceptance_tests": [
+    "QuickActionsToggleTerminalityTest::test_exact_canonical_operation_is_the_pending_quick_actions_toggle",
+    "QuickActionsToggleTerminalityTest::test_authenticated_tenant_context_is_required_before_the_toggle_can_receive_authoritative_routes",
+    "QuickActionsToggleTerminalityTest::test_guest_missing_permission_and_cross_tenant_context_fail_closed",
+    "QuickActionsToggleTerminalityTest::test_runtime_binding_uses_exact_marker_capability_filtering_and_context_derived_tenant_urls",
+    "quick-actions-toggle-control.test.tsx renders the exact canonical toggle and truthfully opens and closes the dialog",
+    "quick-actions-toggle-control.test.tsx exposes only existing permission-enabled source actions",
+    "quick-actions-toggle-control.test.tsx derives and encodes destinations only from the authoritative active tenant",
+    "quick-actions-toggle-control.test.tsx shows a truthful empty state instead of inventing unauthorized actions"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "claim_comment_id": 5659078085,
+    "canonical_base_sha": "8a768a5148abcb4d8d7acb21524155e893b577eb",
+    "worker_branch": "worker/laravel-plat-4c37ac806e-quick-actions-toggle",
+    "pull_request": 498
+  },
+  "implementation_sha": "e1437071a779ae55335e9af5cadfadda5e4b4de9",
+  "implementation_tested_sha": "e1437071a779ae55335e9af5cadfadda5e4b4de9",
+  "implementation_exact_head_ci": {
+    "pr_plan_link": {"run_id": 34808152620, "run_number": 2129, "result": "success"},
+    "cross_domain_security": {"run_id": 34808152603, "run_number": 1277, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 34808152597, "run_number": 1346, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_tests": "success",
+    "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "production_frontend_typecheck_tests_build": "success",
+    "runtime_artifacts": "success",
+    "production_docker_compose_runtime_smoke": "success"
+  },
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "8a768a5148abcb4d8d7acb21524155e893b577eb",
+    "total_operations": 931,
+    "previous_terminal": 564,
+    "expected_terminal_after_this_operation": 565,
+    "previous_pending": 367,
+    "expected_pending_after_this_operation": 366,
+    "previous_blocked": 0,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "The official generator must independently validate this exact one-operation delta against the unchanged live composition authority."
+  },
+  "final_head_policy": "The evidence-bearing, generator-materialized PR head must pass all required exact-head workflows before integration readiness is claimed.",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "generator_backed_reconciliation_passed": false,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no change to the ASP.NET/reference product",
+    "no claim that the separate Quick Actions Close canonical operation is terminal",
+    "no caller-supplied tenant destination or direct object identifier",
+    "no fabricated owner/manual/live-production evidence",
+    "no manual edit of generated parity counts"
+  ]
+}
