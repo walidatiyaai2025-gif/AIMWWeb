@@ -43,7 +43,7 @@ class CurrentUserLogsSecurityTest extends TestCase
             'level' => 'error',
             'message' => 'beta-secret-diagnostic',
             'context' => json_encode([]),
-            'created_at' => now(),
+            'occurred_at' => now(),
         ]);
 
         $this->actingAs($alpha->user)
@@ -63,7 +63,7 @@ class CurrentUserLogsSecurityTest extends TestCase
                 'level' => 'info',
                 'message' => 'alpha-visible',
                 'context' => json_encode([]),
-                'created_at' => now(),
+                'occurred_at' => now(),
             ],
             [
                 'tenant_id' => $betaTenant->id,
@@ -72,7 +72,7 @@ class CurrentUserLogsSecurityTest extends TestCase
                 'level' => 'error',
                 'message' => 'beta-hidden',
                 'context' => json_encode([]),
-                'created_at' => now(),
+                'occurred_at' => now(),
             ],
         ]);
 
