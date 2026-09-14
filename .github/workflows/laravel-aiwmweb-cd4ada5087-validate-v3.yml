@@ -1,0 +1,70 @@
+name: Laravel AIWMWeb CurrentUser Logs Focused Validation v3
+
+on:
+  push:
+    branches:
+      - worker/laravel-iden-cd4ada5087-current-user-logs
+    paths:
+      - '.github/workflows/laravel-aiwmweb-cd4ada5087-validate-v3.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused-validation:
+    runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-iden-cd4ada5087-current-user-logs
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize intended production wiring in validation workspace only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/backend/resources/js/pages.tsx')
+          text = path.read_text(encoding='utf-8')
+          anchor = "import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';\n"
+          assert text.count(anchor) == 1
+          assert "from './current-user-logs-control'" not in text
+          text = text.replace(anchor, anchor + "import { CurrentUserLogsControl } from './current-user-logs-control';\n", 1)
+          old = "    if (query.error) return <QueryError error={query.error} retry={() => query.refetch()} />;"
+          assert text.count(old) >= 2
+          replacement = "    if (query.error) return (\n        <div className=\"workspace-stack\">\n            <QueryError error={query.error} retry={() => query.refetch()} />\n            <CurrentUserLogsControl context={context} />\n        </div>\n    );"
+          first = text.find(old)
+          second = text.find(old, first + len(old))
+          assert second != -1
+          text = text[:second] + replacement + text[second + len(old):]
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Validate focused PHP security contract
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test tests/Feature/CurrentUserLogsSecurityTest.php
+          php artisan migrate:fresh --force
+          php artisan test tests/Feature/CurrentUserLogsSecurityTest.php
+      - name: Validate focused frontend and production build
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test -- --run resources/js/__tests__/current-user-logs-control.test.tsx
+          npm run build
