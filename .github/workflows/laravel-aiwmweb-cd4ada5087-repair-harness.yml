@@ -1,0 +1,34 @@
+name: Repair CurrentUser Logs Closure Harness
+
+on:
+  push:
+    branches:
+      - worker/laravel-iden-cd4ada5087-current-user-logs
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-iden-cd4ada5087-current-user-logs
+          fetch-depth: 0
+      - name: Align harness with repository runtime and hand off once
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='.github/workflows/laravel-aiwmweb-cd4ada5087-implement.yml'
+          grep -q "php-version: '8.3'" "$target"
+          sed -i "s/php-version: '8.3'/php-version: '8.4'/" "$target"
+          grep -q "if: github.actor != 'github-actions\[bot\]'" "$target"
+          sed -i "s/if: github.actor != 'github-actions\[bot\]'/if: always()/" "$target"
+          rm .github/workflows/laravel-aiwmweb-cd4ada5087-repair-harness.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target" .github/workflows/laravel-aiwmweb-cd4ada5087-repair-harness.yml
+          git commit -m 'ci(laravel): run logs closure harness on PHP 8.4'
+          git push origin HEAD:worker/laravel-iden-cd4ada5087-current-user-logs
