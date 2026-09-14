@@ -22,7 +22,9 @@ const context = (
     permissions,
     connectors: [],
     capabilities,
-    api: {},
+    api: {
+        'content-planner': `/api/tenants/${encodeURIComponent(slug)}/content-planner`,
+    },
     actions: {},
 });
 
