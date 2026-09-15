@@ -61,6 +61,7 @@ class CurrentUserSystemHealthControlTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame('tenant.view,diagnostics.view', $route->defaults['workspace_permissions'] ?? null);
         $this->assertSame(['GET', 'HEAD'], $route->methods());
+        $this->post('/tenants/alpha/system-health')->assertStatus(405);
     }
 
     public function test_guest_missing_permission_and_foreign_tenant_all_fail_closed(): void
