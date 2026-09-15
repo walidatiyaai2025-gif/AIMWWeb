@@ -1,0 +1,54 @@
+name: Laravel AIWMWeb AppButton Focused Validation
+
+on:
+  push:
+    branches:
+      - worker/laravel-plat-57e0113f24-app-button-click
+    paths:
+      - '.github/workflows/laravel-aiwmweb-app-button-focused.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify canonical identity and read-only source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin worker/laravel-aiwmweb-closure-composition
+          test -z "$(git diff --name-only origin/worker/laravel-aiwmweb-closure-composition -- src/AIWordPressManager.Web/Components/Shared/AppButton.razor)"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          doc = json.loads(p.read_text())
+          row = next(item for item in doc['operations'] if item['operation_id'] == 'AIMW-PLAT-57E0113F24')
+          assert row['migration_state'] == 'PENDING', row
+          assert row['domain'] == 'platform', row
+          assert row['kind'] == 'visible_control', row
+          assert row['route_screen'] == 'component:AppButton', row
+          assert row['visible_control'] == '@Title [OnClick]', row
+          assert row['current_source'] == 'src/AIWordPressManager.Web/Components/Shared/AppButton.razor', row
+          print(json.dumps({k: row.get(k) for k in ('operation_id','mutation','tenant_owned','risk','migration_state')}, sort_keys=True))
+          PY
+      - name: Install frontend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: npm ci --no-audit --no-fund
+      - name: Run focused AppButton and Recover regression tests
+        working-directory: variants/laravel-aiwmweb/backend
+        run: npx vitest run resources/js/__tests__/app-button-click-control.test.tsx resources/js/__tests__/runtime-error-recover-control.test.tsx
+      - name: Typecheck exact candidate
+        working-directory: variants/laravel-aiwmweb/backend
+        run: npm run typecheck
+      - name: Build exact candidate
+        working-directory: variants/laravel-aiwmweb/backend
+        run: npm run build
