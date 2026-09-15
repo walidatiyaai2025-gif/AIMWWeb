@@ -1,0 +1,60 @@
+name: Laravel Hard Reload Recovery Materialize
+
+on:
+  push:
+    branches:
+      - worker/laravel-plat-4bae8344af-recovery
+    paths:
+      - '.github/workflows/laravel-hard-reload-recovery-materialize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pin focused evidence source and run official generator chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA=7030c9f31a61cd1cf10fab7fd70922d27a98cc90
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          d=json.loads(p.read_text())
+          d['focused_closure_evidence_source_sha']='7030c9f31a61cd1cf10fab7fd70922d27a98cc90'
+          p.write_text(json.dumps(d, indent=2)+'\n')
+          PY
+          cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/before.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output /tmp/recon.json --summary-output /tmp/summary.json --markdown-output /tmp/recon.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input /tmp/recon.json --output /tmp/recon.json --summary-output /tmp/summary.json --markdown-output /tmp/recon.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input /tmp/recon.json --output /tmp/recon.json --summary-output /tmp/summary.json --markdown-output /tmp/recon.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input /tmp/recon.json --output /tmp/recon.json --summary-output /tmp/summary.json --markdown-output /tmp/recon.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input /tmp/recon.json --output /tmp/recon.json --summary-output /tmp/summary.json --markdown-output /tmp/recon.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input /tmp/recon.json --output /tmp/recon.json --summary-output /tmp/summary.json --markdown-output /tmp/recon.md --check-total 931
+          python - <<'PY'
+          import json
+          b=json.load(open('/tmp/before.json')); a=json.load(open('/tmp/recon.json'))
+          def rows(x): return {r['operation_id']:r for r in x['operations']}
+          br,ar=rows(b),rows(a)
+          changed=[k for k in ar if br[k].get('state') != ar[k].get('state')]
+          assert changed == ['AIMW-PLAT-4BAE8344AF'], changed
+          assert br[changed[0]]['state']=='PENDING' and ar[changed[0]]['state']=='ADAPTED'
+          print('isolated transition:', changed[0], 'PENDING -> ADAPTED')
+          PY
+          cp /tmp/recon.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/recon.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          rm .github/workflows/laravel-hard-reload-recovery-materialize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md .github/workflows/laravel-hard-reload-recovery-materialize.yml
+          git commit -m 'chore(laravel): materialize recovered hard reload parity'
+          git push origin HEAD:worker/laravel-plat-4bae8344af-recovery
