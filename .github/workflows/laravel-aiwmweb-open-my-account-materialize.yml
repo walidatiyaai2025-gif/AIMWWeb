@@ -3,7 +3,7 @@ name: Laravel AIWMWeb Open My Account Materialize
 on:
   push:
     branches:
-      - worker/laravel-iden-03760967d1-final-convergence
+      - worker/laravel-aiwmweb-closure-composition
     paths:
       - '.github/workflows/laravel-aiwmweb-open-my-account-materialize.yml'
 
@@ -20,9 +20,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: worker/laravel-iden-03760967d1-final-convergence
-      - name: Fetch evidence refs
-        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+          ref: worker/laravel-aiwmweb-closure-composition
+      - run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -34,24 +33,10 @@ jobs:
           import json
           from pathlib import Path
           p=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
-          m=json.loads(p.read_text())
-          op='AIMW-IDEN-03760967D1'
-          source_sha='afa091b4b9dbb7d01aca84a3a77c900c99d6b9d8'
+          m=json.loads(p.read_text()); op='AIMW-IDEN-03760967D1'; source_sha='afa091b4b9dbb7d01aca84a3a77c900c99d6b9d8'
           for source in m.get('countable_sources', []):
-              if op in (source.get('operation_evidence') or {}) or op in (source.get('route_api_provenance') or {}):
-                  raise SystemExit(f'{op} already registered')
-          m.setdefault('countable_sources', []).append({
-              'label':'Routes NotAuthorized Open my account recovery',
-              'sha':source_sha,
-              'observed_pr_head':source_sha,
-              'domains':['identity'],
-              'operation_evidence':{op:{
-                  'destination_path':'variants/laravel-aiwmweb/backend/resources/views/platform/access-denied.blade.php',
-                  'action_path':'variants/laravel-aiwmweb/backend/bootstrap/app.php',
-                  'acceptance_test':'variants/laravel-aiwmweb/backend/tests/Feature/RoutesOpenMyAccountSecurityTest.php',
-                  'evidence_path':'variants/laravel-aiwmweb/docs/closure-evidence/open-my-account-denial-recovery.json'
-              }}
-          })
+              if op in (source.get('operation_evidence') or {}) or op in (source.get('route_api_provenance') or {}): raise SystemExit(f'{op} already registered')
+          m.setdefault('countable_sources', []).append({'label':'Routes NotAuthorized Open my account recovery','sha':source_sha,'observed_pr_head':source_sha,'domains':['identity'],'operation_evidence':{op:{'destination_path':'variants/laravel-aiwmweb/backend/resources/views/platform/access-denied.blade.php','action_path':'variants/laravel-aiwmweb/backend/bootstrap/app.php','acceptance_test':'variants/laravel-aiwmweb/backend/tests/Feature/RoutesOpenMyAccountSecurityTest.php','evidence_path':'variants/laravel-aiwmweb/docs/closure-evidence/open-my-account-denial-recovery.json'}}})
           p.write_text(json.dumps(m,indent=2,ensure_ascii=False)+'\n')
           PY
       - name: Run official generator chain
@@ -59,9 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/before.json
-          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          SUM=/tmp/operation-parity-summary.json
-          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json; SUM=/tmp/operation-parity-summary.json; MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
           python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
           python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
           python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
@@ -75,30 +58,21 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          before=json.loads(Path('/tmp/before.json').read_text()); after=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
-          b={r['operation_id']:r for r in before['operations']}; a={r['operation_id']:r for r in after['operations']}
+          before=json.loads(Path('/tmp/before.json').read_text()); after=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text()); b={r['operation_id']:r for r in before['operations']}; a={r['operation_id']:r for r in after['operations']}
           transitions=[(op,b[op]['migration_state'],a[op]['migration_state']) for op in b if b[op]['migration_state']!=a[op]['migration_state']]
-          expected=[('AIMW-IDEN-03760967D1','PENDING','ADAPTED')]
-          if transitions!=expected: raise SystemExit(f'unexpected transitions: {transitions!r}')
-          totals=after['totals']; expected_totals={'total':931,'terminal':574,'pending':357,'blocked':0}
-          for k,v in expected_totals.items():
-              if totals[k]!=v: raise SystemExit(f'unexpected {k}: {totals[k]} != {v}')
-          print('ONE_OPERATION_DELTA=PASS')
-          print('TOTAL=931 TERMINAL=574 PENDING=357 BLOCKED=0')
+          if transitions != [('AIMW-IDEN-03760967D1','PENDING','ADAPTED')]: raise SystemExit(f'unexpected transitions: {transitions!r}')
+          t=after['totals']; expected={'total':931,'terminal':574,'pending':357,'blocked':0}
+          if any(t[k]!=v for k,v in expected.items()): raise SystemExit(f'unexpected totals: {t}')
+          print('ONE_OPERATION_DELTA=PASS TOTAL=931 TERMINAL=574 PENDING=357 BLOCKED=0')
           PY
-      - name: Commit generator-owned artifacts
+      - name: Commit generator-owned artifacts and remove materializer
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
           git commit -m 'chore(laravel): materialize Open my account parity'
-          git push origin HEAD:worker/laravel-iden-03760967d1-final-convergence
-      - name: Remove one-shot materializer
-        shell: bash
-        run: |
-          set -euo pipefail
+          git push origin HEAD:worker/laravel-aiwmweb-closure-composition
           git rm .github/workflows/laravel-aiwmweb-open-my-account-materialize.yml
           git commit -m 'chore(laravel): remove Open my account materializer'
-          git push origin HEAD:worker/laravel-iden-03760967d1-final-convergence
+          git push origin HEAD:worker/laravel-aiwmweb-closure-composition
