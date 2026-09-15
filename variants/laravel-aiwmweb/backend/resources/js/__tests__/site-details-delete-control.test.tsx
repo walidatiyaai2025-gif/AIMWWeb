@@ -97,7 +97,7 @@ describe('AIMW-BILL-BE4B8C3822 Site Details delete control', () => {
         expect(headers.get('X-CSRF-TOKEN')).toBe('test-csrf-token');
         expect(headers.get('X-Requested-With')).toBe('XMLHttpRequest');
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites');
-        expect(fetchMock.mock.calls[1]?.[1]).toBeUndefined();
+        expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ credentials: 'same-origin' });
 
         await waitFor(() => expect(navigate).toHaveBeenCalledWith('/tenants/alpha/sites'));
         expect(await screen.findByRole('status')).toHaveTextContent('Site deleted and reconciled from the server.');
