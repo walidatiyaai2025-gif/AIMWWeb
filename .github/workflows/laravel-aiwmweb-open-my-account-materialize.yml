@@ -1,4 +1,5 @@
 name: Laravel AIWMWeb Open My Account Materialize
+# One-shot post-integration materializer for AIMW-IDEN-03760967D1.
 
 on:
   push:
@@ -33,7 +34,7 @@ jobs:
           import json
           from pathlib import Path
           p=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
-          m=json.loads(p.read_text()); op='AIMW-IDEN-03760967D1'; source_sha='afa091b4b9dbb7d01aca84a3a77c900c99d6b9d8'
+          m=json.loads(p.read_text()); op='AIMW-IDEN-03760967D1'; source_sha='afa091b4b9dbb7d01aca84a00e372fedabfb6562'
           for source in m.get('countable_sources', []):
               if op in (source.get('operation_evidence') or {}) or op in (source.get('route_api_provenance') or {}): raise SystemExit(f'{op} already registered')
           m.setdefault('countable_sources', []).append({'label':'Routes NotAuthorized Open my account recovery','sha':source_sha,'observed_pr_head':source_sha,'domains':['identity'],'operation_evidence':{op:{'destination_path':'variants/laravel-aiwmweb/backend/resources/views/platform/access-denied.blade.php','action_path':'variants/laravel-aiwmweb/backend/bootstrap/app.php','acceptance_test':'variants/laravel-aiwmweb/backend/tests/Feature/RoutesOpenMyAccountSecurityTest.php','evidence_path':'variants/laravel-aiwmweb/docs/closure-evidence/open-my-account-denial-recovery.json'}}})
