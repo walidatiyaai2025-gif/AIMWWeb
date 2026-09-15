@@ -41,7 +41,6 @@ jobs:
           manifest = json.loads(manifest_path.read_text())
           op = 'AIMW-CONT-6F699A5C14'
           source_sha = '316d28cd4a22001812fa06c3a41f8ee962c6acd8'
-          manifest['previous_reconciliation_sha'] = '012b7de4ffc215488058f89f4656734e86156432'
 
           for source in manifest.get('countable_sources', []):
               if op in (source.get('route_api_provenance') or {}):
