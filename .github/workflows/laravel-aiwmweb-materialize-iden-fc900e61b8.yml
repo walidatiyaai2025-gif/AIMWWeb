@@ -1,0 +1,128 @@
+name: Materialize AIMW-IDEN-FC900E61B8 closure
+
+on:
+  push:
+    branches:
+      - worker/laravel-iden-fc900e61b8-security-convergence
+    paths:
+      - '.github/workflows/laravel-aiwmweb-materialize-iden-fc900e61b8.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      TARGET_OPERATION: AIMW-IDEN-FC900E61B8
+      EVIDENCE_SHA: d3e3b039cb261bd98ef964409deaa273500ce0e3
+      BASE_SHA: 58b3010d05c0a9249753ae353d514d2d36fa8fac
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Register exact pushed evidence source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          document = json.loads(path.read_text())
+          document['focused_closure_evidence_source_sha'] = os.environ['EVIDENCE_SHA']
+          path.write_text(json.dumps(document, indent=2) + '\n')
+          PY
+
+      - name: Materialize with official reconciliation chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          DOCS=variants/laravel-aiwmweb/docs
+          git show "$BASE_SHA:$DOCS/operation-parity-reconciliation.json" > /tmp/base-reconciliation.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output "$DOCS/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$DOCS/operation-parity-reconciliation.md" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input "$DOCS/operation-parity-reconciliation.json" \
+            --output "$DOCS/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$DOCS/operation-parity-reconciliation.md" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input "$DOCS/operation-parity-reconciliation.json" \
+            --output "$DOCS/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$DOCS/operation-parity-reconciliation.md" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input "$DOCS/operation-parity-reconciliation.json" \
+            --output "$DOCS/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$DOCS/operation-parity-reconciliation.md" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input "$DOCS/operation-parity-reconciliation.json" \
+            --output "$DOCS/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$DOCS/operation-parity-reconciliation.md" \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input "$DOCS/operation-parity-reconciliation.json" \
+            --output "$DOCS/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$DOCS/operation-parity-reconciliation.md" \
+            --check-total 931
+
+      - name: Enforce exactly one canonical transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          before = json.loads(Path('/tmp/base-reconciliation.json').read_text())
+          after = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          def rows(doc):
+              values = doc.get('operations') or doc.get('rows') or []
+              return {row['operation_id']: row for row in values}
+          b, a = rows(before), rows(after)
+          assert len(b) == 931 and len(a) == 931, (len(b), len(a))
+          changed = []
+          for operation_id in sorted(a):
+              bs = b[operation_id].get('status') or b[operation_id].get('migration_state')
+              ass = a[operation_id].get('status') or a[operation_id].get('migration_state')
+              if bs != ass:
+                  changed.append((operation_id, bs, ass))
+          expected = [(os.environ['TARGET_OPERATION'], 'PENDING', 'ADAPTED')]
+          assert changed == expected, f'unexpected canonical transitions: {changed}'
+          assert sum(1 for row in a.values() if (row.get('status') or row.get('migration_state')) == 'BLOCKED') == 0
+          print('STRICT_ONE_OPERATION_DELTA', changed)
+          PY
+
+      - name: Remove temporary workflow and commit generator-owned artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/laravel-aiwmweb-materialize-iden-fc900e61b8.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+                  .github/workflows/laravel-aiwmweb-materialize-iden-fc900e61b8.yml
+          git diff --cached --check
+          git commit -m 'chore(laravel-aiwmweb): materialize AIMW-IDEN-FC900E61B8 closure'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
