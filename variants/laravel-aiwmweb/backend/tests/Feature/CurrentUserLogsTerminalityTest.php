@@ -8,12 +8,17 @@ class CurrentUserLogsTerminalityTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-IDEN-CD4ADA5087';
 
-    private const EVIDENCE_PATH = 'variants/laravel-aiwmweb/docs/closure-evidence/current-user-logs-terminality.json';
+    /**
+     * Historical generator source recorded when AIMW-IDEN-CD4ADA5087 was
+     * materialized. Later focused closures legitimately move the manifest's
+     * global focused source pointer, but must never rewrite this operation's
+     * reconciliation provenance.
+     */
+    private const EVIDENCE_SOURCE_SHA = 'c9eac52c1cb1bc212aa35776edae8e0e20a9f41f';
 
-    public function test_current_user_logs_operation_is_generator_terminal_on_final_evidence_source(): void
+    public function test_current_user_logs_operation_remains_generator_terminal_after_later_closures(): void
     {
         $reconciliation = $this->jsonDocument('../docs/operation-parity-reconciliation.json');
-        $manifest = $this->jsonDocument('../docs/operation-parity-evidence-sources.json');
         $evidence = $this->jsonDocument('../docs/closure-evidence/current-user-logs-terminality.json');
 
         $total = $reconciliation['totals']['total'] ?? null;
@@ -45,37 +50,42 @@ class CurrentUserLogsTerminalityTest extends TestCase
         $this->assertIsArray($operation, 'Canonical operation is missing from generated reconciliation.');
         $this->assertSame('ADAPTED', $operation['migration_state'] ?? null);
         $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null);
-
-        $focusedEvidenceSourceSha = $manifest['focused_closure_evidence_source_sha'] ?? null;
-        $this->assertIsString($focusedEvidenceSourceSha);
-        $this->assertNotSame('', $focusedEvidenceSourceSha);
-        $this->assertSame($focusedEvidenceSourceSha, $operation['reconciliation']['source_sha'] ?? null, 'Reconciliation must be materialized from the manifest current focused evidence source.');
+        $this->assertSame(
+            self::EVIDENCE_SOURCE_SHA,
+            $operation['reconciliation']['source_sha'] ?? null,
+            'Historical reconciliation provenance must remain pinned to the evidence source that terminalized this operation.'
+        );
 
         $focusedTerminals = $reconciliation['validation']['focused_closure_contract_terminals'] ?? [];
         $this->assertContains(self::OPERATION_ID, $focusedTerminals);
         $this->assertTrue($reconciliation['validation']['passed'] ?? false);
     }
 
-    public function test_manifest_and_closure_evidence_are_not_stale_after_generator_materialization(): void
+    public function test_closure_evidence_preserves_historical_generator_contract_after_later_materializations(): void
     {
-        $manifest = $this->jsonDocument('../docs/operation-parity-evidence-sources.json');
         $evidence = $this->jsonDocument('../docs/closure-evidence/current-user-logs-terminality.json');
 
         $this->assertSame(self::OPERATION_ID, $evidence['operation_id'] ?? null);
+        $this->assertSame('PENDING', $evidence['previous_state'] ?? null);
         $this->assertSame('ADAPTED', $evidence['terminal_state'] ?? null);
         $this->assertTrue($evidence['terminality']['generator_backed_reconciliation_passed'] ?? false);
         $this->assertTrue($evidence['terminality']['final_exact_head_ci_required'] ?? false);
 
-        $manifestEvidencePath = null;
-        foreach ($manifest['countable_sources'] ?? [] as $source) {
-            $operationEvidence = $source['operation_evidence'][self::OPERATION_ID] ?? null;
-            if (is_array($operationEvidence)) {
-                $manifestEvidencePath = $operationEvidence['evidence_path'] ?? null;
-                break;
-            }
-        }
+        $implementationSha = $evidence['implementation_sha'] ?? null;
+        $testedSha = $evidence['implementation_tested_sha'] ?? null;
+        $this->assertIsString($implementationSha);
+        $this->assertNotSame('', $implementationSha);
+        $this->assertSame($implementationSha, $testedSha, 'Closure evidence must identify the exact implementation revision that received focused validation.');
 
-        $this->assertSame(self::EVIDENCE_PATH, $manifestEvidencePath, 'Manifest must retain this operation closure evidence after later generator materializations.');
+        $contribution = $evidence['canonical_denominator_contribution'] ?? [];
+        $this->assertSame(931, $contribution['total_operations'] ?? null);
+        $this->assertSame(567, $contribution['previous_terminal'] ?? null);
+        $this->assertSame(568, $contribution['expected_terminal_after_this_operation'] ?? null);
+        $this->assertSame(364, $contribution['previous_pending'] ?? null);
+        $this->assertSame(363, $contribution['expected_pending_after_this_operation'] ?? null);
+        $this->assertSame(0, $contribution['previous_blocked'] ?? null);
+        $this->assertSame(1, $contribution['delta_terminal'] ?? null);
+        $this->assertSame(-1, $contribution['delta_pending'] ?? null);
     }
 
     private function jsonDocument(string $relativePath): array
