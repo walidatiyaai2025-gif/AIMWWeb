@@ -1,0 +1,18 @@
+{
+  "operation_id": "AIMW-IDEN-03760967D1",
+  "domain": "identity",
+  "kind": "control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {"file": "src/AIWordPressManager.Web/Components/Routes.razor", "control": "NotAuthorized -> Open my account"},
+  "laravel_adaptation": {"exception_renderer": "variants/laravel-aiwmweb/backend/bootstrap/app.php", "view": "variants/laravel-aiwmweb/backend/resources/views/platform/access-denied.blade.php", "profile_route": "canonical.workspace.account-profile"},
+  "authorization": {"authentication": "authenticated session", "tenant_context": "authoritative active membership reread constrained by authenticated user and route tenant", "permission": "tenant.view", "guest_semantics": "no recovery control", "missing_permission_semantics": "403 fail closed", "foreign_tenant_semantics": "no cross-tenant recovery URL", "json_api_semantics": "JSON denial preserved"},
+  "tenant_isolation": {"tenant_owned": true, "proof": "Caller query tenant/user/membership identifiers are non-authoritative; active membership and related tenant slug are reread server-side and hash-compared to the route tenant before temporary TenantContext activation."},
+  "semantics": {"mutation": false, "read_only": true, "idempotent": true, "retry_safe": true, "persistence": "no user/membership/role/permission mutation", "authoritative_reread": "current active membership and tenant ownership reread on every denial", "secrets": "password/token fields excluded", "fake_success": "none"},
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RoutesOpenMyAccountSecurityTest.php",
+  "implementation_sha": "afa091b4b9dbb7d01aca84a3a77c900c99d6b9d8",
+  "tested_sha": "afa091b4b9dbb7d01aca84a3a77c900c99d6b9d8",
+  "implementation_ci": {"pr_plan_link": {"run_id": 35026311576, "result": "GREEN"}, "cross_domain_security": {"run_id": 35026311504, "result": "GREEN"}, "laravel_acceptance": {"run_id": 35026311656, "result": "GREEN"}},
+  "canonical_reconciliation_before": {"authority_sha": "031d26b7d4699bf6e7a1b418bc42aa7d43a5f0f3", "total": 931, "terminal": 573, "pending": 358, "blocked": 0, "generated_reconciliation_edited": false},
+  "notes": "Operation-specific closure evidence only; generated reconciliation remains generator-owned."
+}
