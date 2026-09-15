@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import {
     ApiError,
@@ -15,6 +15,7 @@ import {
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
+import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
@@ -154,6 +155,7 @@ function Unavailable({ route, context, state = resolveCapability(context, route)
 function ResourceContent({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale, text } = useLocale();
     const { notify } = useToast();
+    const queryClient = useQueryClient();
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
@@ -168,6 +170,19 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
+
+    const applicationUsersClearAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
+    const clearApplicationUsersSearch = async (): Promise<void> => {
+        if (route.key !== 'application-users' || !endpoint || query.isFetching || !applicationUsersClearAuthorized) return;
+
+        setSearchInput('');
+        setSearch('');
+        setPage(1);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, ''],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
+        });
+    };
 
     const mutation = useMutation({
         mutationFn: async (payload: Record<string, string | number>) => {
@@ -229,6 +244,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     <button type="submit" className="btn">{text(commonText.search)}</button>
+                    {route.key === 'application-users' ? (
+                        <ApplicationUsersClearSearchControl
+                            searchValue={searchInput}
+                            busy={query.isFetching}
+                            locale={locale}
+                            authorized={applicationUsersClearAuthorized}
+                            onClearRequested={clearApplicationUsersSearch}
+                        />
+                    ) : null}
                 </form>
                 <div className="toolbar-actions">
                     {route.key === 'sites' ? (
