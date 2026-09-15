@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-2387758315",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "Build information / معلومات الإصدار",
+    "target": "/about-build",
+    "new_tab": false,
+    "mutation": false,
+    "external_dependency": "none",
+    "verification": "reference current-user menu navigates to the authenticated build-information page with Branch, version and build details semantics"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-build-information-control.tsx",
+    "visible_control": "Build information / معلومات الإصدار",
+    "operation_marker": "AIMW-IDEN-2387758315",
+    "authorization_contract": "trusted FrontendContext + tenant.view; destination is the already-terminal AboutBuildRouteServiceProvider route whose controller independently authorizes tenant.view and rejects a route tenant that differs from active TenantContext",
+    "direct_object_identifier": "none",
+    "caller_supplied_tenant_selector": "none",
+    "network_request": "read-only browser navigation GET to the protected Laravel route",
+    "persistence_mutation": false,
+    "success_message": false,
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false,
+    "fail_closed_behavior": "control is absent without tenant.view; guest, missing-permission and foreign-tenant requests are rejected by the backend instead of rendering build metadata"
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap obtains FrontendContext under auth + tenant.context and tenant.view",
+    "CurrentUserSiteDetailsControl composes CurrentUserBuildInformationControl inside the current-user action group",
+    "CurrentUserBuildInformationControl requires trusted tenant.view permission and derives /tenants/{encoded tenant}/about-build exclusively from FrontendContext.tenant.slug",
+    "AboutBuildRouteServiceProvider serves /tenants/{tenant}/about-build under web + auth + tenant.context",
+    "AboutBuildReadController independently authorizes tenant.view and aborts 404 when the route slug differs from active TenantContext",
+    "BuildInformationReadService supplies safe build metadata; the selected operation performs no mutation, queueing, caching, scheduling, connector call, AI/provider call or success fabrication"
+  ],
+  "security_boundary": {
+    "auth_session": "destination is protected by Laravel web session auth and tenant.context middleware",
+    "active_tenant_resolution": "navigation derives the encoded destination from server-provided FrontendContext tenant; backend compares route tenant with active TenantContext",
+    "permission_checks": "UI fails closed unless tenant.view is advertised; AboutBuildReadController independently re-authorizes tenant.view",
+    "foreign_tenant_rejection": "focused HTTP acceptance proves an authenticated alpha member receives 404 for /tenants/foreign/about-build",
+    "direct_id_rejection": "not applicable: selected control accepts no resource identifier",
+    "validation": "selected operation sends no user payload",
+    "csrf": "not applicable: selected operation is GET/read-only and has no persistence mutation",
+    "server_derived_identity_and_ownership": "authenticated user and tenant membership are server resolved; the control cannot supply an alternate user or direct object owner",
+    "secret_non_exposure": "focused acceptance verifies live safe build fields and rejects APP_KEY, DB_PASSWORD and AWS_SECRET_ACCESS_KEY labels from rendered output",
+    "authoritative_persistence_reread": "not applicable because there is no persistence mutation or persisted-success claim",
+    "idempotency_retry_cancellation": "not applicable to deterministic read-only navigation",
+    "truthful_success": "the control only navigates; metadata is shown only after the protected controller succeeds",
+    "fail_closed": "missing permission, auth, membership or active-tenant match removes or rejects the path rather than synthesizing build data"
+  },
+  "acceptance_tests": [
+    "current-user-build-information-control.test.tsx exact operation marker, canonical label/description in English and Arabic, active-tenant derivation, encoded-tenant safety and permission fail-closed",
+    "CurrentUserBuildInformationSecurityTest::test_guest_cannot_open_current_user_build_information_destination",
+    "CurrentUserBuildInformationSecurityTest::test_member_without_tenant_view_is_forbidden",
+    "CurrentUserBuildInformationSecurityTest::test_foreign_tenant_destination_is_rejected_before_build_metadata_is_rendered",
+    "CurrentUserBuildInformationSecurityTest::test_authorized_member_reads_real_safe_build_metadata_without_secret_material"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "canonical_base_sha": "897358223fda722e49be5780fdc9b54809884de3",
+    "worker_branch": "worker/laravel-iden-2387758315-build-information"
+  },
+  "implementation_sha": "432bd1350388de5f924f5aee5b0b9223f4555906",
+  "implementation_tested_sha": null,
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "897358223fda722e49be5780fdc9b54809884de3",
+    "total_operations": 931,
+    "previous_terminal": 568,
+    "expected_terminal_after_this_operation": 569,
+    "previous_pending": 363,
+    "expected_pending_after_this_operation": 362,
+    "previous_blocked": 0,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "Only AIMW-IDEN-2387758315 is claimed by this closure; the already-terminal /about-build route is consumed unchanged."
+  },
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "focused_tests_green_on_implementation_sha": false,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "generator_backed_reconciliation_passed": false,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no ASP.NET/reference-product modification",
+    "no claim or state change for the already-terminal AIMW-CONT-81B4B20D2D about-build route",
+    "no caller-supplied tenant destination or direct object identifier",
+    "no permission weakening or endpoint bypass",
+    "no secret or credential exposure",
+    "no persistence mutation or fabricated success",
+    "no WordPress/Connector, AI/provider, queue, cache or scheduler behavior",
+    "no manual generated parity-count edit"
+  ]
+}
