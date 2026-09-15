@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: sqlite3, pdo_sqlite
           coverage: none
       - uses: actions/setup-python@v5
@@ -70,7 +70,8 @@ jobs:
         working-directory: variants/laravel-aiwmweb/backend
         run: |
           npm ci
-          npm test -- current-user-about-build-control.test.tsx current-user-site-details-control.test.tsx
+          npx vitest run --config vitest.config.ts resources/js/__tests__/current-user-about-build-control.test.tsx
+          npx vitest run --config vitest.config.ts resources/js/__tests__/current-user-site-details-control.test.tsx
           npm run typecheck
 
       - name: Revalidate existing Laravel security implementation
