@@ -8,15 +8,15 @@ class CurrentUserLogsTerminalityTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-IDEN-CD4ADA5087';
 
-    private const EVIDENCE_SOURCE_SHA = 'c9e9c9296ff86becd325fe856306adb720411567';
+    private const EVIDENCE_SOURCE_SHA = '8d9447700793f408d16aadd2d9c0df1657908c4c';
 
     public function test_current_user_logs_operation_is_generator_terminal_on_final_evidence_source(): void
     {
         $reconciliation = $this->jsonDocument('../docs/operation-parity-reconciliation.json');
 
         $this->assertSame(931, $reconciliation['totals']['total'] ?? null);
-        $this->assertSame(568, $reconciliation['totals']['terminal'] ?? null);
-        $this->assertSame(363, $reconciliation['totals']['pending'] ?? null);
+        $this->assertSame(569, $reconciliation['totals']['terminal'] ?? null);
+        $this->assertSame(362, $reconciliation['totals']['pending'] ?? null);
         $this->assertSame(0, $reconciliation['totals']['blocked'] ?? null);
 
         $operation = null;
