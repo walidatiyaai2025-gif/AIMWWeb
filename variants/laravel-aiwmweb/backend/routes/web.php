@@ -37,9 +37,7 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites', [SiteManagementController::class, 'store']);
     Route::get('/sites/{site}', [SiteManagementController::class, 'show']);
     Route::patch('/sites/{site}', [SiteManagementController::class, 'update']);
-    Route::delete('/sites/{site}', [SiteManagementController::class, 'destroy'])
-        ->defaults('canonical_operation_id', 'AIMW-BILL-BE4B8C3822')
-        ->name('canonical.api.sites.destroy');
+    Route::delete('/sites/{site}', [SiteManagementController::class, 'destroy']);
     Route::post('/sites/{site}/pairing', [DemoController::class, 'pairing']);
     Route::get('/sites/{site}/connector', [DemoController::class, 'connector']);
     Route::put('/sites/{site}/connector/scopes', [DemoController::class, 'scopes']);
