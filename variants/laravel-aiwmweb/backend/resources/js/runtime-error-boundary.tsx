@@ -1,4 +1,5 @@
 import React from 'react';
+import { RuntimeErrorDashboardBackControl } from './runtime-error-dashboard-back-control';
 import { RuntimeErrorHardReloadControl } from './runtime-error-hard-reload-control';
 import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 
@@ -38,6 +39,7 @@ export class RuntimeErrorBoundary extends React.Component<{ children: React.Reac
                             >Try to recover</button>
                             <RuntimeErrorHardReloadControl />
                             <RuntimeErrorOpenLogsControl />
+                            <RuntimeErrorDashboardBackControl />
                         </div>
                     </section>
                 </div>
