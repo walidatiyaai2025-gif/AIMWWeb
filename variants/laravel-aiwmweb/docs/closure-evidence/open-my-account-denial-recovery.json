@@ -1,7 +1,7 @@
 {
   "operation_id": "AIMW-IDEN-03760967D1",
   "domain": "identity",
-  "kind": "control",
+  "kind": "visible_control",
   "previous_state": "PENDING",
   "terminal_state": "ADAPTED",
   "source": {"file": "src/AIWordPressManager.Web/Components/Routes.razor", "control": "NotAuthorized -> Open my account"},
