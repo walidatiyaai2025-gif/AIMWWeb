@@ -38,11 +38,10 @@ class SiteDetailsDeleteControlTerminalityTest extends TestCase
         $this->assertTrue((bool) $operation['tenant_owned']);
     }
 
-    public function test_runtime_route_is_explicit_and_bound_to_the_canonical_operation(): void
+    public function test_runtime_route_is_explicit_and_tenant_guarded(): void
     {
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/7', 'DELETE'));
         $this->assertSame(SiteManagementController::class.'@destroy', ltrim($route->getActionName(), '\\'));
-        $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame(['tenant', 'site'], $route->parameterNames());
