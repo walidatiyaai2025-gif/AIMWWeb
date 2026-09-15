@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-B3BDED59F1",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "ai",
+    "source": "src/AIWordPressManager.Web/Services/ApprovalWorkflowService.cs",
+    "service": "ApprovalWorkflowService.RecordExecutionFailed",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "scanner_metadata": "The canonical generated ledger classifies this service row as mutation=false and risk=low; this evidence preserves that metadata exactly rather than rewriting the generated contract.",
+    "record_failure": "The authoritative source method nevertheless performs a durable workflow transition: RecordExecutionFailed logs the approval ID, execution ID, and failure context server-side, then delegates the approval failure transition to MarkFailed(approvalId, error). The Laravel adapter follows the actual source behavior while retaining the canonical scanner metadata above.",
+    "boundary": "The canonical method does not independently mark the execution failed; execution-state ownership remains outside this service transition."
+  },
+  "laravel_adaptation": {
+    "service": "App\\AI\\Platform\\Services\\ApprovalWorkflowService",
+    "member": "recordExecutionFailed",
+    "authorization": "The transition requires approvals.manage through TenantAuthorizer before any lookup or mutation.",
+    "tenant_scope": "Approval lookup is performed through the tenant-scoped Approval model under the active TenantContext, so a foreign tenant approval resolves as not found.",
+    "state_transition": "Only the owned approval status changes from its previously decided state to FAILED.",
+    "execution_boundary": "No Execution model or executions-table row is updated by this service.",
+    "logging": "The server error log carries the canonical operation ID, approval identity, execution identity, and a bounded credential-redacted error string."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "89bb23aa52fba9807f23ba910829800a5260f943",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/AI/Platform/Services/ApprovalWorkflowService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApprovalWorkflowRecordExecutionFailedTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/scanner-mutation/tenant/risk metadata",
+      "authorized same-tenant call marks only the approval FAILED",
+      "existing execution status and failure fields remain unchanged",
+      "server log includes operation/approval/execution identity and redacts a token value",
+      "foreign-tenant approval fails closed with ModelNotFoundException",
+      "missing approvals.manage fails with AuthorizationException and preserves approval state"
+    ],
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/production evidence is required because this operation is a local approval-state service transition."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AI-B3BDED59F1",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

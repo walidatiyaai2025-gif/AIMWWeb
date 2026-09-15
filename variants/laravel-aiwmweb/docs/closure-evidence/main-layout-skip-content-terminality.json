@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-672DA063EF",
+    "domain": "ai",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "route_screen": "component:MainLayout",
+    "source_file": "src/AIWordPressManager.Web/Components/Layout/MainLayout.razor"
+  },
+  "laravel_adaptation": {
+    "production_path": "variants/laravel-aiwmweb/backend/resources/js/main-layout-parity-controls.tsx",
+    "behavior": "The existing shell skip link remains bound to #main-content and is marked with the exact canonical operation identity.",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/main-layout-controls-closure.test.tsx",
+    "laravel": "variants/laravel-aiwmweb/backend/tests/Feature/MainLayoutControlsClosureTest.php"
+  },
+  "terminality": {"state": "ADAPTED", "runtime_wired": true, "security_and_tenant_enforced": true, "deterministic_acceptance": true}
+}

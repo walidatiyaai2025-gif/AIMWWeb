@@ -1,0 +1,26 @@
+name: Laravel AIWMWeb Closure Evidence Audit
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/tools/audit_closure_inventory.py'
+      - '.github/workflows/laravel-aiwmweb-closure-evidence-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Audit existing closure evidence without regenerating parity
+        run: python variants/laravel-aiwmweb/tools/audit_closure_inventory.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laravel-aiwmweb-closure-evidence-audit
+          path: variants/laravel-aiwmweb/docs/closure-evidence-audit.json

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SYNC-D8581471A2",
+    "domain": "sync",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low",
+    "external_dependency": "WordPress",
+    "verification_threshold": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "source": "src/AIWordPressManager.Web/Components/Pages/ReportsExports.razor",
+    "screens": ["/reports", "/module/reports"],
+    "control": "ExportSitesAsync [ExportSitesAsync]",
+    "download_filename": "sites-report.csv",
+    "columns": ["Name", "Url", "Status"],
+    "status_source": "SiteSummary.ConnectionStatus",
+    "semantics": "Read-only CSV download from the authoritative loaded Site collection; no WordPress mutation is performed by the export control."
+  },
+  "laravel_adaptation": {
+    "dependency_base_pr": 316,
+    "dependency_base_sha": "065cc1002354bcd827438df24a2aa9145df71300",
+    "page_aliases": ["/tenants/{tenant}/reports", "/tenants/{tenant}/module/reports"],
+    "download_route": "/tenants/{tenant}/reports/sites.csv",
+    "controller": "App\\Http\\Controllers\\ApprovalsReportExportController::downloadSites",
+    "filename": "sites-report.csv",
+    "columns": ["Name", "Url", "Status"],
+    "authoritative_read": "Persisted sites rows filtered by active TenantContext tenant_id; Status is connection_status.",
+    "empty_state": "No site rows are available for this tenant; CSV is UTF-8 BOM plus header only.",
+    "no_fake_success": true,
+    "no_demo_data": true,
+    "no_queue_or_report_export_persistence": true,
+    "generated_reconciliation_edited": false
+  },
+  "runtime_path": "GET /tenants/{tenant}/reports or /module/reports -> web + tenant.context -> reports.view -> rendered Sites report control -> GET /tenants/{tenant}/reports/sites.csv -> reports.manage -> exact route tenant equals active TenantContext -> persisted tenant sites query -> streamed sites-report.csv",
+  "authorization": {
+    "page_permission": "reports.view",
+    "download_permission": "reports.manage",
+    "guest_page": 401,
+    "guest_download": 401,
+    "missing_page_permission": 403,
+    "missing_download_permission": 403
+  },
+  "tenant_isolation": {
+    "route_tenant_must_equal_active_context": true,
+    "query_scoped_by_tenant_id": true,
+    "caller_supplied_site_id": false,
+    "tenant_a_to_tenant_b_page": 404,
+    "tenant_a_to_tenant_b_download": 404,
+    "foreign_site_rows_excluded": true
+  },
+  "read_only_and_retry_semantics": {
+    "repeated_downloads_are_idempotent": true,
+    "sites_row_count_unchanged": true,
+    "operation_executions_row_count_unchanged": true,
+    "report_exports_row_count_unchanged": true,
+    "wordpress_mutation": false
+  },
+  "acceptance_tests": {
+    "path": "variants/laravel-aiwmweb/backend/tests/Feature/SitesReportExportTerminalityTest.php",
+    "proofs": [
+      "Exact canonical identity, metadata and PENDING pre-state",
+      "Both source aliases render the real canonical Sites report control",
+      "Persisted active-tenant Site rows and exact CSV Name/Url/Status contract",
+      "reports.view and reports.manage fail-closed authorization",
+      "Guest and Tenant A/Tenant B direct-access isolation",
+      "Truthful empty state and header-only CSV",
+      "Repeated export is read-only and persistence-idempotent"
+    ]
+  },
+  "implementation": {
+    "first_implementation_sha": "aa05fc6de4df14d132d48a1c150349a0a1a90e96",
+    "tested_sha": "5cd35407989bb8362b4b1cca6af399f7e8b766f2",
+    "test_only_followup": "Adjusted CSV assertion to accept standards-compliant fputcsv quoting; production runtime was unchanged."
+  },
+  "implementation_ci": {
+    "pr_plan_link": {"run_number": 977, "run_id": 33252922155, "result": "success"},
+    "cross_domain_security": {"run_number": 244, "run_id": 33252922151, "result": "success"},
+    "laravel_acceptance": {"run_number": 313, "run_id": 33252922183, "result": "success"},
+    "gates": {
+      "pint": "success",
+      "sqlite_migrations_full_php": "success",
+      "mysql_fresh_rollback_forward_full_php": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success",
+      "frontend_typecheck_tests_build": "success",
+      "frontend_production_build": "success",
+      "runtime_artifacts": "success",
+      "acceptance_gate": "success",
+      "production_docker_compose_runtime_smoke": "success"
+    }
+  },
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal": 359,
+    "previous_pending": 573,
+    "new_pending": 572,
+    "scope": "Isolated contribution of this one operation only; parallel unmerged closures are not folded into generated-authority counts."
+  },
+  "final_head_policy": "The evidence-bearing head must independently pass every applicable authoritative repository gate before terminality handoff is final."
+}

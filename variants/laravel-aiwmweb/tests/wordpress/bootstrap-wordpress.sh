@@ -9,6 +9,7 @@ DB_HOST="${WP_DB_HOST:-127.0.0.1}"
 DB_NAME="${WP_DB_NAME:-wordpress}"
 DB_USER="${WP_DB_USER:-root}"
 DB_PASSWORD="${WP_DB_PASSWORD:-root}"
+SERVER_LOG="/tmp/aimw-wordpress-server.log"
 
 curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$WP_CLI"
 chmod +x "$WP_CLI"
@@ -19,6 +20,10 @@ wp() {
   php "$WP_CLI" --path="$WP_PATH" --allow-root "$@"
 }
 
+rest_curl() {
+  curl --fail --silent --show-error --retry 5 --retry-delay 1 --retry-all-errors "$@"
+}
+
 wp core download --quiet
 wp config create --dbname="$DB_NAME" --dbuser="$DB_USER" --dbpass="$DB_PASSWORD" --dbhost="$DB_HOST" --skip-check --quiet
 # WordPress intentionally disables Application Password authentication over plain HTTP
@@ -26,16 +31,31 @@ wp config create --dbname="$DB_NAME" --dbuser="$DB_USER" --dbpass="$DB_PASSWORD"
 wp config set WP_ENVIRONMENT_TYPE local --quiet
 wp core install --url="$WP_URL" --title="AIMW Acceptance" --admin_user=admin --admin_password='Acceptance-Only-Strong-Password-257!' --admin_email=acceptance@example.invalid --skip-email --quiet
 
-php -S "127.0.0.1:${WP_PORT}" -t "$WP_PATH" > /tmp/aimw-wordpress-server.log 2>&1 &
+php -S "127.0.0.1:${WP_PORT}" -t "$WP_PATH" > "$SERVER_LOG" 2>&1 &
 server_pid=$!
-trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+cleanup() {
+  rc=$?
+  if [[ "$rc" -ne 0 && -f "$SERVER_LOG" ]]; then
+    echo '--- WordPress PHP server diagnostics ---' >&2
+    tail -n 200 "$SERVER_LOG" >&2 || true
+  fi
+  kill "$server_pid" 2>/dev/null || true
+  exit "$rc"
+}
+trap cleanup EXIT
 
+ready=0
 for _ in $(seq 1 30); do
   if curl -fsS "$WP_URL/?rest_route=/" >/tmp/wp-index.json; then
+    ready=1
     break
   fi
   sleep 1
 done
+if [[ "$ready" -ne 1 ]]; then
+  echo 'WordPress REST index did not become ready.' >&2
+  exit 1
+fi
 
 python3 - <<'PY'
 import json
@@ -48,7 +68,7 @@ PY
 post_id="$(wp post create --post_title='AIMW acceptance original' --post_content='real wordpress integration fixture' --post_status=publish --porcelain)"
 app_password="$(wp user application-password create admin aimw-e2e --porcelain)"
 
-curl -fsS "$WP_URL/?rest_route=/wp/v2/posts/${post_id}" > /tmp/wp-post-before.json
+rest_curl "$WP_URL/?rest_route=/wp/v2/posts/${post_id}" > /tmp/wp-post-before.json
 python3 - <<'PY'
 import json
 from pathlib import Path
@@ -57,12 +77,12 @@ assert payload['title']['rendered'] == 'AIMW acceptance original'
 print('WORDPRESS_CONTENT_READ=PASS')
 PY
 
-curl -fsS -u "admin:${app_password}" \
+rest_curl -u "admin:${app_password}" \
   -X POST \
   --data-urlencode 'title=AIMW acceptance verified' \
   "$WP_URL/?rest_route=/wp/v2/posts/${post_id}" > /tmp/wp-mutation.json
 
-curl -fsS "$WP_URL/?rest_route=/wp/v2/posts/${post_id}" > /tmp/wp-post-after.json
+rest_curl "$WP_URL/?rest_route=/wp/v2/posts/${post_id}" > /tmp/wp-post-after.json
 python3 - <<'PY'
 import json
 from pathlib import Path
@@ -74,28 +94,43 @@ print('WORDPRESS_AUTHENTICATED_MUTATION=PASS')
 print('WORDPRESS_AUTHORITATIVE_REREAD=PASS')
 PY
 
-connector_dir="${GITHUB_WORKSPACE:-$(pwd)}/variants/laravel-aiwmweb/connector"
-plugin_source="$connector_dir/aimw-connector"
+variant_dir="${GITHUB_WORKSPACE:-$(pwd)}/variants/laravel-aiwmweb"
+plugin_source="$variant_dir/connector/aimw-connector"
+package_script="$variant_dir/runtime/scripts/package-connector.sh"
+artifact_dir="$variant_dir/runtime/artifacts"
 if [[ ! -f "$plugin_source/aimw-connector.php" ]]; then
   echo "CONNECTOR_RUNTIME_PRESENT=NO"
   echo "CONNECTOR_E2E=BLOCKED_RUNTIME"
   echo "WORDPRESS_NATIVE_REST_E2E=PASS"
   exit 0
 fi
+if [[ ! -x "$package_script" ]]; then
+  echo "Canonical Connector packager is unavailable: $package_script" >&2
+  exit 1
+fi
 
 echo "CONNECTOR_RUNTIME_PRESENT=YES"
-rm -rf "$WP_PATH/wp-content/plugins/aimw-connector"
-cp -R "$plugin_source" "$WP_PATH/wp-content/plugins/aimw-connector"
-find "$WP_PATH/wp-content/plugins/aimw-connector" -type f -name '*.php' -print0 \
+find "$plugin_source" -type f -name '*.php' -print0 \
   | xargs -0 -n1 php -l >/tmp/aimw-connector-php-lint.log
 
 echo "CONNECTOR_PHP_LINT=PASS"
-wp plugin activate aimw-connector --quiet
+rm -rf "$artifact_dir"
+mkdir -p "$artifact_dir"
+"$package_script" "$artifact_dir" >/tmp/aimw-connector-package.log
+cat /tmp/aimw-connector-package.log
+connector_zip="$(sed -n 's/^CONNECTOR_ZIP=//p' /tmp/aimw-connector-package.log | tail -n1)"
+expected_version="$(sed -n 's/^CONNECTOR_VERSION=//p' /tmp/aimw-connector-package.log | tail -n1)"
+if [[ -z "$connector_zip" || ! -f "$connector_zip" || -z "$expected_version" ]]; then
+  echo 'Connector packager did not emit a usable ZIP/version contract.' >&2
+  exit 1
+fi
+wp plugin install "$connector_zip" --force --activate --quiet
 wp plugin is-active aimw-connector
 
+echo "CONNECTOR_PACKAGE_INSTALL=PASS"
 plugin_version="$(wp plugin get aimw-connector --field=version)"
-if [[ "$plugin_version" != "0.2.0" ]]; then
-  echo "Unexpected AIMW Connector version: $plugin_version" >&2
+if [[ "$plugin_version" != "$expected_version" ]]; then
+  echo "AIMW Connector version mismatch: packaged=$expected_version installed=$plugin_version" >&2
   exit 1
 fi
 
@@ -123,7 +158,7 @@ if ($found !== $table) {
 echo "CONNECTOR_ACTIVATION=PASS"
 echo "CONNECTOR_SCHEMA_V2=PASS"
 
-curl -fsS "$WP_URL/?rest_route=/" > /tmp/wp-index-connector.json
+rest_curl "$WP_URL/?rest_route=/" > /tmp/wp-index-connector.json
 python3 - <<'PY'
 import json
 from pathlib import Path

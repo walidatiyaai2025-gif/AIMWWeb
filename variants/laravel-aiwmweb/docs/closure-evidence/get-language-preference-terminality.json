@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-PLAT-17E3F2B4ED",
+  "operation_id": "AIMW-PLAT-17E3F2B4ED",
+  "terminal_state": "ADAPTED",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "authority": {
+    "issue": 257,
+    "canonical_base_sha": "69d5e293d3c09f095e464f322bed0f9b68ffc4f5",
+    "claim_comment_id": 5483518835,
+    "worker_branch": "worker/laravel-AIMW-PLAT-17E3F2B4ED-get-language"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-PLAT-17E3F2B4ED",
+    "kind": "service",
+    "domain": "platform",
+    "service": "LanguagePreferenceService",
+    "member": "GetLanguage",
+    "source": "src/AIWordPressManager.Web/Localization/LanguagePreferenceService.cs",
+    "mutation": false
+  },
+  "decision": "ADAPTED",
+  "rationale": "Laravel reads the browser language preference from the current request cookie using the source contract: AIWM.Language accepts en/ar case-insensitively while preserving the supported cookie value, and missing or unsupported values fall back to en. The operation is read-only and does not queue or mutate cookies.",
+  "destination": {
+    "production": "variants/laravel-aiwmweb/backend/app/Platform/Localization/LanguagePreferenceCookieReader.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/GetLanguagePreferenceTerminalityTest.php"
+  },
+  "runtime_behavior": {
+    "cookie_name": "AIWM.Language",
+    "supported_languages": ["en", "ar"],
+    "fallback_language": "en",
+    "supported_match": "case-insensitive with original supported value preserved",
+    "request_source": "current Laravel request cookie bag",
+    "mutation": false,
+    "production_probe": "resolve reader from Laravel container against requests carrying supported, unsupported, mixed-case, and missing AIWM.Language cookies"
+  },
+  "security": {
+    "tenant_state_read": false,
+    "tenant_state_mutated": false,
+    "authorization_weakened": false,
+    "secret_material_exposed": false,
+    "cookie_mutated_by_read": false
+  },
+  "acceptance": [
+    "canonical operation provenance is pinned to AIMW-PLAT-17E3F2B4ED",
+    "supported ar/en cookie values are returned",
+    "source-compatible case-insensitive acceptance is preserved without normalizing the returned supported value",
+    "unsupported values fall back to en",
+    "missing cookie falls back to en",
+    "reading does not queue or mutate a response cookie"
+  ],
+  "scope_exclusions": [
+    "AIMW-PLAT-04D5067C61 / SetLanguage",
+    "language switcher UI",
+    "locale middleware",
+    "tenant settings",
+    "translation resources"
+  ],
+  "validation": {
+    "exact_head_ci_required": true,
+    "authoritative_generator_required": true
+  }
+}

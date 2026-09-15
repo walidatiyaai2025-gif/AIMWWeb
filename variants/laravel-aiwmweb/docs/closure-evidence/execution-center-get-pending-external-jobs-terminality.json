@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-E587C12B37",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.GetPendingExternalJobs",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "selection": "The canonical service returns only External execution jobs whose status is Waiting and whose owner and site identities are present.",
+    "ordering": "Eligible jobs are returned oldest first by creation time.",
+    "limit": "The requested take is clamped to the inclusive range 1..100, with a default of 20.",
+    "side_effects": "The operation is a read-only queue enumeration and never starts, executes, progresses, completes, fails, or retries external work."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterPendingExternalJobsService",
+    "member": "getPendingExternalJobs",
+    "ledger_mapping": "Canonical External jobs reuse the existing tenant-owned operation_executions control plane; payload.execution_mode preserves External and queued preserves source Waiting state.",
+    "tenant_scope": "Active TenantContext is mandatory and operations.manage is authorized server-side before reading. The query is always constrained to active tenant_id and cannot enumerate another tenant's queue.",
+    "identity_scope": "Only rows with a non-null requested_by_user_id and a positive site subject identity are eligible, preserving the source OwnerUserId/SiteId presence requirement.",
+    "ordering_and_limit": "Rows are scanned oldest-first by created_at with deterministic id tie-break; only External rows are admitted and enumeration stops at the source-compatible clamp of 1..100.",
+    "redaction": "Projected title, type, site name, idempotency display and failure text redact credential-shaped values; dedupe fingerprints and raw payload are never exposed.",
+    "external_runtime_boundary": "This adapter only reads control-plane metadata and does not call WordPress, providers, email, payment, DNS, queues, or any live production runtime."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "36a1c2cc5ed6ec45ebda10433c6b078e6f1aa37f",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterPendingExternalJobsService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterGetPendingExternalJobsTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member and operation ID AIMW-AUTO-E587C12B37",
+      "only queued External rows with owner and site identity are returned",
+      "active-tenant isolation excludes a foreign tenant execution from the returned collection",
+      "oldest-first ordering is deterministic without creating or modifying execution/log rows",
+      "take below one clamps to one and take above one hundred clamps to one hundred",
+      "operations.manage and active TenantContext fail closed before queue enumeration",
+      "credential-shaped payload and failure text are redacted and raw payload/dedupe fingerprints are not returned"
+    ],
+    "external_runtime": "No live external evidence is required because GetPendingExternalJobs is a local read-only control-plane enumeration and performs no provider or WordPress action."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-E587C12B37",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "cd326a3335e9c8cc54f67b74e214d0396d3ed664",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-AUTO-E587C12B37-slot0245",
+    "claim_comment": 5627603707
+  }
+}

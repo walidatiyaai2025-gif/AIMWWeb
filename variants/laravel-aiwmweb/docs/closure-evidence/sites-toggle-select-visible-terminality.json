@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-BILL-F8102254A8",
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "ToggleSelectAllVisibleAsync [ToggleSelectAllVisibleAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "risk": "low",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "toggle": "The source Sites workspace uses ToggleSelectAllVisibleAsync to select all currently visible sites and changes the same control to Clear visible when that visible set is selected.",
+    "local_state": "The operation changes only browser selection state; it does not persist, enqueue, call WordPress, or claim mutation success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/sites-bulk-delete-control.tsx binds AIMW-BILL-F8102254A8 to the real visible-selection button, computes allVisibleSelected from rendered site IDs, selects the visible set up to the governed 100-site cap, and removes that same set when already selected.",
+    "read_contract": "The rendered set comes only from the authoritative tenant-scoped sites endpoint already required by SitesBulkDeleteControl.",
+    "mutation_boundary": "Toggle selection performs no DELETE request; the separate RequestBulkDelete and ConfirmBulkDelete operations retain destructive ownership."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesToggleSelectAllVisibleTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/sites-toggle-select-visible.test.tsx",
+    "proofs": [
+      "exact canonical PENDING operation identity, low risk, tenant-owned and non-mutation metadata",
+      "production operation marker on the real select/clear visible control",
+      "frontend behavior selects every rendered site then clears the same visible set",
+      "selection toggle makes no mutation request",
+      "foreign tenant Sites workspace returns 404 before the control can render"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  }
+}

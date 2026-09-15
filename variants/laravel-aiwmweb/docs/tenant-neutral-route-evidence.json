@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "source_sha": "a068073c908dd7e7116778e4dc947e3ce1f3d046",
+  "routes": {
+    "AIMW-CONT-8EE96B77A8": {
+      "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AccessDeniedReadController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccessDeniedRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/access-denied-route-terminality.json"
+    }
+  }
+}

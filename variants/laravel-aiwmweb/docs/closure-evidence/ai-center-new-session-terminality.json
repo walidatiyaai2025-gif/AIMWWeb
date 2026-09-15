@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-C7621E276C",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/ai-center",
+    "visible_control": "@(L.IsArabic ? [ClearClicked]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "AI Center toolbar exposes New session and binds it to ClearClicked, which delegates to Clear().",
+    "local_transition": "Clear resets current content, output/error, prompt key, suggestion, elapsed time, and last approval id/status while deliberately leaving session history intact.",
+    "side_effects": "New session is browser/session-local state only and performs no persistence, AI-provider, WordPress, queue, approval mutation, navigation, or success-receipt operation."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/ai-center-approval-status-control.tsx hosts the real AI Center local session surface and binds only the New session button to AIMW-AI-C7621E276C.",
+    "state": "The adaptation exposes source-equivalent prompt-key/current-content draft state and clears those values together with transient approval display/error/load state without claiming Generate, Submit, Copy, metadata refresh, history clearing, or navigation operations.",
+    "stale_read_guard": "A monotonically increasing read epoch invalidates an older in-flight approval-status read when New session is pressed, preventing stale asynchronous data from resurrecting cleared approval state.",
+    "network_boundary": "The New session click calls only clearSession. It sends no request, carries no body or resource ID, and has no server mutation action contract.",
+    "authorization": "The control is rendered only inside the existing AI Center host when FrontendContext includes ai.use; otherwise it fails closed."
+  },
+  "tenant_isolation": {
+    "render_boundary": "The AI Center host is reached through the authenticated tenant shell and authoritative /tenants/{tenant}/context contract.",
+    "cross_tenant_boundary": "Focused Laravel acceptance proves an Alpha-only authenticated member receives 404 for Beta AI Center/context routes.",
+    "id_surface": "The local reset accepts no tenant, approval, site, content, or other caller-supplied resource identifier and creates no direct-ID/IDOR surface."
+  },
+  "acceptance": {
+    "implementation_source_sha": "a4d574c845e2635cee06fb9f4be48b7658aa47dc",
+    "plan_link_run": 33335850890,
+    "cross_domain_security_run": 33335850905,
+    "implementation_acceptance_run": 33335850891,
+    "backend_test": "backend/tests/Feature/AiCenterNewSessionTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/ai-center-new-session.test.tsx",
+    "proofs": [
+      "exact canonical PENDING identity at implementation stage",
+      "exact production canonical operation marker on New session",
+      "prompt-key and current-content draft state clear locally",
+      "displayed approval state and transient error/load state clear locally",
+      "older in-flight approval read cannot resurrect state after reset",
+      "New session emits no extra network request and no mutation body or method",
+      "no ai.new-session server action contract is advertised",
+      "missing ai.use suppresses the control and performs no read",
+      "guest tenant shell redirects to login and foreign tenant access returns 404",
+      "approval and AI-usage persistence counts remain unchanged across server-side AI Center/context reads",
+      "PR Plan Link, Cross-Domain Security, and full Laravel AIWMWeb Acceptance all succeeded on the exact implementation source SHA",
+      "full Acceptance included Pint, SQLite, MySQL, Redis queue/scheduler, WordPress disposable and real REST gates, frontend tests/builds, runtime artifacts, and production Docker Compose build/boot/runtime smokes"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "other_ai_center_controls_claimed": false,
+    "history_clear_claimed": false,
+    "generate_or_submit_claimed": false,
+    "backend_endpoint_added": false,
+    "generated_parity_modified": false,
+    "fake_success": false
+  }
+}

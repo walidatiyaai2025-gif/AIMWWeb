@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-PLAT-57B1A0F5E3",
+  "operation_id": "AIMW-PLAT-57B1A0F5E3",
+  "terminal_state": "ADAPTED",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "authority": {
+    "issue": 257,
+    "canonical_base_sha": "5f1b4cda95d3faae2d9481ec2f02f7e27cb45f6c",
+    "claim_comment_id": 5555306959,
+    "worker_branch": "worker/laravel-AIMW-PLAT-57B1A0F5E3-release-notes-get-current"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-PLAT-57B1A0F5E3",
+    "kind": "service",
+    "domain": "platform",
+    "service": "ReleaseNotesService",
+    "member": "GetCurrent",
+    "source": "src/AIWordPressManager.Web/Services/ReleaseNotesService.cs",
+    "mutation": false,
+    "external_dependency": "none",
+    "tenant_owned": false,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "decision": "ADAPTED",
+  "rationale": "The Laravel ReleaseNotesService now adapts canonical GetCurrent by trimming the requested version, stripping leading v/V characters, reading through the already-adapted GetAll contract, and returning the first case-insensitive version match or null when no authoritative release matches.",
+  "service_closure_contract": {
+    "implementation_sha": "b12b95a0e49cf6ba4f85e7f6d3c7bc8c5cb248c5",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetCurrentTerminalityTest.php"
+  },
+  "destination": {
+    "service": "variants/laravel-aiwmweb/backend/app/Platform/ReleaseNotesService.php",
+    "runtime_contract": "App\\Platform\\ReleaseNotesService::getCurrent",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ReleaseNotesServiceGetCurrentTerminalityTest.php"
+  },
+  "runtime_behavior": {
+    "normalization": "trim surrounding whitespace then strip leading v/V characters",
+    "lookup": "first case-insensitive exact version match from getAll()",
+    "missing_version": "null",
+    "missing_release_notes_file": "null through truthful empty getAll()",
+    "duplicate_version": "first matching release, preserving source FirstOrDefault semantics"
+  },
+  "security": {
+    "tenant_input_controls_path": false,
+    "user_input_controls_path": false,
+    "request_input_controls_path": false,
+    "external_provider_access": false,
+    "secret_material_exposed": false,
+    "mutation": false
+  },
+  "acceptance": [
+    "canonical operation AIMW-PLAT-57B1A0F5E3 is the only operation claimed by this evidence",
+    "whitespace and leading v/V normalization matches the source contract",
+    "version matching is case-insensitive and returns the first exact normalized match",
+    "lookup delegates to the authoritative GetAll release-note parse/read contract",
+    "absent versions and absent release-note files return null without fabricated release data"
+  ],
+  "scope_exclusions": [
+    "AIMW-PLAT-15C5517022 ReleaseNotesService.GetAll, already terminal on authoritative composition",
+    "all /release-notes and /about-build route operations",
+    "all release-notes visible controls",
+    "release-history content invention or source-product modification",
+    "generated parity count hand edits"
+  ],
+  "validation": {
+    "focused_test_required": true,
+    "generator_reconciliation_required": true,
+    "exact_head_ci_required": true
+  }
+}

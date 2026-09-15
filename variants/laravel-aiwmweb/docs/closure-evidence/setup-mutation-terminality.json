@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task_id": "AIMW-CONT-475267F150",
+  "operation_id": "AIMW-CONT-475267F150",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "terminal_state": "ADAPTED",
+  "authority": {
+    "issue": 257,
+    "slot": 140,
+    "base_sha": "62484983f7e7d593b24fa61c466ac2f08a3fbbd6",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-475267F150-slot0140"
+  },
+  "canonical_operation": {
+    "kind": "api",
+    "domain": "content",
+    "method": "POST",
+    "route": "/setup",
+    "source": "src/AIWordPressManager.Web/Program.cs",
+    "mutation": true
+  },
+  "decision": "ADAPTED_PRE_TENANT_SETUP_MUTATION",
+  "source_semantics": {
+    "summary": "The authoritative AIMWWeb POST /setup is a first-run anonymous setup mutation. It consumes setup form values, invokes DatabaseSetupService.ApplyAsync, redirects to / on success, and renders setup HTML with HTTP 400 on failure.",
+    "authentication": "AllowAnonymous pre-authentication installation surface",
+    "antiforgery": "the source explicitly disables antiforgery on this endpoint"
+  },
+  "laravel_adaptation": {
+    "route": "App\\Providers\\SetupRouteServiceProvider::boot",
+    "controller": "App\\Http\\Controllers\\SetupMutationController::__invoke",
+    "service": "App\\Services\\DatabaseSetupMutationService::apply",
+    "success": "redirect to / after durable tenant, owner identity, membership, role, and permission bootstrap",
+    "failure": "HTTP 400 setup HTML with bounded operator-safe text while exception detail remains server-side",
+    "database_credentials": "deployment-owned; anonymous setup requests do not receive or persist database/provider credentials",
+    "csrf": "retained as an intentional security strengthening; the setup Blade form emits @csrf",
+    "tenant_boundary": "anonymous pre-tenant route with no tenant route parameter or tenant.context middleware; TenantContext is activated only around tenant-scoped persistence and forgotten afterwards"
+  },
+  "acceptance": {
+    "test_file": "variants/laravel-aiwmweb/backend/tests/Feature/SetupMutationTerminalityTest.php",
+    "tests": [
+      "test_canonical_setup_post_is_anonymous_pre_tenant_web_mutation_with_csrf_middleware",
+      "test_fresh_setup_creates_one_hashed_owner_and_real_rbac_then_redirects",
+      "test_setup_form_keeps_database_credentials_deployment_owned_and_csrf_protected",
+      "test_partial_existing_identity_state_is_never_claimed_and_password_is_not_rendered",
+      "test_invalid_password_confirmation_does_not_mutate_identity_state"
+    ],
+    "operation_link": "AIMW-CONT-475267F150 is pinned in focused acceptance and this evidence file",
+    "success_criteria": "fresh setup creates exactly one owner identity and tenant RBAC bootstrap and redirects to /",
+    "failure_criteria": "partial identity state or invalid input cannot claim or mutate installation state; sensitive values are not rendered"
+  },
+  "security": {
+    "authentication": "pre-authentication first-run boundary; no auth middleware is required",
+    "tenant_isolation": "no tenant selector or tenant route parameter is accepted by POST /setup",
+    "credential_handling": "database/provider credentials are deployment-owned and absent from the public setup form",
+    "csrf": "Laravel deliberately strengthens the source contract by retaining web CSRF protection",
+    "password_handling": "owner password is hashed and never reflected into failure output",
+    "partial_state": "existing identity state fails closed instead of being claimed by a new anonymous setup request"
+  },
+  "scope": {
+    "allowed": "variants/laravel-aiwmweb/**",
+    "reference_source_modified": false,
+    "denominator_change": 0,
+    "expected_operation_transition": "AIMW-CONT-475267F150 PENDING -> ADAPTED only"
+  },
+  "validation": {
+    "focused_test": "php artisan test --filter=SetupMutationTerminalityTest",
+    "generator_backed_reconciliation_required": true,
+    "exact_head_ci_required": true
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-DBF5562324",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "automation",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.Cancel",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "source_semantics": {
+    "identity": "The canonical Guid job id identifies one execution-center job. The owner-scoped overload requires a non-empty owner identity.",
+    "selection": "Cancel mutates only ExecutionMode.Tracked jobs in Waiting, Running, or Paused state; missing, wrong-owner, External, or already-terminal jobs are no-ops.",
+    "terminal_transition": "A qualifying job becomes Cancelled and CompletedAtUtc is set while progress, processed-item counters, payload, and prior error fields are otherwise left unchanged.",
+    "activity": "Exactly one Warning activity with the canonical message 'Job cancelled by user.' is appended only when the cancellation transition succeeds."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExecutionCenterCancelService",
+    "member": "cancel",
+    "ledger_mapping": "The canonical job Guid maps to operation_executions.correlation_id, the existing job_id already exposed by the Laravel Execution Center adaptation; no second execution ledger is introduced.",
+    "tenant_owner_scope": "The active TenantContext supplies tenant identity; operations.manage is authorized server-side; the active membership user must equal ownerUserId; lookup and update repeat tenant_id, correlation_id, requested_by_user_id and allowed-state predicates inside one row-locked transaction.",
+    "tracked_mode_mapping": "Canonical ExecutionMode.Tracked is preserved in operation_executions.payload.execution_mode and is required before cancellation; External jobs remain owned by the separate external lifecycle operations.",
+    "state_mapping": "Canonical Waiting/Running/Paused/Cancelled map to queued/running/paused/cancelled. Successful cancellation sets completed_at and updated_at without manufacturing progress or modifying the execution payload.",
+    "safety_boundary": "The Laravel control plane's existing safe_to_cancel=false marker is treated as a fail-closed narrowing: a direct service call cannot cancel work explicitly marked unsafe even if its status would otherwise be eligible.",
+    "activity_mapping": "A successful transition writes exactly one warning operation_log with message 'Job cancelled by user.', source ExecutionCenterService.Cancel, operation ID AIMW-AUTO-DBF5562324, and owner provenance; repeated or ineligible cancellation writes no activity."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "f12730ad74dab34f07ff160d23fc9729e7f916ab",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExecutionCenterCancelService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterCancelTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member and operation ID AIMW-AUTO-DBF5562324",
+      "canonical Guid job identity is preserved through correlation_id/job_id rather than an internal numeric row id",
+      "owned Tracked queued, running, and paused jobs transition to cancelled and receive completed_at",
+      "progress and payload are preserved and no runtime work or progress is manufactured",
+      "exactly one canonical Warning cancellation activity is created and repeated cancellation cannot append another",
+      "External, already-terminal, and safe_to_cancel=false jobs fail closed without activity",
+      "wrong owner and missing operations.manage authorization fail closed",
+      "foreign-tenant job/log rows are absent from the active tenant view and the authoritative foreign row remains unchanged",
+      "missing TenantContext and invalid typed identity fail closed before persistence"
+    ],
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/production/manual evidence is required because Cancel changes only the tenant-local tracked execution control plane and does not itself execute external work."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AUTO-DBF5562324",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "6bc21273affd72036e092a7336bdb4afd7cf8484",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-AUTO-DBF5562324-slot0246",
+    "claim_comment": 5631222836
+  }
+}

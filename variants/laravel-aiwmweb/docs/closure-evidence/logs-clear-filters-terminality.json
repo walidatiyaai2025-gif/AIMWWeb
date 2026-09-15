@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-83908F2D7C",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor",
+    "route_screen": "/logs | /module/logs",
+    "visible_control": "ClearFilters [ClearFilters]",
+    "user_visible_text": "Clear filters",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source",
+    "behavior": "The AIMWWeb Logs & Error Center ClearFilters action resets the current search, level, from-date, and to-date filters without mutating log data."
+  },
+  "laravel_adaptation": {
+    "workspace_route": "GET /tenants/{tenant}/module/logs",
+    "workspace_route_name": "canonical.workspace.logs",
+    "workspace_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@show",
+    "frontend_route_key": "logs",
+    "frontend_control": "resources/js/logs-clear-filters-control.tsx",
+    "control_binding": "data-canonical-operation=AIMW-CONT-83908F2D7C",
+    "clear_target": "/tenants/{active-tenant}/module/logs",
+    "context_api_key": "logs",
+    "logs_api": "GET /tenants/{tenant}/admin/logs",
+    "logs_controller": "App\\Http\\Controllers\\AdminOperationsController::logs",
+    "authoritative_read": "App\\Operations\\OperationsControlPlaneService::logs",
+    "persistence": "operation_logs",
+    "search_contract": "The generic React search query parameter is normalized by AdminOperationsController from search to the existing q filter before OperationsControlPlaneService::logs reads persisted tenant logs.",
+    "clear_semantics": "The real Clear filters control performs a tenant-qualified navigation to the same logs workspace with no query/filter state, causing React state reset and an authoritative unfiltered reread through FrontendContext api.logs.",
+    "fake_or_demo_data": false
+  },
+  "runtime_path": [
+    "authenticated authorized user opens /tenants/{tenant}/module/logs",
+    "auth + tenant.context activate the requested tenant and workspace permission enforcement requires operations.manage plus diagnostics.view",
+    "React logs workspace reads FrontendContext api.logs",
+    "filtered search requests /tenants/{tenant}/admin/logs?search={value}",
+    "AdminOperationsController normalizes search to q and authorizes operations.manage",
+    "OperationsControlPlaneService::logs reads persisted operation_logs constrained to TenantContext tenant_id",
+    "user activates canonical Clear filters control AIMW-CONT-83908F2D7C",
+    "browser navigates to /tenants/{active-tenant}/module/logs with no filter query or in-memory filter state",
+    "tenant context and logs API are reread authoritatively without filters",
+    "unfiltered persisted rows for only the active tenant render; no sample rows are synthesized"
+  ],
+  "authorization": {
+    "workspace_authentication": "auth",
+    "workspace_tenant_context": "tenant.context",
+    "workspace_permissions": ["operations.manage", "diagnostics.view"],
+    "api_authentication": "auth",
+    "api_tenant_context": "tenant.context",
+    "api_permission": "operations.manage",
+    "guest_workspace_semantics": "redirect to /login",
+    "guest_api_semantics": "401 unauthorized",
+    "missing_permission_semantics": "403 forbidden on workspace/API",
+    "foreign_tenant_semantics": "404 on workspace/API"
+  },
+  "tenant_isolation": {
+    "proof": "Acceptance persists two Alpha operation_logs rows and one Beta row. Alpha filtered and unfiltered API reads return only Alpha rows; a direct Alpha request using Beta's correlation_id returns zero rows. Tenant A direct access to Tenant B workspace/API fails 404.",
+    "active_tenant_binding": "Clear target is derived only from FrontendContext context.tenant.slug and URL encoded.",
+    "direct_id_idor": "No log/resource direct-ID route is introduced. Workspace and API expose only the tenant path parameter; persisted rows are constrained by TenantContext tenant_id."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_ui_state_reset": true,
+    "persistence_mutation": false,
+    "idempotent": true,
+    "retry_safe": true,
+    "authoritative_reread": true,
+    "audit_receipt": "not applicable; this operation performs no mutation",
+    "wordpress_runtime": "not applicable to this local persisted logs UI-state reset operation",
+    "provider_runtime": "not applicable",
+    "queue_runtime": "not applicable",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/LogsClearFiltersTerminalityTest.php",
+      "coverage": [
+        "exact canonical PENDING identity/domain/kind/source/control/read-only metadata",
+        "explicit real logs workspace and AdminOperationsController logs API binding",
+        "production frontend canonical control wiring",
+        "real persisted Alpha/Beta operation_logs fixtures",
+        "real search alias filtering through search to q",
+        "authoritative unfiltered reread after clear target",
+        "Tenant B row exclusion and foreign correlation-id probe",
+        "guest redirect/401 semantics",
+        "missing operations.manage 403 semantics",
+        "Tenant A to Tenant B workspace/API 404 isolation",
+        "no direct log/resource ID route surface"
+      ]
+    },
+    "frontend": {
+      "file": "backend/resources/js/__tests__/logs-clear-filters-control.test.tsx",
+      "coverage": [
+        "exact canonical operation marker",
+        "real visible Clear filters label",
+        "active-tenant-derived reset destination",
+        "tenant slug URL encoding"
+      ]
+    }
+  },
+  "implementation": {
+    "dependency_base_pr": 301,
+    "dependency_base_sha": "e0da3e490851f88f81f6894e5d59dff47cfef619",
+    "implementation_sha": "8c758a747e593bc9183416cca89f8b4c2099c5f3",
+    "tested_sha": "8c758a747e593bc9183416cca89f8b4c2099c5f3"
+  },
+  "implementation_head_ci": {
+    "result": "GREEN",
+    "pr_plan_link": {
+      "run_id": 33226138862,
+      "run_number": 958,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33226138832,
+      "run_number": 229,
+      "conclusion": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 33226138866,
+      "run_number": 298,
+      "conclusion": "success"
+    },
+    "acceptance_subgates": {
+      "pint": "success",
+      "sqlite_migrate_fresh_and_full_php_tests": "success",
+      "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success",
+      "frontend_typecheck_tests_build": "success",
+      "production_frontend_build": "success",
+      "runtime_artifacts": "success",
+      "acceptance_gate": "success",
+      "production_docker_compose_model_build_boot_real_runtime_smoke_cleanup": "success",
+      "generate_parity_ledger": "skipped_by_workflow_design"
+    }
+  },
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "isolated_new_terminal": 359,
+    "previous_pending": 573,
+    "isolated_new_pending": 572,
+    "note": "This is the isolated contribution of exactly this one operation against the latest generated reconciliation authority. Parallel unmerged worker PRs are intentionally not folded into these generated-authority counts."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "merge_performed": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The real production logs workspace exposes the exact canonical Clear filters control; filtered and unfiltered reads use real persisted tenant-scoped operation_logs; clearing resets adapted filter state and causes an authoritative unfiltered reread; authorization and Tenant A/B isolation are proven; focused tests and the implementation exact head passed all authoritative repository gates. Final handoff additionally requires this evidence-bearing head itself to pass those gates."
+  }
+}

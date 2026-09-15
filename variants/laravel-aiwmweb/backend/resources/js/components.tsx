@@ -128,16 +128,18 @@ export function Pagination({
     page,
     lastPage,
     onPage,
+    previousOperationId,
 }: {
     page: number;
     lastPage: number;
     onPage: (page: number) => void;
+    previousOperationId?: string;
 }) {
     const { text, locale } = useLocale();
     if (lastPage <= 1) return null;
     return (
         <nav className="pagination" aria-label={locale === 'ar' ? 'ترقيم الصفحات' : 'Pagination'}>
-            <button type="button" className="btn" onClick={() => onPage(page - 1)} disabled={page <= 1}>{text(commonText.previous)}</button>
+            <button type="button" className="btn" data-canonical-operation={previousOperationId} onClick={() => onPage(page - 1)} disabled={page <= 1}>{text(commonText.previous)}</button>
             <span aria-live="polite">{locale === 'ar' ? `صفحة ${page} من ${lastPage}` : `Page ${page} of ${lastPage}`}</span>
             <button type="button" className="btn" onClick={() => onPage(page + 1)} disabled={page >= lastPage}>{text(commonText.next)}</button>
         </nav>
@@ -286,32 +288,91 @@ export function ActionDialog({
     );
 }
 
-function CommandPalette({ context, open, onClose }: { context: FrontendContext; open: boolean; onClose: () => void }) {
+function CommandPalette({
+    context,
+    open,
+    onClose,
+    triggerRef,
+}: {
+    context: FrontendContext;
+    open: boolean;
+    onClose: () => void;
+    triggerRef: React.RefObject<HTMLButtonElement | null>;
+}) {
     const { locale, text } = useLocale();
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const onCloseRef = useRef(onClose);
+    const allowedRoutes = useMemo(
+        () => workspaceRoutes.filter((route) => !route.hidden && resolveCapability(context, route).state === 'enabled'),
+        [context],
+    );
 
     useEffect(() => {
-        if (open) {
-            setQuery('');
-            window.setTimeout(() => inputRef.current?.focus(), 0);
-        }
-    }, [open]);
+        onCloseRef.current = onClose;
+    }, [onClose]);
+
+    useEffect(() => {
+        if (!open) return;
+
+        setQuery('');
+        const trigger = triggerRef.current;
+        const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 0);
+        const handleKey = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault();
+            event.stopPropagation();
+            onCloseRef.current();
+        };
+
+        document.addEventListener('keydown', handleKey);
+        return () => {
+            window.clearTimeout(focusTimer);
+            document.removeEventListener('keydown', handleKey);
+            window.setTimeout(() => trigger?.focus(), 0);
+        };
+    }, [open, triggerRef]);
     if (!open) return null;
-    const matches = workspaceRoutes.filter((route) => !route.hidden && `${route.label.en} ${route.label.ar} ${route.description.en}`.toLowerCase().includes(query.toLowerCase())).slice(0, 12);
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const matches = allowedRoutes.filter((route) => [
+        route.label.en,
+        route.label.ar,
+        route.description.en,
+        route.description.ar,
+        route.path,
+        route.key,
+    ].join(' ').toLowerCase().includes(normalizedQuery)).slice(0, 12);
+
+    const runCommand = (route: WorkspaceRoute) => {
+        if (resolveCapability(context, route).state !== 'enabled') return;
+        navigate(tenantUrl(context.tenant.slug, route.path));
+        onClose();
+    };
 
     return (
         <div className="dialog-backdrop command-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-            <section className="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-title">
+            <section id="command-palette-dialog" className="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-title">
                 <header>
                     <h2 id="command-title" className="sr-only">{text(commonText.quickSearch)}</h2>
-                    <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text(commonText.quickSearch)} aria-label={text(commonText.quickSearch)} />
-                    <button type="button" className="btn" onClick={onClose}>Esc</button>
+                    <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text(commonText.quickSearch)} aria-label={text(commonText.quickSearch)} aria-controls="command-palette-results" />
+                    <button
+                        type="button"
+                        className="btn"
+                        data-canonical-operation="AIMW-AI-D3A8A100B4"
+                        aria-label={locale === 'ar' ? 'إغلاق البحث' : 'Close search'}
+                        onClick={onClose}
+                    >Esc</button>
                 </header>
-                <div className="command-results">
-                    {matches.map((route) => (
-                        <button type="button" key={route.key} className="command-item" onClick={() => { navigate(tenantUrl(context.tenant.slug, route.path)); onClose(); }}>
+                <div id="command-palette-results" className="command-results" aria-live="polite" aria-atomic="false">
+                    {matches.length === 0 ? (
+                        <div className="command-empty" role="status">
+                            <strong>{locale === 'ar' ? 'لا توجد وجهة متاحة مطابقة' : 'No matching available destination'}</strong>
+                            <small>{locale === 'ar' ? 'جرّب اسم صفحة أو مسارًا تسمح به صلاحيات الحساب الحالية.' : 'Try a page name or route available to your current tenant permissions.'}</small>
+                        </div>
+                    ) : matches.map((route) => (
+                        <button type="button" key={route.key} className="command-item" onClick={() => runCommand(route)}>
                             <span aria-hidden="true">{route.icon}</span>
                             <span><strong>{route.label[locale]}</strong><small>{route.description[locale]}</small></span>
                             <code>{route.path}</code>
@@ -331,6 +392,7 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(() => window.localStorage.getItem('aiwm.sidebar') === 'collapsed');
     const [commandOpen, setCommandOpen] = useState(false);
+    const commandTriggerRef = useRef<HTMLButtonElement>(null);
     const [mode, setMode] = useState<'dark' | 'light'>(() => window.localStorage.getItem('aiwm.mode') === 'light' ? 'light' : 'dark');
 
     const currentRoute = useMemo(
@@ -411,7 +473,18 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                         </div>
                     </div>
                     <div className="topbar-actions">
-                        <button type="button" className="command-trigger" onClick={() => setCommandOpen(true)} aria-keyshortcuts="Control+K"><span aria-hidden="true">⌕</span><span>{locale === 'ar' ? 'بحث سريع' : 'Quick search'}</span><kbd>Ctrl K</kbd></button>
+                        <button
+                            ref={commandTriggerRef}
+                            id="command-palette-trigger"
+                            type="button"
+                            className="command-trigger"
+                            onClick={() => setCommandOpen(true)}
+                            aria-label={locale === 'ar' ? 'فتح البحث السريع' : 'Open quick search'}
+                            aria-haspopup="dialog"
+                            aria-controls="command-palette-dialog"
+                            aria-expanded={commandOpen}
+                            aria-keyshortcuts="Control+K"
+                        ><span aria-hidden="true">⌕</span><span>{locale === 'ar' ? 'بحث سريع' : 'Quick search'}</span><kbd>Ctrl K</kbd></button>
                         <label className="tenant-picker">
                             <span className="sr-only">{locale === 'ar' ? 'تغيير الحساب' : 'Switch tenant'}</span>
                             <select
@@ -429,7 +502,7 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
                 </header>
                 <main id="main-content" className="content" tabIndex={-1} aria-labelledby="page-title">{children}</main>
             </div>
-            <CommandPalette context={context} open={commandOpen} onClose={() => setCommandOpen(false)} />
+            <CommandPalette context={context} open={commandOpen} onClose={() => setCommandOpen(false)} triggerRef={commandTriggerRef} />
         </div>
     );
 }

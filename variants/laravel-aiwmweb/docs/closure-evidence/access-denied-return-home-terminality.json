@@ -1,0 +1,119 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-9D5E269773",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AccessDeniedPage.razor",
+    "route_screen": "/access-denied",
+    "visible_control": "/ -> /",
+    "user_visible_text": "Return home",
+    "behavior": "The static Access Denied page exposes a visible Return home anchor whose href is exactly /. The control is navigation-only and does not mutate data or invoke a service, queue, WordPress, or provider runtime."
+  },
+  "laravel_adaptation": {
+    "source_route": "GET /access-denied",
+    "source_route_name": "canonical.access-denied",
+    "source_controller": "App\\Http\\Controllers\\AccessDeniedReadController",
+    "view": "resources/views/platform/access-denied.blade.php",
+    "control_binding": "<a href=\"/\" data-canonical-operation=\"AIMW-CONT-9D5E269773\">Return home</a>",
+    "destination_route": "GET /",
+    "behavior": "The real rendered Blade control preserves the AIMWWeb Return home behavior and targets the real Laravel root route. It does not target a tenant SPA catch-all and does not fabricate a destination."
+  },
+  "runtime_path": [
+    "GET /access-denied",
+    "AccessDeniedReadController",
+    "platform.access-denied Blade view",
+    "canonical visible anchor AIMW-CONT-9D5E269773",
+    "GET /",
+    "real Laravel welcome root"
+  ],
+  "authorization": {
+    "source_authentication": "anonymous by source contract",
+    "destination_authentication": "anonymous",
+    "source_tenant_context": "not resolved",
+    "destination_tenant_context": "not resolved",
+    "permission": "none; navigation is intentionally public and performs no privileged operation",
+    "security_result": "No permission bypass is introduced because neither route carries a tenant/user/resource identifier and the control only navigates to the public root."
+  },
+  "tenant_isolation": {
+    "canonical_tenant_owned": true,
+    "runtime_semantics": "tenant-neutral denial UI",
+    "proof": "Anonymous, authenticated Tenant A, and authenticated Tenant B callers receive byte-identical denial/control HTML. Tenant and user sentinel values are absent from the response. Source and destination accept zero route parameters.",
+    "direct_id_idor": "not exposed; source and destination have no tenant, user, membership, resource, or generic ID parameter"
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "authoritative_reread": "not applicable to navigation-only operation",
+    "audit_receipt": "not applicable; no mutation",
+    "wordpress_runtime": "not applicable",
+    "provider_runtime": "not applicable",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "file": "backend/tests/Feature/AccessDeniedReturnHomeTerminalityTest.php",
+    "coverage": [
+      "exact canonical PENDING identity/domain/kind/source/control",
+      "actual rendered canonical operation marker and exact href=/",
+      "explicit AccessDeniedReadController source route",
+      "real Laravel root destination route",
+      "anonymous source and destination semantics",
+      "Tenant A/Tenant B/anonymous identical static control response",
+      "tenant/user disclosure resistance",
+      "zero route parameters and no direct-ID/IDOR surface"
+    ]
+  },
+  "implementation": {
+    "dependency_base_pr": 302,
+    "dependency_base_sha": "40ce4002c408411ecbb268bdd781c8210d1b3e99",
+    "implementation_sha": "e77b967296ae633c3ec2f465d927ef0bd9c92d4f",
+    "tested_sha": "e77b967296ae633c3ec2f465d927ef0bd9c92d4f"
+  },
+  "implementation_head_ci": {
+    "result": "GREEN",
+    "pr_plan_link": { "run_id": 33225127684, "run_number": 953, "conclusion": "success" },
+    "cross_domain_security": { "run_id": 33225127705, "run_number": 226, "conclusion": "success" },
+    "laravel_aiwmweb_acceptance": { "run_id": 33225127699, "run_number": 295, "conclusion": "success" },
+    "acceptance_subgates": {
+      "pint": "success",
+      "sqlite_migrate_fresh_and_full_php_tests": "success",
+      "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success",
+      "frontend_typecheck_tests_build": "success",
+      "production_frontend_build": "success",
+      "runtime_artifacts": "success",
+      "production_docker_compose_runtime_smoke": "success",
+      "acceptance_gate": "success",
+      "generate_parity_ledger": "skipped_by_workflow_design"
+    }
+  },
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "isolated_new_terminal": 359,
+    "previous_pending": 573,
+    "isolated_new_pending": 572,
+    "note": "This is the isolated one-operation contribution against the latest generated reconciliation authority. Parallel unmerged worker PRs are intentionally not folded into these counts."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "merge_performed": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Real user-visible source-equivalent navigation is bound to the exact canonical operation, reaches a real explicit destination, is tenant/identity neutral by source contract, is deterministically acceptance-tested, and the implementation head passed all authoritative repository gates. The evidence-bearing final head must also be exact-head green before handoff completion."
+  }
+}

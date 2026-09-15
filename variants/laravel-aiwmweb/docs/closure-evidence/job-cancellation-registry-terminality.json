@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "operation_id": "AIMW-AUTO-13392A9E67",
+  "terminal_state": "ADAPTED",
+  "domain": "automation",
+  "kind": "background_job",
+  "evidence_mode": "focused_background_job_contract",
+  "source_sha": "ae2d95eb5449220af649dc0b4895c7609633e0bd",
+  "canonical_operation": {
+    "operation_id": "AIMW-AUTO-13392A9E67",
+    "source": "src/AIWordPressManager.Infrastructure/Jobs/JobCancellationRegistry.cs",
+    "route_screen": "job:JobCancellationRegistry",
+    "background_job": "JobCancellationRegistry",
+    "terminal_state": "ADAPTED"
+  },
+  "laravel": {
+    "destination": "variants/laravel-aiwmweb/backend/app/Jobs/JobCancellationRegistry.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/JobCancellationRegistryParityTest.php",
+    "runtime": "tenant-scoped shared cache/Redis registry with atomic lock-protected replacement, cancellation and disposal semantics"
+  },
+  "acceptance": {
+    "register_replace": "A registration replaces the current job attempt and resets cancellation state.",
+    "try_cancel": "Cancellation succeeds only for a registered job and is idempotently successful once requested.",
+    "is_registered": "Registration presence is observable only inside the active tenant namespace.",
+    "replacement_safe_disposal": "A stale retry registration cannot unregister a newer replacement.",
+    "retry_safety": "Cancellation probes are registration-token scoped so stale retries cannot consume replacement intent.",
+    "tenant_isolation": "Identical job UUIDs in two tenants have independent registry state.",
+    "queue_scheduler_semantics": "State uses Laravel's shared cache/Redis control plane; repository runtime acceptance separately verifies the same tenant cache/lock boundary plus real Redis queue-worker and scheduler context semantics.",
+    "bounded_lifetime": "Registrations are TTL bounded to prevent abandoned worker state from leaking indefinitely.",
+    "invalid_identity": "Invalid UUIDs and invalid TTLs fail closed."
+  },
+  "external_manual_evidence_required": false,
+  "owner_queue_required": false,
+  "denominator_changed": false,
+  "source_product_modified": false
+}

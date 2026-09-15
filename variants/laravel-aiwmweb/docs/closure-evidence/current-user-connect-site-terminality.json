@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SITE-E3EA44AD3F",
+    "domain": "sites",
+    "kind": "visible_control",
+    "route_screen": "component:CurrentUserChip",
+    "visible_control": "/sites/connect",
+    "current_source": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "risk": "low",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "The source CurrentUserChip exposes Connect your first site only when the current tenant has zero sites.",
+    "read_only": "The chip control only navigates to the existing connect workspace; it does not create, pair, or mutate a site itself."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/current-user-connect-site-control.tsx reads the authoritative tenant sites endpoint and renders the exact canonical link into the real .user-chip only after an empty array is confirmed.",
+    "read_authority": "GET /api/tenants/{tenant}/sites is the existing tenant-scoped SiteManagementController index contract and the control fails closed for read failure or malformed payload.",
+    "destination": "SitesConnectRouteServiceProvider registers explicit /tenants/{tenant}/sites/connect before the SPA fallback and requires tenant.view plus sites.manage.",
+    "guard": "The link is suppressed when an active site exists, sites.manage is missing, the sites API is absent, the tenant has any site, or the authoritative read cannot be trusted."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/CurrentUserConnectSiteVisibleTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/current-user-connect-site-control.test.tsx",
+    "proofs": [
+      "exact canonical PENDING operation identity and CurrentUserChip source",
+      "production operation marker on the real zero-sites CurrentUserChip destination",
+      "explicit authenticated tenant-scoped connect workspace guarded by sites.manage",
+      "authoritative empty/non-empty tenant sites reads drive visibility without mutation",
+      "guest, permission and foreign-tenant paths fail closed",
+      "malformed, unavailable, or failed site reads never render fake availability"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "site_creation_runtime_modified": false,
+    "fake_success": false,
+    "excluded_operations": [
+      "AIMW-SITE-9F9F2977B5"
+    ]
+  }
+}

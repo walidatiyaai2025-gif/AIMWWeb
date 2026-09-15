@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-0D4D60320B",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "visible_control": "/settings/ai-prompts -> /settings/ai-prompts",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "Settings.razor exposes the AI prompt templates navigation only inside the Administrator authorization view.",
+    "navigation": "The control opens /settings/ai-prompts and performs no mutation itself.",
+    "side_effects": "Navigation does not save prompts, call an AI provider, change WordPress state, enqueue work, or fabricate a success receipt."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/settings-ai-prompts-link-control.tsx renders the tenant-scoped AI prompt templates link only for settings.manage users and binds AIMW-AI-0D4D60320B only to that link.",
+    "destination": "GET /tenants/{tenant}/settings/ai-prompts is wired to the existing AiPromptTemplatesReadController persisted prompt registry surface.",
+    "supporting_save_route": "PATCH /tenants/{tenant}/settings/ai-prompts/{template} is wired to the existing AiPromptTemplateSaveController because the persisted destination view references that named route; this supporting wiring does not claim the separate Save canonical operation.",
+    "authorization": "Both destination authorities run behind auth + tenant.context and independently require settings.manage while verifying the active tenant slug.",
+    "guard": "Users without settings.manage do not receive the Settings navigation control; cross-tenant destination requests fail closed with 404."
+  },
+  "tenant_isolation": {
+    "proof": "Focused Laravel acceptance creates separate Alpha and Beta memberships and proves an authenticated Alpha settings manager receives 404 when directly requesting Beta's prompt templates destination.",
+    "link_scope": "The href is generated from the authoritative FrontendContext tenant slug and encodes path-like tenant input instead of accepting a cross-tenant path fragment."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SettingsAiPromptsLinkVisibleTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/settings-ai-prompts-link-control.test.tsx",
+    "proofs": [
+      "exact canonical PENDING identity at implementation stage",
+      "source-equivalent administrator-only navigation semantics",
+      "production canonical operation marker on the real Settings link",
+      "persisted prompt templates read authority is the destination",
+      "destination GET and supporting PATCH routes use auth and tenant.context",
+      "foreign tenant destination returns 404",
+      "missing settings.manage hides the navigation control",
+      "tenant slug is encoded in the generated href"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "prompt_persistence_modified": false,
+    "ai_provider_called": false,
+    "other_prompt_controls_claimed": false,
+    "fake_success": false
+  }
+}

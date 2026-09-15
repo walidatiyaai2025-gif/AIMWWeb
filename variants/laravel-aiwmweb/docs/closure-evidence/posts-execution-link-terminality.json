@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-06CF784553",
+  "terminal_state": "ADAPTED",
+  "domain": "automation",
+  "kind": "visible_control",
+  "operation": {
+    "operation_id": "AIMW-AUTO-06CF784553",
+    "terminal_state": "ADAPTED",
+    "domain": "automation",
+    "kind": "visible_control",
+    "route_screen": "/module/posts",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPostsExplorer.razor",
+    "source_control": "Execution Center navigation to /module/execution",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_semantics": {
+    "intent": "Navigate from the authenticated Posts workspace to the Execution Center.",
+    "side_effects": "Navigation only; no content mutation, execution enqueue, provider call, WordPress call, persistence write, approval mutation, or execution mutation.",
+    "destination": "/module/execution"
+  },
+  "laravel_runtime": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/posts-execution-link-control.tsx",
+    "host": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "target": "/tenants/{activeTenant}/module/execution",
+    "tenant_derivation": "tenantUrl derives and URL-encodes the target solely from FrontendContext.tenant.slug",
+    "source_permissions": ["tenant.view", "content.view"],
+    "destination_permissions": ["operations.manage", "execution.view"],
+    "visibility_contract": "the control renders only when tenant.view + content.view + operations.manage + execution.view are all present"
+  },
+  "security": {
+    "guest_destination": "redirect to canonical /login",
+    "missing_destination_permission": "403",
+    "foreign_tenant_destination": "404",
+    "caller_supplied_target_tenant": false,
+    "resource_id_surface": false,
+    "cross_tenant_destination": false,
+    "fake_success": false,
+    "server_or_wordpress_mutation": false
+  },
+  "acceptance": {
+    "implementation_source_sha": "5f625b521f1f96b68e9c796d313cbaa76bc9896c",
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/PostsExecutionNavigationTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/posts-execution-link-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and generator-backed ADAPTED state",
+      "exact production operation marker",
+      "active tenant slug is URL-encoded and no caller tenant target is accepted",
+      "control is hidden unless source and destination permissions are all present",
+      "canonical Posts and Execution Center route contracts remain guarded",
+      "guest, permission and foreign-tenant destination paths fail closed",
+      "navigation introduces no endpoint or mutation"
+    ]
+  },
+  "scope": {
+    "claimed_operations": ["AIMW-AUTO-06CF784553"],
+    "aspnet_modified": false,
+    "backend_route_modified": false,
+    "fake_success": false,
+    "force_push": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "27e776d01b5c1b12f2663c094b6f57d5ba7599c9",
+    "worker_branch": "worker/laravel-aiwmweb-AIMW-AUTO-06CF784553-slot0238",
+    "claim_comment": 5625330603
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The real Posts workspace renders a tenant-derived permission-safe link to the existing guarded Execution Center; focused frontend/backend proof covers tenant isolation, authorization and navigation-only behavior."
+  }
+}

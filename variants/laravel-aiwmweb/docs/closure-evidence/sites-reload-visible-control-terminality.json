@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SYNC-A9E956A4DA",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "ReloadClickedAsync",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "reload": "The source Sites workspace Refresh control invokes ReloadClickedAsync, which rereads the authoritative site collection and reapplies the current view state.",
+    "read_only": "Reload is a read operation and does not persist, enqueue, call a provider mutation, or claim mutation success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/pages.tsx binds AIMW-SYNC-A9E956A4DA only to the existing ResourceContent Refresh button when the active workspace route key is sites.",
+    "permission_surface": "The control remains on the normal Sites read workspace governed by sites.view; it is not nested under the separate sites.manage-only bulk-delete surface.",
+    "read_contract": "Refresh invokes the existing React Query query.refetch() for the active tenant Sites resource and therefore rereads the authoritative context.api.sites endpoint with the current page/search state.",
+    "mutation_boundary": "The reload control issues only the existing GET read; RequestBulkDelete, ConfirmBulkDelete, and other mutation controls remain separate operations."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesReloadVisibleControlTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/sites-reload-visible-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and non-mutation metadata",
+      "production operation marker only on the real Sites ResourceContent Refresh control",
+      "a member with tenant.view plus sites.view and no sites.manage can reach the control surface",
+      "Refresh performs a second authoritative tenant Sites GET and renders the reread response",
+      "Refresh issues no mutation request",
+      "missing sites.view returns 403 and a foreign tenant Sites workspace returns 404",
+      "the manage-only bulk-delete component carries no Reload canonical marker"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  }
+}

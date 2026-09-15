@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-PLAT-18A8EE0324",
+    "domain": "platform",
+    "kind": "api",
+    "route_screen": "/setup",
+    "visible_control": "anonymous GET /setup",
+    "mutation": false,
+    "tenant_owned": false,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "recovery": {
+    "historical_pr": 290,
+    "historical_tested_head": "0081cf664139ab0e7645436ec2f8fd3c39219c87",
+    "authoritative_composition_base": "47df2db4652e91fbf1d9c9904fb36b667f78c6e5",
+    "recovery_commit": "927180792a1510c0e517ba73538dadebb0243a9e",
+    "strategy": "Reuse the evolved setup runtime already present in authoritative composition; do not replay the stale historical runtime snapshot."
+  },
+  "laravel_adaptation": {
+    "route": "GET /setup is explicitly registered by SetupRouteServiceProvider under web middleware only and resolves to SetupReadController.",
+    "tenant_neutral_boundary": "The first-run read accepts no route parameters and deliberately has neither auth nor tenant.context middleware, matching tenant-neutral installation semantics.",
+    "read_model": "DatabaseSetupReadService checks the configured database connection, repository migration ledger completeness, and first identity readiness; failures remain incomplete and fail closed.",
+    "rendering": "DatabaseSetupPageService renders bounded operator-safe status through Blade while database/provider credentials remain deployment-owned and never enter the page model.",
+    "completion_redirect": "SetupReadController redirects only to the fixed local landing path / when authoritative setup status is complete; caller redirect targets are ignored.",
+    "scope_boundary": "POST /setup and DatabaseSetupService.RenderPage are separate canonical operations and are not claimed by this evidence."
+  },
+  "security": {
+    "route_parameters": "The named GET route has zero route parameters and therefore exposes no tenant/resource direct-ID surface.",
+    "redirect_safety": "A caller-supplied returnUrl such as https://evil.example/phish cannot alter the completed-install redirect, which remains exactly /.",
+    "secret_safety": "Configured database passwords and connection strings are never rendered by the read endpoint; focused acceptance injects a sentinel password and proves it is absent from the response.",
+    "truthfulness": "Database unreachable, missing migration ledger entries, or missing first identity keep setup incomplete rather than fabricating readiness."
+  },
+  "acceptance": {
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/PlatformSetupReadTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation ID is linked to the real named GET route",
+      "route resolves to SetupReadController with web-only middleware and zero parameters",
+      "migrations without first identity remain incomplete",
+      "missing repository migration remains incomplete",
+      "incomplete rendering omits a configured secret sentinel",
+      "completed setup ignores external caller redirect input and redirects only to /"
+    ]
+  },
+  "scope": {
+    "runtime_replayed": false,
+    "post_setup_operation_claimed": false,
+    "render_service_operation_claimed": false,
+    "generated_parity_modified_manually": false,
+    "owner_or_live_production_evidence_required": false
+  }
+}

@@ -89,7 +89,7 @@ final class PromptRegistryService
         $last = $template->exists
             ? AiPromptRevision::query()->where('ai_prompt_template_id', $template->id)->latest('version')->first()
             : null;
-        if ($last && $last->snapshot === $snapshot) {
+        if ($last && $this->snapshotsEqual($last->snapshot, $snapshot)) {
             return $template->fresh();
         }
 
@@ -227,6 +227,33 @@ final class PromptRegistryService
             'output_schema' => $template->output_schema,
             'enabled' => (bool) $template->enabled,
         ];
+    }
+
+    private function snapshotsEqual(?array $stored, array $candidate): bool
+    {
+        if ($stored === null) {
+            return false;
+        }
+
+        return $this->canonicalizeSnapshot($stored) === $this->canonicalizeSnapshot($candidate);
+    }
+
+    private function canonicalizeSnapshot(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        $normalized = [];
+        foreach ($value as $key => $item) {
+            $normalized[$key] = $this->canonicalizeSnapshot($item);
+        }
+
+        if (! array_is_list($normalized)) {
+            ksort($normalized);
+        }
+
+        return $normalized;
     }
 
     private function seedBuiltIns(): void

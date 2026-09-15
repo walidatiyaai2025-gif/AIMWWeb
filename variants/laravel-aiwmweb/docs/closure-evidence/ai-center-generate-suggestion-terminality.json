@@ -1,0 +1,47 @@
+{
+  "operation_id": "AIMW-AI-DDB072FE15",
+  "domain": "ai",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-DDB072FE15",
+    "domain": "ai",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "route_screen": "/ai-center",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "handler": "GenerateClickedAsync -> GenerateAsync"
+  },
+  "laravel": {
+    "route": "POST /api/tenants/{tenant}/ai-center/generate",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiCenterGenerateController.php",
+    "runtime": "App\\AI\\Platform\\Services\\AiGenerationService",
+    "ui": "variants/laravel-aiwmweb/backend/resources/js/ai-center-generate-control.tsx",
+    "quota": "App\\AI\\Platform\\Quota\\DatabaseAiQuotaGateway"
+  },
+  "acceptance": {
+    "source_semantics": [
+      "Generate is disabled without content and while a generation is in flight.",
+      "Optional prompt, model, temperature, token budget, and tenant-owned site context are accepted.",
+      "The existing provider/model/secret/retry/usage/audit generation runtime is reused.",
+      "A structured reviewable suggestion is returned and displayed; no external content mutation or publication is performed.",
+      "Session suggestion history is local-only and bounded to ten entries.",
+      "Provider/model failures remain visible and never become false success."
+    ],
+    "security": [
+      "web + auth + tenant.context route guards",
+      "server-side ai.use authorization",
+      "foreign tenant rejected",
+      "foreign site rejected by tenant scope",
+      "caller cannot choose a destination tenant",
+      "provider credentials and secret material are not returned",
+      "quota context must equal the active tenant membership"
+    ],
+    "focused_tests": [
+      "variants/laravel-aiwmweb/backend/tests/Feature/AiCenterGenerateTerminalityTest.php",
+      "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-center-generate-control.test.tsx"
+    ]
+  },
+  "external_manual_evidence_required": false,
+  "denominator_change": false
+}

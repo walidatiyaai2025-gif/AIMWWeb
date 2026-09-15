@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "task_id": "AIMW-CONT-8EE96B77A8",
+  "operation_id": "AIMW-CONT-8EE96B77A8",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-8EE96B77A8",
+    "domain": "content",
+    "kind": "route",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AccessDeniedPage.razor",
+    "source_route": "/access-denied",
+    "visible_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED"
+  },
+  "recovery": {
+    "originating_pr": 302,
+    "originating_pr_state": "stale stacked PR; implementation already integrated into authoritative composition",
+    "issue_claim_comment": 5556717366,
+    "authoritative_base_sha": "27791c7020df06d6d44bde08b56c080c64be5f69",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-CONT-8EE96B77A8-access-denied-recovery"
+  },
+  "source_contract": {
+    "anonymous_boundary": "The canonical Razor page declares Microsoft.AspNetCore.Authorization.AllowAnonymous.",
+    "behavior": "GET /access-denied renders a static 403 denial page with explanatory text and a Return home link.",
+    "data_access": "No tenant, user, resource, provider, WordPress, queue, persistence, or mutation access is required.",
+    "security_implication": "Laravel must preserve the anonymous and identity-neutral boundary rather than fabricate auth or tenant middleware."
+  },
+  "laravel_adaptation": {
+    "route_file": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "route": "GET /access-denied",
+    "route_name": "canonical.access-denied",
+    "controller": "App\\Http\\Controllers\\AccessDeniedReadController",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/platform/access-denied.blade.php",
+    "middleware_contract": ["web"],
+    "excluded_middleware": ["auth", "tenant.context"],
+    "route_parameters": [],
+    "mutation": false
+  },
+  "tenant_neutral_security": {
+    "mode": "tenant_neutral",
+    "anonymous": "Anonymous caller receives the same static denial document as authenticated callers.",
+    "tenant_a_b_equivalence": "Tenant A and Tenant B authenticated callers receive byte-identical static content.",
+    "identity_non_disclosure": "Focused tests assert tenant names/slugs and user names/emails are absent from anonymous and authenticated responses.",
+    "idor_surface": "None: route has zero parameters and controller resolves no tenant, user, or resource identity.",
+    "fake_success": false
+  },
+  "acceptance": {
+    "test": "variants/laravel-aiwmweb/backend/tests/Feature/AccessDeniedRouteTerminalityTest.php",
+    "proofs": [
+      "canonical operation metadata and exact 931 denominator",
+      "explicit AccessDeniedReadController route outside tenant SPA catch-alls",
+      "web middleware present while auth and tenant.context are absent",
+      "zero route parameters",
+      "source-equivalent static 403 denial content for anonymous callers",
+      "anonymous/Tenant A/Tenant B response equivalence",
+      "tenant and user sentinel values never disclosed"
+    ]
+  },
+  "generator_contract": {
+    "mode": "tenant_neutral_route_evidence",
+    "verifier": "variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py",
+    "generator_backed_reconciliation_required": true,
+    "denominator_must_remain": 931,
+    "expected_delta_if_accepted": {
+      "terminal": 1,
+      "pending": -1,
+      "blocked": 0
+    }
+  },
+  "scope": {
+    "other_operations_started": false,
+    "aspnet_source_modified": false,
+    "auth_boundary_weakened": false,
+    "tenant_boundary_fabricated": false,
+    "manual_parity_count_edit": false,
+    "owner_manual_evidence_required": false
+  }
+}

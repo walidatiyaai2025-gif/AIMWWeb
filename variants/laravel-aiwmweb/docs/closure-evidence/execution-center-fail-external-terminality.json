@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-D1F233AB61",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "ai",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService.FailExternal",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "scanner_metadata": "The generated canonical ledger classifies this row as mutation=false and risk=low; this evidence preserves that scanner metadata rather than rewriting it.",
+    "predicate": "FailExternal accepts a typed execution GUID and required owner identity, and mutates only the matching owner-scoped External execution while it is Running. A missing execution, wrong owner, wrong mode, or wrong state is a no-op.",
+    "transition": "A successful transition sets status Failed, records the UTC completion time, stores the normalized failure text, and inserts an Error activity with the same failure message.",
+    "fallback": "Blank failure text is normalized to the canonical fallback 'Approved change execution failed.'."
+  },
+  "laravel_adaptation": {
+    "service": "App\\Execution\\ExternalExecutionFailureService",
+    "member": "failExternal",
+    "external_boundary": "Laravel's executions ledger is intrinsically approval-linked because approval_id is required, so the service does not invent an execution-mode column or a second execution store. The required approval relation is the approved/external execution boundary for this adapter.",
+    "tenant_owner_scope": "Execution lookup uses the tenant-scoped Execution model under the active TenantContext and also requires actor_user_id to equal the supplied owner. Foreign-tenant, wrong-owner, missing, inactive-context, and non-running lookups return false without mutation.",
+    "state_transition": "Only a matching running execution is changed to failed with completed_at and failure set; the linked approval state is deliberately left unchanged because approval failure is owned by ApprovalWorkflowService.RecordExecutionFailed.",
+    "activity": "The same transaction appends immutable tenant-scoped AuditEvent activity with event execution.failed, Error level, canonical operation ID, execution/operation/correlation/approval/site identity, and the normalized message.",
+    "redaction": "Failure persistence and activity metadata redact credential-like assignments and cap the stored message at 1000 characters, preserving the Laravel variant's server-side secret boundary while keeping the source failure semantics."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "843a69c0634a608d04a585feaa2115075f0c6c6a",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Execution/ExternalExecutionFailureService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ExecutionCenterFailExternalTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical service/domain/source/member/tenant/risk identity",
+      "same-tenant owned running execution transitions to failed with deterministic completed_at",
+      "failure text is trimmed, credential-redacted, and persisted without the secret value",
+      "blank failure uses the exact canonical fallback message",
+      "immutable tenant-scoped Error activity records the same safe message and canonical operation provenance",
+      "linked approval status remains unchanged, preserving the separate approval-state service boundary",
+      "wrong owner and non-running state are no-op transitions with no activity",
+      "foreign tenant direct operation UUID is treated as 404-equivalent not found and the foreign row remains unchanged",
+      "valid missing UUID and inactive tenant context fail closed without activity",
+      "malformed UUID and invalid owner identity are rejected before lookup"
+    ],
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/production/manual evidence is required because this operation is a tenant-local execution-ledger failure transition."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AI-D1F233AB61",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

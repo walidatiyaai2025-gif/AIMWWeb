@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "wave": "approval-execution-link-terminality",
+  "base": {
+    "pull_request": 296,
+    "branch": "worker/laravel-aiwmweb-approval-load-terminality",
+    "sha": "9fda003cec54377054af8c43e7bcac7535f2b9da"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-APPR-B360D1C8BA",
+    "kind": "visible_control",
+    "domain": "approvals",
+    "route_screen": "/approvals",
+    "visible_control": "/module/execution -> /module/execution",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/ApprovalQueue.razor",
+    "mutation": false,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "Approval Queue exposes a visible Execution center anchor",
+    "target": "/module/execution",
+    "purpose": "navigate from governed approval review into execution job state"
+  },
+  "laravel_adaptation": {
+    "href_builder": "approvalExecutionCenterHref",
+    "target": "/tenants/{activeTenant}/module/execution",
+    "tenant_qualification": "existing tenantUrl helper encodes the active FrontendContext tenant slug",
+    "route_authority": "canonical.workspace.execution",
+    "route_guards": ["auth", "tenant.context"],
+    "new_backend_endpoint": false,
+    "approval_load_contract_changed": false
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/ApprovalExecutionLinkTerminalityTest.php",
+    "frontend_test": "backend/resources/js/__tests__/approvalQueue.test.ts",
+    "proofs": [
+      "exact canonical operation identity and PENDING source classification",
+      "existing execution workspace remains the route authority",
+      "execution workspace retains auth and tenant.context guards",
+      "Approval Queue visibly wires approvalExecutionCenterHref",
+      "href is tenant-qualified and encoded",
+      "unqualified /module/execution and foreign tenant targets are not synthesized"
+    ]
+  },
+  "implementation_snapshot_sha": "364f7050e63c0641e6f0864f3ddeeef517f86f1d",
+  "implementation_snapshot_ci": {
+    "pr_plan_link": {
+      "run_id": 33217017360,
+      "conclusion": "success"
+    },
+    "pr_plan_link_metadata_retrigger": {
+      "run_id": 33217033074,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33217017422,
+      "conclusion": "success"
+    },
+    "acceptance": {
+      "run_id": 33217017368,
+      "conclusion": "success",
+      "verified_jobs": [
+        "acceptance-gate",
+        "tenant-core-sqlite",
+        "mysql-production-like",
+        "redis-queue-scheduler",
+        "wordpress-real-rest-e2e",
+        "wordpress-disposable-runtime",
+        "frontend",
+        "frontend-production-build",
+        "runtime-artifacts",
+        "compose-production-runtime"
+      ]
+    }
+  },
+  "scope": {
+    "allowed": "variants/laravel-aiwmweb/**",
+    "implementation_files": 4,
+    "generated_reconciliation_modified": false,
+    "parallel_operations_modified": false,
+    "approval_mutations_modified": false,
+    "new_backend_endpoint": false
+  },
+  "route_api_denominator_delta": 0,
+  "current_pr_ci": "pending-final-evidence-revalidation"
+}

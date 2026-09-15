@@ -1,0 +1,240 @@
+{
+  "schema": 1,
+  "variant": "LARAVEL_AIWMWEB",
+  "authority_issue": 257,
+  "integration_base": {
+    "pull_request": 277,
+    "branch": "lead/laravel-aiwmweb-final-convergence",
+    "exact_base_sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6",
+    "current_main_sha_at_start": "bd6d272748753e21b65655901eaed8bb65a267c7"
+  },
+  "worker": {
+    "branch": "worker/laravel-aiwmweb-final-acceptance-runtime",
+    "pull_request": 280,
+    "scope": "CI, database, runtime and deterministic integration acceptance only"
+  },
+  "initial_exact_head_runs": [
+    {
+      "workflow": "Laravel AIWMWeb Acceptance",
+      "run_id": 33128579859,
+      "status": "failure",
+      "failure": "wordpress-real-rest-e2e job 98712505663 failed with curl exit 52 after WordPress REST readiness had already passed",
+      "root_cause": "The lightweight WordPress harness used a one-shot PHP CLI development server path and copied Connector source directly rather than exercising the canonical package. A first fail-closed retry/package repair exposed the deeper deterministic issue on PR #280: PHP 8.4.25 php -S segfaulted on the second WordPress REST request. The repository's declared disposable/production WordPress runtime is PHP 8.3 Apache.",
+      "fix": "Add bounded fail-closed REST retries and server diagnostics, install and verify the exact Connector ZIP from runtime/scripts/package-connector.sh, and align only the WordPress E2E PHP runtime with the declared wordpress:7.0.4-php8.3-apache contract. Laravel compatibility remains independently tested on PHP 8.4.",
+      "repair_commits": [
+        "20c71e767d3773e8e77add0e9344d77e675a158b",
+        "9887747a71f79b1387c9baca2f67cc5764540db9"
+      ]
+    },
+    {
+      "workflow": "Laravel AIWMWeb Convergence Preflight",
+      "run_id": 33128579778,
+      "status": "failure",
+      "failure": "Historical reconstruction produced 13 PHPUnit failures after migrations and mechanical invariants passed.",
+      "root_cause": "convergence-compose.sh replaced the checked-out PR candidate with a stale manifest base and older worker snapshots in the primary workspace. That resurrected already-fixed Monolog ProcessorInterface, Laravel test bootstrap and SQLite OFFSET compatibility defects and omitted later integration corrections.",
+      "fix": "Reconstruct pinned provenance in an isolated git worktree while retaining the exact checked-out candidate for Composer, npm, Pint, SQLite, MySQL, route, PHPUnit and frontend acceptance. The workflow no longer regenerates package-lock or auto-formats PHP before strict gates.",
+      "repair_commits": [
+        "71df54ebfebcb23ef0d4d95d44e4dc320cb53920",
+        "f0a5debccff82144738cf111f541d462d15c174c"
+      ]
+    },
+    {
+      "workflow": "Laravel AIWMWeb Parity Reconciliation",
+      "run_id": 33128579782,
+      "status": "failure",
+      "failure": "Generated 931-operation reconciliation differs from committed operation-parity-reconciliation.json at byte 22608 / line 593.",
+      "root_cause": "Committed parity evidence is stale relative to the current deterministic reconciliation output.",
+      "fix": "None in this runtime worker. Operation classifications and parity evidence remain owned by the parity reconciliation worker and were not modified to make CI green.",
+      "generated_counts": {
+        "total": 931,
+        "ported": 0,
+        "adapted": 333,
+        "pending": 598,
+        "blocked": 0,
+        "verified_unavailable_external": 0,
+        "parity_percent": 35.77,
+        "visible_control_percent": 0.0
+      }
+    },
+    {
+      "workflow": "Laravel AIWMWeb Cross-Domain Security",
+      "run_id": 33128579823,
+      "status": "success",
+      "failure": null,
+      "fix": null
+    },
+    {
+      "workflow": "UX Regression Gate",
+      "run_id": 33128579865,
+      "status": "failure",
+      "failure": "visual-accessibility backup-restore job 98712528586 timed out while the .NET/Blazor fixture attempted to reload startup database configuration before authenticating a Content.View-only user.",
+      "root_cause": "Failure is in tests/AIWordPressManager.UxTests and the non-Laravel AIWordPressManager.Web runtime, outside variants/laravel-aiwmweb and this worker ownership.",
+      "fix": "None. The external failure remains visible and was not suppressed."
+    }
+  ],
+  "post_fix_exact_head_verification": {
+    "validated_runtime_sha": "9887747a71f79b1387c9baca2f67cc5764540db9",
+    "acceptance": {
+      "run_id": 33159115894,
+      "status": "success",
+      "jobs": {
+        "acceptance_gate": 98808997063,
+        "sqlite": 98808997049,
+        "mysql": 98808997151,
+        "redis_queue_scheduler": 98808996781,
+        "wordpress_real_rest": 98808996998,
+        "wordpress_disposable": 98808997016,
+        "frontend": 98808996999,
+        "frontend_production_build": 98808997058,
+        "runtime_artifacts": 98808997060,
+        "compose_production_runtime": 98808996896
+      }
+    },
+    "convergence_preflight": {
+      "run_id": 33159115888,
+      "job_id": 98808996776,
+      "status": "success",
+      "verified": [
+        "isolated pinned-authority reconstruction",
+        "composer install",
+        "npm ci",
+        "pint --test",
+        "SQLite migrate:fresh",
+        "MySQL migrate:fresh",
+        "route collision census",
+        "mechanical convergence invariants",
+        "full exact-candidate PHPUnit suite",
+        "frontend typecheck/test/build",
+        "evidence artifact upload"
+      ]
+    },
+    "cross_domain_security": {
+      "run_id": 33159115877,
+      "job_id": 98808996459,
+      "status": "success"
+    }
+  },
+  "database_runtime_matrix": {
+    "sqlite": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808997049,
+      "evidence": "PHP 8.4 Composer install, Pint --test, migrate:fresh and full php artisan test passed."
+    },
+    "mysql": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808997151,
+      "evidence": "MySQL 8.4.11 fresh migration, runtime:mysql-smoke, rollback/forward/repeat migration and full php artisan test passed on PHP 8.4."
+    },
+    "redis": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808996781,
+      "evidence": "Real Redis tenant lock smoke passed."
+    },
+    "queue": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808996781,
+      "evidence": "Real Redis queue worker and TenantContext restoration smoke passed."
+    },
+    "scheduler": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808996781,
+      "evidence": "Scheduler heartbeat and runtime readiness smoke passed."
+    },
+    "compose_runtime": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808996896,
+      "evidence": "Docker api/web/worker/scheduler images built; MySQL, Redis, queue, scheduler, liveness and readiness smokes passed."
+    },
+    "wordpress_disposable": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808997016,
+      "evidence": "Docker disposable WordPress reset/install/content operation and canonical Connector package installation passed."
+    },
+    "wordpress_real_rest": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808996998,
+      "evidence": "Production-aligned PHP 8.3 WordPress E2E passed REST index, authenticated mutation, authoritative reread, canonical Connector ZIP installation, plugin version/schema/activation checks and aimw/v1 namespace registration."
+    },
+    "frontend": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_ids": [98808996999, 98808997058],
+      "evidence": "Install, typecheck, tests and production build passed in both frontend acceptance paths."
+    },
+    "runtime_artifacts": {
+      "status": "PASS_POST_FIX",
+      "run_id": 33159115894,
+      "job_id": 98808997060,
+      "evidence": "Canonical Connector ZIP, source-traceable runtime manifest and runtime runbook bundle were produced and uploaded."
+    }
+  },
+  "security": {
+    "status": "PASS_POST_FIX_UNCHANGED",
+    "run_id": 33159115877,
+    "job_id": 98808996459,
+    "protected_contracts": [
+      "HMAC",
+      "nonce",
+      "timestamp",
+      "replay protection",
+      "tenant ownership",
+      "connector scope enforcement",
+      "high-risk scope defaults",
+      "secret redaction"
+    ]
+  },
+  "product_gaps_discovered": [
+    {
+      "scope": "parity evidence",
+      "status": "UNRESOLVED_BY_DESIGN",
+      "detail": "The committed operation reconciliation does not match current generated evidence. This worker did not alter classifications."
+    },
+    {
+      "scope": "SEO historical reconstruction",
+      "status": "NOT_AN_EXACT_CANDIDATE_RUNTIME_FAILURE",
+      "detail": "The stale historical reconstruction attempted to replace an immutable SEO evidence receipt during retry. SEO product semantics remain with the SEO closure owner; the corrected exact-candidate full PHPUnit preflight is green."
+    },
+    {
+      "scope": "non-Laravel UX",
+      "status": "EXTERNAL_TO_VARIANT",
+      "detail": "The .NET backup-restore UX fixture cannot reliably reload startup DB configuration before Content.View-only authentication. No Laravel files are implicated."
+    }
+  ],
+  "shared_file_changes": [
+    {
+      "path": ".github/workflows/laravel-aiwmweb-convergence-preflight.yml",
+      "reason": "Candidate-preserving, non-mutating CI acceptance and convergence-target trigger correction."
+    },
+    {
+      "path": ".github/workflows/laravel-aiwmweb.yml",
+      "reason": "Align WordPress REST E2E with the declared PHP 8.3 WordPress production runtime while retaining Laravel PHP 8.4 coverage."
+    },
+    {
+      "path": "variants/laravel-aiwmweb/tools/convergence/convergence-compose.sh",
+      "reason": "Isolate historical provenance reconstruction from exact-candidate acceptance."
+    },
+    {
+      "path": "variants/laravel-aiwmweb/tests/wordpress/bootstrap-wordpress.sh",
+      "reason": "Deterministic WordPress transport diagnostics and canonical Connector package E2E installation."
+    },
+    {
+      "path": "variants/laravel-aiwmweb/docs/closure-evidence/runtime-acceptance.json",
+      "reason": "Required exact runtime acceptance evidence."
+    }
+  ],
+  "repair_commits": [
+    "20c71e767d3773e8e77add0e9344d77e675a158b",
+    "71df54ebfebcb23ef0d4d95d44e4dc320cb53920",
+    "f0a5debccff82144738cf111f541d462d15c174c",
+    "9887747a71f79b1387c9baca2f67cc5764540db9"
+  ],
+  "verification_policy": "No tests were skipped, assertions deleted, failures allowed, continue-on-error added, suites excluded, legacy-peer-deps used, MySQL checks disabled or tenant-isolation checks removed. Runtime behavior is validated at 9887747a71f79b1387c9baca2f67cc5764540db9; this evidence update is documentation-only."
+}

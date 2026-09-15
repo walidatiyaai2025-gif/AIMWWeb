@@ -1,0 +1,140 @@
+{
+  "authority": {
+    "repository": "walidatiyaai2025-gif/AIMWWeb",
+    "issue": 257,
+    "variant": "LARAVEL_AIWMWEB",
+    "composition_branch": "worker/laravel-aiwmweb-closure-composition",
+    "composition_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-79AE29D6B3",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AIPromptTemplates.razor",
+    "source_route": "/settings/ai-prompts",
+    "source_control": "SaveClicked",
+    "generated_metadata": {
+      "mutation": false,
+      "tenant_owned": true,
+      "risk": "low",
+      "verification": "rendered/read response matches authoritative source"
+    },
+    "classifier_mismatch": "The generated row classifies mutation=false, but the authoritative ASP.NET SaveClicked handler calls Save(), PromptStore.Save(...), and ReloadPreservingMessage(saved.Key). The Laravel adaptation therefore preserves the generated row as evidence but implements the real persisted mutation semantics rather than fabricating read-only terminality."
+  },
+  "source_behavior": {
+    "authorization": "Administrator-only source page",
+    "behavior": "SaveClicked delegates to Save(); Save persists through PromptStore.Save, reports the returned revision only after persistence succeeds, then performs ReloadPreservingMessage(saved.Key) for authoritative reread. Exceptions remain error state.",
+    "idempotency_contract": "The source UI explicitly states unchanged content does not create a duplicate revision."
+  },
+  "laravel_adaptation": {
+    "route": {
+      "method": "PATCH",
+      "uri": "/tenants/{tenant}/settings/ai-prompts/{template}",
+      "name": "tenant.settings.ai-prompts.save",
+      "middleware": ["web", "auth", "tenant.context"]
+    },
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiPromptTemplateSaveController.php",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/AiPromptTemplatesRouteServiceProvider.php",
+    "service": "variants/laravel-aiwmweb/backend/app/AI/Platform/Services/PromptRegistryService.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/ai/prompt-templates.blade.php",
+    "test": "variants/laravel-aiwmweb/backend/tests/Feature/AiPromptTemplateSaveVisibleControlTerminalityTest.php",
+    "visible_binding": "The persisted-template Save form submits to the explicit PATCH route and the Save button carries data-canonical-operation=AIMW-AI-79AE29D6B3.",
+    "validation": {
+      "title": "required|string|max:120",
+      "system_template": "nullable|string|max:20000",
+      "user_template": "required|string|max:20000",
+      "enabled": "required|boolean"
+    },
+    "immutable_fields": "stable_key is never accepted as an editable payload field; the tenant-scoped route key is authoritative. Domain, variables and output schema are preserved from the persisted template.",
+    "persistence": "PromptRegistryService::save() owns the durable template update, append-only revision and ai.prompt.changed audit event.",
+    "authoritative_reread": "Only after the service returns a persisted result does the controller flash Saved {stable_key} as revision r{current_version} and redirect to tenant.settings.ai-prompts, whose existing explicit read controller reloads current persisted template and revision history.",
+    "idempotency": "Prompt snapshot comparison is canonicalized recursively; associative JSON maps are key-sorted while list order is preserved, preventing unchanged saves from creating duplicate revisions on both SQLite and MySQL.",
+    "failure_semantics": "Validation errors, locked built-ins, missing permission, wrong tenant and cross-tenant keys never emit success and never mutate the template, revision or audit state. POST is not a mutation alias and returns 405."
+  },
+  "runtime_path": [
+    "GET /tenants/{tenant}/settings/ai-prompts",
+    "existing persisted template Save control",
+    "PATCH /tenants/{tenant}/settings/ai-prompts/{template}",
+    "AiPromptTemplateSaveController",
+    "PromptRegistryService::save()",
+    "ai_prompt_templates + append-only ai_prompt_revisions + audit_events",
+    "redirect to GET /tenants/{tenant}/settings/ai-prompts",
+    "authoritative persisted template/revision reread"
+  ],
+  "security_and_tenancy": {
+    "permission": "settings.manage",
+    "authenticated": true,
+    "route_context_match": "Controller requires the active TenantContext slug to equal the {tenant} route slug; mismatch aborts 404.",
+    "tenant_scoped_lookup": "AiPromptTemplate stable_key lookup executes under the tenant global scope.",
+    "idor_proof": "Acceptance covers foreign route tenant and Tenant A attempting Tenant B stable_key; both return 404 without record or audit mutation.",
+    "guest_semantics": "Guest PATCH redirects to /login.",
+    "missing_permission_semantics": "Authenticated tenant member without settings.manage receives 403."
+  },
+  "acceptance_tests": [
+    "test_exact_canonical_operation_is_the_pending_save_visible_control_and_source_is_a_real_mutation",
+    "test_save_control_is_real_guarded_and_bound_to_an_explicit_mutation_route",
+    "test_save_persists_real_change_creates_revision_and_audit_then_authoritatively_rereads",
+    "test_unchanged_save_is_idempotent_and_does_not_fabricate_revision_or_audit",
+    "test_validation_failure_and_locked_builtin_never_report_fake_success_or_mutate",
+    "test_save_fails_closed_for_guest_missing_permission_foreign_tenant_and_cross_tenant_direct_key"
+  ],
+  "ci": {
+    "implementation_sha": "dffe191f0fdf1bce2ab84f4747c88844973b419a",
+    "exact_tested_sha": "dffe191f0fdf1bce2ab84f4747c88844973b419a",
+    "pr_plan_link": {
+      "run_id": 33223019907,
+      "run_number": 933,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33223019941,
+      "run_number": 210,
+      "conclusion": "success"
+    },
+    "laravel_acceptance": {
+      "run_id": 33223019923,
+      "run_number": 279,
+      "run_attempt": 2,
+      "conclusion": "success",
+      "jobs": {
+        "tenant-core-sqlite": "success",
+        "mysql-production-like": "success",
+        "redis-queue-scheduler": "success",
+        "wordpress-disposable-runtime": "success",
+        "wordpress-real-rest-e2e": "success",
+        "frontend": "success",
+        "frontend-production-build": "success",
+        "runtime-artifacts": "success",
+        "acceptance-gate": "success",
+        "compose-production-runtime": "success"
+      },
+      "compose_job_id": 99028960972,
+      "compose_note": "The first Compose build attempt failed transiently. A GitHub Actions rerun of the same job on the same implementation SHA passed compose model/build and the real production-style runtime smokes without code changes, proving the operation-compatible production runtime on the exact tested SHA."
+    }
+  },
+  "denominator": {
+    "source": "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md at composition SHA 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal_after_this_isolated_closure": 359,
+    "previous_pending": 573,
+    "new_pending_after_this_isolated_closure": 572,
+    "generated_reconciliation_manually_edited": false
+  },
+  "scope_guards": {
+    "second_operation_started": false,
+    "aspnet_current_product_modified": false,
+    "generated_reconciliation_modified": false,
+    "merged": false,
+    "force_pushed": false,
+    "explicitly_excluded_operations": [
+      "AIMW-AI-825B2F5A38",
+      "AIMW-AI-E1A964346F",
+      "AIMW-AI-1E33F01F4E",
+      "Restore control operation"
+    ]
+  },
+  "evidence_commit_rule": "A Git commit cannot embed its own SHA. This artifact records the fully-green implementation/tested SHA. The evidence-bearing commit that adds this file must itself pass all exact-head repository gates before final handoff/integration readiness is claimed."
+}

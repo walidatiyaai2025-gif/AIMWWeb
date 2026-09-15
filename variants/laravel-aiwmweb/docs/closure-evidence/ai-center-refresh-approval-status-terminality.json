@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-AI-168B406674",
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/ai-center",
+    "visible_control": "@(L.IsArabic ? [RefreshApprovalStatusClicked]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/AICenter.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "AI Center exposes Refresh state only after an approval has been submitted in the current source session.",
+    "authoritative_read": "RefreshApprovalStatus calls ApprovalService.GetById(_ownerUserId, _lastApprovalId) and replaces only the displayed approval status.",
+    "side_effects": "The source refresh performs no approval mutation, persistence write, WordPress operation, AI-provider call, queue action, or navigation."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/ai-center-approval-status-control.tsx exposes the exact Refresh state control only after a real persisted current-user approval is returned and marks only that button with AIMW-AI-168B406674.",
+    "read_authority": "GET /api/tenants/{tenant}/ai-center/approval-status is authenticated, tenant-context-bound, authorized by ai.use, tenant-scoped through Approval's DomainModel scope, and additionally restricted to actor_user_id = the authenticated user.",
+    "independent_rehydration": "Because the separate Submit operation is outside this worker's ownership, Laravel intentionally ADAPTS the source session-only _lastApprovalId by rehydrating the latest persisted approval owned by the authenticated user in the active tenant.",
+    "refresh_behavior": "Clicking Refresh state repeats the same GET-only authoritative read and reconciles the displayed status from the server; it sends no request body and invokes no mutation contract.",
+    "guard": "Missing ai.use, missing owned approval, read failure, or tenant mismatch does not fabricate a refresh surface."
+  },
+  "tenant_isolation": {
+    "same_tenant_user_boundary": "Focused acceptance creates two users in one tenant and proves the authenticated user never receives the other user's newer approval.",
+    "cross_tenant_boundary": "Focused acceptance proves a user authenticated only in Alpha receives 404 when requesting Beta's tenant route.",
+    "id_surface": "The adaptation accepts no caller-supplied approval ID, so the current-user ownership boundary cannot be bypassed by guessing an approval identifier."
+  },
+  "acceptance": {
+    "implementation_source_sha": "f4bafe029b64e153d1eb91cdfe196a49bc9098d8",
+    "implementation_acceptance_run": 33334537340,
+    "backend_test": "backend/tests/Feature/AiCenterRefreshApprovalStatusTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/ai-center-approval-status-control.test.tsx",
+    "proofs": [
+      "exact canonical PENDING identity at implementation stage",
+      "GET-only route with auth and tenant.context middleware",
+      "ai.use authorization is enforced",
+      "latest persisted approval is restricted to the authenticated user",
+      "foreign tenant request returns 404",
+      "guest returns 401 and missing ai.use returns 403",
+      "GET leaves approval count, status, and updated_at unchanged",
+      "frontend refresh performs a second authoritative GET with no body or mutation method",
+      "missing permission, empty authoritative result, and read failure fail closed",
+      "full Laravel AIWMWeb Acceptance succeeded on the exact implementation source SHA, including SQLite, MySQL, Redis, WordPress, frontend production build, and production-style Compose runtime smoke"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "other_ai_center_controls_claimed": false,
+    "submit_operation_claimed": false,
+    "approval_queue_broad_read_reused": false,
+    "generated_parity_modified": false,
+    "fake_success": false
+  }
+}

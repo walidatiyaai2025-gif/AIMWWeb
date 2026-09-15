@@ -2,8 +2,43 @@
 
 namespace App\Models;
 
+use App\Sync\SyncCancellationRequested;
+
 class SyncRun extends DomainModel
 {
+    protected static function booted(): void
+    {
+        static::creating(function (SyncRun $run): void {
+            if (! $run->site_id) {
+                return;
+            }
+
+            $cancellingRunId = static::withoutGlobalScopes()
+                ->where('site_id', $run->site_id)
+                ->where('state', 'cancel_requested')
+                ->latest('id')
+                ->value('id');
+
+            if ($cancellingRunId !== null) {
+                throw new SyncCancellationRequested((int) $cancellingRunId);
+            }
+        });
+
+        static::saving(function (SyncRun $run): void {
+            if (! $run->exists || in_array((string) $run->state, ['cancel_requested', 'cancelled'], true)) {
+                return;
+            }
+
+            $persistedState = static::withoutGlobalScopes()
+                ->whereKey($run->getKey())
+                ->value('state');
+
+            if ($persistedState === 'cancel_requested') {
+                throw new SyncCancellationRequested((int) $run->getKey());
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SYNC-7C3B0E834E",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "@(L.IsArabic ? [RequestBulkDeleteAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "risk": "critical",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "request": "The Sites bulk-action bar exposes Delete selected through RequestBulkDeleteAsync as the pre-confirmation destructive request boundary.",
+    "separation": "The source keeps RequestBulkDeleteAsync distinct from ConfirmBulkDeleteAsync; requesting deletion does not itself perform the destructive mutation.",
+    "confirmation": "Actual bulk deletion remains behind the separate destructive confirmation dialog and ConfirmBulkDeleteAsync handler."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/sites-bulk-delete-control.tsx binds AIMW-SYNC-7C3B0E834E to the real Delete selected request button and opens the existing confirmation dialog through requestBulkDelete without issuing DELETE.",
+    "permission_visibility": "The control renders only when the authoritative FrontendContext includes sites.manage (or wildcard) and a real sites API endpoint.",
+    "destructive_boundary": "The existing confirmation control AIMW-BILL-337E4FF969 remains the only button that invokes mutation.mutate(selectedIds).",
+    "endpoint": "DELETE /api/tenants/{tenant}/sites",
+    "authorization": "sites.manage",
+    "tenant_preflight": "The downstream destructive endpoint remains tenant-scoped and rejects a foreign selected site with 404 before deletion."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesRequestBulkDeleteTerminalityTest.php",
+    "proofs": [
+      "exact canonical PENDING operation identity and critical tenant-owned classification",
+      "production operation marker on the real Delete selected request control",
+      "request control only transitions confirmOpen to true and renders the confirmation dialog",
+      "actual DELETE remains bound to the separate already-governed confirmation operation",
+      "missing sites.manage returns 403 at the destructive boundary",
+      "foreign tenant site selection returns 404 and remains persisted"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "confirm_operation_modified": false,
+    "new_backend_mutation": false,
+    "fake_success": false
+  }
+}

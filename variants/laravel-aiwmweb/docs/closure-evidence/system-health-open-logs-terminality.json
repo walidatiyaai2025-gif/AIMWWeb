@@ -1,0 +1,73 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-553D999DDB",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SystemHealth.razor",
+    "route_screen": "/system-health",
+    "visible_control": "@(L.IsArabic ? -> /module/logs",
+    "user_visible_text": "Open logs",
+    "behavior": "The source renders Open logs only inside the successful snapshot branch. Loading and refresh failure clear or withhold the snapshot, so the logs navigation is absent until a real System Health snapshot exists. The control is read-only navigation to /module/logs."
+  },
+  "laravel_adaptation": {
+    "control_file": "variants/laravel-aiwmweb/backend/resources/js/system-health-open-logs-control.tsx",
+    "workspace_file": "variants/laravel-aiwmweb/backend/resources/js/system-health-workspace.tsx",
+    "controller_file": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SystemHealthReadController.php",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/SystemHealthRouteServiceProvider.php",
+    "operation_marker": "AIMW-CONT-553D999DDB",
+    "destination": "/tenants/{authoritative-tenant}/module/logs",
+    "behavior": "A tenant-scoped GET-only System Health snapshot is read from RuntimeHealthService. The Open logs anchor is rendered only after that authoritative snapshot succeeds and only when the exact registered Logs route/API and required permissions are present."
+  },
+  "authorization": {
+    "system_health": "web + auth + tenant.context; tenant.view + diagnostics.view",
+    "logs_destination": "web + auth + tenant.context; operations.manage + diagnostics.view",
+    "csrf": "not applicable to GET/HEAD-only snapshot and navigation; POST is 405"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "route_tenant_derivation": "FrontendContext.tenant.slug only, URL encoded",
+    "idor_surface": "No user/site/resource ID is accepted by the control. TenantContext remains server authority and foreign tenant direct access is 404.",
+    "caller_query_authority": "none"
+  },
+  "runtime_boundaries": {
+    "health_read": "RuntimeHealthService status probes only; no state mutation",
+    "queue": "status/size probe only; no dispatch",
+    "cache": "scheduler heartbeat read only",
+    "scheduler": "heartbeat freshness read only",
+    "secrets": "no credentials or exception text returned",
+    "wordpress_connector": "no Connector or WordPress mutation or credential access added",
+    "ai_provider": "not used"
+  },
+  "truthfulness": {
+    "loading": "Open logs hidden",
+    "request_failure": "Open logs hidden and failure panel rendered",
+    "invalid_or_foreign_snapshot": "Open logs hidden and invalid-snapshot panel rendered",
+    "successful_snapshot": "Open logs may render only if the destination RBAC/API contract is also exact",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/system-health-open-logs-control.test.tsx",
+      "coverage": "snapshot gating, exact operation marker, tenant-derived href, permission fail-closed behavior, API contract fail-closed behavior, tenant encoding, no mutation method"
+    },
+    {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthOpenLogsTerminalityTest.php",
+      "coverage": "canonical metadata, GET-only snapshot route, auth/RBAC, foreign-tenant 404, query/direct-ID non-authority, secret non-exposure, no persistence mutation, Logs destination RBAC, exact production binding"
+    }
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "supporting_read_contract_only": true,
+    "second_operation_claimed": false,
+    "manual_parity_count_edit": false,
+    "aspnet_current_product_modified": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Real source-equivalent conditional navigation is bound to the exact canonical operation ID in production code, backed by a genuine tenant-scoped System Health read, and covered by deterministic tenant/security tests. Official generator materialization is required before integration."
+  }
+}

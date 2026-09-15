@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-E8F4848B4A",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "kind": "service",
+    "domain": "ai",
+    "source": "src/AIWordPressManager.Web/Services/AutomationCenterService.cs",
+    "service": "AutomationCenterService.ClaimDueJobs",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "scanner_metadata": "The canonical generated ledger classifies this service row as mutation=false and risk=low; this evidence preserves that scanner metadata exactly rather than rewriting the generated contract.",
+    "claim_transition": "The authoritative source method nevertheless performs a durable scheduler state transition inside a transaction: enabled due Synchronization/SEO Audit jobs whose last status is not Running are selected in due-time order and each claimed job receives LastStatus=Running plus LastRunUtc/UpdatedAtUtc set to the supplied UTC claim instant.",
+    "reclaim_boundary": "Already-running, future, disabled and unsupported jobs are not claimed, and a completed claim cannot be selected again while its status remains Running.",
+    "dispatch_boundary": "ClaimDueJobs claims work only. It does not create an execution record, advance NextRunUtc, or perform the eventual job payload; those responsibilities remain separate from this service member."
+  },
+  "laravel_adaptation": {
+    "service": "App\\AI\\Platform\\Services\\AutomationCenterService",
+    "member": "claimDueJobs",
+    "persistence": "Uses the existing tenant-owned scheduled_tasks table rather than introducing duplicate scheduler persistence.",
+    "tenant_scope": "Every candidate read, conditional claim update and returned-row lookup is constrained to the active TenantContext tenant_id.",
+    "atomicity": "Candidate selection and claims execute in one database transaction with row locking where supported plus a second tenant/due/status/type guarded conditional update before a row is accepted as claimed.",
+    "supported_work": "Only the Laravel scheduler equivalents sync and seo_audit are claimable; backup/report schedule types remain outside this canonical member.",
+    "state_transition": "Claimed rows receive last_status=Running and last_run_at/updated_at equal to the supplied UTC instant; next_run_at is intentionally not advanced.",
+    "dispatch_boundary": "No operation_executions row is created by this adapter, preserving the canonical claim-only service boundary and keeping existing dispatchDueSchedules behavior separate."
+  },
+  "service_closure_contract": {
+    "implementation_sha": "d4fa28c3d2a5be2ce038ce5db064f1b8dfd0715d",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/AI/Platform/Services/AutomationCenterService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationCenterClaimDueJobsTerminalityTest.php"
+  },
+  "acceptance": {
+    "proofs": [
+      "exact canonical operation/service/member/source/scanner-mutation/tenant/risk metadata",
+      "active tenant claims only enabled due sync and seo_audit work in deterministic due-time order",
+      "future, disabled, already-running and unsupported scheduled work remains untouched",
+      "foreign-tenant due work is explicitly absent from claimed results and remains untouched in persistence",
+      "claimed rows transition to Running at the supplied UTC claim instant without advancing next_run_at",
+      "claim operation creates no operation_executions record",
+      "a second claim cannot reclaim an already-running row"
+    ],
+    "external_runtime": "No live WordPress/provider/email/payment/DNS/production evidence is required because this operation is a local scheduler persistence transition."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-AI-E8F4848B4A",
+    "second_operation_started": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "generated_parity_modified_manually": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  }
+}

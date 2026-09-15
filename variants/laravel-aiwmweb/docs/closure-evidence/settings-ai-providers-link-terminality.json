@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-8205320842",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_intent": "AI providers navigation to /settings/ai-providers",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/settings-ai-providers-link-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "target": "/tenants/{activeTenant}/settings/ai-providers",
+    "target_authority": "tenant.settings.ai-providers",
+    "target_controller": "App\\Http\\Controllers\\AiProviderSettingsReadController",
+    "control_permission": "settings.manage",
+    "target_middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "target_semantics": "existing read-only AI provider settings workspace backed by tenant-scoped persisted provider state"
+  },
+  "security": {
+    "control_visibility_permissions": [
+      "settings.manage"
+    ],
+    "tenant_selector": "authoritative FrontendContext tenant slug only, URL encoded through tenantUrl",
+    "guest_destination": "redirect to canonical /login",
+    "missing_settings_manage": "control suppressed; direct destination fails 403",
+    "foreign_tenant": "direct destination fails 404",
+    "direct_resource_id": false,
+    "server_mutation": false,
+    "provider_mutation": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsAiProvidersLinkVisibleTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-ai-providers-link-control.test.tsx",
+    "coverage": [
+      "generator-backed ADAPTED row identity",
+      "exact production operation marker",
+      "settings.manage visibility guard",
+      "active-tenant-only URL construction through tenantUrl",
+      "existing explicit AI provider settings route authority",
+      "guest redirect, missing-permission 403, and foreign-tenant 404 fail-closed behavior",
+      "no caller-supplied provider or tenant resource ID",
+      "no provider mutation or fake success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-AI-8205320842"
+    ],
+    "provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "historical_implementation_pr": 414,
+    "historical_implementation_head_sha": "2b4f84bc24883c118c8f621d27eae11c43aa61f9",
+    "historical_integration_sha": "0ca7b8650baae0339a5f46619a4ee333064379a0",
+    "recovery_claim_base_sha": "2d4b22f6b9e68e307098a90507108a42b99ae0aa",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-AI-8205320842-reconciliation-recovery",
+    "recovery_reason": "runtime implementation and focused tests were already integrated, but historical evidence predated the current focused visible-control reconciliation contract"
+  },
+  "ci_policy": {
+    "required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ],
+    "exact_final_pushed_head_required": true,
+    "status_at_evidence_commit": "pending generator-backed reconciliation and exact-head repository validation"
+  }
+}

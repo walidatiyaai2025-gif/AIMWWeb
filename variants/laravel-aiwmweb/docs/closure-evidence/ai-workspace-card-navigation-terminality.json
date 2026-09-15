@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-A746A1C3EB",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/WorkspaceHub.razor",
+    "source_route": "/content-workspace | /seo-workspace | /ai-workspace | /operations-workspace",
+    "source_control": "@item.Href -> @item.Href",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "WorkspaceHub renders each real workspace item as an actionable anchor whose href is the item's canonical destination. The already-adapted AI Workspace route contains the AI-domain instance of this shared card-navigation contract.",
+    "ai_cards_in_source_order": [
+      {"key": "ai-center", "href": "/ai-center"},
+      {"key": "ai-providers", "href": "/settings/ai-providers"},
+      {"key": "ai-prompts", "href": "/settings/ai-prompts"},
+      {"key": "approvals", "href": "/approvals"}
+    ],
+    "read_semantics": "The control only navigates. It performs no provider, WordPress, approval, credential, or persistence mutation."
+  },
+  "laravel_adaptation": {
+    "production_component": "variants/laravel-aiwmweb/backend/resources/js/ai-workspace-hub.tsx",
+    "workspace_route": "/tenants/{tenant}/ai-workspace",
+    "workspace_route_operation": "AIMW-AI-8EE4F9F6FC",
+    "control_operation_marker": "AIMW-AI-A746A1C3EB",
+    "tenant_link_rule": "/tenants/{encodeURIComponent(context.tenant.slug)} + canonical child path",
+    "authorized_child_hrefs": [
+      "/tenants/{tenant}/ai-center",
+      "/tenants/{tenant}/settings/ai-providers",
+      "/tenants/{tenant}/settings/ai-prompts",
+      "/tenants/{tenant}/approvals"
+    ],
+    "destination_permission_alignment": {
+      "ai-center": ["tenant.view", "ai.use"],
+      "ai-providers": ["settings.manage"],
+      "ai-prompts": ["settings.manage"],
+      "approvals": ["tenant.view", "approvals.view"]
+    },
+    "unavailable_destination_behavior": "The card is not rendered when the active tenant membership lacks the destination permission, so the real-workspaces-only hub does not expose dead controls.",
+    "other_workspace_routes": "Content, SEO, and Operations Workspace route operations remain independently PENDING and receive no terminal credit from this evidence.",
+    "child_operation_credit": "none",
+    "generated_reconciliation_modified_by_hand": false
+  },
+  "authorization": {
+    "hub_boundary": ["web", "auth", "tenant.context", "tenant.view"],
+    "destination_guards": {
+      "ai-center": "tenant.view + ai.use",
+      "ai-providers": "settings.manage",
+      "ai-prompts": "settings.manage",
+      "approvals": "tenant.view + approvals.view"
+    },
+    "missing_destination_permission": "control hidden and direct target remains 403",
+    "foreign_tenant": "404"
+  },
+  "tenant_and_security_contract": {
+    "active_tenant_source": "FrontendContext returned by /tenants/{tenant}/context after auth and tenant.context enforcement",
+    "link_construction": "tenant slug is taken from context.tenant.slug and encoded with encodeURIComponent before any canonical child path is appended",
+    "tenant_a_to_tenant_b": "404 for the hub and every covered destination",
+    "caller_supplied_resource_ids": "none",
+    "secret_surface": "none",
+    "mutation_surface": "none"
+  },
+  "acceptance_tests": {
+    "frontend_vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/ai-workspace-hub.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/AiWorkspaceCardNavigationTerminalityTest.php",
+    "assertions": [
+      "exact canonical operation marker is attached to every rendered card",
+      "fully authorized members retain the four source-order AI cards and exact tenant-qualified destinations",
+      "cards are suppressed when destination permission is absent",
+      "tenant slug path injection is percent-encoded",
+      "direct destination access remains forbidden without the destination permission",
+      "cross-tenant hub and destination requests return 404",
+      "no direct site, user, or membership identifier is accepted by the control"
+    ],
+    "repository_gates_required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ]
+  },
+  "implementation_snapshot_sha": "006ec09404e265a3bb28f0525b5f2373923fe8e5",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-A746A1C3EB",
+    "second_operation_started": false,
+    "route_operations_terminalized_by_this_evidence": false,
+    "child_operations_terminalized_by_this_evidence": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "The AI-domain instance of WorkspaceHub's shared @item.Href navigation is a real tenant-derived control with exact operation provenance, destination-aware authorization visibility, deterministic tenant-isolation tests, and no mutation or fabricated external success. Generator-controlled terminal credit remains contingent on pushed exact-SHA evidence and repository CI."
+  }
+}
