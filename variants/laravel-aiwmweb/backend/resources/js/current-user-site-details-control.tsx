@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CurrentUserAccountProfileControl } from './current-user-account-profile-control';
+import { CurrentUserBuildInformationControl } from './current-user-build-information-control';
 import { CurrentUserConnectSiteControl } from './current-user-connect-site-control';
 import { CurrentUserSettingsControl } from './current-user-settings-control';
 import { CurrentUserSignOutControl } from './current-user-sign-out-control';
@@ -75,6 +76,7 @@ export function CurrentUserSiteDetailsControl({ context }: { context: FrontendCo
             <CurrentUserConnectSiteControl context={context} />
             <CurrentUserAccountProfileControl context={context} />
             <CurrentUserSettingsControl context={context} />
+            <CurrentUserBuildInformationControl context={context} />
             <QuickActionsToggleControl context={context} />
             <CurrentUserSignOutControl />
             {details}
