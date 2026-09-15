@@ -7,10 +7,13 @@ use App\Billing\Exceptions\QuotaExceededException;
 use App\Http\Middleware\RequestCorrelation;
 use App\Http\Middleware\RequirePlatformAdmin;
 use App\Http\Middleware\ResolveTenantContext;
+use App\Tenancy\TenantContext;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use LogicException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -44,6 +47,36 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->is('health/*') || $request->expectsJson(),
         );
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*') || $request->is('tenants/*/route-api/*')) {
+                return null;
+            }
+
+            $routeTenant = $request->route('tenant');
+            $context = app(TenantContext::class);
+            if (! $request->user() || ! is_string($routeTenant) || $routeTenant === '' || ! $context->active()) {
+                return null;
+            }
+
+            try {
+                $tenant = $context->tenant();
+                $membership = $context->membership();
+            } catch (LogicException) {
+                return null;
+            }
+
+            if (! hash_equals($tenant->slug, $routeTenant)) {
+                return null;
+            }
+
+            $profileUrl = $membership->hasPermission('tenant.view')
+                ? route('canonical.workspace.account-profile', ['tenant' => $tenant->slug], false)
+                : null;
+
+            return response()->view('platform.access-denied', [
+                'profileUrl' => $profileUrl,
+            ], 403);
+        });
         $exceptions->render(fn (EntitlementDeniedException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'ENTITLEMENT_DENIED'], 403) : null);
         $exceptions->render(fn (QuotaExceededException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => $e->getMessage(), 'code' => 'QUOTA_EXCEEDED'], 429) : null);
         $exceptions->render(fn (InvalidProviderSignatureException $e, Request $r) => $r->is('api/*') ? response()->json(['message' => 'Invalid provider signature.', 'code' => 'INVALID_PROVIDER_SIGNATURE'], 401) : null);
