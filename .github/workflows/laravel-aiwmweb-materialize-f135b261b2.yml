@@ -1,0 +1,203 @@
+name: Materialize AIMW-SYNC-F135B261B2 closure
+
+on:
+  push:
+    branches:
+      - worker/laravel-aiwmweb-canonical-AIMW-SYNC-F135B261B2
+
+permissions:
+  contents: write
+
+concurrency:
+  group: materialize-AIMW-SYNC-F135B261B2
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      BASE_SHA: '21ca0f954b2458a61e89116aa7050bb67390b852'
+      TARGET_OPERATION: 'AIMW-SYNC-F135B261B2'
+      BRANCH_NAME: 'worker/laravel-aiwmweb-canonical-AIMW-SYNC-F135B261B2'
+      ROOT: 'variants/laravel-aiwmweb'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact repository refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Wire clear-search to the authoritative tenant reread
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/backend/resources/js/pages.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  "import { useMutation, useQuery } from '@tanstack/react-query';",
+                  "import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';",
+              ),
+              (
+                  "import { AiCenterGenerateControl } from './ai-center-generate-control';",
+                  "import { AiCenterGenerateControl } from './ai-center-generate-control';\nimport { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';",
+              ),
+              (
+                  "    const { notify } = useToast();\n    const [searchInput, setSearchInput] = useState('');",
+                  "    const { notify } = useToast();\n    const queryClient = useQueryClient();\n    const [searchInput, setSearchInput] = useState('');",
+              ),
+              (
+                  "    const query = useQuery({\n        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search],\n        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search)),\n        enabled: state.state === 'enabled' && Boolean(endpoint),\n    });\n\n    const mutation = useMutation({",
+                  "    const query = useQuery({\n        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search],\n        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search)),\n        enabled: state.state === 'enabled' && Boolean(endpoint),\n    });\n\n    const applicationUsersClearAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');\n    const clearApplicationUsersSearch = async (): Promise<void> => {\n        if (route.key !== 'application-users' || !endpoint || query.isFetching || !applicationUsersClearAuthorized) return;\n\n        setSearchInput('');\n        setSearch('');\n        setPage(1);\n        await queryClient.fetchQuery({\n            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, ''],\n            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),\n        });\n    };\n\n    const mutation = useMutation({",
+              ),
+              (
+                  "                    <button type=\"submit\" className=\"btn\">{text(commonText.search)}</button>\n                </form>",
+                  "                    <button type=\"submit\" className=\"btn\">{text(commonText.search)}</button>\n                    {route.key === 'application-users' ? (\n                        <ApplicationUsersClearSearchControl\n                            searchValue={searchInput}\n                            busy={query.isFetching}\n                            locale={locale}\n                            authorized={applicationUsersClearAuthorized}\n                            onClearRequested={clearApplicationUsersSearch}\n                        />\n                    ) : null}\n                </form>",
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one patch target, found {count}: {old[:80]!r}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate focused frontend behavior
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          npm ci
+          npm test -- application-users-clear-search-control.test.tsx
+          npm run typecheck
+
+      - name: Push exact implementation source
+        id: source
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/resources/js/pages.tsx
+          git diff --cached --check
+          git commit -m 'feat(laravel-aiwmweb): wire AIMW-SYNC-F135B261B2 authoritative clear search'
+          git push origin "HEAD:${BRANCH_NAME}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Pin pushed focused evidence source
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          payload['focused_closure_evidence_source_sha'] = os.environ['SOURCE_SHA']
+          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Run official reconciliation chain
+        run: |
+          set -euo pipefail
+          python "$ROOT/tools/finalize_operation_parity.py" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_tenant_neutral_route_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_explicit_route_api_provenance.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_focused_closure_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_focused_service_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$ROOT/tools/apply_focused_background_job_evidence.py" \
+            --input "$ROOT/docs/operation-parity-reconciliation.json" \
+            --output "$ROOT/docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$ROOT/docs/operation-parity-reconciliation.md" \
+            --check-total 931
+
+      - name: Verify exact one-operation parity transition and print kind distribution
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from collections import Counter
+          from pathlib import Path
+
+          path = 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          current = json.loads(Path(path).read_text(encoding='utf-8'))
+          prior = json.loads(subprocess.check_output(['git', 'show', f"{os.environ['BASE_SHA']}:{path}"], text=True))
+          current_by_id = {row['operation_id']: row for row in current['operations']}
+          prior_by_id = {row['operation_id']: row for row in prior['operations']}
+          transitions = sorted(
+              (op_id, prior_by_id[op_id]['migration_state'], row['migration_state'])
+              for op_id, row in current_by_id.items()
+              if prior_by_id[op_id]['migration_state'] != row['migration_state']
+          )
+          assert transitions == [(os.environ['TARGET_OPERATION'], 'PENDING', 'ADAPTED')], transitions
+          totals = current['totals']
+          assert (totals['total'], totals['terminal'], totals['pending'], totals['blocked']) == (931, 570, 361, 0), totals
+          target = current_by_id[os.environ['TARGET_OPERATION']]
+          assert target['reconciliation']['evidence_mode'] == 'focused_closure_contract', target
+          assert target['reconciliation']['source_sha'] == os.environ['SOURCE_SHA'], target
+          kinds = Counter(row['kind'] for row in current['operations'])
+          kind_terminal = Counter(row['kind'] for row in current['operations'] if row['migration_state'] in {'PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'})
+          kind_pending = Counter(row['kind'] for row in current['operations'] if row['migration_state'] == 'PENDING')
+          kind_blocked = Counter(row['kind'] for row in current['operations'] if row['migration_state'] == 'BLOCKED')
+          print('KIND_DISTRIBUTION')
+          for kind in sorted(kinds):
+              print(f"{kind}: total={kinds[kind]} terminal={kind_terminal[kind]} pending={kind_pending[kind]} blocked={kind_blocked[kind]}")
+          print('TRANSITIONS', transitions)
+          PY
+
+      - name: Commit generator-backed materialization and remove one-shot workflow
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-materialize-f135b261b2.yml
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'chore(laravel-aiwmweb): materialize AIMW-SYNC-F135B261B2 reconciliation'
+          git push origin "HEAD:${BRANCH_NAME}"
