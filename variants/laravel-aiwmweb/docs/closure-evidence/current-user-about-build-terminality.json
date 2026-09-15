@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-2387758315",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "About Build",
+    "target": "/about-build",
+    "new_tab": false,
+    "mutation": false,
+    "external_dependency": "none",
+    "verification": "current-user navigation control opens the existing About Build read surface"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-about-build-control.tsx",
+    "visible_control": "About Build",
+    "operation_marker": "AIMW-IDEN-2387758315",
+    "destination": "/tenants/{server-derived-active-tenant}/about-build",
+    "authorization_contract": "trusted FrontendContext + active tenant membership + tenant.view; destination independently enforces web + auth + tenant.context and TenantAuthorizer tenant.view with exact tenant-slug match",
+    "direct_object_identifier": "none",
+    "caller_supplied_tenant_selector": "none",
+    "network_request": false,
+    "persistence_mutation": false,
+    "success_message": false,
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false,
+    "fail_closed_behavior": "control is absent when the user identity, authoritative active-tenant membership, tenant.view permission, or user-chip runtime mount is unavailable; direct foreign-tenant navigation is rejected by the backend"
+  },
+  "runtime_path": [
+    "TenantBootstrap obtains FrontendContext from /tenants/{tenantSlug}/context and renders no authenticated workspace controls when that authoritative request fails",
+    "CurrentUserSiteDetailsControl is the current-user chip composition and mounts CurrentUserAboutBuildControl into .user-chip",
+    "CurrentUserAboutBuildControl requires a positive server-derived user id, active tenant present in the server-provided tenant membership list, and tenant.view or wildcard permission",
+    "destination is derived only from FrontendContext.tenant.slug through tenantUrl and fixed /about-build; browser pathname, query parameters, resource IDs and caller-supplied tenant selectors are ignored",
+    "GET /tenants/{tenant}/about-build is registered under web + auth + tenant.context",
+    "AboutBuildReadController re-authorizes tenant.view and aborts with 404 unless TenantContext tenant slug exactly matches the route tenant",
+    "BuildInformationReadService returns a fixed allowlist of build metadata; application secrets and arbitrary configuration are not serialized",
+    "selected operation is read-only navigation: no write payload, persistence mutation, CSRF write, idempotency token, retry queue, cancellation lifecycle, or success toast exists"
+  ],
+  "security_boundary": {
+    "auth_session": "frontend context and destination are both protected by authenticated Laravel session boundaries; guest direct navigation redirects to login",
+    "active_tenant_resolution": "navigation is derived from the server-provided FrontendContext active tenant; backend TenantContext independently resolves active membership",
+    "permission_checks": "control fails closed without tenant.view or wildcard; AboutBuildReadController independently authorizes tenant.view",
+    "foreign_tenant_rejection": "focused acceptance proves an authenticated alpha member receives 404 for /tenants/foreign/about-build",
+    "direct_id_rejection": "not applicable: selected control accepts no resource ID; focused frontend test proves browser path/query input cannot select the destination tenant",
+    "validation": "no user payload exists; tenant slug is URL-encoded client-side and independently matched against server TenantContext",
+    "csrf": "not applicable to the selected GET/read-only navigation; no state-changing request is issued",
+    "server_derived_identity_and_ownership": "user id, tenant membership list, active tenant and permissions come from authenticated server FrontendContext; the control has no identity or ownership input fields",
+    "secret_non_exposure": "focused HTTP acceptance plants a secret sentinel in application configuration and proves it is absent from rendered About Build output; build service exposes only whitelisted build metadata",
+    "authoritative_persistence_reread": "not applicable because the operation performs no mutation and makes no persisted-success claim",
+    "idempotency_retry_cancellation": "repeated GET navigation is inherently read-only and focused acceptance verifies it does not create tenant membership state; there is no retry queue or cancellable mutation",
+    "truthful_success": "the control does not synthesize a success state; build information is rendered only by the protected server route from BuildInformationReadService",
+    "fail_closed": "missing authenticated context, valid server-derived identity, active tenant membership, permission or backend tenant match removes/rejects access instead of fabricating an About Build result"
+  },
+  "acceptance_tests": [
+    "current-user-about-build-control.test.tsx exact marker, active-tenant derivation, URL encoding, browser-path/query rejection, permission/membership/identity fail-closed and wildcard authorization",
+    "CurrentUserAboutBuildSecurityTest::test_current_user_about_build_destination_is_a_read_only_authenticated_tenant_route",
+    "CurrentUserAboutBuildSecurityTest::test_guest_missing_permission_and_foreign_tenant_all_fail_closed",
+    "CurrentUserAboutBuildSecurityTest::test_authorized_read_uses_server_tenant_context_and_exposes_only_whitelisted_build_metadata",
+    "CurrentUserAboutBuildSecurityTest::test_repeated_navigation_is_idempotent_and_creates_no_tenant_state"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "canonical_base_sha": "897358223fda722e49be5780fdc9b54809884de3",
+    "worker_branch": "worker/laravel-iden-2387758315-about-build"
+  },
+  "canonical_denominator_contribution": {
+    "authority_snapshot_sha": "897358223fda722e49be5780fdc9b54809884de3",
+    "total_operations": 931,
+    "previous_terminal": 568,
+    "expected_terminal_after_this_operation": 569,
+    "previous_pending": 363,
+    "expected_pending_after_this_operation": 362,
+    "previous_blocked": 0,
+    "delta_terminal": 1,
+    "delta_pending": -1,
+    "scope_note": "Expected one-operation delta only; official generator and exact-head gates remain authoritative."
+  },
+  "terminality": {
+    "focused_implementation_complete": true,
+    "runtime_wired": true,
+    "security_contract_encoded_in_tests": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "final_exact_head_ci_required": true,
+    "pre_ci_status": "pending_exact_head_validation",
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no ASP.NET/reference-product modification",
+    "no new About Build backend route or duplicate route operation",
+    "no caller-supplied tenant destination or direct object identifier",
+    "no permission weakening or endpoint bypass",
+    "no secret or credential exposure",
+    "no persistence mutation or fabricated success",
+    "no sample/demo/fake build data",
+    "no manual generated parity-count edit"
+  ]
+}
