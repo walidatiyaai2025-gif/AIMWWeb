@@ -13,6 +13,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use LogicException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -60,7 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
             try {
                 $tenant = $context->tenant();
                 $membership = $context->membership();
-            } catch (\LogicException) {
+            } catch (LogicException) {
                 return null;
             }
 
