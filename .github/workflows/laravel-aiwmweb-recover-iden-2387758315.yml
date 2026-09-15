@@ -37,18 +37,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Replay only operation-scoped implementation, tests, and evidence from PR 505
+      - name: Recover only the missing closure evidence from green PR 505
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin "$OLD_HEAD"
-          git checkout "$OLD_HEAD" -- \
-            "$ROOT/backend/resources/js/current-user-about-build-control.tsx" \
-            "$ROOT/backend/resources/js/__tests__/current-user-about-build-control.test.tsx" \
-            "$ROOT/backend/resources/js/current-user-site-details-control.tsx" \
-            "$ROOT/backend/resources/js/__tests__/current-user-site-details-control.test.tsx" \
-            "$ROOT/backend/tests/Feature/CurrentUserAboutBuildSecurityTest.php" \
-            "$ROOT/docs/closure-evidence/current-user-about-build-terminality.json"
+          git checkout "$OLD_HEAD" -- "$ROOT/docs/closure-evidence/current-user-about-build-terminality.json"
           python - <<'PY'
           import json, os
           from pathlib import Path
@@ -70,28 +64,16 @@ jobs:
           doc['terminality']['pre_ci_status'] = 'recovered_from_green_pr_505_pending_current_exact_head_validation'
           path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           PY
-          python - <<'PY'
-          import subprocess
-          allowed = {
-            'variants/laravel-aiwmweb/backend/resources/js/current-user-about-build-control.tsx',
-            'variants/laravel-aiwmweb/backend/resources/js/__tests__/current-user-about-build-control.test.tsx',
-            'variants/laravel-aiwmweb/backend/resources/js/current-user-site-details-control.tsx',
-            'variants/laravel-aiwmweb/backend/resources/js/__tests__/current-user-site-details-control.test.tsx',
-            'variants/laravel-aiwmweb/backend/tests/Feature/CurrentUserAboutBuildSecurityTest.php',
-            'variants/laravel-aiwmweb/docs/closure-evidence/current-user-about-build-terminality.json',
-          }
-          changed = set(subprocess.check_output(['git','diff','--name-only'], text=True).splitlines())
-          assert changed == allowed, (changed, allowed)
-          PY
+          test "$(git diff --name-only)" = "$ROOT/docs/closure-evidence/current-user-about-build-terminality.json"
 
-      - name: Run focused frontend validation
+      - name: Revalidate existing focused frontend implementation
         working-directory: variants/laravel-aiwmweb/backend
         run: |
           npm ci
           npm test -- current-user-about-build-control.test.tsx current-user-site-details-control.test.tsx
           npm run typecheck
 
-      - name: Run focused Laravel security validation
+      - name: Revalidate existing Laravel security implementation
         working-directory: variants/laravel-aiwmweb/backend
         shell: bash
         run: |
@@ -105,22 +87,16 @@ jobs:
           vendor/bin/pint --test tests/Feature/CurrentUserAboutBuildSecurityTest.php
           php artisan test tests/Feature/CurrentUserAboutBuildSecurityTest.php
 
-      - name: Push exact tested operation source
+      - name: Push exact tested evidence source
         id: source
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            "$ROOT/backend/resources/js/current-user-about-build-control.tsx" \
-            "$ROOT/backend/resources/js/__tests__/current-user-about-build-control.test.tsx" \
-            "$ROOT/backend/resources/js/current-user-site-details-control.tsx" \
-            "$ROOT/backend/resources/js/__tests__/current-user-site-details-control.test.tsx" \
-            "$ROOT/backend/tests/Feature/CurrentUserAboutBuildSecurityTest.php" \
-            "$ROOT/docs/closure-evidence/current-user-about-build-terminality.json"
+          git add "$ROOT/docs/closure-evidence/current-user-about-build-terminality.json"
           git diff --cached --check
-          git commit -m 'feat(laravel-aiwmweb): recover AIMW-IDEN-2387758315 About Build closure'
+          git commit -m 'docs(laravel-aiwmweb): recover AIMW-IDEN-2387758315 closure evidence'
           git push origin "HEAD:${BRANCH_NAME}"
           echo "source_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
