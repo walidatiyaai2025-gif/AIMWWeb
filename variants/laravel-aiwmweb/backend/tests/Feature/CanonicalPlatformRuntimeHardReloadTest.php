@@ -37,6 +37,7 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
         $end = strpos($source, 'export class RuntimeErrorBoundary');
         $this->assertNotFalse($start);
         $this->assertNotFalse($end);
+
         return substr($source, (int) $start, (int) $end - (int) $start);
     }
 
