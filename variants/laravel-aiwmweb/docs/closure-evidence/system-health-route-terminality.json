@@ -81,5 +81,20 @@
     "blocked": 0,
     "generated_reconciliation_edited": false
   },
-  "notes": "The real System Health route runtime was already merged by PR #508 as supporting security enforcement for a separate visible-control operation. This closure adds operation-specific route terminality proof and does not duplicate or claim the System Health child controls."
+  "generator_materialization": {
+    "workflow": "Laravel AIWMWeb System Health Route Materialize",
+    "run_id": 35015478146,
+    "result": "GREEN",
+    "official_generator_chain": "PASS",
+    "one_operation_delta_guard": "PASS",
+    "generated_reconciliation_edited": false,
+    "total": 931,
+    "terminal": 573,
+    "pending": 358,
+    "blocked": 0,
+    "transition": "AIMW-CONT-6F699A5C14: PENDING -> ADAPTED",
+    "route_kind_after": {"terminal": 48, "pending": 36},
+    "content_domain_after": {"terminal": 29, "pending": 135}
+  },
+  "notes": "The real System Health route runtime was already merged by PR #508 as supporting security enforcement for a separate visible-control operation. This closure adds operation-specific route terminality proof and does not duplicate or claim the System Health child controls. The route provenance source is supporting_only so it cannot contribute generic domain evidence or double-count previously terminal service operations."
 }
