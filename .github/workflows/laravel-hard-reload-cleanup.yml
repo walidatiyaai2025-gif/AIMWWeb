@@ -1,0 +1,22 @@
+name: Laravel Hard Reload Cleanup
+on:
+  push:
+    branches: [worker/laravel-plat-4bae8344af-recovery]
+    paths: ['.github/workflows/laravel-hard-reload-cleanup.yml']
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf variants/laravel-aiwmweb/tools/__pycache__
+          rm .github/workflows/laravel-hard-reload-cleanup.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore(laravel): remove generator cache artifacts'
+          git push origin HEAD:worker/laravel-plat-4bae8344af-recovery
