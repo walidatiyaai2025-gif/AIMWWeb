@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-IDEN-FC900E61B8",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "domain": "identity",
+  "kind": "visible_control",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "screens": ["component:CurrentUserChip"],
+    "control": "/system-health -> /system-health",
+    "target": "current authenticated active-tenant System Health workspace",
+    "new_tab": false,
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency": "none",
+    "verification": "read-only navigation is exposed only for a server-authoritative user/active tenant with tenant.view and diagnostics.view and the server independently re-authorizes the destination"
+  },
+  "laravel_adaptation": {
+    "runtime_composition": "resources/js/current-user-site-details-control.tsx",
+    "production_control": "resources/js/current-user-system-health-control.tsx",
+    "server_route_provider": "app/Providers/SystemHealthRouteServiceProvider.php",
+    "provider_registration": "bootstrap/providers.php",
+    "visible_control": "System health / صحة النظام",
+    "details": "Services and database status / فحص الخدمات وقاعدة البيانات",
+    "dom_target": ".topbar-actions",
+    "operation_marker": "AIMW-IDEN-FC900E61B8",
+    "destination": "/tenants/{activeTenant}/system-health",
+    "destination_route_contract": "workspaceRoutes.system-health",
+    "destination_middleware": ["web", "auth", "tenant.context"],
+    "destination_permissions": ["tenant.view", "diagnostics.view"],
+    "availability_contract": "render only when the user id is valid, active tenant is present in server-provided memberships, both permissions or wildcard are present, and the registered workspace route remains /system-health with diagnostics.view permission",
+    "tenant_derivation": "FrontendContext.tenant.slug through tenantUrl; API/action/query/direct-ID values cannot replace the active tenant",
+    "direct_object_identifier": "none",
+    "fake_or_demo_data": false,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap returns server-derived FrontendContext user, active tenant, memberships and permissions",
+    "CurrentUserSiteDetailsControl composes CurrentUserSystemHealthControl without replacing newer CurrentUser controls",
+    "the control fail-closes unless the active tenant is in server-provided memberships, user identity is valid, both required permissions are authoritative and the route contract is exact",
+    "the link target is derived only from context.tenant.slug and URL-encoded by tenantUrl",
+    "the explicit SystemHealthRouteServiceProvider GET route re-applies web session, auth and tenant.context",
+    "CanonicalWorkspaceRouteController re-applies tenant.view and diagnostics.view through TenantAuthorizer before returning the real workspace"
+  ],
+  "authorization": {
+    "session": "web + auth",
+    "active_tenant_resolution": "tenant.context plus server-provided FrontendContext membership check",
+    "workspace_permissions": ["tenant.view", "diagnostics.view"],
+    "wildcard_permission": "supported consistently with canonical RBAC",
+    "guest_workspace": "redirect /login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "tenant_query_override": "ignored",
+    "user_or_membership_query_override": "ignored",
+    "direct_user_or_membership_identifier": "none",
+    "cross_tenant_destination_synthesis": "tenant slug is URL-encoded and derived only from authoritative frontend context"
+  },
+  "validation_and_fail_closed": {
+    "client_identity_validation": "positive safe-integer user id and active tenant membership required",
+    "route_contract_validation": "system-health path and diagnostics.view permission must match exactly",
+    "foreign_path_validation": "encoded tenant slug cannot be interpreted as /tenants/beta",
+    "direct_id_validation": "not applicable; operation exposes no object identifier",
+    "server_permission_validation": "TenantAuthorizer executes both workspace permissions",
+    "truthful_failure": "missing auth/tenant/permission/route contract produces no control or server redirect/403/404 rather than sample success"
+  },
+  "read_only_and_safety": {
+    "mutation": false,
+    "csrf": "not applicable: route methods are GET/HEAD only and the control emits no form, fetch, apiRequest or mutation action",
+    "authoritative_persistence_reread": "not applicable: selected operation is navigation-only and persists no state",
+    "idempotency": "repeated authorized GETs render the same guarded workspace without creating tenant membership or role state",
+    "retry": "safe as read-only GET; no job or external side effect is scheduled",
+    "cancellation": "not applicable: no asynchronous or mutating operation exists",
+    "queue_or_scheduler_change": "none",
+    "cache_change": "none",
+    "secret_read_or_write": "none; sentinel secret is asserted absent from rendered response",
+    "wordpress_or_connector_write": "none",
+    "ai_or_provider_call": "none",
+    "fake_or_demo_success": "none; control contains no sample/demo/fake success path",
+    "success_semantics": "the client only exposes a navigation link after authoritative context checks; the server independently authorizes the real destination"
+  },
+  "acceptance_tests": [
+    "CurrentUserSystemHealthControlTerminalityTest::test_canonical_operation_contract_matches_current_user_system_health_source_semantics",
+    "CurrentUserSystemHealthControlTerminalityTest::test_destination_is_get_only_authenticated_tenant_route_with_exact_permissions",
+    "CurrentUserSystemHealthControlTerminalityTest::test_guest_missing_permission_and_foreign_tenant_all_fail_closed",
+    "CurrentUserSystemHealthControlTerminalityTest::test_authorized_navigation_uses_server_tenant_context_and_ignores_query_identity_overrides",
+    "CurrentUserSystemHealthControlTerminalityTest::test_repeated_get_is_idempotent_and_creates_no_tenant_state_or_write_surface",
+    "CurrentUserSystemHealthControlTerminalityTest::test_runtime_binding_is_server_derived_and_preserves_existing_current_user_controls",
+    "current-user-system-health-control.test.tsx exact tenant target, URL encoding, dual permission fail-closed, wildcard RBAC, authoritative membership/user identity and mutation-authority rejection"
+  ],
+  "authority_metadata": {
+    "issue": 257,
+    "recovered_pr": 503,
+    "canonical_base_sha": "58b3010d05c0a9249753ae353d514d2d36fa8fac",
+    "worker_branch": "worker/laravel-iden-fc900e61b8-security-convergence",
+    "recovery_pr": 508
+  },
+  "implementation_sha": "392168c860471a674913339c3fb970731a86a9cd",
+  "validation_state": "source implementation head entered exact-head PR validation with Plan Link and Cross-Domain Security green and focused/full SQLite/frontend suites green; final evidence-bearing exact-head gates and generator reconciliation remain required before integration",
+  "terminality": {
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_enforced_in_code": true,
+    "evidence_recorded": true,
+    "generator_backed_reconciliation_required": true,
+    "final_exact_head_ci_required": true,
+    "state": "ADAPTED"
+  },
+  "scope_exclusions": [
+    "no change to the ASP.NET/reference product",
+    "no claim that a separate canonical route operation is terminal",
+    "no mutation, provider API, connector, WordPress, AI, queue, scheduler, cache or secret behavior",
+    "no caller-supplied tenant/user/membership identifier authority",
+    "no fabricated owner/manual/live-production evidence",
+    "no manual edit of generated reconciliation counts"
+  ]
+}
