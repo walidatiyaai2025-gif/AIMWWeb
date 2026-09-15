@@ -1,0 +1,18 @@
+{
+  "operation_id": "AIMW-SYNC-F135B261B2",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_semantics": "ApplicationUsers renders Clear only while the bound _search value is nonblank. ClearSearchClickedAsync clears _search first and then awaits LoadAsync, which reloads the authoritative application-user list and assignable-role state while _working prevents concurrent actions and surfaces failures instead of reporting false success.",
+  "laravel_adaptation": "The React Application Users workspace exposes the canonical Clear control only for an authorized nonblank search. The caller clears the controlled search state, resets pagination, and then awaits a GET reread of the application-users endpoint derived from the active tenant context. The endpoint is /tenants/{tenant}/admin/members behind authenticated session and tenant.context middleware; the control additionally requires members.manage to preserve the source page's management-policy boundary. The control owns no tenant identifier, resource identifier, WordPress credential, connector secret, AI provider state, queue, cache, or scheduler state.",
+  "runtime_path": "variants/laravel-aiwmweb/backend/resources/js/application-users-clear-search-control.tsx",
+  "focused_test_path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/application-users-clear-search-control.test.tsx",
+  "security_invariants": [
+    "The reread URL is derived from context.api['application-users'] for the active tenant rather than from user-supplied tenant or membership identifiers.",
+    "auth plus tenant.context middleware owns cross-tenant resolution; a foreign tenant fails closed as not found before authoritative member data can be accepted.",
+    "The visible control is withheld unless members.manage (or the explicit wildcard permission) is present, preserving the source UsersManage policy boundary even though the underlying read endpoint also requires tenant.view.",
+    "This operation is read-only: it performs no member mutation, WordPress write, connector action, AI/provider action, secret access, queue dispatch, cache mutation, or scheduler mutation.",
+    "Duplicate clicks are locked while the authoritative reread is running, and a failed reread is surfaced without fabricating successful refreshed data."
+  ],
+  "failure_behavior": "The local search value is cleared before the authoritative reread, matching the source order. If the tenant-scoped reread fails, React Query retains the real error state and the control reports failure rather than claiming success; the operation remains safely retryable after the in-flight lock is released."
+}
