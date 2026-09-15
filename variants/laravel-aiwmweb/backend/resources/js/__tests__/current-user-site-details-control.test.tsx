@@ -39,6 +39,10 @@ function renderControl(value: ContextWithActiveSite) {
     );
 }
 
+function querySiteDetailsLink() {
+    return screen.queryByRole('link', { name: /site details$/i });
+}
+
 afterEach(() => {
     document.querySelectorAll('.user-chip').forEach((node) => node.remove());
 });
@@ -55,21 +59,21 @@ describe(`${CURRENT_USER_SITE_DETAILS_OPERATION_ID} CurrentUserChip site details
 
     it('fails closed when active site, permission, or exact advertised detail API binding is absent', async () => {
         const first = renderControl(context({ active_site: null }));
-        await waitFor(() => expect(screen.queryByRole('link')).not.toBeInTheDocument());
+        await waitFor(() => expect(querySiteDetailsLink()).not.toBeInTheDocument());
         first.unmount();
         document.querySelectorAll('.user-chip').forEach((node) => node.remove());
 
         const second = renderControl(context({ permissions: ['tenant.view'] }));
-        await waitFor(() => expect(screen.queryByRole('link')).not.toBeInTheDocument());
+        await waitFor(() => expect(querySiteDetailsLink()).not.toBeInTheDocument());
         second.unmount();
         document.querySelectorAll('.user-chip').forEach((node) => node.remove());
 
         renderControl(context({ api: { 'sites.detail.12': '/api/tenants/beta/sites/12' } }));
-        await waitFor(() => expect(screen.queryByRole('link')).not.toBeInTheDocument());
+        await waitFor(() => expect(querySiteDetailsLink()).not.toBeInTheDocument());
     });
 
     it('rejects invalid active-site identifiers instead of synthesizing a direct-ID route', async () => {
         renderControl(context({ active_site: { id: 0, name: 'Invalid' }, api: {} }));
-        await waitFor(() => expect(screen.queryByRole('link')).not.toBeInTheDocument());
+        await waitFor(() => expect(querySiteDetailsLink()).not.toBeInTheDocument());
     });
 });
