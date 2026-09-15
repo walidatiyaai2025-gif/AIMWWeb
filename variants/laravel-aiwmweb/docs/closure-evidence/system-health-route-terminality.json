@@ -1,0 +1,85 @@
+{
+  "operation_id": "AIMW-CONT-6F699A5C14",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SystemHealth.razor",
+    "route_screen": "/system-health",
+    "control": "Open/render route",
+    "behavior": "Open the authenticated System Health screen for the active tenant without mutating application state."
+  },
+  "laravel_adaptation": {
+    "workspace_route": "GET /tenants/{tenant}/system-health",
+    "route_name": "tenant.system-health",
+    "route_provider": "App\\Providers\\SystemHealthRouteServiceProvider",
+    "controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@show",
+    "view": "app",
+    "behavior": "The explicit route renders the production tenant React shell only after authenticated tenant context resolution and server-side tenant.view plus diagnostics.view authorization."
+  },
+  "runtime_path": [
+    "GET /tenants/{tenant}/system-health",
+    "web + auth + tenant.context",
+    "CanonicalWorkspaceRouteController@show",
+    "TenantAuthorizer::authorize(tenant.view)",
+    "TenantAuthorizer::authorize(diagnostics.view)",
+    "production app view / System Health workspace"
+  ],
+  "authorization": {
+    "authentication": "session auth middleware",
+    "tenant_context": "tenant.context resolves the active membership from the route tenant",
+    "permissions": ["tenant.view", "diagnostics.view"],
+    "guest_semantics": "redirect to canonical login",
+    "missing_permission_semantics": "403 fail closed",
+    "foreign_tenant_semantics": "404 fail closed before workspace rendering",
+    "direct_id_surface": "none beyond the tenant slug; user_id, membership_id, site, and query tenant values are not route authority"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "proof": "Tenant A cannot open Tenant B System Health route without an active membership. The controller authorizes only after TenantContext is established, and caller query probes do not replace the route-derived active tenant."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only": true,
+    "idempotent": true,
+    "retry_safe": true,
+    "csrf": "not applicable: the canonical route is GET/HEAD only and POST returns 405",
+    "persistence": "no membership or role state is created or changed by repeated GET",
+    "authoritative_reread": "route access is re-authorized from the current authenticated session, active TenantContext, and current RBAC state on every request",
+    "secrets": "server configuration sentinel is not rendered",
+    "wordpress_connector": "not invoked by this route operation; System Health child controls/data operations are separate canonical operations",
+    "ai_provider": "not applicable",
+    "queue_cache_scheduler": "not invoked or mutated by this route operation",
+    "fake_success": "none; the route either renders after authorization or returns the real redirect/403/404/405 failure"
+  },
+  "scope_exclusions": [
+    "AIMW-IDEN-FC900E61B8 CurrentUserChip System Health link (already terminal)",
+    "AIMW-SYNC-0DFEE862FA System Health Refresh control",
+    "AIMW-CONT-553D999DDB System Health Logs link",
+    "AIMW-BILL-48E69F42EB System Health Copy Summary control"
+  ],
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php",
+  "acceptance_tests": [
+    "Tests\\Feature\\SystemHealthRouteTerminalityTest::test_exact_canonical_operation_is_the_system_health_route",
+    "Tests\\Feature\\SystemHealthRouteTerminalityTest::test_route_is_explicit_get_only_and_enforces_both_permissions",
+    "Tests\\Feature\\SystemHealthRouteTerminalityTest::test_guest_missing_permission_and_foreign_tenant_fail_closed",
+    "Tests\\Feature\\SystemHealthRouteTerminalityTest::test_authorized_reads_are_tenant_derived_idempotent_and_secret_free"
+  ],
+  "implementation_sha": "cfa777265900e717b9a5e43d424d34edad183eae",
+  "tested_sha": "cfa777265900e717b9a5e43d424d34edad183eae",
+  "implementation_ci": {
+    "pr_plan_link": {"run_id": 35014305582, "run_number": 2187, "result": "GREEN"},
+    "cross_domain_security": {"run_id": 35014305578, "run_number": 1332, "result": "GREEN"},
+    "laravel_acceptance": {"run_id": 35014305551, "run_number": 1401, "result": "GREEN"}
+  },
+  "canonical_reconciliation_before": {
+    "authority_sha": "012b7de4ffc215488058f89f4656734e86156432",
+    "total": 931,
+    "terminal": 572,
+    "pending": 359,
+    "blocked": 0,
+    "generated_reconciliation_edited": false
+  },
+  "notes": "The real System Health route runtime was already merged by PR #508 as supporting security enforcement for a separate visible-control operation. This closure adds operation-specific route terminality proof and does not duplicate or claim the System Health child controls."
+}

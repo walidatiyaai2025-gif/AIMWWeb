@@ -1,0 +1,137 @@
+name: Laravel AIWMWeb System Health Route Materialize
+
+on:
+  push:
+    branches:
+      - worker/laravel-cont-6f699a5c14-system-health-route
+    paths:
+      - '.github/workflows/laravel-aiwmweb-system-health-route-materialize.yml'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONHASHSEED: '0'
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: worker/laravel-cont-6f699a5c14-system-health-route
+
+      - name: Fetch pushed evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Register exact pushed route evidence source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest_path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(manifest_path.read_text())
+          op = 'AIMW-CONT-6F699A5C14'
+          source_sha = '316d28cd4a22001812fa06c3a41f8ee962c6acd8'
+
+          for source in manifest.get('countable_sources', []):
+              if op in (source.get('route_api_provenance') or {}):
+                  raise SystemExit(f'{op} is already registered in a countable source')
+
+          manifest.setdefault('countable_sources', []).append({
+              'label': 'System Health canonical route terminality',
+              'sha': source_sha,
+              'observed_pr_head': source_sha,
+              'domains': ['content'],
+              'route_api_provenance': {
+                  op: {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/SystemHealthRouteServiceProvider.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/system-health-route-terminality.json',
+                      'security_mode': 'tenant_selected'
+                  }
+              }
+          })
+          manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n')
+          PY
+
+      - name: Run official generator chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/before.json
+          OUT=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          SUM=/tmp/operation-parity-summary.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+
+      - name: Verify exactly one canonical state transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          before = json.loads(Path('/tmp/before.json').read_text())
+          after = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          bid = {r['operation_id']: r for r in before['operations']}
+          aid = {r['operation_id']: r for r in after['operations']}
+          transitions = [
+              (op, bid[op]['migration_state'], aid[op]['migration_state'])
+              for op in bid
+              if bid[op]['migration_state'] != aid[op]['migration_state']
+          ]
+          expected = [('AIMW-CONT-6F699A5C14', 'PENDING', 'ADAPTED')]
+          if transitions != expected:
+              raise SystemExit(f'unexpected state transitions: {transitions!r}')
+          totals = after['totals']
+          expected_totals = {'total': 931, 'terminal': 573, 'pending': 358, 'blocked': 0}
+          for key, value in expected_totals.items():
+              if totals[key] != value:
+                  raise SystemExit(f'unexpected {key}: {totals[key]} != {value}')
+          route_rows = [r for r in after['operations'] if r['kind'] == 'route']
+          content_rows = [r for r in after['operations'] if r['domain'] == 'content']
+          route_terminal = sum(r['migration_state'] in {'PORTED','ADAPTED','VERIFIED_UNAVAILABLE_EXTERNAL'} for r in route_rows)
+          route_pending = sum(r['migration_state'] == 'PENDING' for r in route_rows)
+          content_terminal = sum(r['migration_state'] in {'PORTED','ADAPTED','VERIFIED_UNAVAILABLE_EXTERNAL'} for r in content_rows)
+          content_pending = sum(r['migration_state'] == 'PENDING' for r in content_rows)
+          assert (route_terminal, route_pending) == (48, 36), (route_terminal, route_pending)
+          assert (content_terminal, content_pending) == (29, 135), (content_terminal, content_pending)
+          print('ONE_OPERATION_DELTA=PASS')
+          print('TOTAL=931 TERMINAL=573 PENDING=358 BLOCKED=0')
+          PY
+
+      - name: Commit generator-owned artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m 'chore(laravel): materialize system health route parity'
+          git push origin HEAD:worker/laravel-cont-6f699a5c14-system-health-route
+
+      - name: Remove one-shot materializer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/laravel-aiwmweb-system-health-route-materialize.yml
+          git commit -m 'chore(laravel): remove system health materializer'
+          git push origin HEAD:worker/laravel-cont-6f699a5c14-system-health-route
