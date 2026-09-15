@@ -1,0 +1,17 @@
+{
+  "operation_id": "AIMW-SYNC-E36C56A631",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source_semantics": "AppFilterChip renders an optional nonblank label plus the required value, carries the tone and supplied CSS class, exposes the RemoveAsync button only when RemoveRequested is bound, suppresses removal while Disabled, uses the canonical fallback aria label, and invokes the supplied callback for removal.",
+  "laravel_adaptation": "The React AppFilterChip preserves the callback-gated control contract without owning a tenant id, resource id, API route, fetch call, or persistence. The caller binds onRemoveRequested only after its authoritative tenant-scoped reread and permission check have succeeded. Missing callback is the fail-closed state. Async removal is duplicate-submit locked; callback failure keeps the chip authoritative, reports a retryable error, and does not fabricate persistence success.",
+  "runtime_path": "variants/laravel-aiwmweb/backend/resources/js/app-filter-chip.tsx",
+  "focused_test_path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-filter-chip.test.tsx",
+  "security_invariants": [
+    "Cross-tenant authoritative resolution remains a caller-owned 404/not-found boundary and therefore never binds a removal callback to this component.",
+    "RBAC denial remains a caller-owned 403/forbidden boundary and therefore never exposes the mutation control.",
+    "The shared component accepts no tenant-derived route or resource identifier, so it cannot bypass tenant scoping or introduce an IDOR path on its own.",
+    "Disabled or in-flight removal never invokes the callback and a rejected callback remains retryable without optimistic state mutation."
+  ],
+  "failure_behavior": "If removal fails, the chip stays rendered, a local alert is exposed, the in-flight lock is released, and the authoritative caller may retry. No local state claims that server-side removal succeeded."
+}
