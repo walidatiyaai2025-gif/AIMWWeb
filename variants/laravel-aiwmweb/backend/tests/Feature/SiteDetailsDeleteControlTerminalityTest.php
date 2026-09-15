@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\SiteManagementController;
-use App\Models\Execution;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Site;
@@ -13,7 +12,9 @@ use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class SiteDetailsDeleteControlTerminalityTest extends TestCase
@@ -53,10 +54,7 @@ class SiteDetailsDeleteControlTerminalityTest extends TestCase
         $alpha = $this->membership($user, 'alpha', ['tenant.view', 'sites.view', 'sites.manage']);
         $site = $this->site($alpha, 'Alpha Site');
 
-        $this->actingAs($user)
-            ->deleteJson('/api/tenants/alpha/sites/'.$site->id)
-            ->assertNoContent();
-
+        $this->actingAs($user)->deleteJson('/api/tenants/alpha/sites/'.$site->id)->assertNoContent();
         $this->assertDatabaseMissing('sites', ['id' => $site->id, 'tenant_id' => $alpha->tenant_id]);
     }
 
@@ -81,14 +79,19 @@ class SiteDetailsDeleteControlTerminalityTest extends TestCase
         $this->actingAs($owner)->deleteJson('/api/tenants/alpha/sites/0')->assertNotFound();
         $this->assertDatabaseHas('sites', ['id' => $betaSite->id]);
 
-        $context = app(TenantContext::class);
-        $context->activate($alpha->tenant, $alpha);
-        Execution::query()->create([
+        DB::table('executions')->insert([
+            'operation_id' => (string) Str::uuid(),
+            'request_id' => (string) Str::uuid(),
+            'correlation_id' => (string) Str::uuid(),
+            'tenant_id' => $alpha->tenant_id,
             'site_id' => $alphaSite->id,
+            'approval_id' => 999999,
+            'actor_user_id' => $owner->id,
             'status' => 'running',
-            'operation' => 'test',
+            'attempts' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
-        $context->forget();
 
         $this->actingAs($owner)->deleteJson('/api/tenants/alpha/sites/'.$alphaSite->id)->assertConflict();
         $this->assertDatabaseHas('sites', ['id' => $alphaSite->id]);
