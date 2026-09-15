@@ -8,9 +8,9 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-PLAT-4BAE8344AF';
 
-    public function test_canonical_row_is_the_low_risk_tenant_neutral_hard_reload_control(): void
+    public function test_generated_reconciliation_closes_the_canonical_hard_reload_identity(): void
     {
-        $row = collect($this->ledger()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
+        $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
         $this->assertNotNull($row);
         $this->assertSame('platform', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
@@ -19,6 +19,7 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
         $this->assertFalse((bool) $row['mutation']);
         $this->assertFalse((bool) $row['tenant_owned']);
         $this->assertSame('low', $row['risk']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
     }
 
     public function test_runtime_control_uses_exact_current_url_with_no_callback_or_api_mutation(): void
@@ -42,9 +43,9 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
     }
 
     /** @return array<string, mixed> */
-    private function ledger(): array
+    private function reconciliation(): array
     {
 
-        return json_decode((string) file_get_contents(base_path('../docs/capability-parity-ledger.json')), true, 512, JSON_THROW_ON_ERROR);
+        return json_decode((string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
     }
 }
