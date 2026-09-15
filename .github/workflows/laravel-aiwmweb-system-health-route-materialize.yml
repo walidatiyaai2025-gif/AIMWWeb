@@ -51,6 +51,7 @@ jobs:
               'sha': source_sha,
               'observed_pr_head': source_sha,
               'domains': ['content'],
+              'supporting_only': True,
               'route_api_provenance': {
                   op: {
                       'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/SystemHealthRouteServiceProvider.php',
