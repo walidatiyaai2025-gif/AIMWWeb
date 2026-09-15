@@ -1,0 +1,86 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-PLAT-4BAE8344AF",
+  "domain": "platform",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Routes.razor",
+    "visible_control": "@Navigation.Uri -> @Navigation.Uri",
+    "user_visible_text": "Hard reload",
+    "behavior": "The runtime error surface exposes a raw anchor to the exact current Navigation.Uri with enhanced navigation disabled, forcing a full document navigation rather than an in-app router transition."
+  },
+  "laravel_adaptation": {
+    "file": "variants/laravel-aiwmweb/backend/resources/js/runtime-error-boundary.tsx",
+    "control": "RuntimeErrorHardReloadControl",
+    "operation_marker": "AIMW-PLAT-4BAE8344AF",
+    "destination": "window.location.href",
+    "behavior": "The runtime error boundary renders a real anchor whose href is the browser's exact current URL. Native anchor navigation performs the source-equivalent full-document reload while preserving path, query string, and fragment. No React Router Link, callback reload shim, API request, tenant route synthesis, or persistence mutation is used."
+  },
+  "authorization": {
+    "authentication_change": "none",
+    "rbac_change": "none",
+    "session_or_csrf_change": "none",
+    "reason": "This is a navigation-only recovery control on the already-rendered runtime error surface and does not execute a privileged server action."
+  },
+  "tenant_isolation": {
+    "canonical_tenant_owned": false,
+    "route_tenant_derivation": "none",
+    "idor_surface": "none",
+    "proof": "The control does not accept or construct a tenant/resource identifier; it reuses the exact current browser URL without parsing or substituting tenant state."
+  },
+  "runtime_boundaries": {
+    "queue": "not used",
+    "cache": "not used",
+    "scheduler": "not used",
+    "secrets": "not read or written",
+    "wordpress_connector": "not used",
+    "ai_provider": "not used"
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "full_document_navigation": true,
+    "preserves_path_query_fragment": true,
+    "authoritative_reread": "the browser performs a fresh document request for the exact current URL",
+    "audit_receipt": "not applicable; no application mutation",
+    "fake_success_path": "none; navigation success/failure is owned by the browser/server response"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/runtime-error-hard-reload.test.tsx",
+      "coverage": "raw link role, exact current href, operation marker, path/query/hash preservation, no synthesized API destination"
+    },
+    {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/CanonicalPlatformRuntimeHardReloadTest.php",
+      "coverage": "canonical ledger identity/domain/kind/source/control plus production source marker and absence of legacy reload callback/API mutation"
+    }
+  ],
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha_at_claim": "031d26b7d4699bf6e7a1b418bc42aa7d43a5f0f3",
+    "total": 931,
+    "terminal_before": 573,
+    "pending_before": 358,
+    "blocked_before": 0,
+    "note": "Counts are the live generated reconciliation observed immediately before this single-operation claim; final post-merge counts must be re-read from the authoritative composition."
+  },
+  "validation": {
+    "focused_local_contract": "implemented; exact-head repository CI pending",
+    "official_reconciliation": "pending generator-backed materialization",
+    "merge": "not yet performed"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Real source-equivalent full-document navigation is implemented and bound to the exact canonical operation ID in production code and deterministic focused tests. Generator-backed reconciliation and exact-head CI remain required before integration."
+  }
+}
