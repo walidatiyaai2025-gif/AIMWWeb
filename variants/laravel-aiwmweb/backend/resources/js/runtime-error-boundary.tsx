@@ -1,20 +1,10 @@
 import React from 'react';
+import { RuntimeErrorHardReloadControl } from './runtime-error-hard-reload-control';
 import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 
 export const RUNTIME_ERROR_RECOVER_OPERATION_ID = 'AIMW-PLAT-C6260410D1';
-export const RUNTIME_ERROR_HARD_RELOAD_OPERATION_ID = 'AIMW-PLAT-4BAE8344AF';
 
 type RuntimeErrorBoundaryState = { error: Error | null };
-
-export function RuntimeErrorHardReloadControl() {
-    return (
-        <a
-            className="btn"
-            href={window.location.href}
-            data-canonical-operation={RUNTIME_ERROR_HARD_RELOAD_OPERATION_ID}
-        >Hard reload</a>
-    );
-}
 
 export class RuntimeErrorBoundary extends React.Component<{ children: React.ReactNode }, RuntimeErrorBoundaryState> {
     state: RuntimeErrorBoundaryState = { error: null };
