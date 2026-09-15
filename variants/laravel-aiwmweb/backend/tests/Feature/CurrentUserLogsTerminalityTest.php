@@ -8,7 +8,7 @@ class CurrentUserLogsTerminalityTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-IDEN-CD4ADA5087';
 
-    private const EVIDENCE_SOURCE_SHA = '8d9447700793f408d16aadd2d9c0df1657908c4c';
+    private const EVIDENCE_SOURCE_SHA = '632b753a47264d9422319eefd3a796cf9a0f02bc';
 
     public function test_current_user_logs_operation_is_generator_terminal_on_final_evidence_source(): void
     {
