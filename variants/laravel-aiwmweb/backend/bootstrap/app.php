@@ -7,13 +7,13 @@ use App\Billing\Exceptions\QuotaExceededException;
 use App\Http\Middleware\RequestCorrelation;
 use App\Http\Middleware\RequirePlatformAdmin;
 use App\Http\Middleware\ResolveTenantContext;
+use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use LogicException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -59,25 +59,37 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             $routeTenant = $request->route('tenant');
-            $context = app(TenantContext::class);
-            if (! $request->user() || ! is_string($routeTenant) || $routeTenant === '' || ! $context->active()) {
+            $user = $request->user();
+            if (! $user || ! is_string($routeTenant) || $routeTenant === '') {
                 return null;
             }
+
+            // Tenant middleware deliberately clears its request-scoped context while
+            // the exception unwinds. Re-read the active membership authoritatively
+            // from the authenticated user + route tenant rather than trusting query
+            // identifiers or retaining mutable tenant state across requests.
+            $membership = TenantMembership::query()
+                ->withoutGlobalScopes()
+                ->where('user_id', $user->getAuthIdentifier())
+                ->where('status', 'active')
+                ->whereHas('tenant', fn ($query) => $query->where('slug', $routeTenant))
+                ->with('tenant')
+                ->first();
+
+            if (! $membership || ! hash_equals($membership->tenant->slug, $routeTenant)) {
+                return null;
+            }
+
+            $context = app(TenantContext::class);
+            $context->activate($membership->tenant, $membership);
 
             try {
-                $tenant = $context->tenant();
-                $membership = $context->membership();
-            } catch (LogicException) {
-                return null;
+                $profileUrl = $membership->hasPermission('tenant.view')
+                    ? route('canonical.workspace.account-profile', ['tenant' => $membership->tenant->slug], false)
+                    : null;
+            } finally {
+                $context->forget();
             }
-
-            if (! hash_equals($tenant->slug, $routeTenant)) {
-                return null;
-            }
-
-            $profileUrl = $membership->hasPermission('tenant.view')
-                ? route('canonical.workspace.account-profile', ['tenant' => $tenant->slug], false)
-                : null;
 
             return response()->view('platform.access-denied', [
                 'profileUrl' => $profileUrl,
