@@ -608,6 +608,25 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "System Health canonical route terminality",
+      "sha": "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
+      "observed_pr_head": "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-CONT-6F699A5C14": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SystemHealthRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/system-health-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],

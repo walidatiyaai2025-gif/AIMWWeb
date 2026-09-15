@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 572 |
-| PENDING | 359 |
+| ADAPTED | 573 |
+| PENDING | 358 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 572 |
-| OVERALL_PARITY_PERCENT | 61.44% |
+| TERMINAL | 573 |
+| OVERALL_PARITY_PERCENT | 61.55% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -35,7 +35,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 88 | 90 | 0 | 0 | 88 | 49.44% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
-| content | 164 | 0 | 28 | 136 | 0 | 0 | 28 | 17.07% |
+| content | 164 | 0 | 29 | 135 | 0 | 0 | 29 | 17.68% |
 | email | 82 | 0 | 57 | 25 | 0 | 0 | 57 | 69.51% |
 | identity | 7 | 0 | 6 | 1 | 0 | 0 | 6 | 85.71% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
@@ -54,7 +54,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
-| route | 84 | 0 | 47 | 37 | 0 | 0 | 47 | 55.95% |
+| route | 84 | 0 | 48 | 36 | 0 | 0 | 48 | 57.14% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
 | visible_control | 446 | 0 | 124 | 322 | 0 | 0 | 124 | 27.80% |
 
@@ -193,7 +193,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-COMM-B16FBF4792`
 - `AIMW-COMM-C083D47BC4`
 
-### content (136)
+### content (135)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
@@ -255,7 +255,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-6D14B76763`
 - `AIMW-CONT-6E22D74EE0`
 - `AIMW-CONT-6EC0601E18`
-- `AIMW-CONT-6F699A5C14`
 - `AIMW-CONT-71F54E3BA6`
 - `AIMW-CONT-73E4F88038`
 - `AIMW-CONT-7957ECC794`
