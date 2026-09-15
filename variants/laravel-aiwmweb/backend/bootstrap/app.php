@@ -10,11 +10,11 @@ use App\Http\Middleware\ResolveTenantContext;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->is('health/*') || $request->expectsJson(),
         );
-        $exceptions->render(function (AuthorizationException $e, Request $request) {
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*') || $request->is('tenants/*/route-api/*')) {
                 return null;
             }
@@ -65,11 +65,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            // Tenant middleware deliberately clears its request-scoped context while
-            // the exception unwinds. Resolve the route tenant independently first,
-            // then activate that tenant only while performing the authoritative
-            // membership/permission reread. This keeps BelongsToTenant scopes
-            // fail-closed instead of bypassing them in the exception renderer.
+            // Laravel prepares AuthorizationException as AccessDeniedHttpException
+            // before render callbacks execute. Tenant middleware has also cleared its
+            // request-scoped context while unwinding, so resolve the route tenant and
+            // perform a scoped authoritative membership reread without bypassing
+            // BelongsToTenant protections.
             $tenant = Tenant::query()->where('slug', $routeTenant)->first();
             if (! $tenant || ! hash_equals($tenant->slug, $routeTenant)) {
                 return null;
