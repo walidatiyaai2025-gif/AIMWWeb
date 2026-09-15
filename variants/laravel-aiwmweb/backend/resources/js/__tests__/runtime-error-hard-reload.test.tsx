@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
     RUNTIME_ERROR_HARD_RELOAD_OPERATION_ID,
     RuntimeErrorHardReloadControl,
-} from '../runtime-error-boundary';
+} from '../runtime-error-hard-reload-control';
 
 const originalUrl = window.location.href;
 
