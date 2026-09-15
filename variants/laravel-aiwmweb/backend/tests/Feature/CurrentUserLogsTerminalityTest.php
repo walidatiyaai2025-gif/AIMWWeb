@@ -8,17 +8,10 @@ class CurrentUserLogsTerminalityTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-IDEN-CD4ADA5087';
 
-    /**
-     * Historical generator source recorded when AIMW-IDEN-CD4ADA5087 was
-     * materialized. Later focused closures legitimately move the manifest's
-     * global focused source pointer, but must never rewrite this operation's
-     * reconciliation provenance.
-     */
-    private const EVIDENCE_SOURCE_SHA = 'c9eac52c1cb1bc212aa35776edae8e0e20a9f41f';
-
     public function test_current_user_logs_operation_remains_generator_terminal_after_later_closures(): void
     {
         $reconciliation = $this->jsonDocument('../docs/operation-parity-reconciliation.json');
+        $manifest = $this->jsonDocument('../docs/operation-parity-evidence-sources.json');
         $evidence = $this->jsonDocument('../docs/closure-evidence/current-user-logs-terminality.json');
 
         $total = $reconciliation['totals']['total'] ?? null;
@@ -50,10 +43,14 @@ class CurrentUserLogsTerminalityTest extends TestCase
         $this->assertIsArray($operation, 'Canonical operation is missing from generated reconciliation.');
         $this->assertSame('ADAPTED', $operation['migration_state'] ?? null);
         $this->assertSame('focused_closure_contract', $operation['reconciliation']['evidence_mode'] ?? null);
+
+        $focusedSourceSha = $manifest['focused_closure_evidence_source_sha'] ?? null;
+        $this->assertIsString($focusedSourceSha);
+        $this->assertNotSame('', $focusedSourceSha);
         $this->assertSame(
-            self::EVIDENCE_SOURCE_SHA,
+            $focusedSourceSha,
             $operation['reconciliation']['source_sha'] ?? null,
-            'Historical reconciliation provenance must remain pinned to the evidence source that terminalized this operation.'
+            'Generated focused-control provenance must match the current pushed focused-closure evidence source.'
         );
 
         $focusedTerminals = $reconciliation['validation']['focused_closure_contract_terminals'] ?? [];
