@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-BE4B8C3822",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "ConfirmDeleteAsync",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "critical"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/site-details-delete-control.tsx",
+    "controller": "App\\Http\\Controllers\\SiteManagementController::destroy",
+    "route": "DELETE /api/tenants/{tenant}/sites/{site}",
+    "permission": "sites.manage",
+    "tenant_source": "active server TenantContext and server-advertised FrontendContext tenant slug",
+    "ownership_lookup": "unscoped Site lookup constrained by active tenant_id plus positive direct site ID",
+    "active_execution_guard": "queued or running executions for the same active tenant and site reject with 409",
+    "persistence": "transactional row-locked Site deletion followed by authoritative database absence verification",
+    "frontend_reconciliation": "success is emitted only after DELETE succeeds and an authenticated authoritative GET /api/tenants/{tenant}/sites proves the deleted ID absent",
+    "duplicate_submission": "confirmation and mutation controls are disabled while the request is pending",
+    "csrf_session": "shared apiRequest sends same-origin credentials, X-Requested-With, and the page CSRF token for the DELETE request",
+    "fake_success": false
+  },
+  "security": {
+    "guest": "401 and no deletion",
+    "missing_sites_manage": "403 and no deletion",
+    "route_tenant_mismatch": "404",
+    "foreign_direct_site_id": "404 and foreign site preserved",
+    "invalid_or_non_positive_site_id": "404",
+    "replay_after_success": "404 after authoritative persisted absence",
+    "secret_surface": "none",
+    "wordpress_or_provider_side_effect": "none"
+  },
+  "focused_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsDeleteControlTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-details-delete-control.test.tsx",
+    "coverage": [
+      "canonical operation identity and critical tenant-owned mutation metadata",
+      "real web/auth/tenant.context DELETE route and controller binding",
+      "authorized persisted deletion plus replay fail-closed behavior",
+      "guest and missing-permission rejection",
+      "route-tenant mismatch, foreign direct ID and invalid ID rejection",
+      "queued/running execution conflict preservation and completed execution allowance",
+      "exact production operation marker and explicit confirmation",
+      "same-origin CSRF/session request semantics",
+      "authoritative collection reread before success",
+      "reread-still-contains-site failure",
+      "cancel without mutation and duplicate-pending suppression",
+      "foreign/synthesized advertised endpoint rejection"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-BE4B8C3822",
+    "second_operation_started": false,
+    "aspnet_or_reference_product_modified": false,
+    "canonical_counts_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "authoritative_reread_required_before_ui_success": true,
+    "evidence_recorded": true
+  }
+}
