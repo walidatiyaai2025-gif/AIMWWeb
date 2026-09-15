@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
+use App\Http\Controllers\SystemHealthReadController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,5 +19,9 @@ final class SystemHealthRouteServiceProvider extends ServiceProvider
                     ->defaults('workspace_permissions', 'tenant.view,diagnostics.view')
                     ->name('tenant.system-health');
             });
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->get('/api/tenants/{tenant}/system-health', SystemHealthReadController::class)
+            ->name('tenant.system-health.snapshot');
     }
 }
