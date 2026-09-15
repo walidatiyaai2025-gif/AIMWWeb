@@ -44,6 +44,7 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
     /** @return array<string, mixed> */
     private function ledger(): array
     {
+
         return json_decode((string) file_get_contents(base_path('../docs/capability-parity-ledger.json')), true, 512, JSON_THROW_ON_ERROR);
     }
 }
