@@ -26,6 +26,7 @@ import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
+import { SiteDetailsDeleteControl } from './site-details-delete-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
@@ -114,12 +115,14 @@ function AiWorkspaceRoute() {
 
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
+    const { siteId } = useParams();
     if (route.key === 'site-details') return (
         <>
             <SiteDetailsBackControl context={context} />
             <SiteDetailsCancelSynchronizationControl context={context} />
             <SiteDetailsSettingsLinkControl context={context} />
             <SiteDetailsSiteUrlControl context={context} />
+            {siteId ? <SiteDetailsDeleteControl context={context} siteId={siteId} /> : null}
             <SiteDetailsRoute context={context} route={route} />
         </>
     );
