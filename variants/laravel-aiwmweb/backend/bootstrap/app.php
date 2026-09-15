@@ -7,6 +7,7 @@ use App\Billing\Exceptions\QuotaExceededException;
 use App\Http\Middleware\RequestCorrelation;
 use App\Http\Middleware\RequirePlatformAdmin;
 use App\Http\Middleware\ResolveTenantContext;
+use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -65,27 +66,31 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // Tenant middleware deliberately clears its request-scoped context while
-            // the exception unwinds. Re-read the active membership authoritatively
-            // from the authenticated user + route tenant rather than trusting query
-            // identifiers or retaining mutable tenant state across requests.
-            $membership = TenantMembership::query()
-                ->withoutGlobalScopes()
-                ->where('user_id', $user->getAuthIdentifier())
-                ->where('status', 'active')
-                ->whereHas('tenant', fn ($query) => $query->where('slug', $routeTenant))
-                ->with('tenant')
-                ->first();
-
-            if (! $membership || ! hash_equals($membership->tenant->slug, $routeTenant)) {
+            // the exception unwinds. Resolve the route tenant independently first,
+            // then activate that tenant only while performing the authoritative
+            // membership/permission reread. This keeps BelongsToTenant scopes
+            // fail-closed instead of bypassing them in the exception renderer.
+            $tenant = Tenant::query()->where('slug', $routeTenant)->first();
+            if (! $tenant || ! hash_equals($tenant->slug, $routeTenant)) {
                 return null;
             }
 
             $context = app(TenantContext::class);
-            $context->activate($membership->tenant, $membership);
+            $context->activate($tenant);
 
             try {
+                $membership = TenantMembership::query()
+                    ->where('user_id', $user->getAuthIdentifier())
+                    ->where('status', 'active')
+                    ->first();
+
+                if (! $membership) {
+                    return null;
+                }
+
+                $context->activate($tenant, $membership);
                 $profileUrl = $membership->hasPermission('tenant.view')
-                    ? route('canonical.workspace.account-profile', ['tenant' => $membership->tenant->slug], false)
+                    ? route('canonical.workspace.account-profile', ['tenant' => $tenant->slug], false)
                     : null;
             } finally {
                 $context->forget();
