@@ -2,8 +2,19 @@ import React from 'react';
 import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
 
 export const RUNTIME_ERROR_RECOVER_OPERATION_ID = 'AIMW-PLAT-C6260410D1';
+export const RUNTIME_ERROR_HARD_RELOAD_OPERATION_ID = 'AIMW-PLAT-4BAE8344AF';
 
 type RuntimeErrorBoundaryState = { error: Error | null };
+
+export function RuntimeErrorHardReloadControl() {
+    return (
+        <a
+            className="btn"
+            href={window.location.href}
+            data-canonical-operation={RUNTIME_ERROR_HARD_RELOAD_OPERATION_ID}
+        >Hard reload</a>
+    );
+}
 
 export class RuntimeErrorBoundary extends React.Component<{ children: React.ReactNode }, RuntimeErrorBoundaryState> {
     state: RuntimeErrorBoundaryState = { error: null };
@@ -35,7 +46,7 @@ export class RuntimeErrorBoundary extends React.Component<{ children: React.Reac
                                 data-canonical-operation={RUNTIME_ERROR_RECOVER_OPERATION_ID}
                                 onClick={this.recover}
                             >Try to recover</button>
-                            <button type="button" className="btn" onClick={() => window.location.reload()}>Hard reload</button>
+                            <RuntimeErrorHardReloadControl />
                             <RuntimeErrorOpenLogsControl />
                         </div>
                     </section>
