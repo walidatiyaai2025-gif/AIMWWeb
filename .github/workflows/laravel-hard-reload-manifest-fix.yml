@@ -1,0 +1,27 @@
+name: Laravel Hard Reload Manifest Fix
+on:
+  push:
+    branches: [worker/laravel-plat-4bae8344af-recovery]
+    paths: ['.github/workflows/laravel-hard-reload-manifest-fix.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'); d=json.loads(p.read_text())
+          d['base_main_sha']='bd6d272748753e21b65655901eaed8bb65a267c7'
+          p.write_text(json.dumps(d, indent=2)+'\n')
+          PY
+          rm .github/workflows/laravel-hard-reload-manifest-fix.yml
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix(laravel): preserve canonical parity base authority'
+          git push origin HEAD:worker/laravel-plat-4bae8344af-recovery
