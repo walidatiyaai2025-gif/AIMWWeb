@@ -1,75 +1,103 @@
-import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LocaleProvider } from '../i18n';
-import { ToastProvider } from '../components';
-import { SITE_DETAILS_DELETE_OPERATION_ID, SiteDetailsDeleteControl } from '../site-details-delete-control';
-import type { FrontendContext } from '../core';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AppContextProvider, type AppContext } from '../core'
+import { SITE_DETAILS_DELETE_OPERATION_ID, SiteDetailsDeleteControl } from '../site-details-delete-control'
 
-const fetchMock = vi.fn();
-vi.stubGlobal('fetch', fetchMock);
+const navigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => navigate }
+})
 
-afterEach(() => fetchMock.mockReset());
-
-const context = (permissions = ['tenant.view', 'sites.view', 'sites.manage']): FrontendContext => ({
+function context(overrides: Partial<AppContext> = {}): AppContext {
+  return {
     user: { id: 1, name: 'Owner', email: 'owner@example.test' },
-    tenant: { slug: 'alpha', name: 'Alpha' },
-    tenants: [{ slug: 'alpha', name: 'Alpha' }],
-    permissions,
-    connectors: [],
-    capabilities: {},
-    api: { 'sites.detail.7': '/api/tenants/alpha/sites/7' },
-    actions: {},
-});
-
-function renderControl(value = context()) {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-    render(
-        <QueryClientProvider client={queryClient}>
-            <LocaleProvider>
-                <ToastProvider>
-                    <MemoryRouter initialEntries={['/tenants/alpha/sites/7']}>
-                        <Routes>
-                            <Route path="/tenants/:tenantSlug/sites/:siteId" element={<SiteDetailsDeleteControl context={value} siteId="7" />} />
-                            <Route path="/tenants/:tenantSlug/sites" element={<div>Sites collection</div>} />
-                        </Routes>
-                    </MemoryRouter>
-                </ToastProvider>
-            </LocaleProvider>
-        </QueryClientProvider>,
-    );
+    tenant: { id: 7, slug: 'alpha', name: 'Alpha' },
+    permissions: ['sites.manage'],
+    api: {
+      sites: '/api/tenants/alpha/sites',
+      'sites.detail.42': '/api/tenants/alpha/sites/42',
+    },
+    toast: { success: vi.fn(), error: vi.fn() },
+    ...overrides,
+  }
 }
 
-describe('AIMW-BILL-BE4B8C3822 site deletion', () => {
-    it('requires explicit confirmation and sends one DELETE to the authoritative tenant/site endpoint', async () => {
-        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
-        renderControl();
+function renderControl(value = context()) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  render(
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <AppContextProvider value={value}>
+          <SiteDetailsDeleteControl siteId={42} />
+        </AppContextProvider>
+      </QueryClientProvider>
+    </MemoryRouter>,
+  )
+  return { queryClient }
+}
 
-        expect(screen.queryByRole('button', { name: 'Confirm delete' })).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-        const confirm = screen.getByRole('button', { name: 'Confirm delete' });
-        expect(confirm).toHaveAttribute('data-canonical-operation', SITE_DETAILS_DELETE_OPERATION_ID);
-        expect(SITE_DETAILS_DELETE_OPERATION_ID).toBe('AIMW-BILL-BE4B8C3822');
+afterEach(() => {
+  vi.restoreAllMocks()
+  navigate.mockReset()
+})
 
-        fireEvent.click(confirm);
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-        expect(fetchMock.mock.calls[0][0]).toBe('/api/tenants/alpha/sites/7');
-        expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'DELETE' });
-        await screen.findByText('Sites collection');
-    });
+describe('site details delete control terminality', () => {
+  it('deletes only after confirmation and authoritative reread proves absence', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 7 }]), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const value = context()
+    renderControl(value)
 
-    it('fails closed when sites.manage is absent', () => {
-        renderControl(context(['tenant.view', 'sites.view']));
-        expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-    });
+    expect(screen.getByLabelText('Delete site')).toHaveAttribute('data-operation-id', SITE_DETAILS_DELETE_OPERATION_ID)
+    fireEvent.click(screen.getByRole('button', { name: 'Delete site' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
 
-    it('fails closed when the advertised endpoint does not exactly match the active tenant and site', () => {
-        const foreign = context();
-        foreign.api['sites.detail.7'] = '/api/tenants/beta/sites/7';
-        renderControl(foreign);
-        expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-        expect(fetchMock).not.toHaveBeenCalled();
-    });
-});
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites/42')
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'DELETE' })
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites')
+    await waitFor(() => expect(value.toast.success).toHaveBeenCalledWith('Site deleted'))
+    expect(navigate).toHaveBeenCalledWith('/sites')
+  })
+
+  it('fails closed when authoritative reread still contains the deleted id', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 42 }]), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const value = context()
+    renderControl(value)
+    fireEvent.click(screen.getByRole('button', { name: 'Delete site' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
+
+    await waitFor(() => expect(value.toast.error).toHaveBeenCalled())
+    expect(value.toast.success).not.toHaveBeenCalled()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('cancel performs no mutation', () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+    renderControl()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete site' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('does not render without sites.manage', () => {
+    renderControl(context({ permissions: ['sites.view'] }))
+    expect(screen.queryByLabelText('Delete site')).not.toBeInTheDocument()
+  })
+
+  it('fails closed when an advertised endpoint escapes the active tenant', () => {
+    renderControl(context({ api: { sites: '/api/tenants/alpha/sites', 'sites.detail.42': '/api/tenants/beta/sites/42' } }))
+    expect(screen.queryByLabelText('Delete site')).not.toBeInTheDocument()
+  })
+
+  it('fails closed when the advertised reread endpoint escapes the active tenant', () => {
+    renderControl(context({ api: { sites: '/api/tenants/beta/sites', 'sites.detail.42': '/api/tenants/alpha/sites/42' } }))
+    expect(screen.queryByLabelText('Delete site')).not.toBeInTheDocument()
+  })
+})
