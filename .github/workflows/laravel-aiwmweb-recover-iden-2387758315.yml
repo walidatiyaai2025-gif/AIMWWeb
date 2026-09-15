@@ -102,6 +102,8 @@ jobs:
           php artisan key:generate
           mkdir -p database
           touch database/database.sqlite
+          export DB_CONNECTION=sqlite
+          export DB_DATABASE="$PWD/database/database.sqlite"
           php artisan migrate:fresh --force
           vendor/bin/pint --test tests/Feature/CurrentUserAboutBuildSecurityTest.php
           php artisan test tests/Feature/CurrentUserAboutBuildSecurityTest.php
