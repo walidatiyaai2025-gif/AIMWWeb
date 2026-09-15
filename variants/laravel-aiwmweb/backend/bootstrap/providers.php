@@ -21,6 +21,7 @@ use App\Providers\SiteOperationsMaintenanceRouteServiceProvider;
 use App\Providers\SitesBulkDeleteRouteServiceProvider;
 use App\Providers\SitesConnectRouteServiceProvider;
 use App\Providers\SiteSettingsRouteServiceProvider;
+use App\Providers\SystemHealthRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -44,4 +45,5 @@ return [
     SiteEmailSettingsRouteServiceProvider::class,
     SiteSettingsRouteServiceProvider::class,
     SeoVisibleControlRouteServiceProvider::class,
+    SystemHealthRouteServiceProvider::class,
 ];
