@@ -57,15 +57,21 @@ function renderControl(value = context(), siteId: number | string = 42) {
 beforeEach(() => {
     window.localStorage.setItem('aiwm.locale', 'en');
     navigate.mockReset();
+    document.head.querySelector('meta[name="csrf-token"]')?.remove();
+    const csrf = document.createElement('meta');
+    csrf.name = 'csrf-token';
+    csrf.content = 'test-csrf-token';
+    document.head.appendChild(csrf);
 });
 
 afterEach(() => {
+    document.head.querySelector('meta[name="csrf-token"]')?.remove();
     cleanup();
     vi.restoreAllMocks();
 });
 
 describe('AIMW-BILL-BE4B8C3822 Site Details delete control', () => {
-    it('binds the exact canonical operation and reports success only after authoritative reread proves absence', async () => {
+    it('binds the exact canonical operation, preserves CSRF/session semantics, and reports success only after authoritative reread proves absence', async () => {
         const fetchMock = vi.spyOn(globalThis, 'fetch')
             .mockResolvedValueOnce(new Response(null, { status: 204 }))
             .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 7 }]), {
@@ -84,7 +90,12 @@ describe('AIMW-BILL-BE4B8C3822 Site Details delete control', () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites/42');
-        expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'DELETE' });
+        const deleteInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
+        const headers = new Headers(deleteInit.headers);
+        expect(deleteInit.method).toBe('DELETE');
+        expect(deleteInit.credentials).toBe('same-origin');
+        expect(headers.get('X-CSRF-TOKEN')).toBe('test-csrf-token');
+        expect(headers.get('X-Requested-With')).toBe('XMLHttpRequest');
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites');
         expect(fetchMock.mock.calls[1]?.[1]).toBeUndefined();
 
