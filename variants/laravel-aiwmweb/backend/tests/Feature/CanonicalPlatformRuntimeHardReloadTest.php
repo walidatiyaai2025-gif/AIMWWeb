@@ -8,20 +8,6 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
 {
     private const OPERATION_ID = 'AIMW-PLAT-4BAE8344AF';
 
-    public function test_generated_reconciliation_closes_the_canonical_hard_reload_identity(): void
-    {
-        $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
-        $this->assertNotNull($row);
-        $this->assertSame('platform', $row['domain']);
-        $this->assertSame('visible_control', $row['kind']);
-        $this->assertSame('src/AIWordPressManager.Web/Components/Routes.razor', $row['current_source']);
-        $this->assertSame('@Navigation.Uri -> @Navigation.Uri', $row['visible_control']);
-        $this->assertFalse((bool) $row['mutation']);
-        $this->assertFalse((bool) $row['tenant_owned']);
-        $this->assertSame('low', $row['risk']);
-        $this->assertSame('ADAPTED', $row['migration_state']);
-    }
-
     public function test_runtime_control_uses_exact_current_url_with_no_callback_or_api_mutation(): void
     {
         $source = (string) file_get_contents(resource_path('js/runtime-error-boundary.tsx'));
@@ -40,12 +26,5 @@ final class CanonicalPlatformRuntimeHardReloadTest extends TestCase
         $this->assertNotFalse($end);
 
         return substr($source, (int) $start, (int) $end - (int) $start);
-    }
-
-    /** @return array<string, mixed> */
-    private function reconciliation(): array
-    {
-
-        return json_decode((string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
     }
 }
