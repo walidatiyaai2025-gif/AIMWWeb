@@ -22,6 +22,7 @@ class SiteDetailsDeleteControlTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-BILL-BE4B8C3822';
+
     private const CSRF_TOKEN = 'site-delete-terminality-csrf-token';
 
     public function test_exact_canonical_operation_is_the_pending_confirm_delete_control(): void
