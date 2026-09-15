@@ -29,6 +29,7 @@ import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-s
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
+import { SystemHealthWorkspace } from './system-health-workspace';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -133,6 +134,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
+    if (route.key === 'system-health') return <SystemHealthWorkspace context={context} route={route} />;
     return <WorkspacePage context={context} route={route} />;
 }
 
