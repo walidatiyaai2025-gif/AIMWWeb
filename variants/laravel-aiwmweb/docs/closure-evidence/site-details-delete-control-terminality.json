@@ -6,36 +6,10 @@
   "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
   "source_control": "ConfirmDeleteAsync / Confirm delete",
   "migration_state": "ADAPTED",
-  "implementation_tested_sha": "0075b866032e20bb09648cc921379738b4e4c3b2",
-  "runtime": {
-    "frontend": "backend/resources/js/site-details-delete-control.tsx",
-    "controller": "backend/app/Http/Controllers/SiteManagementController.php",
-    "route": "DELETE /api/tenants/{tenant}/sites/{site}",
-    "persistence": "tenant-owned sites row deletion in a database transaction with authoritative post-delete absence verification"
-  },
-  "security": {
-    "session": "authenticated Laravel web session",
-    "csrf": "web CSRF protection is retained for DELETE; focused acceptance proves missing token fails closed without persistence change",
-    "tenant": "active TenantContext is authoritative and route tenant must match it",
-    "permission": "sites.manage",
-    "idor": "positive direct site ID is resolved with an explicit unscoped tenant_id + primary-key ownership query; foreign IDs and invalid IDs return 404",
-    "active_execution": "queued or running execution for the active tenant/site returns 409 and preserves the site",
-    "secret_exposure": "success is an empty 204 only; no credentials or provider secrets are returned"
-  },
-  "truthfulness": {
-    "success": "reported only after transactional delete and authoritative database absence verification, followed by frontend authoritative sites reread",
-    "failure": "mutation or reread failure does not emit success; duplicate submission is suppressed while pending",
-    "replay": "already-absent/direct-ID replay fails closed as not found",
-    "fake_success": false,
-    "sample_or_demo_data": false
-  },
-  "focused_acceptance": [
-    "backend/tests/Feature/SiteDetailsDeleteControlTerminalityTest.php",
-    "backend/resources/js/__tests__/site-details-delete-control.test.tsx"
-  ],
-  "scope": {
-    "canonical_operations_closed": 1,
-    "reference_product_modified": false,
-    "generated_reconciliation_hand_edited": false
-  }
+  "implementation_tested_sha": "f49b208d305a4b5bc28c88a91fad1050b759ef33",
+  "runtime": {"frontend":"backend/resources/js/site-details-delete-control.tsx","controller":"backend/app/Http/Controllers/SiteManagementController.php","route":"DELETE /api/tenants/{tenant}/sites/{site}","persistence":"tenant-owned sites row deletion in a database transaction with authoritative post-delete absence verification"},
+  "security": {"session":"authenticated Laravel web session","csrf":"web CSRF protection is retained for DELETE; focused acceptance proves missing token fails closed without persistence change","tenant":"active TenantContext is authoritative and route tenant must match it","permission":"sites.manage","idor":"positive direct site ID is resolved with an explicit unscoped tenant_id + primary-key ownership query; foreign IDs and invalid IDs return 404","active_execution":"queued or running execution for the active tenant/site returns 409 and preserves the site","secret_exposure":"success is an empty 204 only; no credentials or provider secrets are returned"},
+  "truthfulness": {"success":"reported only after transactional delete and authoritative database absence verification, followed by frontend authoritative sites reread proving the target ID absent","failure":"mutation, malformed reread, reread failure, or stale target presence does not emit success; duplicate submission is suppressed while pending","replay":"already-absent/direct-ID replay fails closed as not found","fake_success":false,"sample_or_demo_data":false},
+  "focused_acceptance": ["backend/tests/Feature/SiteDetailsDeleteControlTerminalityTest.php","backend/resources/js/__tests__/site-details-delete-control.test.tsx"],
+  "scope": {"canonical_operations_closed":1,"reference_product_modified":false,"generated_reconciliation_hand_edited":false}
 }
