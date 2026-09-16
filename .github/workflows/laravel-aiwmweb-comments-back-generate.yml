@@ -1,5 +1,5 @@
 name: Laravel AIWMWeb Comments Back Generator
-# Re-materialize after the TypeScript-safe focused-test repair so provenance points at the validated source snapshot.
+# Final provenance materialization after removing the unverified evidence snapshot field.
 
 on:
   push:
