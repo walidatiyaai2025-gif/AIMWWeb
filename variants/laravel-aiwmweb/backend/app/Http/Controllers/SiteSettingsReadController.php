@@ -29,8 +29,8 @@ final class SiteSettingsReadController extends Controller
             ->whereKey($site)
             ->firstOrFail();
 
-        $canManageCredential = $this->tenantContext->membership()->hasPermission('sites.manage');
-        $credential = $canManageCredential
+        $canManageSite = $this->tenantContext->membership()->hasPermission('sites.manage');
+        $credential = $canManageSite
             ? SiteCredential::withoutGlobalScopes()
                 ->where('tenant_id', $activeTenant->getKey())
                 ->where('site_id', $model->getKey())
@@ -41,7 +41,8 @@ final class SiteSettingsReadController extends Controller
             'site' => $model,
             'tenant' => $activeTenant->slug,
             'credential' => $credential,
-            'canManageCredential' => $canManageCredential,
+            'canManageCredential' => $canManageSite,
+            'canManageSite' => $canManageSite,
         ]);
     }
 }
