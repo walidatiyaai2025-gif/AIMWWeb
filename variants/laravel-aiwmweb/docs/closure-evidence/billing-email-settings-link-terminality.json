@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-092F59830B",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AccountBilling.razor",
+    "source_screen": "/account/billing",
+    "source_control": "Email settings / إعدادات البريد -> /account/email-settings",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "Subscription & Billing exposes a visible secondary Email settings action that navigates to the account email-settings workspace.",
+    "side_effect": "navigation only",
+    "mutation": false,
+    "success_semantics": "navigation reaches the real tenant email-settings route; the control does not claim save, test, provider, or delivery success"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/billing-profile-link.tsx",
+    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "read_only_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-summary.tsx",
+    "source_route": "/tenants/{tenant}/account/billing",
+    "source_permission": "billing.view",
+    "target_builder": "tenantUrl(context.tenant.slug, '/account/email-settings')",
+    "target_route": "/tenants/{tenant}/account/email-settings",
+    "target_route_operation": "AIMW-EMAI-B2CFCF818C",
+    "target_route_permission": "tenant.view",
+    "target_read_api": "/api/v1/tenants/{tenant}/email/configuration",
+    "target_read_permission": "tenant.manage",
+    "target_read_source": "App\\Http\\Controllers\\EmailNotificationController::configuration",
+    "target_serializer": "App\\Email\\Services\\MailConfigurationService::serialize",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "authenticated user opens the explicit /tenants/{tenant}/account/billing route",
+    "auth and tenant.context activate the membership and billing.view authorizes the source route",
+    "BillingProfileLink renders the canonical Email settings control only in the account-billing RouteElement",
+    "the control derives the destination from authoritative FrontendContext.tenant.slug through tenantUrl",
+    "React resolves account/email-settings explicitly instead of falling through to NotFound",
+    "the destination server route rereads authenticated tenant context and requires tenant.view",
+    "the read-only destination requests the same-tenant email configuration only when tenant.manage is present",
+    "MailConfigurationService serializes configuration state without the SMTP secret"
+  ],
+  "authorization": {
+    "source_route": ["web", "auth", "tenant.context", "billing.view"],
+    "target_route": ["web", "auth", "tenant.context", "tenant.view"],
+    "configuration_api": ["auth", "tenant.context", "tenant.manage"],
+    "missing_billing_view": "403 at the source route",
+    "missing_tenant_manage": "the client sends no configuration request and the API independently returns 403",
+    "guest": "redirected to canonical login before source or destination data is exposed"
+  },
+  "tenant_isolation": {
+    "tenant_source": "authoritative FrontendContext.tenant.slug",
+    "caller_selected_tenant_allowed": false,
+    "tenant_encoding": "tenantUrl and encodeURIComponent prevent path-fragment tenant injection",
+    "foreign_tenant_source_route": "404",
+    "foreign_tenant_target_route": "404",
+    "foreign_tenant_configuration_api": "404",
+    "direct_id_surface": "none; the navigation and default configuration read contain no caller-selected user, site, credential, provider, or billing resource ID"
+  },
+  "security_semantics": {
+    "csrf": "not applicable to the canonical operation because navigation and configuration display are GET/read-only; no state-changing request was added",
+    "session": "Laravel auth session is required by the source, target, context, and configuration contracts",
+    "secrets": "SMTP secret material is never returned or rendered; only has_secret boolean state is exposed by the existing serializer",
+    "queue_cache_scheduler": "none; this operation enqueues no job, writes no cache key, and changes no scheduler state",
+    "wordpress_connector": "none; no WordPress or Connector request is issued",
+    "billing_provider": "none; no checkout, subscription, PayPal, or provider mutation is issued",
+    "ai_provider": "none; no AI/provider request is issued",
+    "persistence": "none; the canonical operation performs navigation plus authoritative reads only",
+    "idempotency": "repeated navigation and rereads are side-effect free",
+    "truthful_failure": "authorization or API failures render an explicit failure state rather than fake success"
+  },
+  "focused_tests": {
+    "frontend": [
+      "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-email-settings-link.test.tsx",
+      "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-summary.test.tsx"
+    ],
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/BillingEmailSettingsLinkTerminalityTest.php",
+    "assertions": [
+      "exact source labels and canonical operation marker",
+      "tenant-derived encoded destination and cross-tenant path rejection",
+      "Arabic label parity",
+      "tenant.manage fail-closed before configuration fetch",
+      "SMTP secret non-rendering",
+      "explicit source and destination routes with exact permissions",
+      "guest, missing-permission, and foreign-tenant rejection"
+    ]
+  },
+  "selected_authority_sha": "a7e16fd9a1e7a59874d1e9c19f9e51e2ebf962ee",
+  "implementation_snapshot_sha": "842a3035c5c0ff7b84a2ac8685e27a562ba54b5c",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-092F59830B",
+    "target_route_operation_claimed": false,
+    "email_settings_mutation_controls_claimed": false,
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "canonical_input_ledger_modified": false,
+    "hand_edited_terminal_count": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "The source-faithful Email settings action is visibly mounted on the real Billing workspace, derives its tenant-qualified destination from authenticated server context, resolves to the already-terminal explicit email-settings route, reads only authoritative same-tenant configuration behind tenant.manage, exposes no SMTP secret, rejects foreign-tenant paths, and introduces no mutation or fake success. Exact-head focused and repository CI are recorded externally because a commit cannot self-contain its own final SHA."
+  }
+}
