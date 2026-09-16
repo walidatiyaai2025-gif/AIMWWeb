@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AboutBuildRouteServiceProvider;
+use App\Providers\AccountEmailSettingsRouteServiceProvider;
 use App\Providers\AiCenterApprovalStatusRouteServiceProvider;
 use App\Providers\AiCenterRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
@@ -25,6 +26,7 @@ use App\Providers\SystemHealthRouteServiceProvider;
 
 return [
     AppServiceProvider::class,
+    AccountEmailSettingsRouteServiceProvider::class,
     ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
     PublicWelcomeRouteServiceProvider::class,
