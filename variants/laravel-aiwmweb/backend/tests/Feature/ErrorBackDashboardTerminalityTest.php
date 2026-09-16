@@ -72,9 +72,11 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
         $this->get('/')->assertOk();
     }
 
-    public function test_tenant_shaped_error_path_fails_closed_without_exposing_the_control(): void
+    public function test_authenticated_tenant_shaped_error_path_fails_closed_without_exposing_the_control(): void
     {
-        $this->get('/tenants/foreign-tenant/Error')
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/tenants/foreign-tenant/Error')
             ->assertNotFound()
             ->assertDontSee(self::OPERATION_ID);
     }
