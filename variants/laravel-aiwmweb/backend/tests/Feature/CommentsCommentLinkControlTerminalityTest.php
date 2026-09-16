@@ -113,19 +113,28 @@ class CommentsCommentLinkControlTerminalityTest extends TestCase
         $controller = (string) file_get_contents(app_path('Http/Controllers/ContentApiController.php'));
         $service = (string) file_get_contents(app_path('Content/ContentPlatformService.php'));
 
+        $linkControlStart = strpos($component, 'export function CommentsCommentLinkControl');
+        $replyDraftStart = strpos($component, 'function CommentsReplyDraft');
+        $this->assertNotFalse($linkControlStart);
+        $this->assertNotFalse($replyDraftStart);
+        $this->assertGreaterThan($linkControlStart, $replyDraftStart);
+        $linkControl = substr($component, $linkControlStart, $replyDraftStart - $linkControlStart);
+
         $this->assertStringContainsString(self::OPERATION_ID, $component);
+        $this->assertStringContainsString('COMMENTS_COMMENT_LINK_OPERATION_ID', $linkControl);
         $this->assertStringContainsString("parsed.protocol !== 'http:' && parsed.protocol !== 'https:'", $component);
         $this->assertStringContainsString('parsed.username || parsed.password', $component);
-        $this->assertStringContainsString('target="_blank"', $component);
-        $this->assertStringContainsString('rel="noopener noreferrer"', $component);
+        $this->assertStringContainsString('target="_blank"', $linkControl);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $linkControl);
         $this->assertStringContainsString("import { CommentsCommentLinksControl } from './comments-comment-link-control';", $host);
         $this->assertStringContainsString("if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} />", $host);
         $this->assertStringContainsString("\$q = Comment::query()->where('site_id', \$site);", $controller);
         $this->assertStringContainsString("'link' => \$row['link'] ?? null", $service);
-        $this->assertStringNotContainsString('method: \'POST\'', $component);
-        $this->assertStringNotContainsString('method: \'PATCH\'', $component);
-        $this->assertStringNotContainsString('method: \'DELETE\'', $component);
-        $this->assertStringNotContainsString('secret', strtolower($component));
+        $this->assertStringNotContainsString('apiRequest', $linkControl);
+        $this->assertStringNotContainsString('method: \'POST\'', $linkControl);
+        $this->assertStringNotContainsString('method: \'PATCH\'', $linkControl);
+        $this->assertStringNotContainsString('method: \'DELETE\'', $linkControl);
+        $this->assertStringNotContainsString('secret', strtolower($linkControl));
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
