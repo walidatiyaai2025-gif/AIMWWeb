@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "source_sha": "34d359e2eed06323d60834601bfd37695c70d548",
+  "routes": {
+    "AIMW-BILL-5811B45F89": {
+      "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportReadController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-support-route-terminality.json",
+      "source_auth_path": "src/AIWordPressManager.Web/Services/ApplicationPermissionCatalog.cs",
+      "security_mode": "platform_admin_policy"
+    }
+  }
+}

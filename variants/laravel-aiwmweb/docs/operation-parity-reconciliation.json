@@ -17,6 +17,7 @@
     "operation_scoped_source_policy": "a countable source declaring operation_ids may contribute generic evidence only to those canonical IDs; the normal code, tenant/security, and test thresholds still apply",
     "explicit_route_policy": "route rows remain pending unless an exact pushed source declares operation_evidence and the generator verifies route, auth/tenant action, test, and evidence links",
     "tenant_neutral_route_policy": "zero-parameter route rows outside tenant-selected routing may be terminalized only by an exact pushed source-boundary contract proving either explicit AllowAnonymous web-only semantics or application-wide authenticated fallback semantics preserved as web+auth without tenant.context, together with explicit action wiring and deterministic fail-closed acceptance",
+    "platform_admin_route_policy": "zero-parameter tenant-owned scanner rows may use platform-admin route evidence only when the canonical source explicitly requires non-delegable Settings.Manage authorization and exact pushed Laravel evidence preserves it as web+auth+platform.admin without tenant.context or caller-selected resource identifiers",
     "explicit_route_api_policy": "route/API rows may be terminalized by route_api_provenance only when an exact pushed source proves normalized route identity, declared action wiring, operation-ID linkage, runtime acceptance, and tenant-selected, pre-tenant session-auth, authenticated-session logout, pre-tenant setup-mutation, or explicitly tenant-neutral security semantics",
     "focused_visible_control_policy": "visible-control rows remain PENDING unless an exact pushed closure evidence file, production operation-ID marker, focused operation-ID test, and applicable tenant/security assertions are all present",
     "focused_service_policy": "service rows remain PENDING unless an opted-in closure evidence contract names a pushed exact implementation SHA and the verifier confirms exact operation, canonical source/service/member, production path, focused test, and applicable tenant/authorization proof"
@@ -24,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 591,
-    "pending": 340,
+    "adapted": 592,
+    "pending": 339,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 591,
-    "overall_parity_percent": 63.48
+    "terminal": 592,
+    "overall_parity_percent": 63.59
   },
   "visible_controls": {
     "total": 446,
@@ -82,12 +83,12 @@
     "billing": {
       "total": 178,
       "ported": 0,
-      "adapted": 92,
-      "pending": 86,
+      "adapted": 93,
+      "pending": 85,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 92,
-      "percent": 51.69
+      "terminal": 93,
+      "percent": 52.25
     },
     "comments": {
       "total": 8,
@@ -10036,21 +10037,40 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php",
+      "evidence": "Platform-admin route closure@34d359e2eed06323d60834601bfd37695c70d548: variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php; platform-admin-route:AIMW-BILL-5811B45F89; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-support-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed evidence proves the source Settings.Manage administrator-only policy, Laravel web+auth+platform.admin enforcement without an invented tenant selector, zero route parameters, read-only action wiring, and deterministic fail-closed acceptance.",
+        "source_label": "Platform-admin route closure",
+        "source_sha": "34d359e2eed06323d60834601bfd37695c70d548",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "security_mode": "platform_admin_policy",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-support-route-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-5811B45F89",
+          "source-policy:Settings.Manage",
+          "source-policy:administrator-only",
+          "middleware:web",
+          "middleware:auth",
+          "middleware:platform.admin",
+          "middleware:no-tenant-context",
+          "route:no-parameters",
+          "resource-input:none",
+          "guest:login-redirect",
+          "non-admin:403",
+          "platform-admin:200",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -34910,12 +34930,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 51,
-      "pending": 33,
+      "adapted": 52,
+      "pending": 32,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 51,
-      "percent": 60.71
+      "terminal": 52,
+      "percent": 61.9
     },
     "service": {
       "total": 349,
@@ -34969,7 +34989,6 @@
       "AIMW-BILL-48E69F42EB",
       "AIMW-BILL-4DCB58743D",
       "AIMW-BILL-54E4003BE9",
-      "AIMW-BILL-5811B45F89",
       "AIMW-BILL-582319B640",
       "AIMW-BILL-5887A977D7",
       "AIMW-BILL-5A0140C699",
@@ -35681,6 +35700,7 @@
       "AIMW-BACK-66BFA49775",
       "AIMW-BACK-979DEF54FA",
       "AIMW-BILL-2FFFC55BAB",
+      "AIMW-BILL-5811B45F89",
       "AIMW-COMM-C2DDF5DAE3",
       "AIMW-CONT-110268CC96",
       "AIMW-CONT-1DA83B9262",
@@ -35722,6 +35742,11 @@
     ],
     "source_boundary_route_contract_count": 2,
     "tenant_neutral_route_source_sha": "d03f0dc5b5a663289fefd08015fcf5babbc4d89f",
+    "platform_admin_route_contract_terminals": [
+      "AIMW-BILL-5811B45F89"
+    ],
+    "platform_admin_route_contract_count": 1,
+    "platform_admin_route_source_sha": "34d359e2eed06323d60834601bfd37695c70d548",
     "explicit_route_api_contract_terminals": [
       "AIMW-AI-58FABCCEDB",
       "AIMW-AI-82F795EE67",
