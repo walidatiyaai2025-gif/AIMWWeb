@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 579,
-    "pending": 352,
+    "adapted": 580,
+    "pending": 351,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 579,
-    "overall_parity_percent": 62.19
+    "terminal": 580,
+    "overall_parity_percent": 62.3
   },
   "visible_controls": {
     "total": 446,
@@ -112,12 +112,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 57,
-      "pending": 25,
+      "adapted": 58,
+      "pending": 24,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 57,
-      "percent": 69.51
+      "terminal": 58,
+      "percent": 70.73
     },
     "identity": {
       "total": 7,
@@ -20739,21 +20739,34 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/AccountEmailSettingsRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
+      "evidence": "Account email settings route closure@b4af1a8e8e4160699ad9b44e72488c33be56a7c7: variants/laravel-aiwmweb/backend/app/Providers/AccountEmailSettingsRouteServiceProvider.php; explicit-route-api:AIMW-EMAI-B2CFCF818C; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Account email settings route closure",
+        "source_sha": "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AccountEmailSettingsRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-route-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-B2CFCF818C",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -34789,12 +34802,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 48,
-      "pending": 36,
+      "adapted": 49,
+      "pending": 35,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 48,
-      "percent": 57.14
+      "terminal": 49,
+      "percent": 58.33
     },
     "service": {
       "total": 349,
@@ -35075,7 +35088,6 @@
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-9EB09C490D",
       "AIMW-EMAI-A9CB66F400",
-      "AIMW-EMAI-B2CFCF818C",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-BFDC050625",
       "AIMW-EMAI-E4EEF1914B",
@@ -35492,6 +35504,16 @@
         "supporting_only": true,
         "operation_ids": [],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "Account email settings route closure",
+        "sha": "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
+        "domains": [
+          "email"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -35520,6 +35542,7 @@
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
+      "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
@@ -35593,6 +35616,7 @@
       "AIMW-CONT-475267F150",
       "AIMW-CONT-6F699A5C14",
       "AIMW-EMAI-2D94EFDD53",
+      "AIMW-EMAI-B2CFCF818C",
       "AIMW-MEDI-8BADBE1261",
       "AIMW-OPER-ABB41FC891",
       "AIMW-PLAT-18A8EE0324",
@@ -35602,7 +35626,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 18,
+    "explicit_route_api_contract_count": 19,
     "focused_closure_source_sha": "ad0c131b35e0a6a9c4d5c72583f32c580ed3241f",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
