@@ -162,12 +162,12 @@ final class SubscriptionPlanSaveController extends Controller
 
         $attributes = [
             'name' => $data['name_en'],
-            'localized_name' => ['en' => $data['name_en'], 'ar' => $data['name_ar']],
+            'localized_name' => $this->localized($data['name_en'], $data['name_ar']),
             'description' => $data['description_en'] ?? null,
-            'localized_description' => [
-                'en' => $data['description_en'] ?? '',
-                'ar' => $data['description_ar'] ?? '',
-            ],
+            'localized_description' => $this->localized(
+                $data['description_en'] ?? '',
+                $data['description_ar'] ?? '',
+            ),
             'price_minor' => $this->priceMinor((string) $data['price']),
             'currency' => $data['currency'],
             'billing_interval' => $data['billing_interval'] === 'Yearly' ? 'year' : 'month',
@@ -185,6 +185,11 @@ final class SubscriptionPlanSaveController extends Controller
         }
 
         return $attributes;
+    }
+
+    private function localized(string $english, string $arabic): array
+    {
+        return ['ar' => $arabic, 'en' => $english];
     }
 
     private function priceMinor(string $price): int
