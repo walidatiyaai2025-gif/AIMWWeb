@@ -36,6 +36,8 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           touch database/database.sqlite
+          export DB_CONNECTION=sqlite
+          export DB_DATABASE="$(pwd)/database/database.sqlite"
           php artisan migrate:fresh --force
           php artisan test tests/Feature/ErrorRouteTerminalityTest.php
 
