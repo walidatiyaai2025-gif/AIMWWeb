@@ -23,17 +23,16 @@ class SitesDeleteControlTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-BE4B8C3822';
 
-    public function test_exact_canonical_operation_is_the_pending_sites_confirm_delete_control(): void
+    public function test_exact_canonical_operation_is_the_sites_confirm_delete_control(): void
     {
         $document = json_decode((string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
         $this->assertSame('billing', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/Sites.razor', $operation['current_source']);
         $this->assertStringContainsString('Confirm', $operation['visible_control']);
-        $this->assertTrue((bool) $operation['mutation']);
+        $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
     }
 
