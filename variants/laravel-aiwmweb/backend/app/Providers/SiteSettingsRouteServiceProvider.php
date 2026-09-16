@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\SiteCredentialController;
 use App\Http\Controllers\SiteSettingsReadController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -15,5 +16,11 @@ final class SiteSettingsRouteServiceProvider extends ServiceProvider
             ->defaults('canonical_operation_id', 'AIMW-SITE-9F9F2977B5')
             ->whereNumber('site')
             ->name('canonical.site.settings');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->delete('/tenants/{tenant}/sites/{site}/settings/credential', [SiteCredentialController::class, 'destroy'])
+            ->defaults('canonical_operation_id', 'AIMW-BILL-E36C3E1427')
+            ->whereNumber('site')
+            ->name('canonical.site.settings.credential.destroy');
     }
 }
