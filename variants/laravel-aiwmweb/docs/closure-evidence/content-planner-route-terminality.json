@@ -1,0 +1,63 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-69825FEAD5",
+  "domain": "billing",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/web/AIWebsiteManager.Web/Components/Pages/ContentPlanner.razor",
+    "route_screen": "/content-planner",
+    "visible_control": "(route exposure)",
+    "behavior": "Expose the Content Planner route for the current tenant; this closure is limited to route exposure and does not invent ContentPlanningService behavior that is outside the canonical operation row."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ContentPlannerRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+    "route": "/tenants/{tenant}/content-planner",
+    "operation_marker": "AIMW-BILL-69825FEAD5",
+    "behavior": "A dedicated Laravel route renders the existing tenant workspace through CanonicalWorkspaceRouteController after authenticated tenant-context resolution and explicit tenant.view plus content.view authorization."
+  },
+  "authorization": {
+    "middleware": ["web", "auth", "tenant.context"],
+    "permissions": ["tenant.view", "content.view"],
+    "fail_closed": "Guests cannot reach the workspace, authenticated members missing content.view receive 403, and a member of another tenant receives 404 during tenant-context resolution."
+  },
+  "tenant_isolation": {
+    "tenant_selector": "route slug resolved by tenant.context",
+    "direct_object_id": "none",
+    "idor_surface": "none beyond the tenant slug",
+    "proof": "Focused acceptance exercises alpha->beta direct route access and requires 404; the route exposes no user, site, content, or other resource identifier."
+  },
+  "validation_and_degraded_states": {
+    "invalid_or_foreign_tenant": "fails closed through tenant.context without rendering the workspace",
+    "missing_permission": "403",
+    "anonymous": "redirected to the Laravel login boundary",
+    "fake_success_path": "none"
+  },
+  "persistence_and_runtime": {
+    "mutation": "none",
+    "persistence": "none added by this route exposure",
+    "idempotency": "GET route is read-only",
+    "retry": "No internal retry; normal browser retry remains truthful because no mutation is performed.",
+    "audit": "No business mutation is emitted by this route exposure operation."
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
+      "coverage": "canonical operation identity, explicit action binding, auth and tenant.context middleware, tenant.view/content.view authorization, authorized rendering, guest boundary, missing-permission 403, cross-tenant 404, and absence of direct resource-ID surfaces"
+    }
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "content_planning_service_behavior_claimed": false,
+    "aspnet_current_product_modified": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical route exposure is represented by an explicit, tenant-derived Laravel route with deterministic authorization/isolation acceptance; no unrelated Content Planner business behavior is claimed."
+  }
+}
