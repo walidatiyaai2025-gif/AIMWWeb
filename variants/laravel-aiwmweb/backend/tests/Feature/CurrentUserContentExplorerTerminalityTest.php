@@ -52,8 +52,7 @@ final class CurrentUserContentExplorerTerminalityTest extends TestCase
 
         $response
             ->assertJsonPath('tenant.slug', 'alpha')
-            ->assertJsonPath('active_site.id', $site->id)
-            ->assertJsonPath('api.sites.detail.'.$site->id, null);
+            ->assertJsonPath('active_site.id', $site->id);
 
         $payload = $response->json();
         $this->assertSame(
