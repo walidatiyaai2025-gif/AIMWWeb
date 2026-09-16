@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "c24f5e21c8c6d1e199fe8a57fcd534c58c6a8ae1",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-1234961B6E",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_screen": "/settings",
+    "source_control": "ToggleLanguage [ToggleLanguage]",
+    "mutation": false,
+    "verification": "focused deterministic frontend tests plus exact pushed production marker"
+  },
+  "source_behavior": {
+    "action": "ToggleLanguage",
+    "toggle": "ar <-> en",
+    "persist": "appLanguage.set stores the selected culture",
+    "apply": "appLanguage.apply updates culture and text direction immediately"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/settings",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-ai-providers-link-control.tsx",
+    "locale_runtime": "variants/laravel-aiwmweb/backend/resources/js/i18n.tsx",
+    "storage_key": "aiwm.locale",
+    "placeholder_or_fake_success": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap resolves FrontendContext before the Settings route renders",
+    "Settings route requires tenant.view and the language control independently fails closed without tenant.view or wildcard permission",
+    "button invokes LocaleProvider.toggleLocale with no caller-supplied tenant or resource identifier",
+    "LocaleProvider persists only the locale preference in localStorage under aiwm.locale",
+    "LocaleProvider applies document.documentElement.lang and dir from the selected locale",
+    "the control performs no fetch, server persistence, queue, cache, scheduler, WordPress, Connector, AI or provider mutation"
+  ],
+  "authorization_and_isolation": {
+    "session": "required by tenant bootstrap",
+    "active_tenant": "server-resolved FrontendContext",
+    "permission": "tenant.view or wildcard",
+    "foreign_tenant": "remains governed by tenant bootstrap; the control accepts no tenant input",
+    "direct_object_id": "not applicable",
+    "csrf": "not applicable because no HTTP mutation occurs"
+  },
+  "secret_and_external_policy": {
+    "secrets_read_or_exposed": false,
+    "wordpress_or_connector_effect": false,
+    "ai_or_provider_effect": false,
+    "server_mutation": false,
+    "fake_or_demo_success": false
+  },
+  "acceptance_tests": {
+    "path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-language-toggle-control.test.tsx",
+    "proof": [
+      "canonical operation marker is bound to the rendered Settings button",
+      "English toggles to Arabic and persists aiwm.locale",
+      "Arabic applies lang=ar and dir=rtl immediately",
+      "persisted Arabic restores and toggles back to English with lang=en and dir=ltr",
+      "no fetch call occurs during the preference change",
+      "missing tenant.view fails closed and preserves server-side foreign-tenant 404 / permission 403 boundaries"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-1234961B6E",
+    "sibling_controls_terminalized": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The canonical Settings language control now drives the existing real Laravel locale runtime, persists the selected culture, applies document language and direction immediately, fails closed outside the tenant Settings permission boundary, and introduces no server/external mutation or fabricated success path."
+  }
+}
