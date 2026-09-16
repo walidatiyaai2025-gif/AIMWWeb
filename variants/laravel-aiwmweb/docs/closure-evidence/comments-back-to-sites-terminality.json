@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-COMM-85A340C8BC",
+    "domain": "comments",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/comments",
+    "source_control": "@L[ -> /sites",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "CommentsManager exposes BackToSites navigation to /sites as the recovery action when the requested site cannot be resolved.",
+    "side_effect": "navigation only",
+    "wordpress_behavior": "none for this control; no WordPress request or mutation is initiated",
+    "success_semantics": "navigation only; no success message or mutation receipt is fabricated"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/sites/{site}/comments",
+    "source_route_name": "canonical.site.comments",
+    "source_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::redirectSite",
+    "source_workspace": "/tenants/{tenant}/module/comments?site={site}",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-back-to-sites-control.tsx",
+    "runtime_wiring": "CommentsBackToSitesControl is rendered only for the existing comments RouteElement",
+    "target_builder": "tenantUrl(context.tenant.slug, '/sites')",
+    "target_route": "/tenants/{tenant}/sites",
+    "target_route_name": "canonical.workspace.sites",
+    "target_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "target_backing_api": "/api/tenants/{tenant}/sites",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "adaptation_note": "The ASP.NET control is shown on the source site-not-found state. Laravel intentionally preserves its stricter existing fail-closed site resolution: an unknown or foreign site is rejected before the React workspace renders. The source-equivalent recovery intent is therefore exposed as a tenant-derived Back to sites navigation on the real Comments workspace without weakening the 404/IDOR boundary.",
+  "runtime_path": [
+    "authenticated user enters the explicit tenant/site Comments route",
+    "auth and tenant.context activate the current tenant membership",
+    "content.view is authorized before Site is resolved through tenant-scoped Site query",
+    "foreign or missing Site direct IDs fail closed before workspace rendering",
+    "the route stores authoritative site context and redirects to the real Comments workspace",
+    "React renders CommentsBackToSitesControl only for the comments workspace",
+    "the link target is derived exclusively from FrontendContext.tenant.slug",
+    "the destination explicit Sites workspace authorizes tenant.view and sites.view and reads the real tenant-scoped Sites API"
+  ],
+  "authorization": {
+    "source_route": ["auth", "tenant.context", "content.view"],
+    "destination_route": ["auth", "tenant.context", "tenant.view", "sites.view"],
+    "guest": "redirects to canonical login",
+    "missing_source_permission": "403",
+    "missing_destination_permission": "403"
+  },
+  "tenant_isolation": {
+    "target_tenant_source": "authoritative FrontendContext.tenant.slug only",
+    "caller_controlled_redirect": false,
+    "foreign_site_direct_id": "404",
+    "foreign_tenant_destination": "404",
+    "destination_direct_id_surface": "none"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf_write_path": "not applicable; no HTTP mutation exists",
+    "persistence": "none",
+    "queue_cache_scheduler": "none",
+    "secret_provider_connector_surface": "none",
+    "authoritative_reread": "destination Sites workspace reads the real tenant-scoped Sites collection",
+    "idempotency": "repeated navigation is side-effect free",
+    "retry_and_cancellation": "not applicable to navigation-only control",
+    "audit_or_receipt": "not applicable because no domain mutation occurs"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-back-to-sites-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsBackToSitesControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker and tenant-derived target",
+      "tenant slug encoding without caller-derived destination",
+      "explicit source and destination controller routes with auth/tenant middleware",
+      "authorized real Comments and Sites reachability",
+      "guest redirect and permission 403 behavior",
+      "foreign-site and foreign-tenant 404 isolation",
+      "no network mutation from the control"
+    ]
+  },
+  "implementation_snapshot_sha": "6449e945eb851a9dceb54cbe6c23b84c66d3e7a0",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-COMM-85A340C8BC",
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The exact source navigation intent is implemented on the real tenant-scoped Comments runtime with an authoritative tenant-derived Sites destination, existing fail-closed site IDOR behavior is preserved, no mutation or fake success is introduced, and focused frontend/Laravel proof is committed."
+  }
+}
