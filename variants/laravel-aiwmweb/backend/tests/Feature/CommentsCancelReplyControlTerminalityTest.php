@@ -3,12 +3,22 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\ContentApiController;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Site;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
+use App\Models\User;
+use App\Tenancy\TenantContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class CommentsCancelReplyControlTerminalityTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-COMM-843A2F029B';
 
     public function test_exact_canonical_input_is_the_pending_comments_cancel_reply_control(): void
@@ -52,6 +62,29 @@ class CommentsCancelReplyControlTerminalityTest extends TestCase
         $this->assertStringContainsString('\'content\' => \'required|string|max:20000\'', $controller);
     }
 
+    public function test_guest_foreign_tenant_and_foreign_site_context_fail_closed_with_404(): void
+    {
+        $alphaUser = User::factory()->create();
+        $alphaMembership = $this->membership($alphaUser, 'alpha', ['tenant.view', 'content.view', 'sites.view', 'content.edit']);
+        $alphaSite = $this->site($alphaMembership, 'Alpha Site');
+
+        $betaUser = User::factory()->create();
+        $betaMembership = $this->membership($betaUser, 'beta', ['tenant.view', 'content.view', 'sites.view', 'content.edit']);
+        $betaSite = $this->site($betaMembership, 'Beta Site');
+
+        $this->getJson('/tenants/alpha/context?site='.$alphaSite->id)->assertUnauthorized();
+
+        $this->actingAs($alphaUser)
+            ->getJson('/tenants/alpha/context?site='.$betaSite->id)
+            ->assertNotFound();
+
+        $this->actingAs($alphaUser)
+            ->getJson('/tenants/beta/context?site='.$betaSite->id)
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('sites', ['id' => $betaSite->id, 'tenant_id' => $betaMembership->tenant_id]);
+    }
+
     public function test_frontend_cancel_is_permission_gated_local_only_and_supporting_send_uses_csrf_same_origin_without_retry(): void
     {
         $component = (string) file_get_contents(resource_path('js/comments-comment-link-control.tsx'));
@@ -73,5 +106,37 @@ class CommentsCancelReplyControlTerminalityTest extends TestCase
         $this->assertStringContainsString('meta[name="csrf-token"]', $core);
         $this->assertStringContainsString('headers.set(\'X-CSRF-TOKEN\', csrf)', $core);
         $this->assertStringContainsString('credentials: \'same-origin\'', $core);
+    }
+
+    private function membership(User $user, string $slug, array $permissions): TenantMembership
+    {
+        $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
+
+        $membership = TenantMembership::query()->create(['user_id' => $user->id, 'status' => 'active']);
+        $role = Role::query()->create(['name' => "comments-cancel-reply-{$slug}-{$user->id}"]);
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
+            $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
+        }
+        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $context->forget();
+
+        return $membership->fresh('tenant');
+    }
+
+    private function site(TenantMembership $membership, string $name): Site
+    {
+        $context = app(TenantContext::class);
+        $context->activate($membership->tenant, $membership);
+        $site = Site::query()->create([
+            'name' => $name,
+            'url' => 'https://'.strtolower(str_replace(' ', '-', $name)).'.test',
+            'status' => 'active',
+        ]);
+        $context->forget();
+
+        return $site;
     }
 }
