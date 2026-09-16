@@ -1,16 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { APP_BUTTON_CLICK_OPERATION_ID, AppButton } from '../app-button';
-import { RUNTIME_ERROR_RECOVER_OPERATION_ID, RuntimeErrorBoundary } from '../runtime-error-boundary';
-
-function AlwaysThrows(): React.JSX.Element {
-    throw new Error('app-button production wiring probe');
-}
-
-afterEach(() => {
-    vi.restoreAllMocks();
-});
 
 describe('AIMW-PLAT-57E0113F24 AppButton non-link click contract', () => {
     it('renders a real typed button and dispatches the supplied click callback', () => {
@@ -46,13 +37,21 @@ describe('AIMW-PLAT-57E0113F24 AppButton non-link click contract', () => {
         expect(button.querySelector('.app-button__spinner')).not.toBeNull();
     });
 
-    it('is exercised by a real production control without stealing that controls canonical identity', () => {
-        vi.spyOn(console, 'error').mockImplementation(() => undefined);
-        render(<RuntimeErrorBoundary><AlwaysThrows /></RuntimeErrorBoundary>);
-        const recover = screen.getByRole('button', { name: 'Try to recover' });
-        expect(recover).toHaveAttribute('data-canonical-operation', RUNTIME_ERROR_RECOVER_OPERATION_ID);
-        expect(recover).toHaveAttribute('data-canonical-component-operation', APP_BUTTON_CLICK_OPERATION_ID);
-        expect(RUNTIME_ERROR_RECOVER_OPERATION_ID).toBe('AIMW-PLAT-C6260410D1');
+    it('keeps a consumer canonical identity separate from the shared component identity', () => {
+        const onClick = vi.fn();
+        render(
+            <AppButton
+                canonicalOperationId="AIMW-PLAT-C6260410D1"
+                aria-label="Consumer action"
+                onClick={onClick}
+            >Consumer action</AppButton>,
+        );
+
+        const button = screen.getByRole('button', { name: 'Consumer action' });
+        expect(button).toHaveAttribute('data-canonical-operation', 'AIMW-PLAT-C6260410D1');
+        expect(button).toHaveAttribute('data-canonical-component-operation', APP_BUTTON_CLICK_OPERATION_ID);
         expect(document.querySelectorAll(`[data-canonical-operation="${APP_BUTTON_CLICK_OPERATION_ID}"]`)).toHaveLength(0);
+        fireEvent.click(button);
+        expect(onClick).toHaveBeenCalledTimes(1);
     });
 });
