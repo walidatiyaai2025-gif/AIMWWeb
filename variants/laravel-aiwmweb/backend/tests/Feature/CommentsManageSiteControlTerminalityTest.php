@@ -143,7 +143,7 @@ class CommentsManageSiteControlTerminalityTest extends TestCase
         $this->assertStringContainsString('active_site', $component);
         $this->assertStringContainsString('context.api.comments', $component);
         $this->assertStringContainsString("resolveCapability(context, commentsRoute).state !== 'enabled'", $component);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, `/sites/\${siteId}/comments`)", $component);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, `/sites/${siteId}/comments`)', $component);
         $this->assertStringContainsString('CommentsManageSiteControl', $app);
         $this->assertStringContainsString("route.key === 'comments'", $app);
         $this->assertStringNotContainsString('apiRequest', $component);
