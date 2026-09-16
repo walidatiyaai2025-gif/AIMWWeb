@@ -41,7 +41,7 @@ class CommentsCommentLinkControlTerminalityTest extends TestCase
         $this->assertSame('@comment.Link -> @comment.Link', $operation['visible_control']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
-        $this->assertSame('wordpress', $operation['external_dependency']);
+        $this->assertSame('WordPress', $operation['external_dependency']);
         $this->assertTrue((bool) $operation['native_wp_rest']);
         $this->assertSame('low', $operation['risk']);
     }
@@ -109,7 +109,7 @@ class CommentsCommentLinkControlTerminalityTest extends TestCase
     public function test_production_wiring_allows_only_absolute_http_links_and_exposes_no_write_or_secret_path(): void
     {
         $component = (string) file_get_contents(resource_path('js/comments-comment-link-control.tsx'));
-        $host = (string) file_get_contents(resource_path('js/comments-back-to-sites-control.tsx'));
+        $host = (string) file_get_contents(resource_path('js/app.tsx'));
         $controller = (string) file_get_contents(app_path('Http/Controllers/ContentApiController.php'));
         $service = (string) file_get_contents(app_path('Content/ContentPlatformService.php'));
 
@@ -118,7 +118,8 @@ class CommentsCommentLinkControlTerminalityTest extends TestCase
         $this->assertStringContainsString('parsed.username || parsed.password', $component);
         $this->assertStringContainsString('target="_blank"', $component);
         $this->assertStringContainsString('rel="noopener noreferrer"', $component);
-        $this->assertStringContainsString('CommentsCommentLinksControl', $host);
+        $this->assertStringContainsString("import { CommentsCommentLinksControl } from './comments-comment-link-control';", $host);
+        $this->assertStringContainsString("if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} />", $host);
         $this->assertStringContainsString("\$q = Comment::query()->where('site_id', \$site);", $controller);
         $this->assertStringContainsString("'link' => \$row['link'] ?? null", $service);
         $this->assertStringNotContainsString('method: \'POST\'', $component);
