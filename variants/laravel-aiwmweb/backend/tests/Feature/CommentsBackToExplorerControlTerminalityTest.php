@@ -123,7 +123,8 @@ class CommentsBackToExplorerControlTerminalityTest extends TestCase
         $this->assertStringContainsString('active_site', $component);
         $this->assertStringContainsString('context.api.comments', $component);
         $this->assertStringContainsString("resolveCapability(context, commentsRoute).state !== 'enabled'", $component);
-        $this->assertStringContainsString("resolveCapability(context, explorerRoute).state !== 'enabled'", $component);
+        $this->assertStringContainsString('hasExplorerPermission', $component);
+        $this->assertStringContainsString("context.capabilities['explorer.view'] ?? context.capabilities.explorer", $component);
         $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/explorer')", $component);
         $this->assertStringContainsString("r('explorer', '/explorer'", $core);
         $this->assertStringContainsString("permission: 'sites.view'", $core);
