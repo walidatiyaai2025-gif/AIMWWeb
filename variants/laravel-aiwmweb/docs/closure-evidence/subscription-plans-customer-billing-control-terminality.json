@@ -13,7 +13,7 @@
     "source_control": "Customer billing / صفحة العميل -> /account/billing",
     "mutation": false,
     "tenant_owned": true,
-    "risk": "low",
+    "risk": "medium",
     "verification": "rendered source-equivalent navigation reaches the existing guarded Account Billing workspace using the server-resolved active tenant"
   },
   "source_behavior": {
@@ -88,7 +88,7 @@
       "SubscriptionPlansAdminCustomerBillingControlTerminalityTest::test_guest_missing_source_permission_foreign_tenant_and_missing_destination_permission_fail_closed"
     ]
   },
-  "implementation_snapshot_sha": "1df420256516dd769712f9970898bd2860d34b28",
+  "implementation_snapshot_sha": "c6af709827e6267f59d78557d34be6669b10dc60",
   "canonical_denominator": {
     "source": "authoritative composition 1134e0f0191c1a5f901875def7dd3d75816fda6a",
     "total": 931,
