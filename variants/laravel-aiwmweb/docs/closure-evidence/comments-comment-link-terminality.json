@@ -13,7 +13,7 @@
     "source_control": "@comment.Link -> @comment.Link",
     "mutation": false,
     "tenant_owned": true,
-    "external_dependency": "wordpress",
+    "external_dependency": "WordPress",
     "native_wp_rest": true,
     "risk": "low",
     "verification": "rendered/read response matches authoritative source"
@@ -34,10 +34,21 @@
     "persisted_field": "content_comments.link",
     "wordpress_ingest": "App\\Content\\ContentPlatformService persists row['link'] into Comment.link during authoritative comments synchronization",
     "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-comment-link-control.tsx",
-    "runtime_wiring": "CommentsCommentLinksControl is hosted by the existing CommentsBackToSitesControl rendered only for the comments workspace",
+    "runtime_wiring": "CommentsCommentLinksControl is mounted directly by RouteElement for route.key === 'comments', independently of previously closed Comments navigation controls",
     "destination_source": "authoritative Comment.link returned by the tenant/site comments API",
-    "allowed_destination_schemes": ["http", "https"],
-    "rejected_destination_classes": ["relative", "malformed", "javascript", "data", "file", "credential-bearing URL", "surrounding-whitespace URL"],
+    "allowed_destination_schemes": [
+      "http",
+      "https"
+    ],
+    "rejected_destination_classes": [
+      "relative",
+      "malformed",
+      "javascript",
+      "data",
+      "file",
+      "credential-bearing URL",
+      "surrounding-whitespace URL"
+    ],
     "new_tab": true,
     "noopener": true,
     "noreferrer": true,
@@ -49,7 +60,7 @@
     "authenticated session enters the explicit tenant/site Comments route",
     "tenant.context resolves an active membership for the route tenant and activates TenantContext inside a bounded try/finally scope",
     "content.view is required before the tenant-scoped Site is resolved; foreign or missing source Site direct IDs fail closed",
-    "the real Comments workspace receives the server-advertised tenant/site comments API contract",
+    "the real Comments workspace mounts CommentsCommentLinksControl directly and receives the server-advertised tenant/site comments API contract",
     "GET comments authorizes content.view again and queries Comment through tenant global scope plus site_id",
     "Comment.link is the persisted value previously ingested from the authoritative WordPress comments REST row",
     "the React control reads only the server-advertised same-origin comments endpoint and never accepts a destination from query, route, form, or DOM input",
@@ -58,8 +69,16 @@
     "clicking the safe anchor performs external navigation only and never reports mutation success"
   ],
   "authorization": {
-    "source_route": ["auth", "tenant.context", "content.view"],
-    "comments_api": ["web", "tenant.context", "content.view"],
+    "source_route": [
+      "auth",
+      "tenant.context",
+      "content.view"
+    ],
+    "comments_api": [
+      "web",
+      "tenant.context",
+      "content.view"
+    ],
     "session_requirement": "ResolveTenantContext rejects requests without an authenticated user with 401 before tenant activation",
     "guest_api": "401",
     "missing_content_view": "403",
@@ -75,7 +94,10 @@
   },
   "validation_and_link_safety": {
     "url_parser": "browser URL parser",
-    "scheme_allowlist": ["http:", "https:"],
+    "scheme_allowlist": [
+      "http:",
+      "https:"
+    ],
     "credentials_rejected": true,
     "relative_urls_rejected": true,
     "unsafe_schemes_rejected": true,
@@ -102,6 +124,7 @@
     "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsCommentLinkControlTerminalityTest.php",
     "proof": [
       "exact canonical operation identity and source metadata",
+      "direct runtime mounting in the real Comments RouteElement independent of previously closed navigation controls",
       "persisted authoritative WordPress comment link returned despite caller query override",
       "HTTP(S)-only destination allowlist and rejection of javascript/data/file/relative/malformed/credential-bearing values",
       "new-tab noopener+noreferrer contract",
@@ -126,6 +149,6 @@
     "security_and_tenant_enforced": true,
     "focused_tests_present": true,
     "evidence_recorded": true,
-    "reason": "The source external comment-link behavior is implemented on the real tenant/site Comments runtime using the authoritative persisted WordPress comment link, with session/tenant/permission isolation and strict fail-closed URL validation. No caller-controlled redirect, mutation, fake success, or secret exposure is introduced. Exact pushed provenance is generator-owned through operation-parity-evidence-sources.json."
+    "reason": "The source external comment-link behavior is implemented on the real tenant/site Comments runtime using the authoritative persisted WordPress comment link, with direct comments-route mounting, session/tenant/permission isolation, and strict fail-closed URL validation. No caller-controlled redirect, mutation, fake success, or secret exposure is introduced. Exact pushed provenance is generator-owned through operation-parity-evidence-sources.json."
   }
 }
