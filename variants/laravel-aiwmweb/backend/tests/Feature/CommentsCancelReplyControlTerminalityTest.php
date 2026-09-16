@@ -44,12 +44,12 @@ class CommentsCancelReplyControlTerminalityTest extends TestCase
         $middleware = (string) file_get_contents(app_path('Http/Middleware/ResolveTenantContext.php'));
         $controller = (string) file_get_contents(app_path('Http/Controllers/ContentApiController.php'));
         $this->assertStringContainsString('abort_unless($user, 401)', $middleware);
-        $this->assertStringContainsString("->where('user_id', $user->getAuthIdentifier())", $middleware);
-        $this->assertStringContainsString("->where('status', 'active')", $middleware);
-        $this->assertStringContainsString("->where('slug', $slug)", $middleware);
-        $this->assertStringContainsString("$auth->authorize('content.edit')", $controller);
-        $this->assertStringContainsString("->where('site_id', $site)->findOrFail($comment)", $controller);
-        $this->assertStringContainsString("'content' => 'required|string|max:20000'", $controller);
+        $this->assertStringContainsString('->where(\'user_id\', $user->getAuthIdentifier())', $middleware);
+        $this->assertStringContainsString('->where(\'status\', \'active\')', $middleware);
+        $this->assertStringContainsString('->where(\'slug\', $slug)', $middleware);
+        $this->assertStringContainsString('$auth->authorize(\'content.edit\')', $controller);
+        $this->assertStringContainsString('->where(\'site_id\', $site)->findOrFail($comment)', $controller);
+        $this->assertStringContainsString('\'content\' => \'required|string|max:20000\'', $controller);
     }
 
     public function test_frontend_cancel_is_permission_gated_local_only_and_supporting_send_uses_csrf_same_origin_without_retry(): void
@@ -59,19 +59,19 @@ class CommentsCancelReplyControlTerminalityTest extends TestCase
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $component);
-        $this->assertStringContainsString("context.permissions.includes('content.edit')", $component);
+        $this->assertStringContainsString('context.permissions.includes(\'content.edit\')', $component);
         $this->assertStringContainsString('data-canonical-operation={COMMENTS_CANCEL_REPLY_OPERATION_ID}', $component);
         $this->assertStringContainsString('setReplyingTo(null)', $component);
-        $this->assertStringContainsString("setDraft('')", $component);
+        $this->assertStringContainsString('setDraft(\'\')', $component);
         $this->assertStringContainsString('if (mutation.isPending) return;', $component);
         $this->assertStringContainsString('retry: false', $component);
-        $this->assertStringContainsString("url.origin !== window.location.origin", $component);
-        $this->assertStringContainsString("path.endsWith('/comments')", $component);
-        $this->assertStringContainsString("route.key === 'comments'", $app);
+        $this->assertStringContainsString('url.origin !== window.location.origin', $component);
+        $this->assertStringContainsString('path.endsWith(\'/comments\')', $component);
+        $this->assertStringContainsString('route.key === \'comments\'', $app);
         $this->assertStringContainsString('CommentsCommentLinksControl', $app);
 
-        $this->assertStringContainsString("meta[name=\"csrf-token\"]", $core);
-        $this->assertStringContainsString("headers.set('X-CSRF-TOKEN', csrf)", $core);
-        $this->assertStringContainsString("credentials: 'same-origin'", $core);
+        $this->assertStringContainsString('meta[name="csrf-token"]', $core);
+        $this->assertStringContainsString('headers.set(\'X-CSRF-TOKEN\', csrf)', $core);
+        $this->assertStringContainsString('credentials: \'same-origin\'', $core);
     }
 }
