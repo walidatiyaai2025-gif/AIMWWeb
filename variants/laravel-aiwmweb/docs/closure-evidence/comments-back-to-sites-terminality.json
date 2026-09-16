@@ -86,7 +86,6 @@
       "no network mutation from the control"
     ]
   },
-  "implementation_snapshot_sha": "6449e945eb851a9dceb54cbe6c23b84c66d3e7a0",
   "scope_guards": {
     "only_operation_claimed": "AIMW-COMM-85A340C8BC",
     "second_operation_started": false,
@@ -101,6 +100,6 @@
     "security_and_tenant_enforced": true,
     "focused_tests_present": true,
     "evidence_recorded": true,
-    "reason": "The exact source navigation intent is implemented on the real tenant-scoped Comments runtime with an authoritative tenant-derived Sites destination, existing fail-closed site IDOR behavior is preserved, no mutation or fake success is introduced, and focused frontend/Laravel proof is committed."
+    "reason": "The exact source navigation intent is implemented on the real tenant-scoped Comments runtime with an authoritative tenant-derived Sites destination, existing fail-closed site IDOR behavior is preserved, no mutation or fake success is introduced, and focused frontend/Laravel proof is committed. Exact pushed provenance is generator-owned through operation-parity-evidence-sources.json."
   }
 }
