@@ -155,13 +155,13 @@ class ApplicationUserPasswordResetTerminalityTest extends TestCase
         $control = (string) file_get_contents(resource_path('js/application-user-password-reset-control.tsx'));
         $core = (string) file_get_contents(resource_path('js/core.ts'));
 
-        $this->assertStringContainsString("retry: false", $control);
+        $this->assertStringContainsString('retry: false', $control);
         $this->assertStringContainsString('resetMutation.isPending', $control);
         $this->assertStringContainsString('type="password"', $control);
         $this->assertStringContainsString('confirmation_identity', $control);
-        $this->assertStringContainsString("method: 'POST'", $control);
+        $this->assertStringContainsString('method: \'POST\'', $control);
         $this->assertStringContainsString('credentials: \'same-origin\'', $core);
-        $this->assertStringContainsString("headers.set('X-CSRF-TOKEN', csrf)", $core);
+        $this->assertStringContainsString('headers.set(\'X-CSRF-TOKEN\', csrf)', $core);
         $this->assertStringNotContainsString('user_id:', $control);
         $this->assertStringNotContainsString('tenant_id:', $control);
     }
