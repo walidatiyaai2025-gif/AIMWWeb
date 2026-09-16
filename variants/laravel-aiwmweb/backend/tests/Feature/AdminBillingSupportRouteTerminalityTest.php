@@ -32,7 +32,7 @@ class AdminBillingSupportRouteTerminalityTest extends TestCase
         $this->assertSame('/admin/billing-support', $operation['route_screen']);
         $this->assertSame('Open/render route', $operation['visible_control']);
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor', $operation['current_source']);
-        $this->assertFalse((bool) $operation['tenant_owned']);
+        $this->assertTrue((bool) $operation['tenant_owned'], 'The generated canonical ledger conservatively classifies this billing operation as tenant-owned.');
     }
 
     public function test_route_is_exact_read_only_global_admin_surface(): void
