@@ -93,5 +93,15 @@
     "focused_tests_present": true,
     "evidence_recorded": true,
     "reason": "The exact source cancellation semantics are reachable on the real tenant Comments runtime, are content.edit gated, clear only local reply state, never emit a cancellation mutation or fake success, and preserve the existing authenticated tenant/site/comment boundaries for the surrounding real reply path."
+  },
+  "recovery_validation": {
+    "base_authority_sha": "1134e0f0191c1a5f901875def7dd3d75816fda6a",
+    "validation_input_sha": "5ddd7969a824b6e9d413a719ca854963393e5229",
+    "workflow_run": 35136959311,
+    "php_terminality": "PASS",
+    "typescript_typecheck": "PASS",
+    "react_control": "PASS",
+    "pint": "PASS",
+    "result": "PASS"
   }
 }
