@@ -19,14 +19,14 @@
     "source_workspace": "/module/pages",
     "destination_workspace": "/module/posts",
     "control_binding": "PagesPostsLinkControl / data-canonical-operation=AIMW-CONT-058F41BD1B",
-    "behavior": "The real Pages production route renders the Posts link only when authoritative FrontendContext proves the tenant context, content.view permission, Posts API contract, and enabled Posts capability. The destination is derived only from context.tenant.slug through tenantUrl and the canonical workspace route; no caller-supplied tenant or resource identifier is accepted."
+    "behavior": "The real Pages production route renders the Posts link only when authoritative FrontendContext proves tenant access, content.view, the Posts API contract, a connected connector advertising posts.read, and an enabled Posts capability. The destination is derived only from context.tenant.slug through tenantUrl and the canonical workspace route; no caller-supplied tenant or resource identifier is accepted."
   },
   "authorization": {
     "source_policy": "ContentView",
     "laravel_permission": "content.view",
     "tenant_context_permission": "tenant.view",
     "rbac_change": "none",
-    "security_result": "The control grants no authority. It is hidden unless the server-provided context proves both tenant access and the existing Posts workspace capability contract."
+    "security_result": "The control grants no authority. It is hidden unless the server-provided context proves tenant access and the existing Posts workspace permission/API/connector/capability contract."
   },
   "tenant_isolation": {
     "canonical_tenant_owned": true,
@@ -40,12 +40,12 @@
     "read_only_navigation": true,
     "csrf_write": "not applicable",
     "session_mutation": "none",
-    "authoritative_reread": "FrontendContext route/API/capability contract is authoritative for visibility",
+    "authoritative_reread": "FrontendContext permission/API/connector/capability contract is authoritative for visibility",
     "queue": "none",
     "cache": "none",
     "scheduler": "none",
-    "wordpress_runtime": "none",
-    "connector_runtime": "none",
+    "wordpress_runtime": "no WordPress request is executed by this control",
+    "connector_runtime": "connector state is read only as a fail-closed availability gate; the control invokes no connector action",
     "ai_provider_runtime": "none",
     "secrets": "none",
     "fake_success_path": "none"
@@ -54,6 +54,7 @@
     "missing_tenant_permission": "control is absent",
     "missing_content_permission": "control is absent",
     "missing_posts_api_contract": "control is absent",
+    "missing_posts_connector_scope": "control is absent",
     "disabled_posts_capability": "control is absent",
     "failure_claim": "No success state or mutation result is fabricated because this operation only exposes navigation when its authoritative route contract is enabled."
   },
@@ -66,6 +67,7 @@
       "fail-closed visibility without tenant.view",
       "fail-closed visibility without content.view",
       "fail-closed visibility without the authoritative Posts API contract",
+      "fail-closed visibility without a connected connector advertising posts.read",
       "fail-closed visibility when the server disables the Posts capability"
     ]
   },
@@ -90,6 +92,6 @@
   },
   "terminality": {
     "state": "ADAPTED",
-    "basis": "Real source-equivalent navigation is implemented on the production Pages route, derives tenant scope only from authoritative context, fails closed on missing RBAC/API/capability proof, is deterministically focused-tested including foreign-tenant isolation, and introduces no mutation or privileged runtime surface. Final canonical credit remains conditional on official exact-SHA generator reconciliation and repository gates."
+    "basis": "Real source-equivalent navigation is implemented on the production Pages route, derives tenant scope only from authoritative context, fails closed on missing RBAC/API/connector/capability proof, is deterministically focused-tested including foreign-tenant isolation, and introduces no mutation or privileged runtime surface. Final canonical credit remains conditional on official exact-SHA generator reconciliation and repository gates."
   }
 }
