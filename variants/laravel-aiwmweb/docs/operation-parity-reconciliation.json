@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 597,
-    "pending": 334,
+    "adapted": 598,
+    "pending": 333,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 597,
-    "overall_parity_percent": 64.12
+    "terminal": 598,
+    "overall_parity_percent": 64.23
   },
   "visible_controls": {
     "total": 446,
@@ -83,12 +83,12 @@
     "billing": {
       "total": 178,
       "ported": 0,
-      "adapted": 97,
-      "pending": 81,
+      "adapted": 98,
+      "pending": 80,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 97,
-      "percent": 54.49
+      "terminal": 98,
+      "percent": 55.06
     },
     "comments": {
       "total": 8,
@@ -12852,21 +12852,34 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
+      "evidence": "Subscription Plans admin route exact-head closure@e4a21b493d2c40dbdda9cdabb1e539449c528cbe: variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php; explicit-route-api:AIMW-BILL-B86D339C12; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlansAdminReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-admin-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Subscription Plans admin route exact-head closure",
+        "source_sha": "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlansAdminReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-admin-route-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-B86D339C12",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -34976,12 +34989,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 52,
-      "pending": 32,
+      "adapted": 53,
+      "pending": 31,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 52,
-      "percent": 61.9
+      "terminal": 53,
+      "percent": 63.1
     },
     "service": {
       "total": 349,
@@ -35070,7 +35083,6 @@
       "AIMW-BILL-B4F030B126",
       "AIMW-BILL-B6BE029CB8",
       "AIMW-BILL-B84663A4C0",
-      "AIMW-BILL-B86D339C12",
       "AIMW-BILL-B9C3030764",
       "AIMW-BILL-BC093D6418",
       "AIMW-BILL-BC1C75CE0D",
@@ -35682,6 +35694,18 @@
           "AIMW-BILL-69825FEAD5"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "Subscription Plans admin route exact-head closure",
+        "sha": "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
+        "domains": [
+          "billing"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-BILL-B86D339C12"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -35717,6 +35741,7 @@
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
       "e26a7d9a254f7df980714b778491d0f864605087",
+      "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
       "e9bf787b783b972541187ac8748ca24d7785f5d3",
       "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
@@ -35794,6 +35819,7 @@
       "AIMW-AI-8EE4F9F6FC",
       "AIMW-AI-C37F405767",
       "AIMW-BILL-69825FEAD5",
+      "AIMW-BILL-B86D339C12",
       "AIMW-COMM-A16719E105",
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2F2E40D7F0",
@@ -35810,7 +35836,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 20,
+    "explicit_route_api_contract_count": 21,
     "focused_closure_source_sha": "7e7e4298efe1f7bd64a5939ea17616f55bf29046",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "a7e16fd9a1e7a59874d1e9c19f9e51e2ebf962ee",
+  "previous_reconciliation_sha": "35ea3bd44a3c6977da8e40ad1dd08c2ff117c9cc",
   "focused_closure_evidence_source_sha": "7e7e4298efe1f7bd64a5939ea17616f55bf29046",
   "countable_sources": [
     {
@@ -664,6 +664,28 @@
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-planner-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      }
+    },
+    {
+      "label": "Subscription Plans admin route exact-head closure",
+      "sha": "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
+      "observed_pr_head": "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
+      "domains": [
+        "billing"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-BILL-B86D339C12"
+      ],
+      "route_api_provenance": {
+        "AIMW-BILL-B86D339C12": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlansAdminReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-admin-route-terminality.json",
           "security_mode": "tenant_scoped"
         }
       }
