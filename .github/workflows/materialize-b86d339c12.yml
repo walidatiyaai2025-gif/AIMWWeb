@@ -48,6 +48,8 @@ jobs:
               'sha': head,
               'observed_pr_head': head,
               'domains': ['billing'],
+              'supporting_only': True,
+              'operation_ids': [operation_id],
               'route_api_provenance': {
                   operation_id: {
                       'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php',
