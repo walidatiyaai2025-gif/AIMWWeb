@@ -39,11 +39,16 @@ jobs:
 
       - name: Run focused Laravel security acceptance
         working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
         run: |
           composer install --no-interaction --prefer-dist
           cp .env.example .env
           php artisan key:generate
-          php artisan migrate:fresh --force
           php artisan test --filter SitesDeleteControlTerminalityTest
 
       - uses: actions/setup-python@v5
