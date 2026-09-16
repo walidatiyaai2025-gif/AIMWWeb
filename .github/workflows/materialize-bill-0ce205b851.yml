@@ -15,7 +15,7 @@ jobs:
     env:
       PYTHONHASHSEED: '0'
       BASE_SHA: '1134e0f0191c1a5f901875def7dd3d75816fda6a'
-      EVIDENCE_SHA: '5e9fc7fd2140125b28c63e522ead1ad6e10dc7d1'
+      EVIDENCE_SHA: '975bb9301e4f966157c068c5d3aa6c58c57ac641'
       OPERATION_ID: 'AIMW-BILL-0CE205B851'
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
           path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           data['previous_reconciliation_sha'] = '1134e0f0191c1a5f901875def7dd3d75816fda6a'
-          data['focused_closure_evidence_source_sha'] = '5e9fc7fd2140125b28c63e522ead1ad6e10dc7d1'
+          data['focused_closure_evidence_source_sha'] = '975bb9301e4f966157c068c5d3aa6c58c57ac641'
           path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           PY
 
