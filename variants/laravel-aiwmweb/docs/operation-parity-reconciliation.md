@@ -35,12 +35,12 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 91 | 87 | 0 | 0 | 91 | 51.12% |
 | comments | 8 | 0 | 2 | 6 | 0 | 0 | 2 | 25.00% |
-| content | 164 | 0 | 31 | 133 | 0 | 0 | 31 | 18.90% |
+| content | 164 | 0 | 30 | 134 | 0 | 0 | 30 | 18.29% |
 | email | 82 | 0 | 58 | 24 | 0 | 0 | 58 | 70.73% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
 | operations | 5 | 0 | 5 | 0 | 0 | 0 | 5 | 100.00% |
-| platform | 18 | 0 | 16 | 2 | 0 | 0 | 16 | 88.89% |
+| platform | 18 | 0 | 17 | 1 | 0 | 0 | 17 | 94.44% |
 | reports | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | seo | 24 | 0 | 24 | 0 | 0 | 0 | 24 | 100.00% |
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
@@ -190,10 +190,11 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-COMM-B16FBF4792`
 - `AIMW-COMM-C083D47BC4`
 
-### content (133)
+### content (134)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
+- `AIMW-CONT-058F41BD1B`
 - `AIMW-CONT-10AFCDF334`
 - `AIMW-CONT-1456BE001F`
 - `AIMW-CONT-16D09482D4`
@@ -375,9 +376,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### platform (2)
+### platform (1)
 
-- `AIMW-PLAT-57E0113F24`
 - `AIMW-PLAT-827A8F1C0D`
 
 ### reports (0)
