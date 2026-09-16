@@ -3,7 +3,7 @@
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
-  "canonical_base_sha": "1134e0f0191c1a5f901875def7dd3d75816fda6a",
+  "canonical_base_sha": "419ec7118c3d60ea751446309fd52c1c142f90a4",
   "canonical_operation": {
     "operation_id": "AIMW-BILL-5AF09ADABA",
     "domain": "billing",
