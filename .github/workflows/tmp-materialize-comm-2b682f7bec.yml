@@ -1,0 +1,181 @@
+name: TEMP Materialize COMM-2B682F7BEC
+
+on:
+  push:
+    branches:
+      - worker/laravel-comm-2b682f7bec-recovery-4
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      AUTHORITY_SHA: a7e16fd9a1e7a59874d1e9c19f9e51e2ebf962ee
+      OPERATION_ID: AIMW-COMM-2B682F7BEC
+      BRANCH: worker/laravel-comm-2b682f7bec-recovery-4
+      WORKFLOW_PATH: .github/workflows/tmp-materialize-comm-2b682f7bec.yml
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install backend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Initialize Laravel test environment
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Install frontend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f package-lock.json ]]; then npm ci --no-audit --no-fund; else npm install --ignore-scripts --no-audit --no-fund; fi
+
+      - name: Focused tenant and runtime acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          php artisan test tests/Feature/CommentsBackToExplorerControlTerminalityTest.php --filter=test_context_resolves_only_the_authenticated_tenant_site_and_matching_comments_contract
+          php artisan test tests/Feature/CommentsBackToExplorerControlTerminalityTest.php --filter=test_guest_missing_tenant_permission_foreign_tenant_and_foreign_site_fail_closed
+          php artisan test tests/Feature/CommentsBackToExplorerControlTerminalityTest.php --filter=test_authorized_explorer_navigation_rereads_authoritative_site_context_without_mutation
+          php artisan test tests/Feature/CommentsBackToExplorerControlTerminalityTest.php --filter=test_production_wiring_is_read_only_fail_closed_and_scoped_to_the_claimed_control
+
+      - name: Frontend fail-closed acceptance
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          npm run --if-present typecheck
+          npx vitest run resources/js/__tests__/comments-back-to-explorer-control.test.tsx
+
+      - name: Pint focused PHP
+        working-directory: variants/laravel-aiwmweb/backend
+        run: vendor/bin/pint --test tests/Feature/CommentsBackToExplorerControlTerminalityTest.php
+
+      - name: Record current-authority focused proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('variants/laravel-aiwmweb/docs/closure-evidence/comments-back-to-explorer-terminality.json')
+          d=json.loads(p.read_text())
+          d['recovery_validation']={
+            'base_authority_sha':os.environ['AUTHORITY_SHA'],
+            'validation_input_sha':os.environ['GITHUB_SHA'],
+            'workflow_run':int(os.environ['GITHUB_RUN_ID']),
+            'pre_materialization_php_security_methods':'PASS (4 focused methods)',
+            'typescript_typecheck':'PASS',
+            'react_control':'PASS (12 tests)',
+            'pint':'PASS',
+            'result':'PASS'
+          }
+          p.write_text(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/closure-evidence/comments-back-to-explorer-terminality.json
+          git commit -m 'test: record current-authority Comments recovery proof'
+          git push origin HEAD:${BRANCH}
+          echo "EVIDENCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Run official reconciliation chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          d=json.loads(p.read_text())
+          d['previous_reconciliation_sha']=os.environ['AUTHORITY_SHA']
+          d['focused_closure_evidence_source_sha']=os.environ['EVIDENCE_SHA']
+          p.write_text(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+          PY
+          JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+
+      - name: Full focused terminality on generated candidate
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: php artisan test tests/Feature/CommentsBackToExplorerControlTerminalityTest.php
+
+      - name: Enforce exactly one canonical transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "${AUTHORITY_SHA}:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/previous.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          target=os.environ['OPERATION_ID']
+          old=json.loads(Path('/tmp/previous.json').read_text())
+          new=json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          before={x['operation_id']:x for x in old['operations']}
+          after={x['operation_id']:x for x in new['operations']}
+          changed=[op for op in before if before[op]['migration_state']!=after[op]['migration_state']]
+          assert old['totals']['total']==new['totals']['total']==931
+          assert old['totals']['terminal']==596 and old['totals']['pending']==335 and old['totals']['blocked']==0, old['totals']
+          assert new['totals']['terminal']==597 and new['totals']['pending']==334 and new['totals']['blocked']==0, new['totals']
+          assert changed==[target], changed
+          assert before[target]['migration_state']=='PENDING'
+          assert after[target]['migration_state']=='ADAPTED'
+          assert after[target]['acceptance_test']=='variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-back-to-explorer-control.test.tsx'
+          rec=after[target]['reconciliation']
+          assert rec['evidence_mode']=='focused_closure_contract'
+          assert 'test:tenant-isolation' in rec['signals']
+          print('EXACT_ONE_TRANSITION=PASS')
+          print(f'{target}:PENDING->ADAPTED')
+          print('TOTAL=931 TERMINAL=597 PENDING=334 BLOCKED=0')
+          PY
+          python variants/laravel-aiwmweb/tools/operation_parity_delta.py --current variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json --previous-sha "$AUTHORITY_SHA"
+
+      - name: Commit generated artifacts and remove temporary materializer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git rm "$WORKFLOW_PATH"
+          git commit -m 'Laravel: materialize current-authority Comments Back to Explorer closure'
+          git push origin HEAD:${BRANCH}
