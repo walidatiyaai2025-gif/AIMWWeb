@@ -13,6 +13,12 @@
         <p>{{ app()->getLocale() === 'ar'
             ? 'عرض حقيقي للكتالوج المحفوظ. عمليات الإنشاء والتعديل والتعطيل تُغلق بشكل مستقل.'
             : 'Authoritative persisted catalog view. Create, edit, clone and enable/disable controls close independently.' }}</p>
+        <nav aria-label="{{ app()->getLocale() === 'ar' ? 'روابط الفوترة' : 'Billing navigation' }}">
+            <a
+                href="{{ route('canonical.workspace.account-billing', ['tenant' => $tenant->slug]) }}"
+                data-canonical-operation="AIMW-BILL-0CE205B851"
+            >{{ app()->getLocale() === 'ar' ? 'صفحة العميل' : 'Customer billing' }}</a>
+        </nav>
     </header>
 
     <section aria-label="{{ app()->getLocale() === 'ar' ? 'كتالوج الخطط' : 'Plan catalog' }}">
