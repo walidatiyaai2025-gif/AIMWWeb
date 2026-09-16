@@ -17,6 +17,14 @@
             <p role="status">{{ session('status') }}</p>
         @endif
 
+        @if ($errors->any())
+            <div role="alert">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
+
         <dl>
             <div><dt>Name</dt><dd>{{ $site->name }}</dd></div>
             <div><dt>URL</dt><dd>{{ $site->url }}</dd></div>
@@ -26,6 +34,20 @@
         @if ($canManageCredential)
             <section aria-labelledby="wordpress-credential-heading">
                 <h2 id="wordpress-credential-heading">WordPress credential</h2>
+
+                <form method="POST" action="{{ route('canonical.site.settings.credential.store', ['tenant' => $tenant, 'site' => $site->getKey()]) }}" data-canonical-operation="AIMW-BILL-723BEA8F1D">
+                    @csrf
+                    <label>
+                        WordPress username
+                        <input type="text" name="username" value="{{ old('username', $credential?->username ?? '') }}" maxlength="255" autocomplete="username" required>
+                    </label>
+                    <label>
+                        Application Password
+                        <input type="password" name="application_password" minlength="8" maxlength="1024" autocomplete="new-password" required>
+                    </label>
+                    <button type="submit" data-canonical-operation="AIMW-BILL-723BEA8F1D">Save &amp; Test</button>
+                </form>
+
                 @if ($credential)
                     <dl>
                         <div><dt>Username</dt><dd>{{ $credential->username ?: '—' }}</dd></div>
