@@ -133,6 +133,7 @@ class SitesDeleteControlTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $context->forget();
+
         return $membership->fresh('tenant');
     }
 
@@ -142,6 +143,7 @@ class SitesDeleteControlTerminalityTest extends TestCase
         $context->activate($membership->tenant, $membership);
         $site = Site::query()->create(['name' => $name, 'url' => 'https://example.test/'.strtolower(str_replace(' ', '-', $name)), 'status' => 'active']);
         $context->forget();
+
         return $site;
     }
 
