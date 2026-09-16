@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-COMM-C083D47BC4",
+    "domain": "comments",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/GlobalCommentsWorkspace.razor",
+    "source_screen": "/module/comments",
+    "source_control": "Manage selected site comments",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "GlobalCommentsWorkspace renders a localized Manage anchor for loaded comment rows. Its target is /sites/{SelectedSiteId}/comments, so every row navigates to the Comments Manager for the currently selected authoritative site.",
+    "selected_site_source": "SelectedSiteId is parsed from the workspace-selected site state populated from SiteWebService.GetSitesAsync().",
+    "side_effect": "navigation only",
+    "success_semantics": "navigation only; the source control does not mutate WordPress, local persistence, queues, caches, schedules, providers, or secrets"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-manage-site-control.tsx",
+    "runtime_wiring": "CommentsManageSiteControl is mounted only by RouteElement for route.key === 'comments' on the real tenant Comments workspace.",
+    "placement_adaptation": "The source repeats the same selected-site Manage destination in each result row. Laravel exposes one workspace-level Manage action because the destination is invariant for all rows; no row identity participates in the source target.",
+    "destination": "/tenants/{tenant}/sites/{active_site}/comments",
+    "destination_derivation": "tenant slug, active_site.id, and api.comments must agree in the server-authoritative FrontendContext before the link renders",
+    "caller_selected_destination": false,
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "authenticated request enters /tenants/{tenant}/module/comments with tenant.context active",
+    "frontend context requires tenant.view and resolves the optional site query through tenant-scoped Site::query()->findOrFail",
+    "only a successfully resolved tenant-owned site is returned as active_site and receives a matching api.comments contract",
+    "the control requires tenant.view plus the existing Comments route capability, which preserves content.view and comments.read connector scope",
+    "the control verifies api.comments is same-origin and exactly matches the active tenant/site before deriving the destination",
+    "the destination uses tenantUrl with the authoritative tenant slug and active site id",
+    "the existing /tenants/{tenant}/sites/{site}/comments route re-authorizes content.view, resolves the Site under TenantContext, and redirects to the real Comments workspace with the site query",
+    "navigation performs no mutation and reports no fabricated success state"
+  ],
+  "authorization": {
+    "source_workspace": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "content.view"
+    ],
+    "destination_route": [
+      "auth",
+      "tenant.context",
+      "content.view"
+    ],
+    "frontend_capability": "resolveCapability for the canonical comments route additionally requires the advertised comments.read connector scope",
+    "guest": "fails closed",
+    "missing_tenant_view": "403/context unavailable",
+    "missing_content_view": "control hidden and destination 403",
+    "foreign_tenant": "404",
+    "foreign_site": "404"
+  },
+  "tenant_isolation": {
+    "active_site_resolution": "server-side tenant-scoped Site::query()->findOrFail on the context request",
+    "api_contract_match": "control requires /api/v1/tenants/{encoded active tenant}/sites/{active_site.id}/comments exactly",
+    "same_origin_required": true,
+    "query_or_fragment_override_rejected": true,
+    "foreign_origin_rejected": true,
+    "caller_row_id_used": false,
+    "caller_user_or_tenant_override": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf_write_path": "not applicable; no write request is issued",
+    "persistence": "no Site or Comment persistence change",
+    "authoritative_reread": "destination route re-enters the server tenant/site resolver and the Comments workspace reloads its server context",
+    "truthful_success": "no success state exists; missing or inconsistent authority removes the link",
+    "idempotency": "repeated navigation is side-effect free",
+    "queue_cache_scheduler": "none introduced",
+    "secret_exposure": "none; the control consumes only tenant slug, numeric site id, permissions/capability metadata, and same-origin API path",
+    "wordpress_connector_safety": "no WordPress mutation or Connector call is performed by the control",
+    "ai_provider_safety": "not applicable; no AI/provider call is performed",
+    "audit_or_receipt": "not applicable because no domain mutation occurs"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-manage-site-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsManageSiteControlTerminalityTest.php",
+    "focused_workflow": ".github/workflows/laravel-c083-focused.yml",
+    "proof": [
+      "exact canonical operation marker and localized Manage anchor",
+      "tenant-qualified selected-site destination",
+      "active_site/api.comments agreement is mandatory",
+      "foreign tenant, foreign site, foreign origin, query and fragment overrides fail closed",
+      "tenant.view, content.view, comments.read and explicit disabled capability boundaries fail closed",
+      "destination route keeps auth + tenant.context + content.view",
+      "guest, missing permission, foreign tenant and foreign direct-site access fail closed",
+      "authorized navigation leaves authoritative Site persistence unchanged",
+      "no API mutation, CSRF write, queue/cache/scheduler, secret, WordPress mutation, Connector mutation or provider call"
+    ]
+  },
+  "validation": {
+    "focused_validation_head": "f031517e25b4f46a86877c20ac53bd9138046877",
+    "workflow_run": 35101884970,
+    "workflow_job": 104813080505,
+    "result": "PASS",
+    "php_tenant_idor": "PASS",
+    "typescript_typecheck": "PASS",
+    "react_control": "PASS"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-COMM-C083D47BC4",
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source selected-site Manage navigation is implemented on the real Laravel Comments workspace using only mutually consistent server-authoritative tenant/site/API context, existing RBAC/connector capability boundaries, and the existing tenant-scoped Comments destination route. Inconsistent or foreign authority fails closed and no mutation or fake success is introduced."
+  }
+}
