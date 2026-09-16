@@ -120,7 +120,8 @@ class CommentsCommentLinkControlTerminalityTest extends TestCase
         $this->assertGreaterThan($linkControlStart, $replyDraftStart);
         $linkControl = substr($component, $linkControlStart, $replyDraftStart - $linkControlStart);
 
-        $this->assertStringContainsString(self::OPERATION_ID, $linkControl);
+        $this->assertStringContainsString(self::OPERATION_ID, $component);
+        $this->assertStringContainsString('COMMENTS_COMMENT_LINK_OPERATION_ID', $linkControl);
         $this->assertStringContainsString("parsed.protocol !== 'http:' && parsed.protocol !== 'https:'", $component);
         $this->assertStringContainsString('parsed.username || parsed.password', $component);
         $this->assertStringContainsString('target="_blank"', $linkControl);
