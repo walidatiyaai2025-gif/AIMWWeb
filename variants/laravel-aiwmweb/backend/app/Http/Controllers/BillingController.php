@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
 use App\Billing\EntitlementService;
+use App\Billing\Enums\SubscriptionState;
+use App\Billing\PermanentSubscriptionCancellationService;
 use App\Billing\SubscriptionService;
 use App\Billing\UsageQuotaService;
 use App\Models\BillingAudit;
@@ -12,6 +14,7 @@ use App\Models\BillingTransaction;
 use App\Models\TenantSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 final class BillingController extends Controller
 {
@@ -25,7 +28,7 @@ final class BillingController extends Controller
         $auth->authorize('billing.view');
         $s = TenantSubscription::query()->with('plan')->first();
 
-        return response()->json(['data' => $s ? ['state' => $s->state->value, 'plan' => $this->planResource($s->plan), 'started_at' => $s->started_at?->toAtomString(), 'trial_expires_at' => $s->trial_expires_at?->toAtomString(), 'current_period_end' => $s->current_period_end?->toAtomString(), 'grace_ends_at' => $s->grace_ends_at?->toAtomString(), 'cancel_at_period_end' => $s->cancel_at_period_end] : null]);
+        return response()->json(['data' => $s ? ['state' => $s->state->value, 'plan' => $this->planResource($s->plan), 'started_at' => $s->started_at?->toAtomString(), 'trial_expires_at' => $s->trial_expires_at?->toAtomString(), 'current_period_end' => $s->current_period_end?->toAtomString(), 'grace_ends_at' => $s->grace_ends_at?->toAtomString(), 'cancel_at_period_end' => $s->cancel_at_period_end, 'can_cancel_permanently' => $this->canCancelPermanently($s)] : null]);
     }
 
     public function trial(TenantAuthorizer $auth, SubscriptionService $service): JsonResponse
@@ -44,9 +47,29 @@ final class BillingController extends Controller
         return response()->json(['data' => $service->checkout($plan)], 201);
     }
 
-    public function cancel(TenantAuthorizer $auth, SubscriptionService $service): JsonResponse
+    public function cancel(Request $request, TenantAuthorizer $auth, SubscriptionService $service, PermanentSubscriptionCancellationService $permanent): JsonResponse
     {
         $auth->authorize('billing.manage');
+        $data = $request->validate(['mode' => 'nullable|string|in:permanent_provider']);
+
+        if (($data['mode'] ?? null) === 'permanent_provider') {
+            $unexpected = array_values(array_diff($request->keys(), ['mode']));
+            if ($unexpected !== []) {
+                throw ValidationException::withMessages(['request' => 'Permanent cancellation does not accept caller-supplied tenant, user, subscription, or provider identifiers.']);
+            }
+
+            $result = $permanent->request();
+            $authoritative = TenantSubscription::query()->findOrFail($result['subscription']->id);
+            $status = $result['request_status'] === 'provider_accepted' ? 202 : 200;
+
+            return response()->json(['data' => [
+                'request_status' => $result['request_status'],
+                'state' => $authoritative->state->value,
+                'cancel_at_period_end' => $authoritative->cancel_at_period_end,
+                'provider_state_authoritative' => true,
+            ]], $status);
+        }
+
         $s = $service->cancel();
 
         return response()->json(['data' => ['state' => $s->state->value, 'cancel_at_period_end' => $s->cancel_at_period_end]]);
@@ -81,6 +104,13 @@ final class BillingController extends Controller
         $auth->authorize('billing.view');
 
         return response()->json(['data' => ['audit' => BillingAudit::query()->latest('occurred_at')->limit(100)->get(['action', 'subject_type', 'subject_id', 'metadata', 'occurred_at']), 'transactions' => BillingTransaction::query()->latest('occurred_at')->limit(100)->get(['type', 'status', 'amount_minor', 'currency', 'occurred_at'])]]);
+    }
+
+    private function canCancelPermanently(TenantSubscription $subscription): bool
+    {
+        return $subscription->provider === 'paypal'
+            && filled($subscription->encrypted_provider_subscription_id)
+            && in_array($subscription->state, [SubscriptionState::ACTIVE, SubscriptionState::PAST_DUE, SubscriptionState::GRACE, SubscriptionState::SUSPENDED], true);
     }
 
     private function planResource(BillingPlan $p): array
