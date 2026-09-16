@@ -1,0 +1,1 @@
+Trigger exact-head PR validation after generator-owned materialization. No runtime or parity semantics.
