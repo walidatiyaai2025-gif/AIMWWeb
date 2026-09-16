@@ -21,12 +21,12 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_exact_canonical_operation_is_the_pending_error_back_to_dashboard_control(): void
+    public function test_exact_canonical_operation_is_the_adapted_error_back_to_dashboard_control(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('content', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('/Error', $row['route_screen']);
@@ -70,6 +70,15 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
         $this->assertNotContains('auth', $destination->gatherMiddleware());
         $this->assertNotContains('tenant.context', $destination->gatherMiddleware());
         $this->get('/')->assertOk();
+    }
+
+    public function test_authenticated_tenant_shaped_error_path_fails_closed_without_exposing_the_control(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/tenants/foreign-tenant/Error')
+            ->assertNotFound()
+            ->assertDontSee(self::OPERATION_ID);
     }
 
     public function test_control_preserves_the_safe_error_surface_and_does_not_reflect_query_secrets(): void
