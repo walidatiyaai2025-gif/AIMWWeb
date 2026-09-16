@@ -1,0 +1,41 @@
+name: Worker Laravel Save Plan Diagnostic
+
+on:
+  push:
+    branches:
+      - worker/laravel-bill-5af09adaba-save-plan-recovery-v2
+
+permissions:
+  contents: read
+
+jobs:
+  focused-save-plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Run focused Save plan test with diagnostic log
+        shell: bash
+        run: |
+          set +e
+          php artisan test --filter SubscriptionPlanSaveTerminalityTest --testdox 2>&1 | tee /tmp/save-plan-test.log
+          status=${PIPESTATUS[0]}
+          echo "EXIT_STATUS=${status}" | tee -a /tmp/save-plan-test.log
+          exit ${status}
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: save-plan-test-log-${{ github.sha }}
+          path: /tmp/save-plan-test.log
+          if-no-files-found: error
