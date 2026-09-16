@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Site;
 use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use Closure;
@@ -29,6 +30,27 @@ final class ResolveTenantContext
         $request->attributes->set('tenant_id', (int) $membership->tenant->getKey());
 
         try {
+            if ($request->isMethod('GET')
+                && $request->route()?->uri() === 'tenants/{tenant}/context'
+                && $request->query->has('site')) {
+                $rawSiteId = $request->query('site');
+                abort_unless(is_scalar($rawSiteId), 404);
+
+                $siteId = filter_var(
+                    $rawSiteId,
+                    FILTER_VALIDATE_INT,
+                    ['options' => ['min_range' => 1]],
+                );
+                abort_unless($siteId !== false, 404);
+
+                $ownedSiteExists = Site::query()
+                    ->withoutGlobalScopes()
+                    ->whereKey((int) $siteId)
+                    ->where('tenant_id', $this->context->id())
+                    ->exists();
+                abort_unless($ownedSiteExists, 404);
+            }
+
             return $next($request);
         } finally {
             $this->context->forget();
