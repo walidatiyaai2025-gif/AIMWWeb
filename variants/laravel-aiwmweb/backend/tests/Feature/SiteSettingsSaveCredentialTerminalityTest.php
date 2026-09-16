@@ -85,7 +85,7 @@ final class SiteSettingsSaveCredentialTerminalityTest extends TestCase
         Http::assertSentCount(2);
         Http::assertSent(fn ($request) => $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/me?context=edit'
             && $request->hasHeader('Authorization')
-            && !str_contains((string) $request->body(), $secret));
+            && ! str_contains((string) $request->body(), $secret));
     }
 
     public function test_provider_failure_preserves_existing_credential_and_does_not_flash_secret(): void
@@ -177,6 +177,7 @@ final class SiteSettingsSaveCredentialTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $context->forget();
+
         return $membership->fresh('tenant');
     }
 
@@ -186,6 +187,7 @@ final class SiteSettingsSaveCredentialTerminalityTest extends TestCase
         $context->activate($membership->tenant, $membership);
         $site = Site::query()->create(['name' => $name, 'url' => $url, 'status' => 'active']);
         $context->forget();
+
         return $site;
     }
 
@@ -195,6 +197,7 @@ final class SiteSettingsSaveCredentialTerminalityTest extends TestCase
         $context->activate($membership->tenant, $membership);
         $credential = SiteCredential::query()->create(['site_id' => $site->id, 'username' => $username, 'secret_value' => $secret]);
         $context->forget();
+
         return $credential;
     }
 }

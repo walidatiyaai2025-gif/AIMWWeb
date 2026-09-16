@@ -88,8 +88,8 @@ final class SiteCredentialController extends Controller
             ->whereKey($credentialId)
             ->firstOrFail();
 
-        if (!hash_equals($username, (string) $authoritativeCredential->username)
-            || !hash_equals($applicationPassword, (string) $authoritativeCredential->secret_value)) {
+        if (! hash_equals($username, (string) $authoritativeCredential->username)
+            || ! hash_equals($applicationPassword, (string) $authoritativeCredential->secret_value)) {
             throw new RuntimeException('Credential persistence could not be reconciled.');
         }
 
