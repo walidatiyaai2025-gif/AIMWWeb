@@ -2,8 +2,8 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "7624572399fdf05b9a7d21cdc1b728718854bbaf",
-  "focused_closure_evidence_source_sha": "664e978dd5ff7cb383fea4fcdfb40a43a17ddefd",
+  "previous_reconciliation_sha": "ded56b10b202256dc544036d93893400251b5552",
+  "focused_closure_evidence_source_sha": "03f5547aa261081bdc535103fcbcb3be88fdb288",
   "countable_sources": [
     {
       "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
