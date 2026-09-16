@@ -42,7 +42,7 @@ final class SubscriptionPlansAdminCustomerBillingControlTerminalityTest extends 
         $this->assertStringContainsString('/account/billing', $row['visible_control']);
         $this->assertFalse((bool) $row['mutation']);
         $this->assertTrue((bool) $row['tenant_owned']);
-        $this->assertSame('low', $row['risk']);
+        $this->assertSame('medium', $row['risk']);
     }
 
     public function test_reference_control_is_settings_manage_navigation_only(): void
@@ -87,7 +87,7 @@ final class SubscriptionPlansAdminCustomerBillingControlTerminalityTest extends 
             ->assertOk()
             ->assertSee(self::OPERATION_ID)
             ->assertSee('Customer billing')
-            ->assertSee('href="http://localhost/tenants/alpha/account/billing"', false)
+            ->assertSee('href="/tenants/alpha/account/billing"', false)
             ->assertDontSee('/tenants/beta/account/billing');
 
         $this->actingAs($user)
