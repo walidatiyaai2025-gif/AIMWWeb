@@ -11,6 +11,7 @@ use App\Providers\ApplicationUserPasswordResetRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
+use App\Providers\ContentPlannerRouteServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
@@ -39,6 +40,7 @@ return [
     AiProviderApiKeyRemovalRouteServiceProvider::class,
     AiWorkspaceRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
+    ContentPlannerRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
