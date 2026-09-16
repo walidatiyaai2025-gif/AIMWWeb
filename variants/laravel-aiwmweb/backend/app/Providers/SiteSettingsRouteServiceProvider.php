@@ -18,6 +18,12 @@ final class SiteSettingsRouteServiceProvider extends ServiceProvider
             ->name('canonical.site.settings');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
+            ->post('/tenants/{tenant}/sites/{site}/settings/credential', [SiteCredentialController::class, 'store'])
+            ->defaults('canonical_operation_id', 'AIMW-BILL-723BEA8F1D')
+            ->whereNumber('site')
+            ->name('canonical.site.settings.credential.store');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
             ->delete('/tenants/{tenant}/sites/{site}/settings/credential', [SiteCredentialController::class, 'destroy'])
             ->defaults('canonical_operation_id', 'AIMW-BILL-E36C3E1427')
             ->whereNumber('site')
