@@ -44,8 +44,19 @@
   ],
   "authorization": {
     "session": "Laravel authenticated same-origin session is required by server routes/context; no local fake sign-in is introduced",
-    "source_workspace": ["auth", "tenant.context", "tenant.view", "content.view", "comments.read connector capability"],
-    "destination_workspace": ["auth", "tenant.context", "tenant.view", "sites.view"],
+    "source_workspace": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "content.view",
+      "comments.read connector capability"
+    ],
+    "destination_workspace": [
+      "auth",
+      "tenant.context",
+      "tenant.view",
+      "sites.view"
+    ],
     "guest_context": "401",
     "missing_tenant_view": "403",
     "missing_content_view": "control hidden through Comments capability",
@@ -124,5 +135,15 @@
     "focused_tests_present": true,
     "evidence_recorded": true,
     "reason": "The source BackToExplorer behavior is implemented as a tenant-qualified, server-authority-derived, read-only Laravel Comments control. It requires authenticated tenant context, Comments and Explorer authorization boundaries, rejects mismatched/foreign site authority, rereads server context at the destination, exposes no secrets or mutation surface, and fails closed whenever the required authority is absent or inconsistent."
+  },
+  "recovery_validation": {
+    "base_authority_sha": "b2843d6cafa1c0a16918e9a756b6cac510ba3988",
+    "validation_input_sha": "71fea4f19bf04ce1f47bc25ed331ab11136209d9",
+    "workflow_run": 35125803743,
+    "pre_materialization_php_security_methods": "PASS (4 focused methods)",
+    "typescript_typecheck": "PASS",
+    "react_control": "PASS",
+    "pint": "PASS",
+    "result": "PASS"
   }
 }
