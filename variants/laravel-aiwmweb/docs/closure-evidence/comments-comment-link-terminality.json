@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-COMM-B16FBF4792",
+    "domain": "comments",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/comments",
+    "source_control": "@comment.Link -> @comment.Link",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "wordpress",
+    "native_wp_rest": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "CommentsManager renders the authoritative WordPress comment.Link as an Open external anchor when a link exists.",
+    "side_effect": "external navigation only",
+    "wordpress_behavior": "the link value originates from the WordPress comments REST read and is persisted with the tenant-owned Comment record; clicking does not mutate WordPress",
+    "success_semantics": "navigation only; no mutation success, receipt, or fake completion state exists"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/sites/{site}/comments",
+    "source_route_name": "canonical.site.comments",
+    "source_workspace": "/tenants/{tenant}/module/comments?site={site}",
+    "backing_api": "/api/v1/tenants/{tenant}/sites/{site}/comments",
+    "backing_controller": "App\\Http\\Controllers\\ContentApiController::comments",
+    "persistence_model": "App\\Models\\Comment",
+    "persisted_field": "content_comments.link",
+    "wordpress_ingest": "App\\Content\\ContentPlatformService persists row['link'] into Comment.link during authoritative comments synchronization",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-comment-link-control.tsx",
+    "runtime_wiring": "CommentsCommentLinksControl is hosted by the existing CommentsBackToSitesControl rendered only for the comments workspace",
+    "destination_source": "authoritative Comment.link returned by the tenant/site comments API",
+    "allowed_destination_schemes": ["http", "https"],
+    "rejected_destination_classes": ["relative", "malformed", "javascript", "data", "file", "credential-bearing URL", "surrounding-whitespace URL"],
+    "new_tab": true,
+    "noopener": true,
+    "noreferrer": true,
+    "caller_controlled_destination": false,
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "authenticated session enters the explicit tenant/site Comments route",
+    "tenant.context resolves an active membership for the route tenant and activates TenantContext inside a bounded try/finally scope",
+    "content.view is required before the tenant-scoped Site is resolved; foreign or missing source Site direct IDs fail closed",
+    "the real Comments workspace receives the server-advertised tenant/site comments API contract",
+    "GET comments authorizes content.view again and queries Comment through tenant global scope plus site_id",
+    "Comment.link is the persisted value previously ingested from the authoritative WordPress comments REST row",
+    "the React control reads only the server-advertised same-origin comments endpoint and never accepts a destination from query, route, form, or DOM input",
+    "only absolute HTTP(S) persisted links without embedded credentials render as clickable external anchors",
+    "unsafe or malformed persisted destinations remain non-navigable and produce no synthesized fallback",
+    "clicking the safe anchor performs external navigation only and never reports mutation success"
+  ],
+  "authorization": {
+    "source_route": ["auth", "tenant.context", "content.view"],
+    "comments_api": ["web", "tenant.context", "content.view"],
+    "session_requirement": "ResolveTenantContext rejects requests without an authenticated user with 401 before tenant activation",
+    "guest_api": "401",
+    "missing_content_view": "403",
+    "foreign_tenant": "404"
+  },
+  "tenant_isolation": {
+    "active_tenant_resolution": "route tenant must resolve to an active membership for the authenticated user",
+    "site_resolution": "source workspace resolves Site through active TenantContext and rejects a foreign direct ID with 404",
+    "api_record_scope": "Comment global tenant scope plus site_id ensures a foreign-site identifier under the active tenant returns an empty authoritative collection rather than foreign rows",
+    "server_derived_identity": true,
+    "caller_user_or_tenant_override": false,
+    "foreign_comment_link_disclosure": false
+  },
+  "validation_and_link_safety": {
+    "url_parser": "browser URL parser",
+    "scheme_allowlist": ["http:", "https:"],
+    "credentials_rejected": true,
+    "relative_urls_rejected": true,
+    "unsafe_schemes_rejected": true,
+    "caller_query_override_ignored": true,
+    "same_origin_api_request": "the server-advertised API endpoint is normalized to pathname+search before fetch, so an absolute foreign API origin cannot be followed"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf_write_path": "not applicable; the operation and its backing fetch are GET/read-only",
+    "persistence": "authoritative Comment.link is reread; the operation makes no persistence change",
+    "authoritative_reread": "each rendered destination is sourced from the current tenant/site comments read contract, not browser-supplied state",
+    "truthful_success": "no success state exists; API error or unsafe destination fails closed without a link",
+    "idempotency": "repeated reads and navigation do not mutate domain state",
+    "retry": "read retries are side-effect free; no mutation retry semantics apply",
+    "cancellation": "no long-running mutation or cancellable job is created",
+    "queue_cache_scheduler": "none introduced by this operation",
+    "secret_exposure": "no credentials, Connector secrets, provider secrets, or internal tokens are rendered; credential-bearing external URLs are rejected",
+    "wordpress_connector_safety": "no WordPress or AIMW Connector mutation is performed",
+    "ai_provider_safety": "not applicable; no AI/provider call is performed",
+    "audit_or_receipt": "not applicable because no domain mutation occurs"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-comment-link-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsCommentLinkControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation identity and source metadata",
+      "persisted authoritative WordPress comment link returned despite caller query override",
+      "HTTP(S)-only destination allowlist and rejection of javascript/data/file/relative/malformed/credential-bearing values",
+      "new-tab noopener+noreferrer contract",
+      "guest 401 and missing-permission 403 fail closed",
+      "foreign tenant and source-workspace foreign Site direct-ID 404",
+      "foreign-site API lookup cannot disclose foreign persisted comment link",
+      "backing read leaves the persisted Comment unchanged",
+      "no POST/PATCH/DELETE path, fake success, secret, queue, scheduler, provider, or Connector mutation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-COMM-B16FBF4792",
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source external comment-link behavior is implemented on the real tenant/site Comments runtime using the authoritative persisted WordPress comment link, with session/tenant/permission isolation and strict fail-closed URL validation. No caller-controlled redirect, mutation, fake success, or secret exposure is introduced. Exact pushed provenance is generator-owned through operation-parity-evidence-sources.json."
+  }
+}
