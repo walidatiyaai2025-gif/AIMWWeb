@@ -10,6 +10,7 @@ import { AiWorkspaceHub } from './ai-workspace-hub';
 import { ApplicationUserPasswordResetControl } from './application-user-password-reset-control';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
+import { CommentsBackToExplorerControl } from './comments-back-to-explorer-control';
 import { CommentsBackToSitesControl } from './comments-back-to-sites-control';
 import { CommentsCommentLinksControl } from './comments-comment-link-control';
 import { CommentsContentHubLink } from './comments-content-hub-link';
@@ -136,7 +137,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'comments') return <><CommentsBackToExplorerControl context={context} /><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
