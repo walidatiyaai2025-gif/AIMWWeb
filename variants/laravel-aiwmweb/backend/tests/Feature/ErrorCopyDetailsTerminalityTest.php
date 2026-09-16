@@ -3,12 +3,16 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\ErrorReadController;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class ErrorCopyDetailsTerminalityTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-SYNC-89777052CB';
 
     protected function setUp(): void
@@ -34,11 +38,12 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
     }
 
-    public function test_real_error_page_renders_the_copy_control_from_only_safe_tracking_values(): void
+    public function test_real_error_page_renders_the_copy_control_from_only_safe_tracking_values_for_authenticated_session(): void
     {
         Carbon::setTestNow('2026-08-30 20:45:00');
+        $user = User::factory()->create();
 
-        $response = $this->withHeaders([
+        $response = $this->actingAs($user)->withHeaders([
             'X-Request-ID' => 'error-copy-request-0001',
             'X-Correlation-ID' => 'error-copy-correlation-0001',
         ])->get('/Error?exception=database-password-secret&tenant=foreign-secret');
@@ -66,7 +71,7 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
         $this->assertCount(2, $payload);
     }
 
-    public function test_copy_control_preserves_the_existing_anonymous_error_route_and_does_not_claim_sibling_operations(): void
+    public function test_copy_control_preserves_authenticated_error_route_and_does_not_claim_sibling_operations(): void
     {
         $route = Route::getRoutes()->getByName('canonical.error');
 
@@ -75,10 +80,12 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
         $this->assertSame('Error', $route->uri());
         $this->assertSame([], $route->parameterNames());
         $this->assertContains('web', $route->gatherMiddleware());
-        $this->assertNotContains('auth', $route->gatherMiddleware());
+        $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
+        $this->get('/Error')->assertRedirect('/login');
 
-        $html = $this->get('/Error')->assertOk()->getContent();
+        $user = User::factory()->create();
+        $html = $this->actingAs($user)->get('/Error')->assertOk()->getContent();
         $this->assertStringContainsString('data-canonical-operation="'.self::OPERATION_ID.'"', $html);
         $this->assertStringContainsString('data-canonical-operation="AIMW-CONT-85394A0E55"', $html);
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-8B3518EF80"', $html);
@@ -87,7 +94,8 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
 
     public function test_invalid_tracking_headers_are_not_exposed_to_the_clipboard_payload(): void
     {
-        $response = $this->withHeaders([
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->withHeaders([
             'X-Request-ID' => '<script>alert(1)</script>',
             'X-Correlation-ID' => 'password=must-not-copy',
         ])->get('/Error');
