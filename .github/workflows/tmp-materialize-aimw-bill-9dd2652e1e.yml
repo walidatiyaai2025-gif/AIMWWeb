@@ -37,7 +37,7 @@ jobs:
           path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
           manifest = json.loads(path.read_text(encoding='utf-8'))
           manifest['previous_reconciliation_sha'] = '802cdb50048f069d22ec67d04e715ed4ffea0a25'
-          manifest['focused_closure_evidence_source_sha'] = '5f59b6f2941a4675ef1d70b32742f9920f9f0e4e'
+          manifest['focused_closure_evidence_source_sha'] = 'f96d495e4518c8141ec9dffe683aecb6f3b065ac'
           path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           PY
 
