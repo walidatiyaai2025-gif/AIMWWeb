@@ -1,0 +1,99 @@
+name: Temporary materialize AIMW-BILL-9DD2652E1E
+
+on:
+  push:
+    branches:
+      - worker/laravel-AIMW-BILL-9DD2652E1E-cancel-permanently
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pin current authority and focused evidence snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          manifest = json.loads(path.read_text(encoding='utf-8'))
+          manifest['previous_reconciliation_sha'] = '802cdb50048f069d22ec67d04e715ed4ffea0a25'
+          manifest['focused_closure_evidence_source_sha'] = '5f59b6f2941a4675ef1d70b32742f9920f9f0e4e'
+          path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Run official reconciliation chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=variants/laravel-aiwmweb
+          OUT="$ROOT/docs/operation-parity-reconciliation.json"
+          MD="$ROOT/docs/operation-parity-reconciliation.md"
+          SUMMARY=/tmp/operation-parity-summary.json
+
+          python "$ROOT/tools/finalize_operation_parity.py" \
+            --output "$OUT" \
+            --summary-output "$SUMMARY" \
+            --markdown-output "$MD" \
+            --check-total 931
+          python "$ROOT/tools/apply_tenant_neutral_route_evidence.py" \
+            --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python "$ROOT/tools/apply_platform_admin_route_evidence.py" \
+            --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python "$ROOT/tools/apply_explicit_route_api_provenance.py" \
+            --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python "$ROOT/tools/apply_focused_closure_evidence.py" \
+            --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python "$ROOT/tools/apply_focused_service_evidence.py" \
+            --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python "$ROOT/tools/apply_focused_background_job_evidence.py" \
+            --input "$OUT" --output "$OUT" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+
+      - name: Prove exactly one canonical transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=variants/laravel-aiwmweb
+          python "$ROOT/tools/operation_parity_delta.py" \
+            --current "$ROOT/docs/operation-parity-reconciliation.json" \
+            --previous-sha 802cdb50048f069d22ec67d04e715ed4ffea0a25 | tee /tmp/parity-delta.txt
+          grep -Fx 'PREVIOUS_TERMINAL=592' /tmp/parity-delta.txt
+          grep -Fx 'CURRENT_TERMINAL=593' /tmp/parity-delta.txt
+          grep -Fx 'TERMINAL_DELTA=+1' /tmp/parity-delta.txt
+          grep -Fx 'FALSE_POSITIVES_DEMOTED=0' /tmp/parity-delta.txt
+          grep -Fx 'FALSE_PENDING_ROWS_TERMINALIZED=1' /tmp/parity-delta.txt
+          grep -Fx 'STATUS_CHANGED_ROWS=1' /tmp/parity-delta.txt
+          grep -Fx 'TERMINALIZED_IDS=AIMW-BILL-9DD2652E1E' /tmp/parity-delta.txt
+          grep -Fx 'STATUS_CHANGED_IDS=AIMW-BILL-9DD2652E1E' /tmp/parity-delta.txt
+
+      - name: Commit generated reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --check
+          git commit -m 'AIMW-BILL-9DD2652E1E: materialize official parity reconciliation'
+          git push origin HEAD
