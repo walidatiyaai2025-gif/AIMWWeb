@@ -7,6 +7,7 @@ import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
 import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
 import { AutomationPhaseNavigationControls } from './automation-phase-controls';
 import { AiWorkspaceHub } from './ai-workspace-hub';
+import { ApplicationUserPasswordResetControl } from './application-user-password-reset-control';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
@@ -83,6 +84,7 @@ function TenantBootstrap() {
             <AppShell context={context}>
                 <CurrentUserSiteDetailsControl context={context} />
                 <MainLayoutParityControls context={context} />
+                <ApplicationUserPasswordResetControl context={context} />
                 <AutomationPhaseNavigationControls context={context} />
                 <Outlet context={{ context } satisfies OutletState} />
             </AppShell>
