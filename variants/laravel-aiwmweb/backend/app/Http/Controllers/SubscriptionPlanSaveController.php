@@ -203,6 +203,7 @@ final class SubscriptionPlanSaveController extends Controller
                 if (($actual ?? []) != ($expected ?? [])) {
                     return false;
                 }
+
                 continue;
             }
             if ($actual != $expected) {

@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Http\Controllers\SubscriptionPlanSaveController;
 use App\Http\Controllers\SubscriptionPlansAdminReadController;
+use App\Http\Controllers\SubscriptionPlanSaveController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
