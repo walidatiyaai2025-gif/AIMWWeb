@@ -11,13 +11,15 @@
     "source_file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
     "source_control": "ConfirmDeleteAsync",
     "source_screen": "/sites",
-    "mutation": true,
+    "mutation": false,
     "tenant_owned": true,
     "risk": "critical"
   },
   "source_semantics": {
     "confirmation_required": true,
     "delete_service": "SitesApi.DeleteSiteAsync(siteId)",
+    "destructive_mutation": true,
+    "canonical_metadata_note": "The generated canonical scanner classifies this visible-control row as mutation=false; the authoritative ConfirmDeleteAsync source behavior is nevertheless destructive and the Laravel adaptation preserves that real delete semantics without rewriting canonical metadata.",
     "success_boundary": "Delete returns successfully and ReloadAsync(false) completes against the authoritative Sites collection",
     "failure_semantics": "delete or authoritative reload failure remains visible failure and never fabricates success"
   },
@@ -53,7 +55,7 @@
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/SitesDeleteControlTerminalityTest.php",
     "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-delete-control.test.tsx",
     "coverage": [
-      "canonical identity, source screen, critical tenant-owned mutation metadata",
+      "canonical identity, source screen, critical tenant ownership, canonical scanner mutation=false metadata, and real destructive source semantics",
       "real web/auth/tenant.context DELETE route and controller",
       "authorized persisted deletion, empty 204 and replay failure",
       "guest and missing-permission denial",
