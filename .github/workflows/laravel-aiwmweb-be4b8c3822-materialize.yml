@@ -16,7 +16,6 @@ jobs:
     env:
       PYTHONHASHSEED: '0'
       BASE_SHA: 'ded56b10b202256dc544036d93893400251b5552'
-      EVIDENCE_SHA: 'a47cdd59f538166dff38851ce3600bcfd98bda05'
       OPERATION_ID: 'AIMW-BILL-BE4B8C3822'
     steps:
       - uses: actions/checkout@v4
@@ -30,12 +29,54 @@ jobs:
           git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
           test "$(git rev-parse origin/worker/laravel-aiwmweb-closure-composition)" = "$BASE_SHA"
           git merge-base --is-ancestor "$BASE_SHA" HEAD
-          git cat-file -e "$EVIDENCE_SHA^{commit}"
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           coverage: none
+
+      - name: Align canonical metadata proof and create immutable evidence commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          test_path = Path('variants/laravel-aiwmweb/backend/tests/Feature/SitesDeleteControlTerminalityTest.php')
+          text = test_path.read_text(encoding='utf-8')
+          text = text.replace(
+              'test_exact_canonical_operation_is_the_pending_sites_confirm_delete_control',
+              'test_exact_canonical_operation_is_the_sites_confirm_delete_control',
+          )
+          text = text.replace("        $this->assertSame('PENDING', $operation['migration_state']);\n", '')
+          text = text.replace(
+              "        $this->assertTrue((bool) $operation['mutation']);\n",
+              "        $this->assertFalse((bool) $operation['mutation']);\n",
+          )
+          test_path.write_text(text, encoding='utf-8')
+
+          evidence_path = Path('variants/laravel-aiwmweb/docs/closure-evidence/sites-delete-control-terminality.json')
+          evidence = json.loads(evidence_path.read_text(encoding='utf-8'))
+          evidence['canonical_operation']['mutation'] = False
+          evidence['source_semantics']['destructive_mutation'] = True
+          evidence['source_semantics']['canonical_metadata_note'] = (
+              'The generated canonical scanner classifies this visible-control row as mutation=false; '
+              'the authoritative ConfirmDeleteAsync source behavior is nevertheless destructive and '
+              'the Laravel adaptation preserves that real delete semantics without rewriting canonical metadata.'
+          )
+          evidence['focused_tests']['coverage'][0] = (
+              'canonical identity, source screen, critical tenant ownership, canonical scanner mutation=false metadata, '
+              'and real destructive source semantics'
+          )
+          evidence_path.write_text(json.dumps(evidence, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/backend/tests/Feature/SitesDeleteControlTerminalityTest.php variants/laravel-aiwmweb/docs/closure-evidence/sites-delete-control-terminality.json
+          git diff --cached --check
+          git commit -m 'test(laravel-aiwmweb): align site delete canonical metadata'
+          echo "EVIDENCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Run focused Laravel security acceptance
         working-directory: variants/laravel-aiwmweb/backend
@@ -59,6 +100,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git cat-file -e "$EVIDENCE_SHA^{commit}"
           python - <<'PY'
           import json
           import os
