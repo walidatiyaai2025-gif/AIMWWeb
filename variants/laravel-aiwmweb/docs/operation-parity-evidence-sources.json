@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "f753e377c7ccd22e01cd2fe4338cdbdfcb24e8ff",
+  "previous_reconciliation_sha": "80adb539c8be76ef5c966ceed04e18e252ff14c2",
   "focused_closure_evidence_source_sha": "8407229caa4b825470c7966976184c4e3c1a16f4",
   "countable_sources": [
     {
@@ -644,6 +644,27 @@
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-route-terminality.json",
           "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "Content Planner explicit tenant route recovery",
+      "sha": "3ef0d094b3211f0e67966346f1a896d2daf164a9",
+      "observed_pr_head": "3ef0d094b3211f0e67966346f1a896d2daf164a9",
+      "domains": [
+        "billing"
+      ],
+      "operation_ids": [
+        "AIMW-BILL-69825FEAD5"
+      ],
+      "route_api_provenance": {
+        "AIMW-BILL-69825FEAD5": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ContentPlannerRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-planner-route-terminality.json",
+          "security_mode": "tenant_scoped"
         }
       }
     }
