@@ -81,7 +81,10 @@
   },
   "validation": {
     "status": "PENDING_FOCUSED_CI",
-    "result": "NOT_YET_RECORDED"
+    "result": "NOT_YET_RECORDED",
+    "workflow": ".github/workflows/laravel-bill-5811-focused.yml",
+    "workflow_introduced_at": "570dfeb2bff4119b074d3735efff9e4376200fc3",
+    "note": "No PASS is recorded until GitHub Actions completes the focused test successfully."
   },
   "scope_guards": {
     "only_operation_claimed": "AIMW-BILL-5811B45F89",
