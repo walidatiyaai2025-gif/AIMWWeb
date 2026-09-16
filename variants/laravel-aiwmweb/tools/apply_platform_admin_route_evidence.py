@@ -124,7 +124,7 @@ def apply(
         require("'platform_admin' => true" in acceptance_low and "assertok" in acceptance_low, f"platform-admin route lacks authorized administrator acceptance: {operation_id}")
         for resource in ("tenant", "account", "subscription", "provider", "user"):
             require(
-                f"assertdontsee('name=\\\"{resource}" in acceptance_low,
+                f"assertdontsee('name=\"{resource}" in acceptance_low,
                 f"platform-admin route lacks {resource} resource-input non-disclosure acceptance: {operation_id}",
             )
 
