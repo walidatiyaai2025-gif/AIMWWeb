@@ -97,8 +97,8 @@ final class SubscriptionPlanSaveTerminalityTest extends TestCase
 
         $plan = BillingPlan::query()->where('code', 'security-save-plan')->firstOrFail();
         $this->assertSame('Security Save EN', $plan->name);
-        $this->assertSame(['en' => 'Security Save EN', 'ar' => 'حفظ أمني'], $plan->localized_name);
-        $this->assertSame(['en' => 'Persisted English description', 'ar' => 'وصف عربي محفوظ'], $plan->localized_description);
+        $this->assertSame(['ar' => 'حفظ أمني', 'en' => 'Security Save EN'], $plan->localized_name);
+        $this->assertSame(['ar' => 'وصف عربي محفوظ', 'en' => 'Persisted English description'], $plan->localized_description);
         $this->assertSame(1999, $plan->price_minor);
         $this->assertSame('month', $plan->billing_interval);
         $this->assertSame('PROD-sensitive-sentinel', $plan->provider_product_id);
