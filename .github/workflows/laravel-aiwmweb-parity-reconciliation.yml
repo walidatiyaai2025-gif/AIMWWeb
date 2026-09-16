@@ -19,125 +19,84 @@ on:
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   reconcile:
-    if: github.event.pull_request.head.ref == 'worker/laravel-bill-be4b8c3822-clean-recovery'
     runs-on: ubuntu-latest
     env:
       PYTHONHASHSEED: '0'
-      BASE_SHA: 'ded56b10b202256dc544036d93893400251b5552'
-      EVIDENCE_SHA: '262aa6b9c696845c26560980abdb3a09d39146b9'
-      OPERATION_ID: 'AIMW-BILL-BE4B8C3822'
-      HEAD_BRANCH: 'worker/laravel-bill-be4b8c3822-clean-recovery'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Fetch refs and prove immutable recovery inputs
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
-          test "$(git rev-parse origin/worker/laravel-aiwmweb-closure-composition)" = "$BASE_SHA"
-          git cat-file -e "$EVIDENCE_SHA^{commit}"
-          git merge-base --is-ancestor "$BASE_SHA" HEAD
-          git merge-base --is-ancestor "$EVIDENCE_SHA" HEAD
-
-      - name: Bind generator to current authority and immutable focused evidence
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
-          data['previous_reconciliation_sha'] = os.environ['BASE_SHA']
-          data['focused_closure_evidence_source_sha'] = os.environ['EVIDENCE_SHA']
-          path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
-          PY
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-
-      - name: Run focused site-delete security acceptance
-        working-directory: variants/laravel-aiwmweb/backend
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-          CACHE_STORE: array
-          SESSION_DRIVER: array
-          QUEUE_CONNECTION: sync
-        run: |
-          composer install --no-interaction --prefer-dist
-          cp .env.example .env
-          php artisan key:generate
-          php artisan test --filter SitesDeleteControlTerminalityTest
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Run official six-stage reconciliation generator
-        shell: bash
+      - name: Rebuild and validate operation-level reconciliation
         run: |
-          set -euo pipefail
-          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output /tmp/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output /tmp/operation-parity-reconciliation.md --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input /tmp/operation-parity-reconciliation.json --output /tmp/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output /tmp/operation-parity-reconciliation.md --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input /tmp/operation-parity-reconciliation.json --output /tmp/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output /tmp/operation-parity-reconciliation.md --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input /tmp/operation-parity-reconciliation.json --output /tmp/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output /tmp/operation-parity-reconciliation.md --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input /tmp/operation-parity-reconciliation.json --output /tmp/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output /tmp/operation-parity-reconciliation.md --check-total 931
-          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input /tmp/operation-parity-reconciliation.json --output /tmp/operation-parity-reconciliation.json --summary-output /tmp/operation-parity-summary.json --markdown-output /tmp/operation-parity-reconciliation.md --check-total 931
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
 
-      - name: Prove exactly one generator-backed transition
+      - name: Verify committed reconciliation artifacts
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json, os
+          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/operation-parity-reconciliation.json
+          cmp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md /tmp/operation-parity-reconciliation.md
+
+      - name: Compare with previous canonical reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous_sha="$(python - <<'PY'
+          import json
           from pathlib import Path
-          terminal = {'PORTED', 'ADAPTED', 'VERIFIED_UNAVAILABLE_EXTERNAL'}
-          old = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text(encoding='utf-8'))
-          new = json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text(encoding='utf-8'))
-          old_by_id = {row['operation_id']: row for row in old['operations']}
-          new_by_id = {row['operation_id']: row for row in new['operations']}
-          assert old_by_id.keys() == new_by_id.keys(), 'operation universe changed'
-          changes = sorted((op_id, old_by_id[op_id]['migration_state'], new_by_id[op_id]['migration_state']) for op_id in old_by_id if old_by_id[op_id]['migration_state'] != new_by_id[op_id]['migration_state'])
-          expected = [(os.environ['OPERATION_ID'], 'PENDING', 'ADAPTED')]
-          assert changes == expected, f'unexpected reconciliation changes: {changes}'
-          counts = lambda doc: (
-              len(doc['operations']),
-              sum(r['migration_state'] in terminal for r in doc['operations']),
-              sum(r['migration_state'] == 'PENDING' for r in doc['operations']),
-              sum(r['migration_state'] == 'BLOCKED' for r in doc['operations']),
-          )
-          assert counts(old) == (931, 577, 354, 0), counts(old)
-          assert counts(new) == (931, 578, 353, 0), counts(new)
-          print(f'ISOLATED_TRANSITION={changes[0][0]}:{changes[0][1]}->{changes[0][2]}')
-          print('COUNTS=931/578/353/0')
+          manifest = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json').read_text())
+          print(manifest['previous_reconciliation_sha'])
           PY
-          python variants/laravel-aiwmweb/tools/operation_parity_delta.py --current /tmp/operation-parity-reconciliation.json --previous-sha "$BASE_SHA"
-
-      - name: Materialize generator output and restore CI definition
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
-          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
-          git checkout "$BASE_SHA" -- .github/workflows/laravel-aiwmweb-parity-reconciliation.yml
-          git rm -f .github/workflows/laravel-aiwmweb-be4b8c3822-materialize.yml || true
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md .github/workflows/laravel-aiwmweb-parity-reconciliation.yml
-          git diff --cached --check
-          git commit -m 'docs(laravel-aiwmweb): materialize BE4B8C3822 reconciliation'
-          git push origin HEAD:"$HEAD_BRANCH"
+          )"
+          python variants/laravel-aiwmweb/tools/operation_parity_delta.py \
+            --current /tmp/operation-parity-reconciliation.json \
+            --previous-sha "$previous_sha"
 
       - uses: actions/upload-artifact@v4
         if: always()
