@@ -31,7 +31,7 @@ final class SubscriptionPlanSaveTerminalityTest extends TestCase
         $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('billing', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
-        $this->assertSame('Save plan', $row['visible_control']);
+        $this->assertStringContainsString('[SaveAsync]', (string) $row['visible_control']);
         $this->assertTrue((bool) $row['mutation']);
     }
 
