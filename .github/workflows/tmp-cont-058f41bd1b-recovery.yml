@@ -1,0 +1,125 @@
+name: TEMP CONT-058F41BD1B Recovery
+
+on:
+  push:
+    branches:
+      - worker/laravel-cont-058f41bd1b-pages-posts-recovery-v2
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recover exact legacy unit onto live authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUTHORITY_SHA=4590ee7aa01107a64b5441a6600de40e34bfac0a
+          LEGACY_SHA=407d194ab7cd513ef0e45e62648a9d6e75e73d49
+          OP=AIMW-CONT-058F41BD1B
+          git fetch origin "$LEGACY_SHA" || true
+          test "$(git merge-base "$AUTHORITY_SHA" HEAD)" = "$AUTHORITY_SHA"
+          cp variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json /tmp/previous.json
+          git show "$LEGACY_SHA":variants/laravel-aiwmweb/backend/resources/js/pages-posts-link-control.tsx > variants/laravel-aiwmweb/backend/resources/js/pages-posts-link-control.tsx
+          git show "$LEGACY_SHA":variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-posts-link-control.test.tsx > variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-posts-link-control.test.tsx
+          git show "$LEGACY_SHA":variants/laravel-aiwmweb/docs/closure-evidence/pages-posts-link-terminality.json > variants/laravel-aiwmweb/docs/closure-evidence/pages-posts-link-terminality.json
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('variants/laravel-aiwmweb/backend/resources/js/app.tsx')
+          s=p.read_text()
+          imp="import { PagesPostsLinkControl } from './pages-posts-link-control';\n"
+          anchor="import { MainLayoutParityControls } from './main-layout-parity-controls';\n"
+          if imp not in s:
+              assert anchor in s
+              s=s.replace(anchor, anchor+imp, 1)
+          route="    if (route.key === 'pages') return <><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;\n"
+          anchor2="    if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;\n"
+          if route not in s:
+              assert anchor2 in s
+              s=s.replace(anchor2, anchor2+route, 1)
+          p.write_text(s)
+          PY
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('variants/laravel-aiwmweb/docs/closure-evidence/pages-posts-link-terminality.json')
+          d=json.loads(p.read_text())
+          d['canonical_denominator']={
+            'authority_branch':'worker/laravel-aiwmweb-closure-composition',
+            'authority_sha':'4590ee7aa01107a64b5441a6600de40e34bfac0a',
+            'total':931,
+            'previous_terminal':589,
+            'isolated_new_terminal':590,
+            'previous_pending':342,
+            'isolated_new_pending':341,
+            'previous_blocked':0,
+            'isolated_new_blocked':0,
+            'note':'Expected isolated delta for this recovered unit; canonical counts remain generator-owned and are validated below.'
+          }
+          p.write_text(json.dumps(d, indent=2, ensure_ascii=False)+'\n')
+          PY
+          cd variants/laravel-aiwmweb/backend
+          npm install --no-audit --no-fund
+          npx vitest run resources/js/__tests__/pages-posts-link-control.test.tsx
+          npm run typecheck
+          cd ../../..
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add variants/laravel-aiwmweb/backend/resources/js/pages-posts-link-control.tsx variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-posts-link-control.test.tsx variants/laravel-aiwmweb/backend/resources/js/app.tsx variants/laravel-aiwmweb/docs/closure-evidence/pages-posts-link-terminality.json
+          git commit -m "feat(laravel): recover Pages to Posts canonical control"
+          PRODUCT_SHA=$(git rev-parse HEAD)
+          git push origin HEAD
+          python - "$PRODUCT_SHA" <<'PY'
+          import json,sys
+          from pathlib import Path
+          product_sha=sys.argv[1]
+          p=Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          d=json.loads(p.read_text())
+          d['previous_reconciliation_sha']='4590ee7aa01107a64b5441a6600de40e34bfac0a'
+          d['focused_closure_evidence_source_sha']=product_sha
+          p.write_text(json.dumps(d, indent=2)+'\n')
+          PY
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output /tmp/current.json --summary-output /tmp/summary.json --markdown-output /tmp/current.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input /tmp/current.json --output /tmp/current.json --summary-output /tmp/summary.json --markdown-output /tmp/current.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input /tmp/current.json --output /tmp/current.json --summary-output /tmp/summary.json --markdown-output /tmp/current.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input /tmp/current.json --output /tmp/current.json --summary-output /tmp/summary.json --markdown-output /tmp/current.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input /tmp/current.json --output /tmp/current.json --summary-output /tmp/summary.json --markdown-output /tmp/current.md --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input /tmp/current.json --output /tmp/current.json --summary-output /tmp/summary.json --markdown-output /tmp/current.md --check-total 931
+          python - <<'PY'
+          import json
+          prev=json.load(open('/tmp/previous.json'))
+          cur=json.load(open('/tmp/current.json'))
+          def rows(d):
+              return {r['operation_id']:r for r in d['operations']}
+          a,b=rows(prev),rows(cur)
+          changed=[k for k in a if a[k].get('status') != b[k].get('status')]
+          assert changed == ['AIMW-CONT-058F41BD1B'], changed
+          assert a[changed[0]]['status']=='PENDING', a[changed[0]]['status']
+          assert b[changed[0]]['status'] in ('ADAPTED','PORTED','VERIFIED_UNAVAILABLE_EXTERNAL'), b[changed[0]]['status']
+          summary=cur['summary']
+          assert summary['total']==931, summary
+          assert summary['terminal']==590, summary
+          assert summary['pending']==341, summary
+          assert summary['blocked']==0, summary
+          print('EXACTLY_ONE_TRANSITION=PASS', changed[0], summary)
+          PY
+          cp /tmp/current.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/current.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git commit -m "chore(laravel): reconcile Pages Posts canonical parity"
+          git push origin HEAD
+          git rm .github/workflows/tmp-cont-058f41bd1b-recovery.yml
+          git commit -m "chore: remove CONT-058F41BD1B recovery workflow"
+          git push origin HEAD
