@@ -7,9 +7,9 @@ use App\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use RuntimeException;
 
 final class AutomationCenterJobSaveService
 {
@@ -40,6 +40,10 @@ final class AutomationCenterJobSaveService
                 if (! hash_equals((string) $existing->request_hash, $requestHash)) {
                     throw new ConflictHttpException('Idempotency key was already used for different automation configuration.');
                 }
+                if (! $this->configurationMatches($existing, $desired)) {
+                    throw new ConflictHttpException('Idempotent create target has changed since the original request.');
+                }
+
                 return (int) $existing->id;
             }
 
@@ -121,8 +125,6 @@ final class AutomationCenterJobSaveService
                     'last_status' => $desired['enabled'] ? 'Scheduled' : 'Disabled',
                     'next_run_at' => $this->calculateNextRun($now, $desired),
                     'version' => $nextVersion,
-                    'idempotency_key' => null,
-                    'request_hash' => null,
                     'updated_at' => $now,
                 ]);
             if ($updated !== 1) {
@@ -140,6 +142,7 @@ final class AutomationCenterJobSaveService
         if ($site === null) {
             throw new NotFoundHttpException('Site was not found.');
         }
+
         return $site;
     }
 
@@ -229,6 +232,7 @@ final class AutomationCenterJobSaveService
                 default => $candidate->addDays($interval),
             };
         }
+
         return $candidate;
     }
 
