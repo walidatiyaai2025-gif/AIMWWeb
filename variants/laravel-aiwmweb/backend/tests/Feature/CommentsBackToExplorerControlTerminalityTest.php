@@ -18,7 +18,7 @@ class CommentsBackToExplorerControlTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-COMM-2B682F7BEC';
 
-    public function test_exact_canonical_input_is_the_pending_comments_back_to_explorer_control(): void
+    public function test_exact_canonical_operation_is_the_adapted_comments_back_to_explorer_control(): void
     {
         $document = json_decode(
             (string) file_get_contents(base_path('../docs/capability-parity-ledger.json')),
@@ -29,7 +29,7 @@ class CommentsBackToExplorerControlTerminalityTest extends TestCase
         $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('PENDING', $operation['migration_state']);
+        $this->assertSame('ADAPTED', $operation['migration_state']);
         $this->assertSame('comments', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('/sites/{SiteId:guid}/comments', $operation['route_screen']);
