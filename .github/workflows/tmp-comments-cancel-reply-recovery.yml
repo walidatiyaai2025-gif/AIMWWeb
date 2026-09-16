@@ -1,0 +1,131 @@
+name: Temporary Comments CancelReply Recovery
+
+on:
+  push:
+    branches:
+      - worker/laravel-comm-843a2f029b-cancel-reply-recovery-2
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      PREVIOUS_AUTHORITY: 404770109de96ffa004168cac7aace80285356f9
+      OPERATION_ID: AIMW-COMM-843A2F029B
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install focused dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd variants/laravel-aiwmweb/backend
+          composer install --no-interaction --prefer-dist
+          npm ci --no-audit --no-fund
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run focused current-authority validation
+        shell: bash
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set -euo pipefail
+          vendor/bin/pint --test tests/Feature/CommentsCancelReplyControlTerminalityTest.php
+          php artisan test tests/Feature/CommentsCancelReplyControlTerminalityTest.php
+          npm run typecheck
+          npm test -- --run resources/js/__tests__/comments-cancel-reply-control.test.tsx
+
+      - name: Register exact pushed recovery evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          doc = json.loads(path.read_text())
+          doc['previous_reconciliation_sha'] = os.environ['PREVIOUS_AUTHORITY']
+          doc['focused_closure_evidence_source_sha'] = os.environ['GITHUB_SHA']
+          path.write_text(json.dumps(doc, indent=2) + '\n')
+          PY
+
+      - name: Run official seven-stage reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='variants/laravel-aiwmweb'
+          json="$base/docs/operation-parity-reconciliation.json"
+          md="$base/docs/operation-parity-reconciliation.md"
+          summary='/tmp/operation-parity-summary.json'
+          python "$base/tools/finalize_operation_parity.py" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/apply_tenant_neutral_route_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/apply_platform_admin_route_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/apply_explicit_route_api_provenance.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/apply_focused_closure_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/apply_focused_service_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/apply_focused_background_job_evidence.py" --input "$json" --output "$json" --summary-output "$summary" --markdown-output "$md" --check-total 931
+          python "$base/tools/operation_parity_delta.py" --current "$json" --previous-sha "$PREVIOUS_AUTHORITY"
+
+      - name: Prove exact-one canonical transition and totals
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "$PREVIOUS_AUTHORITY:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/previous-reconciliation.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          prev = json.loads(Path('/tmp/previous-reconciliation.json').read_text())
+          cur = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          p = {x['operation_id']: x['migration_state'] for x in prev['operations']}
+          c = {x['operation_id']: x['migration_state'] for x in cur['operations']}
+          changed = [(k, p[k], c[k]) for k in p if p[k] != c[k]]
+          expected = [(os.environ['OPERATION_ID'], 'PENDING', 'ADAPTED')]
+          if changed != expected:
+              raise SystemExit(f'unexpected parity delta: {changed}')
+          totals = cur['totals']
+          expected_totals = {'total': 931, 'terminal': 599, 'pending': 332, 'blocked': 0}
+          for key, value in expected_totals.items():
+              if totals.get(key) != value:
+                  raise SystemExit(f'{key}={totals.get(key)} expected {value}')
+          comments = cur['domains']['comments']
+          if comments.get('terminal') != 8 or comments.get('pending') != 0:
+              raise SystemExit(f'comments domain not complete: {comments}')
+          print('EXACT_ONE_TRANSITION=PASS')
+          print('COMMENTS_DOMAIN=8/8')
+          PY
+
+      - name: Commit generator-backed artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --quiet && { echo 'Expected generator-backed changes were absent'; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(laravel): materialize CancelReply reconciliation'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
