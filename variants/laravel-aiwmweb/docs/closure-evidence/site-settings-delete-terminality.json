@@ -1,0 +1,91 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-D7D075EF3C",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+    "visible_control": "Delete site / DeleteClicked",
+    "behavior": "The current source enables the destructive Site Settings action only after the user types the exact site name, invokes SiteService.DeleteSiteAsync(Id), and navigates to /sites only after that deletion call succeeds. The caller supplies the current Site Id; identity and tenant ownership are not accepted as editable form data."
+  },
+  "laravel_adaptation": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsDeleteController.php",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+    "operation_marker": "AIMW-BILL-D7D075EF3C",
+    "behavior": "The Site Settings danger-zone form submits a CSRF-protected DELETE to an explicit canonical route. The controller resolves the active tenant from TenantContext, authorizes sites.manage, scopes the site by server-resolved tenant_id plus route site ID, requires an exact case-sensitive server-side site-name confirmation, blocks deletion while a queued/running execution exists, deletes in a transaction under a row lock, rereads authoritatively after commit, clears the deleted active-site session pointer, and redirects to /sites only after absence is proven."
+  },
+  "authorization": {
+    "authentication": "web authenticated session",
+    "tenant_resolution": "tenant.context plus exact route slug equality with server-resolved TenantContext",
+    "read_permissions": ["tenant.view", "sites.view"],
+    "mutation_permission": "sites.manage",
+    "csrf": "web middleware plus Blade @csrf and method-spoofed DELETE"
+  },
+  "tenant_isolation": {
+    "canonical_tenant_owned": true,
+    "route_identity": ["tenant", "site"],
+    "server_tenant_identity": "TenantContext tenant id and slug; submitted tenant_id is ignored",
+    "server_actor_identity": "authenticated request user; submitted actor_user_id is ignored",
+    "site_resolution": "withoutGlobalScopes constrained explicitly by active TenantContext tenant_id and route site primary key",
+    "foreign_tenant_slug": "404 before mutation",
+    "foreign_site_direct_id": "404 before mutation",
+    "caller_selected_identity_fields": "not used for authorization, ownership, or target selection"
+  },
+  "validation": {
+    "confirmation": "required string, maximum 255 characters, then exact case-sensitive equality with the server-loaded site name",
+    "invalid_confirmation": "422 and no destructive write",
+    "site_id": "positive numeric route identifier only"
+  },
+  "secret_safety": {
+    "request": "no credential, API key, provider secret, or WordPress Application Password is required by the delete contract",
+    "response": "redirect plus fixed status only; submitted fields are not echoed",
+    "site_settings_read": "existing credential projection remains secret-free and renders only a fixed password mask"
+  },
+  "truthful_mutation_semantics": {
+    "transactional_delete": true,
+    "row_lock": true,
+    "active_execution_guard": "queued/running executions return 409 before delete and are never implicitly cancelled",
+    "post_transaction_authoritative_reread": true,
+    "success_redirect_after_reread_only": true,
+    "session_cleanup": "canonical_site_id is removed only when it points at the successfully deleted site",
+    "replayed_delete": "404 because the tenant-scoped site no longer exists; no second fake success",
+    "retry": "no automatic destructive retry; a manual replay must pass the full auth/tenant/site checks and fails closed after a successful prior delete",
+    "cancellation": "no asynchronous delete job/provider request exists; an unrelated active execution blocks the operation rather than being cancelled"
+  },
+  "runtime_boundaries": {
+    "database": "tenant-scoped transactional Eloquent delete plus authoritative post-commit existence query",
+    "queue": "not used for deletion",
+    "cache": "not used to establish success",
+    "scheduler": "not used",
+    "wordpress_connector": "not called",
+    "billing_provider": "not called despite scanner domain classification",
+    "ai_provider": "not used",
+    "sample_demo_fake_success": "none"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsDeleteTerminalityTest.php",
+      "coverage": "canonical operation route and production marker; web/auth/tenant.context and rendered CSRF token; authenticated sites.manage authorization; server-derived tenant and actor identity; foreign tenant/direct-ID 404; exact-name validation; active-execution fail-closed behavior without implicit cancellation; transactional successful deletion, authoritative absence, active-site session cleanup, ignored spoof identity fields, secret non-echo, and replay 404 semantics"
+    }
+  ],
+  "generator_evidence_source": {
+    "sha": "d676ff1f4c6fbe7eb3ccb546d707e8bd10b16a43",
+    "note": "Immutable implementation-and-focused-test head on the claimed worker branch before this machine-readable evidence artifact."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The destructive Site Settings control is wired to a real tenant-scoped runtime mutation with source-equivalent typed confirmation, deterministic authorization/IDOR/CSRF validation, fail-closed active-operation handling, authoritative persistence verification, and no fabricated success."
+  }
+}
