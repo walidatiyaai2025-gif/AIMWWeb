@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-BILL-0938ECBF66",
+  "domain": "billing",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+  "source_handler": "ClearHistory",
+  "implementation": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/site-details-save-test-control.tsx",
+    "test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-clear-history.test.tsx"
+  },
+  "source_semantics": {
+    "behavior": "ClearHistory only clears the page-local history collection; it does not delete persisted operation history or call a backend service.",
+    "adaptation": "Laravel keeps connection-verification history in component-local state and exposes Clear history only when at least one real verification has completed and been authoritatively reread."
+  },
+  "security_contract": {
+    "session_auth": "Clear history performs no server action. The real verification that can create a local history entry remains on the existing authenticated Laravel SPA/API session path.",
+    "active_tenant": "history is local to the active tenant/site component and is reset whenever context.tenant.slug or the canonical Site Details endpoint changes",
+    "permission": "the containing control fails closed unless the server-derived frontend context grants connector.manage or wildcard permission",
+    "idor": "Clear history emits no route, tenant ID, site ID, or HTTP request; the underlying verification retains the existing tenant-scoped server route and foreign-tenant direct-ID 404 contract",
+    "validation": "Clear history accepts no user payload or identity/ownership fields",
+    "csrf": "no CSRF-bearing mutation is created for Clear history because it has no server mutation; the existing verification continues through apiRequest CSRF/session handling",
+    "ownership": "no caller-supplied tenant/site ownership is consumed by Clear history; local history is reset on tenant/site context change",
+    "secret_non_exposure": "history copies only normalized connection and health states; unexpected application_password or encrypted_secret fields are never rendered or retained in history",
+    "truthful_success": "a history item is appended only after the real verification POST succeeds and Site Details authoritative reread succeeds",
+    "retry_idempotency": "clearing is an in-memory set-to-empty operation with no persistence or side effect; repeated clear is naturally idempotent",
+    "provider_failure": "verification failure or authoritative reread failure records no local success history",
+    "queue_cache_scheduler_isolation": "Clear history touches no queue, cache, scheduler, persistence, or background job",
+    "fake_success": "no demo/sample result creates history; entries originate only from the existing real verification path after authoritative reread"
+  }
+}
