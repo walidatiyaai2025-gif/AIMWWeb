@@ -32,20 +32,6 @@ jobs:
           git merge-base --is-ancestor "$BASE_SHA" HEAD
           git cat-file -e "$EVIDENCE_SHA^{commit}"
 
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          coverage: none
-
-      - name: Run focused Laravel security acceptance
-        working-directory: variants/laravel-aiwmweb/backend
-        run: |
-          composer install --no-interaction --prefer-dist
-          cp .env.example .env
-          php artisan key:generate
-          php artisan migrate:fresh --force
-          php artisan test --filter SiteSettingsRemoveCredentialTerminalityTest
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -142,12 +128,36 @@ jobs:
             --current /tmp/operation-parity-reconciliation.json \
             --previous-sha "$BASE_SHA"
 
-      - name: Commit generator-owned artifacts and self-delete materializer
+      - name: Stage generator-owned artifacts for focused acceptance
         shell: bash
         run: |
           set -euo pipefail
           cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
           cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Run focused Laravel security acceptance on generated terminal state
+        working-directory: variants/laravel-aiwmweb/backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer install --no-interaction --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          export DB_CONNECTION=sqlite
+          export DB_DATABASE="$PWD/database/database.sqlite"
+          : > "$DB_DATABASE"
+          php artisan migrate:fresh --force
+          php artisan test --filter SiteSettingsRemoveCredentialTerminalityTest
+
+      - name: Commit generator-owned artifacts and self-delete materializer
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
