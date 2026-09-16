@@ -1,7 +1,7 @@
 <?php
 
-use App\Providers\AccountEmailSettingsRouteServiceProvider;
 use App\Providers\AboutBuildRouteServiceProvider;
+use App\Providers\AccountEmailSettingsRouteServiceProvider;
 use App\Providers\AiCenterApprovalStatusRouteServiceProvider;
 use App\Providers\AiCenterRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
