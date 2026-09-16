@@ -139,13 +139,12 @@
   },
   "recovery_validation": {
     "base_authority_sha": "7e64b4f094b06bcf78260e84a9f021fe39baa4f9",
-    "validation_input_sha": "308390db50fac16d8c44d65e5b57db4a5b42d788",
-    "workflow_run": 35120437638,
+    "validation_input_sha": "320c7c66566142e8deebdb2da60aac15e9755ff5",
+    "workflow_run": 35121185525,
     "pre_materialization_php_security_methods": "PASS (4 focused methods)",
     "typescript_typecheck": "PASS",
     "react_control": "PASS",
     "pint": "PASS",
-    "result": "PASS",
-    "full_php_terminality_test": "PASS (5 focused methods on generated candidate)"
+    "result": "PASS"
   }
 }
