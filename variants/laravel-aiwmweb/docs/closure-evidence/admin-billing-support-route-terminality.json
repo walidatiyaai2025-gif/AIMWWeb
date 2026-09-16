@@ -82,15 +82,17 @@
     ]
   },
   "validation": {
-    "status": "PENDING_FOCUSED_CI_RETRY",
-    "result": "NOT_YET_RECORDED",
+    "status": "PASS",
+    "result": "5 tests passed, 37 assertions; Pint passed for all 3 focused PHP files",
     "workflow": ".github/workflows/laravel-bill-5811-focused.yml",
+    "successful_run_id": 35105013270,
+    "successful_job_id": 104823834309,
+    "validated_head": "fc8f0551086690d4fa8c960673f4d4f1df00f834",
     "initial_run_id": 35104795973,
     "initial_head": "8bf7e1363954559d326d06f609332076e53f1ca9",
     "initial_result": "FAIL",
     "initial_failure": "The focused test incorrectly asserted tenant_owned=false while the generated canonical ledger truthfully records tenant_owned=true.",
-    "remediation": "Corrected the test and evidence to retain the canonical tenant_owned=true metadata without weakening the runtime authorization, no-resource-ID, or read-only assertions.",
-    "note": "No PASS is recorded until GitHub Actions completes the corrected focused test successfully."
+    "remediation": "Corrected the test and evidence to retain the canonical tenant_owned=true metadata without weakening the runtime authorization, no-resource-ID, or read-only assertions. The corrected exact-head retry passed."
   },
   "scope_guards": {
     "only_operation_claimed": "AIMW-BILL-5811B45F89",
