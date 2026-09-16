@@ -23,6 +23,7 @@ import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
+import { PagesPostsLinkControl } from './pages-posts-link-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { PostsExecutionLinkControl } from './posts-execution-link-control';
 import { RuntimeErrorBoundary } from './runtime-error-boundary';
@@ -132,6 +133,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'pages') return <><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
