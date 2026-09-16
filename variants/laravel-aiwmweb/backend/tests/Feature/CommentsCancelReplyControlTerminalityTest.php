@@ -121,9 +121,10 @@ class CommentsCancelReplyControlTerminalityTest extends TestCase
             $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $membership->setRelation('tenant', $tenant);
         $context->forget();
 
-        return $membership->fresh('tenant');
+        return $membership;
     }
 
     private function site(TenantMembership $membership, string $name): Site
