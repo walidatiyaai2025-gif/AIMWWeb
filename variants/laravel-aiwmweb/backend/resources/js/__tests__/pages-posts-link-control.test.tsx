@@ -6,17 +6,22 @@ import { PAGES_POSTS_OPERATION_ID, PagesPostsLinkControl } from '../pages-posts-
 import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 
+const connectedPostsConnector: FrontendContext['connectors'] = [
+    { key: 'wordpress', state: 'connected', scopes: ['posts.read'] },
+];
+
 const context = (
     slug = 'alpha',
     permissions = ['tenant.view', 'content.view'],
     api: Record<string, string> = { posts: '/tenants/alpha/api/posts' },
     capabilities: FrontendContext['capabilities'] = {},
+    connectors: FrontendContext['connectors'] = connectedPostsConnector,
 ): FrontendContext => ({
     user: { id: 10, name: 'Alpha Owner', email: 'alpha@example.test' },
     tenant: { slug, name: 'Alpha' },
     tenants: [{ slug, name: 'Alpha' }],
     permissions,
-    connectors: [],
+    connectors,
     capabilities,
     api,
     actions: {},
@@ -52,12 +57,13 @@ describe('AIMW-CONT-058F41BD1B Pages to Posts navigation', () => {
     });
 
     it.each([
-        ['tenant context permission is missing', ['content.view'], { posts: '/tenants/alpha/api/posts' }, {}],
-        ['content permission is missing', ['tenant.view'], { posts: '/tenants/alpha/api/posts' }, {}],
-        ['the authoritative posts API contract is missing', ['tenant.view', 'content.view'], {}, {}],
-        ['the server disables the posts capability', ['tenant.view', 'content.view'], { posts: '/tenants/alpha/api/posts' }, { posts: { state: 'disabled_by_owner' as const } }],
-    ])('fails closed when %s', (_label, permissions, api, capabilities) => {
-        renderControl(context('alpha', permissions, api, capabilities));
+        ['tenant context permission is missing', ['content.view'], { posts: '/tenants/alpha/api/posts' }, {}, connectedPostsConnector],
+        ['content permission is missing', ['tenant.view'], { posts: '/tenants/alpha/api/posts' }, {}, connectedPostsConnector],
+        ['the authoritative posts API contract is missing', ['tenant.view', 'content.view'], {}, {}, connectedPostsConnector],
+        ['the Posts connector scope is unavailable', ['tenant.view', 'content.view'], { posts: '/tenants/alpha/api/posts' }, {}, []],
+        ['the server disables the posts capability', ['tenant.view', 'content.view'], { posts: '/tenants/alpha/api/posts' }, { posts: { state: 'disabled_by_owner' as const } }, connectedPostsConnector],
+    ])('fails closed when %s', (_label, permissions, api, capabilities, connectors) => {
+        renderControl(context('alpha', permissions, api, capabilities, connectors));
         expect(screen.queryByRole('link', { name: 'Posts' })).not.toBeInTheDocument();
     });
 });
