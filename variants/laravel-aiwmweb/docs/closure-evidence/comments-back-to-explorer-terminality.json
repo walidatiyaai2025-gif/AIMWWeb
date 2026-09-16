@@ -144,6 +144,7 @@
     "typescript_typecheck": "PASS",
     "react_control": "PASS",
     "pint": "PASS",
-    "result": "PASS"
+    "result": "PASS",
+    "full_php_terminality_test": "PASS (5 focused methods on generated candidate)"
   }
 }
