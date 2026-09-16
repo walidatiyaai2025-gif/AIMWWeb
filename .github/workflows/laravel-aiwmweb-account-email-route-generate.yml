@@ -1,0 +1,101 @@
+name: Laravel AIWMWeb Account Email Route Generate
+
+on:
+  push:
+    branches:
+      - worker/laravel-emai-b2cfcf818c-account-email-settings-route
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      PREVIOUS_RECONCILIATION_SHA: '70b2086fde0e29c9c36307ee7c062b3bef094d43'
+      OPERATION_ID: 'AIMW-EMAI-B2CFCF818C'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Register exact pushed implementation provenance
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          document = json.loads(path.read_text(encoding='utf-8'))
+          source_sha = os.environ['GITHUB_SHA']
+          op_id = os.environ['OPERATION_ID']
+          document['previous_reconciliation_sha'] = os.environ['PREVIOUS_RECONCILIATION_SHA']
+          document['countable_sources'] = [
+              source for source in document['countable_sources']
+              if op_id not in (source.get('route_api_provenance') or {})
+          ]
+          document['countable_sources'].append({
+              'label': 'Account email settings route closure',
+              'sha': source_sha,
+              'observed_pr_head': source_sha,
+              'domains': ['email'],
+              'supporting_only': True,
+              'route_api_provenance': {
+                  op_id: {
+                      'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/AccountEmailSettingsRouteServiceProvider.php',
+                      'action_path': 'variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php',
+                      'acceptance_test': 'variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php',
+                      'operation_link_test': 'variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php',
+                      'evidence_path': 'variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-route-terminality.json',
+                      'security_mode': 'tenant_selected',
+                  }
+              },
+          })
+          path.write_text(json.dumps(document, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Run official canonical parity generator and evidence applicators
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          MD=variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          SUMMARY=/tmp/operation-parity-summary.json
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$JSON" --output "$JSON" --summary-output "$SUMMARY" --markdown-output "$MD" --check-total 931
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          op_id = 'AIMW-EMAI-B2CFCF818C'
+          doc = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          row = next(row for row in doc['operations'] if row['operation_id'] == op_id)
+          assert row['migration_state'] == 'ADAPTED', row
+          assert doc['totals']['total'] == 931, doc['totals']
+          assert doc['totals']['blocked'] == 0, doc['totals']
+          print(json.dumps({'operation': op_id, 'state': row['migration_state'], 'totals': doc['totals']}, indent=2))
+          PY
+
+      - name: Commit generator-backed reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --quiet && exit 1
+          git commit -m 'chore(laravel-aiwmweb): generate account email route reconciliation'
+          git push origin HEAD:${GITHUB_REF_NAME}
