@@ -1,5 +1,4 @@
 import React from 'react';
-import { AppButton } from './app-button';
 import { RuntimeErrorDashboardBackControl } from './runtime-error-dashboard-back-control';
 import { RuntimeErrorHardReloadControl } from './runtime-error-hard-reload-control';
 import { RuntimeErrorOpenLogsControl } from './runtime-error-open-logs-control';
@@ -32,11 +31,12 @@ export class RuntimeErrorBoundary extends React.Component<{ children: React.Reac
                         <h1>A runtime error interrupted this screen</h1>
                         <p>{this.state.error.message}</p>
                         <div className="d-flex gap-2 flex-wrap">
-                            <AppButton
-                                className="primary"
-                                canonicalOperationId={RUNTIME_ERROR_RECOVER_OPERATION_ID}
+                            <button
+                                type="button"
+                                className="btn primary"
+                                data-canonical-operation={RUNTIME_ERROR_RECOVER_OPERATION_ID}
                                 onClick={this.recover}
-                            >Try to recover</AppButton>
+                            >Try to recover</button>
                             <RuntimeErrorHardReloadControl />
                             <RuntimeErrorOpenLogsControl />
                             <RuntimeErrorDashboardBackControl />
