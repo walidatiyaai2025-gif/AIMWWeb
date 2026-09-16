@@ -42,6 +42,23 @@
             </section>
         @endif
 
+        @if ($canManageSite)
+            <section aria-labelledby="danger-zone-heading" data-canonical-operation="AIMW-BILL-D7D075EF3C">
+                <h2 id="danger-zone-heading">Danger zone</h2>
+                <p>Deletion removes this site from active lists. Type the exact site name to confirm.</p>
+                <form method="POST" action="{{ route('canonical.site.settings.delete', ['tenant' => $tenant, 'site' => $site->getKey()]) }}" autocomplete="off">
+                    @csrf
+                    @method('DELETE')
+                    <label for="site-delete-confirmation">Site name</label>
+                    <input id="site-delete-confirmation" name="confirmation" type="text" required maxlength="255" autocomplete="off">
+                    @error('confirmation')
+                        <p role="alert">{{ $message }}</p>
+                    @enderror
+                    <button type="submit">Delete site</button>
+                </form>
+            </section>
+        @endif
+
         <nav aria-label="Site settings navigation">
             <a href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}">Back to site details</a>
         </nav>
