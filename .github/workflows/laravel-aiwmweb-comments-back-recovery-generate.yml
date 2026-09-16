@@ -1,0 +1,126 @@
+name: Laravel AIWMWeb Comments Back Recovery Generator
+
+on:
+  push:
+    branches:
+      - worker/laravel-comm-85a340c8bc-recovery
+    paths:
+      - '.github/workflows/laravel-aiwmweb-comments-back-recovery-generate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      BASE_RECONCILIATION_SHA: '72157a7332985651cd2e9476d107f580211faee0'
+      OPERATION_ID: 'AIMW-COMM-85A340C8BC'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pin exact pushed focused evidence source
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['previous_reconciliation_sha'] = os.environ['BASE_RECONCILIATION_SHA']
+          data['focused_closure_evidence_source_sha'] = os.environ['GITHUB_SHA']
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Run official six-step reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          docs='variants/laravel-aiwmweb/docs'
+          tools='variants/laravel-aiwmweb/tools'
+          python "$tools/finalize_operation_parity.py" \
+            --output "$docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$tools/apply_tenant_neutral_route_evidence.py" \
+            --input "$docs/operation-parity-reconciliation.json" \
+            --output "$docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$tools/apply_explicit_route_api_provenance.py" \
+            --input "$docs/operation-parity-reconciliation.json" \
+            --output "$docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$tools/apply_focused_closure_evidence.py" \
+            --input "$docs/operation-parity-reconciliation.json" \
+            --output "$docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$tools/apply_focused_service_evidence.py" \
+            --input "$docs/operation-parity-reconciliation.json" \
+            --output "$docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$docs/operation-parity-reconciliation.md" \
+            --check-total 931
+          python "$tools/apply_focused_background_job_evidence.py" \
+            --input "$docs/operation-parity-reconciliation.json" \
+            --output "$docs/operation-parity-reconciliation.json" \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output "$docs/operation-parity-reconciliation.md" \
+            --check-total 931
+
+      - name: Prove exactly one canonical state transition
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          base = os.environ['BASE_RECONCILIATION_SHA']
+          op = os.environ['OPERATION_ID']
+          old = json.loads(subprocess.check_output(['git','show',f'{base}:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'], text=True))
+          new = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text(encoding='utf-8'))
+          old_by = {r['operation_id']: r for r in old['operations']}
+          new_by = {r['operation_id']: r for r in new['operations']}
+          changed = [oid for oid in old_by if old_by[oid]['migration_state'] != new_by[oid]['migration_state']]
+          if changed != [op]:
+              raise SystemExit(f'expected exactly [{op}] state transition, got {changed}')
+          if old_by[op]['migration_state'] != 'PENDING' or new_by[op]['migration_state'] != 'ADAPTED':
+              raise SystemExit(f'invalid transition {old_by[op]["migration_state"]} -> {new_by[op]["migration_state"]}')
+          totals = new['totals']
+          expected = (931, 585, 346, 0)
+          observed = (totals['total'], totals['terminal'], totals['pending'], totals['blocked'])
+          if observed != expected:
+              raise SystemExit(f'expected TOTAL/TERMINAL/PENDING/BLOCKED={expected}, got {observed}')
+          print(f'{op}: PENDING -> ADAPTED')
+          print('TOTAL=931 TERMINAL=585 PENDING=346 BLOCKED=0')
+          PY
+
+      - name: Commit generator-backed artifacts and remove materializer
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git rm .github/workflows/laravel-aiwmweb-comments-back-recovery-generate.yml
+          git diff --cached --quiet && { echo 'Generator produced no materialized change'; exit 1; }
+          git commit -m 'chore(laravel-aiwmweb): materialize Comments back recovery parity'
+          git push origin HEAD:worker/laravel-comm-85a340c8bc-recovery
