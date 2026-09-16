@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "e7ef663e2a7c719f08e26dc9dd809a550bb4f698",
+  "previous_reconciliation_sha": "70b2086fde0e29c9c36307ee7c062b3bef094d43",
   "focused_closure_evidence_source_sha": "ad0c131b35e0a6a9c4d5c72583f32c580ed3241f",
   "countable_sources": [
     {
@@ -624,6 +624,25 @@
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/system-health-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "Account email settings route closure",
+      "sha": "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
+      "observed_pr_head": "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
+      "domains": [
+        "email"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-EMAI-B2CFCF818C": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AccountEmailSettingsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-route-terminality.json",
           "security_mode": "tenant_selected"
         }
       }
