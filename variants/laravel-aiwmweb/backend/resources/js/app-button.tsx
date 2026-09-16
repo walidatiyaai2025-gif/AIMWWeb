@@ -72,6 +72,7 @@ export function AppButton(props: AppButtonProps) {
 
     const {
         href: _href,
+        target: _target,
         type = 'button',
         disabled = false,
         busy = false,
@@ -81,7 +82,7 @@ export function AppButton(props: AppButtonProps) {
         className = '',
         children,
         ...buttonProps
-    } = props as AppButtonActionProps & { href?: string };
+    } = props as AppButtonActionProps & { href?: string; target?: React.HTMLAttributeAnchorTarget };
 
     return (
         <button
