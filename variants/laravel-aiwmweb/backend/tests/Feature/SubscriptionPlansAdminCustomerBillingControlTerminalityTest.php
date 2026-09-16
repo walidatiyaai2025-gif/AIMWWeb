@@ -81,13 +81,14 @@ final class SubscriptionPlansAdminCustomerBillingControlTerminalityTest extends 
 
         $plansBefore = BillingPlan::query()->withoutGlobalScopes()->count();
         $subscriptionsBefore = TenantSubscription::query()->withoutGlobalScopes()->count();
+        $expectedTarget = route('canonical.workspace.account-billing', ['tenant' => 'alpha']);
 
         $this->actingAs($user)
             ->get('/tenants/alpha/admin/subscription-plans?tenant=beta&return=%2Ftenants%2Fbeta%2Faccount%2Fbilling')
             ->assertOk()
             ->assertSee(self::OPERATION_ID)
             ->assertSee('Customer billing')
-            ->assertSee('href="/tenants/alpha/account/billing"', false)
+            ->assertSee('href="'.e($expectedTarget).'"', false)
             ->assertDontSee('/tenants/beta/account/billing');
 
         $this->actingAs($user)
