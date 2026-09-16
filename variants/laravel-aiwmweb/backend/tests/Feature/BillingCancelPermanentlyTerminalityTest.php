@@ -159,13 +159,41 @@ final class BillingCancelPermanentlyTerminalityTest extends TestCase
 final class PermanentCancellationFakePayPal implements BillingProvider
 {
     public int $cancelCalls = 0;
+
     public string $reconciledStatus = 'ACTIVE';
 
-    public function name(): string { return 'paypal'; }
-    public function configured(): bool { return true; }
-    public function createSubscriptionIntent(TenantSubscription $subscription, BillingPlan $plan): array { return ['provider_subscription_id' => 'unused', 'approval_url' => 'https://example.test', 'status' => 'unused']; }
-    public function changeSubscription(TenantSubscription $subscription, BillingPlan $plan): array { return ['requested' => true]; }
-    public function cancelSubscription(TenantSubscription $subscription): void { $this->cancelCalls++; }
-    public function verifyAndParseWebhook(Request $request): array { return []; }
-    public function reconcile(TenantSubscription $subscription): array { return ['status' => $this->reconciledStatus, 'provider_plan_id' => 'P-ALPHA', 'occurred_at' => now()->toAtomString()]; }
+    public function name(): string
+    {
+        return 'paypal';
+    }
+
+    public function configured(): bool
+    {
+        return true;
+    }
+
+    public function createSubscriptionIntent(TenantSubscription $subscription, BillingPlan $plan): array
+    {
+        return ['provider_subscription_id' => 'unused', 'approval_url' => 'https://example.test', 'status' => 'unused'];
+    }
+
+    public function changeSubscription(TenantSubscription $subscription, BillingPlan $plan): array
+    {
+        return ['requested' => true];
+    }
+
+    public function cancelSubscription(TenantSubscription $subscription): void
+    {
+        $this->cancelCalls++;
+    }
+
+    public function verifyAndParseWebhook(Request $request): array
+    {
+        return [];
+    }
+
+    public function reconcile(TenantSubscription $subscription): array
+    {
+        return ['status' => $this->reconciledStatus, 'provider_plan_id' => 'P-ALPHA', 'occurred_at' => now()->toAtomString()];
+    }
 }
