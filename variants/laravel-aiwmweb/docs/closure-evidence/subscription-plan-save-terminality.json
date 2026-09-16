@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "419ec7118c3d60ea751446309fd52c1c142f90a4",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-5AF09ADABA",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "source_screen": "/admin/subscription-plans",
+    "source_control": "Save plan",
+    "mutation": true,
+    "verification": "persisted write, focused security tests, authoritative reread, and audit evidence"
+  },
+  "source_behavior": {
+    "authorization": "ApplicationPermissionCatalog.SettingsManage",
+    "action": "SaveAsync",
+    "create": "ISubscriptionPlanCatalog.CreateAsync",
+    "update": "ISubscriptionPlanCatalog.UpdateAsync",
+    "audit": "SubscriptionPlan.Create or SubscriptionPlan.Update security audit",
+    "success_after": "saved result is applied, catalog is reloaded, then Plan saved is shown"
+  },
+  "laravel_adaptation": {
+    "routes": [
+      "POST /tenants/{tenant}/admin/subscription-plans",
+      "PATCH /tenants/{tenant}/admin/subscription-plans/{plan}"
+    ],
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlanSaveController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "model": "App\\Models\\BillingPlan",
+    "catalog_scope": "global product plan catalog by schema; tenant is the authenticated administration context, not caller-owned plan data",
+    "placeholder_or_fake_success": false
+  },
+  "runtime_path": [
+    "web middleware provides session and CSRF validation for the HTML mutation routes",
+    "auth rejects guests before controller execution",
+    "tenant.context resolves the active route tenant from server-side membership",
+    "TenantAuthorizer requires settings.manage and controller rechecks the resolved tenant slug",
+    "controller validates source-equivalent plan fields and prohibits caller tenant, actor, provider, entitlement and plan ownership fields",
+    "create derives immutable normalized code and update cannot change code",
+    "global BillingPlan direct ID is looked up only after tenant and permission checks; unknown direct IDs return 404",
+    "DB transaction retries deadlocks up to three attempts and atomically commits mutation plus redacted audit",
+    "create retry with identical immutable code and persisted values is idempotent; conflicting duplicate code fails validation",
+    "update retry with unchanged values is a no-op and does not duplicate audit evidence",
+    "controller rereads BillingPlan after transaction commit and returns success only if the authoritative safe snapshot still matches",
+    "redirect returns to the authoritative catalog; no sample/demo row or fabricated provider result is created"
+  ],
+  "authorization_and_isolation": {
+    "session": "required",
+    "active_tenant": "server-resolved by tenant.context",
+    "permission": "settings.manage",
+    "foreign_tenant": "404/fail closed before mutation",
+    "direct_plan_id": "unknown ID 404 after authorization; BillingPlan is intentionally global catalog and has no tenant_id",
+    "caller_tenant_or_actor_fields": "prohibited",
+    "actor_identity": "request authenticated user only"
+  },
+  "validation_and_integrity": {
+    "code": "normalized lowercase create-only pattern, maximum 64, immutable on update",
+    "names": "English and Arabic required, maximum 160",
+    "descriptions": "English and Arabic maximum 1000 and both persisted",
+    "billing_interval": "Monthly or Yearly mapped to persisted month/year",
+    "price": "0..1000000 with visible-control 0.01 precision mapped to price_minor",
+    "currency": "uppercase ISO-style 3-letter format",
+    "trial_days": "0..365",
+    "grace_period_days": "0..90",
+    "sort_order": "0..100000",
+    "gateway_identifiers": "optional, maximum 200; update preserves hidden current values unless replacement or explicit clear is submitted"
+  },
+  "secret_and_audit_policy": {
+    "provider_credentials_table_read": false,
+    "provider_credentials_exposed": false,
+    "existing_provider_product_id_rendered": false,
+    "existing_provider_plan_id_rendered": false,
+    "audit_contains_provider_identifiers": false,
+    "audit_actor": "server authenticated user id",
+    "audit_atomic_with_mutation": true,
+    "success_after_authoritative_reread": true
+  },
+  "retry_and_cancellation": {
+    "create_duplicate": "identical persisted SaveAsync retry returns success without duplicate row or audit; differing values fail closed",
+    "update_duplicate": "no-op retry returns success without duplicate audit",
+    "database_retry": "transaction retries deadlock-class failures up to three attempts",
+    "cancellation": "not applicable: synchronous local database mutation with no queued or external side effect"
+  },
+  "acceptance_tests": {
+    "path": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlanSaveTerminalityTest.php",
+    "proof": [
+      "canonical source SaveAsync create/update/audit/reload semantics",
+      "web/auth/tenant.context and CSRF-bearing forms",
+      "guest redirect, missing-permission 403 and foreign-tenant 404 without side effects",
+      "server-derived actor identity and prohibited caller identity/tenant fields",
+      "source fields persist including Arabic localized description",
+      "provider identifiers persist when submitted but are not rendered or written into audit snapshots",
+      "immutable code and unknown direct-ID rejection",
+      "idempotent identical create and no-op update retries",
+      "validation rejects invalid code, negative price and invalid currency without fake success"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-5AF09ADABA",
+    "sibling_controls_terminalized": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "Save plan now has a real tenant-qualified settings.manage create/update path with source-aligned validation, immutable code, fail-closed foreign-tenant/direct-ID behavior, server-derived actor identity, CSRF-capable web forms, provider credential non-exposure, atomic redacted audit, idempotent retry semantics, authoritative post-commit reread, and no fake/demo success."
+  }
+}
