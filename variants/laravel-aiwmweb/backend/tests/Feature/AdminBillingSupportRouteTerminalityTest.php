@@ -38,13 +38,15 @@ class AdminBillingSupportRouteTerminalityTest extends TestCase
     public function test_route_is_exact_read_only_global_admin_surface(): void
     {
         $route = Route::getRoutes()->match(Request::create('/admin/billing-support', 'GET'));
+        $middleware = $route->gatherMiddleware();
 
         $this->assertSame(AdminBillingSupportReadController::class, ltrim($route->getActionName(), '\\'));
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertSame('canonical.admin.billing-support', $route->getName());
-        $this->assertContains('web', $route->gatherMiddleware());
-        $this->assertContains('auth', $route->gatherMiddleware());
-        $this->assertContains('platform.admin', $route->gatherMiddleware());
+        $this->assertContains('web', $middleware);
+        $this->assertContains('auth', $middleware);
+        $this->assertContains('platform.admin', $middleware);
+        $this->assertNotContains('tenant.context', $middleware);
         $this->assertSame([], $route->parameterNames());
         $this->assertSame(['GET', 'HEAD'], $route->methods());
     }
@@ -76,8 +78,10 @@ class AdminBillingSupportRouteTerminalityTest extends TestCase
             ->assertDontSee('<form', false)
             ->assertDontSee('<button', false)
             ->assertDontSee('name="tenant', false)
+            ->assertDontSee('name="account', false)
             ->assertDontSee('name="subscription', false)
-            ->assertDontSee('name="provider', false);
+            ->assertDontSee('name="provider', false)
+            ->assertDontSee('name="user', false);
 
         $this->assertSame($before, $admin->fresh()->toArray(), 'Opening the support route must not mutate authoritative user state.');
     }
@@ -85,12 +89,16 @@ class AdminBillingSupportRouteTerminalityTest extends TestCase
     public function test_source_and_laravel_authorization_contracts_remain_fail_closed(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor'));
+        $sourcePermissions = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Services/ApplicationPermissionCatalog.cs'));
         $provider = (string) file_get_contents(app_path('Providers/AdminBillingSupportRouteServiceProvider.php'));
         $middleware = (string) file_get_contents(app_path('Http/Middleware/RequirePlatformAdmin.php'));
         $view = (string) file_get_contents(resource_path('views/billing/admin-support.blade.php'));
 
         $this->assertStringContainsString('@page "/admin/billing-support"', $source);
         $this->assertStringContainsString('ApplicationPermissionCatalog.SettingsManage', $source);
+        $this->assertStringContainsString('public const string SettingsManage = "Settings.Manage";', $sourcePermissions);
+        $this->assertStringContainsString('new(SettingsManage, "Manage security-sensitive settings"', $sourcePermissions);
+        $this->assertStringContainsString('!string.Equals(permission, SettingsManage, StringComparison.Ordinal)', $sourcePermissions);
         $this->assertStringContainsString("['web', 'auth', 'platform.admin']", $provider);
         $this->assertStringContainsString('canonical_operation_id', $provider);
         $this->assertStringContainsString('$request->user()?->platform_admin', $middleware);
