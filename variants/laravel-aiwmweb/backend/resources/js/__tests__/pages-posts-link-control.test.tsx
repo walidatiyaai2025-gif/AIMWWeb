@@ -42,12 +42,13 @@ describe('AIMW-CONT-058F41BD1B Pages to Posts navigation', () => {
         expect(PAGES_POSTS_OPERATION_ID).toBe('AIMW-CONT-058F41BD1B');
     });
 
-    it('encodes the tenant slug and cannot be redirected by a tenant-shaped path fragment', () => {
+    it('encodes the tenant slug so a foreign tenant path remains behind the server 404 isolation boundary', () => {
         renderControl(context('alpha/../foreign'));
 
         const link = screen.getByRole('link', { name: 'Posts' });
+        const foreignTenant404Boundary = '/tenants/foreign/module/posts';
         expect(link).toHaveAttribute('href', '/tenants/alpha%2F..%2Fforeign/module/posts');
-        expect(link.getAttribute('href')).not.toBe('/tenants/foreign/module/posts');
+        expect(link.getAttribute('href')).not.toBe(foreignTenant404Boundary);
     });
 
     it.each([
