@@ -1,0 +1,70 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-PLAT-827A8F1C0D",
+  "domain": "platform",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/AppButton.razor",
+    "route_screen": "component:AppButton",
+    "visible_control": "@Title -> @EffectiveHref",
+    "behavior": "When Href is non-blank, AppButton renders an anchor with EffectiveHref, Target, Title, aria-disabled, aria-busy, aria-label, aria-pressed, and disabled tabindex semantics. EffectiveHref is null while disabled, preventing navigation. Blank Href falls through to the native button branch."
+  },
+  "laravel_adaptation": {
+    "file": "variants/laravel-aiwmweb/backend/resources/js/app-button.tsx",
+    "component": "AppButton",
+    "operation_marker": "AIMW-PLAT-827A8F1C0D",
+    "runtime_consumer": "none required for the shared component contract",
+    "behavior": "The production React AppButton now renders the source-equivalent anchor branch for non-blank href values, preserves href/target/title and accessibility state, removes href and keyboard focus when disabled, and falls back to the already-terminal native-button branch for blank href values. Consumer canonical identity remains distinct from the shared link-operation identity."
+  },
+  "authorization": {
+    "component_authority": "none",
+    "rbac_change": "none",
+    "reason": "This shared link control neither grants permissions nor performs a backend mutation; route authorization remains the responsibility of the destination and the authorized consumer that supplies the href."
+  },
+  "tenant_isolation": {
+    "tenant_selector": "none",
+    "direct_object_id": "none",
+    "idor_surface": "none",
+    "proof": "The component derives no tenant or resource identifier and performs no lookup. It renders only the href supplied by its already-authorized consumer."
+  },
+  "degraded_and_retry_semantics": {
+    "disabled": "Disabled link mode fails closed by omitting href and setting tabindex=-1 plus aria-disabled=true.",
+    "busy": "aria-busy is exposed without fabricating completion or navigation success.",
+    "retry": "No retry or idempotency behavior is introduced because the shared control performs no mutation or request.",
+    "fake_success_path": "none"
+  },
+  "persistence_and_runtime": {
+    "mutation": "none in the shared component",
+    "persistence": "none",
+    "queue": "none",
+    "cache": "none",
+    "wordpress": "none",
+    "provider": "none",
+    "secrets": "none"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-button-link-control.test.tsx",
+      "coverage": "exact canonical marker, native anchor rendering, effective href/target/title, busy/pressed accessibility, disabled fail-closed href removal and tabindex, blank-href fallback, and consumer/shared identity separation"
+    },
+    {
+      "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-button-click-control.test.tsx",
+      "coverage": "regression guard for the already-terminal AIMW-PLAT-57E0113F24 non-link click/button contract"
+    }
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "existing_click_branch_reopened": false,
+    "aspnet_current_product_modified": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false,
+    "backend_or_route_authority_changed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Source-equivalent AppButton link behavior is implemented in the production React shared component and covered by focused deterministic acceptance, including fail-closed disabled navigation and preservation of the previously terminal button branch."
+  }
+}
