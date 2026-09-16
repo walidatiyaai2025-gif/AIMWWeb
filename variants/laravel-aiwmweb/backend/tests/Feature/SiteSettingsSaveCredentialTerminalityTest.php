@@ -85,7 +85,7 @@ final class SiteSettingsSaveCredentialTerminalityTest extends TestCase
         Http::assertSentCount(2);
         Http::assertSent(fn ($request) => $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/me?context=edit'
             && $request->hasHeader('Authorization')
-            && ! str_contains((string) $request->body(), $secret));
+            && !str_contains((string) $request->body(), $secret));
     }
 
     public function test_provider_failure_preserves_existing_credential_and_does_not_flash_secret(): void
