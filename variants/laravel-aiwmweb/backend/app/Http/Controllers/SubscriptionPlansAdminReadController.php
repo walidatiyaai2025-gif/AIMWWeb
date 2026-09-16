@@ -28,6 +28,7 @@ final class SubscriptionPlansAdminReadController extends Controller
                 'name',
                 'localized_name',
                 'description',
+                'localized_description',
                 'price_minor',
                 'currency',
                 'billing_interval',
