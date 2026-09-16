@@ -65,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
         Event::subscribe(SyncNotificationSubscriber::class);
 
         Route::middleware(['web', 'auth', 'tenant.context'])
-            ->prefix('/tenants/{tenant}/automation-center')
+            ->prefix('/api/tenants/{tenant}/automation-center')
             ->group(function (): void {
                 Route::post('/jobs', [AutomationCenterJobSaveController::class, 'store'])
                     ->defaults('canonical_operation_id', 'AIMW-BILL-BC1C75CE0D')
