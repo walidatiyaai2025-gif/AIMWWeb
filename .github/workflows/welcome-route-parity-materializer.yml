@@ -15,6 +15,7 @@ jobs:
       PYTHONHASHSEED: '0'
       BASE_AUTHORITY_SHA: 35ea3bd44a3c6977da8e40ad1dd08c2ff117c9cc
       OPERATION_ID: AIMW-CONT-86346F4C6C
+      APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
     steps:
       - uses: actions/checkout@v4
         with:
