@@ -35,8 +35,20 @@ jobs:
         working-directory: variants/laravel-aiwmweb/backend
         run: composer install --no-interaction --prefer-dist
 
+      - name: Initialize Laravel test environment
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
       - name: Focused security acceptance
         working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
         run: php artisan test tests/Feature/SiteSettingsDeleteTerminalityTest.php
 
       - name: Pint changed PHP
