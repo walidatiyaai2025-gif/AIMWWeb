@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-COMM-843A2F029B",
+    "domain": "comments",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/comments",
+    "source_control": "CancelReplyClicked",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "focused runtime tests prove local cancellation and server-derived reply context"
+  },
+  "source_behavior": {
+    "summary": "CancelReplyClicked calls CancelReply, clears the active comment reply target and reply text, and performs no persistence or WordPress mutation.",
+    "side_effect": "local reply-editor state only",
+    "wordpress_behavior": "none for cancellation",
+    "busy_behavior": "Cancel is disabled while the source reply operation is working",
+    "success_semantics": "no success receipt is emitted for cancellation"
+  },
+  "laravel_adaptation": {
+    "workspace": "/tenants/{tenant}/module/comments?site={site}",
+    "read_api": "/api/v1/tenants/{tenant}/sites/{site}/comments",
+    "supporting_reply_api": "/api/v1/tenants/{tenant}/sites/{site}/comments/{comment}/reply",
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-comment-link-control.tsx",
+    "runtime_wiring": "The existing CommentsCommentLinksControl, already mounted only on route.key === comments, reuses the authoritative comments collection to open a reply draft for a persisted comment. The canonical Cancel button clears only the selected comment id, draft text, and local validation state.",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "the authenticated Comments workspace receives server-built FrontendContext for the active tenant and site",
+    "the existing tenant/site comments API supplies persisted comment ids under content.view",
+    "reply controls render only when FrontendContext.permissions contains content.edit or wildcard permission",
+    "a user opens a local draft for one persisted comment row",
+    "CancelReplyClicked adaptation is disabled while a supporting reply mutation is pending",
+    "Cancel clears replyingTo, draft text, and local validation state without issuing an HTTP mutation"
+  ],
+  "authorization": {
+    "session": "tenant.context rejects unauthenticated API access with 401 and activates only an active membership for the route tenant slug",
+    "workspace_read": "content.view",
+    "reply_editor_and_supporting_send": "content.edit",
+    "cancel": "reachable only from the content.edit-gated reply editor"
+  },
+  "tenant_isolation": {
+    "tenant_and_site_source": "server-derived FrontendContext.api.comments only",
+    "caller_selected_tenant_or_site": false,
+    "supporting_reply_target": "same-origin child path of the authoritative comments collection only",
+    "comment_id_validation": "positive safe integer only",
+    "backend_idor_guard": "Comment query requires site_id == route site before findOrFail",
+    "foreign_tenant_guard": "ResolveTenantContext requires an active membership matching the route tenant slug"
+  },
+  "validation_and_runtime": {
+    "cancel_validation": "none required; cancellation discards local state only",
+    "supporting_reply_validation": "client trims and requires 1..20000 characters; server independently validates required|string|max:20000",
+    "csrf": "apiRequest supplies X-CSRF-TOKEN and same-origin credentials for the supporting POST",
+    "persistence": "none for cancellation",
+    "secrets": "no secret/provider/connector material is read or rendered by the control",
+    "fake_success": false,
+    "authoritative_reread": "supporting Send closes the editor only after the comments query refetch callback resolves",
+    "idempotency": "Cancel is side-effect free and repeat-safe; supporting reply create is not automatically retried",
+    "retry_and_cancellation": "supporting reply mutation uses retry:false and disables Cancel while that mutation is pending"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-cancel-reply-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsCancelReplyControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation id and PENDING source-ledger row",
+      "content.edit-gated reachability",
+      "Cancel clears local draft state with zero POST calls",
+      "same-origin server-derived reply endpoint construction with positive comment ids only",
+      "tenant-context authentication, site-scoped comment lookup and server validation",
+      "CSRF/same-origin support for the existing real reply endpoint",
+      "no automatic retry for non-idempotent reply create and draft retention on failure"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-COMM-843A2F029B",
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The exact source cancellation semantics are reachable on the real tenant Comments runtime, are content.edit gated, clear only local reply state, never emit a cancellation mutation or fake success, and preserve the existing authenticated tenant/site/comment boundaries for the surrounding real reply path."
+  }
+}
