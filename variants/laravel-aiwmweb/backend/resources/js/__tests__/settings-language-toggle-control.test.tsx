@@ -25,12 +25,14 @@ beforeEach(() => {
     document.documentElement.lang = 'en';
     document.documentElement.dir = 'ltr';
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
 });
 
 describe('AIMW-BILL-1234961B6E Settings ToggleLanguage', () => {
     it('toggles en to ar, persists culture, and applies lang/dir immediately without an HTTP mutation', async () => {
         const user = userEvent.setup();
-        const fetchSpy = vi.spyOn(window, 'fetch');
+        const fetchSpy = vi.fn();
+        vi.stubGlobal('fetch', fetchSpy);
 
         render(
             <LocaleProvider>
