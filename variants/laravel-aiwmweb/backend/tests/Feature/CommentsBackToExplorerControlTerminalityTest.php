@@ -21,7 +21,7 @@ class CommentsBackToExplorerControlTerminalityTest extends TestCase
     public function test_exact_canonical_operation_is_the_adapted_comments_back_to_explorer_control(): void
     {
         $document = json_decode(
-            (string) file_get_contents(base_path('../docs/capability-parity-ledger.json')),
+            (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
             true,
             512,
             JSON_THROW_ON_ERROR,
