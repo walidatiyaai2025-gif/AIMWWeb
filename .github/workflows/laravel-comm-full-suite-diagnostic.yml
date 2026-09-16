@@ -1,0 +1,57 @@
+name: Laravel Comments Full Suite Diagnostic
+
+on:
+  push:
+    branches:
+      - worker/laravel-comm-2b682f7bec-recovery-2
+    paths:
+      - '.github/workflows/laravel-comm-full-suite-diagnostic.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sqlite-first-failure:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: vendor/bin/pint --test
+      - run: php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+      - name: Capture first full-suite failure
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan test --stop-on-failure 2>&1 | tee /tmp/comments-full-suite.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          mkdir -p ../../../diagnostics
+          tail -n 240 /tmp/comments-full-suite.log > ../../../diagnostics/comments-full-suite-first-failure.txt
+          printf '\nEXIT_CODE=%s\nSOURCE_SHA=%s\n' "$rc" "$GITHUB_SHA" >> ../../../diagnostics/comments-full-suite-first-failure.txt
+          git -C ../../.. config user.name 'github-actions[bot]'
+          git -C ../../.. config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ../../.. add diagnostics/comments-full-suite-first-failure.txt
+          git -C ../../.. commit -m 'test: capture Comments full-suite first failure' || true
+          git -C ../../.. push origin HEAD:worker/laravel-comm-2b682f7bec-recovery-2
+          exit "$rc"
