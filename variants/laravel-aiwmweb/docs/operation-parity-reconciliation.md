@@ -8,12 +8,12 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 597 |
-| PENDING | 334 |
+| ADAPTED | 598 |
+| PENDING | 333 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 597 |
-| OVERALL_PARITY_PERCENT | 64.12% |
+| TERMINAL | 598 |
+| OVERALL_PARITY_PERCENT | 64.23% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
@@ -35,7 +35,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 97 | 81 | 0 | 0 | 97 | 54.49% |
 | comments | 8 | 0 | 7 | 1 | 0 | 0 | 7 | 87.50% |
-| content | 164 | 0 | 33 | 131 | 0 | 0 | 33 | 20.12% |
+| content | 164 | 0 | 34 | 130 | 0 | 0 | 34 | 20.73% |
 | email | 82 | 0 | 58 | 24 | 0 | 0 | 58 | 70.73% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
@@ -54,7 +54,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
-| route | 84 | 0 | 52 | 32 | 0 | 0 | 52 | 61.90% |
+| route | 84 | 0 | 53 | 31 | 0 | 0 | 53 | 63.10% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
 | visible_control | 446 | 0 | 144 | 302 | 0 | 0 | 144 | 32.29% |
 
@@ -65,7 +65,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Allowed statuses only: **PASS**
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
-- Explicit route contracts: **40**
+- Explicit route contracts: **41**
 - Focused visible-control contracts: **144**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
@@ -179,7 +179,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - `AIMW-COMM-843A2F029B`
 
-### content (131)
+### content (130)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
@@ -247,7 +247,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-7F2BC55FF4`
 - `AIMW-CONT-80EE7CA296`
 - `AIMW-CONT-859135B2D1`
-- `AIMW-CONT-86346F4C6C`
 - `AIMW-CONT-8C19E4E3B2`
 - `AIMW-CONT-8DF93FC75E`
 - `AIMW-CONT-915652366F`
