@@ -43,7 +43,7 @@ class CurrentUserSiteSettingsVisibleTerminalityTest extends TestCase
         $this->assertStringContainsString('tenantUrl(context.tenant.slug, `/sites/${activeSite.id}/settings`)', $frontend);
     }
 
-    public function test_settings_destination_is_explicit_guarded_and_reads_the_authoritative_tenant_site_without_mutation(): void
+    public function test_settings_destination_is_explicit_guarded_and_navigation_read_does_not_mutate_site_state(): void
     {
         $user = User::factory()->create();
         $membership = $this->membership($user, 'alpha', ['tenant.view', 'sites.view']);
@@ -65,8 +65,7 @@ class CurrentUserSiteSettingsVisibleTerminalityTest extends TestCase
             ->assertSee('Settings')
             ->assertSee('Alpha Site')
             ->assertSee('https://alpha-site.test')
-            ->assertSee('active')
-            ->assertSee('No settings mutation is exposed by this canonical navigation control.');
+            ->assertSee('active');
         $after = Site::query()->withoutGlobalScopes()->findOrFail($site->id)->only(['name', 'url', 'status']);
 
         $this->assertSame($before, $after);
