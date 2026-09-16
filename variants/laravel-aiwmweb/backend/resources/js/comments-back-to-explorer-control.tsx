@@ -23,7 +23,14 @@ export function authoritativeCommentsExplorerHref(context: FrontendContext): str
 
     if (!commentsRoute || !explorerRoute || !context.permissions.includes('tenant.view')) return null;
     if (resolveCapability(context, commentsRoute).state !== 'enabled') return null;
-    if (resolveCapability(context, explorerRoute).state !== 'enabled') return null;
+
+    const hasExplorerPermission = !explorerRoute.permission
+        || context.permissions.includes(explorerRoute.permission)
+        || context.permissions.includes('*');
+    if (!hasExplorerPermission) return null;
+
+    const explicitExplorer = context.capabilities['explorer.view'] ?? context.capabilities.explorer;
+    if (explicitExplorer && explicitExplorer.state !== 'enabled') return null;
     if (!Number.isSafeInteger(siteId) || Number(siteId) <= 0) return null;
 
     const endpoint = context.api.comments;
