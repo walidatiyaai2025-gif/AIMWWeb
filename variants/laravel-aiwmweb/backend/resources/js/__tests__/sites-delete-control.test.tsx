@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
@@ -81,15 +81,16 @@ describe('AIMW-BILL-BE4B8C3822 Sites ConfirmDeleteAsync adaptation', () => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
-    it('does not render without sites.manage or with a foreign/malformed collection contract', async () => {
+    it('does not render without sites.manage or with a foreign/malformed collection contract', () => {
         const fetchMock = vi.fn();
         vi.stubGlobal('fetch', fetchMock);
         const denied = context(); denied.permissions = ['tenant.view', 'sites.view'];
-        const { rerender } = render(<LocaleProvider><SitesDeleteControl context={denied} /></LocaleProvider>);
+        renderControl(denied);
         expect(screen.queryByLabelText('Delete site')).not.toBeInTheDocument();
 
+        cleanup();
         const foreign = context(); foreign.api.sites = '/api/tenants/beta/sites';
-        rerender(<LocaleProvider><SitesDeleteControl context={foreign} /></LocaleProvider>);
+        renderControl(foreign);
         expect(screen.queryByLabelText('Delete site')).not.toBeInTheDocument();
         expect(fetchMock).not.toHaveBeenCalled();
         expect(canonicalSitesDeleteCollection(foreign)).toBeNull();
