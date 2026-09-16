@@ -21,16 +21,25 @@ final class CurrentUserContentExplorerTerminalityTest extends TestCase
 
     public function test_exact_canonical_operation_is_the_adapted_current_user_content_control(): void
     {
-        $document = json_decode(
+        $ledger = json_decode(
             (string) file_get_contents(base_path('../docs/capability-parity-ledger.json')),
             true,
             512,
             JSON_THROW_ON_ERROR,
         );
-        $operation = collect($document['operations'])->firstWhere('operation_id', self::OPERATION_ID);
+        $operation = collect($ledger['operations'])->firstWhere('operation_id', self::OPERATION_ID);
+
+        $reconciliation = json_decode(
+            (string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        $reconciled = collect($reconciliation['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($operation);
-        $this->assertSame('ADAPTED', $operation['migration_state']);
+        $this->assertNotNull($reconciled);
+        $this->assertSame('ADAPTED', $reconciled['migration_state']);
         $this->assertSame('content', $operation['domain']);
         $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame('component:CurrentUserChip', $operation['route_screen']);
