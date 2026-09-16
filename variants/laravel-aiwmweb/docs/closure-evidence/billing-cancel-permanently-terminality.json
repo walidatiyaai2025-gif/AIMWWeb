@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-9DD2652E1E",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AccountBilling.razor",
+    "source_screen": "/account/billing",
+    "source_control": "CancelPermanentlyAsync / Permanently cancel PayPal",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "source_behavior": {
+    "summary": "The source exposes permanent PayPal cancellation only for a PayPal-bound subscription that CanCancelPermanently. The command reports that PayPal accepted the irreversible request, explicitly leaves local subscription state unchanged until authoritative provider reconciliation confirms cancellation, and reloads the billing workspace after the command.",
+    "truth_boundary": "Provider command acceptance is not authoritative subscription state; provider reconciliation is authoritative.",
+    "retry_meaning": "An accepted irreversible cancellation must not be blindly resubmitted on a retry.",
+    "secret_boundary": "Provider subscription identity remains server-side and is not supplied by the browser."
+  },
+  "laravel_adaptation": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Billing/PermanentSubscriptionCancellationService.php",
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/billing-cancel-permanently-control.tsx",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/billing-profile-link.tsx",
+    "route": "/api/v1/tenants/{tenant}/billing/cancel",
+    "method": "POST",
+    "mode": "permanent_provider",
+    "middleware": ["web", "auth", "tenant.context"],
+    "permission": "billing.manage",
+    "operation_marker": "AIMW-BILL-9DD2652E1E",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_success": false,
+    "scope_note": "The existing generic billing cancellation behavior is preserved when mode is omitted. This closure adds only the source-equivalent permanent PayPal command/control contract."
+  },
+  "authorization_and_tenant_isolation": {
+    "session_authentication": "Existing web/auth middleware rejects an unauthenticated command.",
+    "active_tenant_resolution": "tenant.context resolves the active tenant from the route and authenticated membership before BillingController executes.",
+    "permission_check": "BillingController authorizes billing.manage before permanent-cancellation handling.",
+    "foreign_tenant": "A member of a different tenant receives 404 for the foreign tenant route in the focused test.",
+    "direct_id_rejection": "Permanent mode accepts only the literal mode field and returns 422 when caller-supplied tenant_id, subscription_id, user/provider targeting identifiers, or any other extra field is present.",
+    "server_derived_ownership": "TenantSubscription is selected by the active TenantContext global scope; no subscription identifier is accepted from the request.",
+    "csrf": "The POST remains on Laravel web middleware and no CSRF exception is introduced; the frontend uses the shared same-origin apiRequest CSRF/session contract.",
+    "frontend_fail_closed": "The control requires billing.view and billing.manage and derives only a canonical same-origin tenant URL from the active server-provided tenant slug."
+  },
+  "provider_and_persistence_semantics": {
+    "provider": "paypal",
+    "preflight_reconciliation": "The service performs an authoritative provider reconcile before submitting an irreversible cancellation, so a previously accepted ambiguous cancellation that is already provider-confirmed is not submitted again.",
+    "serialization": "The tenant-scoped subscription row is selected with lockForUpdate inside a database transaction.",
+    "accepted_command_receipt": "After a real provider acceptance, a tenant-scoped immutable billing.cancellation.permanent_requested audit event is persisted.",
+    "idempotent_retry": "A later retry that sees that accepted-command audit receipt returns provider_accepted without a second provider cancelSubscription call.",
+    "authoritative_state": "Command acceptance does not set local CANCELLED state and does not change cancel_at_period_end. Only authoritative provider reconciliation/webhook state may transition local cancellation state.",
+    "authoritative_reread": "The controller rereads the tenant-scoped subscription after the service result. The frontend then GETs the subscription again before presenting accepted/confirmed status.",
+    "truthful_success": "provider_accepted is displayed as an accepted request, not as local cancellation. provider_confirmed is displayed only if authoritative reread reports CANCELLED; contradictory local mutation fails closed.",
+    "secret_non_exposure": "Responses include only request_status, state, cancel_at_period_end and the provider-authoritative marker; provider subscription IDs and encrypted values are never returned."
+  },
+  "error_and_cancellation_semantics": {
+    "ineligible_state": "Fails with BillingConflictException rather than fabricating success.",
+    "missing_or_non_paypal_binding": "Fails with BillingConflictException before any provider cancellation call.",
+    "validation_failure": "Unexpected targeting fields fail with 422 before provider invocation.",
+    "provider_failure": "No accepted-command audit is recorded unless cancelSubscription returns successfully; provider exceptions propagate as failure.",
+    "user_confirmation_cancel": "Closing/rejecting the browser confirmation sends no mutation request.",
+    "ambiguous_network_result": "A retry is preceded by provider reconciliation and is additionally protected from duplicate submission once an accepted-command audit receipt exists."
+  },
+  "unrelated_boundaries": {
+    "queue_cache_scheduler": "No queue, cache, scheduler key or worker isolation behavior is added or changed.",
+    "wordpress_connector": "No WordPress or Connector request is performed.",
+    "ai_provider": "No AI provider or model request is performed."
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/BillingCancelPermanentlyTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-cancel-permanently-control.test.tsx",
+    "proof": [
+      "guest command rejection",
+      "foreign-tenant 404 isolation",
+      "billing.manage RBAC rejection",
+      "caller-supplied tenant/subscription ID rejection before provider invocation",
+      "provider identifier and encrypted-secret non-exposure",
+      "real provider command accepted while local state/cancel flag remains unchanged",
+      "accepted retry does not resubmit the provider command",
+      "provider snapshot can authoritatively confirm cancellation without command resubmission",
+      "frontend POST body contains only permanent_provider mode",
+      "frontend performs authoritative subscription reread before status",
+      "frontend fails closed on contradictory pre-confirmation local cancellation state",
+      "frontend derives only the active tenant same-origin route and fails closed without billing permissions"
+    ]
+  },
+  "validation": {
+    "status": "PASS",
+    "validated_head": "367b23475fe1be56d02a49aa39c813b1dccb4b2f",
+    "acceptance_run_id": 35109538477,
+    "cross_domain_security_run_id": 35109538667,
+    "plan_link_run_id": 35109538490,
+    "pint": "PASS",
+    "sqlite_full_tests": "PASS",
+    "mysql_full_tests": "PASS",
+    "frontend_typecheck_test_build": "PASS",
+    "wordpress_acceptance": "PASS",
+    "redis_queue_scheduler_acceptance": "PASS",
+    "production_compose_acceptance": "PASS",
+    "initial_failure": "The first implementation head failed only Laravel Pint class_attributes_separation formatting in the focused fake provider; PHP tests were not run on that failed job.",
+    "remediation": "Applied Laravel-standard class/method spacing only, without changing any security or behavioral assertion; the corrected exact head passed Acceptance and Cross-Domain Security."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-9DD2652E1E",
+    "second_operation_started": false,
+    "existing_generic_cancel_semantics_preserved": true,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "real_provider_path_wired": true,
+    "tenant_isolation_enforced": true,
+    "authorization_enforced": true,
+    "idor_resistant": true,
+    "authoritative_reread_enforced": true,
+    "idempotent_retry_guarded": true,
+    "secret_boundary_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source-equivalent permanent PayPal control now executes through authenticated tenant-scoped billing authorization, accepts no caller-selected resource identity, preserves provider secrets server-side, reconciles provider truth before the irreversible command, records durable accepted-command evidence for retry safety, leaves local cancellation state unchanged on command acceptance, and reports success only after authoritative server and client rereads."
+  }
+}

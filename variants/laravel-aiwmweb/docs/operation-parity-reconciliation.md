@@ -33,8 +33,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 59 | 0 | 0 | 0 | 59 | 100.00% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
-| billing | 178 | 0 | 93 | 85 | 0 | 0 | 93 | 52.25% |
-| comments | 8 | 0 | 7 | 1 | 0 | 0 | 7 | 87.50% |
+| billing | 178 | 0 | 94 | 84 | 0 | 0 | 94 | 52.81% |
+| comments | 8 | 0 | 6 | 2 | 0 | 0 | 6 | 75.00% |
 | content | 164 | 0 | 33 | 131 | 0 | 0 | 33 | 20.12% |
 | email | 82 | 0 | 58 | 24 | 0 | 0 | 58 | 70.73% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
@@ -91,7 +91,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### billing (85)
+### billing (84)
 
 - `AIMW-BILL-092F59830B`
 - `AIMW-BILL-0938ECBF66`
@@ -145,7 +145,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-BILL-8F4FA80ED6`
 - `AIMW-BILL-9414B3FFEF`
 - `AIMW-BILL-94755B17E4`
-- `AIMW-BILL-9DD2652E1E`
 - `AIMW-BILL-A152D6A7DE`
 - `AIMW-BILL-A6E9CF63BC`
 - `AIMW-BILL-A8CBD94255`
@@ -179,8 +178,9 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-BILL-F56F7955DA`
 - `AIMW-BILL-F73C7348C3`
 
-### comments (1)
+### comments (2)
 
+- `AIMW-COMM-2B682F7BEC`
 - `AIMW-COMM-843A2F029B`
 
 ### content (131)
