@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-5811B45F89",
+    "domain": "billing",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_screen": "/admin/billing-support",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "The source exposes /admin/billing-support as an authenticated Billing Support page guarded by ApplicationPermissionCatalog.SettingsManage. The page is the administrative entry surface for searching and inspecting billing support state; its individual support controls are separate canonical operations.",
+    "authorization": "Settings.Manage",
+    "security_meaning": "Settings.Manage is security-sensitive and reserved to the built-in Administrator role; custom roles cannot receive it.",
+    "route_side_effect": "Opening/rendering the route is read-only.",
+    "payment_truth_boundary": "The source explicitly treats committed billing history and authoritative provider evidence as truth and does not treat browser returns or caller assertions as payment success."
+  },
+  "laravel_adaptation": {
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/AdminBillingSupportRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/admin-support.blade.php",
+    "route": "/admin/billing-support",
+    "method": "GET",
+    "middleware": ["web", "auth", "platform.admin"],
+    "route_parameters": [],
+    "operation_marker": "AIMW-BILL-5811B45F89",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false,
+    "scope_note": "This closure implements only the canonical route/open-render contract. The canonical ledger conservatively marks the billing operation tenant-owned; opening the source-equivalent global administrator route accepts no tenant or resource identifier and grants no tenant billing action. Search, grace, suspend, restore, reconciliation, and other Billing Support controls remain separately governed and are not claimed or terminalized by this evidence."
+  },
+  "authorization": {
+    "guest": "redirected by auth middleware",
+    "authenticated_non_platform_admin": "403",
+    "platform_admin": "allowed",
+    "server_authoritative_identity": true,
+    "caller_permission_override": false,
+    "source_settings_manage_mapping": "Laravel platform.admin is the existing server-side global administrator boundary and is required in addition to auth."
+  },
+  "tenant_and_idor": {
+    "canonical_tenant_owned": true,
+    "global_admin_entry_surface": true,
+    "tenant_route_parameter": false,
+    "account_route_parameter": false,
+    "subscription_route_parameter": false,
+    "provider_route_parameter": false,
+    "user_route_parameter": false,
+    "direct_resource_id_surface": false,
+    "caller_selected_scope": false,
+    "boundary_note": "The route-open operation itself selects no tenant-owned record. Any later lookup or mutation of tenant billing data remains a separate permission-checked canonical operation and is outside this closure."
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf": "Standard web middleware remains active; the GET route introduces no write and no CSRF exception.",
+    "persistence_mutation": "none",
+    "queue_cache_scheduler": "none introduced",
+    "secret_exposure": "none; the route/view does not read or render payment-provider credentials",
+    "wordpress_connector_safety": "not applicable; no WordPress or Connector call is performed",
+    "ai_provider_safety": "not applicable; no AI/provider call is performed",
+    "payment_provider_safety": "opening the route performs no provider call and reports no payment success",
+    "truthful_success_failure": "opening the page reports only successful rendering; it does not claim any billing command or provider reconciliation succeeded",
+    "idempotency": "repeated GET requests are side-effect free"
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportRouteTerminalityTest.php",
+    "proof": [
+      "exact canonical ledger row remains the claimed pending billing route and retains canonical tenant-owned metadata",
+      "exact GET path and canonical operation marker",
+      "web + auth + platform.admin middleware",
+      "no route resource identifiers",
+      "guest redirect and non-admin 403",
+      "platform administrator receives the real read-only support surface",
+      "route open leaves authoritative user persistence unchanged",
+      "source Settings.Manage policy and Laravel platform-admin boundary are both asserted",
+      "no form, support command, provider secret, WordPress/Connector mutation, queue, cache, scheduler, or AI call is introduced"
+    ]
+  },
+  "validation": {
+    "status": "PASS",
+    "result": "5 tests passed, 37 assertions; Pint passed for all 3 focused PHP files",
+    "workflow": ".github/workflows/laravel-bill-5811-focused.yml",
+    "successful_run_id": 35105013270,
+    "successful_job_id": 104823834309,
+    "validated_head": "fc8f0551086690d4fa8c960673f4d4f1df00f834",
+    "initial_run_id": 35104795973,
+    "initial_head": "8bf7e1363954559d326d06f609332076e53f1ca9",
+    "initial_result": "FAIL",
+    "initial_failure": "The focused test incorrectly asserted tenant_owned=false while the generated canonical ledger truthfully records tenant_owned=true.",
+    "remediation": "Corrected the test and evidence to retain the canonical tenant_owned=true metadata without weakening the runtime authorization, no-resource-ID, or read-only assertions. The corrected exact-head retry passed."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-5811B45F89",
+    "second_operation_started": false,
+    "separate_visible_controls_terminalized": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented_for_claimed_route_contract": true,
+    "runtime_wired": true,
+    "security_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The exact Billing Support route now renders a real server-side administrative surface at the source URL behind the existing global platform-admin boundary that corresponds to the source's non-delegable Settings.Manage policy. Opening the route is read-only, accepts no caller-selected resource scope, exposes no provider secrets, and does not claim any separate billing support command or visible control."
+  }
+}

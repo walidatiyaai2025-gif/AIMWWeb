@@ -2,6 +2,7 @@
 
 use App\Providers\AboutBuildRouteServiceProvider;
 use App\Providers\AccountEmailSettingsRouteServiceProvider;
+use App\Providers\AdminBillingSupportRouteServiceProvider;
 use App\Providers\AiCenterApprovalStatusRouteServiceProvider;
 use App\Providers\AiCenterRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
@@ -11,6 +12,7 @@ use App\Providers\ApplicationUserPasswordResetRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
 use App\Providers\AppServiceProvider;
+use App\Providers\ContentPlannerRouteServiceProvider;
 use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
@@ -28,6 +30,7 @@ use App\Providers\SystemHealthRouteServiceProvider;
 return [
     AppServiceProvider::class,
     AccountEmailSettingsRouteServiceProvider::class,
+    AdminBillingSupportRouteServiceProvider::class,
     ApplicationUserPasswordResetRouteServiceProvider::class,
     ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
@@ -39,6 +42,7 @@ return [
     AiProviderApiKeyRemovalRouteServiceProvider::class,
     AiWorkspaceRouteServiceProvider::class,
     ApprovalQueueRouteServiceProvider::class,
+    ContentPlannerRouteServiceProvider::class,
     SetupRouteServiceProvider::class,
     ErrorRouteServiceProvider::class,
     SitesBulkDeleteRouteServiceProvider::class,
