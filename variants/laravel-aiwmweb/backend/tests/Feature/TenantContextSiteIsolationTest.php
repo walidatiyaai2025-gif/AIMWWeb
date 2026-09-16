@@ -37,18 +37,22 @@ class TenantContextSiteIsolationTest extends TestCase
         $this->actingAs($noPermissionUser)
             ->getJson('/tenants/gamma/context?site='.$noPermissionSite->id)
             ->assertForbidden();
+        $this->assertFalse(app(TenantContext::class)->active());
 
         $this->actingAs($alphaUser)
             ->getJson('/tenants/beta/context?site='.$betaSite->id)
             ->assertNotFound();
+        $this->assertFalse(app(TenantContext::class)->active());
 
         $this->actingAs($alphaUser)
             ->getJson('/tenants/alpha/context?site='.$betaSite->id)
             ->assertNotFound();
+        $this->assertFalse(app(TenantContext::class)->active());
 
         $this->actingAs($alphaUser)
             ->getJson('/tenants/alpha/context?site=999999999')
             ->assertNotFound();
+        $this->assertFalse(app(TenantContext::class)->active());
     }
 
     public function test_context_site_selector_validates_malformed_ids_fail_closed(): void
@@ -61,6 +65,7 @@ class TenantContextSiteIsolationTest extends TestCase
             $this->actingAs($user)
                 ->getJson('/tenants/alpha/context?site='.urlencode($siteId))
                 ->assertNotFound();
+            $this->assertFalse(app(TenantContext::class)->active());
         }
     }
 
@@ -87,12 +92,14 @@ class TenantContextSiteIsolationTest extends TestCase
             ->assertJsonPath('active_site.status', 'active');
         $this->assertStringNotContainsString($secret, $first->getContent());
         $this->assertArrayNotHasKey('encrypted_secret', $first->json('connectors.0') ?? []);
+        $this->assertFalse(app(TenantContext::class)->active());
 
         $second = $this->actingAs($user)->getJson('/tenants/alpha/context?site='.$site->id);
         $second->assertOk()
             ->assertJsonPath('tenant.id', $membership->tenant_id)
             ->assertJsonPath('active_site.id', $site->id);
         $this->assertStringNotContainsString($secret, $second->getContent());
+        $this->assertFalse(app(TenantContext::class)->active());
 
         $this->assertSame($countsBefore['sites'], Site::query()->withoutGlobalScopes()->count());
         $this->assertSame($countsBefore['connectors'], Connector::query()->withoutGlobalScopes()->count());
