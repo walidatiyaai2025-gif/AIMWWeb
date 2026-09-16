@@ -119,8 +119,8 @@ class CommentsCommentLinkControlTerminalityTest extends TestCase
         $this->assertStringContainsString('target="_blank"', $component);
         $this->assertStringContainsString('rel="noopener noreferrer"', $component);
         $this->assertStringContainsString('CommentsCommentLinksControl', $host);
-        $this->assertStringContainsString("$q = Comment::query()->where('site_id', $site);", $controller);
-        $this->assertStringContainsString("'link' => $row['link'] ?? null", $service);
+        $this->assertStringContainsString("\$q = Comment::query()->where('site_id', \$site);", $controller);
+        $this->assertStringContainsString("'link' => \$row['link'] ?? null", $service);
         $this->assertStringNotContainsString('method: \'POST\'', $component);
         $this->assertStringNotContainsString('method: \'PATCH\'', $component);
         $this->assertStringNotContainsString('method: \'DELETE\'', $component);
