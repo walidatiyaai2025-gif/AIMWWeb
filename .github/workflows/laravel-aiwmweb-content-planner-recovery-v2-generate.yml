@@ -44,6 +44,7 @@ jobs:
               'sha': os.environ['EVIDENCE_SOURCE_SHA'],
               'observed_pr_head': os.environ['EVIDENCE_SOURCE_SHA'],
               'domains': ['billing'],
+              'operation_ids': [os.environ['TARGET_OPERATION_ID']],
               'route_api_provenance': {
                   os.environ['TARGET_OPERATION_ID']: {
                       'destination_path': 'variants/laravel-aiwmweb/backend/app/Providers/ContentPlannerRouteServiceProvider.php',
