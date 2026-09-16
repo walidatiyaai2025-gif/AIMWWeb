@@ -218,7 +218,7 @@ jobs:
           assert changed == [target], changed
           assert before[target]['migration_state'] == 'PENDING'
           assert after[target]['migration_state'] == 'ADAPTED'
-          assert 'CommentsBackToExplorerControlTerminalityTest.php' in acceptance, acceptance
+          assert acceptance == 'variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-back-to-explorer-control.test.tsx', acceptance
           print('EXACT_ONE_TRANSITION=PASS')
           print('AIMW-COMM-2B682F7BEC:PENDING->ADAPTED')
           print('TOTAL=931 TERMINAL=595 PENDING=336 BLOCKED=0')
