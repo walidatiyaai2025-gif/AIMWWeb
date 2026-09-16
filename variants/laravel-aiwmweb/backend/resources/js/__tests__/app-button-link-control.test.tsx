@@ -92,7 +92,7 @@ describe('AIMW-PLAT-827A8F1C0D AppButton effective href contract', () => {
         render(
             <AppButton
                 href="/release-notes"
-                canonicalOperationId="AIMW-CONT-0154E7772B"
+                canonicalOperationId="consumer-link-operation"
                 aria-label="Consumer navigation"
             >
                 Consumer navigation
@@ -100,7 +100,7 @@ describe('AIMW-PLAT-827A8F1C0D AppButton effective href contract', () => {
         );
 
         const link = screen.getByRole('link', { name: 'Consumer navigation' });
-        expect(link).toHaveAttribute('data-canonical-operation', 'AIMW-CONT-0154E7772B');
+        expect(link).toHaveAttribute('data-canonical-operation', 'consumer-link-operation');
         expect(link).toHaveAttribute('data-canonical-component-operation', APP_BUTTON_LINK_OPERATION_ID);
         expect(document.querySelectorAll(`[data-canonical-operation="${APP_BUTTON_LINK_OPERATION_ID}"]`)).toHaveLength(0);
     });
