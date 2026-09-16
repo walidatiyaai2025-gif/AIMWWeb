@@ -1,0 +1,95 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-058F41BD1B",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor",
+    "route_screen": "/module/pages",
+    "visible_control": "Posts (/module/posts -> /module/posts)",
+    "user_visible_text": "Posts",
+    "behavior": "The authorized Pages Explorer toolbar exposes a navigation-only Posts control to /module/posts under the ContentView policy. The control performs no mutation, persistence, queue, WordPress, connector, provider, or secret operation."
+  },
+  "laravel_adaptation": {
+    "component": "variants/laravel-aiwmweb/backend/resources/js/pages-posts-link-control.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "source_workspace": "/module/pages",
+    "destination_workspace": "/module/posts",
+    "control_binding": "PagesPostsLinkControl / data-canonical-operation=AIMW-CONT-058F41BD1B",
+    "behavior": "The real Pages production route renders the Posts link only when authoritative FrontendContext proves the tenant context, content.view permission, Posts API contract, and enabled Posts capability. The destination is derived only from context.tenant.slug through tenantUrl and the canonical workspace route; no caller-supplied tenant or resource identifier is accepted."
+  },
+  "authorization": {
+    "source_policy": "ContentView",
+    "laravel_permission": "content.view",
+    "tenant_context_permission": "tenant.view",
+    "rbac_change": "none",
+    "security_result": "The control grants no authority. It is hidden unless the server-provided context proves both tenant access and the existing Posts workspace capability contract."
+  },
+  "tenant_isolation": {
+    "canonical_tenant_owned": true,
+    "tenant_selector": "context.tenant.slug only",
+    "direct_object_id": "none",
+    "idor_surface": "none",
+    "proof": "Focused acceptance proves tenantUrl encodes tenant-shaped path fragments and cannot convert alpha/../foreign into the foreign tenant route. Foreign-tenant navigation therefore remains behind the server tenant-resolution 404 boundary."
+  },
+  "semantics": {
+    "mutation": false,
+    "read_only_navigation": true,
+    "csrf_write": "not applicable",
+    "session_mutation": "none",
+    "authoritative_reread": "FrontendContext route/API/capability contract is authoritative for visibility",
+    "queue": "none",
+    "cache": "none",
+    "scheduler": "none",
+    "wordpress_runtime": "none",
+    "connector_runtime": "none",
+    "ai_provider_runtime": "none",
+    "secrets": "none",
+    "fake_success_path": "none"
+  },
+  "degraded_and_failure_semantics": {
+    "missing_tenant_permission": "control is absent",
+    "missing_content_permission": "control is absent",
+    "missing_posts_api_contract": "control is absent",
+    "disabled_posts_capability": "control is absent",
+    "failure_claim": "No success state or mutation result is fabricated because this operation only exposes navigation when its authoritative route contract is enabled."
+  },
+  "acceptance_tests": {
+    "file": "variants/laravel-aiwmweb/backend/resources/js/__tests__/pages-posts-link-control.test.tsx",
+    "coverage": [
+      "exact canonical operation marker and source-equivalent Posts label",
+      "tenant-qualified /module/posts destination from authoritative context",
+      "foreign-tenant path injection remains outside the foreign route and behind the server 404 isolation boundary",
+      "fail-closed visibility without tenant.view",
+      "fail-closed visibility without content.view",
+      "fail-closed visibility without the authoritative Posts API contract",
+      "fail-closed visibility when the server disables the Posts capability"
+    ]
+  },
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "dc141d8f7c862d7dbca01786ce9ee91a0f787c1d",
+    "total": 931,
+    "previous_terminal": 581,
+    "isolated_new_terminal": 582,
+    "previous_pending": 350,
+    "isolated_new_pending": 349,
+    "previous_blocked": 0,
+    "isolated_new_blocked": 0,
+    "note": "Counts describe exactly this isolated one-operation contribution against the live generated reconciliation authority. Parallel unmerged work is not folded into these counts."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "manual_parity_count_edit": false,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Real source-equivalent navigation is implemented on the production Pages route, derives tenant scope only from authoritative context, fails closed on missing RBAC/API/capability proof, is deterministically focused-tested including foreign-tenant isolation, and introduces no mutation or privileged runtime surface. Final canonical credit remains conditional on official exact-SHA generator reconciliation and repository gates."
+  }
+}
