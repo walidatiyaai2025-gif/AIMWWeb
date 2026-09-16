@@ -6,6 +6,7 @@ on:
       - worker/laravel-bill-5811b45f89-admin-billing-support-route
     paths:
       - '.github/workflows/laravel-bill-5811-materialize.yml'
+      - 'variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py'
 
 permissions:
   contents: write
