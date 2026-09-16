@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -80,17 +81,17 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
         $this->membership($user, 'alpha', ['settings.manage']);
 
         BillingPlan::query()->create([
-            'code' => 'starter-monthly',
-            'name' => 'Starter Monthly',
-            'localized_name' => ['ar' => 'المبتدئة الشهرية'],
-            'description' => 'Persisted starter plan',
+            'code' => 'closure-starter-monthly',
+            'name' => 'Closure Starter Monthly',
+            'localized_name' => ['ar' => 'المبتدئة الشهرية للاختبار'],
+            'description' => 'Persisted closure starter plan',
             'price_minor' => 1299,
             'currency' => 'USD',
             'billing_interval' => 'month',
             'trial_period_days' => 14,
             'grace_period_days' => 3,
             'enabled' => true,
-            'display_order' => 10,
+            'display_order' => 10010,
             'provider' => 'paypal',
             'provider_product_id' => 'PROD-secret-sentinel',
             'provider_plan_id' => 'P-secret-sentinel',
@@ -98,8 +99,8 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
             'entitlements' => ['ai' => true],
         ]);
         BillingPlan::query()->create([
-            'code' => 'free-trial',
-            'name' => 'Free Trial',
+            'code' => 'closure-disabled-trial',
+            'name' => 'Closure Disabled Trial',
             'description' => null,
             'price_minor' => 0,
             'currency' => 'USD',
@@ -107,23 +108,23 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
             'trial_period_days' => 30,
             'grace_period_days' => 0,
             'enabled' => false,
-            'display_order' => 20,
+            'display_order' => 10020,
             'limits' => [],
             'entitlements' => [],
         ]);
 
         $before = BillingPlan::query()->orderBy('id')->get()->map->getAttributes()->all();
-        $auditCount = \DB::table('billing_plan_audits')->count();
+        $auditCount = DB::table('billing_plan_audits')->count();
 
         $response = $this->actingAs($user)->get('/tenants/alpha/admin/subscription-plans');
 
         $response->assertOk()
             ->assertSee('Subscription Plans')
-            ->assertSee('starter-monthly')
-            ->assertSee('Starter Monthly')
-            ->assertSee('Persisted starter plan')
+            ->assertSee('closure-starter-monthly')
+            ->assertSee('Closure Starter Monthly')
+            ->assertSee('Persisted closure starter plan')
             ->assertSee('12.99 USD')
-            ->assertSee('free-trial')
+            ->assertSee('closure-disabled-trial')
             ->assertDontSee('PROD-secret-sentinel')
             ->assertDontSee('P-secret-sentinel')
             ->assertDontSee('AIMW-BILL-0CE205B851')
@@ -131,13 +132,14 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
             ->assertDontSee('AIMW-BILL-F73C7348C3');
 
         $this->assertSame($before, BillingPlan::query()->orderBy('id')->get()->map->getAttributes()->all());
-        $this->assertSame($auditCount, \DB::table('billing_plan_audits')->count());
+        $this->assertSame($auditCount, DB::table('billing_plan_audits')->count());
     }
 
-    public function test_empty_catalog_is_truthful_and_does_not_seed_sample_data(): void
+    public function test_empty_catalog_is_truthful_and_get_does_not_seed_sample_data(): void
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['settings.manage']);
+        BillingPlan::query()->delete();
 
         $this->assertDatabaseCount('billing_plans', 0);
         $this->actingAs($user)->get('/tenants/alpha/admin/subscription-plans')
