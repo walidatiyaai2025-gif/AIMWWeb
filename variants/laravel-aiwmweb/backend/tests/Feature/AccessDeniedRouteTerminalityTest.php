@@ -16,7 +16,7 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-CONT-8EE96B77A8';
 
-    public function test_canonical_reconciliation_row_is_generator_backed_tenant_neutral_terminal(): void
+    public function test_canonical_reconciliation_row_is_generator_backed_explicit_anonymous_terminal(): void
     {
         $payload = $this->reconciliation();
         $row = collect($payload['operations'])->firstWhere('operation_id', self::OPERATION_ID);
@@ -33,7 +33,7 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
         $this->assertSame('explicit_route_contract', $row['reconciliation']['evidence_mode']);
-        $this->assertSame('tenant_neutral', $row['reconciliation']['security_mode']);
+        $this->assertSame('explicit_anonymous', $row['reconciliation']['security_mode']);
         $this->assertSame(
             'variants/laravel-aiwmweb/docs/closure-evidence/access-denied-route-terminality.json',
             $row['reconciliation']['evidence_path'],
@@ -58,6 +58,7 @@ final class AccessDeniedRouteTerminalityTest extends TestCase
         );
         $this->assertTrue((bool) ($payload['validation']['passed'] ?? false));
         $this->assertContains(self::OPERATION_ID, $payload['validation']['tenant_neutral_route_contract_terminals']);
+        $this->assertContains(self::OPERATION_ID, $payload['validation']['source_boundary_route_contract_terminals']);
     }
 
     public function test_route_is_explicit_anonymous_and_not_a_tenant_spa_catch_all(): void
