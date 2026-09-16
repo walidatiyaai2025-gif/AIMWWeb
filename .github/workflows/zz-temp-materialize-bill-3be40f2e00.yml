@@ -1,0 +1,98 @@
+name: TEMP Materialize AIMW-BILL-3BE40F2E00
+
+on:
+  push:
+    branches:
+      - worker/laravel-bill-3be40f2e00-password-reset
+    paths:
+      - '.github/workflows/zz-temp-materialize-bill-3be40f2e00.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+      OPERATION_ID: AIMW-BILL-3BE40F2E00
+      EVIDENCE_SOURCE_SHA: c8ae55a62a3952f53a9a46df99a491ab22121d6d
+      PREVIOUS_RECONCILIATION_SHA: 61fd5df0c56b5eceafb96bef553080a9648ef511
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch pushed refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Register exact pushed focused evidence provenance
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json')
+          data = json.loads(path.read_text())
+          data['previous_reconciliation_sha'] = os.environ['PREVIOUS_RECONCILIATION_SHA']
+          data['focused_closure_evidence_source_sha'] = os.environ['EVIDENCE_SOURCE_SHA']
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+          PY
+          git show "$PREVIOUS_RECONCILIATION_SHA:variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json" > /tmp/before.json
+
+      - name: Run official reconciliation generator chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json'
+          MD='variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
+          SUM='/tmp/operation-parity-summary.json'
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py --input "$OUT" --output "$OUT" --summary-output "$SUM" --markdown-output "$MD" --check-total 931
+
+      - name: Guard exactly one canonical transition
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          before = json.loads(Path('/tmp/before.json').read_text())
+          after = json.loads(Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json').read_text())
+          b = {row['operation_id']: row['migration_state'] for row in before['operations']}
+          a = {row['operation_id']: row['migration_state'] for row in after['operations']}
+          changed = [(op, b[op], a[op]) for op in b if b[op] != a[op]]
+          expected = os.environ['OPERATION_ID']
+          if changed != [(expected, 'PENDING', 'ADAPTED')]:
+              raise SystemExit(f'unexpected canonical transitions: {changed}')
+          totals = after['totals']
+          assert totals['total'] == 931, totals
+          assert totals['terminal'] == 581, totals
+          assert totals['pending'] == 350, totals
+          assert totals['blocked'] == 0, totals
+          row = next(row for row in after['operations'] if row['operation_id'] == expected)
+          assert row['migration_state'] == 'ADAPTED', row
+          assert row['reconciliation']['evidence_mode'] == 'focused_closure_contract', row['reconciliation']
+          print('EXACTLY_ONE_TRANSITION=PASS')
+          print('TOTAL=931 TERMINAL=581 PENDING=350 BLOCKED=0')
+          PY
+
+      - name: Commit generated reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git diff --cached --quiet && { echo 'generator produced no changes'; exit 1; }
+          git commit -m 'laravel: materialize AIMW-BILL-3BE40F2E00 parity evidence'
+          git push origin HEAD:worker/laravel-bill-3be40f2e00-password-reset
