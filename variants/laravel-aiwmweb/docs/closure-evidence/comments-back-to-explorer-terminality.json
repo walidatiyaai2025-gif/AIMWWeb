@@ -138,14 +138,13 @@
     "reason": "The source BackToExplorer behavior is implemented as a tenant-qualified, server-authority-derived, read-only Laravel Comments control. It requires authenticated tenant context, Comments and Explorer authorization boundaries, rejects mismatched/foreign site authority, rereads server context at the destination, exposes no secrets or mutation surface, and fails closed whenever the required authority is absent or inconsistent."
   },
   "recovery_validation": {
-    "base_authority_sha": "7e64b4f094b06bcf78260e84a9f021fe39baa4f9",
-    "validation_input_sha": "034162d25780efc49248566532292457543f0e82",
-    "workflow_run": 35121625962,
+    "base_authority_sha": "b2843d6cafa1c0a16918e9a756b6cac510ba3988",
+    "validation_input_sha": "5f433e1603afffb3b39c06f1e58b520d19a1a56b",
+    "workflow_run": 35126402209,
     "pre_materialization_php_security_methods": "PASS (4 focused methods)",
     "typescript_typecheck": "PASS",
     "react_control": "PASS",
     "pint": "PASS",
-    "result": "PASS",
-    "full_php_terminality_test": "PASS (5 focused methods on generated candidate)"
+    "result": "PASS"
   }
 }
