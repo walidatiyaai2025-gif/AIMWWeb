@@ -3,12 +3,16 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\ErrorReadController;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class ErrorBackDashboardTerminalityTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-CONT-85394A0E55';
 
     protected function setUp(): void
@@ -34,9 +38,11 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
         $this->assertSame('rendered/read response matches authoritative source', $row['verification']);
     }
 
-    public function test_real_error_page_renders_the_exact_canonical_back_to_dashboard_control(): void
+    public function test_real_error_page_renders_the_exact_canonical_back_to_dashboard_control_for_authenticated_session(): void
     {
-        $this->get('/Error')
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/Error')
             ->assertOk()
             ->assertSee('Back to dashboard')
             ->assertSee('href="/"', false)
@@ -44,7 +50,7 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
             ->assertDontSee('data-canonical-operation="AIMW-CONT-8B3518EF80"', false);
     }
 
-    public function test_source_and_destination_are_real_explicit_anonymous_routes_without_direct_ids(): void
+    public function test_error_source_is_authenticated_while_dashboard_destination_remains_public_without_direct_ids(): void
     {
         $source = Route::getRoutes()->getByName('canonical.error');
         $destination = Route::getRoutes()->match(Request::create('/', 'GET'));
@@ -54,8 +60,9 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
         $this->assertSame('Error', $source->uri());
         $this->assertSame([], $source->parameterNames());
         $this->assertContains('web', $source->gatherMiddleware());
-        $this->assertNotContains('auth', $source->gatherMiddleware());
+        $this->assertContains('auth', $source->gatherMiddleware());
         $this->assertNotContains('tenant.context', $source->gatherMiddleware());
+        $this->get('/Error')->assertRedirect('/login');
 
         $this->assertSame('/', $destination->uri());
         $this->assertSame([], $destination->parameterNames());
@@ -67,7 +74,8 @@ final class ErrorBackDashboardTerminalityTest extends TestCase
 
     public function test_control_preserves_the_safe_error_surface_and_does_not_reflect_query_secrets(): void
     {
-        $response = $this->withHeaders([
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->withHeaders([
             'X-Request-ID' => 'error-back-dashboard-request-0001',
             'X-Correlation-ID' => 'error-back-dashboard-correlation-0001',
         ])->get('/Error?exception=dashboard-secret&tenant=foreign-secret');

@@ -111,10 +111,7 @@ final class ErrorOpenLogsVisibleTerminalityTest extends TestCase
     {
         $this->withoutVite();
 
-        $this->get('/Error')
-            ->assertOk()
-            ->assertDontSee(self::OPERATION_ID)
-            ->assertDontSee('Open logs');
+        $this->get('/Error')->assertRedirect('/login');
 
         $missingPermission = User::factory()->create();
         $this->membership($missingPermission, 'alpha', ['operations.manage']);

@@ -38,7 +38,24 @@ final class ErrorRouteTerminalityTest extends TestCase
         $this->assertSame('low', $operation['risk']);
     }
 
-    public function test_error_route_is_explicit_web_only_and_has_no_tenant_or_direct_id_surface(): void
+    public function test_reference_error_route_inherits_authenticated_fallback_policy(): void
+    {
+        $programPath = base_path('../../../src/AIWordPressManager.Web/Program.cs');
+        $sourcePath = base_path('../../../src/AIWordPressManager.Web/Components/Pages/Error.razor');
+
+        $this->assertFileExists($programPath);
+        $this->assertFileExists($sourcePath);
+
+        $program = file_get_contents($programPath);
+        $source = file_get_contents($sourcePath);
+
+        $this->assertStringContainsString('options.FallbackPolicy', $program);
+        $this->assertStringContainsString('RequireAuthenticatedUser()', $program);
+        $this->assertStringContainsString('@page "/Error"', $source);
+        $this->assertStringNotContainsString('[AllowAnonymous]', $source);
+    }
+
+    public function test_error_route_is_explicit_authenticated_session_route_without_tenant_or_direct_id_surface(): void
     {
         $route = Route::getRoutes()->getByName('canonical.error');
 
@@ -47,16 +64,22 @@ final class ErrorRouteTerminalityTest extends TestCase
         $this->assertSame('Error', $route->uri());
         $this->assertContains('GET', $route->methods());
         $this->assertContains('web', $route->gatherMiddleware());
-        $this->assertNotContains('auth', $route->gatherMiddleware());
+        $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame([], $route->parameterNames());
+    }
+
+    public function test_guest_error_route_access_fails_closed_to_login(): void
+    {
+        $this->get('/Error')->assertRedirect('/login');
     }
 
     public function test_error_surface_renders_authoritative_tracking_ids_without_sensitive_details(): void
     {
         Carbon::setTestNow('2026-08-30 17:30:00');
+        $user = User::factory()->create();
 
-        $response = $this->withHeaders([
+        $response = $this->actingAs($user)->withHeaders([
             'X-Request-ID' => 'error-route-request-0001',
             'X-Correlation-ID' => 'error-route-correlation-0001',
         ])->get('/Error?exception=database-password-secret&tenant=foreign-secret');
@@ -77,9 +100,10 @@ final class ErrorRouteTerminalityTest extends TestCase
             ->assertDontSee('Exception message');
     }
 
-    public function test_invalid_caller_tracking_headers_are_not_reflected(): void
+    public function test_invalid_caller_tracking_headers_are_not_reflected_for_authenticated_session(): void
     {
-        $response = $this->withHeaders([
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->withHeaders([
             'X-Request-ID' => '<script>alert(1)</script>',
             'X-Correlation-ID' => 'password=must-not-render',
         ])->get('/Error');
@@ -95,7 +119,7 @@ final class ErrorRouteTerminalityTest extends TestCase
         $this->assertSame($requestId, $correlationId);
     }
 
-    public function test_error_surface_is_identity_neutral_for_guest_and_authenticated_users(): void
+    public function test_authenticated_error_surface_does_not_leak_identity_or_foreign_tenant_data(): void
     {
         Carbon::setTestNow('2026-08-30 17:31:00');
         $alpha = User::factory()->create(['name' => 'Alpha Tenant Sentinel', 'email' => 'alpha-error@example.test']);
@@ -105,14 +129,12 @@ final class ErrorRouteTerminalityTest extends TestCase
             'X-Correlation-ID' => 'error-route-correlation-0002',
         ];
 
-        $guest = $this->withHeaders($headers)->get('/Error')->getContent();
-        $alphaHtml = $this->actingAs($alpha)->withHeaders($headers)->get('/Error')->getContent();
+        $alphaHtml = $this->actingAs($alpha)->withHeaders($headers)->get('/Error')->assertOk()->getContent();
         $this->app['auth']->forgetGuards();
-        $betaHtml = $this->actingAs($beta)->withHeaders($headers)->get('/Error')->getContent();
+        $betaHtml = $this->actingAs($beta)->withHeaders($headers)->get('/Error')->assertOk()->getContent();
 
-        $this->assertSame($guest, $alphaHtml);
-        $this->assertSame($guest, $betaHtml);
-        foreach ([$guest, $alphaHtml, $betaHtml] as $html) {
+        $this->assertSame($alphaHtml, $betaHtml);
+        foreach ([$alphaHtml, $betaHtml] as $html) {
             $this->assertStringNotContainsString('Alpha Tenant Sentinel', $html);
             $this->assertStringNotContainsString('Beta Tenant Sentinel', $html);
             $this->assertStringNotContainsString('alpha-error@example.test', $html);
