@@ -24,12 +24,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 588,
-    "pending": 343,
+    "adapted": 589,
+    "pending": 342,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 588,
-    "overall_parity_percent": 63.16
+    "terminal": 589,
+    "overall_parity_percent": 63.27
   },
   "visible_controls": {
     "total": 446,
@@ -82,12 +82,12 @@
     "billing": {
       "total": 178,
       "ported": 0,
-      "adapted": 91,
-      "pending": 87,
+      "adapted": 92,
+      "pending": 86,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 91,
-      "percent": 51.12
+      "terminal": 92,
+      "percent": 51.69
     },
     "comments": {
       "total": 8,
@@ -10714,21 +10714,34 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/ContentPlannerRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
+      "evidence": "Content Planner explicit tenant route recovery@3ef0d094b3211f0e67966346f1a896d2daf164a9: variants/laravel-aiwmweb/backend/app/Providers/ContentPlannerRouteServiceProvider.php; explicit-route-api:AIMW-BILL-69825FEAD5; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-planner-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Content Planner explicit tenant route recovery",
+        "source_sha": "3ef0d094b3211f0e67966346f1a896d2daf164a9",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ContentPlannerRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-planner-route-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-69825FEAD5",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -34879,12 +34892,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 50,
-      "pending": 34,
+      "adapted": 51,
+      "pending": 33,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 50,
-      "percent": 59.52
+      "terminal": 51,
+      "percent": 60.71
     },
     "service": {
       "total": 349,
@@ -34952,7 +34965,6 @@
       "AIMW-BILL-609F15BFCA",
       "AIMW-BILL-616576D8F7",
       "AIMW-BILL-6928C148FF",
-      "AIMW-BILL-69825FEAD5",
       "AIMW-BILL-7101AC9489",
       "AIMW-BILL-723BEA8F1D",
       "AIMW-BILL-77E7F0D972",
@@ -35582,6 +35594,18 @@
         "supporting_only": true,
         "operation_ids": [],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "Content Planner explicit tenant route recovery",
+        "sha": "3ef0d094b3211f0e67966346f1a896d2daf164a9",
+        "domains": [
+          "billing"
+        ],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-BILL-69825FEAD5"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -35602,6 +35626,7 @@
       "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
+      "3ef0d094b3211f0e67966346f1a896d2daf164a9",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
@@ -35686,6 +35711,7 @@
       "AIMW-AI-82F795EE67",
       "AIMW-AI-8EE4F9F6FC",
       "AIMW-AI-C37F405767",
+      "AIMW-BILL-69825FEAD5",
       "AIMW-COMM-A16719E105",
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2F2E40D7F0",
@@ -35702,7 +35728,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 19,
+    "explicit_route_api_contract_count": 20,
     "focused_closure_source_sha": "8407229caa4b825470c7966976184c4e3c1a16f4",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
