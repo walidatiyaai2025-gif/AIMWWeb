@@ -91,13 +91,18 @@ describe('AIMW-BILL-BE4B8C3822 Site Details delete control', () => {
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites/42');
         const deleteInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-        const headers = new Headers(deleteInit.headers);
+        const deleteHeaders = new Headers(deleteInit.headers);
         expect(deleteInit.method).toBe('DELETE');
         expect(deleteInit.credentials).toBe('same-origin');
-        expect(headers.get('X-CSRF-TOKEN')).toBe('test-csrf-token');
-        expect(headers.get('X-Requested-With')).toBe('XMLHttpRequest');
+        expect(deleteHeaders.get('X-CSRF-TOKEN')).toBe('test-csrf-token');
+        expect(deleteHeaders.get('X-Requested-With')).toBe('XMLHttpRequest');
+
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites');
-        expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ credentials: 'same-origin' });
+        const rereadInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
+        const rereadHeaders = new Headers(rereadInit.headers);
+        expect(rereadInit.credentials).toBe('same-origin');
+        expect(rereadHeaders.get('X-CSRF-TOKEN')).toBe('test-csrf-token');
+        expect(rereadHeaders.get('X-Requested-With')).toBe('XMLHttpRequest');
 
         await waitFor(() => expect(navigate).toHaveBeenCalledWith('/tenants/alpha/sites'));
         expect(await screen.findByRole('status')).toHaveTextContent('Site deleted and reconciled from the server.');
