@@ -52,11 +52,12 @@ describe('AIMW-PLAT-827A8F1C0D AppButton link contract', () => {
     });
 
     it('treats whitespace href as the existing non-link button branch without reopening click parity', () => {
-        render(<AppButton href="   ">Fallback action</AppButton>);
+        render(<AppButton href="   " target="_blank">Fallback action</AppButton>);
 
         const button = screen.getByRole('button', { name: 'Fallback action' });
         expect(button.tagName).toBe('BUTTON');
         expect(button).not.toHaveAttribute('href');
+        expect(button).not.toHaveAttribute('target');
         expect(button).toHaveAttribute('data-canonical-operation', APP_BUTTON_CLICK_OPERATION_ID);
         expect(button).toHaveAttribute('data-canonical-component-operation', APP_BUTTON_CLICK_OPERATION_ID);
     });
@@ -65,13 +66,13 @@ describe('AIMW-PLAT-827A8F1C0D AppButton link contract', () => {
         render(
             <AppButton
                 href="/consumer-route"
-                canonicalOperationId="AIMW-CONT-0154E7772B"
+                canonicalOperationId="AIMW-PLAT-C6260410D1"
                 aria-label="Consumer route"
             >Consumer route</AppButton>,
         );
 
         const link = screen.getByRole('link', { name: 'Consumer route' });
-        expect(link).toHaveAttribute('data-canonical-operation', 'AIMW-CONT-0154E7772B');
+        expect(link).toHaveAttribute('data-canonical-operation', 'AIMW-PLAT-C6260410D1');
         expect(link).toHaveAttribute('data-canonical-component-operation', APP_BUTTON_LINK_OPERATION_ID);
         expect(document.querySelectorAll(`[data-canonical-operation="${APP_BUTTON_LINK_OPERATION_ID}"]`)).toHaveLength(0);
     });
