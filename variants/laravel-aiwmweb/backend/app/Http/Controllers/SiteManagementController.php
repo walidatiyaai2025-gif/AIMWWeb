@@ -74,12 +74,43 @@ final class SiteManagementController extends Controller
         return response()->json($model);
     }
 
-    public function destroy(int $site, TenantAuthorizer $auth): JsonResponse
-    {
+    public function destroy(
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+    ): JsonResponse {
         $auth->authorize('sites.manage');
-        $model = Site::query()->findOrFail($site);
-        abort_if(Execution::query()->where('site_id', $site)->whereIn('status', ['queued', 'running'])->exists(), 409, 'Active execution prevents deletion.');
-        $model->delete();
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+
+        $model = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->firstOrFail();
+
+        $activeExecutionExists = Execution::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->where('site_id', $siteId)
+            ->whereIn('status', ['queued', 'running'])
+            ->exists();
+        abort_if($activeExecutionExists, 409, 'Active execution prevents deletion.');
+
+        DB::transaction(function () use ($model): void {
+            $model->delete();
+        });
+
+        $stillExists = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->exists();
+        abort_if($stillExists, 409, 'Site deletion could not be verified.');
 
         return response()->json([], 204);
     }
