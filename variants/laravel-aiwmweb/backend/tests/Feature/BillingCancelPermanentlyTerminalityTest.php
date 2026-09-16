@@ -17,6 +17,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Tests\TestCase;
 
+/** Canonical visible-control closure: AIMW-BILL-9DD2652E1E. */
 final class BillingCancelPermanentlyTerminalityTest extends TestCase
 {
     use RefreshDatabase;
