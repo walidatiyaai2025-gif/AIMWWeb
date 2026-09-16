@@ -24,6 +24,7 @@ use App\Email\Contracts\NotificationEventSink;
 use App\Email\Services\NotificationPlatformService;
 use App\Email\Services\SymfonyEmailTransport;
 use App\Email\Services\SyncNotificationSubscriber;
+use App\Http\Controllers\AutomationCenterJobSaveController;
 use App\Jobs\BackgroundExecutionIdentity;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
@@ -34,6 +35,7 @@ use App\Sync\Webhooks\ConnectorSyncWebhookVerifier;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -61,5 +63,16 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(TenantSecret::class, TenantSecretPolicy::class);
         Event::subscribe(SyncNotificationSubscriber::class);
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->prefix('/tenants/{tenant}/automation-center')
+            ->group(function (): void {
+                Route::post('/jobs', [AutomationCenterJobSaveController::class, 'store'])
+                    ->defaults('canonical_operation_id', 'AIMW-BILL-BC1C75CE0D')
+                    ->name('tenant.automation-center.jobs.store');
+                Route::put('/jobs/{job}', [AutomationCenterJobSaveController::class, 'update'])
+                    ->defaults('canonical_operation_id', 'AIMW-BILL-BC1C75CE0D')
+                    ->name('tenant.automation-center.jobs.update');
+            });
     }
 }
