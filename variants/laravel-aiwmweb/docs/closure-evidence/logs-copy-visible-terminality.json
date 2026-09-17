@@ -90,7 +90,7 @@
     ]
   },
   "selected_authority_sha": "4eb1f31c270de6fce9a9ea9d6a73d3c754d24b82",
-  "implementation_snapshot_sha": "30f105688bfaf89318e8b5bb0ac7f92c8c1cdc13",
+  "implementation_snapshot_sha": "722c755aafe898b87c3e677f824f3745d4143f3a",
   "scope_guards": {
     "only_operation_claimed": "AIMW-BILL-2138CD95B2",
     "second_operation_started": false,
