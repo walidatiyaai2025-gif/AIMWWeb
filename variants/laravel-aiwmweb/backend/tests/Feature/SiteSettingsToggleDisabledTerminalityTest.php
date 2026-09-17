@@ -233,7 +233,7 @@ final class SiteSettingsToggleDisabledTerminalityTest extends TestCase
         $this->assertStringContainsString("authorize('tenant.view')", $controller);
         $this->assertStringContainsString("authorize('sites.view')", $controller);
         $this->assertStringContainsString("authorize('sites.manage')", $controller);
-        $this->assertStringContainsString("targetConnectionStatus = $disabled ? 'disabled' : 'unknown'", $controller);
+        $this->assertStringContainsString('\$targetConnectionStatus = \$disabled ? \'disabled\' : \'unknown\';', $controller);
         $this->assertStringContainsString('lockForUpdate()', $controller);
         $this->assertStringContainsString('}, 3);', $controller);
         $this->assertGreaterThanOrEqual(2, substr_count($controller, 'withoutGlobalScopes()'));
