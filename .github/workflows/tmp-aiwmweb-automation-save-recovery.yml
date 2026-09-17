@@ -1,0 +1,118 @@
+name: Temporary AIWMWeb Automation Save Parity Materializer
+
+on:
+  push:
+    branches:
+      - worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-single-operation:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Install backend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Refresh focused evidence provenance
+        run: |
+          set -euo pipefail
+          evidence='variants/laravel-aiwmweb/docs/closure-evidence/automation-center-save-terminality.json'
+          tmp="$(mktemp)"
+          jq '.canonical_base_sha = "52585af0bc9da8d0b9680893419d923a33ebad35"' "$evidence" > "$tmp"
+          mv "$tmp" "$evidence"
+          git diff --check
+          git add "$evidence"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh Automation Center Save closure provenance'
+          fi
+          echo "FOCUSED_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Update generator provenance manifest only
+        run: |
+          set -euo pipefail
+          manifest='variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+          tmp="$(mktemp)"
+          jq --arg previous '52585af0bc9da8d0b9680893419d923a33ebad35' --arg focused "$FOCUSED_SHA" \
+            '.previous_reconciliation_sha = $previous | .focused_closure_evidence_source_sha = $focused' \
+            "$manifest" > "$tmp"
+          mv "$tmp" "$manifest"
+      - name: Run focused Automation Save validation
+        working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: |
+          vendor/bin/pint --test \
+            app/Http/Controllers/AutomationCenterJobSaveController.php \
+            app/Operations/AutomationCenterJobSaveService.php \
+            tests/Feature/AutomationCenterSaveTerminalityTest.php \
+            tests/Feature/AutomationCenterSaveIdempotencyLifetimeTest.php
+          php artisan test \
+            tests/Feature/AutomationCenterSaveTerminalityTest.php \
+            tests/Feature/AutomationCenterSaveIdempotencyLifetimeTest.php
+      - name: Run official parity generator
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          php artisan aiwmweb:parity-reconciliation \
+            --source ../../../qa/browser-testing-page-parity.md \
+            --output ../docs/operation-parity-reconciliation.json \
+            --evidence-root ../docs/closure-evidence \
+            --evidence-source-manifest ../docs/operation-parity-evidence-sources.json \
+            --json
+      - name: Assert exactly one canonical terminal delta
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json')
+          data = json.loads(p.read_text())
+          def find_count(names):
+              for n in names:
+                  if n in data and isinstance(data[n], int): return data[n]
+              summary = data.get('summary', {})
+              for n in names:
+                  if n in summary and isinstance(summary[n], int): return summary[n]
+              return None
+          expected = {'total': 931, 'terminal': 602, 'pending': 329, 'blocked': 0}
+          actual = {
+              'total': find_count(['total','TOTAL','operation_count']),
+              'terminal': find_count(['terminal','TERMINAL','terminal_count']),
+              'pending': find_count(['pending','PENDING','pending_count']),
+              'blocked': find_count(['blocked','BLOCKED','blocked_count']),
+          }
+          if actual != expected:
+              raise SystemExit(f'Unexpected reconciliation counts: {actual}, expected {expected}')
+          text = p.read_text()
+          if 'AIMW-BILL-BC1C75CE0D' not in text or 'ADAPTED' not in text:
+              raise SystemExit('Selected operation did not materialize as ADAPTED')
+          print(actual)
+          PY
+      - name: Commit generator-backed reconciliation and push
+        run: |
+          set -euo pipefail
+          git diff --check
+          git add \
+            variants/laravel-aiwmweb/docs/closure-evidence/automation-center-save-terminality.json \
+            variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+            variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git diff --cached --quiet; then
+            git commit -m 'Materialize AIMW-BILL-BC1C75CE0D parity closure'
+          fi
+          git push origin HEAD:worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
