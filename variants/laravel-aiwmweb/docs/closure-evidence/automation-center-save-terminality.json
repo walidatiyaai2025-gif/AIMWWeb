@@ -3,7 +3,7 @@
   "authority": "AIMWWeb Issue #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
-  "canonical_base_sha": "c24f5e21c8c6d1e199fe8a57fcd534c58c6a8ae1",
+  "canonical_base_sha": "52585af0bc9da8d0b9680893419d923a33ebad35",
   "canonical_operation": {
     "operation_id": "AIMW-BILL-BC1C75CE0D",
     "domain": "billing",
@@ -18,7 +18,10 @@
   },
   "source_behavior": {
     "service": "AccountAutomationCenterService.SaveAsync",
-    "supported_types": ["Synchronization", "SEO Audit"],
+    "supported_types": [
+      "Synchronization",
+      "SEO Audit"
+    ],
     "site_ownership": "current account owner only",
     "job_ownership": "unknown and other-owner IDs have identical not-found semantics",
     "plan_limit": "AutomationSchedulesMax on create",
