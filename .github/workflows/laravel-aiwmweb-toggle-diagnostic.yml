@@ -31,20 +31,29 @@ jobs:
       - run: cp .env.example .env
       - run: php artisan key:generate
       - run: php artisan migrate:fresh --force
-      - name: Toggle reference contract
-        run: php artisan test --filter=test_reference_contract_is_settings_manage_set_enabled_then_audit_reload_and_truthful_message
-      - name: Toggle route contract
+      - name: Action uses Class@__invoke
+        run: php artisan test --filter=test_action_is_invokable_notation
+      - name: Action uses class-only notation
+        if: always()
+        run: php artisan test --filter=test_action_is_class_only_notation
+      - name: Route has web middleware
+        if: always()
+        run: php artisan test --filter=test_route_has_web_middleware
+      - name: Route has auth middleware
+        if: always()
+        run: php artisan test --filter=test_route_has_auth_middleware
+      - name: Route has tenant.context middleware
+        if: always()
+        run: php artisan test --filter=test_route_has_tenant_context_middleware
+      - name: View has operation marker
+        if: always()
+        run: php artisan test --filter=test_view_has_operation_marker
+      - name: View has CSRF marker
+        if: always()
+        run: php artisan test --filter=test_view_has_csrf_marker
+      - name: View has expected_enabled marker
+        if: always()
+        run: php artisan test --filter=test_view_has_expected_enabled_marker
+      - name: Original toggle route contract
         if: always()
         run: php artisan test --filter=test_route_is_session_authenticated_tenant_scoped_csrf_capable_and_visible
-      - name: Toggle auth and IDOR contract
-        if: always()
-        run: php artisan test --filter=test_guest_missing_permission_foreign_tenant_and_unknown_direct_id_fail_closed
-      - name: Toggle atomic audit and retry contract
-        if: always()
-        run: php artisan test --filter=test_disable_is_atomic_audited_redacted_authoritatively_reread_and_retry_safe
-      - name: Toggle stale and malicious payload contract
-        if: always()
-        run: php artisan test --filter=test_stale_or_malicious_payload_converges_safely_without_identity_or_secret_override
-      - name: SubscriptionPlan family
-        if: always()
-        run: php artisan test --filter=SubscriptionPlan
