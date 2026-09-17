@@ -1,0 +1,50 @@
+name: Laravel AIWMWeb Toggle Diagnostic
+
+on:
+  push:
+    branches:
+      - worker/laravel-ci-repair-bill-toggle-20260917
+
+permissions:
+  contents: read
+
+jobs:
+  isolate-toggle-regression:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: php artisan migrate:fresh --force
+      - name: Toggle reference contract
+        run: php artisan test --filter=test_reference_contract_is_settings_manage_set_enabled_then_audit_reload_and_truthful_message
+      - name: Toggle route contract
+        if: always()
+        run: php artisan test --filter=test_route_is_session_authenticated_tenant_scoped_csrf_capable_and_visible
+      - name: Toggle auth and IDOR contract
+        if: always()
+        run: php artisan test --filter=test_guest_missing_permission_foreign_tenant_and_unknown_direct_id_fail_closed
+      - name: Toggle atomic audit and retry contract
+        if: always()
+        run: php artisan test --filter=test_disable_is_atomic_audited_redacted_authoritatively_reread_and_retry_safe
+      - name: Toggle stale and malicious payload contract
+        if: always()
+        run: php artisan test --filter=test_stale_or_malicious_payload_converges_safely_without_identity_or_secret_override
+      - name: SubscriptionPlan family
+        if: always()
+        run: php artisan test --filter=SubscriptionPlan
