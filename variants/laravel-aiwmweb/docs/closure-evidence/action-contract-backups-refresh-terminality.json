@@ -10,21 +10,30 @@
     "tenant_owned": true
   },
   "laravel_adaptation": {
-    "production_contract": "backend/config/frontend_actions.php",
-    "runtime_wiring": "ActionContractRegistry exposes the permission-gated contract to pages.tsx, which prepares and executes the discovered request.",
-    "request_semantics": "GET tenant backup collection"
+    "production_contract": "backend/resources/js/pages.tsx",
+    "runtime_wiring": "The backups workspace renders an exact data-canonical-operation marker for AIMW-BILL-07A0F6427B and delegates reload to backup-reload-control.ts. The control rejects an in-flight duplicate, performs the authoritative server-backed query refetch, emits success only after that reread completes without error, and surfaces returned or thrown reread failures without false success. The underlying GET remains the existing tenant-scoped /api/v1/tenants/{tenant}/admin/backups contract guarded server-side by backup.manage; no create/restore mutation is introduced or weakened.",
+    "request_semantics": "Read-only authoritative GET of the active tenant backup collection"
   },
   "acceptance": {
     "backend_test": "backend/tests/Feature/FocusedActionContractTerminalityTest.php",
-    "frontend_test": "backend/resources/js/__tests__/focused-action-contract-terminality.test.ts",
+    "frontend_test": "backend/resources/js/__tests__/backup-reload-control.test.ts",
     "proofs": [
-      "exact operation identity and request wiring",
-      "tenant/site context fails closed",
-      "mutation permission gates remain enforced"
+      "exact canonical operation identity is bound to the visible backups reload control",
+      "tenant-bound backup API and existing server-side permission/IDOR protections remain authoritative",
+      "duplicate reload is rejected while a reread is already in flight",
+      "success is emitted only after authoritative reread succeeds",
+      "returned and thrown reread failures are visible and never produce fake success",
+      "backup create and restore mutation semantics are untouched"
+    ],
+    "evidence_tags": [
+      "test:tenant-isolation",
+      "test:frontend-authoritative-reread",
+      "test:fail-closed"
     ]
   },
   "scope": {
     "generated_reconciliation_modified": false,
-    "fake_success": false
+    "fake_success": false,
+    "second_operation_claimed": false
   }
 }
