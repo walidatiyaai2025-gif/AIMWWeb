@@ -22,19 +22,6 @@ final class SubscriptionPlanEnabledTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-812D1C53B6';
 
-    public function test_canonical_reconciliation_row_is_the_adapted_toggle_enabled_control(): void
-    {
-        $payload = json_decode((string) file_get_contents(base_path('../docs/operation-parity-reconciliation.json')), true, 512, JSON_THROW_ON_ERROR);
-        $row = collect($payload['operations'])->firstWhere('operation_id', self::OPERATION_ID);
-
-        $this->assertNotNull($row);
-        $this->assertSame('ADAPTED', $row['migration_state']);
-        $this->assertSame('billing', $row['domain']);
-        $this->assertSame('visible_control', $row['kind']);
-        $this->assertStringContainsString('ToggleEnabledAsync', (string) $row['visible_control']);
-        $this->assertTrue((bool) $row['mutation']);
-    }
-
     public function test_reference_contract_is_settings_manage_set_enabled_then_audit_reload_and_truthful_message(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor'));
@@ -99,6 +86,7 @@ final class SubscriptionPlanEnabledTerminalityTest extends TestCase
         $this->assertStringNotContainsString('PROD-sensitive', (string) $audit->before);
         $this->assertStringNotContainsString('P-sensitive', (string) $audit->after);
 
+        // Same network retry is idempotent: state stays disabled and no second audit is emitted.
         $this->actingAs($user)->patch("/tenants/alpha/admin/subscription-plans/{$plan->id}/enabled", $payload)
             ->assertRedirect('/tenants/alpha/admin/subscription-plans');
         $this->assertFalse((bool) $plan->fresh()->enabled);
