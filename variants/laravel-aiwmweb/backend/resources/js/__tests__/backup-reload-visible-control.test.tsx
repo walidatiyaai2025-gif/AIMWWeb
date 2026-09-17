@@ -55,13 +55,13 @@ afterEach(() => {
 describe(`${OPERATION_ID} Reload`, () => {
     it('is available with backups.view and rereads the tenant-derived authoritative backup endpoint without mutation', async () => {
         const fetchMock = vi.fn()
-            .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 11, status: 'completed', path: 'before' }]), { status: 200, headers: { 'content-type': 'application/json' } }))
-            .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 12, status: 'completed', path: 'after' }]), { status: 200, headers: { 'content-type': 'application/json' } }));
+            .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 11, status: 'completed' }]), { status: 200, headers: { 'content-type': 'application/json' } }))
+            .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 12, status: 'completed' }]), { status: 200, headers: { 'content-type': 'application/json' } }));
         vi.stubGlobal('fetch', fetchMock);
 
         renderWorkspace();
 
-        expect(await screen.findByText('before')).toBeInTheDocument();
+        expect(await screen.findByText('11')).toBeInTheDocument();
         const refresh = screen.getByRole('button', { name: 'Refresh' });
         expect(refresh).toHaveAttribute('data-canonical-operation', OPERATION_ID);
         expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -69,7 +69,8 @@ describe(`${OPERATION_ID} Reload`, () => {
 
         fireEvent.click(refresh);
 
-        expect(await screen.findByText('after')).toBeInTheDocument();
+        expect(await screen.findByText('12')).toBeInTheDocument();
+        expect(screen.queryByText('11')).not.toBeInTheDocument();
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(fetchMock.mock.calls[1][0]).toBe('/tenants/alpha/admin/backups?page=1');
         expect(fetchMock.mock.calls.every(([, options]) => !options || options.method === undefined || options.method === 'GET')).toBe(true);
