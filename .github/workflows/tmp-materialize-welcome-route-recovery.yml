@@ -111,11 +111,18 @@ jobs:
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
           coverage: none
 
       - name: Run focused Laravel acceptance
         working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
         shell: bash
         run: |
           set -euo pipefail
