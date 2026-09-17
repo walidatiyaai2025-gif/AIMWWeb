@@ -29,7 +29,26 @@
             <div><dt>Name</dt><dd>{{ $site->name }}</dd></div>
             <div><dt>URL</dt><dd>{{ $site->url }}</dd></div>
             <div><dt>Status</dt><dd>{{ $site->status }}</dd></div>
+            <div><dt>Connection status</dt><dd>{{ $site->connection_status }}</dd></div>
         </dl>
+
+        @if ($canManageSite)
+            @php($isOperationallyDisabled = strtolower((string) $site->connection_status) === 'disabled')
+            <section aria-labelledby="operational-state-heading" data-canonical-operation="AIMW-BILL-84B63E3F42">
+                <h2 id="operational-state-heading">Operational state</h2>
+                <p>Temporarily disable this site without deleting its data. Re-enabling resets the connection state to unknown so it can be verified again.</p>
+                <form method="POST"
+                      action="{{ route('canonical.site.settings.operational-state', ['tenant' => $tenant, 'site' => $site->getKey()]) }}"
+                      data-site-operational-state-form
+                      data-canonical-operation="AIMW-BILL-84B63E3F42">
+                    @csrf
+                    <input type="hidden" name="disabled" value="{{ $isOperationallyDisabled ? '0' : '1' }}">
+                    <button type="submit" data-canonical-operation="AIMW-BILL-84B63E3F42">
+                        {{ $isOperationallyDisabled ? 'Enable site' : 'Disable site' }}
+                    </button>
+                </form>
+            </section>
+        @endif
 
         @if ($canManageCredential)
             <section aria-labelledby="wordpress-credential-heading">
