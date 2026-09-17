@@ -246,7 +246,7 @@
           "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/AboutBuildRouteServiceProvider.php",
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AboutBuildReadController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AboutBuildRouteTerminalityTest.php",
-          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/about-build-route-terminality.json"
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/route-api-terminality.json"
         }
       }
     },
