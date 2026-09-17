@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "33c5a7405d17aa7cf309e0c6f96bf79cd81e43aa",
+  "previous_reconciliation_sha": "e4f36dc5848e727c19c87e9bdcac84489e1f45a2",
   "focused_closure_evidence_source_sha": "ff9543b33039b4340668763789aa883a5edb83b6",
   "countable_sources": [
     {
@@ -686,6 +686,25 @@
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-admin-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      }
+    },
+    {
+      "label": "AIMW-EMAI-BFDC050625 site email settings route closure",
+      "sha": "fcdb592864636e096ec75a4fab8beb580c380f6c",
+      "observed_pr_head": "fcdb592864636e096ec75a4fab8beb580c380f6c",
+      "domains": [
+        "email"
+      ],
+      "supporting_only": true,
+      "route_api_provenance": {
+        "AIMW-EMAI-BFDC050625": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-route-terminality.json",
           "security_mode": "tenant_scoped"
         }
       }
