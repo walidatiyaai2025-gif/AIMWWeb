@@ -5,6 +5,9 @@ on:
     paths:
       - 'variants/laravel-aiwmweb/tools/audit_closure_inventory.py'
       - '.github/workflows/laravel-aiwmweb-closure-evidence-audit.yml'
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
   workflow_dispatch:
 
 permissions:
