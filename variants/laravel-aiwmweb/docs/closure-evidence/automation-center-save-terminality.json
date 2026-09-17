@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "52585af0bc9da8d0b9680893419d923a33ebad35",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-BC1C75CE0D",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AutomationCenter.razor",
+    "source_screen": "/automation-center",
+    "source_control": "SaveAsync [SaveAsync]",
+    "mutation": true,
+    "verification": "tenant-qualified persistence, focused security tests, atomic audit, idempotent retry, and authoritative post-commit reread"
+  },
+  "source_behavior": {
+    "service": "AccountAutomationCenterService.SaveAsync",
+    "supported_types": ["Synchronization", "SEO Audit"],
+    "site_ownership": "current account owner only",
+    "job_ownership": "unknown and other-owner IDs have identical not-found semantics",
+    "plan_limit": "AutomationSchedulesMax on create",
+    "seo_entitlement": "PremiumSeo for SEO Audit",
+    "site_name": "server-derived from authoritative site",
+    "execution": "save persists schedule only; queue/run is a separate operation"
+  },
+  "laravel_adaptation": {
+    "routes": [
+      "POST /api/tenants/{tenant}/automation-center/jobs",
+      "PUT /api/tenants/{tenant}/automation-center/jobs/{job}"
+    ],
+    "route_registration": "variants/laravel-aiwmweb/backend/app/Providers/AppServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AutomationCenterJobSaveController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Operations/AutomationCenterJobSaveService.php",
+    "migration": "variants/laravel-aiwmweb/backend/database/migrations/2026_09_17_021600_create_automation_center_jobs_table.php",
+    "account_mapping": "source account-owned sites map to active tenant-owned Site rows; persisted jobs additionally bind owner_user_id to the authenticated user",
+    "placeholder_or_fake_success": false
+  },
+  "runtime_path": [
+    "web middleware supplies session and CSRF validation; auth and tenant.context execute before controller",
+    "TenantAuthorizer requires operations.manage from the active tenant membership",
+    "controller accepts only an explicit allowlist of schedule fields and rejects caller tenant, owner, site_name, provider, secret, token, action and payload fields as unsupported",
+    "site lookup is tenant-qualified and foreign or missing site IDs return the same 404 class",
+    "create derives tenant_id, owner_user_id and site_name server-side, checks seo.audit.enabled when applicable and automation.rules.max before first persistence",
+    "POST requires Idempotency-Key; identical replay returns the same persisted row without duplicate audit while key reuse with changed state returns 409",
+    "update lookup is tenant plus authenticated owner qualified; foreign-owner, foreign-tenant and missing direct IDs fail closed",
+    "PUT uses expected_version; exact lost-response replay is a no-op, conflicting stale writes return 409, and real changes advance version exactly once",
+    "DB transaction atomically persists the schedule and redacted configuration audit; no queue, scheduler, connector, AI provider or billing provider call is performed",
+    "after commit the service rereads by tenant plus owner plus id and verifies the requested safe configuration before returning success"
+  ],
+  "authorization_and_isolation": {
+    "session": "required",
+    "csrf": "web middleware; only billing webhook is globally exempt and this route is not exempt",
+    "active_tenant": "server-resolved by tenant.context",
+    "permission": "operations.manage",
+    "foreign_tenant": "404 before mutation",
+    "foreign_site_id": "same 404 class as missing site",
+    "foreign_job_owner_id": "same 404 class as missing job",
+    "actor_identity": "authenticated request user only",
+    "tenant_identity": "TenantContext only"
+  },
+  "validation_and_integrity": {
+    "name": "required non-whitespace string max 200",
+    "type": "Synchronization or SEO Audit only; Content Operation remains unavailable",
+    "frequency": "hourly, daily, weekly, monthly",
+    "interval_value": "1..365",
+    "time_of_day": "strict H:i",
+    "retry_count": "0..10",
+    "enabled": "required boolean",
+    "site_name": "never caller supplied",
+    "response": "safe schedule fields only; tenant, owner, idempotency hash and secrets are not returned"
+  },
+  "retry_and_cancellation": {
+    "create": "required Idempotency-Key with request hash; exact replay is stable, divergent replay is 409",
+    "update": "expected_version optimistic concurrency plus exact no-op retry",
+    "database_retry": "transaction retries up to three attempts",
+    "cancellation": "not applicable to SaveAsync adaptation: synchronous local database persistence and no dispatch/queue/external side effect"
+  },
+  "secret_and_external_boundaries": {
+    "provider_credentials_read": false,
+    "provider_credentials_written": false,
+    "connector_secret_read": false,
+    "queue_dispatch": false,
+    "scheduler_dispatch": false,
+    "ai_provider_call": false,
+    "billing_provider_call": false,
+    "fake_or_demo_success": false
+  },
+  "acceptance_tests": {
+    "path": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationCenterSaveTerminalityTest.php",
+    "proof": [
+      "canonical operation marker and web/auth/tenant.context route contract",
+      "guest, permission and foreign-tenant fail closed",
+      "server-derived tenant owner and site_name with authoritative persisted reread",
+      "same-result foreign/missing site and foreign-owner/missing job IDOR rejection",
+      "strict type/range and unknown identity/secret field rejection",
+      "entitlement denial with no persisted schedule",
+      "idempotent POST replay and divergent-key conflict",
+      "idempotent PUT lost-response replay and stale conflicting version rejection",
+      "single audit per real mutation and zero generic scheduled_tasks/automation_rules side effects"
+    ],
+    "additional_idempotency_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationCenterSaveIdempotencyLifetimeTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-BC1C75CE0D",
+    "sibling_operations_terminalized": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "Automation Center Save now has a real session/CSRF-backed tenant-qualified operations.manage mutation path with source-supported schedule types, tenant/site and per-user job isolation, server-derived ownership/site metadata, fail-closed direct-ID behavior, plan and SEO entitlement checks, strict validation, idempotent retries, optimistic concurrency, atomic redacted audit, authoritative post-commit verification, secret/provider isolation and no fake or queued success."
+  }
+}
