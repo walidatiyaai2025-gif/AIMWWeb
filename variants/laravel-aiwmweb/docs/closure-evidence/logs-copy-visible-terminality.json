@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-2138CD95B2",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor",
+    "source_screen": "/logs | /module/logs",
+    "source_control": "CopyVisibleAsync [CopyVisibleAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "CopyVisibleAsync formats the currently filtered log lines as [Level] Text and writes that text to navigator.clipboard.",
+    "side_effect": "browser clipboard write only",
+    "mutation": false,
+    "success_semantics": "copy success is reported only after the browser confirms navigator.clipboard.writeText"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/logs-clear-filters-control.tsx",
+    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "workspace_route": "/tenants/{tenant}/module/logs",
+    "workspace_permissions": ["operations.manage", "diagnostics.view"],
+    "authoritative_read": "/tenants/{tenant}/admin/logs",
+    "api_permission": "operations.manage",
+    "tenant_source": "FrontendContext.tenant.slug",
+    "trusted_api_contract": "context.api.logs must exactly equal tenantUrl(context.tenant.slug, '/admin/logs')",
+    "filter_semantics": "the current logs search input is forwarded as the existing search query, which AdminOperationsController normalizes to q before tenant-scoped persistence read",
+    "clipboard_format": "[level] message separated by newline",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "authenticated user opens the explicit tenant-scoped logs workspace",
+    "auth and tenant.context resolve the active membership and the workspace requires operations.manage plus diagnostics.view",
+    "the canonical copy control is mounted only in the real logs workspace",
+    "the control derives the expected API from authoritative FrontendContext.tenant.slug and rejects a mismatched advertised API",
+    "the current search value is sent to the existing GET logs endpoint",
+    "AdminOperationsController requires operations.manage and normalizes search to the existing q filter",
+    "OperationsControlPlaneService reads operation_logs only where tenant_id equals the active TenantContext id",
+    "the returned authoritative rows are formatted using the source [level] message contract",
+    "navigator.clipboard.writeText is awaited",
+    "success feedback is rendered only after the clipboard write resolves successfully"
+  ],
+  "authorization": {
+    "workspace": ["web", "auth", "tenant.context", "operations.manage", "diagnostics.view"],
+    "api": ["auth", "tenant.context", "operations.manage"],
+    "guest": "workspace redirects to login and JSON API returns 401",
+    "missing_operations_manage": "workspace and API return 403",
+    "foreign_tenant": "workspace and API return 404"
+  },
+  "tenant_isolation": {
+    "tenant_source": "authoritative FrontendContext.tenant.slug plus server TenantContext",
+    "caller_selected_tenant_allowed": false,
+    "foreign_api_contract_allowed": false,
+    "persistence_filter": "operation_logs.tenant_id = TenantContext::id()",
+    "foreign_row_proof": "focused feature test persists Alpha and Beta logs and proves Alpha search returns only Alpha",
+    "direct_id_surface": "none; the copy operation adds no caller-selected log or tenant resource identifier"
+  },
+  "security_semantics": {
+    "csrf": "not applicable because the canonical operation performs only authenticated GET reads and a browser-local clipboard write",
+    "session": "Laravel authenticated session and active tenant membership are required before logs can be read",
+    "secrets": "no credential/provider secret source is added or exposed; the control copies only the log level and message returned by the already-authorized logs read model",
+    "queue_cache_scheduler": "none; no job, cache key, lock, retry state, or scheduler state is created or changed",
+    "wordpress_connector": "none; no WordPress or Connector request is issued",
+    "billing_provider": "none; no billing or payment provider request is issued despite the canonical billing-domain classification",
+    "ai_provider": "none; no AI/provider request is issued",
+    "persistence": "none; the canonical operation does not mutate Laravel or WordPress persistence",
+    "idempotency": "repeated reads and clipboard writes create no server-side state and are safely repeatable",
+    "truthful_empty": "an empty authoritative result reports no visible results and never reports copy success",
+    "truthful_failure": "API, capability, permission, tenant-contract, or clipboard failure cannot produce copy success"
+  },
+  "focused_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/logs-copy-visible-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/LogsCopyVisibleTerminalityTest.php",
+    "assertions": [
+      "exact canonical operation marker and source formatting contract",
+      "trusted same-tenant logs API and current search request",
+      "clipboard success only after resolved write",
+      "clipboard rejection never produces success",
+      "foreign advertised tenant endpoint and missing permission disable the control",
+      "guest and missing-permission rejection",
+      "foreign-tenant workspace/API 404",
+      "persisted cross-tenant log rows do not leak into the active tenant read"
+    ]
+  },
+  "selected_authority_sha": "4eb1f31c270de6fce9a9ea9d6a73d3c754d24b82",
+  "implementation_snapshot_sha": "bb7edf8c58492c0c1220aa53961ace7ff35fae87",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-2138CD95B2",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "canonical_input_ledger_modified": false,
+    "hand_edited_terminal_count": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "The source-faithful Copy results control is visibly mounted on the real tenant logs workspace, reads only the trusted active-tenant logs API under existing auth/RBAC/TenantContext enforcement, preserves the current search semantics, copies only authoritative [level] message rows, and reports success only after a confirmed browser clipboard write."
+  }
+}
