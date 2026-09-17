@@ -56,6 +56,7 @@ final class AutomationCenterJobSaveController extends Controller
         if ($update) {
             $rules['expected_version'] = ['required', 'integer', 'min:1'];
         }
+
         return $rules;
     }
 
