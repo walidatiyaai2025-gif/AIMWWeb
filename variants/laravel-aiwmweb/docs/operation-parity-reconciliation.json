@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 608,
-    "pending": 323,
+    "adapted": 609,
+    "pending": 322,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 608,
-    "overall_parity_percent": 65.31
+    "terminal": 609,
+    "overall_parity_percent": 65.41
   },
   "visible_controls": {
     "total": 446,
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 59,
-      "pending": 23,
+      "adapted": 60,
+      "pending": 22,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 59,
-      "percent": 71.95
+      "terminal": 60,
+      "percent": 73.17
     },
     "identity": {
       "total": 7,
@@ -21444,21 +21444,34 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsModuleRouteTerminalityTest.php",
+      "evidence": "AIMW-EMAI-7F2D7C5921 module site email settings route closure@a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f: variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php; explicit-route-api:AIMW-EMAI-7F2D7C5921; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsModuleRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-module-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-EMAI-7F2D7C5921 module site email settings route closure",
+        "source_sha": "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-module-route-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-7F2D7C5921",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsModuleRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsModuleRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -35224,12 +35237,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 55,
-      "pending": 29,
+      "adapted": 56,
+      "pending": 28,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 55,
-      "percent": 65.48
+      "terminal": 56,
+      "percent": 66.67
     },
     "service": {
       "total": 349,
@@ -35479,7 +35492,6 @@
       "AIMW-EMAI-77C637E3E3",
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-7E1D4105B0",
-      "AIMW-EMAI-7F2D7C5921",
       "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
@@ -35940,6 +35952,16 @@
         "supporting_only": true,
         "operation_ids": [],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-EMAI-7F2D7C5921 module site email settings route closure",
+        "sha": "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
+        "domains": [
+          "email"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -35966,6 +35988,7 @@
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+      "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
@@ -36064,6 +36087,7 @@
       "AIMW-CONT-475267F150",
       "AIMW-CONT-6F699A5C14",
       "AIMW-EMAI-2D94EFDD53",
+      "AIMW-EMAI-7F2D7C5921",
       "AIMW-EMAI-B2CFCF818C",
       "AIMW-EMAI-BFDC050625",
       "AIMW-MEDI-8BADBE1261",
@@ -36075,7 +36099,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 22,
+    "explicit_route_api_contract_count": 23,
     "focused_closure_source_sha": "ff9543b33039b4340668763789aa883a5edb83b6",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
