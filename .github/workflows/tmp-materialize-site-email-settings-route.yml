@@ -108,6 +108,12 @@ jobs:
 
       - name: Run focused Laravel acceptance
         working-directory: variants/laravel-aiwmweb/backend
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
         shell: bash
         run: |
           set -euo pipefail
