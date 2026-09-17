@@ -66,10 +66,10 @@ final class LogsCopyVisibleTerminalityTest extends TestCase
 
         $control = (string) file_get_contents(resource_path('js/logs-clear-filters-control.tsx'));
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, '/admin/logs')", $control);
-        $this->assertStringContainsString("context.api.logs === expectedLogsApi", $control);
-        $this->assertStringContainsString("context.permissions.includes('operations.manage')", $control);
-        $this->assertStringContainsString("context.permissions.includes('diagnostics.view')", $control);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, \'/admin/logs\')', $control);
+        $this->assertStringContainsString('context.api.logs === expectedLogsApi', $control);
+        $this->assertStringContainsString('context.permissions.includes(\'operations.manage\')', $control);
+        $this->assertStringContainsString('context.permissions.includes(\'diagnostics.view\')', $control);
         $this->assertStringContainsString('apiRequest<LogsPayload>', $control);
         $this->assertStringContainsString('navigator.clipboard', $control);
         $this->assertStringContainsString('await clipboard.writeText(formatVisibleLogs(rows))', $control);
