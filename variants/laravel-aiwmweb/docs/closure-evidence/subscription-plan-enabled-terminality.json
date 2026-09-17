@@ -47,8 +47,8 @@
     "controller accepts expected_enabled and enabled booleans and prohibits caller tenant, actor, plan ownership, provider and retirement fields",
     "global BillingPlan direct ID is resolved only after tenant and permission checks; unknown IDs return 404",
     "locked transaction compares server persisted state to expected state before mutation",
-    "a repeated request whose desired state is already authoritative is idempotent and emits no duplicate audit",
-    "a stale request whose expected and authoritative states differ without matching desired state fails 409 instead of blindly toggling",
+    "a repeated or stale request whose explicit desired state is already authoritative converges idempotently and emits no duplicate audit",
+    "the controller never derives a blind inverse from current persistence; it applies only the validated explicit desired boolean and retains a defensive conflict guard for any nonmatching persistence state",
     "server authenticated user supplies audit actor; audit snapshot never includes provider identifiers",
     "controller rereads BillingPlan after commit and returns success only if authoritative safe snapshot still matches",
     "redirect returns to authoritative catalog; no sample or demo row, destructive subscriber deletion, external call or fabricated success is used"
@@ -63,8 +63,8 @@
     "actor_identity": "request authenticated user only"
   },
   "validation_and_integrity": {
-    "expected_enabled": "required boolean optimistic-concurrency precondition",
-    "enabled": "required boolean desired state and must differ from expected_enabled",
+    "expected_enabled": "required boolean request precondition used to identify a normal transition versus an already-converged retry",
+    "enabled": "required explicit desired boolean and must differ from expected_enabled",
     "blind_toggle": false,
     "provider_or_retirement_override": "prohibited",
     "subscriber_data_deleted": false
@@ -79,14 +79,13 @@
   },
   "retry_and_cancellation": {
     "duplicate_retry": "same expected/desired request is idempotent after the first commit and does not duplicate audit or toggle back",
-    "stale_concurrent_request": "409 unless authoritative state already equals desired state",
+    "stale_concurrent_request": "when authoritative state already equals the explicit desired boolean, the request is a no-op success with no audit; otherwise the defensive conflict guard fails closed rather than deriving a blind toggle",
     "database_retry": "transaction retries deadlock-class failures up to three attempts",
     "cancellation": "not applicable: synchronous local database mutation with no queued or external side effect"
   },
   "acceptance_tests": {
     "path": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlanEnabledTerminalityTest.php",
     "proof": [
-      "canonical generated row remains ADAPTED for the exact operation",
       "canonical source SettingsManage, SetEnabledAsync, audit and reload semantics",
       "web/auth/tenant.context route and CSRF-bearing visible form",
       "guest redirect, missing-permission 403 and foreign-tenant 404 without side effects",
@@ -94,7 +93,7 @@
       "server-derived actor and caller identity, tenant and provider override rejection",
       "atomic persisted disable and redacted audit",
       "idempotent duplicate retry without duplicate audit or reverse toggle",
-      "stale expected-state 409 and same-state validation failure"
+      "stale desired-already-authoritative request converges as a no-op and same-state input validation fails closed"
     ]
   },
   "scope_guards": {
@@ -111,6 +110,6 @@
     "security_and_tenant_enforced": true,
     "focused_tests_present": true,
     "evidence_recorded": true,
-    "reason": "ToggleEnabledAsync is now physically present on the live-derived Laravel branch as a tenant-qualified settings.manage mutation with CSRF/session enforcement, fail-closed foreign-tenant/direct-ID behavior, prohibited caller ownership and provider fields, server-derived actor identity, optimistic concurrency that prevents retry double-toggle, atomic redacted audit, authoritative post-commit reread, and no fake or demo success or subscriber deletion."
+    "reason": "ToggleEnabledAsync is now physically present on the live-derived Laravel branch as a tenant-qualified settings.manage mutation with CSRF/session enforcement, fail-closed foreign-tenant/direct-ID behavior, prohibited caller ownership and provider fields, server-derived actor identity, explicit desired-state retry convergence that prevents double-toggle, atomic redacted audit, authoritative post-commit reread, and no fake or demo success or subscriber deletion."
   }
 }
