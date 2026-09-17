@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
+import { AccountEmailSettingsSummary } from './account-email-settings-summary';
 import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
 import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
 import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
@@ -116,6 +117,11 @@ function ApprovalQueueRoute({ context, route }: { context: FrontendContext; rout
     );
 }
 
+function AccountEmailSettingsRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <AccountEmailSettingsSummary context={context} />;
+}
+
 function AiWorkspaceRoute() {
     const { context } = useOutletContext<OutletState>();
     return <AiWorkspaceHub context={context} />;
@@ -169,6 +175,7 @@ function AppRoutes() {
     return (
         <Routes>
             <Route path="/tenants/:tenantSlug" element={<TenantBootstrap />}>
+                <Route path="account/email-settings" element={<AccountEmailSettingsRoute />} />
                 <Route path="ai-workspace" element={<AiWorkspaceRoute />} />
                 {workspaceRoutes.map((route) => {
                     const relative = route.path === '/' ? undefined : route.path.replace(/^\//, '');
