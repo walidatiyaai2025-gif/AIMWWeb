@@ -5,7 +5,7 @@
   "domain": "sync",
   "kind": "visible_control",
   "previous_state": "PENDING",
-  "terminal_candidate_state": "ADAPTED",
+  "terminal_state": "ADAPTED",
   "canonical_source": {
     "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
     "route_screen": "/Error",
@@ -20,10 +20,10 @@
     "browser_runtime": "resources/js/error-copy-details.ts",
     "control_binding": "button[data-copy-error-details][data-canonical-operation=AIMW-SYNC-89777052CB]",
     "payload": ["errorId", "correlationId"],
-    "behavior": "The real Error surface renders only already-sanitized request/correlation IDs into an escaped application/json payload. Browser runtime adds copy-time at invocation and writes the source-equivalent report to Clipboard. Success is exposed only after writeText resolves; rejection/unavailable Clipboard produces a truthful retryable failure state; duplicate in-flight copies are suppressed."
+    "behavior": "The real authenticated Error surface renders only already-sanitized request/correlation IDs into an escaped application/json payload. Browser runtime adds copy-time at invocation and writes the source-equivalent report to Clipboard. Success is exposed only after writeText resolves; rejection/unavailable Clipboard produces a truthful retryable failure state; duplicate in-flight copies are suppressed."
   },
   "runtime_path": [
-    "GET /Error",
+    "authenticated GET /Error",
     "RequestCorrelation middleware sanitizes or generates tracking IDs",
     "ErrorReadController",
     "platform.error Blade view",
@@ -33,12 +33,12 @@
     "confirmed success or truthful retryable failure"
   ],
   "security": {
-    "authentication": "anonymous by canonical Error route contract",
-    "tenant_context": "not resolved",
+    "authentication": "required by the current canonical.error route auth middleware; unauthenticated requests redirect to login",
+    "tenant_context": "not resolved by the tenant-neutral Error route; tenant-qualified/direct-ID Error paths are absent and fail 404",
     "server_mutation": false,
     "direct_id_surface": false,
     "safe_payload_only": true,
-    "proof": "Feature coverage verifies malicious caller tracking headers are rejected by existing correlation middleware and do not enter the clipboard payload; exception/query secrets, stack traces and exception messages remain absent."
+    "proof": "Focused Feature coverage verifies authentication, absence of a tenant-qualified/direct-ID Error surface, malicious caller tracking-header rejection, and non-exposure of exception/query secrets, stack traces or exception messages."
   },
   "semantics": {
     "mutation": false,
@@ -55,9 +55,9 @@
     "php": "backend/tests/Feature/ErrorCopyDetailsTerminalityTest.php",
     "frontend": "backend/resources/js/__tests__/error-copy-details.test.ts",
     "coverage": [
-      "exact canonical PENDING identity/domain/kind/source/control",
+      "exact canonical identity/domain/kind/source/control and generated terminal state",
       "real rendered canonical button and escaped safe payload",
-      "existing anonymous Error route and zero direct-ID/tenant route surface",
+      "authenticated Error route and zero tenant-qualified/direct-ID surface",
       "malicious tracking-header non-exposure",
       "source-equivalent report formatting",
       "confirmed Clipboard success",
@@ -71,6 +71,7 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_sha": "09e544d60a768c14483380edbc8d47912b8d7ef0",
     "implementation_snapshot_sha": "dd6ed0a8c7394998b96e2a64cce8e1695ff17386",
+    "historical_merge_commit": "c695d4a8934ef464a3fb75bdef6ad4f1734e4703",
     "exact_head_policy": "Terminal handoff is valid only when PR Plan Link, Laravel AIWMWeb Cross-Domain Security and Laravel AIWMWeb Acceptance all succeed on the final PR head. Exact run IDs are recorded in Issue #257 handoff rather than predeclared in this source artifact."
   },
   "scope_guards": {

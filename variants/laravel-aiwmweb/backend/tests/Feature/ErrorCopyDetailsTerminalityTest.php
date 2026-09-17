@@ -21,12 +21,12 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_exact_canonical_operation_is_the_pending_error_copy_control(): void
+    public function test_exact_canonical_operation_is_the_terminal_error_copy_control(): void
     {
         $row = collect($this->reconciliation()['operations'])->firstWhere('operation_id', self::OPERATION_ID);
 
         $this->assertNotNull($row);
-        $this->assertSame('PENDING', $row['migration_state']);
+        $this->assertSame('ADAPTED', $row['migration_state']);
         $this->assertSame('sync', $row['domain']);
         $this->assertSame('visible_control', $row['kind']);
         $this->assertSame('/Error', $row['route_screen']);
@@ -90,6 +90,15 @@ final class ErrorCopyDetailsTerminalityTest extends TestCase
         $this->assertStringContainsString('data-canonical-operation="AIMW-CONT-85394A0E55"', $html);
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-8B3518EF80"', $html);
         $this->assertStringNotContainsString('/tenants/', $html);
+    }
+
+    public function test_copy_control_exposes_no_foreign_tenant_or_direct_id_error_surface(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/tenants/00000000-0000-0000-0000-000000000001/Error')
+            ->assertNotFound();
     }
 
     public function test_invalid_tracking_headers_are_not_exposed_to_the_clipboard_payload(): void
