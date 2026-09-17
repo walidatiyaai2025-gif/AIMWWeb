@@ -13,6 +13,12 @@
         <p>{{ app()->getLocale() === 'ar'
             ? 'عرض وحفظ حقيقيان لكتالوج الخطط المخزن.'
             : 'Authoritative persisted catalog view and save path.' }}</p>
+        <nav aria-label="{{ app()->getLocale() === 'ar' ? 'روابط الفوترة' : 'Billing navigation' }}">
+            <a
+                href="{{ route('canonical.workspace.account-billing', ['tenant' => $tenant->slug]) }}"
+                data-canonical-operation="AIMW-BILL-0CE205B851"
+            >{{ app()->getLocale() === 'ar' ? 'صفحة العميل' : 'Customer billing' }}</a>
+        </nav>
     </header>
 
     @if (session('status'))

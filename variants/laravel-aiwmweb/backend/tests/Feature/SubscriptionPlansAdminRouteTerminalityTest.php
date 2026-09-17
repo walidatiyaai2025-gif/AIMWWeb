@@ -127,7 +127,7 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
             ->assertSee('closure-disabled-trial')
             ->assertDontSee('PROD-secret-sentinel')
             ->assertDontSee('P-secret-sentinel')
-            ->assertDontSee('AIMW-BILL-0CE205B851')
+            ->assertSee('AIMW-BILL-0CE205B851')
             ->assertDontSee('AIMW-BILL-5E8896CD58')
             ->assertDontSee('AIMW-BILL-F73C7348C3');
 
