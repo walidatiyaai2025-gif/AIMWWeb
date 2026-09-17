@@ -1,0 +1,52 @@
+name: Laravel AIWMWeb Regression Diagnostic
+
+on:
+  push:
+    branches:
+      - worker/laravel-authority-ci-regression-7a942043
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite-regression-diagnostic:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - run: php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+      - name: Capture full PHPUnit failure without masking its exit code in evidence
+        shell: bash
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set +e
+          php artisan test --log-junit=regression-junit.xml 2>&1 | tee regression-test-output.txt
+          status=${PIPESTATUS[0]}
+          printf '%s\n' "$status" > regression-test-exit-code.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laravel-regression-diagnostic-${{ github.sha }}
+          path: |
+            variants/laravel-aiwmweb/backend/regression-junit.xml
+            variants/laravel-aiwmweb/backend/regression-test-output.txt
+            variants/laravel-aiwmweb/backend/regression-test-exit-code.txt
+          if-no-files-found: error
