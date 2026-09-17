@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-CEA27985CB",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "source_screen": "component:CurrentUserChip",
+    "source_control": "/sites/@_activeSite.Id/explorer -> /sites/@_activeSite.Id/explorer",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "summary": "When CurrentUserChip has a selected active site, the source renders the localized Content workspace action beside Site dashboard and Settings and navigates to that active site's Explorer.",
+    "active_site_source": "The destination site comes from the CurrentUserChip active-site state, not from a caller-entered destination field.",
+    "permission_note": "The source CurrentUserChip does not add a separate ContentView condition around this workspace action.",
+    "side_effect": "navigation only",
+    "success_semantics": "navigation only; no mutation success state or receipt is fabricated"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/current-user-site-details-control.tsx",
+    "runtime_wiring": "CurrentUserSiteDetailsControl is already mounted in the authenticated application shell and portals active-site actions into the existing user chip.",
+    "active_site_contract": "FrontendContext.active_site plus the exact tenant-qualified sites.detail.{id} API advertisement",
+    "target_builder": "tenantUrl(context.tenant.slug, '/explorer') + '?site=' + active_site.id",
+    "target_route": "/tenants/{tenant}/explorer?site={active_site}",
+    "target_workspace": "existing Laravel Explorer workspace",
+    "target_context_reread": "/tenants/{tenant}/context?site={active_site}",
+    "operation_marker": "AIMW-CONT-CEA27985CB",
+    "placeholder_or_catch_all_control": false,
+    "demo_or_sample_data": false,
+    "scope_note": "This closure adds only the CurrentUserChip Content navigation. It does not claim Explorer page controls, route parity, or the separate Site details/Settings actions."
+  },
+  "authorization_and_tenant_isolation": {
+    "session_authentication": "The tenant Explorer application shell and context endpoint remain behind the existing authenticated tenant.context runtime.",
+    "tenant_permission": "The control requires tenant.view so its generated tenant destination is reachable under the existing tenant workspace boundary.",
+    "explorer_permission": "The control requires the existing Explorer sites.view permission and honors wildcard permission; no new permission is invented.",
+    "source_permission_preservation": "No content.view condition is added because the source CurrentUserChip does not gate this action with ContentView.",
+    "active_site_validation": "The control accepts only a positive safe-integer active_site.id supplied by FrontendContext.",
+    "api_contract_binding": "The advertised sites.detail.{active_site.id} endpoint must exactly equal /api/tenants/{tenant}/sites/{active_site.id}; a missing, foreign-tenant, or mismatched-site advertisement suppresses the link.",
+    "explicit_disable": "An explicit explorer/explorer.view capability state other than enabled suppresses navigation.",
+    "tenant_encoding": "tenantUrl URL-encodes the server-provided tenant slug before constructing the target.",
+    "foreign_site": "The context endpoint resolves the site through active tenant scoping; a foreign site ID returns 404.",
+    "foreign_tenant": "An authenticated member cannot activate another tenant through the destination/context route; foreign tenant access returns 404."
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf_write_path": "not applicable; the control issues no mutation request",
+    "persistence": "no domain persistence mutation; the Explorer bootstrap rereads existing tenant/site context",
+    "queue_cache_scheduler": "none changed",
+    "wordpress_connector": "no WordPress or AIMW Connector request is initiated by this navigation control",
+    "ai_provider": "no AI provider request is initiated",
+    "payment_provider": "no payment-provider request is initiated despite unrelated canonical extraction metadata on neighboring source records",
+    "secrets": "no secret or credential value is read or exposed",
+    "idempotency": "repeated navigation is side-effect free",
+    "retry_and_cancellation": "not applicable to navigation-only behavior",
+    "audit_or_receipt": "not applicable because no domain mutation occurs",
+    "truthful_failure": "invalid/missing authority, permission, or explicit disable state produces no link instead of a fabricated destination"
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/current-user-site-details-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CurrentUserContentExplorerTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker and localized Content control",
+      "server-active-site tenant-qualified Explorer destination",
+      "no invented content.view requirement",
+      "tenant.view and sites.view fail-closed behavior",
+      "exact site-detail API binding and invalid-ID rejection",
+      "explicit Explorer disable-state rejection",
+      "tenant slug encoding without path escape",
+      "guest and missing tenant permission rejection on authoritative context",
+      "foreign tenant/site 404 isolation",
+      "authorized Explorer application shell plus authoritative active-site reread",
+      "no Site persistence mutation and no network mutation from the control"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-CEA27985CB",
+    "second_operation_started": false,
+    "active_claims_avoided": ["AIMW-COMM-2B682F7BEC", "AIMW-BILL-4DCB58743D"],
+    "aspnet_reference_modified": false,
+    "existing_site_details_semantics_preserved": true,
+    "existing_site_settings_semantics_preserved": true,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "tenant_isolation_enforced": true,
+    "authorization_enforced": true,
+    "idor_resistant": true,
+    "source_visibility_semantics_preserved": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The source CurrentUserChip Content action is now represented by a real authenticated Laravel navigation control that uses only the server-authoritative active site and tenant, fails closed on invalid authority/permissions/disable state, targets the existing Explorer bootstrap for authoritative site reread, performs no mutation, and is covered by deterministic frontend and Laravel tenant/IDOR proof."
+  }
+}
