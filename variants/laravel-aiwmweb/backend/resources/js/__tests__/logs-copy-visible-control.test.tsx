@@ -28,7 +28,7 @@ function response(payload: unknown, status = 200) {
         headers: { get: () => 'application/json' },
         json: async () => payload,
         text: async () => JSON.stringify(payload),
-    } as Response;
+    } as unknown as Response;
 }
 
 function renderControl(value = 'Needle', current = context()) {
