@@ -5,7 +5,7 @@
   "domain": "sync",
   "kind": "visible_control",
   "previous_state": "PENDING",
-  "terminal_candidate_state": "ADAPTED",
+  "terminal_state": "ADAPTED",
   "canonical_source": {
     "file": "src/AIWordPressManager.Web/Components/Pages/Error.razor",
     "route_screen": "/Error",
