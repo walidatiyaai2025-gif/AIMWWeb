@@ -7,6 +7,15 @@
   "parity_transition_expected": false,
   "selected_authority_sha": "d6d79177eedf68d24984bbe0c98db2d5adb20aab",
   "recovered_from_pr": 577,
+  "official_reconciliation_validation": {
+    "workflow_run_id": 35274856313,
+    "result": "success",
+    "total": 931,
+    "terminal": 606,
+    "pending": 325,
+    "blocked": 0,
+    "committed_artifacts_match_regeneration": true
+  },
   "runtime": {
     "workspace": "/tenants/{tenant}/module/backups",
     "authoritative_read": "/tenants/{tenant}/admin/backups?page=1",
