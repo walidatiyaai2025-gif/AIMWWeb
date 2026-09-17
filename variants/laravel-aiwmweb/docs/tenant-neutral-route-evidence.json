@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
-  "source_sha": "d03f0dc5b5a663289fefd08015fcf5babbc4d89f",
+  "source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
   "routes": {
     "AIMW-CONT-8EE96B77A8": {
       "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
@@ -17,6 +17,13 @@
       "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/error-route-terminality.json",
       "security_mode": "authenticated_fallback",
       "source_auth_path": "src/AIWordPressManager.Web/Program.cs"
+    },
+    "AIMW-CONT-86346F4C6C": {
+      "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/PublicWelcomeRouteServiceProvider.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-route-terminality.json",
+      "security_mode": "explicit_anonymous"
     }
   }
 }
