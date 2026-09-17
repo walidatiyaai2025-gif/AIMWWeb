@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { tenantUrl, workspaceRoutes, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { BACKUPS_RELOAD_OPERATION_ID } from './backup-reload-control';
 
 export const AUTOMATION_NEW_JOB_OPERATION_ID = 'AIMW-AUTO-3C8B141746';
 export const AUTOMATION_REFRESH_OPERATION_ID = 'AIMW-AUTO-647F50CC73';
@@ -16,6 +17,7 @@ export const REPORTS_EXPORT_AUTOMATION_OPERATION_ID = 'AIMW-AUTO-C4A8DCCFEF';
 export const AUTOMATION_PHASE_REFRESH_OPERATIONS: Partial<Record<string, string>> = {
     automation: AUTOMATION_REFRESH_OPERATION_ID,
     schedules: SCHEDULE_REFRESH_OPERATION_ID,
+    backups: BACKUPS_RELOAD_OPERATION_ID,
 };
 
 export const AUTOMATION_PHASE_ACTION_OPERATIONS: Partial<Record<string, string>> = {
