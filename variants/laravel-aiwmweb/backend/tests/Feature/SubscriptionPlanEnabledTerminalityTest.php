@@ -35,7 +35,8 @@ final class SubscriptionPlanEnabledTerminalityTest extends TestCase
     public function test_route_is_session_authenticated_tenant_scoped_csrf_capable_and_visible(): void
     {
         $route = Route::getRoutes()->match(Request::create('/tenants/alpha/admin/subscription-plans/7/enabled', 'PATCH'));
-        $this->assertSame(SubscriptionPlanEnabledController::class.'@__invoke', $route->getActionName());
+        $this->assertSame(SubscriptionPlanEnabledController::class, $route->getActionName());
+        $this->assertTrue(method_exists(SubscriptionPlanEnabledController::class, '__invoke'));
         $this->assertContains('web', $route->gatherMiddleware());
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
