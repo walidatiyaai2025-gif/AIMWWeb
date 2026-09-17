@@ -25,6 +25,11 @@ jobs:
       - name: Install backend dependencies
         working-directory: variants/laravel-aiwmweb/backend
         run: composer install --no-interaction --prefer-dist
+      - name: Prepare Laravel test environment
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
       - name: Refresh focused evidence provenance
         run: |
           set -euo pipefail
