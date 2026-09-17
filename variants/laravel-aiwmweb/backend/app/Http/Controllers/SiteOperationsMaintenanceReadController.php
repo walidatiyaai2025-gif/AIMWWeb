@@ -23,13 +23,15 @@ final class SiteOperationsMaintenanceReadController extends Controller
         abort_unless($this->context->tenant()->slug === $tenant, 404);
 
         $membership = $this->context->membership();
+        $canManageOperations = $membership->hasPermission('operations.manage');
 
         return view('site-operations-maintenance', [
             'tenant' => $this->context->tenant()->slug,
             'storage' => $this->history->getStorageInfo(),
             'preview' => $this->history->previewCleanup(90, 100),
+            'canCleanup' => $canManageOperations,
             'canOpenOperationsHub' => $membership->hasPermission('execution.view')
-                && $membership->hasPermission('operations.manage'),
+                && $canManageOperations,
         ]);
     }
 }
