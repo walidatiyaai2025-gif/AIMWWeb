@@ -37,7 +37,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
-      - name: Refresh focused evidence provenance
+      - name: Refresh and publish focused evidence provenance
         run: |
           set -euo pipefail
           evidence='variants/laravel-aiwmweb/docs/closure-evidence/automation-center-save-terminality.json'
@@ -51,7 +51,11 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m 'Refresh Automation Center Save closure provenance'
           fi
-          echo "FOCUSED_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          focused_sha="$(git rev-parse HEAD)"
+          echo "FOCUSED_SHA=$focused_sha" >> "$GITHUB_ENV"
+          git push origin HEAD:worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
+          git fetch origin worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
+          git branch -r --contains "$focused_sha" | grep -F 'origin/worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917'
       - name: Update generator provenance manifest only
         run: |
           set -euo pipefail
