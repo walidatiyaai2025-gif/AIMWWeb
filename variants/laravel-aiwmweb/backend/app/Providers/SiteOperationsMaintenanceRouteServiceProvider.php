@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\SiteOperationsMaintenanceCleanupController;
 use App\Http\Controllers\SiteOperationsMaintenanceReadController;
 use App\Http\Controllers\SiteOperationsMaintenanceRefreshController;
 use App\Http\Controllers\SiteOperationsMaintenanceReloadController;
@@ -29,5 +30,11 @@ final class SiteOperationsMaintenanceRouteServiceProvider extends ServiceProvide
             ->defaults('workspace_permissions', 'execution.view')
             ->defaults('canonical_operation_id', SiteOperationsMaintenanceReloadController::OPERATION_ID)
             ->name('canonical.workspace.site-operations-maintenance.reload');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->post('/tenants/{tenant}/site-operations/maintenance/cleanup', SiteOperationsMaintenanceCleanupController::class)
+            ->defaults('workspace_permissions', 'execution.view,operations.manage')
+            ->defaults('canonical_operation_id', SiteOperationsMaintenanceCleanupController::OPERATION_ID)
+            ->name('canonical.workspace.site-operations-maintenance.cleanup');
     }
 }
