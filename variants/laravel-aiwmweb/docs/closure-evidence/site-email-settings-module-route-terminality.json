@@ -1,0 +1,92 @@
+{
+  "operation_id": "AIMW-EMAI-7F2D7C5921",
+  "domain": "email",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteEmailSettings.razor",
+    "route_screen": "/module/site-email-settings",
+    "visible_control": "Open/render route",
+    "behavior": "Open the module-level Site Email Settings surface for the authenticated active tenant, enumerate only tenant-visible sites, and optionally load the selected tenant-owned site's persisted email-recipient state without exposing protected SMTP/password material."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+    "view_path": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
+    "route": "GET /tenants/{tenant}/module/site-email-settings",
+    "route_name": "canonical.workspace.site-email-settings.module",
+    "canonical_operation_id": "AIMW-EMAI-7F2D7C5921",
+    "behavior": "The explicit module GET route executes SiteEmailSettingsController::module, authorizes the active tenant member, reads the tenant-scoped site collection, optionally resolves a selected site through the tenant-scoped model, rereads persisted recipients, and renders the real site email settings view."
+  },
+  "runtime_path": [
+    "/tenants/{tenant}/module/site-email-settings",
+    "web + auth + tenant.context",
+    "SiteEmailSettingsController::module",
+    "TenantAuthorizer tenant.view + sites.view + settings.manage",
+    "TenantContext active tenant",
+    "tenant-scoped Site list and optional Site::findOrFail(requestedSite)",
+    "SiteEmailRecipientService::listAsync(selectedSite)",
+    "sites/email-settings.blade.php"
+  ],
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "settings.manage"
+    ],
+    "guest_semantics": "redirect to canonical login before tenant-owned data is rendered",
+    "missing_permission_semantics": "403 fail closed",
+    "foreign_tenant_semantics": "404 fail closed",
+    "direct_id_semantics": "the optional caller-supplied numeric site query value is resolved under active TenantContext; foreign-tenant site IDs return 404"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "server_derived_ownership": "TenantContext is established from the authenticated active membership; controller verifies the route tenant slug and Site/SiteEmailRecipient reads remain tenant-scoped.",
+    "idor_proof": "Focused acceptance creates Alpha and Beta tenant data and proves Alpha cannot select Beta through either a foreign tenant route or a foreign optional site query ID, while Beta site and recipient data are absent from the Alpha response."
+  },
+  "read_and_failure_semantics": {
+    "mutation": false,
+    "authoritative_reread": "Each GET rereads the tenant-scoped site collection and, when selected, the persisted site recipient list.",
+    "truthful_success": "200 is asserted only after the guarded controller resolves the active tenant context and renders authoritative persisted tenant data.",
+    "invalid_or_foreign_site": "404",
+    "missing_permission": "403",
+    "unauthenticated": "login redirect",
+    "retry": "safe; GET is read-only and repeatable",
+    "cancellation": "not applicable to synchronous read route"
+  },
+  "csrf_and_mutation_boundary": {
+    "selected_operation": "GET only; no CSRF-bearing server mutation is introduced.",
+    "existing_recipient_mutation": "POST /tenants/{tenant}/sites/{site}/email-settings/recipients remains the separate canonical operation exposed by SiteEmailRecipientService::ADD_OPERATION_ID and the Blade form retains @csrf.",
+    "sibling_site_route": "GET /tenants/{tenant}/sites/{site}/email-settings remains canonical operation AIMW-EMAI-BFDC050625."
+  },
+  "secret_provider_wordpress_boundaries": {
+    "smtp_secret_non_exposure": "The module route/controller do not return password ciphertext or SMTP/provider secret fields; focused response acceptance checks common secret markers are absent.",
+    "provider_calls": "No email-provider send/test call is performed by this route operation.",
+    "wordpress_connector": "No WordPress or Connector call is performed by this route operation.",
+    "ai_provider": "No AI-provider call or secret is touched.",
+    "queue_cache_scheduler": "No queue, cache, scheduler, or background job side effect is introduced."
+  },
+  "acceptance_tests": [
+    "Tests\\Feature\\SiteEmailSettingsModuleRouteTerminalityTest::test_exact_canonical_operation_is_the_module_site_email_settings_route",
+    "Tests\\Feature\\SiteEmailSettingsModuleRouteTerminalityTest::test_module_route_is_explicit_guarded_operation_bound_and_read_only",
+    "Tests\\Feature\\SiteEmailSettingsModuleRouteTerminalityTest::test_authorized_member_renders_only_authoritative_active_tenant_data_without_secret_material",
+    "Tests\\Feature\\SiteEmailSettingsModuleRouteTerminalityTest::test_guest_missing_permission_foreign_tenant_and_foreign_query_site_fail_closed",
+    "Tests\\Feature\\SiteEmailSettingsModuleRouteTerminalityTest::test_site_specific_route_and_recipient_mutation_remain_separate_canonical_operations",
+    "Tests\\Feature\\SiteEmailSettingsModuleRouteTerminalityTest::test_source_and_laravel_authorization_contracts_remain_tenant_and_secret_safe"
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "site_specific_route_claimed": false,
+    "recipient_add_claimed": false,
+    "source_aspnet_modified": false,
+    "manual_parity_count_edit": false,
+    "fake_provider_evidence": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "A real guarded Laravel module route is explicitly operation-bound and proven to preserve authenticated tenant isolation, permission checks, authoritative persisted reads, foreign-site rejection, read-only semantics, separate CSRF-protected mutations, and secret/provider boundaries."
+  }
+}
