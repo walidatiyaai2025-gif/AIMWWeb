@@ -19,6 +19,9 @@ on:
       - 'variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/*.json'
       - '.github/workflows/laravel-aiwmweb-parity-reconciliation.yml'
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
 
 permissions:
   contents: read
