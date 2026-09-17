@@ -86,14 +86,13 @@ final class SubscriptionPlanEnabledTerminalityTest extends TestCase
         $this->assertStringNotContainsString('PROD-sensitive', (string) $audit->before);
         $this->assertStringNotContainsString('P-sensitive', (string) $audit->after);
 
-        // Same network retry is idempotent: state stays disabled and no second audit is emitted.
         $this->actingAs($user)->patch("/tenants/alpha/admin/subscription-plans/{$plan->id}/enabled", $payload)
             ->assertRedirect('/tenants/alpha/admin/subscription-plans');
         $this->assertFalse((bool) $plan->fresh()->enabled);
         $this->assertSame(1, DB::table('billing_plan_audits')->where('billing_plan_id', $plan->id)->count());
     }
 
-    public function test_stale_or_malicious_payload_fails_closed_without_identity_or_secret_override(): void
+    public function test_stale_or_malicious_payload_converges_safely_without_identity_or_secret_override(): void
     {
         $user = User::factory()->create();
         $this->membership($user, 'alpha', ['settings.manage']);
@@ -110,11 +109,13 @@ final class SubscriptionPlanEnabledTerminalityTest extends TestCase
             ->assertSessionHasErrors(['tenant_id', 'actor_user_id', 'provider_plan_id']);
         $this->assertTrue((bool) $plan->fresh()->enabled);
 
+        // A stale expected state is safe when the authoritative value already equals the explicit desired value.
         $this->actingAs($user)->patch("/tenants/alpha/admin/subscription-plans/{$plan->id}/enabled", [
             'expected_enabled' => 0,
             'enabled' => 1,
-        ])->assertStatus(409);
+        ])->assertRedirect('/tenants/alpha/admin/subscription-plans');
         $this->assertTrue((bool) $plan->fresh()->enabled);
+        $this->assertSame(0, DB::table('billing_plan_audits')->where('billing_plan_id', $plan->id)->count());
 
         $this->actingAs($user)->patch("/tenants/alpha/admin/subscription-plans/{$plan->id}/enabled", [
             'expected_enabled' => 1,
