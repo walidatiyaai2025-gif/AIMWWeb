@@ -16,6 +16,7 @@ import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StateP
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
+import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
@@ -184,6 +185,30 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         });
     };
 
+    const refreshWorkspace = async (): Promise<void> => {
+        if (route.key !== 'backups') {
+            await query.refetch();
+            return;
+        }
+
+        await runAuthoritativeBackupReload({
+            busy: query.isFetching,
+            refetch: () => query.refetch(),
+            onSuccess: () => notify(
+                locale === 'ar'
+                    ? 'تمت إعادة تحميل النسخ الاحتياطية من الحالة الموثوقة على الخادم.'
+                    : 'Backups were reloaded from authoritative server state.',
+                'success',
+            ),
+            onFailure: (error) => notify(
+                error instanceof Error
+                    ? error.message
+                    : (locale === 'ar' ? 'تعذر إعادة تحميل النسخ الاحتياطية من الخادم.' : 'Backups could not be reloaded from the server.'),
+                'error',
+            ),
+        });
+    };
+
     const mutation = useMutation({
         mutationFn: async (payload: Record<string, string | number>) => {
             if (!dialog) throw new Error('Action contract is missing.');
@@ -270,15 +295,19 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         data-canonical-operation={refreshOperationId}
                         data-canonical-load-operation={readOperations?.load}
                         data-canonical-refresh-operation={readOperations?.refresh}
-                        disabled={route.key === 'ai-center' && query.isFetching}
-                        aria-busy={route.key === 'ai-center' && query.isFetching ? 'true' : 'false'}
-                        onClick={() => void query.refetch()}
+                        disabled={(route.key === 'ai-center' || route.key === 'backups') && query.isFetching}
+                        aria-busy={(route.key === 'ai-center' || route.key === 'backups') && query.isFetching ? 'true' : 'false'}
+                        onClick={() => void refreshWorkspace()}
                     >
                         {route.key === 'ai-center'
                             ? (query.isFetching
                                 ? (locale === 'ar' ? 'جارٍ تحديث البيانات…' : 'Refreshing data…')
                                 : (locale === 'ar' ? 'تحديث البيانات' : 'Refresh data'))
-                            : text(commonText.refresh)}
+                            : route.key === 'backups'
+                                ? (query.isFetching
+                                    ? (locale === 'ar' ? 'جارٍ إعادة تحميل النسخ…' : 'Reloading backups…')
+                                    : (locale === 'ar' ? 'إعادة تحميل النسخ' : 'Reload backups'))
+                                : text(commonText.refresh)}
                     </button>
                     {route.controls?.map((actionKey) => {
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
