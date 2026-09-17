@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 606,
-    "pending": 325,
+    "adapted": 607,
+    "pending": 324,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 606,
-    "overall_parity_percent": 65.09
+    "terminal": 607,
+    "overall_parity_percent": 65.2
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 33,
-      "pending": 131,
+      "adapted": 34,
+      "pending": 130,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 33,
-      "percent": 20.12
+      "terminal": 34,
+      "percent": 20.73
     },
     "email": {
       "total": 82,
@@ -15071,12 +15071,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccessDeniedRouteTerminalityTest.php",
-      "evidence": "Source-boundary route closure@d03f0dc5b5a663289fefd08015fcf5babbc4d89f: variants/laravel-aiwmweb/backend/routes/web.php; source-boundary-route:AIMW-CONT-8EE96B77A8; mode:explicit_anonymous; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AccessDeniedReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AccessDeniedRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/access-denied-route-terminality.json",
+      "evidence": "Source-boundary route closure@66095bcecfaf63c43e987891ffc538c304c8f4a9: variants/laravel-aiwmweb/backend/routes/web.php; source-boundary-route:AIMW-CONT-8EE96B77A8; mode:explicit_anonymous; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/AccessDeniedReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/AccessDeniedRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/access-denied-route-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed source-boundary route evidence proves source authorization semantics, explicit action wiring, zero route parameters, focused runtime acceptance, and fail-closed identity/diagnostic behavior.",
         "source_label": "Source-boundary route closure",
-        "source_sha": "d03f0dc5b5a663289fefd08015fcf5babbc4d89f",
+        "source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
         "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
         "evidence_mode": "explicit_route_contract",
         "security_mode": "explicit_anonymous",
@@ -16114,12 +16114,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ErrorRouteTerminalityTest.php",
-      "evidence": "Source-boundary route closure@d03f0dc5b5a663289fefd08015fcf5babbc4d89f: variants/laravel-aiwmweb/backend/app/Providers/ErrorRouteServiceProvider.php; source-boundary-route:AIMW-CONT-455F01DAC7; mode:authenticated_fallback; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/ErrorReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/ErrorRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/error-route-terminality.json",
+      "evidence": "Source-boundary route closure@66095bcecfaf63c43e987891ffc538c304c8f4a9: variants/laravel-aiwmweb/backend/app/Providers/ErrorRouteServiceProvider.php; source-boundary-route:AIMW-CONT-455F01DAC7; mode:authenticated_fallback; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/ErrorReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/ErrorRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/error-route-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed source-boundary route evidence proves source authorization semantics, explicit action wiring, zero route parameters, focused runtime acceptance, and fail-closed identity/diagnostic behavior.",
         "source_label": "Source-boundary route closure",
-        "source_sha": "d03f0dc5b5a663289fefd08015fcf5babbc4d89f",
+        "source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
         "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ErrorRouteServiceProvider.php",
         "evidence_mode": "explicit_route_contract",
         "security_mode": "authenticated_fallback",
@@ -19949,21 +19949,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/PublicWelcomeRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php",
+      "evidence": "Source-boundary route closure@66095bcecfaf63c43e987891ffc538c304c8f4a9: variants/laravel-aiwmweb/backend/app/Providers/PublicWelcomeRouteServiceProvider.php; source-boundary-route:AIMW-CONT-86346F4C6C; mode:explicit_anonymous; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed source-boundary route evidence proves source authorization semantics, explicit action wiring, zero route parameters, focused runtime acceptance, and fail-closed identity/diagnostic behavior.",
+        "source_label": "Source-boundary route closure",
+        "source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/PublicWelcomeRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_contract",
+        "security_mode": "explicit_anonymous",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-86346F4C6C",
+          "source:AllowAnonymous",
+          "middleware:web-only",
+          "tenant:neutral",
+          "route:no-parameters",
+          "identity:no-disclosure",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php"
+        ]
       }
     },
     {
@@ -35198,12 +35211,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 53,
-      "pending": 31,
+      "adapted": 54,
+      "pending": 30,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 53,
-      "percent": 63.1
+      "terminal": 54,
+      "percent": 64.29
     },
     "service": {
       "total": 349,
@@ -35375,7 +35388,6 @@
       "AIMW-CONT-7F2BC55FF4",
       "AIMW-CONT-80EE7CA296",
       "AIMW-CONT-859135B2D1",
-      "AIMW-CONT-86346F4C6C",
       "AIMW-CONT-8C19E4E3B2",
       "AIMW-CONT-8DF93FC75E",
       "AIMW-CONT-915652366F",
@@ -35975,6 +35987,7 @@
       "AIMW-CONT-5D18F49928",
       "AIMW-CONT-8140D785B5",
       "AIMW-CONT-81B4B20D2D",
+      "AIMW-CONT-86346F4C6C",
       "AIMW-CONT-8EE96B77A8",
       "AIMW-CONT-9B8574AA90",
       "AIMW-CONT-9B87A269F3",
@@ -35998,16 +36011,18 @@
     "passed": true,
     "source_boundary_route_contract_terminals": [
       "AIMW-CONT-455F01DAC7",
+      "AIMW-CONT-86346F4C6C",
       "AIMW-CONT-8EE96B77A8"
     ],
     "tenant_neutral_route_contract_terminals": [
+      "AIMW-CONT-86346F4C6C",
       "AIMW-CONT-8EE96B77A8"
     ],
     "authenticated_fallback_route_contract_terminals": [
       "AIMW-CONT-455F01DAC7"
     ],
-    "source_boundary_route_contract_count": 2,
-    "tenant_neutral_route_source_sha": "d03f0dc5b5a663289fefd08015fcf5babbc4d89f",
+    "source_boundary_route_contract_count": 3,
+    "tenant_neutral_route_source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
     "platform_admin_route_contract_terminals": [
       "AIMW-BILL-5811B45F89"
     ],
