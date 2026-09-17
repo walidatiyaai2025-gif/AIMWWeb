@@ -63,6 +63,21 @@
       "coverage": "canonical operation identity, explicit source AllowAnonymous proof, exact route/action binding, web-only middleware, absence of auth and tenant.context, zero route parameters, real public product rendering rather than the stock Laravel placeholder, identity/tenant/query non-disclosure, and preservation of the separate existing Welcome visible-control marker"
     }
   ],
+  "validation": {
+    "materializer_run_id": 35277505653,
+    "materialized_head": "49a58336cd48ffb7181083a1ded045f78ac2c79c",
+    "php_runtime": "8.4 (aligned with official Laravel AIWMWeb tenant-core acceptance)",
+    "official_generator_chain": "PASS",
+    "operation_parity_delta": "exactly AIMW-CONT-86346F4C6C PENDING -> ADAPTED; TERMINAL +1; no demotions",
+    "generated_totals": {
+      "total": 931,
+      "terminal": 607,
+      "pending": 324,
+      "blocked": 0
+    },
+    "focused_pint": "PASS",
+    "focused_laravel_test": "PASS"
+  },
   "scope_guards": {
     "exactly_one_operation": true,
     "welcome_visible_controls_claimed": false,
