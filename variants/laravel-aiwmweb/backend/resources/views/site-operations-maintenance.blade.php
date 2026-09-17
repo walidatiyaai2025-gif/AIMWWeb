@@ -13,10 +13,18 @@
         <span class="workspace-kicker">STORAGE MANAGEMENT</span>
         <h1>Site Operation History Maintenance</h1>
         <p>Review the real tenant-scoped operation-history footprint and refresh the retention preview with the same policy choices as the authoritative source. Maintenance mutations are separate canonical operations.</p>
+
+        @if (session('status'))
+            <p role="status" aria-live="polite">{{ session('status') }}</p>
+        @endif
+
         <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
             <label>
                 <span>Delete operations older than</span>
-                <select class="form-control" data-maintenance-policy="older_than_days">
+                <select class="form-control"
+                        data-maintenance-policy="older_than_days"
+                        name="older_than_days"
+                        form="maintenance-cleanup-form">
                     <option value="30">30 days</option>
                     <option value="60">60 days</option>
                     <option value="90" selected>90 days</option>
@@ -26,7 +34,10 @@
             </label>
             <label>
                 <span>Always keep the newest</span>
-                <select class="form-control" data-maintenance-policy="keep_latest">
+                <select class="form-control"
+                        data-maintenance-policy="keep_latest"
+                        name="keep_latest"
+                        form="maintenance-cleanup-form">
                     <option value="50">50</option>
                     <option value="100" selected>100</option>
                     <option value="250">250</option>
@@ -79,6 +90,37 @@
             <dt>Cutoff</dt><dd data-maintenance-field="cutoff">{{ $preview['cutoff'] }}</dd>
         </dl>
     </section>
+
+    @if ($canCleanup)
+        <section class="panel" aria-label="Confirm cleanup">
+            <h2>Confirm cleanup</h2>
+            <p>Only operation-history records inside the authenticated active tenant can be removed. Type <strong>CLEANUP</strong> and confirm the browser prompt before the request is submitted.</p>
+            <form id="maintenance-cleanup-form"
+                  method="POST"
+                  action="{{ route('canonical.workspace.site-operations-maintenance.cleanup', ['tenant' => $tenant], false) }}"
+                  data-maintenance-cleanup-form
+                  data-canonical-operation="AIMW-BILL-DA1A53D8A1"
+                  onsubmit="return window.confirm('Permanently remove the eligible tenant-scoped operation-history records?');">
+                @csrf
+                <label>
+                    <span>Type CLEANUP to confirm</span>
+                    <input class="form-control"
+                           type="text"
+                           name="confirmation"
+                           required
+                           maxlength="32"
+                           pattern="\s*CLEANUP\s*"
+                           autocomplete="off">
+                </label>
+                <button class="btn danger"
+                        type="submit"
+                        data-canonical-operation="AIMW-BILL-DA1A53D8A1"
+                        @disabled((int) $preview['removable_count'] < 1)>
+                    Delete eligible records
+                </button>
+            </form>
+        </section>
+    @endif
 </main>
 </body>
 </html>
