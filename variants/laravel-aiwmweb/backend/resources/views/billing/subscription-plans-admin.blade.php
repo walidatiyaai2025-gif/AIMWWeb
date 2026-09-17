@@ -97,6 +97,14 @@
                     <label><input name="clear_gateway_plan_id" type="checkbox" value="1"> Clear PayPal Plan ID</label>
                     <button type="submit">{{ app()->getLocale() === 'ar' ? 'حفظ الخطة' : 'Save plan' }}</button>
                 </form>
+
+                <form method="post" action="{{ route('tenant.admin.subscription-plans.enabled', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-812D1C53B6">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="expected_enabled" value="{{ $plan->enabled ? '1' : '0' }}">
+                    <input type="hidden" name="enabled" value="{{ $plan->enabled ? '0' : '1' }}">
+                    <button type="submit">{{ $plan->enabled ? (app()->getLocale() === 'ar' ? 'تعطيل' : 'Disable') : (app()->getLocale() === 'ar' ? 'تفعيل' : 'Enable') }}</button>
+                </form>
             </article>
         @empty
             <p role="status">{{ app()->getLocale() === 'ar' ? 'لا توجد خطط اشتراك محفوظة.' : 'No persisted subscription plans.' }}</p>
