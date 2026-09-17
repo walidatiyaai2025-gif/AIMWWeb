@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 final class AutomationCenterJobSaveService
 {
     private const AUTOMATION_LIMIT = 'automation.rules.max';
+
     private const PREMIUM_SEO = 'seo.audit.enabled';
 
     public function __construct(
