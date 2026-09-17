@@ -1,0 +1,118 @@
+name: TEMP Materialize AIMW-BILL-84B63E3F42
+
+on:
+  push:
+    branches:
+      - worker/laravel-bill-84b63e3f42-site-state-20260918
+    paths:
+      - '.github/workflows/tmp-materialize-aiwm-bill-84b63e3f42.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: worker/laravel-bill-84b63e3f42-site-state-20260918
+
+      - name: Fetch exact evidence refs
+        run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run official 931-operation generator chain
+        run: |
+          set -euo pipefail
+          python variants/laravel-aiwmweb/tools/finalize_operation_parity.py \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_tenant_neutral_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_platform_admin_route_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_closure_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_service_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+          python variants/laravel-aiwmweb/tools/apply_focused_background_job_evidence.py \
+            --input /tmp/operation-parity-reconciliation.json \
+            --output /tmp/operation-parity-reconciliation.json \
+            --summary-output /tmp/operation-parity-summary.json \
+            --markdown-output /tmp/operation-parity-reconciliation.md \
+            --check-total 931
+
+      - name: Enforce exact one-operation delta
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('/tmp/operation-parity-reconciliation.json').read_text())
+          t=p['totals']
+          assert t['total']==931, t
+          assert t['terminal']==612, t
+          assert t['pending']==319, t
+          assert t['blocked']==0, t
+          rows={r['operation_id']:r for r in p['operations']}
+          assert rows['AIMW-BILL-84B63E3F42']['migration_state']=='ADAPTED'
+          PY
+          delta="$(python variants/laravel-aiwmweb/tools/operation_parity_delta.py \
+            --current /tmp/operation-parity-reconciliation.json \
+            --previous-sha b32b2aa90e6d9cb4f3b2c6c06b08926f140f9d3c)"
+          printf '%s\n' "$delta"
+          grep -qx 'PREVIOUS_TERMINAL=611' <<<"$delta"
+          grep -qx 'CURRENT_TERMINAL=612' <<<"$delta"
+          grep -qx 'TERMINAL_DELTA=+1' <<<"$delta"
+          grep -qx 'FALSE_POSITIVES_DEMOTED=0' <<<"$delta"
+          grep -qx 'FALSE_PENDING_ROWS_TERMINALIZED=1' <<<"$delta"
+          grep -qx 'STATUS_CHANGED_ROWS=1' <<<"$delta"
+          grep -qx 'DEMOTED_IDS=' <<<"$delta"
+          grep -qx 'TERMINALIZED_IDS=AIMW-BILL-84B63E3F42' <<<"$delta"
+          grep -qx 'STATUS_CHANGED_IDS=AIMW-BILL-84B63E3F42' <<<"$delta"
+
+      - name: Commit generated artifacts and self-remove
+        run: |
+          set -euo pipefail
+          cp /tmp/operation-parity-reconciliation.json variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json
+          cp /tmp/operation-parity-reconciliation.md variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
+          rm .github/workflows/tmp-materialize-aiwm-bill-84b63e3f42.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json \
+                  variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md \
+                  .github/workflows/tmp-materialize-aiwm-bill-84b63e3f42.yml
+          git diff --cached --check
+          git commit -m 'chore(laravel): materialize AIMW-BILL-84B63E3F42 parity'
+          git push origin HEAD:worker/laravel-bill-84b63e3f42-site-state-20260918
