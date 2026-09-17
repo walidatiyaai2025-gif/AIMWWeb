@@ -1,0 +1,54 @@
+name: Temporary AIWMWeb Automation Save Recovery Formatter
+
+on:
+  push:
+    branches:
+      - worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  format-focused-files:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - name: Install backend dependencies
+        working-directory: variants/laravel-aiwmweb/backend
+        run: composer install --no-interaction --prefer-dist
+      - name: Apply Pint only to recovered Automation Save files
+        working-directory: variants/laravel-aiwmweb/backend
+        run: |
+          vendor/bin/pint \
+            app/Http/Controllers/AutomationCenterJobSaveController.php \
+            app/Operations/AutomationCenterJobSaveService.php \
+            tests/Feature/AutomationCenterSaveTerminalityTest.php
+          vendor/bin/pint --test \
+            app/Http/Controllers/AutomationCenterJobSaveController.php \
+            app/Operations/AutomationCenterJobSaveService.php \
+            tests/Feature/AutomationCenterSaveTerminalityTest.php
+      - name: Commit focused formatting
+        run: |
+          set -euo pipefail
+          git diff --check
+          git add \
+            variants/laravel-aiwmweb/backend/app/Http/Controllers/AutomationCenterJobSaveController.php \
+            variants/laravel-aiwmweb/backend/app/Operations/AutomationCenterJobSaveService.php \
+            variants/laravel-aiwmweb/backend/tests/Feature/AutomationCenterSaveTerminalityTest.php
+          if git diff --cached --quiet; then
+            echo 'No formatting changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fix Automation Center Save Pint issues'
+          git push origin HEAD:worker/laravel-bill-bc1c75ce0d-automation-save-recovery-20260917
