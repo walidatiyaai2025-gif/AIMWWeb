@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-84B63E3F42",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+    "source_screen": "/sites/{Id:guid}/settings",
+    "source_control": "ToggleDisabledClicked",
+    "tenant_owned": true,
+    "risk": "critical"
+  },
+  "source_semantics": {
+    "disable": "ToggleDisabledClicked computes disable=true whenever the current source connection state is not Disabled, then calls SiteWebService.SetDisabledAsync(Id, true).",
+    "enable": "When the source connection state is Disabled it calls SiteWebService.SetDisabledAsync(Id, false).",
+    "persisted_mapping": "SiteWebService.SetDisabledAsync persists Disabled when disabling and Unknown when enabling.",
+    "authoritative_reread": "After the mutation the source calls LoadAsync and displays the reread site settings state.",
+    "external_effect": "The source state toggle is a local application-state mutation and does not call WordPress or a billing/payment provider."
+  },
+  "laravel_adaptation": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsToggleDisabledController.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+    "route": "POST /tenants/{tenant}/sites/{site}/settings/operational-state",
+    "route_name": "canonical.site.settings.operational-state",
+    "canonical_operation_id": "AIMW-BILL-84B63E3F42",
+    "desired_state_adaptation": "The rendered button submits an explicit desired disabled boolean derived from the authoritative settings reread, avoiding non-idempotent blind-toggle replay.",
+    "persisted_mapping": {
+      "disabled=true": "connection_status=disabled",
+      "disabled=false": "connection_status=unknown"
+    }
+  },
+  "runtime_path": [
+    "authenticated web session",
+    "auth middleware",
+    "tenant.context active-membership resolution",
+    "TenantAuthorizer tenant.view",
+    "TenantAuthorizer sites.view",
+    "TenantAuthorizer sites.manage",
+    "route tenant slug equality against active TenantContext",
+    "boolean desired-state validation",
+    "server-owned tenant/site lookup with tenant_id predicate",
+    "row lock inside DB transaction",
+    "idempotent desired connection_status persistence",
+    "authoritative tenant/site reread",
+    "success redirect only after persisted state verification"
+  ],
+  "authentication_authorization_isolation": {
+    "guest": "redirected to login by auth middleware",
+    "active_tenant": "ResolveTenantContext derives the tenant from the authenticated active membership.",
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "sites.manage"
+    ],
+    "missing_permission": "403 fail closed",
+    "foreign_tenant": "404 fail closed",
+    "foreign_site": "404 fail closed because the destructive lookup uses withoutGlobalScopes plus explicit active tenant_id and route site key.",
+    "caller_ownership_fields": "tenant_id, site_id, actor_user_id, connection_status, status and secret request fields are explicitly rejected with 422.",
+    "server_derived_ownership": "The only mutable value accepted from the browser is the desired disabled boolean; tenant and site ownership are derived from TenantContext and the route."
+  },
+  "validation_csrf_and_errors": {
+    "disabled": "required boolean only",
+    "csrf": "The route uses web middleware and the Blade form renders @csrf; no CSRF exemption is added.",
+    "invalid_input": "422 before persistence",
+    "foreign_resource": "404 before persistence",
+    "permission_denied": "403 before persistence",
+    "verification_failure": "409 if the authoritative reread does not equal the desired persisted connection status.",
+    "no_fake_success": true
+  },
+  "persistence_truthfulness_and_retry": {
+    "transaction": "DB::transaction with three bounded attempts.",
+    "locking": "The active-tenant site row is acquired with lockForUpdate before state comparison/write.",
+    "idempotency": "If the current connection_status already equals the requested desired state, no save occurs; replay remains a no-op and does not toggle back.",
+    "disable_result": "disabled",
+    "enable_result": "unknown",
+    "unrelated_status_column": "The general site status column remains unchanged, matching the source connection-state semantics.",
+    "authoritative_reread": "After the transaction the controller rereads the same tenant-owned site and verifies exact connection_status before success.",
+    "success_messages": {
+      "disabled": "Site disabled.",
+      "enabled": "Site enabled and reset for connection testing."
+    }
+  },
+  "external_secret_and_runtime_boundaries": {
+    "wordpress": "No WordPress or Connector request is performed.",
+    "payment_provider": "No billing/payment-provider request is performed; the canonical scanner domain/dependency classification does not reflect this source control's real behavior.",
+    "ai_provider": "No AI provider request is performed.",
+    "queue_cache_scheduler": "No queue, cache or scheduler side effect is introduced.",
+    "secrets": "No password, API key, client secret or provider secret is accepted, read, rendered or persisted by this operation.",
+    "cancellation": "The mutation is a short synchronous database transaction; no asynchronous cancellation surface is fabricated."
+  },
+  "focused_tests": [
+    "Tests\\Feature\\SiteSettingsToggleDisabledTerminalityTest::test_exact_critical_canonical_operation_is_terminalized",
+    "Tests\\Feature\\SiteSettingsToggleDisabledTerminalityTest::test_route_and_control_are_session_tenant_permission_csrf_and_operation_bound",
+    "Tests\\Feature\\SiteSettingsToggleDisabledTerminalityTest::test_control_is_hidden_without_manage_permission_and_direct_post_fails_closed",
+    "Tests\\Feature\\SiteSettingsToggleDisabledTerminalityTest::test_guest_foreign_tenant_foreign_site_invalid_input_and_identity_overrides_fail_before_write",
+    "Tests\\Feature\\SiteSettingsToggleDisabledTerminalityTest::test_disable_enable_and_replays_preserve_source_semantics_and_tenant_isolation",
+    "Tests\\Feature\\SiteSettingsToggleDisabledTerminalityTest::test_source_and_laravel_contracts_keep_runtime_real_retry_safe_and_secret_free"
+  ],
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-84B63E3F42",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "canonical_counts_hand_edited": false,
+    "assertion_weakening": false,
+    "fabricated_live_or_manual_evidence": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "tenant_isolation_enforced": true,
+    "authorization_enforced": true,
+    "idor_resistant": true,
+    "validation_enforced": true,
+    "csrf_protected": true,
+    "retry_safe": true,
+    "idempotent": true,
+    "authoritative_reread": true,
+    "reason": "The critical Site Settings operational-state control now reaches a real tenant-scoped, permission-gated, CSRF-protected desired-state mutation that preserves source Disabled/Unknown semantics, rejects caller ownership/state overrides, is replay-safe, and reports success only after authoritative persistence verification."
+  }
+}
