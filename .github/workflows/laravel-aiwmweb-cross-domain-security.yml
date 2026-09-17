@@ -5,6 +5,9 @@ on:
     paths:
       - 'variants/laravel-aiwmweb/**'
       - '.github/workflows/laravel-aiwmweb-cross-domain-security.yml'
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
   workflow_dispatch:
 
 permissions:
