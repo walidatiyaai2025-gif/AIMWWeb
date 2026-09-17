@@ -9,12 +9,15 @@ use Illuminate\Support\ServiceProvider;
 
 final class SiteEmailSettingsRouteServiceProvider extends ServiceProvider
 {
+    public const MODULE_ROUTE_OPERATION_ID = 'AIMW-EMAI-7F2D7C5921';
+
     public const SITE_ROUTE_OPERATION_ID = 'AIMW-EMAI-BFDC050625';
 
     public function boot(): void
     {
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->get('/tenants/{tenant}/module/site-email-settings', [SiteEmailSettingsController::class, 'module'])
+            ->defaults('canonical_operation_id', self::MODULE_ROUTE_OPERATION_ID)
             ->name('canonical.workspace.site-email-settings.module');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
