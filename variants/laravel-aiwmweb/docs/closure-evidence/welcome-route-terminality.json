@@ -1,0 +1,77 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-86346F4C6C",
+  "domain": "content",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "recovery": {
+    "authoritative_base_sha": "33c5a7405d17aa7cf309e0c6f96bf79cd81e43aa",
+    "historical_branch": "worker/laravel-cont-86346f4c6c-welcome-route",
+    "historical_head_sha": "7d29f1ff55953ff14a9e2981ebbd99915fa9d01e",
+    "historical_merge_base_sha": "35ea3bd44a3c6977da8e40ad1dd08c2ff117c9cc",
+    "reason": "Completed route implementation, focused acceptance, and evidence existed on a stale branch that diverged from authoritative composition and was never integrated. Reconstructed operation-owned delta on exact live authority."
+  },
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "route_screen": "/welcome",
+    "visible_control": "Open/render route",
+    "behavior": "Expose the public Welcome route under the source page's explicit AllowAnonymous boundary. This closure is limited to route exposure; separate Welcome visible controls remain independently reconciled."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/PublicWelcomeRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php",
+    "view_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "route": "/welcome",
+    "route_operation_marker": "AIMW-CONT-86346F4C6C",
+    "existing_visible_control_marker": "AIMW-AI-4C07560F0B",
+    "behavior": "The explicit web-only Laravel route renders the existing real AI WordPress Manager public entry view. The route carries a distinct canonical route marker while preserving the independently terminal public-brand visible-control marker."
+  },
+  "authorization": {
+    "source_boundary": "Welcome.razor explicitly declares Microsoft.AspNetCore.Authorization.AllowAnonymous.",
+    "middleware": ["web"],
+    "permissions": [],
+    "fail_closed": "The route accepts no tenant, user, site, or resource identifier and resolves no TenantContext or TenantAuthorizer; query input is not reflected into the response."
+  },
+  "tenant_isolation": {
+    "tenant_selector": "none",
+    "direct_object_id": "none",
+    "idor_surface": "none",
+    "proof": "Focused acceptance compares anonymous and authenticated callers while injecting distinct tenant/user sentinels and hostile query values; rendered content remains identity-neutral and discloses none of them."
+  },
+  "validation_and_degraded_states": {
+    "anonymous": "allowed by source contract and returns the real public product entry",
+    "authenticated": "returns the same tenant/user-neutral public route shell; auth-aware Welcome controls remain separate canonical operations",
+    "query_override": "ignored for tenant/user authority and not reflected",
+    "fake_success_path": "none"
+  },
+  "persistence_and_runtime": {
+    "mutation": "none",
+    "persistence": "none",
+    "csrf": "not applicable to GET/read-only route exposure",
+    "idempotency": "GET route is read-only and repeatable",
+    "retry": "Normal browser retry is side-effect free.",
+    "queue_cache_scheduler": "none introduced",
+    "wordpress_connector": "none introduced",
+    "ai_provider": "none introduced",
+    "secrets": "no provider, credential, tenant, user, or query secret is rendered"
+  },
+  "acceptance_tests": [
+    {
+      "file": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php",
+      "coverage": "canonical operation identity, explicit source AllowAnonymous proof, exact route/action binding, web-only middleware, absence of auth and tenant.context, zero route parameters, real public product rendering rather than the stock Laravel placeholder, identity/tenant/query non-disclosure, and preservation of the separate existing Welcome visible-control marker"
+    }
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "welcome_visible_controls_claimed": false,
+    "aspnet_current_product_modified": false,
+    "manual_parity_count_edit": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical /welcome route is explicitly bound to the real public Welcome controller/view under source-equivalent anonymous, zero-parameter, tenant-neutral semantics with deterministic identity non-disclosure acceptance."
+  }
+}
