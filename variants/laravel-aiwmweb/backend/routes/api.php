@@ -35,7 +35,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::get('media', [ContentApiController::class, 'media']);
     Route::post('media', [ContentApiController::class, 'uploadMedia']);
     Route::patch('media/{media}', [ContentApiController::class, 'updateMedia']);
-    Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia']);
+    Route::delete('media/{media}', [ContentApiController::class, 'deleteMedia'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentApiController::MEDIA_DELETE_OPERATION_ID)
+        ->name('api.v1.media.delete-permanently');
 
     Route::get('comments', [ContentApiController::class, 'comments']);
     Route::post('comments/{comment}/action', [ContentApiController::class, 'commentAction']);
