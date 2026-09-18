@@ -21,6 +21,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { CurrentUserLogsControl } from './current-user-logs-control';
+import { MediaDeleteControl } from './media-delete-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
@@ -353,7 +354,22 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             ) : null}
             <section className="panel data-panel">
                 <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter === 'connected' ? visibleRows.length : collection.total}</span></header>
-                {visibleRows.length ? <DataTable rows={visibleRows} /> : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
+                {visibleRows.length ? (
+                    <DataTable
+                        rows={visibleRows}
+                        renderActions={route.key === 'media' && endpoint ? (row) => (
+                            <MediaDeleteControl
+                                context={context}
+                                endpoint={endpoint}
+                                row={row}
+                                onReconcile={async () => {
+                                    const refreshed = await query.refetch();
+                                    if (refreshed.error) throw refreshed.error;
+                                }}
+                            />
+                        ) : undefined}
+                    />
+                ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
                 <Pagination page={collection.page} lastPage={collection.lastPage} onPage={setPage} previousOperationId={readOperations?.previous} />
             </section>
             <ActionDialog
