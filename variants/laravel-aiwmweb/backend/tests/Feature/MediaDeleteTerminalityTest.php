@@ -166,7 +166,7 @@ final class MediaDeleteTerminalityTest extends TestCase
         ]);
 
         Http::assertSent(fn ($request) => $request->method() === 'DELETE'
-            && str_contains($request->url(), "/wp-json/wp/v2/media/801"));
+            && str_contains($request->url(), '/wp-json/wp/v2/media/801'));
     }
 
     public function test_lost_response_retry_recovers_from_remote_absence_without_second_delete(): void
