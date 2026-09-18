@@ -2,6 +2,7 @@
 
 namespace App\Content\Remote;
 
+use App\Models\SiteCredential;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -11,8 +12,11 @@ final class NativeWordPressRestPath
     public function available(int $siteId): bool
     {
         $site = $this->site($siteId, false);
+        if (! $site || blank($site->url ?? null)) {
+            return false;
+        }
 
-        return $site && filled($site->url ?? null) && filled($site->rest_username ?? null) && filled($site->rest_application_password ?? null);
+        return $this->credential($siteId, false) !== null;
     }
 
     public function list(int $siteId, string $resource, array $query = []): array
@@ -104,11 +108,21 @@ final class NativeWordPressRestPath
 
     private function requestWithoutRetry(int $siteId): PendingRequest
     {
-        $site = $this->site($siteId);
+        $credential = $this->credential($siteId);
 
         return Http::timeout(45)
             ->acceptJson()
-            ->withBasicAuth((string) $site->rest_username, (string) $site->rest_application_password);
+            ->withBasicAuth((string) $credential->username, (string) $credential->secret_value);
+    }
+
+    private function credential(int $siteId, bool $fail = true): ?SiteCredential
+    {
+        $credential = SiteCredential::query()->where('site_id', $siteId)->first();
+        if (! $credential && $fail) {
+            throw new RuntimeException('WordPress application-password credential is not configured.');
+        }
+
+        return $credential;
     }
 
     private function url(int $siteId, string $path): string
