@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Content\ContentConflictException;
 use App\Content\ContentPlatformService;
+use App\Content\MediaDeleteService;
 use App\Content\Remote\ContentRemoteDriver;
 use App\Jobs\BulkCommentModerationJob;
 use App\Jobs\BulkContentMutationJob;
@@ -27,7 +28,14 @@ use Illuminate\Validation\Rule;
 
 final class ContentApiController extends Controller
 {
-    public function __construct(private readonly ContentPlatformService $content, private readonly ContentRemoteDriver $remote, private readonly TenantContext $tenant) {}
+    public const MEDIA_DELETE_OPERATION_ID = 'AIMW-BILL-4DCB58743D';
+
+    public function __construct(
+        private readonly ContentPlatformService $content,
+        private readonly ContentRemoteDriver $remote,
+        private readonly TenantContext $tenant,
+        private readonly MediaDeleteService $mediaDelete,
+    ) {}
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type): JsonResponse
     {
@@ -155,16 +163,12 @@ final class ContentApiController extends Controller
         return response()->json($result);
     }
 
-    public function deleteMedia(TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
+    public function deleteMedia(Request $request, TenantAuthorizer $auth, string $tenant, int $site, int $media): JsonResponse
     {
         $auth->authorize('content.edit');
-        $item = MediaItem::query()->where('site_id', $site)->findOrFail($media);
-        $used = ContentItem::query()->where('site_id', $site)->where('featured_media_remote_id', $item->remote_id)->pluck('id');
-        abort_if($used->isNotEmpty(), 409, 'Media is referenced as featured media; detach it before deletion.');
-        $result = $this->remote->mutate($site, 'media', $item->remote_id, 'delete');
-        $item->delete();
+        abort_if($request->request->count() > 0, 422, 'Media delete does not accept caller-owned fields.');
 
-        return response()->json($result);
+        return response()->json($this->mediaDelete->deletePermanently($site, $media));
     }
 
     public function comments(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
