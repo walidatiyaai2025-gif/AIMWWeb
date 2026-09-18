@@ -47,13 +47,17 @@ final class MediaDeleteService
             ? []
             : $this->wordpress->deletePermanently($siteId, $remoteId);
 
-        // Do not remove local state or report success until an authoritative
-        // WordPress reread proves the permanent delete actually took effect.
-        abort_if(
-            $this->wordpress->exists($siteId, 'media', $remoteId),
-            409,
-            'WordPress media still exists after the permanent delete request.',
-        );
+        // If this request performed the destructive call, require a fresh
+        // authoritative reread before local reconciliation. When the preflight
+        // already proved remote absence (lost-response recovery), that preflight
+        // is the authoritative proof and no redundant provider call is needed.
+        if (! $alreadyAbsent) {
+            abort_if(
+                $this->wordpress->exists($siteId, 'media', $remoteId),
+                409,
+                'WordPress media still exists after the permanent delete request.',
+            );
+        }
 
         DB::transaction(function () use ($siteId, $mediaId, $remoteId): void {
             $locked = MediaItem::query()
