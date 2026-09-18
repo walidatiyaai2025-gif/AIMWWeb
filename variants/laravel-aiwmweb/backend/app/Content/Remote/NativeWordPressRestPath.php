@@ -47,6 +47,49 @@ final class NativeWordPressRestPath
         return $this->request($siteId)->post($this->url($siteId, $endpoint), $payload)->throw()->json() ?? [];
     }
 
+    public function deletePermanently(int $siteId, int $remoteId): array
+    {
+        $endpoint = $this->endpoint('media').'/'.$remoteId;
+        $response = null;
+
+        try {
+            // Destructive requests are not blindly retried. A lost response is
+            // reconciled by the authoritative GET below before any local delete.
+            $response = $this->requestWithoutRetry($siteId)
+                ->delete($this->url($siteId, $endpoint), ['force' => true]);
+
+            if ($response->status() !== 404) {
+                $response->throw();
+            }
+        } catch (\Throwable $error) {
+            if ($this->exists($siteId, 'media', $remoteId)) {
+                throw $error;
+            }
+        }
+
+        if ($this->exists($siteId, 'media', $remoteId)) {
+            throw new RuntimeException('WordPress media still exists after permanent deletion.');
+        }
+
+        $payload = $response?->json();
+
+        return is_array($payload) ? $payload : [];
+    }
+
+    public function exists(int $siteId, string $resource, int $remoteId): bool
+    {
+        $response = $this->request($siteId)
+            ->get($this->url($siteId, $this->endpoint($resource).'/'.$remoteId), ['context' => 'edit']);
+
+        if ($response->status() === 404) {
+            return false;
+        }
+
+        $response->throw();
+
+        return (int) data_get($response->json(), 'id', 0) === $remoteId;
+    }
+
     public function upload(int $siteId, string $path, string $name, string $mimeType, array $metadata = []): array
     {
         $response = $this->request($siteId)->attach('file', fopen($path, 'r'), $name, ['Content-Type' => $mimeType])->post($this->url($siteId, '/wp-json/wp/v2/media'), $metadata)->throw();
@@ -56,9 +99,16 @@ final class NativeWordPressRestPath
 
     private function request(int $siteId): PendingRequest
     {
+        return $this->requestWithoutRetry($siteId)->retry(2, 250);
+    }
+
+    private function requestWithoutRetry(int $siteId): PendingRequest
+    {
         $site = $this->site($siteId);
 
-        return Http::timeout(45)->retry(2, 250)->acceptJson()->withBasicAuth((string) $site->rest_username, (string) $site->rest_application_password);
+        return Http::timeout(45)
+            ->acceptJson()
+            ->withBasicAuth((string) $site->rest_username, (string) $site->rest_application_password);
     }
 
     private function url(int $siteId, string $path): string
