@@ -82,7 +82,11 @@ final class NativeWordPressRestPath
 
     public function exists(int $siteId, string $resource, int $remoteId): bool
     {
-        $response = $this->request($siteId)
+        // Verification GETs may be retried because they are read-only, but the
+        // final response must remain inspectable: WordPress 404 is authoritative
+        // absence, not an exception that should escape the reconciliation path.
+        $response = $this->requestWithoutRetry($siteId)
+            ->retry(2, 250, null, false)
             ->get($this->url($siteId, $this->endpoint($resource).'/'.$remoteId), ['context' => 'edit']);
 
         if ($response->status() === 404) {
