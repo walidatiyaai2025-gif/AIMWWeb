@@ -47,18 +47,10 @@ final class MediaDeleteService
             ? []
             : $this->wordpress->deletePermanently($siteId, $remoteId);
 
-        // If this request performed the destructive call, require a fresh
-        // authoritative reread before local reconciliation. When the preflight
-        // already proved remote absence (lost-response recovery), that preflight
-        // is the authoritative proof and no redundant provider call is needed.
-        if (! $alreadyAbsent) {
-            abort_if(
-                $this->wordpress->exists($siteId, 'media', $remoteId),
-                409,
-                'WordPress media still exists after the permanent delete request.',
-            );
-        }
-
+        // Remote absence is already authoritative on both branches: the
+        // preflight proves absence for lost-response recovery, while
+        // deletePermanently() does not return until its post-delete WordPress
+        // reread proves absence. Do not add a third provider reread here.
         DB::transaction(function () use ($siteId, $mediaId, $remoteId): void {
             $locked = MediaItem::query()
                 ->where('site_id', $siteId)
