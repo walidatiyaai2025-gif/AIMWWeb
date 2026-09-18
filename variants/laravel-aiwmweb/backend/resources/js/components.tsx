@@ -92,7 +92,13 @@ export function LoadingState() {
     );
 }
 
-export function DataTable({ rows }: { rows: Array<Record<string, unknown>> }) {
+export function DataTable({
+    rows,
+    renderActions,
+}: {
+    rows: Array<Record<string, unknown>>;
+    renderActions?: (row: Record<string, unknown>) => React.ReactNode;
+}) {
     const { locale } = useLocale();
     const preferred = ['id', 'title', 'name', 'status', 'type', 'site', 'updated_at', 'updatedAt', 'created_at'];
     const available = new Set(rows.flatMap((row) => Object.keys(row)));
@@ -110,12 +116,16 @@ export function DataTable({ rows }: { rows: Array<Record<string, unknown>> }) {
         <div className="table-scroll" tabIndex={0} role="region" aria-label={locale === 'ar' ? 'جدول البيانات' : 'Data table'}>
             <table className="data-table">
                 <thead>
-                    <tr>{fallbackColumns.map((column) => <th key={column} scope="col">{column.replaceAll('_', ' ')}</th>)}</tr>
+                    <tr>
+                        {fallbackColumns.map((column) => <th key={column} scope="col">{column.replaceAll('_', ' ')}</th>)}
+                        {renderActions ? <th scope="col">{locale === 'ar' ? 'إجراءات' : 'Actions'}</th> : null}
+                    </tr>
                 </thead>
                 <tbody>
                     {rows.map((row, index) => (
                         <tr key={String(row.id ?? index)}>
                             {fallbackColumns.map((column) => <td key={column}>{format(row[column])}</td>)}
+                            {renderActions ? <td>{renderActions(row)}</td> : null}
                         </tr>
                     ))}
                 </tbody>
