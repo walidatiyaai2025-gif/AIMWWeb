@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Content\MediaDeleteService;
 use App\Http\Controllers\ContentApiController;
 use App\Models\ContentItem;
 use App\Models\MediaItem;
@@ -67,8 +66,8 @@ final class MediaDeleteTerminalityTest extends TestCase
 
         $bootstrap = (string) file_get_contents(base_path('bootstrap/app.php'));
         $frontend = (string) file_get_contents(resource_path('js/core.ts'));
-        $this->assertStringContainsString("validateCsrfTokens(except: ['api/v1/billing/webhooks/paypal'])", $bootstrap);
-        $this->assertStringContainsString("headers.set('X-CSRF-TOKEN', csrf)", $frontend);
+        $this->assertStringContainsString('validateCsrfTokens(except: [\'api/v1/billing/webhooks/paypal\'])', $bootstrap);
+        $this->assertStringContainsString('headers.set(\'X-CSRF-TOKEN\', csrf)', $frontend);
     }
 
     public function test_permission_foreign_tenant_foreign_site_and_foreign_media_fail_closed(): void
@@ -232,13 +231,13 @@ final class MediaDeleteTerminalityTest extends TestCase
 
         $this->assertStringContainsString(self::OPERATION_ID, $service);
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("authorize('content.edit')", (string) file_get_contents(app_path('Http/Controllers/ContentApiController.php')));
-        $this->assertStringContainsString("['force' => true]", $wordpress);
+        $this->assertStringContainsString('authorize(\'content.edit\')', (string) file_get_contents(app_path('Http/Controllers/ContentApiController.php')));
+        $this->assertStringContainsString('[\'force\' => true]', $wordpress);
         $this->assertStringContainsString('requestWithoutRetry', $wordpress);
-        $this->assertStringContainsString("where('site_id', $siteId)", $service);
+        $this->assertStringContainsString('where(\'site_id\', $siteId)', $service);
         $this->assertStringContainsString('lockForUpdate()', $service);
         $this->assertStringContainsString('remote_verified_absent', $service);
-        $this->assertStringContainsString("method: 'DELETE'", $control);
+        $this->assertStringContainsString('method: \'DELETE\'', $control);
         $this->assertStringContainsString('role="alertdialog"', $control);
 
         $combined = strtolower($service."\n".$control);
