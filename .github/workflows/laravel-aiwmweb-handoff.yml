@@ -20,7 +20,7 @@ on:
         required: false
         type: string
   issues:
-    types: [opened, labeled, unlabeled, closed, reopened]
+    types: [opened, closed, reopened]
   pull_request:
     types: [closed]
     branches:
