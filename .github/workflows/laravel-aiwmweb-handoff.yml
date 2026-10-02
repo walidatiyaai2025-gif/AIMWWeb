@@ -1,0 +1,150 @@
+name: Laravel AIWMWeb Handoff
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Handoff command
+        required: true
+        type: choice
+        default: promote
+        options:
+          - bootstrap
+          - promote
+          - claim
+          - heartbeat
+          - release
+          - reclaim
+      issue_number:
+        description: Issue number for claim/heartbeat/release/reclaim
+        required: false
+        type: string
+  issues:
+    types: [opened, labeled, unlabeled, closed, reopened]
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - lead/laravel-aiwmweb-final-convergence
+      - worker/laravel-aiwmweb-closure-composition
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: laravel-aiwmweb-handoff
+  cancel-in-progress: false
+
+jobs:
+  handoff:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      COMMAND: ${{ inputs.command || 'promote' }}
+      INPUT_ISSUE: ${{ inputs.issue_number || '' }}
+      PR_BODY: ${{ github.event.pull_request.body || '' }}
+      PR_MERGED: ${{ github.event.pull_request.merged || false }}
+      PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+    steps:
+      - name: Bootstrap labels
+        shell: bash
+        run: |
+          set -euo pipefail
+          ensure_label() {
+            gh label create "$1" --repo "$REPO" --color "$2" --description "$3" --force >/dev/null
+          }
+          ensure_label "handoff:ready" "0E8A16" "Ready for a worker; dependencies are clear."
+          ensure_label "handoff:next" "1D76DB" "Highest-priority ready handoff candidate."
+          ensure_label "handoff:active" "FBCA04" "Claimed by a worker; do not duplicate."
+          ensure_label "handoff:blocked" "D93F0B" "Blocked by an external dependency."
+          ensure_label "handoff:umbrella" "5319E7" "Coordination-only umbrella; never directly claimed."
+          ensure_label "handoff:done" "8250DF" "Execution unit completed and integrated."
+          ensure_label "migration:approved" "B60205" "Explicit approval for a destructive migration change."
+
+      - name: Apply merged-PR handoff
+        if: github.event_name == 'pull_request' && env.PR_MERGED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t refs < <(printf '%s\n' "$PR_BODY" | grep -Eio '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]*:?[[:space:]]*#[0-9]+' | grep -Eo '[0-9]+' | sort -u || true)
+          for issue in "${refs[@]}"; do
+            labels="$(gh issue view "$issue" --repo "$REPO" --json labels --jq '[.labels[].name] | join(" ")')"
+            if grep -Eq 'handoff:(ready|next|active|blocked)' <<<"$labels"; then
+              gh issue edit "$issue" --repo "$REPO" --remove-label "handoff:ready" --remove-label "handoff:next" --remove-label "handoff:active" --remove-label "handoff:blocked" >/dev/null 2>&1 || true
+              gh issue edit "$issue" --repo "$REPO" --add-label "handoff:done" >/dev/null
+              gh issue close "$issue" --repo "$REPO" --reason completed >/dev/null 2>&1 || true
+              gh issue comment "$issue" --repo "$REPO" --body "HANDOFF_DONE via merged PR #$PR_NUMBER." >/dev/null
+            fi
+          done
+
+      - name: Execute explicit handoff command
+        if: github.event_name == 'workflow_dispatch' && inputs.command != 'bootstrap' && inputs.command != 'promote'
+        shell: bash
+        run: |
+          set -euo pipefail
+          issue="$INPUT_ISSUE"
+          [[ "$issue" =~ ^[0-9]+$ ]] || { echo "::error::issue_number is required."; exit 1; }
+
+          labels="$(gh issue view "$issue" --repo "$REPO" --json labels --jq '[.labels[].name] | join(" ")')"
+          state="$(gh issue view "$issue" --repo "$REPO" --json state --jq '.state')"
+          [[ "$state" == "OPEN" ]] || { echo "::error::Issue #$issue is not open."; exit 1; }
+
+          case "$COMMAND" in
+            claim)
+              if grep -Eq 'handoff:(umbrella|blocked|done)' <<<"$labels"; then
+                echo "::error::Issue #$issue is not claimable: $labels"
+                exit 1
+              fi
+              if grep -q 'handoff:active' <<<"$labels"; then
+                echo "::error::Issue #$issue already has an active lease."
+                exit 1
+              fi
+              gh issue edit "$issue" --repo "$REPO" --remove-label "handoff:ready" --remove-label "handoff:next" >/dev/null 2>&1 || true
+              gh issue edit "$issue" --repo "$REPO" --add-label "handoff:active" >/dev/null
+              gh issue comment "$issue" --repo "$REPO" --body "handoff-lease:v1 owner=$GITHUB_ACTOR started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
+              ;;
+            heartbeat)
+              grep -q 'handoff:active' <<<"$labels" || { echo "::error::Issue #$issue is not active."; exit 1; }
+              gh issue comment "$issue" --repo "$REPO" --body "handoff-heartbeat:v1 owner=$GITHUB_ACTOR at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
+              ;;
+            release)
+              gh issue edit "$issue" --repo "$REPO" --remove-label "handoff:active" >/dev/null 2>&1 || true
+              gh issue edit "$issue" --repo "$REPO" --add-label "handoff:ready" >/dev/null
+              gh issue comment "$issue" --repo "$REPO" --body "HANDOFF_RELEASED by $GITHUB_ACTOR." >/dev/null
+              ;;
+            reclaim)
+              grep -q 'handoff:active' <<<"$labels" || { echo "::error::Issue #$issue is not active."; exit 1; }
+              updated="$(gh issue view "$issue" --repo "$REPO" --json updatedAt --jq '.updatedAt')"
+              python - "$updated" <<'PY'
+          import datetime, sys
+          updated = datetime.datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
+          age = datetime.datetime.now(datetime.timezone.utc) - updated
+          if age.total_seconds() < 1800:
+              raise SystemExit("Active lease is newer than 30 minutes; refusing reclaim.")
+          PY
+              gh issue edit "$issue" --repo "$REPO" --remove-label "handoff:active" >/dev/null
+              gh issue edit "$issue" --repo "$REPO" --add-label "handoff:ready" >/dev/null
+              gh issue comment "$issue" --repo "$REPO" --body "HANDOFF_RECLAIMED after >=30m inactivity by $GITHUB_ACTOR." >/dev/null
+              ;;
+          esac
+
+      - name: Promote next ready unit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t current_next < <(gh issue list --repo "$REPO" --state open --label "handoff:next" --limit 100 --json number --jq '.[].number')
+          for issue in "${current_next[@]}"; do
+            gh issue edit "$issue" --repo "$REPO" --remove-label "handoff:next" >/dev/null 2>&1 || true
+          done
+
+          next="$(gh issue list --repo "$REPO" --state open --label "handoff:ready" --limit 100             --json number,createdAt,labels             --jq '[.[] | select((.labels | map(.name) | index("handoff:blocked") | not) and (.labels | map(.name) | index("handoff:umbrella") | not) and (.labels | map(.name) | index("handoff:active") | not))] | sort_by(.createdAt) | .[0].number // empty')"
+
+          if [[ -n "$next" ]]; then
+            gh issue edit "$next" --repo "$REPO" --add-label "handoff:next" >/dev/null
+            echo "HANDOFF_NEXT=#$next"
+          else
+            echo "HANDOFF_NEXT=NONE"
+          fi
