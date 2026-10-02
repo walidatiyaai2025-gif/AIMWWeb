@@ -1,0 +1,43 @@
+name: Laravel AIWMWeb Merged Branch Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - lead/laravel-aiwmweb-final-convergence
+      - worker/laravel-aiwmweb-closure-composition
+
+permissions:
+  contents: write
+
+jobs:
+  delete-merged-head:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Delete safe merged task branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$HEAD_REF" in
+            main|lead/laravel-aiwmweb-final-convergence|worker/laravel-aiwmweb-closure-composition)
+              echo "Protected integration branch; keep."
+              exit 0
+              ;;
+          esac
+
+          if ! [[ "$HEAD_REF" =~ ^(worker|recovery|feat|fix|test|release|chore|docs|closure)/ ]]; then
+            echo "Unmanaged branch prefix; keep."
+            exit 0
+          fi
+
+          encoded="$(python -c 'import urllib.parse,os; print(urllib.parse.quote(os.environ["HEAD_REF"], safe=""))')"
+          gh api -X DELETE "repos/$REPO/git/refs/heads/$encoded"
+          echo "Deleted merged branch: $HEAD_REF"
