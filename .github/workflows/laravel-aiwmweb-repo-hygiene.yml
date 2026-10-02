@@ -75,7 +75,7 @@ jobs:
             exit 1
           fi
 
-          if git diff -U0 "$BASE_SHA" "$HEAD_SHA" -- '.github/workflows/*.yml' '.github/workflows/*.yaml' |              grep -E '^\+.*(pull_request_target:|permissions:[[:space:]]*write-all)' >/tmp/workflow-danger.txt; then
+          if git diff -U0 "$BASE_SHA" "$HEAD_SHA" -- '.github/workflows/*.yml' '.github/workflows/*.yaml' |              grep -E '^\+.*(pull_request[_]target:|permissions:[[:space:]]*write[-]all)' >/tmp/workflow-danger.txt; then
             cat /tmp/workflow-danger.txt
             echo "::error title=Unsafe workflow primitive::pull_request_target and write-all permissions are prohibited."
             exit 1
