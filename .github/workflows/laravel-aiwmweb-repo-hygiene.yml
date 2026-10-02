@@ -1,0 +1,103 @@
+name: Laravel AIWMWeb Repo Hygiene
+
+on:
+  pull_request:
+    branches:
+      - main
+      - lead/laravel-aiwmweb-final-convergence
+      - worker/laravel-aiwmweb-closure-composition
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-*.yml'
+      - '.github/CODEOWNERS'
+      - '.github/pull_request_template.md'
+      - '.github/dependabot.yml'
+      - '.github/ISSUE_TEMPLATE/**'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: laravel-aiwmweb-hygiene-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  policy:
+    name: Repository policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate branch, scope, secrets, generated files and migrations
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
+          cat /tmp/changed-files.txt
+
+          if ! [[ "$HEAD_REF" =~ ^(worker|recovery|feat|fix|test|release|chore|docs|closure|lead)/ ]]; then
+            echo "::error title=Invalid branch name::Use an issue-scoped branch prefix: worker/, recovery/, feat/, fix/, test/, release/, chore/, docs/, closure/, or lead/."
+            exit 1
+          fi
+
+          if grep -qE '^variants/laravel-aiwmweb/' /tmp/changed-files.txt && grep -qE '^(src/|tests/|Build/)' /tmp/changed-files.txt; then
+            echo "::error title=Mixed runtime scope::Laravel AIWMWeb work must not modify ASP.NET runtime paths in the same PR."
+            exit 1
+          fi
+
+          forbidden='(^|/)(vendor|node_modules)(/|$)|(^|/)\.env$|\.(log|sqlite|sqlite3|db|db-shm|db-wal|zip|7z|rar|tar|tgz)$|/public/build/'
+          bad="$(grep -E '^variants/laravel-aiwmweb/' /tmp/changed-files.txt | grep -Ei "$forbidden" || true)"
+          if [[ -n "$bad" ]]; then
+            echo "::error title=Generated/local files are tracked::$bad"
+            exit 1
+          fi
+
+          while IFS= read -r file; do
+            [[ -f "$file" ]] || continue
+            bytes="$(wc -c < "$file")"
+            if (( bytes > 5242880 )); then
+              echo "::error title=Oversized tracked file::$file is $bytes bytes; use release artifacts or approved fixtures instead."
+              exit 1
+            fi
+          done < /tmp/changed-files.txt
+
+          if git diff -U0 "$BASE_SHA" "$HEAD_SHA" -- variants/laravel-aiwmweb |              grep -E '^\+.*(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{32,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' >/tmp/secret-hits.txt; then
+            cat /tmp/secret-hits.txt
+            echo "::error title=Possible secret committed::Remove the credential/private key from the diff and rotate it if real."
+            exit 1
+          fi
+
+          if git diff -U0 "$BASE_SHA" "$HEAD_SHA" -- '.github/workflows/*.yml' '.github/workflows/*.yaml' |              grep -E '^\+.*(pull_request_target:|permissions:[[:space:]]*write-all)' >/tmp/workflow-danger.txt; then
+            cat /tmp/workflow-danger.txt
+            echo "::error title=Unsafe workflow primitive::pull_request_target and write-all permissions are prohibited."
+            exit 1
+          fi
+
+          migration_diff="$(git diff -U0 "$BASE_SHA" "$HEAD_SHA" -- 'variants/laravel-aiwmweb/backend/database/migrations/*.php' || true)"
+          if printf '%s\n' "$migration_diff" | grep -E '^\+.*(drop(Table|IfExists|Column)|renameColumn|truncate\(|->delete\()' >/tmp/destructive-migrations.txt; then
+            if ! printf '%s' "$PR_LABELS" | grep -q '"migration:approved"'; then
+              cat /tmp/destructive-migrations.txt
+              echo "::error title=Destructive migration requires approval::Add the migration:approved label after explicit review."
+              exit 1
+            fi
+          fi
+
+          if grep -qx 'variants/laravel-aiwmweb/backend/composer.json' /tmp/changed-files.txt &&              ! grep -qx 'variants/laravel-aiwmweb/backend/composer.lock' /tmp/changed-files.txt; then
+            echo "::error title=Composer lock mismatch::composer.json changed without composer.lock."
+            exit 1
+          fi
+
+          if grep -qx 'variants/laravel-aiwmweb/backend/package.json' /tmp/changed-files.txt &&              ! grep -qx 'variants/laravel-aiwmweb/backend/package-lock.json' /tmp/changed-files.txt; then
+            echo "::error title=NPM lock mismatch::package.json changed without package-lock.json."
+            exit 1
+          fi
+
+          echo "REPO_HYGIENE=PASS"
