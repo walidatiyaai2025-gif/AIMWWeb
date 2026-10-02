@@ -1,0 +1,95 @@
+name: Laravel AIWMWeb Nightly Health
+
+on:
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to validate
+        required: false
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: laravel-aiwmweb-nightly-health
+  cancel-in-progress: true
+
+jobs:
+  clean-room:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: variants/laravel-aiwmweb/backend/package-lock.json
+
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-check-publish
+
+      - name: Install PHP dependencies from lock
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit production Composer dependencies
+        run: composer audit --locked --no-interaction
+
+      - name: Install frontend dependencies from lock
+        run: npm ci --no-audit --no-fund
+
+      - name: Audit production NPM dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: Fresh SQLite schema and full Laravel suite
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ runner.temp }}/aiwmweb-nightly.sqlite
+          CACHE_STORE: array
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          php artisan key:generate
+          rm -f "$DB_DATABASE"
+          touch "$DB_DATABASE"
+          php artisan migrate:fresh --force
+          php artisan test
+
+      - name: Frontend typecheck, tests and production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm test -- --run
+          npm run build
+
+      - name: Verify clean tracked tree
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          test -z "$(git status --porcelain)"
