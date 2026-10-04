@@ -4,7 +4,7 @@ name: Laravel AIWMWeb Task Parity Materialize
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-29A4267B87-content-planner-save
+      - worker/laravel-aiwmweb-AIMW-BILL-29A4267B87-billing-reactivate
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-reactivate-terminality.json'
