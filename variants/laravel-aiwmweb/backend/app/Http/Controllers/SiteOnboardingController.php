@@ -86,14 +86,11 @@ final class SiteOnboardingController extends Controller
         }
 
         $persisted = DB::transaction(function () use (
-            $request,
             $key,
             $requestHash,
             $retrySiteId,
             $name,
             $url,
-            $username,
-            $password,
         ): array {
             $receipt = IdempotencyKey::query()->where('key', $key)->lockForUpdate()->first();
             if ($receipt !== null) {
