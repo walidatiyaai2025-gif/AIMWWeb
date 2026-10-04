@@ -406,6 +406,7 @@ return [
         'platform_admin' => true,
         'permission' => null,
         'capability' => 'billing.support.reactivate',
+        'idempotency_required' => true,
         'endpoint' => '/api/tenants/{tenant}/billing/admin/subscriptions/{subscription}/reactivate',
         'method' => 'POST',
         'reconcile_api_key' => 'account.billing',
