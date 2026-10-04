@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257 / task #610",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-2EF6B8A27A",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/connect | /sites/onboarding",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor:/sites/connect|/sites/onboarding:SaveTestAndSyncAsync",
+    "source_intent": "Persist the tenant-owned site profile and protected WordPress credentials, verify the real WordPress REST boundary, clear browser credential material, and only after successful verification start the tenant-aware initial synchronization",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOnboardingController.php",
+    "credential_model": "variants/laravel-aiwmweb/backend/app/Models/SiteCredential.php",
+    "verifier": "variants/laravel-aiwmweb/backend/app/Connector/WordPressApplicationPasswordVerifier.php",
+    "sync_job": "variants/laravel-aiwmweb/backend/app/Jobs/SyncSiteJob.php",
+    "mutation_route": "POST /api/tenants/{tenant}/sites/onboarding",
+    "workspace_routes": [
+      "GET /tenants/{tenant}/sites/connect",
+      "GET /tenants/{tenant}/sites/onboarding"
+    ],
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "permissions": [
+      "sites.manage"
+    ],
+    "transaction_retry_limit": 3,
+    "authoritative_reread": true,
+    "idempotency_header": "Idempotency-Key"
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "site_identity": "server-created; caller-owned tenant_id, site_id, actor_user_id, status and other unexpected fields are rejected",
+    "credential_storage": "SiteCredential secret_value encrypted cast; secret never returned by API",
+    "browser_secret_policy": "Application Password state is cleared after submission and never echoed in rendered authoritative state",
+    "csrf": "mutation is on the Laravel web/auth/tenant.context route stack and frontend apiRequest supplies the CSRF token",
+    "wordpress_boundary": "existing WordPressApplicationPasswordVerifier performs authenticated /wp-json/wp/v2/users/me?context=edit verification",
+    "initial_sync_gate": "SyncRun and SyncSiteJob are created/dispatched only after successful WordPress verification",
+    "idempotency": "tenant-scoped Idempotency-Key receipt rejects conflicting payloads and replays terminal outcomes without duplicating site, credential or sync run",
+    "audit": "immutable tenant-scoped AuditEvent records credential persistence and verified queue/failure milestones without secrets",
+    "provider_success_inferred": false,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and mutation route",
+      "authenticated tenant and sites.manage authorization",
+      "guest, missing-permission and foreign-tenant denial",
+      "caller-owned identity rejection",
+      "encrypted credential persistence and secret non-exposure",
+      "real WordPress REST verification boundary",
+      "no initial synchronization before verification success",
+      "tenant-aware queued initial synchronization after verification",
+      "idempotent replay without duplicate site, credential or sync run",
+      "authoritative persisted site, verification and sync reread",
+      "browser Application Password clearing after submission",
+      "both /sites/connect and /sites/onboarding workspace routes"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-2EF6B8A27A"
+    ],
+    "sibling_operations_claimed": false,
+    "next_previous_claimed": false,
+    "retry_sync_claimed": false,
+    "open_site_claimed": false,
+    "aspnet_product_modified": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "415bd5d7a38408e8d344f2999a955ed99d6bdb3e",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-2EF6B8A27A-site-onboarding-save-test-sync",
+    "implementation_sha": "365c54b378bc1eb46aa9864847a2cbf1c610dbc1"
+  }
+}
