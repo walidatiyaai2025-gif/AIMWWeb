@@ -48,7 +48,7 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
-    Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save')]
+    Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
         ->name('canonical.api.content-planner.save');
     Route::get('/sites/{site}/content', [DemoController::class, 'content']);
