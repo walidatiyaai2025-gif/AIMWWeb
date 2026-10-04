@@ -183,12 +183,15 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
             ->assertUnprocessable();
 
         $siteId = (int) $failed->json('site.id');
+        $retryToken = (string) $failed->json('retry_token');
+        $this->assertNotSame('', $retryToken);
         $this->assertDatabaseCount('sites', 1);
         $this->assertDatabaseCount('site_credentials', 0);
         $this->assertDatabaseCount('sync_runs', 0);
         Queue::assertNothingPushed();
 
         $payload['application_password'] = 'correct-password-value';
+        $payload['retry_token'] = $retryToken;
 
         $retried = $this->actingAs($user)
             ->withHeader('Idempotency-Key', 'retry-success-2')
@@ -209,6 +212,85 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
             fn (SyncSiteJob $job): bool => $job->tenantId === $tenant->id && $job->siteId === $siteId,
         );
         Queue::assertPushed(SyncSiteJob::class, 1);
+    }
+
+    public function test_same_wordpress_url_can_create_independent_profiles_without_a_retry_token(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['tenant.view', 'sites.manage']);
+        Queue::fake();
+        Http::fake([
+            'https://shared.example.test/*' => Http::response([
+                'id' => 91,
+                'capabilities' => ['manage_options' => true],
+            ], 200),
+        ]);
+
+        $first = $this->actingAs($user)
+            ->withHeader('Idempotency-Key', 'shared-profile-1')
+            ->postJson('/api/tenants/alpha/sites/onboarding', [
+                'name' => 'Shared URL profile one',
+                'url' => 'https://shared.example.test',
+                'username' => 'wp-admin-one',
+                'application_password' => 'first-password-value',
+            ])
+            ->assertAccepted();
+
+        $second = $this->actingAs($user)
+            ->withHeader('Idempotency-Key', 'shared-profile-2')
+            ->postJson('/api/tenants/alpha/sites/onboarding', [
+                'name' => 'Shared URL profile two',
+                'url' => 'https://shared.example.test',
+                'username' => 'wp-admin-two',
+                'application_password' => 'second-password-value',
+            ])
+            ->assertAccepted();
+
+        $this->assertNotSame((int) $first->json('site.id'), (int) $second->json('site.id'));
+        $this->assertDatabaseCount('sites', 2);
+        $this->assertDatabaseCount('site_credentials', 2);
+        $this->assertDatabaseCount('sync_runs', 2);
+        Queue::assertPushed(SyncSiteJob::class, 2);
+    }
+
+    public function test_retry_token_is_actor_bound_and_cannot_select_another_users_failed_profile(): void
+    {
+        $owner = User::factory()->create();
+        $this->membership($owner, 'alpha', ['tenant.view', 'sites.manage']);
+        Queue::fake();
+        Http::fake(['https://actor-bound.example.test/*' => Http::response(['code' => 'rest_forbidden'], 401)]);
+
+        $failed = $this->actingAs($owner)
+            ->withHeader('Idempotency-Key', 'actor-bound-owner')
+            ->postJson('/api/tenants/alpha/sites/onboarding', [
+                'name' => 'Actor bound',
+                'url' => 'https://actor-bound.example.test',
+                'username' => 'owner',
+                'application_password' => 'owner-password-value',
+            ])
+            ->assertUnprocessable();
+
+        $retryToken = (string) $failed->json('retry_token');
+        $this->assertNotSame('', $retryToken);
+
+        $other = User::factory()->create();
+        $this->membership($other, 'alpha', ['tenant.view', 'sites.manage']);
+
+        $this->actingAs($other)
+            ->withHeader('Idempotency-Key', 'actor-bound-other')
+            ->postJson('/api/tenants/alpha/sites/onboarding', [
+                'name' => 'Actor bound',
+                'url' => 'https://actor-bound.example.test',
+                'username' => 'other',
+                'application_password' => 'other-password-value',
+                'retry_token' => $retryToken,
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('sites', 1);
+        $this->assertDatabaseCount('site_credentials', 0);
+        $this->assertDatabaseCount('sync_runs', 0);
+        Queue::assertNothingPushed();
     }
 
     public function test_guest_missing_permission_foreign_tenant_and_caller_owned_identity_fail_closed(): void
