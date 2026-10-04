@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Connector\WordPressApplicationPasswordVerifier;
 use App\Jobs\SyncSiteJob;
+use App\Models\AuditEvent;
 use App\Models\IdempotencyKey;
 use App\Models\Site;
 use App\Models\SiteCredential;
@@ -65,12 +66,7 @@ final class SiteOnboardingController extends Controller
 
         $existing = IdempotencyKey::query()->where('key', $key)->first();
         if ($existing !== null) {
-            $this->assertSameRequest($existing, $requestHash);
-            $siteId = (int) (($existing->response ?? [])['site_id'] ?? 0);
-            $runId = (int) (($existing->response ?? [])['run_id'] ?? 0);
-            abort_unless($existing->completed_at && $siteId > 0 && $runId > 0, 409, 'Onboarding request is already in progress.');
-
-            return response()->json($this->authoritativeResponse($context->id(), $siteId, $runId, true));
+            return $this->replay($existing, $requestHash, $context->id());
         }
 
         try {
@@ -79,18 +75,8 @@ final class SiteOnboardingController extends Controller
             return response()->json(['state' => 'CAPABILITY_DISABLED', 'message' => $exception->getMessage()], 403);
         }
 
-        $probe = new Site;
-        $probe->url = $url;
-        try {
-            $verification = $verifier->verify($probe, $username, $password);
-        } catch (Throwable) {
-            return response()->json([
-                'message' => 'WordPress connection test failed. No site or credential was created.',
-                'errors' => ['application_password' => ['WordPress connection test failed.']],
-            ], 422);
-        }
-
-        $created = DB::transaction(function () use (
+        $persisted = DB::transaction(function () use (
+            $request,
             $context,
             $key,
             $requestHash,
@@ -98,16 +84,18 @@ final class SiteOnboardingController extends Controller
             $url,
             $username,
             $password,
-            $verification,
         ): array {
             $receipt = IdempotencyKey::query()->where('key', $key)->lockForUpdate()->first();
             if ($receipt !== null) {
                 $this->assertSameRequest($receipt, $requestHash);
-                $siteId = (int) (($receipt->response ?? [])['site_id'] ?? 0);
-                $runId = (int) (($receipt->response ?? [])['run_id'] ?? 0);
-                abort_unless($receipt->completed_at && $siteId > 0 && $runId > 0, 409, 'Onboarding request is already in progress.');
+                abort_unless($receipt->completed_at, 409, 'Onboarding request is already in progress.');
 
-                return ['site_id' => $siteId, 'run_id' => $runId, 'replay' => true];
+                return [
+                    'replay' => true,
+                    'site_id' => (int) (($receipt->response ?? [])['site_id'] ?? 0),
+                    'run_id' => (int) (($receipt->response ?? [])['run_id'] ?? 0),
+                    'result' => (string) (($receipt->response ?? [])['result'] ?? ''),
+                ];
             }
 
             $receipt = IdempotencyKey::query()->create([
@@ -120,47 +108,186 @@ final class SiteOnboardingController extends Controller
                 'name' => $name,
                 'url' => $url,
                 'status' => 'active',
-                'connection_status' => 'verified',
-                'health_state' => ($verification['limited_permissions'] ?? false) ? 'limited' : 'healthy',
-                'last_verified_at' => now(),
+                'connection_status' => 'testing',
+                'health_state' => 'unknown',
             ]);
 
             $credential = new SiteCredential;
-            $credential->tenant_id = $context->id();
             $credential->site_id = $site->getKey();
             $credential->username = $username;
             $credential->secret_value = $password;
             $credential->save();
 
-            $run = SyncRun::query()->create(['site_id' => $site->getKey()]);
-
             $receipt->response = [
                 'site_id' => (int) $site->getKey(),
+                'result' => 'credentials_saved',
+            ];
+            $receipt->save();
+
+            AuditEvent::query()->create([
+                'actor_user_id' => (int) $request->user()->getAuthIdentifier(),
+                'event' => 'site_onboarding.credentials_saved',
+                'subject_type' => 'site',
+                'subject_id' => (string) $site->getKey(),
+                'metadata' => ['operation_id' => self::OPERATION_ID],
+                'occurred_at' => now(),
+            ]);
+
+            return [
+                'replay' => false,
+                'site_id' => (int) $site->getKey(),
+                'receipt_id' => (int) $receipt->getKey(),
+            ];
+        }, 3);
+
+        if ($persisted['replay']) {
+            $receipt = IdempotencyKey::query()->where('key', $key)->firstOrFail();
+
+            return $this->replay($receipt, $requestHash, $context->id());
+        }
+
+        $siteId = (int) $persisted['site_id'];
+        $receiptId = (int) $persisted['receipt_id'];
+        $probe = Site::query()->findOrFail($siteId);
+
+        try {
+            $verification = $verifier->verify($probe, $username, $password);
+        } catch (Throwable) {
+            DB::transaction(function () use ($request, $siteId, $receiptId): void {
+                Site::query()->whereKey($siteId)->update([
+                    'connection_status' => 'failed',
+                    'health_state' => 'unhealthy',
+                ]);
+
+                $receipt = IdempotencyKey::query()->whereKey($receiptId)->lockForUpdate()->firstOrFail();
+                $receipt->response = [
+                    'site_id' => $siteId,
+                    'result' => 'connection_failed',
+                ];
+                $receipt->completed_at = now();
+                $receipt->save();
+
+                AuditEvent::query()->create([
+                    'actor_user_id' => (int) $request->user()->getAuthIdentifier(),
+                    'event' => 'site_onboarding.connection_failed',
+                    'subject_type' => 'site',
+                    'subject_id' => (string) $siteId,
+                    'metadata' => ['operation_id' => self::OPERATION_ID],
+                    'occurred_at' => now(),
+                ]);
+            }, 3);
+
+            return response()->json(
+                $this->failureResponse($context->id(), $siteId, false, 'WordPress connection test failed. Initial synchronization was not started.'),
+                422,
+            );
+        }
+
+        $runId = DB::transaction(function () use ($request, $siteId, $receiptId, $verification): int {
+            Site::query()->whereKey($siteId)->update([
+                'connection_status' => 'verified',
+                'health_state' => ($verification['limited_permissions'] ?? false) ? 'limited' : 'healthy',
+                'last_verified_at' => now(),
+            ]);
+
+            $run = SyncRun::query()->create(['site_id' => $siteId]);
+
+            $receipt = IdempotencyKey::query()->whereKey($receiptId)->lockForUpdate()->firstOrFail();
+            $receipt->response = [
+                'site_id' => $siteId,
                 'run_id' => (int) $run->getKey(),
+                'result' => 'accepted',
             ];
             $receipt->completed_at = now();
             $receipt->save();
 
-            return ['site_id' => (int) $site->getKey(), 'run_id' => (int) $run->getKey(), 'replay' => false];
+            AuditEvent::query()->create([
+                'actor_user_id' => (int) $request->user()->getAuthIdentifier(),
+                'event' => 'site_onboarding.initial_sync_queued',
+                'subject_type' => 'site',
+                'subject_id' => (string) $siteId,
+                'metadata' => [
+                    'operation_id' => self::OPERATION_ID,
+                    'sync_run_id' => (int) $run->getKey(),
+                    'limited_permissions' => (bool) ($verification['limited_permissions'] ?? false),
+                ],
+                'occurred_at' => now(),
+            ]);
+
+            return (int) $run->getKey();
         }, 3);
 
-        if (! $created['replay']) {
-            try {
-                SyncSiteJob::dispatch($context->id(), $created['site_id'], $created['run_id']);
-            } catch (Throwable $exception) {
-                SyncRun::query()->whereKey($created['run_id'])->update([
+        try {
+            SyncSiteJob::dispatch($context->id(), $siteId, $runId);
+        } catch (Throwable) {
+            DB::transaction(function () use ($request, $context, $siteId, $runId, $receiptId): void {
+                SyncRun::query()->whereKey($runId)->update([
                     'status' => 'failed',
                     'failure' => 'Queue dispatch failed before initial synchronization could start.',
                     'completed_at' => now(),
                 ]);
-                throw $exception;
-            }
+
+                $receipt = IdempotencyKey::query()->whereKey($receiptId)->lockForUpdate()->firstOrFail();
+                $receipt->response = [
+                    'site_id' => $siteId,
+                    'run_id' => $runId,
+                    'result' => 'queue_failed',
+                ];
+                $receipt->save();
+
+                AuditEvent::query()->create([
+                    'actor_user_id' => (int) $request->user()->getAuthIdentifier(),
+                    'event' => 'site_onboarding.initial_sync_queue_failed',
+                    'subject_type' => 'site',
+                    'subject_id' => (string) $siteId,
+                    'metadata' => [
+                        'operation_id' => self::OPERATION_ID,
+                        'sync_run_id' => $runId,
+                    ],
+                    'occurred_at' => now(),
+                ]);
+            }, 3);
+
+            $payload = $this->authoritativeResponse($context->id(), $siteId, $runId, false);
+            $payload['message'] = 'Site and credentials were saved and verified, but initial synchronization could not be queued.';
+
+            return response()->json($payload, 503);
         }
 
         return response()->json(
-            $this->authoritativeResponse($context->id(), $created['site_id'], $created['run_id'], (bool) $created['replay']),
-            $created['replay'] ? 200 : 202,
+            $this->authoritativeResponse($context->id(), $siteId, $runId, false),
+            202,
         );
+    }
+
+    private function replay(IdempotencyKey $receipt, string $requestHash, int $tenantId): JsonResponse
+    {
+        $this->assertSameRequest($receipt, $requestHash);
+        abort_unless($receipt->completed_at, 409, 'Onboarding request is already in progress.');
+
+        $response = is_array($receipt->response) ? $receipt->response : [];
+        $siteId = (int) ($response['site_id'] ?? 0);
+        $runId = (int) ($response['run_id'] ?? 0);
+        $result = (string) ($response['result'] ?? '');
+        abort_unless($siteId > 0, 409, 'Onboarding receipt is incomplete.');
+
+        if ($result === 'connection_failed') {
+            return response()->json(
+                $this->failureResponse($tenantId, $siteId, true, 'WordPress connection test failed. Initial synchronization was not started.'),
+                422,
+            );
+        }
+
+        abort_unless($runId > 0, 409, 'Onboarding receipt is incomplete.');
+        $payload = $this->authoritativeResponse($tenantId, $siteId, $runId, true);
+
+        if ($result === 'queue_failed') {
+            $payload['message'] = 'Site and credentials were saved and verified, but initial synchronization could not be queued.';
+
+            return response()->json($payload, 503);
+        }
+
+        return response()->json($payload);
     }
 
     private function assertSameRequest(IdempotencyKey $receipt, string $requestHash): void
@@ -170,6 +297,37 @@ final class SiteOnboardingController extends Controller
             409,
             'Idempotency key was already used for a different request.',
         );
+    }
+
+    /** @return array<string, mixed> */
+    private function failureResponse(int $tenantId, int $siteId, bool $replay, string $message): array
+    {
+        $site = Site::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->whereKey($siteId)
+            ->firstOrFail();
+
+        $credentialExists = SiteCredential::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('site_id', $siteId)
+            ->exists();
+        abort_unless($credentialExists, 409, 'Credential persistence could not be reconciled.');
+
+        return [
+            'operation_id' => self::OPERATION_ID,
+            'message' => $message,
+            'site' => [
+                'id' => (int) $site->getKey(),
+                'name' => (string) $site->name,
+                'url' => (string) $site->url,
+                'connection_status' => (string) $site->connection_status,
+                'health_state' => (string) $site->health_state,
+                'last_verified_at' => $site->last_verified_at?->utc()->toIso8601String(),
+            ],
+            'credential_configured' => true,
+            'sync' => null,
+            'idempotent_replay' => $replay,
+        ];
     }
 
     /** @return array<string, mixed> */
