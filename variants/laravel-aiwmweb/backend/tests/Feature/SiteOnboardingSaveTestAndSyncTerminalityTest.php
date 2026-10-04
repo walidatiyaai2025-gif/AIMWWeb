@@ -171,7 +171,11 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
             'application_password' => 'wrong-password-value',
         ];
 
-        Http::fake(['https://retry.example.test/*' => Http::response(['code' => 'rest_forbidden'], 401)]);
+        Http::fake([
+            'https://retry.example.test/*' => Http::sequence()
+                ->push(['code' => 'rest_forbidden'], 401)
+                ->push(['id' => 88, 'capabilities' => ['manage_options' => true]], 200),
+        ]);
 
         $failed = $this->actingAs($user)
             ->withHeader('Idempotency-Key', 'retry-failed-1')
@@ -183,13 +187,6 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
         $this->assertDatabaseCount('site_credentials', 0);
         $this->assertDatabaseCount('sync_runs', 0);
         Queue::assertNothingPushed();
-
-        Http::fake([
-            'https://retry.example.test/*' => Http::response([
-                'id' => 88,
-                'capabilities' => ['manage_options' => true],
-            ], 200),
-        ]);
 
         $payload['application_password'] = 'correct-password-value';
 
