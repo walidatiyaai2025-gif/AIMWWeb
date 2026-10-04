@@ -123,6 +123,7 @@ final class BillingReactivatePayPalTerminalityTest extends TestCase
 final class ReactivationFakePayPal implements BillingProvider
 {
     public int $reactivateCalls = 0;
+
     public string $reconciledStatus = 'SUSPENDED';
 
     public function name(): string { return 'paypal'; }
