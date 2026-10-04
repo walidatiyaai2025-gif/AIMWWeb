@@ -151,6 +151,61 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_failed_connection_can_be_retried_with_a_new_key_without_duplicate_site_or_unsafe_sync(): void
+    {
+        $user = User::factory()->create();
+        $tenant = $this->membership($user, 'alpha', ['tenant.view', 'sites.manage']);
+        Queue::fake();
+
+        $payload = [
+            'name' => 'Retry WordPress',
+            'url' => 'https://retry.example.test',
+            'username' => 'wp-admin',
+            'application_password' => 'wrong-password-value',
+        ];
+
+        Http::fake(['https://retry.example.test/*' => Http::response(['code' => 'rest_forbidden'], 401)]);
+
+        $failed = $this->actingAs($user)
+            ->withHeader('Idempotency-Key', 'retry-failed-1')
+            ->postJson('/api/tenants/alpha/sites/onboarding', $payload)
+            ->assertUnprocessable();
+
+        $siteId = (int) $failed->json('site.id');
+        $this->assertDatabaseCount('sites', 1);
+        $this->assertDatabaseCount('site_credentials', 1);
+        $this->assertDatabaseCount('sync_runs', 0);
+        Queue::assertNothingPushed();
+
+        Http::fake([
+            'https://retry.example.test/*' => Http::response([
+                'id' => 88,
+                'capabilities' => ['manage_options' => true],
+            ], 200),
+        ]);
+
+        $payload['application_password'] = 'correct-password-value';
+
+        $retried = $this->actingAs($user)
+            ->withHeader('Idempotency-Key', 'retry-success-2')
+            ->postJson('/api/tenants/alpha/sites/onboarding', $payload)
+            ->assertAccepted()
+            ->assertJsonPath('site.id', $siteId)
+            ->assertJsonPath('site.connection_status', 'verified')
+            ->assertJsonPath('sync.status', 'queued')
+            ->assertJsonPath('idempotent_replay', false);
+
+        $this->assertStringNotContainsString($payload['application_password'], $retried->getContent());
+        $this->assertDatabaseCount('sites', 1);
+        $this->assertDatabaseCount('site_credentials', 1);
+        $this->assertDatabaseCount('sync_runs', 1);
+
+        Queue::assertPushed(SyncSiteJob::class, fn (SyncSiteJob $job): bool =>
+            $job->tenantId === $tenant->id && $job->siteId === $siteId
+        );
+        Queue::assertPushed(SyncSiteJob::class, 1);
+    }
+
     public function test_guest_missing_permission_foreign_tenant_and_caller_owned_identity_fail_closed(): void
     {
         $this->postJson('/api/tenants/alpha/sites/onboarding', [])->assertUnauthorized();
