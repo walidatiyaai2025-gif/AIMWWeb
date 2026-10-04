@@ -69,13 +69,13 @@ final class BackupCopyPathTerminalityTest extends TestCase
         $appSource = (string) file_get_contents(resource_path('js/app.tsx'));
         $controlSource = (string) file_get_contents(resource_path('js/backup-copy-path-control.tsx'));
 
-        $this->assertStringContainsString("route.key === 'backups'", $appSource);
+        $this->assertStringContainsString('route.key === \'backups\'', $appSource);
         $this->assertStringContainsString('BackupCopyPathControl context={context}', $appSource);
         $this->assertStringContainsString(self::OPERATION_ID, $controlSource);
         $this->assertStringContainsString('context.api.backups', $controlSource);
-        $this->assertStringContainsString("hasPermission(context, 'backup.manage')", $controlSource);
-        $this->assertStringContainsString("hasPermission(context, 'backups.view')", $controlSource);
-        $this->assertStringContainsString("clipboard.writeText(value)", $controlSource);
+        $this->assertStringContainsString('hasPermission(context, \'backup.manage\')', $controlSource);
+        $this->assertStringContainsString('hasPermission(context, \'backups.view\')', $controlSource);
+        $this->assertStringContainsString('clipboard.writeText(value)', $controlSource);
         $this->assertStringNotContainsString('BackupDirectory', $controlSource);
         $this->assertStringNotContainsString('C:\\', $controlSource);
     }
