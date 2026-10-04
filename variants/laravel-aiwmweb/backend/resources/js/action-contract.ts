@@ -11,6 +11,7 @@ export type DiscoveredActionContract = Omit<ActionContract, 'method' | 'fields'>
     availability: { state: string; reason?: string | null };
     fixed?: Record<string, string | number>;
     reconcile_api_key?: string | null;
+    idempotency_required?: boolean;
     fields?: Array<NonNullable<ActionContract['fields']>[number] & { path?: boolean }>;
 };
 
@@ -34,7 +35,7 @@ export function prepareActionRequest(
     contract: ActionContract | DiscoveredActionContract,
     context: FrontendContext,
     values: Record<string, string | number>,
-): { endpoint: string; method: string; body?: string; operationId: string } {
+): { endpoint: string; method: string; body?: string; operationId: string; headers?: Record<string, string> } {
     const action = discoveredAction(contract);
     const bound = context as BoundContext;
 
@@ -75,5 +76,13 @@ export function prepareActionRequest(
         ? undefined
         : JSON.stringify(payload);
 
-    return { endpoint, method: action.method, body, operationId: action.operation_id };
+    const headers = action.idempotency_required
+        ? (() => {
+            const key = globalThis.crypto?.randomUUID?.();
+            if (!key) throw new ActionContractError('This action requires a browser idempotency key, but secure UUID generation is unavailable.');
+            return { 'Idempotency-Key': key };
+        })()
+        : undefined;
+
+    return { endpoint, method: action.method, body, operationId: action.operation_id, headers };
 }
