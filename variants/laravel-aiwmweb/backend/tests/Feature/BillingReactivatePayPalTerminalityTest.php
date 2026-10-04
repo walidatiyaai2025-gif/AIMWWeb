@@ -146,9 +146,7 @@ final class ReactivationFakePayPal implements BillingProvider
         return ['requested' => true];
     }
 
-    public function cancelSubscription(TenantSubscription $subscription): void
-    {
-    }
+    public function cancelSubscription(TenantSubscription $subscription): void {}
 
     public function reactivateSubscription(TenantSubscription $subscription): void
     {
