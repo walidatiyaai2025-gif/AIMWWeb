@@ -47,6 +47,7 @@ final class AdminBillingSupportController extends Controller
             'actor_user_id' => ['prohibited'],
             'provider' => ['prohibited'],
             'provider_subscription_id' => ['prohibited'],
+            'provider_subscription_hash' => ['prohibited'],
             'payment_status' => ['prohibited'],
         ]);
 
@@ -95,7 +96,9 @@ final class AdminBillingSupportController extends Controller
                 'Only a suspended local subscription can be reactivated by support.',
             );
             abort_if(
-                filled($target->provider) || filled($target->encrypted_provider_subscription_id),
+                filled($target->provider)
+                    || filled($target->provider_subscription_hash)
+                    || filled($target->encrypted_provider_subscription_id),
                 409,
                 'Provider-backed subscriptions require authoritative provider reconciliation.',
             );
@@ -150,6 +153,7 @@ final class AdminBillingSupportController extends Controller
         abort_unless(
             $authoritative->state === SubscriptionState::ACTIVE
             && blank($authoritative->provider)
+            && blank($authoritative->provider_subscription_hash)
             && blank($authoritative->encrypted_provider_subscription_id),
             409,
             'Persisted billing state did not reconcile after support reactivation.',
@@ -167,7 +171,9 @@ final class AdminBillingSupportController extends Controller
             'id' => (int) $subscription->getKey(),
             'state' => $subscription->state->value,
             'billing_plan_id' => (int) $subscription->billing_plan_id,
-            'provider_bound' => filled($subscription->provider) || filled($subscription->encrypted_provider_subscription_id),
+            'provider_bound' => filled($subscription->provider)
+                || filled($subscription->provider_subscription_hash)
+                || filled($subscription->encrypted_provider_subscription_id),
             'local_access_restored' => $subscription->state === SubscriptionState::ACTIVE,
             'payment_success_recorded' => false,
             'updated_at' => $subscription->updated_at?->utc()->toIso8601String(),
