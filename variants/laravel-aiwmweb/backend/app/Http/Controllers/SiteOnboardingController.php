@@ -41,7 +41,7 @@ final class SiteOnboardingController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'url' => ['required', 'url', 'max:2048'],
+            'url' => ['required', 'url:http,https', 'max:2048'],
             'username' => ['required', 'string', 'max:255'],
             'application_password' => ['required', 'string', 'min:8', 'max:1024'],
         ]);
@@ -128,34 +128,11 @@ final class SiteOnboardingController extends Controller
                 $site->save();
             }
 
-            $credential = SiteCredential::query()
-                ->where('site_id', $site->getKey())
-                ->lockForUpdate()
-                ->first();
-
-            if ($credential === null) {
-                $credential = new SiteCredential;
-                $credential->site_id = $site->getKey();
-            }
-
-            $credential->username = $username;
-            $credential->secret_value = $password;
-            $credential->save();
-
             $receipt->response = [
                 'site_id' => (int) $site->getKey(),
-                'result' => 'credentials_saved',
+                'result' => 'profile_saved',
             ];
             $receipt->save();
-
-            AuditEvent::query()->create([
-                'actor_user_id' => (int) $request->user()->getAuthIdentifier(),
-                'event' => 'site_onboarding.credentials_saved',
-                'subject_type' => 'site',
-                'subject_id' => (string) $site->getKey(),
-                'metadata' => ['operation_id' => self::OPERATION_ID],
-                'occurred_at' => now(),
-            ]);
 
             return [
                 'replay' => false,
@@ -207,7 +184,30 @@ final class SiteOnboardingController extends Controller
             );
         }
 
-        $runId = DB::transaction(function () use ($request, $siteId, $receiptId, $verification): int {
+        $runId = DB::transaction(function () use ($request, $siteId, $receiptId, $verification, $username, $password): int {
+            $credential = SiteCredential::query()
+                ->where('site_id', $siteId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($credential === null) {
+                $credential = new SiteCredential;
+                $credential->site_id = $siteId;
+            }
+
+            $credential->username = $username;
+            $credential->secret_value = $password;
+            $credential->save();
+
+            AuditEvent::query()->create([
+                'actor_user_id' => (int) $request->user()->getAuthIdentifier(),
+                'event' => 'site_onboarding.credentials_saved',
+                'subject_type' => 'site',
+                'subject_id' => (string) $siteId,
+                'metadata' => ['operation_id' => self::OPERATION_ID],
+                'occurred_at' => now(),
+            ]);
+
             Site::query()->whereKey($siteId)->update([
                 'connection_status' => 'verified',
                 'health_state' => ($verification['limited_permissions'] ?? false) ? 'limited' : 'healthy',
@@ -331,12 +331,6 @@ final class SiteOnboardingController extends Controller
             ->whereKey($siteId)
             ->firstOrFail();
 
-        $credentialExists = SiteCredential::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
-            ->where('site_id', $siteId)
-            ->exists();
-        abort_unless($credentialExists, 409, 'Credential persistence could not be reconciled.');
-
         return [
             'operation_id' => self::OPERATION_ID,
             'message' => $message,
@@ -348,7 +342,7 @@ final class SiteOnboardingController extends Controller
                 'health_state' => (string) $site->health_state,
                 'last_verified_at' => $site->last_verified_at?->utc()->toIso8601String(),
             ],
-            'credential_configured' => true,
+            'credential_configured' => false,
             'sync' => null,
             'idempotent_replay' => $replay,
         ];
