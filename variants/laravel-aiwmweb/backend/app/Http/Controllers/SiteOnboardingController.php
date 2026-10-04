@@ -331,6 +331,11 @@ final class SiteOnboardingController extends Controller
             ->whereKey($siteId)
             ->firstOrFail();
 
+        $credentialExists = SiteCredential::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('site_id', $siteId)
+            ->exists();
+
         return [
             'operation_id' => self::OPERATION_ID,
             'message' => $message,
@@ -342,7 +347,7 @@ final class SiteOnboardingController extends Controller
                 'health_state' => (string) $site->health_state,
                 'last_verified_at' => $site->last_verified_at?->utc()->toIso8601String(),
             ],
-            'credential_configured' => false,
+            'credential_configured' => $credentialExists,
             'sync' => null,
             'idempotent_replay' => $replay,
         ];
