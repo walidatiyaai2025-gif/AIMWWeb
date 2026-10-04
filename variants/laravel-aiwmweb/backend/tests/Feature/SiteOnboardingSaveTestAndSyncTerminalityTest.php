@@ -27,6 +27,13 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
 
     public function test_exact_mutation_route_is_guarded_and_bound_to_the_canonical_operation(): void
     {
+        $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor'));
+        $this->assertStringContainsString('OnClick="SaveTestAndSyncAsync"', $source);
+        $this->assertStringContainsString('SiteOnboardingProfileFlow.PersistAsync(', $source);
+        $this->assertStringContainsString('SiteService.SaveCredentialAndTestAsync(', $source);
+        $this->assertStringContainsString('_applicationPassword = string.Empty;', $source);
+        $this->assertStringContainsString('await RunInitialSyncAsync();', $source);
+
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/onboarding', 'POST'));
 
         $this->assertSame(SiteOnboardingController::class.'@store', ltrim($route->getActionName(), '\\'));
@@ -125,7 +132,7 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('operation_id', self::OPERATION_ID)
             ->assertJsonPath('site.connection_status', 'failed')
-            ->assertJsonPath('credential_configured', true)
+            ->assertJsonPath('credential_configured', false)
             ->assertJsonPath('sync', null)
             ->assertJsonPath('idempotent_replay', false);
 
@@ -147,7 +154,7 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
             ->assertJsonPath('idempotent_replay', true);
 
         $this->assertDatabaseCount('sites', 1);
-        $this->assertDatabaseCount('site_credentials', 1);
+        $this->assertDatabaseCount('site_credentials', 0);
         Queue::assertNothingPushed();
     }
 
@@ -173,7 +180,7 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
 
         $siteId = (int) $failed->json('site.id');
         $this->assertDatabaseCount('sites', 1);
-        $this->assertDatabaseCount('site_credentials', 1);
+        $this->assertDatabaseCount('site_credentials', 0);
         $this->assertDatabaseCount('sync_runs', 0);
         Queue::assertNothingPushed();
 
