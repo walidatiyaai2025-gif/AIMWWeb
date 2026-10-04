@@ -26,8 +26,6 @@ const contract: DiscoveredActionContract = {
     endpoint: '/api/tenants/alpha%20team/content-planner/items/save',
     method: 'POST',
     availability: { state: 'enabled' },
-    risk: 'high',
-    approval_required: false,
     fields: [
         { key: 'id', type: 'number', label: { en: 'ID', ar: 'المعرف' } },
         { key: 'site_id', type: 'number', label: { en: 'Site', ar: 'الموقع' } },
