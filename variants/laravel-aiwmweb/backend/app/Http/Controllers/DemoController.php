@@ -85,7 +85,7 @@ final class DemoController extends Controller
     {
         $auth->authorize('sites.manage');
         $model = Site::query()->findOrFail($site);
-        abort_if(Execution::query()->where('site_id', $site)->whereIn('status', ['queued', 'running'])->exists(), 409, 'Active execution prevents deletion.');
+        abort_if(Execution::query()->where('site_id', $siteId)->whereIn('status', ['queued', 'running'])->exists(), 409, 'Active execution prevents deletion.');
         $model->delete();
 
         return response()->json([], 204);
@@ -110,13 +110,13 @@ final class DemoController extends Controller
     {
         $auth->authorize('tenant.view');
 
-        return response()->json(Connector::query()->where('site_id', $site)->firstOrFail());
+        return response()->json(Connector::query()->where('site_id', $siteId)->firstOrFail());
     }
 
     public function scopes(Request $request, int $site, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('connector.manage');
-        $connector = Connector::query()->where('site_id', $site)->firstOrFail();
+        $connector = Connector::query()->where('site_id', $siteId)->firstOrFail();
         $scopes = $request->validate(['scopes' => 'required|array', 'scopes.*' => 'string'])['scopes'];
         abort_if(array_diff($scopes, $connector->capabilities), 422, 'Scope not supported by connector.');
         $connector->update(['enabled_scopes' => array_values(array_unique($scopes))]);
@@ -128,7 +128,7 @@ final class DemoController extends Controller
     {
         $auth->authorize('connector.manage');
         app(WordPressGateway::class)->disconnect(Site::query()->findOrFail($site));
-        $connector = Connector::query()->where('site_id', $site)->firstOrFail();
+        $connector = Connector::query()->where('site_id', $siteId)->firstOrFail();
         $connector->update(['revoked_at' => now(), 'enabled_scopes' => []]);
         Site::query()->findOrFail($site)->update(['connection_status' => 'revoked']);
 
@@ -139,7 +139,7 @@ final class DemoController extends Controller
     {
         $auth->authorize('connector.manage');
         $model = Site::query()->findOrFail($site);
-        $connector = Connector::query()->where('site_id', $site)->firstOrFail();
+        $connector = Connector::query()->where('site_id', $siteId)->firstOrFail();
         $secret = Str::random(64);
         $wordpress->rotateSecret($model, $secret);
         $connector->update(['encrypted_secret' => $secret]);
@@ -153,25 +153,28 @@ final class DemoController extends Controller
         $model = Site::query()->findOrFail($site);
         $health = $wordpress->health($model);
         $model->update(['connection_status' => 'verified', 'health_state' => $health['status'] ?? 'healthy', 'last_verified_at' => now()]);
-        Connector::query()->where('site_id', $site)->update(['verified_at' => now()]);
+        Connector::query()->where('site_id', $siteId)->update(['verified_at' => now()]);
 
         return response()->json($health);
     }
 
-    public function sync(int $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function sync(int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('sites.manage');
-        Site::query()->findOrFail($site);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+        Site::query()->findOrFail($siteId);
 
         $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
         abort_if(strlen($idempotencyKey) > 128, 422, 'Idempotency-Key must not exceed 128 characters.');
         $requestHash = hash('sha256', json_encode([
             'tenant_id' => $context->id(),
-            'site_id' => $site,
+            'site_id' => $siteId,
             'operation' => 'site.sync',
         ], JSON_THROW_ON_ERROR));
 
-        $result = DB::transaction(function () use ($site, $idempotencyKey, $requestHash): array {
+        $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash): array {
             $receipt = null;
             if ($idempotencyKey !== '') {
                 $receipt = IdempotencyKey::query()
@@ -197,7 +200,7 @@ final class DemoController extends Controller
             }
 
             $run = SyncRun::query()
-                ->where('site_id', $site)
+                ->where('site_id', $siteId)
                 ->whereIn('status', ['queued', 'running'])
                 ->lockForUpdate()
                 ->latest('id')
@@ -205,7 +208,7 @@ final class DemoController extends Controller
             $created = false;
 
             if (! $run) {
-                $run = SyncRun::query()->create(['site_id' => $site]);
+                $run = SyncRun::query()->create(['site_id' => $siteId]);
                 $created = true;
             }
 
@@ -225,7 +228,7 @@ final class DemoController extends Controller
 
         if ($result['created']) {
             try {
-                SyncSiteJob::dispatch($context->id(), $site, $result['run']->id);
+                SyncSiteJob::dispatch($context->id(), $siteId, $result['run']->id);
             } catch (Throwable $exception) {
                 SyncRun::query()->whereKey($result['run']->id)->update([
                     'status' => 'failed',
@@ -244,10 +247,13 @@ final class DemoController extends Controller
         );
     }
 
-    public function syncStatus(int $run, TenantAuthorizer $auth): JsonResponse
+    public function syncStatus(int|string $run, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
-        $model = SyncRun::query()->findOrFail($run);
+        abort_unless(is_int($run) || ctype_digit($run), 404);
+        $runId = (int) $run;
+        abort_if($runId < 1, 404);
+        $model = SyncRun::query()->findOrFail($runId);
 
         return response()->json($this->syncRunResource($model));
     }
@@ -272,7 +278,7 @@ final class DemoController extends Controller
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
 
-        return response()->json(SyncedContent::query()->where('site_id', $site)->paginate());
+        return response()->json(SyncedContent::query()->where('site_id', $siteId)->paginate());
     }
 
     public function audit(int $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
