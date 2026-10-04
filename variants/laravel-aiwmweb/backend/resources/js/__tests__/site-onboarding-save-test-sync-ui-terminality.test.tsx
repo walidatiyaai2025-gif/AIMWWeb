@@ -90,6 +90,7 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
+    });
 
     it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
         const uuid = vi.fn()
@@ -163,6 +164,5 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         });
         await waitFor(() => expect(secret).toHaveValue(''));
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
-    });
     });
 });
