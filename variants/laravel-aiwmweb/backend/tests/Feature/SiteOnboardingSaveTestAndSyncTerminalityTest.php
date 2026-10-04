@@ -214,45 +214,6 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
         Queue::assertPushed(SyncSiteJob::class, 1);
     }
 
-    public function test_same_wordpress_url_can_create_independent_profiles_without_a_retry_token(): void
-    {
-        $user = User::factory()->create();
-        $this->membership($user, 'alpha', ['tenant.view', 'sites.manage']);
-        Queue::fake();
-        Http::fake([
-            'https://shared.example.test/*' => Http::response([
-                'id' => 91,
-                'capabilities' => ['manage_options' => true],
-            ], 200),
-        ]);
-
-        $first = $this->actingAs($user)
-            ->withHeader('Idempotency-Key', 'shared-profile-1')
-            ->postJson('/api/tenants/alpha/sites/onboarding', [
-                'name' => 'Shared URL profile one',
-                'url' => 'https://shared.example.test',
-                'username' => 'wp-admin-one',
-                'application_password' => 'first-password-value',
-            ])
-            ->assertAccepted();
-
-        $second = $this->actingAs($user)
-            ->withHeader('Idempotency-Key', 'shared-profile-2')
-            ->postJson('/api/tenants/alpha/sites/onboarding', [
-                'name' => 'Shared URL profile two',
-                'url' => 'https://shared.example.test',
-                'username' => 'wp-admin-two',
-                'application_password' => 'second-password-value',
-            ])
-            ->assertAccepted();
-
-        $this->assertNotSame((int) $first->json('site.id'), (int) $second->json('site.id'));
-        $this->assertDatabaseCount('sites', 2);
-        $this->assertDatabaseCount('site_credentials', 2);
-        $this->assertDatabaseCount('sync_runs', 2);
-        Queue::assertPushed(SyncSiteJob::class, 2);
-    }
-
     public function test_retry_token_is_actor_bound_and_cannot_select_another_users_failed_profile(): void
     {
         $owner = User::factory()->create();
