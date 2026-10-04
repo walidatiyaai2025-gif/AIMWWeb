@@ -188,7 +188,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('evidence', '/module/evidence', 'seo', '▥', 'Evidence & Receipts', 'الأدلة والإيصالات', 'Inspect execution evidence and receipts.', 'مراجعة أدلة وإيصالات التنفيذ.', { permission: 'execution.view' }),
 
     r('ai-center', '/ai-center', 'ai', '✦', 'AI Center', 'مركز الذكاء الاصطناعي', 'Generate reviewable AI-assisted work through configured providers.', 'إنشاء عمل مدعوم بالذكاء قابل للمراجعة عبر المزودين المهيئين.', { permission: 'ai.use' }),
-    r('content-planner', '/content-planner', 'ai', '◫', 'Content Planner', 'مخطط المحتوى', 'Move ideas through brief, draft and review.', 'تحويل الأفكار إلى ملخصات ومسودات ومراجعة.', { permission: 'content.view', controls: ['planner.create'] }),
+    r('content-planner', '/content-planner', 'ai', '◫', 'Content Planner', 'مخطط المحتوى', 'Move ideas through brief, draft and review.', 'تحويل الأفكار إلى ملخصات ومسودات ومراجعة.', { permission: 'content.view', controls: ['planner.save'] }),
     r('ai-providers', '/module/ai-providers', 'ai', '◈', 'AI Providers', 'مزودو الذكاء', 'Review provider configuration and real runtime readiness.', 'مراجعة إعداد المزودين وحالة التشغيل الحقيقية.', { permission: 'ai.configure', kind: 'settings' }),
     r('prompts', '/module/prompts', 'ai', '⌘', 'Prompt Templates', 'قوالب الأوامر', 'Manage reusable prompt templates.', 'إدارة قوالب الأوامر القابلة لإعادة الاستخدام.', { permission: 'ai.configure', controls: ['prompts.create'] }),
     r('ai-usage', '/module/ai-usage', 'ai', '▥', 'AI Usage & Cost', 'استخدام وتكلفة الذكاء', 'Inspect tenant-scoped usage and cost telemetry.', 'مراجعة استخدام الذكاء والتكلفة الخاصة بالحساب.', { permission: 'ai.viewUsage' }),
