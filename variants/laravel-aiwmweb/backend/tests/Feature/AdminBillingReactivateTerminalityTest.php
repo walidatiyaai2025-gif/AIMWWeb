@@ -46,7 +46,10 @@ class AdminBillingReactivateTerminalityTest extends TestCase
         $readRoute = Route::getRoutes()->match(Request::create('/api/tenants/alpha/billing/admin/subscriptions', 'GET'));
         $this->assertSame(AdminBillingSupportController::class.'@index', ltrim($readRoute->getActionName(), '\\'));
         $this->assertSame('canonical.api.billing-support.index', $readRoute->getName());
-        $this->assertContains('platform.admin', $readRoute->gatherMiddleware());
+        $readMiddleware = $readRoute->gatherMiddleware();
+        $this->assertContains('auth', $readMiddleware);
+        $this->assertContains('tenant.context', $readMiddleware);
+        $this->assertContains('platform.admin', $readMiddleware);
     }
 
     public function test_platform_admin_reactivates_local_suspension_with_idempotent_authoritative_reread_and_audit(): void
