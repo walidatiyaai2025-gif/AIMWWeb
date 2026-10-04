@@ -166,6 +166,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         $api = [
             'sites' => "/api/tenants/{$tenant}/sites",
             'operations' => "/tenants/{$tenant}/admin/operations",
+            'operations-hub' => "/tenants/{$tenant}/admin/operations-hub",
             'automation' => "/tenants/{$tenant}/admin/automations",
             'schedules' => "/tenants/{$tenant}/admin/schedules",
             'execution' => "/tenants/{$tenant}/admin/operations",
@@ -234,6 +235,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::put('/automations/{rule}', 'saveAutomation');
         Route::post('/automations/{rule}/trigger', 'triggerAutomation');
         Route::post('/automation-runs/{run}/approve', 'approveAutomation');
+        Route::get('/operations-hub', 'operationsHub')->name('canonical.api.operations-hub.reload');
         Route::get('/operations', 'operations');
         Route::get('/operations/{operation}', 'operation');
         Route::post('/operations/{operation}/cancel', 'cancelOperation');
