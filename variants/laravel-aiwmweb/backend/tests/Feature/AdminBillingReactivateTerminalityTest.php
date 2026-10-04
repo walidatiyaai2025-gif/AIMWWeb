@@ -229,6 +229,8 @@ class AdminBillingReactivateTerminalityTest extends TestCase
             'grace_period_days' => 7,
             'enabled' => true,
             'display_order' => 999,
+            'limits' => [],
+            'entitlements' => [],
         ]);
     }
 
