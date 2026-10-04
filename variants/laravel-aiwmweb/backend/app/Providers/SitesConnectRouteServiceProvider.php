@@ -15,5 +15,11 @@ final class SitesConnectRouteServiceProvider extends ServiceProvider
             ->defaults('workspace_permissions', 'tenant.view,sites.manage')
             ->defaults('canonical_operation_id', 'AIMW-SITE-E3EA44AD3F')
             ->name('canonical.site.connect');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->get('/tenants/{tenant}/sites/onboarding', [CanonicalWorkspaceRouteController::class, 'show'])
+            ->defaults('workspace_permissions', 'tenant.view,sites.manage')
+            ->defaults('canonical_operation_id', 'AIMW-SITE-E3EA44AD3F')
+            ->name('canonical.site.onboarding');
     }
 }
