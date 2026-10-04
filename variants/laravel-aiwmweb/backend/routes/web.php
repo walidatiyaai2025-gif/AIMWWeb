@@ -3,7 +3,7 @@
 use App\Authorization\TenantAuthorizer;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
-use App\Http\Controllers\AdminOperationsController;
+use App\Http\Controllers\AdminOperationsController;\nuse App\Http\Controllers\AdminBillingSupportController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
 use App\Http\Controllers\AiProviderSettingsReadController;
@@ -47,6 +47,11 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/verify', [DemoController::class, 'verify']);
     Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
+    Route::post('/billing/admin/subscriptions/{subscription}/reactivate', [AdminBillingSupportController::class, 'reactivate'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::REACTIVATE_OPERATION_ID)
+        ->name('canonical.api.billing-support.reactivate');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
@@ -263,6 +268,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
+        Route::get('/admin/billing-support', 'show')->middleware('platform.admin')->defaults('workspace_permissions', '')->name('canonical.workspace.admin-billing-support');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
