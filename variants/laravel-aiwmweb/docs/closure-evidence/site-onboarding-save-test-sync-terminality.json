@@ -10,7 +10,7 @@
     "route_screen": "/sites/connect | /sites/onboarding",
     "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
     "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor:/sites/connect|/sites/onboarding:SaveTestAndSyncAsync",
-    "source_intent": "Persist or update the exact onboarding site profile held by the flow, allow independent profiles to share the same WordPress URL, verify the real WordPress REST boundary, persist protected WordPress credentials only after successful verification, clear browser credential material, and then start the tenant-aware initial synchronization",
+    "source_intent": "Persist or update the exact onboarding site profile held by the flow, verify the real WordPress REST boundary, persist protected WordPress credentials only after successful verification, clear browser credential material, and then start the tenant-aware initial synchronization.",
     "mutation": true,
     "tenant_owned": true,
     "risk": "high"
@@ -36,18 +36,18 @@
   },
   "security": {
     "tenant_selector": "server-owned tenant.context only",
-    "site_identity": "server-created; caller-owned tenant_id, site_id, actor_user_id, status and other direct identifiers are rejected; failed-verification retries may target only the exact failed profile through a server-issued encrypted token bound to the active tenant and actor",
-    "credential_storage": "SiteCredential secret_value encrypted cast only after successful WordPress verification; failed verification stores no credential; secret never returned by API",
+    "site_identity": "server-owned active tenant context; caller-owned tenant_id, site_id, actor_user_id, status and other direct identifiers are rejected; after failed verification the server may issue an encrypted retry_token bound to operation + tenant + actor + failed site so only that server-selected profile can be retried",
+    "credential_storage": "SiteCredential secret_value uses the encrypted cast and is written only after successful WordPress verification; failed verification stores no newly submitted credential and the secret is never returned",
     "browser_secret_policy": "Application Password state is cleared after submission and never echoed in rendered authoritative state",
     "csrf": "mutation is on the Laravel web/auth/tenant.context route stack and frontend apiRequest supplies the CSRF token",
     "wordpress_boundary": "existing WordPressApplicationPasswordVerifier performs authenticated /wp-json/wp/v2/users/me?context=edit verification",
     "initial_sync_gate": "SyncRun and SyncSiteJob are created/dispatched only after successful WordPress verification",
-    "idempotency": "tenant-scoped Idempotency-Key receipts reject conflicting payloads and replay terminal outcomes; failed verification returns an encrypted active-tenant/actor-bound retry token so a new-key retry can reuse only that exact failed profile; without a retry token the same WordPress URL may create an independent site profile, matching the canonical source",
+    "idempotency": "tenant-scoped Idempotency-Key receipts bind the request including server-resolved retry identity, reject conflicting reuse, and replay terminal outcomes; corrected retries use only a server-issued encrypted retry_token bound to operation + tenant + actor + failed site, never a caller-owned site id",
     "audit": "immutable tenant-scoped AuditEvent records credential persistence and verified queue/failure milestones without secrets",
     "provider_success_inferred": false,
     "secret_disclosure_added": false,
     "fake_success": false,
-    "retry_token": "opaque Laravel-encrypted retry token is returned only with failed verification, bound to operation + tenant + actor + site, validated server-side, and accepted only while that exact site remains failed"
+    "retry_token": "opaque Laravel-encrypted retry token is returned only for failed verification, bound to operation + tenant + actor + site, validated server-side, and accepted only while that exact tenant-owned site remains failed"
   },
   "acceptance": {
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php",
@@ -67,8 +67,12 @@
       "both /sites/connect and /sites/onboarding workspace routes",
       "failed connection retry with a new idempotency key reuses the exact server-issued failed profile without URL-based identity",
       "retry token is actor- and tenant-bound and cannot select another user's failed profile",
-      "same WordPress URL can create independent site profiles when no retry token is supplied",
-      "same WordPress URL may create independent site profiles without weakening retry ownership"
+      "exact canonical source method and mutation route identity",
+      "failed verification keeps the tenant-owned site profile but persists no newly submitted credential and starts no sync",
+      "successful verification persists an encrypted hidden credential before one tenant-aware queued initial sync",
+      "same-key replay does not duplicate profile, provider verification, credential, sync run or queue dispatch",
+      "server-issued retry token is tenant- and actor-bound and cannot select another user's failed profile",
+      "browser proof covers CSRF, Idempotency-Key, retry-token carry, Application Password clearing and secret non-rendering"
     ]
   },
   "scope_guards": {
@@ -81,12 +85,14 @@
     "open_site_claimed": false,
     "aspnet_product_modified": false,
     "authorization_weakened": false,
-    "tenant_isolation_weakened": false
+    "tenant_isolation_weakened": false,
+    "site_url_uniqueness_changed": false,
+    "global_sites_schema_changed": false
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "415bd5d7a38408e8d344f2999a955ed99d6bdb3e",
     "branch": "worker/laravel-aiwmweb-AIMW-BILL-2EF6B8A27A-site-onboarding-save-test-sync",
-    "implementation_sha": "6c7885308e00ae40029afc4e39c090fcce985cf4"
+    "implementation_sha": "77aa0a50a982d803d4279c47cc73418f6a2212fe"
   }
 }
