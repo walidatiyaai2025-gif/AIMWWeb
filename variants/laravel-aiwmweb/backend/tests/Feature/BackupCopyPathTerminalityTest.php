@@ -92,7 +92,7 @@ final class BackupCopyPathTerminalityTest extends TestCase
             'user_id' => $user->id,
             'status' => 'active',
         ]);
-        $role = Role::query()->create(['name' => "backup-copy-path-{$slug}"]);
+        $role = Role::query()->create(['name' => 'backup-copy-path-'.$slug]);
 
         foreach ($permissions as $permissionName) {
             $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
