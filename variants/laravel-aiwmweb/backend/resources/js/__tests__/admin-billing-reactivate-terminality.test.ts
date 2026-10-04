@@ -26,7 +26,8 @@ const contract: DiscoveredActionContract = {
     endpoint: '/api/tenants/alpha/billing/admin/subscriptions/{subscription}/reactivate',
     method: 'POST',
     availability: { state: 'enabled' },
-    reconcile_api_key: 'account.billing',
+    reconcile_api_key: 'admin-billing-support',
+    idempotency_required: true,
     fields: [
         { key: 'subscription', type: 'number', label: { en: 'Subscription ID', ar: 'معرّف الاشتراك' }, required: true, path: true },
         { key: 'reason', type: 'textarea', label: { en: 'Support reason', ar: 'سبب تدخل الدعم' }, required: true },
@@ -50,6 +51,7 @@ describe('Admin Billing ReactivateAsync terminality', () => {
         expect(prepared.endpoint).toBe('/api/tenants/alpha/billing/admin/subscriptions/41/reactivate');
         expect(prepared.method).toBe('POST');
         expect(prepared.operationId).toBe(operationId);
+        expect(prepared.headers?.['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/i);
         expect(JSON.parse(prepared.body ?? '{}')).toEqual({
             reason: 'Case SUP-1001 verified local lockout',
         });
