@@ -63,7 +63,7 @@ final class SiteDataSnapshotController extends Controller
                 'id' => (int) $latestRun->getKey(),
                 'status' => (string) $latestRun->status,
                 'processed' => (int) ($latestRun->processed ?? 0),
-                'failure' => $latestRun->failure,
+                'failure' => filled($latestRun->failure) ? 'Synchronization failed.' : null,
                 'completed_at' => $latestRun->completed_at?->utc()->toIso8601String(),
             ] : null,
         ]);
