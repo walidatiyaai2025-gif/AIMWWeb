@@ -99,6 +99,7 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
     Route::post('/trial', [BillingController::class, 'trial']);
     Route::post('/checkout', [BillingController::class, 'checkout']);
     Route::post('/cancel', [BillingController::class, 'cancel']);
+    Route::post('/reactivate', [BillingController::class, 'reactivate']);
     Route::post('/change-plan', [BillingController::class, 'changePlan']);
     Route::get('/entitlements', [BillingController::class, 'entitlements']);
     Route::get('/usage', [BillingController::class, 'usage']);
