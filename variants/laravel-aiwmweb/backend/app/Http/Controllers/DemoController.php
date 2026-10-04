@@ -278,7 +278,7 @@ final class DemoController extends Controller
         $auth->authorize('tenant.view');
         Site::query()->findOrFail($site);
 
-        return response()->json(SyncedContent::query()->where('site_id', $siteId)->paginate());
+        return response()->json(SyncedContent::query()->where('site_id', $site)->paginate());
     }
 
     public function audit(int $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
