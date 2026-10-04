@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-1EA01528A9",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/seo",
+    "visible_control": "/account/billing -> /account/billing",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SeoManager.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/SeoManager.razor:/sites/{Id:guid}/seo:/account/billing:/account/billing",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "medium"
+  },
+  "laravel_runtime": {
+    "source_route": "/tenants/{tenant}/sites/{site}/seo",
+    "source_authority": "canonical.site.seo",
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/seo-visible-controls.tsx",
+    "server_config": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
+    "destination": "/tenants/{activeTenant}/account/billing",
+    "destination_authority": "canonical.workspace.account-billing",
+    "destination_permission": "billing.view"
+  },
+  "security": {
+    "seo_permissions": [
+      "tenant.view",
+      "seo.view"
+    ],
+    "billing_visibility": "server-derived active membership billing.view",
+    "tenant_selector": "server route tenant only",
+    "foreign_tenant": "destination denied by tenant.context",
+    "provider_success_inferred": false,
+    "browser_provider_identifier_added": false,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/seo-manager-billing-link.test.ts",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerBillingLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "active-tenant billing URL only",
+      "server-side billing.view visibility decision",
+      "foreign tenant destination rejection",
+      "authenticated tenant middleware and billing permission",
+      "read-only navigation with no provider success inference"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-1EA01528A9"
+    ],
+    "provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "469db69c2de961769ae4e96b4234c74c77a3199f",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-1EA01528A9-seo-billing-link"
+  }
+}

@@ -7,13 +7,17 @@ use App\Models\SeoAudit;
 use App\Models\SeoFinding;
 use App\Models\Site;
 use App\Models\SyncedContent;
+use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class SeoVisibleControlController extends Controller
 {
-    public function __construct(private readonly TenantAuthorizer $authorizer) {}
+    public function __construct(
+        private readonly TenantAuthorizer $authorizer,
+        private readonly TenantContext $context,
+    ) {}
 
     public function manager(Request $request, string $tenant, int $site): View
     {
@@ -26,6 +30,7 @@ final class SeoVisibleControlController extends Controller
             'config' => [
                 'tenant' => $tenant,
                 'site' => ['id' => (int) $model->getKey(), 'name' => $model->name, 'url' => $model->url],
+                'can_view_billing' => $this->context->membership()->hasPermission('billing.view'),
                 'urls' => [
                     'audits' => "/api/tenants/{$tenant}/sites/{$site}/seo/audits",
                     'findings' => "/api/tenants/{$tenant}/sites/{$site}/seo/audits/__AUDIT__/findings",
@@ -38,6 +43,7 @@ final class SeoVisibleControlController extends Controller
                     'sites' => "/tenants/{$tenant}/sites",
                     'explorer' => "/tenants/{$tenant}/module/posts?site={$site}",
                     'approvals' => "/tenants/{$tenant}/approvals",
+                    'billing' => "/tenants/{$tenant}/account/billing",
                 ],
             ],
         ]);

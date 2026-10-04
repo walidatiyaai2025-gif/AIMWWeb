@@ -10,12 +10,14 @@ export const SEO_OPERATIONS = {
     applySelected: 'AIMW-SEO-4F3F2AC874',
     retryFailed: 'AIMW-AI-49E68B3816',
     route: 'AIMW-SEO-5F71B89C92',
+    billing: 'AIMW-BILL-1EA01528A9',
     previousPage: 'AIMW-SEO-9FE309C9AE',
     resetFilters: 'AIMW-SEO-250C53DAC5',
 } as const;
 
-type SeoConfig = {
+export type SeoConfig = {
     tenant: string;
+    can_view_billing: boolean;
     site: { id: number; name: string; url: string };
     urls: {
         audits: string;
@@ -29,6 +31,7 @@ type SeoConfig = {
         sites: string;
         explorer: string;
         approvals: string;
+        billing: string;
     };
 };
 
@@ -53,6 +56,12 @@ type RetryResult = {
     execution_ids?: number[];
     mutated?: boolean;
 };
+
+export function seoBillingHref(config: SeoConfig): string | null {
+    if (!config.can_view_billing) return null;
+    const expected = `/tenants/${encodeURIComponent(config.tenant)}/account/billing`;
+    return config.urls.billing === expected ? config.urls.billing : null;
+}
 
 type ProposalState = Record<number, Record<string, unknown>>;
 const WRITABLE = new Set(['title', 'slug', 'seo_title', 'seo_description', 'seo_canonical', 'seo_robots']);
@@ -282,6 +291,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     if (loading) return <main className="workspace-stack"><section className="panel"><p>Loading authoritative SEO state…</p></section></main>;
 
     const safeCount = findings.filter((finding) => Boolean(proposalFor(finding))).length;
+    const billingHref = seoBillingHref(config);
 
     return (
         <main className="workspace-stack" data-canonical-operation={SEO_OPERATIONS.route}>
@@ -291,6 +301,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                     <a className="btn" data-canonical-operation={SEO_OPERATIONS.execution} href={config.urls.execution}>Execution Center</a>
                     <a className="btn" data-canonical-operation={SEO_OPERATIONS.sites} href={config.urls.sites}>Back to Sites</a>
                     <a className="btn" data-canonical-operation={SEO_OPERATIONS.explorer} href={config.urls.explorer}>Back to Explorer</a>
+                    {billingHref ? <a className="btn primary" data-canonical-operation={SEO_OPERATIONS.billing} href={billingHref}>Review subscription</a> : null}
                 </div>
             </section>
 
