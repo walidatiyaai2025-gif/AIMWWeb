@@ -90,5 +90,79 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
+
+    it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
+        const uuid = vi.fn()
+            .mockReturnValueOnce('22222222-2222-4222-8222-222222222222')
+            .mockReturnValueOnce('33333333-3333-4333-8333-333333333333');
+        vi.stubGlobal('crypto', { randomUUID: uuid });
+
+        const fetchMock = vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+                message: 'WordPress connection test failed. Initial synchronization was not started.',
+                site: {
+                    id: 23,
+                    name: 'Retry Site',
+                    url: 'https://retry.example.test',
+                    connection_status: 'failed',
+                    health_state: 'unhealthy',
+                },
+                credential_configured: false,
+                retry_token: 'opaque-server-issued-retry-token',
+                sync: null,
+                idempotent_replay: false,
+            }), { status: 422, headers: { 'content-type': 'application/json' } }))
+            .mockResolvedValueOnce(new Response(JSON.stringify({
+                operation_id: SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
+                site: {
+                    id: 23,
+                    name: 'Retry Site',
+                    url: 'https://retry.example.test',
+                    connection_status: 'verified',
+                    health_state: 'healthy',
+                },
+                credential_configured: true,
+                sync: { id: 51, status: 'queued', processed: 0, failure: null },
+                idempotent_replay: false,
+            }), { status: 202, headers: { 'content-type': 'application/json' } }));
+        vi.stubGlobal('fetch', fetchMock);
+
+        renderControl();
+        const inputs = screen.getAllByRole('textbox');
+        fireEvent.change(inputs[0], { target: { value: 'Retry Site' } });
+        fireEvent.change(inputs[1], { target: { value: 'https://retry.example.test' } });
+        fireEvent.change(inputs[2], { target: { value: 'wp-admin' } });
+        const secret = screen.getByLabelText('Application Password');
+        fireEvent.change(secret, { target: { value: 'first-secret-value' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))).toEqual({
+            name: 'Retry Site',
+            url: 'https://retry.example.test',
+            username: 'wp-admin',
+            application_password: 'first-secret-value',
+        });
+        await waitFor(() => expect(secret).toHaveValue(''));
+        expect(await screen.findByRole('alert')).toHaveTextContent('WordPress connection test failed');
+
+        fireEvent.change(secret, { target: { value: 'second-secret-value' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        const secondInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
+        expect(new Headers(secondInit.headers).get('Idempotency-Key'))
+            .toBe('33333333-3333-4333-8333-333333333333');
+        expect(JSON.parse(String(secondInit.body))).toEqual({
+            name: 'Retry Site',
+            url: 'https://retry.example.test',
+            username: 'wp-admin',
+            application_password: 'second-secret-value',
+            retry_token: 'opaque-server-issued-retry-token',
+        });
+        await waitFor(() => expect(secret).toHaveValue(''));
+        expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
+    });
     });
 });
