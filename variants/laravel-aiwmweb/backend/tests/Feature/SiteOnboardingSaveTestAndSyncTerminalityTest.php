@@ -200,8 +200,9 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
         $this->assertDatabaseCount('site_credentials', 1);
         $this->assertDatabaseCount('sync_runs', 1);
 
-        Queue::assertPushed(SyncSiteJob::class, fn (SyncSiteJob $job): bool =>
-            $job->tenantId === $tenant->id && $job->siteId === $siteId
+        Queue::assertPushed(
+            SyncSiteJob::class,
+            fn (SyncSiteJob $job): bool => $job->tenantId === $tenant->id && $job->siteId === $siteId,
         );
         Queue::assertPushed(SyncSiteJob::class, 1);
     }
