@@ -69,16 +69,21 @@ final class SiteOnboardingController extends Controller
             return $this->replay($existing, $requestHash, $context->id());
         }
 
-        try {
-            $entitlements->assertCanCreate();
-        } catch (RuntimeException $exception) {
-            return response()->json(['state' => 'CAPABILITY_DISABLED', 'message' => $exception->getMessage()], 403);
+        $existingSite = Site::query()->where('url', $url)->first();
+
+        if ($existingSite === null) {
+            try {
+                $entitlements->assertCanCreate();
+            } catch (RuntimeException $exception) {
+                return response()->json(['state' => 'CAPABILITY_DISABLED', 'message' => $exception->getMessage()], 403);
+            }
         }
 
         $persisted = DB::transaction(function () use (
             $request,
             $key,
             $requestHash,
+            $existingSite,
             $name,
             $url,
             $username,
@@ -103,16 +108,36 @@ final class SiteOnboardingController extends Controller
                 'request_hash' => $requestHash,
             ]);
 
-            $site = Site::query()->create([
-                'name' => $name,
-                'url' => $url,
-                'status' => 'active',
-                'connection_status' => 'testing',
-                'health_state' => 'unknown',
-            ]);
+            $site = $existingSite === null
+                ? null
+                : Site::query()->whereKey($existingSite->getKey())->lockForUpdate()->first();
 
-            $credential = new SiteCredential;
-            $credential->site_id = $site->getKey();
+            if ($site === null) {
+                $site = Site::query()->create([
+                    'name' => $name,
+                    'url' => $url,
+                    'status' => 'active',
+                    'connection_status' => 'testing',
+                    'health_state' => 'unknown',
+                ]);
+            } else {
+                $site->name = $name;
+                $site->url = $url;
+                $site->connection_status = 'testing';
+                $site->health_state = 'unknown';
+                $site->save();
+            }
+
+            $credential = SiteCredential::query()
+                ->where('site_id', $site->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($credential === null) {
+                $credential = new SiteCredential;
+                $credential->site_id = $site->getKey();
+            }
+
             $credential->username = $username;
             $credential->secret_value = $password;
             $credential->save();
