@@ -75,6 +75,7 @@ final class ActionContractRegistry
                 'risk' => $definition['risk'] ?? 'low',
                 'approval_required' => (bool) ($definition['approval_required'] ?? false),
                 'terminal_candidate' => (bool) ($definition['terminal_candidate'] ?? false),
+                'idempotency_required' => (bool) ($definition['idempotency_required'] ?? false),
                 'ui_role' => $definition['ui_role'] ?? null,
                 'fields' => $definition['fields'] ?? [],
                 'fixed' => $definition['fixed'] ?? (object) [],
