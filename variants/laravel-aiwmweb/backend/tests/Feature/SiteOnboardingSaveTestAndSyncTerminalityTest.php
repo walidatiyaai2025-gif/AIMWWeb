@@ -6,7 +6,6 @@ use App\Http\Controllers\SiteOnboardingController;
 use App\Jobs\SyncSiteJob;
 use App\Models\Permission;
 use App\Models\Role;
-use App\Models\Site;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;

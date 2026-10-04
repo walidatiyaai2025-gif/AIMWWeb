@@ -77,7 +77,6 @@ final class SiteOnboardingController extends Controller
 
         $persisted = DB::transaction(function () use (
             $request,
-            $context,
             $key,
             $requestHash,
             $name,
