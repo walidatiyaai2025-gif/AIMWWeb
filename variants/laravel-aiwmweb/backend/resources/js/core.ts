@@ -1,4 +1,4 @@
-import { z } from 'zod';
+    r('admin-billing-support', '/admin/billing-support', 'system', '◇', 'Billing Support', 'دعم الفوترة', 'Perform bounded audited local subscription support actions without fabricating provider success.', 'تنفيذ تدخلات دعم محلية محدودة ومدققة للاشتراك دون اختلاق نجاح من مزود الدفع.', { kind: 'settings', controls: ['billing.support.reactivate'] }),\nimport { z } from 'zod';
 
 export type Locale = 'en' | 'ar';
 export type CapabilityState =
