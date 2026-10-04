@@ -85,7 +85,7 @@ final class DemoController extends Controller
     {
         $auth->authorize('sites.manage');
         $model = Site::query()->findOrFail($site);
-        abort_if(Execution::query()->where('site_id', $siteId)->whereIn('status', ['queued', 'running'])->exists(), 409, 'Active execution prevents deletion.');
+        abort_if(Execution::query()->where('site_id', $site)->whereIn('status', ['queued', 'running'])->exists(), 409, 'Active execution prevents deletion.');
         $model->delete();
 
         return response()->json([], 204);
@@ -110,13 +110,13 @@ final class DemoController extends Controller
     {
         $auth->authorize('tenant.view');
 
-        return response()->json(Connector::query()->where('site_id', $siteId)->firstOrFail());
+        return response()->json(Connector::query()->where('site_id', $site)->firstOrFail());
     }
 
     public function scopes(Request $request, int $site, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('connector.manage');
-        $connector = Connector::query()->where('site_id', $siteId)->firstOrFail();
+        $connector = Connector::query()->where('site_id', $site)->firstOrFail();
         $scopes = $request->validate(['scopes' => 'required|array', 'scopes.*' => 'string'])['scopes'];
         abort_if(array_diff($scopes, $connector->capabilities), 422, 'Scope not supported by connector.');
         $connector->update(['enabled_scopes' => array_values(array_unique($scopes))]);
@@ -128,7 +128,7 @@ final class DemoController extends Controller
     {
         $auth->authorize('connector.manage');
         app(WordPressGateway::class)->disconnect(Site::query()->findOrFail($site));
-        $connector = Connector::query()->where('site_id', $siteId)->firstOrFail();
+        $connector = Connector::query()->where('site_id', $site)->firstOrFail();
         $connector->update(['revoked_at' => now(), 'enabled_scopes' => []]);
         Site::query()->findOrFail($site)->update(['connection_status' => 'revoked']);
 
@@ -139,7 +139,7 @@ final class DemoController extends Controller
     {
         $auth->authorize('connector.manage');
         $model = Site::query()->findOrFail($site);
-        $connector = Connector::query()->where('site_id', $siteId)->firstOrFail();
+        $connector = Connector::query()->where('site_id', $site)->firstOrFail();
         $secret = Str::random(64);
         $wordpress->rotateSecret($model, $secret);
         $connector->update(['encrypted_secret' => $secret]);
@@ -153,7 +153,7 @@ final class DemoController extends Controller
         $model = Site::query()->findOrFail($site);
         $health = $wordpress->health($model);
         $model->update(['connection_status' => 'verified', 'health_state' => $health['status'] ?? 'healthy', 'last_verified_at' => now()]);
-        Connector::query()->where('site_id', $siteId)->update(['verified_at' => now()]);
+        Connector::query()->where('site_id', $site)->update(['verified_at' => now()]);
 
         return response()->json($health);
     }
