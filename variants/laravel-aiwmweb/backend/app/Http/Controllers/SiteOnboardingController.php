@@ -14,6 +14,7 @@ use App\Sites\SiteEntitlementHook;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -35,7 +36,7 @@ final class SiteOnboardingController extends Controller
 
         $unexpected = array_values(array_diff(
             $request->keys(),
-            ['name', 'url', 'username', 'application_password'],
+            ['name', 'url', 'username', 'application_password', 'retry_token'],
         ));
         abort_if($unexpected !== [], 422, 'Onboarding does not accept caller-owned tenant, site, status, or actor identifiers.');
 
@@ -44,12 +45,18 @@ final class SiteOnboardingController extends Controller
             'url' => ['required', 'url:http,https', 'max:2048'],
             'username' => ['required', 'string', 'max:255'],
             'application_password' => ['required', 'string', 'min:8', 'max:1024'],
+            'retry_token' => ['nullable', 'string', 'max:4096'],
         ]);
 
         $name = trim((string) $data['name']);
         $url = rtrim(trim((string) $data['url']), '/');
         $username = trim((string) $data['username']);
         $password = (string) $data['application_password'];
+        $actorId = (int) $request->user()->getAuthIdentifier();
+        $retryToken = trim((string) ($data['retry_token'] ?? ''));
+        $retrySiteId = $retryToken === ''
+            ? null
+            : $this->resolveRetrySiteId($retryToken, $context->id(), $actorId);
         abort_if($name === '' || $username === '', 422, 'Site name and WordPress username are required.');
 
         $key = trim((string) $request->header('Idempotency-Key', ''));
@@ -62,16 +69,15 @@ final class SiteOnboardingController extends Controller
             'url' => $url,
             'username' => $username,
             'password_hash' => hash('sha256', $password),
+            'retry_site_id' => $retrySiteId,
         ], JSON_THROW_ON_ERROR));
 
         $existing = IdempotencyKey::query()->where('key', $key)->first();
         if ($existing !== null) {
-            return $this->replay($existing, $requestHash, $context->id());
+            return $this->replay($existing, $requestHash, $context->id(), $actorId);
         }
 
-        $existingSite = Site::query()->where('url', $url)->first();
-
-        if ($existingSite === null) {
+        if ($retrySiteId === null) {
             try {
                 $entitlements->assertCanCreate();
             } catch (RuntimeException $exception) {
@@ -83,7 +89,7 @@ final class SiteOnboardingController extends Controller
             $request,
             $key,
             $requestHash,
-            $existingSite,
+            $retrySiteId,
             $name,
             $url,
             $username,
@@ -108,9 +114,9 @@ final class SiteOnboardingController extends Controller
                 'request_hash' => $requestHash,
             ]);
 
-            $site = $existingSite === null
+            $site = $retrySiteId === null
                 ? null
-                : Site::query()->whereKey($existingSite->getKey())->lockForUpdate()->first();
+                : Site::query()->whereKey($retrySiteId)->lockForUpdate()->firstOrFail();
 
             if ($site === null) {
                 $site = Site::query()->create([
@@ -121,6 +127,11 @@ final class SiteOnboardingController extends Controller
                     'health_state' => 'unknown',
                 ]);
             } else {
+                abort_unless(
+                    $site->connection_status === 'failed',
+                    409,
+                    'Onboarding retry token is no longer valid for this site state.',
+                );
                 $site->name = $name;
                 $site->url = $url;
                 $site->connection_status = 'testing';
@@ -144,7 +155,7 @@ final class SiteOnboardingController extends Controller
         if ($persisted['replay']) {
             $receipt = IdempotencyKey::query()->where('key', $key)->firstOrFail();
 
-            return $this->replay($receipt, $requestHash, $context->id());
+            return $this->replay($receipt, $requestHash, $context->id(), $actorId);
         }
 
         $siteId = (int) $persisted['site_id'];
@@ -179,7 +190,7 @@ final class SiteOnboardingController extends Controller
             }, 3);
 
             return response()->json(
-                $this->failureResponse($context->id(), $siteId, false, 'WordPress connection test failed. Initial synchronization was not started.'),
+                $this->failureResponse($context->id(), $siteId, $actorId, false, 'WordPress connection test failed. Initial synchronization was not started.'),
                 422,
             );
         }
@@ -284,7 +295,7 @@ final class SiteOnboardingController extends Controller
         );
     }
 
-    private function replay(IdempotencyKey $receipt, string $requestHash, int $tenantId): JsonResponse
+    private function replay(IdempotencyKey $receipt, string $requestHash, int $tenantId, int $actorId): JsonResponse
     {
         $this->assertSameRequest($receipt, $requestHash);
         abort_unless($receipt->completed_at, 409, 'Onboarding request is already in progress.');
@@ -297,7 +308,7 @@ final class SiteOnboardingController extends Controller
 
         if ($result === 'connection_failed') {
             return response()->json(
-                $this->failureResponse($tenantId, $siteId, true, 'WordPress connection test failed. Initial synchronization was not started.'),
+                $this->failureResponse($tenantId, $siteId, $actorId, true, 'WordPress connection test failed. Initial synchronization was not started.'),
                 422,
             );
         }
@@ -314,6 +325,37 @@ final class SiteOnboardingController extends Controller
         return response()->json($payload);
     }
 
+    private function resolveRetrySiteId(string $token, int $tenantId, int $actorId): int
+    {
+        try {
+            $payload = json_decode(Crypt::decryptString($token), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            abort(422, 'Onboarding retry token is invalid.');
+        }
+
+        abort_unless(is_array($payload), 422, 'Onboarding retry token is invalid.');
+        abort_unless(($payload['operation_id'] ?? null) === self::OPERATION_ID, 422, 'Onboarding retry token is invalid.');
+        abort_unless((int) ($payload['tenant_id'] ?? 0) === $tenantId, 404);
+        abort_unless((int) ($payload['actor_user_id'] ?? 0) === $actorId, 404);
+
+        $siteId = (int) ($payload['site_id'] ?? 0);
+        abort_unless($siteId > 0, 422, 'Onboarding retry token is invalid.');
+        Site::query()->whereKey($siteId)->firstOrFail();
+
+        return $siteId;
+    }
+
+    private function retryToken(int $tenantId, int $siteId, int $actorId): string
+    {
+        return Crypt::encryptString(json_encode([
+            'version' => 1,
+            'operation_id' => self::OPERATION_ID,
+            'tenant_id' => $tenantId,
+            'site_id' => $siteId,
+            'actor_user_id' => $actorId,
+        ], JSON_THROW_ON_ERROR));
+    }
+
     private function assertSameRequest(IdempotencyKey $receipt, string $requestHash): void
     {
         abort_unless(
@@ -324,7 +366,7 @@ final class SiteOnboardingController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function failureResponse(int $tenantId, int $siteId, bool $replay, string $message): array
+    private function failureResponse(int $tenantId, int $siteId, int $actorId, bool $replay, string $message): array
     {
         $site = Site::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)
@@ -348,6 +390,7 @@ final class SiteOnboardingController extends Controller
                 'last_verified_at' => $site->last_verified_at?->utc()->toIso8601String(),
             ],
             'credential_configured' => $credentialExists,
+            'retry_token' => $this->retryToken($tenantId, $siteId, $actorId),
             'sync' => null,
             'idempotent_replay' => $replay,
         ];
