@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-29A4267B87",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/billing-support",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:ReactivateAsync:ReactivateAsync",
+    "source_intent": "Restore local subscription access for a suspended non-provider-backed subscription through a bounded audited platform-admin support intervention",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportController.php",
+    "route": "POST /api/tenants/{tenant}/billing/admin/subscriptions/{subscription}/reactivate",
+    "readback": "GET /api/tenants/{tenant}/billing/admin/subscriptions",
+    "workspace": "GET /tenants/{tenant}/admin/billing-support",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_request_binding": "variants/laravel-aiwmweb/backend/resources/js/action-contract.ts",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "platform_admin_required": true,
+    "tenant_context_required": true,
+    "authoritative_reread": true,
+    "idempotency_header": "Idempotency-Key",
+    "transaction_retry_limit": 3
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "subscription_ownership": "TenantSubscription global tenant scope rejects foreign direct IDs",
+    "caller_owned_fields": [
+      "tenant_id",
+      "user_id",
+      "actor_user_id",
+      "provider",
+      "provider_subscription_id",
+      "payment_status"
+    ],
+    "caller_owned_fields_policy": "prohibited",
+    "csrf": "web route stack retained for POST mutation",
+    "audit": "immutable tenant-scoped BillingAudit records actor, support reason and request context",
+    "provider_backed_reactivation": "rejected; authoritative provider reconciliation remains required",
+    "provider_secret_disclosure_added": false,
+    "provider_mutation_added": false,
+    "payment_success_recorded": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingReactivateTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/admin-billing-reactivate-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and route marker",
+      "platform-admin middleware plus guest and non-admin denial",
+      "tenant-scoped foreign subscription direct-ID rejection",
+      "support reason and caller-owned field validation",
+      "idempotent replay with conflicting request protection",
+      "authoritative persisted readback after mutation",
+      "immutable tenant billing audit with actor and request context",
+      "provider-backed subscription denial without provider mutation",
+      "no payment-success inference and no provider secret response",
+      "active-tenant frontend contract binding and browser idempotency header"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-29A4267B87"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "provider_mutation_added": false,
+    "payment_success_inferred": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "036fb9f055978f1c18e2b540b8b3613cd3d5d5ef",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-29A4267B87-billing-reactivate",
+    "implementation_sha": "ac8d6d00bebbbd3c554ec58ef86a02124a7fb36b"
+  }
+}
