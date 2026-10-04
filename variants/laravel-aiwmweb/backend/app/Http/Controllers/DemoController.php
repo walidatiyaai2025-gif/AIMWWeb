@@ -237,17 +237,34 @@ final class DemoController extends Controller
         }
 
         $authoritative = SyncRun::query()->findOrFail($result['run']->id);
-        $payload = $authoritative->toArray();
-        $payload['idempotent_replay'] = (bool) $result['replay'];
 
-        return response()->json($payload, $result['created'] ? 202 : 200);
+        return response()->json(
+            $this->syncRunResource($authoritative, (bool) $result['replay']),
+            $result['created'] ? 202 : 200,
+        );
     }
 
     public function syncStatus(int $run, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
+        $model = SyncRun::query()->findOrFail($run);
 
-        return response()->json(SyncRun::query()->findOrFail($run));
+        return response()->json($this->syncRunResource($model));
+    }
+
+    /** @return array<string, mixed> */
+    private function syncRunResource(SyncRun $run, bool $replay = false): array
+    {
+        return [
+            'id' => (int) $run->getKey(),
+            'site_id' => (int) $run->site_id,
+            'status' => (string) $run->status,
+            'processed' => (int) ($run->processed ?? 0),
+            'failure' => filled($run->failure) ? 'Synchronization failed.' : null,
+            'started_at' => $run->started_at?->utc()->toIso8601String(),
+            'completed_at' => $run->completed_at?->utc()->toIso8601String(),
+            'idempotent_replay' => $replay,
+        ];
     }
 
     public function content(int $site, TenantAuthorizer $auth): JsonResponse
