@@ -126,19 +126,42 @@ final class ReactivationFakePayPal implements BillingProvider
 
     public string $reconciledStatus = 'SUSPENDED';
 
-    public function name(): string { return 'paypal'; }
+    public function name(): string
+    {
+        return 'paypal';
+    }
 
-    public function configured(): bool { return true; }
+    public function configured(): bool
+    {
+        return true;
+    }
 
-    public function createSubscriptionIntent(TenantSubscription $subscription, BillingPlan $plan): array { return []; }
+    public function createSubscriptionIntent(TenantSubscription $subscription, BillingPlan $plan): array
+    {
+        return [];
+    }
 
-    public function changeSubscription(TenantSubscription $subscription, BillingPlan $plan): array { return ['requested' => true]; }
+    public function changeSubscription(TenantSubscription $subscription, BillingPlan $plan): array
+    {
+        return ['requested' => true];
+    }
 
-    public function cancelSubscription(TenantSubscription $subscription): void {}
+    public function cancelSubscription(TenantSubscription $subscription): void
+    {
+    }
 
-    public function reactivateSubscription(TenantSubscription $subscription): void { $this->reactivateCalls++; }
+    public function reactivateSubscription(TenantSubscription $subscription): void
+    {
+        $this->reactivateCalls++;
+    }
 
-    public function verifyAndParseWebhook(Request $request): array { return []; }
+    public function verifyAndParseWebhook(Request $request): array
+    {
+        return [];
+    }
 
-    public function reconcile(TenantSubscription $subscription): array { return ['status' => $this->reconciledStatus, 'occurred_at' => now()->toAtomString()]; }
+    public function reconcile(TenantSubscription $subscription): array
+    {
+        return ['status' => $this->reconciledStatus, 'occurred_at' => now()->toAtomString()];
+    }
 }
