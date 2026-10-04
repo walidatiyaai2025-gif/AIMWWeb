@@ -31,6 +31,12 @@ export function canonicalSiteOnboardingEndpoint(sitesEndpoint: string | undefine
     return `${sitesEndpoint}/onboarding`;
 }
 
+export function onboardingRetryTokenFromError(error: unknown): string | null {
+    if (!(error instanceof ApiError)) return null;
+    const token = error.payload.retry_token;
+    return typeof token === 'string' && token.trim() !== '' ? token : null;
+}
+
 function nextIdempotencyKey(): string {
     if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
     return `site-onboarding-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -45,6 +51,7 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
     const [username, setUsername] = useState('');
     const [applicationPassword, setApplicationPassword] = useState('');
     const [result, setResult] = useState<OnboardingResponse | null>(null);
+    const [retryToken, setRetryToken] = useState<string | null>(null);
     const idempotencyKey = useRef<string | null>(null);
 
     const resetRequestIdentity = () => {
@@ -67,6 +74,7 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         url: url.trim(),
                         username: username.trim(),
                         application_password: applicationPassword,
+                        retry_token: retryToken ?? undefined,
                     }),
                 });
             } finally {
@@ -75,9 +83,12 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
         },
         onSuccess: (payload) => {
             setResult(payload);
+            setRetryToken(null);
             idempotencyKey.current = null;
         },
         onError: (error) => {
+            const issuedRetryToken = onboardingRetryTokenFromError(error);
+            if (issuedRetryToken) setRetryToken(issuedRetryToken);
             if (error instanceof ApiError && (error.status === 409 || error.status === 422)) {
                 idempotencyKey.current = null;
             }
