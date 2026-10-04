@@ -31,8 +31,7 @@
     ],
     "transaction_retry_limit": 3,
     "authoritative_reread": true,
-    "idempotency_header": "Idempotency-Key",
-    "site_url_parity_migration": "variants/laravel-aiwmweb/backend/database/migrations/2026_10_05_000100_allow_duplicate_site_urls.php"
+    "idempotency_header": "Idempotency-Key"
   },
   "security": {
     "tenant_selector": "server-owned tenant.context only",
