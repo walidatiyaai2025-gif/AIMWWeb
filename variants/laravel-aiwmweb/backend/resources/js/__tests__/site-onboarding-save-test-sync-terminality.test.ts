@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { ApiError } from '../core';
 import {
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
     canonicalSiteOnboardingEndpoint,
+    onboardingRetryTokenFromError,
 } from '../site-onboarding-save-test-sync-control';
 
 describe('Site onboarding SaveTestAndSyncAsync terminality', () => {
@@ -17,5 +19,18 @@ describe('Site onboarding SaveTestAndSyncAsync terminality', () => {
         const endpoint = canonicalSiteOnboardingEndpoint('/api/tenants/alpha/sites');
         expect(endpoint).not.toContain('/sites/0/');
         expect(endpoint).not.toContain('/sites/99/');
+    });
+
+    it('accepts only the server-issued retry token carried in a safe API error payload', () => {
+        const error = new ApiError(
+            'Connection failed',
+            422,
+            'http_422',
+            {},
+            { retry_token: 'server-issued-retry-token' },
+        );
+
+        expect(onboardingRetryTokenFromError(error)).toBe('server-issued-retry-token');
+        expect(onboardingRetryTokenFromError(new Error('not an API error'))).toBeNull();
     });
 });
