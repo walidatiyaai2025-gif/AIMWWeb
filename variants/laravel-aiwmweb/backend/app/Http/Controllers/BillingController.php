@@ -28,7 +28,7 @@ final class BillingController extends Controller
         $auth->authorize('billing.view');
         $s = TenantSubscription::query()->with('plan')->first();
 
-        return response()->json(['data' => $s ? ['state' => $s->state->value, 'plan' => $this->planResource($s->plan), 'started_at' => $s->started_at?->toAtomString(), 'trial_expires_at' => $s->trial_expires_at?->toAtomString(), 'current_period_end' => $s->current_period_end?->toAtomString(), 'grace_ends_at' => $s->grace_ends_at?->toAtomString(), 'cancel_at_period_end' => $s->cancel_at_period_end, 'can_cancel_permanently' => $this->canCancelPermanently($s)] : null]);
+        return response()->json(['data' => $s ? ['state' => $s->state->value, 'plan' => $this->planResource($s->plan), 'started_at' => $s->started_at?->toAtomString(), 'trial_expires_at' => $s->trial_expires_at?->toAtomString(), 'current_period_end' => $s->current_period_end?->toAtomString(), 'grace_ends_at' => $s->grace_ends_at?->toAtomString(), 'cancel_at_period_end' => $s->cancel_at_period_end, 'can_cancel_permanently' => $this->canCancelPermanently($s), 'can_reactivate' => $this->canReactivate($s)] : null]);
     }
 
     public function trial(TenantAuthorizer $auth, SubscriptionService $service): JsonResponse
@@ -75,6 +75,25 @@ final class BillingController extends Controller
         return response()->json(['data' => ['state' => $s->state->value, 'cancel_at_period_end' => $s->cancel_at_period_end]]);
     }
 
+    public function reactivate(Request $request, TenantAuthorizer $auth, \App\Billing\PayPalSubscriptionReactivationService $reactivation): JsonResponse
+    {
+        $auth->authorize('billing.manage');
+
+        if ($request->keys() !== []) {
+            throw ValidationException::withMessages(['request' => 'Reactivation does not accept caller-supplied tenant, user, subscription, or provider identifiers.']);
+        }
+
+        $result = $reactivation->request();
+        $authoritative = TenantSubscription::query()->findOrFail($result['subscription']->id);
+        $status = $result['request_status'] === 'provider_accepted' ? 202 : 200;
+
+        return response()->json(['data' => [
+            'request_status' => $result['request_status'],
+            'state' => $authoritative->state->value,
+            'provider_state_authoritative' => true,
+        ]], $status);
+    }
+
     public function changePlan(Request $request, TenantAuthorizer $auth, SubscriptionService $service): JsonResponse
     {
         $auth->authorize('billing.manage');
@@ -104,6 +123,13 @@ final class BillingController extends Controller
         $auth->authorize('billing.view');
 
         return response()->json(['data' => ['audit' => BillingAudit::query()->latest('occurred_at')->limit(100)->get(['action', 'subject_type', 'subject_id', 'metadata', 'occurred_at']), 'transactions' => BillingTransaction::query()->latest('occurred_at')->limit(100)->get(['type', 'status', 'amount_minor', 'currency', 'occurred_at'])]]);
+    }
+
+    private function canReactivate(TenantSubscription $subscription): bool
+    {
+        return $subscription->provider === 'paypal'
+            && filled($subscription->encrypted_provider_subscription_id)
+            && $subscription->state === SubscriptionState::SUSPENDED;
     }
 
     private function canCancelPermanently(TenantSubscription $subscription): bool
