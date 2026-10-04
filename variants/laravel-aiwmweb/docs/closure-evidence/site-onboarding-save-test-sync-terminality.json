@@ -10,7 +10,7 @@
     "route_screen": "/sites/connect | /sites/onboarding",
     "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
     "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor:/sites/connect|/sites/onboarding:SaveTestAndSyncAsync",
-    "source_intent": "Persist the tenant-owned site profile, verify the real WordPress REST boundary, persist protected WordPress credentials only after successful verification, clear browser credential material, and then start the tenant-aware initial synchronization",
+    "source_intent": "Persist or update the exact onboarding site profile held by the flow, allow independent profiles to share the same WordPress URL, verify the real WordPress REST boundary, persist protected WordPress credentials only after successful verification, clear browser credential material, and then start the tenant-aware initial synchronization",
     "mutation": true,
     "tenant_owned": true,
     "risk": "high"
@@ -31,21 +31,23 @@
     ],
     "transaction_retry_limit": 3,
     "authoritative_reread": true,
-    "idempotency_header": "Idempotency-Key"
+    "idempotency_header": "Idempotency-Key",
+    "site_url_parity_migration": "variants/laravel-aiwmweb/backend/database/migrations/2026_10_05_000100_allow_duplicate_site_urls.php"
   },
   "security": {
     "tenant_selector": "server-owned tenant.context only",
-    "site_identity": "server-created; caller-owned tenant_id, site_id, actor_user_id, status and other unexpected fields are rejected",
+    "site_identity": "new profiles are server-created even when another profile uses the same WordPress URL; failed-profile retries use only a server-issued encrypted token bound to operation, tenant, actor and site; caller-owned tenant_id, site_id, actor_user_id and status identifiers are rejected",
     "credential_storage": "SiteCredential secret_value encrypted cast only after successful WordPress verification; failed verification stores no credential; secret never returned by API",
     "browser_secret_policy": "Application Password state is cleared after submission and never echoed in rendered authoritative state",
     "csrf": "mutation is on the Laravel web/auth/tenant.context route stack and frontend apiRequest supplies the CSRF token",
     "wordpress_boundary": "existing WordPressApplicationPasswordVerifier performs authenticated /wp-json/wp/v2/users/me?context=edit verification",
     "initial_sync_gate": "SyncRun and SyncSiteJob are created/dispatched only after successful WordPress verification",
-    "idempotency": "tenant-scoped Idempotency-Key receipt rejects conflicting payloads and replays terminal outcomes; a new-key credential retry reuses the active-tenant site profile by URL and updates the encrypted credential without duplicating the site or sync run",
+    "idempotency": "tenant-scoped Idempotency-Key receipts reject conflicting payloads and replay terminal outcomes; after a failed verification, a new-key retry can reuse only the exact failed profile carried by the server-issued encrypted retry token, never by URL lookup",
     "audit": "immutable tenant-scoped AuditEvent records credential persistence and verified queue/failure milestones without secrets",
     "provider_success_inferred": false,
     "secret_disclosure_added": false,
-    "fake_success": false
+    "fake_success": false,
+    "retry_token": "opaque Laravel-encrypted retry token is returned only with failed verification, bound to operation + tenant + actor + site, validated server-side, and accepted only while that exact site remains failed"
   },
   "acceptance": {
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php",
@@ -63,7 +65,9 @@
       "authoritative persisted site, verification and sync reread",
       "browser Application Password clearing after submission",
       "both /sites/connect and /sites/onboarding workspace routes",
-      "failed connection retry with a new idempotency key reuses the same tenant-owned site and credential"
+      "failed connection retry with a new idempotency key reuses the exact server-issued failed profile without URL-based identity",
+      "retry token is actor- and tenant-bound and cannot select another user's failed profile",
+      "same WordPress URL can create independent site profiles when no retry token is supplied"
     ]
   },
   "scope_guards": {
@@ -82,6 +86,6 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "415bd5d7a38408e8d344f2999a955ed99d6bdb3e",
     "branch": "worker/laravel-aiwmweb-AIMW-BILL-2EF6B8A27A-site-onboarding-save-test-sync",
-    "implementation_sha": "c5849c7c995cdf44ee2fb9c29495a03edc1cc53d"
+    "implementation_sha": "b66f1454ec4c099f69ee2b32098a316463409342"
   }
 }
