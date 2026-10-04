@@ -220,7 +220,7 @@ final class SiteOnboardingController extends Controller
         try {
             SyncSiteJob::dispatch($context->id(), $siteId, $runId);
         } catch (Throwable) {
-            DB::transaction(function () use ($request, $context, $siteId, $runId, $receiptId): void {
+            DB::transaction(function () use ($request, $siteId, $runId, $receiptId): void {
                 SyncRun::query()->whereKey($runId)->update([
                     'status' => 'failed',
                     'failure' => 'Queue dispatch failed before initial synchronization could start.',
