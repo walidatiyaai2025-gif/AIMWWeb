@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { BillingCancelPermanentlyControl } from './billing-cancel-permanently-control';
+import { BillingReactivatePayPalControl } from './billing-reactivate-paypal-control';
 import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
@@ -32,6 +33,7 @@ export function BillingProfileLink({ context }: { context: FrontendContext }) {
                     </Link>
                 </div>
             </nav>
+            <BillingReactivatePayPalControl context={context} />
             <BillingCancelPermanentlyControl context={context} />
         </>
     );
