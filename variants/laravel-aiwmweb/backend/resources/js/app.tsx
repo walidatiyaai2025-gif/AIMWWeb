@@ -39,6 +39,7 @@ import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
+import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
 import { SitesDeleteControl } from './sites-delete-control';
 import { SystemHealthWorkspace } from './system-health-workspace';
@@ -132,6 +133,7 @@ function AiWorkspaceRoute() {
 
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
+    if (route.key === 'site-snapshot' || route.key === 'site-offline-data') return <SiteDataSnapshotSyncControl context={context} />;
     if (route.key === 'site-details') return (
         <>
             <SiteDetailsBackControl context={context} />

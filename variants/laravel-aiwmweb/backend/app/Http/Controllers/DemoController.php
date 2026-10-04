@@ -15,6 +15,7 @@ use App\Models\Approval;
 use App\Models\Connector;
 use App\Models\EvidenceReceipt;
 use App\Models\Execution;
+use App\Models\IdempotencyKey;
 use App\Models\SeoAudit;
 use App\Models\SeoFinding;
 use App\Models\Site;
@@ -25,6 +26,8 @@ use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final class DemoController extends Controller
 {
@@ -155,21 +158,125 @@ final class DemoController extends Controller
         return response()->json($health);
     }
 
-    public function sync(int $site, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function sync(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('sites.manage');
-        Site::query()->findOrFail($site);
-        $run = SyncRun::query()->create(['site_id' => $site]);
-        SyncSiteJob::dispatch($context->id(), $site, $run->id);
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+        Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->firstOrFail();
 
-        return response()->json($run, 202);
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        abort_if(strlen($idempotencyKey) > 128, 422, 'Idempotency-Key must not exceed 128 characters.');
+        $requestHash = hash('sha256', json_encode([
+            'tenant_id' => $context->id(),
+            'site_id' => $siteId,
+            'operation' => 'site.sync',
+        ], JSON_THROW_ON_ERROR));
+
+        $result = DB::transaction(function () use ($siteId, $idempotencyKey, $requestHash): array {
+            $receipt = null;
+            if ($idempotencyKey !== '') {
+                $receipt = IdempotencyKey::query()
+                    ->where('key', $idempotencyKey)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($receipt) {
+                    abort_unless(
+                        $receipt->operation === 'site.sync' && hash_equals((string) $receipt->request_hash, $requestHash),
+                        409,
+                        'Idempotency key was already used for a different request.',
+                    );
+                    $acceptedRunId = (int) (($receipt->response ?? [])['run_id'] ?? 0);
+                    if ($receipt->completed_at && $acceptedRunId > 0) {
+                        return [
+                            'run' => SyncRun::query()->findOrFail($acceptedRunId),
+                            'created' => false,
+                            'replay' => true,
+                        ];
+                    }
+                }
+            }
+
+            $run = SyncRun::query()
+                ->where('site_id', $siteId)
+                ->whereIn('status', ['queued', 'running'])
+                ->lockForUpdate()
+                ->latest('id')
+                ->first();
+            $created = false;
+
+            if (! $run) {
+                $run = SyncRun::query()->create(['site_id' => $siteId]);
+                $created = true;
+            }
+
+            if ($idempotencyKey !== '') {
+                $receipt ??= IdempotencyKey::query()->create([
+                    'key' => $idempotencyKey,
+                    'operation' => 'site.sync',
+                    'request_hash' => $requestHash,
+                ]);
+                $receipt->response = ['run_id' => (int) $run->getKey()];
+                $receipt->completed_at = now();
+                $receipt->save();
+            }
+
+            return ['run' => $run, 'created' => $created, 'replay' => false];
+        }, 3);
+
+        if ($result['created']) {
+            try {
+                SyncSiteJob::dispatch($context->id(), $siteId, $result['run']->id);
+            } catch (Throwable $exception) {
+                SyncRun::query()->whereKey($result['run']->id)->update([
+                    'status' => 'failed',
+                    'failure' => 'Queue dispatch failed before synchronization could start.',
+                    'completed_at' => now(),
+                ]);
+                throw $exception;
+            }
+        }
+
+        $authoritative = SyncRun::query()->findOrFail($result['run']->id);
+
+        return response()->json(
+            $this->syncRunResource($authoritative, (bool) $result['replay']),
+            $result['created'] ? 202 : 200,
+        );
     }
 
-    public function syncStatus(int $run, TenantAuthorizer $auth): JsonResponse
+    public function syncStatus(string $tenant, int|string $run, TenantAuthorizer $auth, TenantContext $context): JsonResponse
     {
         $auth->authorize('tenant.view');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($run) || ctype_digit($run), 404);
+        $runId = (int) $run;
+        abort_if($runId < 1, 404);
+        $model = SyncRun::query()->findOrFail($runId);
 
-        return response()->json(SyncRun::query()->findOrFail($run));
+        return response()->json($this->syncRunResource($model));
+    }
+
+    /** @return array<string, mixed> */
+    private function syncRunResource(SyncRun $run, bool $replay = false): array
+    {
+        return [
+            'id' => (int) $run->getKey(),
+            'site_id' => (int) $run->site_id,
+            'status' => (string) $run->status,
+            'processed' => (int) ($run->processed ?? 0),
+            'failure' => filled($run->failure) ? 'Synchronization failed.' : null,
+            'started_at' => $run->started_at?->utc()->toIso8601String(),
+            'completed_at' => $run->completed_at?->utc()->toIso8601String(),
+            'idempotent_replay' => $replay,
+        ];
     }
 
     public function content(int $site, TenantAuthorizer $auth): JsonResponse

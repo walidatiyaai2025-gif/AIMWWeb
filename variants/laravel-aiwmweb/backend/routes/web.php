@@ -17,6 +17,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
 use App\Http\Controllers\RouteApiAdapterController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SiteDataSnapshotController;
 use App\Http\Controllers\SiteDiagnosticsController;
 use App\Http\Controllers\SiteManagementController;
 use App\Models\Connector;
@@ -47,6 +48,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::delete('/sites/{site}/connector', [DemoController::class, 'revoke']);
     Route::post('/sites/{site}/verify', [DemoController::class, 'verify']);
     Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
+    Route::get('/sites/{site}/snapshot', SiteDataSnapshotController::class)
+        ->defaults('canonical_operation_id', SiteDataSnapshotController::OPERATION_ID)
+        ->name('canonical.api.site-data-snapshot');
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
     Route::get('/billing/admin/subscriptions', [AdminBillingSupportController::class, 'index'])
         ->middleware('platform.admin')
