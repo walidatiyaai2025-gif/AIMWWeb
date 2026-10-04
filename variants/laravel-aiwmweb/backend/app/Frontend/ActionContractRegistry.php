@@ -22,8 +22,14 @@ final class ActionContractRegistry
             $availability = ['state' => 'enabled', 'reason' => null];
             $permission = $definition['permission'] ?? null;
             $ownership = $definition['ownership'] ?? 'tenant';
+            $requiresPlatformAdmin = (bool) ($definition['platform_admin'] ?? false);
 
-            if ($site !== null && (int) $site->tenant_id !== (int) $tenant->id) {
+            if ($requiresPlatformAdmin && ! (bool) auth()->user()?->platform_admin) {
+                $availability = [
+                    'state' => 'permission_denied',
+                    'reason' => 'Platform administrator access is required.',
+                ];
+            } elseif ($site !== null && (int) $site->tenant_id !== (int) $tenant->id) {
                 $availability = [
                     'state' => 'context_mismatch',
                     'reason' => 'The selected site does not belong to the active tenant.',
@@ -60,6 +66,7 @@ final class ActionContractRegistry
                 'tenant_slug' => (string) $tenant->slug,
                 'site_id' => $ownership === 'site' ? $site?->id : null,
                 'permission' => $permission,
+                'platform_admin_required' => $requiresPlatformAdmin,
                 'capability' => $definition['capability'] ?? null,
                 'connector_scope' => $definition['connector_scope'] ?? null,
                 'endpoint' => $endpoint,
