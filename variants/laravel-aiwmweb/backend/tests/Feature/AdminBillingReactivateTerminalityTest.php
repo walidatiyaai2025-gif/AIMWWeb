@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Billing\Enums\SubscriptionState;
 use App\Http\Controllers\AdminBillingSupportController;
+use App\Models\BillingAudit;
 use App\Models\BillingPlan;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
@@ -12,7 +13,9 @@ use App\Models\User;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use LogicException;
 use Tests\TestCase;
 
 class AdminBillingReactivateTerminalityTest extends TestCase
@@ -92,6 +95,8 @@ class AdminBillingReactivateTerminalityTest extends TestCase
         $persisted = TenantSubscription::query()->findOrFail($subscription->id);
         $this->assertSame(SubscriptionState::ACTIVE, $persisted->state);
         $this->assertNull($persisted->provider);
+        $this->assertNull($persisted->provider_subscription_hash);
+        $this->assertNull($persisted->encrypted_provider_subscription_id);
         $this->assertDatabaseCount('billing_audits', 1);
         $this->assertDatabaseHas('billing_audits', [
             'tenant_id' => $tenant->id,
@@ -100,6 +105,18 @@ class AdminBillingReactivateTerminalityTest extends TestCase
             'subject_type' => 'subscription',
             'subject_id' => (string) $subscription->id,
         ]);
+        $audit = BillingAudit::query()->where('action', 'billing.support.reactivated')->sole();
+        $this->assertSame('req-support-1', $audit->metadata['request_id']);
+        $this->assertSame('Case SUP-1001 verified local lockout', $audit->metadata['reason']);
+        $this->assertFalse($audit->metadata['payment_success_recorded']);
+        $this->assertFalse($audit->metadata['provider_mutated']);
+        $this->assertSame(0, DB::table('billing_transactions')->where('tenant_id', $tenant->id)->count());
+        try {
+            $audit->update(['action' => 'tampered']);
+            $this->fail('Billing audit must be immutable.');
+        } catch (LogicException) {
+            $this->assertSame('billing.support.reactivated', $audit->fresh()->action);
+        }
         app(TenantContext::class)->forget();
     }
 
@@ -149,8 +166,9 @@ class AdminBillingReactivateTerminalityTest extends TestCase
         $subscription = TenantSubscription::query()->create([
             'billing_plan_id' => $plan->id,
             'state' => SubscriptionState::SUSPENDED,
-            'provider' => 'paypal',
-            'encrypted_provider_subscription_id' => 'I-PROVIDER-SECRET',
+            'provider' => null,
+            'provider_subscription_hash' => hash('sha256', 'I-PROVIDER-REFERENCE'),
+            'encrypted_provider_subscription_id' => null,
             'started_at' => now()->subMonth(),
         ]);
         app(TenantContext::class)->forget();
@@ -173,6 +191,7 @@ class AdminBillingReactivateTerminalityTest extends TestCase
                 'reason' => 'Attempt ownership override',
                 'tenant_id' => 999,
                 'actor_user_id' => 999,
+                'provider_subscription_hash' => hash('sha256', 'forged'),
                 'payment_status' => 'COMPLETED',
             ])
             ->assertUnprocessable();
@@ -180,8 +199,10 @@ class AdminBillingReactivateTerminalityTest extends TestCase
         $this->activate($tenant);
         $persisted = TenantSubscription::query()->findOrFail($subscription->id);
         $this->assertSame(SubscriptionState::SUSPENDED, $persisted->state);
-        $this->assertSame('paypal', $persisted->provider);
+        $this->assertNull($persisted->provider);
+        $this->assertNotNull($persisted->provider_subscription_hash);
         $this->assertDatabaseCount('billing_audits', 0);
+        $this->assertSame(0, DB::table('billing_transactions')->where('tenant_id', $tenant->id)->count());
         app(TenantContext::class)->forget();
     }
 
