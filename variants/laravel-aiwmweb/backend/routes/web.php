@@ -10,6 +10,7 @@ use App\Http\Controllers\AiProviderSettingsReadController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
+use App\Http\Controllers\ContentPlannerController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\PayPalWebhookController;
@@ -46,6 +47,10 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/verify', [DemoController::class, 'verify']);
     Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
+    Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
+    Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
+        ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
+        ->name('canonical.api.content-planner.save');
     Route::get('/sites/{site}/content', [DemoController::class, 'content']);
     Route::post('/sites/{site}/audits', [DemoController::class, 'audit']);
     Route::get('/audits/{audit}/findings', [DemoController::class, 'findings']);
@@ -165,6 +170,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
+            'content-planner' => "/api/tenants/{$tenant}/content-planner/items",
             'application-users' => "/tenants/{$tenant}/admin/members",
             'roles' => "/tenants/{$tenant}/admin/roles",
             'sessions' => "/tenants/{$tenant}/admin/sessions",

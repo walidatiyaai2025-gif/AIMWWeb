@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-2805622F94",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/content-planner",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor:/content-planner:SaveAsync:SaveAsync",
+    "source_intent": "Create or update a Content Planner item and then reconcile from authoritative persisted state",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentPlannerController.php",
+    "model": "variants/laravel-aiwmweb/backend/app/Models/ContentPlannerItem.php",
+    "migration": "variants/laravel-aiwmweb/backend/database/migrations/2026_10_04_072300_create_content_planner_items_table.php",
+    "route": "POST /api/tenants/{tenant}/content-planner/items/save",
+    "readback": "GET /api/tenants/{tenant}/content-planner/items",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "permissions": ["content.view", "content.edit"],
+    "transaction_retry_limit": 3,
+    "authoritative_reread": true,
+    "idempotency_header": "Idempotency-Key"
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "site_ownership": "Site global tenant scope rejects foreign site IDs",
+    "item_ownership": "ContentPlannerItem global tenant scope rejects foreign item IDs",
+    "caller_owned_fields": ["tenant_id", "user_id", "created_by_user_id", "actor_user_id"],
+    "caller_owned_fields_policy": "prohibited",
+    "csrf": "web route stack retained for POST mutation",
+    "audit": "immutable tenant-scoped AuditEvent written only inside successful transaction",
+    "payment_provider_mutation": false,
+    "provider_success_inferred": false,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerSaveTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-planner-save-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity",
+      "route method, middleware and canonical marker",
+      "create and authoritative persisted reread",
+      "update and authoritative persisted reread",
+      "idempotent replay and conflicting-key rejection",
+      "guest and missing-permission denial",
+      "validation and caller-owned field rejection",
+      "foreign tenant site and planner item IDOR rejection",
+      "immutable tenant audit event",
+      "active-tenant frontend contract binding"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-2805622F94"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "payment_provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "61f0e8d7a6464cdb3eb8f3dc8f9bb69beee16fd1",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-2805622F94-content-planner-save",
+    "implementation_sha": "0d38cffd1da962c2dc3ea6128fa67cba57fa6dc1"
+  }
+}
