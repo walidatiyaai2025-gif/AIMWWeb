@@ -69,18 +69,19 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
         $siteId = (int) $first->json('site.id');
         $runId = (int) $first->json('sync.id');
 
-        Http::assertSent(fn (HttpRequest $request): bool =>
-            str_starts_with($request->url(), 'https://wp.example.test/wp-json/wp/v2/users/me')
-        );
+        Http::assertSent(fn (HttpRequest $request): bool => str_starts_with(
+            $request->url(),
+            'https://wp.example.test/wp-json/wp/v2/users/me'
+        ));
 
         $rawSecret = DB::table('site_credentials')->where('site_id', $siteId)->value('secret_value');
         $this->assertIsString($rawSecret);
         $this->assertNotSame($payload['application_password'], $rawSecret);
         $this->assertStringNotContainsString($payload['application_password'], $first->getContent());
 
-        Queue::assertPushed(SyncSiteJob::class, fn (SyncSiteJob $job): bool =>
-            $job->tenantId === $tenant->id && $job->siteId === $siteId && $job->syncRunId === $runId
-        );
+        Queue::assertPushed(SyncSiteJob::class, fn (SyncSiteJob $job): bool => $job->tenantId === $tenant->id
+            && $job->siteId === $siteId
+            && $job->syncRunId === $runId);
 
         $this->actingAs($user)
             ->withHeader('Idempotency-Key', 'onboarding-alpha-1')
