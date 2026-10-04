@@ -164,7 +164,11 @@ final class DemoController extends Controller
         abort_unless(is_int($site) || ctype_digit($site), 404);
         $siteId = (int) $site;
         abort_if($siteId < 1, 404);
-        Site::query()->findOrFail($siteId);
+        Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->firstOrFail();
 
         $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
         abort_if(strlen($idempotencyKey) > 128, 422, 'Idempotency-Key must not exceed 128 characters.');
