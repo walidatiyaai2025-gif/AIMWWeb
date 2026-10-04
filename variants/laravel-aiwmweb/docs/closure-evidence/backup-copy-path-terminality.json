@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-141E898A90",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/backups | /module/backups",
+    "visible_control": "CopyPathAsync [CopyPathAsync]",
+    "source": "src/AIWordPressManager.Web/Components/Pages/BackupRestore.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/BackupRestore.razor:/backups | /module/backups:CopyPathAsync [CopyPathAsync]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "adaptation": {
+    "reason": "Laravel is a remote multi-tenant web runtime; exposing the server-local filesystem BackupDirectory would leak host topology. The copy control therefore copies the authoritative tenant-scoped backups API path issued by the server frontend context.",
+    "copied_value_source": "FrontendContext.api.backups",
+    "expected_shape": "/tenants/{activeTenant}/admin/backups",
+    "filesystem_path_exposed": false
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/backup-copy-path-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "permissions": [
+      "backup.manage",
+      "backups.view"
+    ],
+    "clipboard_success": "only after navigator.clipboard.writeText resolves",
+    "clipboard_failure": "explicit error notification; no success state"
+  },
+  "security": {
+    "tenant_selector": "server-issued FrontendContext active tenant",
+    "foreign_tenant_path": "rejected client-side before clipboard write",
+    "absolute_url": "rejected",
+    "filesystem_path": "rejected",
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/backup-copy-path-control.test.ts",
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/BackupCopyPathTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "server-issued active-tenant endpoint only",
+      "backup.manage plus backups.view authorization",
+      "foreign tenant / absolute URL / filesystem path rejection",
+      "clipboard resolve required for success",
+      "clipboard unavailable/rejected failure semantics",
+      "existing tenant route middleware and permissions"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-141E898A90"
+    ],
+    "provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "6180251f0a14f60073090334e0882e607ef3379c",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-141E898A90-backup-copy-path"
+  }
+}
