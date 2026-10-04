@@ -138,7 +138,7 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
 
         $siteId = (int) $response->json('site.id');
         $this->assertDatabaseHas('sites', ['id' => $siteId, 'connection_status' => 'failed']);
-        $this->assertDatabaseHas('site_credentials', ['site_id' => $siteId]);
+        $this->assertDatabaseMissing('site_credentials', ['site_id' => $siteId]);
         $this->assertDatabaseCount('sync_runs', 0);
         Queue::assertNothingPushed();
 
