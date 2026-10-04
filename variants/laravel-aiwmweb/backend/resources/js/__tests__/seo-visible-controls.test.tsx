@@ -5,6 +5,7 @@ import { SEO_OPERATIONS, SeoVisibleControls } from '../seo-visible-controls';
 
 const config = {
     tenant: 'alpha',
+    can_view_billing: true,
     site: { id: 7, name: 'Alpha Site', url: 'https://alpha.test' },
     urls: {
         audits: '/api/tenants/alpha/sites/7/seo/audits',
@@ -18,6 +19,7 @@ const config = {
         sites: '/tenants/alpha/sites',
         explorer: '/tenants/alpha/module/posts?site=7',
         approvals: '/tenants/alpha/approvals',
+        billing: '/tenants/alpha/account/billing',
     },
 };
 
