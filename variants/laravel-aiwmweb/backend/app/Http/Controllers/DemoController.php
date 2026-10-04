@@ -158,9 +158,10 @@ final class DemoController extends Controller
         return response()->json($health);
     }
 
-    public function sync(int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function sync(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('sites.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
         abort_unless(is_int($site) || ctype_digit($site), 404);
         $siteId = (int) $site;
         abort_if($siteId < 1, 404);
@@ -251,9 +252,10 @@ final class DemoController extends Controller
         );
     }
 
-    public function syncStatus(int|string $run, TenantAuthorizer $auth): JsonResponse
+    public function syncStatus(string $tenant, int|string $run, TenantAuthorizer $auth, TenantContext $context): JsonResponse
     {
         $auth->authorize('tenant.view');
+        abort_unless($tenant === $context->tenant()->slug, 404);
         abort_unless(is_int($run) || ctype_digit($run), 404);
         $runId = (int) $run;
         abort_if($runId < 1, 404);
