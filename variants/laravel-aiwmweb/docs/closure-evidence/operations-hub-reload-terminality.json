@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "036fb9f055978f1c18e2b540b8b3613cd3d5d5ef",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-2C2CB8CBAC",
+    "domain": "billing",
+    "kind": "visible_control",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsHub.razor",
+    "source_screen": "/operations | /operations/hub",
+    "source_control": "ReloadAsync",
+    "mutation": false,
+    "terminal_state": "ADAPTED",
+    "verification": "active-tenant authoritative reread replaces displayed state; stale snapshot is cleared on failure"
+  },
+  "source_behavior": {
+    "initialization": "OnInitializedAsync calls ReloadAsync",
+    "reads": [
+      "current-user owned sites",
+      "retained site operation history"
+    ],
+    "retry": "Retry invokes the same ReloadAsync path",
+    "failure": "clears sites, recent history and summary before presenting an explicit load error; stale metrics/activity are not presented as current"
+  },
+  "laravel_adaptation": {
+    "page_routes": [
+      "/tenants/{tenant}/operations",
+      "/tenants/{tenant}/operations/hub"
+    ],
+    "read_endpoint": "GET /tenants/{tenant}/admin/operations-hub",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php::operationsHub",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/operations-hub-reload-control.tsx",
+    "route_context": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "placeholder_or_fake_success": false
+  },
+  "authorization_and_isolation": {
+    "session": "required",
+    "active_tenant": "server-resolved by tenant.context",
+    "permissions": [
+      "operations.manage",
+      "execution.view"
+    ],
+    "foreign_tenant": "404/fail closed",
+    "data_scope": "Site global tenant scope plus OperationsControlPlaneService tenant_id filtering",
+    "caller_tenant_override": false
+  },
+  "runtime_path": [
+    "server advertises the operations-hub endpoint for the active tenant in frontend context",
+    "GET endpoint is protected by auth + tenant.context and rechecks operations.manage and execution.view",
+    "endpoint returns only safe site fields plus redacted operation summary fields; payload/result/provider secrets are not returned",
+    "frontend validates endpoint tenant identity and response operation/tenant identity before accepting the snapshot",
+    "initial load and explicit Refresh/Retry use the same authoritative GET",
+    "frontend clears the previous snapshot before every reread",
+    "failed reread leaves snapshot empty and renders an explicit error instead of stale or sample data"
+  ],
+  "tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsHubReloadTerminalityTest.php",
+    "typescript": "variants/laravel-aiwmweb/backend/resources/js/__tests__/operations-hub-reload-terminality.test.tsx",
+    "proof": [
+      "canonical source ReloadAsync and stale-clear semantics",
+      "GET-only route with auth + tenant.context",
+      "guest and partial-permission denial",
+      "foreign-tenant denial",
+      "tenant-isolated server response",
+      "canonical marker on Refresh/Retry",
+      "successful authoritative refresh replaces rendered state",
+      "failed refresh removes prior rendered state and exposes no fake success"
+    ]
+  },
+  "scope_guards": {
+    "only_operation": "AIMW-BILL-2C2CB8CBAC",
+    "mutations_added": false,
+    "sibling_maintenance_sync_retry_cancel_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "ReloadAsync is represented by a tenant-scoped, permission-gated, GET-only Operations Hub snapshot endpoint and a visible Refresh/Retry control that discards stale state before every authoritative reread and never fabricates success."
+  }
+}

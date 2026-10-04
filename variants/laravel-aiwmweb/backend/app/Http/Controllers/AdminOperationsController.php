@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
+use App\Models\Site;
 use App\Operations\AdministrationService;
 use App\Operations\OperationsControlPlaneService;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class AdminOperationsController extends Controller
 {
+    public const OPERATIONS_HUB_RELOAD_OPERATION_ID = 'AIMW-BILL-2C2CB8CBAC';
+
     public function __construct(
         private readonly TenantAuthorizer $authorizer,
         private readonly AdministrationService $administration,
@@ -149,6 +152,52 @@ final class AdminOperationsController extends Controller
         $this->authorizer->authorize('operations.manage');
 
         return response()->json($this->operations->approveAutomationRun($run, (int) $request->user()->getAuthIdentifier()));
+    }
+
+    public function operationsHub(string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('operations.manage');
+        $this->authorizer->authorize('execution.view');
+
+        $sites = Site::query()
+            ->orderBy('id')
+            ->get()
+            ->map(static fn (Site $site): array => [
+                'id' => (int) $site->getKey(),
+                'name' => (string) $site->name,
+                'status' => (string) $site->status,
+                'connection_status' => (string) $site->connection_status,
+                'health_state' => (string) $site->health_state,
+                'last_verified_at' => $site->last_verified_at?->toIso8601String(),
+                'last_sync_at' => $site->last_sync_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+
+        $operations = collect($this->operations->operations())
+            ->map(static fn (array $operation): array => [
+                'id' => (int) ($operation['id'] ?? 0),
+                'type' => (string) ($operation['type'] ?? ''),
+                'status' => (string) ($operation['status'] ?? ''),
+                'subject_type' => $operation['subject_type'] ?? null,
+                'started_at' => $operation['started_at'] ?? null,
+                'completed_at' => $operation['completed_at'] ?? null,
+                'updated_at' => $operation['updated_at'] ?? null,
+            ])
+            ->values()
+            ->all();
+
+        return response()->json([
+            'data' => [
+                'sites' => $sites,
+                'operations' => $operations,
+            ],
+            'meta' => [
+                'operation_id' => self::OPERATIONS_HUB_RELOAD_OPERATION_ID,
+                'tenant' => $tenant,
+                'refreshed_at' => now()->toIso8601String(),
+            ],
+        ]);
     }
 
     public function operations(Request $request, string $tenant): JsonResponse
