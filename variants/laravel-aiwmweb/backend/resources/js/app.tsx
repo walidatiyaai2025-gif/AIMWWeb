@@ -11,6 +11,7 @@ import { AiWorkspaceHub } from './ai-workspace-hub';
 import { ApplicationUserPasswordResetControl } from './application-user-password-reset-control';
 import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
 import { BillingProfileLink } from './billing-profile-link';
+import { BackupCopyPathControl } from './backup-copy-path-control';
 import { CommentsBackToExplorerControl } from './comments-back-to-explorer-control';
 import { CommentsBackToSitesControl } from './comments-back-to-sites-control';
 import { CommentsCommentLinksControl } from './comments-comment-link-control';
@@ -149,6 +150,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
