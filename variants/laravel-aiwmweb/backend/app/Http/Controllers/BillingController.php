@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Billing\EntitlementService;
 use App\Billing\Enums\SubscriptionState;
+use App\Billing\PayPalSubscriptionReactivationService;
 use App\Billing\PermanentSubscriptionCancellationService;
 use App\Billing\SubscriptionService;
 use App\Billing\UsageQuotaService;
@@ -75,7 +76,7 @@ final class BillingController extends Controller
         return response()->json(['data' => ['state' => $s->state->value, 'cancel_at_period_end' => $s->cancel_at_period_end]]);
     }
 
-    public function reactivate(Request $request, TenantAuthorizer $auth, \App\Billing\PayPalSubscriptionReactivationService $reactivation): JsonResponse
+    public function reactivate(Request $request, TenantAuthorizer $auth, PayPalSubscriptionReactivationService $reactivation): JsonResponse
     {
         $auth->authorize('billing.manage');
 
