@@ -10,7 +10,7 @@
     "route_screen": "/sites/connect | /sites/onboarding",
     "source": "src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor",
     "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor:/sites/connect|/sites/onboarding:SaveTestAndSyncAsync",
-    "source_intent": "Persist the tenant-owned site profile and protected WordPress credentials, verify the real WordPress REST boundary, clear browser credential material, and only after successful verification start the tenant-aware initial synchronization",
+    "source_intent": "Persist the tenant-owned site profile, verify the real WordPress REST boundary, persist protected WordPress credentials only after successful verification, clear browser credential material, and then start the tenant-aware initial synchronization",
     "mutation": true,
     "tenant_owned": true,
     "risk": "high"
@@ -36,7 +36,7 @@
   "security": {
     "tenant_selector": "server-owned tenant.context only",
     "site_identity": "server-created; caller-owned tenant_id, site_id, actor_user_id, status and other unexpected fields are rejected",
-    "credential_storage": "SiteCredential secret_value encrypted cast; secret never returned by API",
+    "credential_storage": "SiteCredential secret_value encrypted cast only after successful WordPress verification; failed verification stores no credential; secret never returned by API",
     "browser_secret_policy": "Application Password state is cleared after submission and never echoed in rendered authoritative state",
     "csrf": "mutation is on the Laravel web/auth/tenant.context route stack and frontend apiRequest supplies the CSRF token",
     "wordpress_boundary": "existing WordPressApplicationPasswordVerifier performs authenticated /wp-json/wp/v2/users/me?context=edit verification",
@@ -49,13 +49,13 @@
   },
   "acceptance": {
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php",
-    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-terminality.test.ts",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-terminality.test.ts + site-onboarding-save-test-sync-ui-terminality.test.tsx",
     "coverage": [
       "exact canonical operation identity and mutation route",
       "authenticated tenant and sites.manage authorization",
       "guest, missing-permission and foreign-tenant denial",
       "caller-owned identity rejection",
-      "encrypted credential persistence and secret non-exposure",
+      "credential non-persistence on failed verification plus encrypted persistence and secret non-exposure on success",
       "real WordPress REST verification boundary",
       "no initial synchronization before verification success",
       "tenant-aware queued initial synchronization after verification",
