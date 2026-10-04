@@ -392,6 +392,32 @@ return [
         'terminal_candidate' => true,
         'fields' => [],
     ],
+    'billing.support.reactivate' => [
+        'operation_id' => 'AIMW-BILL-29A4267B87',
+        'canonical' => [
+            'kind' => 'visible_control',
+            'domain' => 'billing',
+            'route_screen' => '/admin/billing-support',
+            'visible_control' => 'ReactivateAsync [ReactivateAsync]',
+            'current_source' => 'src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor',
+        ],
+        'route_keys' => ['admin-billing-support'],
+        'ownership' => 'tenant',
+        'platform_admin' => true,
+        'permission' => null,
+        'capability' => 'billing.support.reactivate',
+        'idempotency_required' => true,
+        'endpoint' => '/api/tenants/{tenant}/billing/admin/subscriptions/{subscription}/reactivate',
+        'method' => 'POST',
+        'reconcile_api_key' => 'account.billing',
+        'risk' => 'high',
+        'approval_required' => false,
+        'terminal_candidate' => true,
+        'fields' => [
+            ['key' => 'subscription', 'type' => 'number', 'label' => ['en' => 'Subscription ID', 'ar' => 'معرّف الاشتراك'], 'required' => true, 'path' => true],
+            ['key' => 'reason', 'type' => 'textarea', 'label' => ['en' => 'Support reason (5–500 characters)', 'ar' => 'سبب تدخل الدعم (5–500 حرف)'], 'required' => true],
+        ],
+    ],
     'planner.save' => [
         'operation_id' => 'AIMW-BILL-2805622F94',
         'canonical' => [

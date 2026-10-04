@@ -215,7 +215,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             if (!dialog) throw new Error('Action contract is missing.');
             const request = prepareActionRequest(dialog.contract, context, payload);
             return mutateThenReconcile(
-                () => apiRequest(request.endpoint, { method: request.method, body: request.body }),
+                () => apiRequest(request.endpoint, { method: request.method, body: request.body, headers: request.headers }),
                 async () => {
                     const refreshed = await query.refetch();
                     if (refreshed.error) throw refreshed.error;

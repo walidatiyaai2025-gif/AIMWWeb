@@ -3,6 +3,7 @@
 use App\Authorization\TenantAuthorizer;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
+use App\Http\Controllers\AdminBillingSupportController;
 use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
@@ -51,6 +52,14 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->defaults('canonical_operation_id', SiteDataSnapshotController::OPERATION_ID)
         ->name('canonical.api.site-data-snapshot');
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
+    Route::get('/billing/admin/subscriptions', [AdminBillingSupportController::class, 'index'])
+        ->middleware('platform.admin')
+        ->name('canonical.api.billing-support.index');
+    Route::post('/billing/admin/subscriptions/{subscription}/reactivate', [AdminBillingSupportController::class, 'reactivate'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::REACTIVATE_OPERATION_ID)
+        ->name('canonical.api.billing-support.reactivate');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
@@ -174,6 +183,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'backups' => "/tenants/{$tenant}/admin/backups",
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
+            'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
             'content-planner' => "/api/tenants/{$tenant}/content-planner/items",
             'application-users' => "/tenants/{$tenant}/admin/members",
@@ -269,6 +279,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
+        Route::get('/admin/billing-support', 'show')->middleware('platform.admin')->defaults('workspace_permissions', '')->name('canonical.workspace.admin-billing-support');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
