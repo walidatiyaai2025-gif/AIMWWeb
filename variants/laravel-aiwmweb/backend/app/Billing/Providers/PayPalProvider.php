@@ -83,6 +83,18 @@ class PayPalProvider implements BillingProvider
         return ['requested' => true];
     }
 
+    public function reactivateSubscription(TenantSubscription $subscription): void
+    {
+        $id = $subscription->encrypted_provider_subscription_id;
+        if (! $id) {
+            throw new RuntimeException('PayPal subscription id is unavailable.');
+        }
+        $r = $this->auth()->post(rtrim(config('billing.paypal.base_url'), '/').'/v1/billing/subscriptions/'.rawurlencode($id).'/activate', ['reason' => 'Customer requested reactivation']);
+        if (! $r->successful() && $r->status() !== 204) {
+            throw new RuntimeException('PayPal reactivation failed.');
+        }
+    }
+
     public function cancelSubscription(TenantSubscription $subscription): void
     {
         $id = $subscription->encrypted_provider_subscription_id;
