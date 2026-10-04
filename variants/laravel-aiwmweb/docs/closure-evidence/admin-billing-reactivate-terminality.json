@@ -38,12 +38,13 @@
       "actor_user_id",
       "provider",
       "provider_subscription_id",
+      "provider_subscription_hash",
       "payment_status"
     ],
     "caller_owned_fields_policy": "prohibited",
     "csrf": "web route stack retained for POST mutation",
     "audit": "immutable tenant-scoped BillingAudit records actor, support reason and request context",
-    "provider_backed_reactivation": "rejected; authoritative provider reconciliation remains required",
+    "provider_backed_reactivation": "rejected when provider, provider_subscription_hash, or encrypted provider subscription ID is present; authoritative provider reconciliation remains required",
     "provider_secret_disclosure_added": false,
     "provider_mutation_added": false,
     "payment_success_recorded": false,
@@ -62,7 +63,10 @@
       "immutable tenant billing audit with actor and request context",
       "provider-backed subscription denial without provider mutation",
       "no payment-success inference and no provider secret response",
-      "active-tenant frontend contract binding and browser idempotency header"
+      "active-tenant frontend contract binding and browser idempotency header",
+      "provider hash-only binding denial",
+      "billing transaction non-creation proof",
+      "BillingAudit immutability proof"
     ]
   },
   "scope_guards": {
@@ -80,6 +84,6 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "036fb9f055978f1c18e2b540b8b3613cd3d5d5ef",
     "branch": "worker/laravel-aiwmweb-AIMW-BILL-29A4267B87-billing-reactivate",
-    "implementation_sha": "ac8d6d00bebbbd3c554ec58ef86a02124a7fb36b"
+    "implementation_sha": "3d0e77af763f4d2bfa94afbcc3549b5312896446"
   }
 }
