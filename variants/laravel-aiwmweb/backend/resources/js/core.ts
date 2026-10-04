@@ -77,6 +77,7 @@ export class ApiError extends Error {
         public readonly status: number,
         public readonly code: string,
         public readonly validation: Record<string, string[]> = {},
+        public readonly payload: Record<string, unknown> = {},
     ) {
         super(message);
         this.name = 'ApiError';
@@ -114,6 +115,9 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
             response.status,
             typeof payload?.code === 'string' ? payload.code : `http_${response.status}`,
             typeof payload?.errors === 'object' && payload.errors ? payload.errors : {},
+            typeof payload === 'object' && payload !== null && !Array.isArray(payload)
+                ? payload as Record<string, unknown>
+                : {},
         );
     }
 
