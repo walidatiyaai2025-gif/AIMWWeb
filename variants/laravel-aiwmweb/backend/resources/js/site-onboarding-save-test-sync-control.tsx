@@ -115,8 +115,8 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                     <h2>{locale === 'ar' ? 'ربط موقع WordPress' : 'Connect a WordPress site'}</h2>
                     <p>
                         {locale === 'ar'
-                            ? 'يُحفظ ملف الموقع وبيانات الاعتماد المشفرة على الخادم، ثم يتم اختبار REST API، ولا تبدأ المزامنة الأولية إلا بعد نجاح الاختبار.'
-                            : 'The site profile and encrypted server-side credentials are saved first, the REST API is tested next, and initial synchronization starts only after verification succeeds.'}
+                            ? 'يُحفظ ملف الموقع أولًا، ثم يتم اختبار REST API، ولا تُحفظ بيانات الاعتماد المشفرة ولا تبدأ المزامنة الأولية إلا بعد نجاح الاختبار.'
+                            : 'The site profile is saved first, the REST API is tested next, credentials are encrypted only after verification succeeds, and then initial synchronization starts.'}
                     </p>
                 </div>
             </section>
@@ -150,7 +150,7 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         : 'The Application Password is cleared from the browser after submission and is never echoed back.'}
                 </p>
                 {errorMessage ? <p role="alert">{errorMessage}</p> : null}
-                <button type="submit" className="btn primary" disabled={disabled}>
+                <button type="submit" className="btn primary" disabled={disabled} data-canonical-operation={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}>
                     {mutation.isPending
                         ? (locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…')
                         : (locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize')}
