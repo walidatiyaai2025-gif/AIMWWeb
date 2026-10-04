@@ -48,6 +48,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/verify', [DemoController::class, 'verify']);
     Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
+    Route::get('/billing/admin/subscriptions', [AdminBillingSupportController::class, 'index'])
+        ->middleware('platform.admin')
+        ->name('canonical.api.billing-support.index');
     Route::post('/billing/admin/subscriptions/{subscription}/reactivate', [AdminBillingSupportController::class, 'reactivate'])
         ->middleware('platform.admin')
         ->whereNumber('subscription')
@@ -175,6 +178,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'backups' => "/tenants/{$tenant}/admin/backups",
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
+            'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
             'account.profile' => "/tenants/{$tenant}/route-api/account-profile",
             'content-planner' => "/api/tenants/{$tenant}/content-planner/items",
             'application-users' => "/tenants/{$tenant}/admin/members",
