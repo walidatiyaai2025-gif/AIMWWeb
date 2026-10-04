@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "b9cea57d78c2b8f065bc3a536b334e1e066c09f6",
+  "previous_reconciliation_sha": "aa134619f491b6c96f357d91783c75e448aca46d",
   "focused_closure_evidence_source_sha": "f08b6845ebf8f2e717fe0446d6c2ae3c2afcf3de",
   "countable_sources": [
     {
@@ -730,5 +730,14 @@
     }
   ],
   "excluded_sources": [],
-  "known_composition_blockers": []
+  "known_composition_blockers": [],
+  "supplemental_focused_closure_evidence_sources": [
+    {
+      "label": "AIMW-BILL-A8CBD94255 PayPal reactivation focused closure",
+      "sha": "74a69e118d854d64104cc2d9dcc48b57cbfe0e28",
+      "operation_ids": [
+        "AIMW-BILL-A8CBD94255"
+      ]
+    }
+  ]
 }
