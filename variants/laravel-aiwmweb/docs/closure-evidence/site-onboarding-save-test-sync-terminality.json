@@ -41,7 +41,7 @@
     "csrf": "mutation is on the Laravel web/auth/tenant.context route stack and frontend apiRequest supplies the CSRF token",
     "wordpress_boundary": "existing WordPressApplicationPasswordVerifier performs authenticated /wp-json/wp/v2/users/me?context=edit verification",
     "initial_sync_gate": "SyncRun and SyncSiteJob are created/dispatched only after successful WordPress verification",
-    "idempotency": "tenant-scoped Idempotency-Key receipt rejects conflicting payloads and replays terminal outcomes without duplicating site, credential or sync run",
+    "idempotency": "tenant-scoped Idempotency-Key receipt rejects conflicting payloads and replays terminal outcomes; a new-key credential retry reuses the active-tenant site profile by URL and updates the encrypted credential without duplicating the site or sync run",
     "audit": "immutable tenant-scoped AuditEvent records credential persistence and verified queue/failure milestones without secrets",
     "provider_success_inferred": false,
     "secret_disclosure_added": false,
@@ -62,7 +62,8 @@
       "idempotent replay without duplicate site, credential or sync run",
       "authoritative persisted site, verification and sync reread",
       "browser Application Password clearing after submission",
-      "both /sites/connect and /sites/onboarding workspace routes"
+      "both /sites/connect and /sites/onboarding workspace routes",
+      "failed connection retry with a new idempotency key reuses the same tenant-owned site and credential"
     ]
   },
   "scope_guards": {
@@ -81,6 +82,6 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "415bd5d7a38408e8d344f2999a955ed99d6bdb3e",
     "branch": "worker/laravel-aiwmweb-AIMW-BILL-2EF6B8A27A-site-onboarding-save-test-sync",
-    "implementation_sha": "365c54b378bc1eb46aa9864847a2cbf1c610dbc1"
+    "implementation_sha": "1312ec9dbdf36fc05d2ec9c939dc07498c570e46"
   }
 }
