@@ -38,6 +38,11 @@ class AdminBillingReactivateTerminalityTest extends TestCase
         $this->assertContains('auth', $middleware);
         $this->assertContains('tenant.context', $middleware);
         $this->assertContains('platform.admin', $middleware);
+
+        $readRoute = Route::getRoutes()->match(Request::create('/api/tenants/alpha/billing/admin/subscriptions', 'GET'));
+        $this->assertSame(AdminBillingSupportController::class.'@index', ltrim($readRoute->getActionName(), '\\'));
+        $this->assertSame('canonical.api.billing-support.index', $readRoute->getName());
+        $this->assertContains('platform.admin', $readRoute->gatherMiddleware());
     }
 
     public function test_platform_admin_reactivates_local_suspension_with_idempotent_authoritative_reread_and_audit(): void
@@ -74,6 +79,14 @@ class AdminBillingReactivateTerminalityTest extends TestCase
             ->postJson("/api/tenants/alpha/billing/admin/subscriptions/{$subscription->id}/reactivate", $payload)
             ->assertOk()
             ->assertJsonPath('data.state', SubscriptionState::ACTIVE->value);
+
+        $this->actingAs($admin)
+            ->getJson('/api/tenants/alpha/billing/admin/subscriptions')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $subscription->id)
+            ->assertJsonPath('data.0.state', SubscriptionState::ACTIVE->value)
+            ->assertJsonMissing(['encrypted_provider_subscription_id'])
+            ->assertJsonMissing(['provider_subscription_id']);
 
         $this->activate($tenant);
         $persisted = TenantSubscription::query()->findOrFail($subscription->id);
