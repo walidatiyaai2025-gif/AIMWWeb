@@ -17,6 +17,23 @@ final class AdminBillingSupportController extends Controller
 
     private const IDEMPOTENCY_OPERATION = 'billing.support.reactivate';
 
+    public function index(): JsonResponse
+    {
+        $subscriptions = TenantSubscription::query()
+            ->with('plan:id,code,name')
+            ->latest('updated_at')
+            ->latest('id')
+            ->get()
+            ->map(fn (TenantSubscription $subscription): array => [
+                ...$this->snapshot($subscription),
+                'plan_code' => $subscription->plan?->code,
+                'plan_name' => $subscription->plan?->name,
+            ])
+            ->values();
+
+        return response()->json(['data' => $subscriptions]);
+    }
+
     public function reactivate(
         Request $request,
         string $tenant,
