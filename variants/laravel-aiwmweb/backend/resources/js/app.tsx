@@ -39,6 +39,7 @@ import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
+import { SiteOnboardingSaveTestSyncControl } from './site-onboarding-save-test-sync-control';
 import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
 import { SitesDeleteControl } from './sites-delete-control';
@@ -134,6 +135,7 @@ function AiWorkspaceRoute() {
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
     if (route.key === 'site-snapshot' || route.key === 'site-offline-data') return <SiteDataSnapshotSyncControl context={context} />;
+    if (route.key === 'site-connect') return <SiteOnboardingSaveTestSyncControl context={context} />;
     if (route.key === 'site-details') return (
         <>
             <SiteDetailsBackControl context={context} />
@@ -185,6 +187,7 @@ function AppRoutes() {
             <Route path="/tenants/:tenantSlug" element={<TenantBootstrap />}>
                 <Route path="account/email-settings" element={<AccountEmailSettingsRoute />} />
                 <Route path="ai-workspace" element={<AiWorkspaceRoute />} />
+                <Route path="sites/onboarding" element={<RouteElement route={workspaceRoutes.find((route) => route.key === 'site-connect')!} />} />
                 {workspaceRoutes.map((route) => {
                     const relative = route.path === '/' ? undefined : route.path.replace(/^\//, '');
                     return route.path === '/'
