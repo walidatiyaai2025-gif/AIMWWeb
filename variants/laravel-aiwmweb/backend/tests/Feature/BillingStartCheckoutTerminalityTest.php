@@ -34,8 +34,6 @@ final class BillingStartCheckoutTerminalityTest extends TestCase
     {
         [$alpha, $owner] = $this->tenant('alpha', ['billing.view', 'billing.manage'], 'alpha-owner');
         [, $betaOwner] = $this->tenant('beta', ['billing.view', 'billing.manage'], 'beta-owner');
-        [, $viewer] = $this->tenant('gamma', ['billing.view'], 'gamma-viewer');
-
         $context = app(TenantContext::class);
         $context->activate($alpha, $owner);
         $plan = BillingPlan::query()->where('code', 'pro')->firstOrFail();
@@ -119,8 +117,15 @@ final class CheckoutFakePayPal implements BillingProvider
 {
     public int $checkoutCalls = 0;
 
-    public function name(): string { return 'paypal'; }
-    public function configured(): bool { return true; }
+    public function name(): string
+    {
+        return 'paypal';
+    }
+
+    public function configured(): bool
+    {
+        return true;
+    }
 
     public function createSubscriptionIntent(TenantSubscription $subscription, BillingPlan $plan): array
     {
@@ -139,7 +144,16 @@ final class CheckoutFakePayPal implements BillingProvider
     }
 
     public function cancelSubscription(TenantSubscription $subscription): void {}
+
     public function reactivateSubscription(TenantSubscription $subscription): void {}
-    public function verifyAndParseWebhook(Request $request): array { return []; }
-    public function reconcile(TenantSubscription $subscription): array { return ['status' => 'SUSPENDED', 'occurred_at' => now()->toAtomString()]; }
+
+    public function verifyAndParseWebhook(Request $request): array
+    {
+        return [];
+    }
+
+    public function reconcile(TenantSubscription $subscription): array
+    {
+        return ['status' => 'SUSPENDED', 'occurred_at' => now()->toAtomString()];
+    }
 }
