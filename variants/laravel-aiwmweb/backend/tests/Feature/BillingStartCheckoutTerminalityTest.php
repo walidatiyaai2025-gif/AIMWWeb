@@ -143,9 +143,15 @@ final class CheckoutFakePayPal implements BillingProvider
         return ['requested' => true];
     }
 
-    public function cancelSubscription(TenantSubscription $subscription): void {}
+    public function cancelSubscription(TenantSubscription $subscription): void
+    {
+        // Checkout proof does not exercise provider cancellation.
+    }
 
-    public function reactivateSubscription(TenantSubscription $subscription): void {}
+    public function reactivateSubscription(TenantSubscription $subscription): void
+    {
+        // Checkout proof does not exercise provider reactivation.
+    }
 
     public function verifyAndParseWebhook(Request $request): array
     {
