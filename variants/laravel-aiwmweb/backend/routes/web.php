@@ -119,7 +119,7 @@ Route::prefix('api/v1/billing')->group(function () {
 Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/billing')->group(function () {
     Route::get('/subscription', [BillingController::class, 'current']);
     Route::post('/trial', [BillingController::class, 'trial']);
-    Route::post('/checkout', [BillingController::class, 'checkout']);
+    Route::post('/checkout', [BillingController::class, 'checkout'])\n        ->defaults('canonical_operation_id', BillingController::CHECKOUT_OPERATION_ID)\n        ->name('api.v1.billing.checkout');
     Route::post('/cancel', [BillingController::class, 'cancel']);
     Route::post('/reactivate', [BillingController::class, 'reactivate']);
     Route::post('/change-plan', [BillingController::class, 'changePlan']);
