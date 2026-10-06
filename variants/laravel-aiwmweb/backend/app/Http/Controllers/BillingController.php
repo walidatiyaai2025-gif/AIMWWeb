@@ -13,12 +13,15 @@ use App\Models\BillingAudit;
 use App\Models\BillingPlan;
 use App\Models\BillingTransaction;
 use App\Models\TenantSubscription;
+use App\Tenancy\IdempotencyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 final class BillingController extends Controller
 {
+    public const CHECKOUT_OPERATION_ID = 'AIMW-BILL-8DD8F167D3';
+
     public function plans(): JsonResponse
     {
         return response()->json(['data' => BillingPlan::query()->where('enabled', true)->whereNull('retired_at')->orderBy('display_order')->get()->map(fn ($p) => $this->planResource($p))]);
@@ -39,13 +42,34 @@ final class BillingController extends Controller
         return response()->json(['data' => $service->startTrial()], 201);
     }
 
-    public function checkout(Request $request, TenantAuthorizer $auth, SubscriptionService $service): JsonResponse
+    public function checkout(Request $request, TenantAuthorizer $auth, SubscriptionService $service, IdempotencyService $idempotency): JsonResponse
     {
         $auth->authorize('billing.manage');
-        $data = $request->validate(['plan_code' => 'required|string|max:64']);
-        $plan = BillingPlan::query()->where('code', $data['plan_code'])->firstOrFail();
 
-        return response()->json(['data' => $service->checkout($plan)], 201);
+        $unexpected = array_values(array_diff($request->keys(), ['plan_code']));
+        if ($unexpected !== []) {
+            throw ValidationException::withMessages([
+                'request' => 'Checkout accepts only plan_code. Tenant, user, subscription, and provider identity are resolved server-side.',
+            ]);
+        }
+
+        $data = $request->validate(['plan_code' => 'required|string|max:64']);
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        if (! preg_match('/^[A-Za-z0-9._:-]{16,128}$/', $idempotencyKey)) {
+            throw ValidationException::withMessages([
+                'idempotency_key' => 'A valid Idempotency-Key header is required for checkout.',
+            ]);
+        }
+
+        $plan = BillingPlan::query()->where('code', $data['plan_code'])->firstOrFail();
+        $result = $idempotency->run(
+            $idempotencyKey,
+            self::CHECKOUT_OPERATION_ID,
+            ['plan_code' => $plan->code],
+            fn (): array => $service->checkout($plan),
+        );
+
+        return response()->json(['data' => $result], 201);
     }
 
     public function cancel(Request $request, TenantAuthorizer $auth, SubscriptionService $service, PermanentSubscriptionCancellationService $permanent): JsonResponse
