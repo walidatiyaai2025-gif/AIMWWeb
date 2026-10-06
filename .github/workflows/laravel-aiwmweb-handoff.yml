@@ -226,8 +226,8 @@ jobs:
           branch_hint="$(gh api --paginate "repos/$REPO/branches?per_page=100" \
             --jq '.[] | .name' | awk -v needle="$op_lc" 'tolower($0) ~ needle {print; exit}')"
           pr_hint="$(gh pr list --repo "$REPO" --state open --limit 100 \
-            --json number,title,headRefName,body \
-            --jq --arg op "$OP_ID" '[.[] | select((.title // "" | contains($op)) or (.body // "" | contains($op)) or (.headRefName // "" | ascii_downcase | contains($op | ascii_downcase)))] | .[0].number // empty')"
+            --json number,title,headRefName,body | \
+            jq -r --arg op "$OP_ID" '[.[] | select((.title // "" | contains($op)) or (.body // "" | contains($op)) or ((.headRefName // "" | ascii_downcase) | contains($op | ascii_downcase)))] | .[0].number // empty')"
 
           display="${OP_CONTROL:-${OP_ROUTE:-canonical pending operation}}"
           title="[Laravel Handoff] $OP_ID — $display"
