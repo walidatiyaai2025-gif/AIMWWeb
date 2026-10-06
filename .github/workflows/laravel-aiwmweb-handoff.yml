@@ -11,6 +11,7 @@ on:
         options:
           - bootstrap
           - promote
+          - advance
           - claim
           - heartbeat
           - release
@@ -48,6 +49,7 @@ jobs:
       PR_BODY: ${{ github.event.pull_request.body || '' }}
       PR_MERGED: ${{ github.event.pull_request.merged || false }}
       PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+      PR_BASE: ${{ github.event.pull_request.base.ref || '' }}
     steps:
       - name: Bootstrap labels
         shell: bash
@@ -81,7 +83,7 @@ jobs:
           done
 
       - name: Execute explicit handoff command
-        if: github.event_name == 'workflow_dispatch' && inputs.command != 'bootstrap' && inputs.command != 'promote'
+        if: github.event_name == 'workflow_dispatch' && inputs.command != 'bootstrap' && inputs.command != 'promote' && inputs.command != 'advance'
         shell: bash
         run: |
           set -euo pipefail
@@ -130,6 +132,151 @@ jobs:
               gh issue comment "$issue" --repo "$REPO" --body "HANDOFF_RECLAIMED after >=30m inactivity by $GITHUB_ACTOR." >/dev/null
               ;;
           esac
+
+      - name: Checkout canonical composition for automatic advance
+        if: >-
+          (github.event_name == 'workflow_dispatch' && inputs.command == 'advance') ||
+          (github.event_name == 'pull_request' && env.PR_MERGED == 'true' && env.PR_BASE == 'worker/laravel-aiwmweb-closure-composition')
+        uses: actions/checkout@v4
+        with:
+          ref: worker/laravel-aiwmweb-closure-composition
+          fetch-depth: 1
+
+      - name: Seed next canonical pending unit when queue is empty
+        if: >-
+          (github.event_name == 'workflow_dispatch' && inputs.command == 'advance') ||
+          (github.event_name == 'pull_request' && env.PR_MERGED == 'true' && env.PR_BASE == 'worker/laravel-aiwmweb-closure-composition')
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          queued="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --json number,labels \
+            --jq '[.[] | select(.labels | map(.name) | any(. == "handoff:active" or . == "handoff:next" or . == "handoff:ready"))] | length')"
+          if [[ "$queued" != "0" ]]; then
+            echo "HANDOFF_ADVANCE=QUEUE_PRESENT"
+            exit 0
+          fi
+
+          reconciliation="variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json"
+          [[ -f "$reconciliation" ]] || {
+            echo "::error title=Missing canonical reconciliation::$reconciliation is required to advance the Laravel handoff."
+            exit 1
+          }
+
+          python - "$reconciliation" > /tmp/next-pending.env <<'PY'
+          import json
+          import shlex
+          import sys
+
+          path = sys.argv[1]
+          payload = json.load(open(path, encoding="utf-8"))
+          totals = payload.get("totals", {})
+          pending = int(totals.get("pending", 0))
+          operations = payload.get("operations", [])
+          row = next((item for item in operations if item.get("migration_state") == "PENDING"), None)
+
+          print("PENDING_COUNT=" + shlex.quote(str(pending)))
+          if pending == 0:
+              print("PROJECT_COMPLETE=true")
+              raise SystemExit(0)
+          if row is None:
+              raise SystemExit("pending total is non-zero but no PENDING operation row exists")
+
+          def emit(key, value):
+              value = "" if value is None else str(value)
+              print(f"{key}=" + shlex.quote(value))
+
+          emit("PROJECT_COMPLETE", "false")
+          emit("OP_ID", row.get("operation_id"))
+          emit("OP_DOMAIN", row.get("domain"))
+          emit("OP_RISK", row.get("risk"))
+          emit("OP_ROUTE", row.get("route_screen"))
+          emit("OP_CONTROL", row.get("visible_control"))
+          emit("OP_SOURCE", row.get("current_source"))
+          PY
+          source /tmp/next-pending.env
+
+          if [[ "$PROJECT_COMPLETE" == "true" ]]; then
+            echo "HANDOFF_COMPLETE=TRUE"
+            echo "Canonical reconciliation has PENDING=0; no new leaf created."
+            exit 0
+          fi
+
+          [[ -n "$OP_ID" ]] || {
+            echo "::error title=Invalid canonical pending row::operation_id is empty."
+            exit 1
+          }
+
+          existing_issue="$(gh issue list --repo "$REPO" --state open --limit 100 \
+            --search "$OP_ID in:title,body" \
+            --json number,title,labels \
+            --jq '.[0].number // empty')"
+          if [[ -n "$existing_issue" ]]; then
+            labels="$(gh issue view "$existing_issue" --repo "$REPO" --json labels --jq '[.labels[].name] | join(" ")')"
+            if ! grep -Eq 'handoff:(active|blocked|done|umbrella)' <<<"$labels"; then
+              gh issue edit "$existing_issue" --repo "$REPO" --add-label "handoff:ready" >/dev/null
+            fi
+            echo "HANDOFF_ADVANCE=REUSED_ISSUE"
+            echo "HANDOFF_ISSUE=#$existing_issue"
+            exit 0
+          fi
+
+          op_lc="$(printf '%s' "$OP_ID" | tr '[:upper:]' '[:lower:]')"
+          branch_hint="$(gh api --paginate "repos/$REPO/branches?per_page=100" \
+            --jq '.[] | .name' | awk -v needle="$op_lc" 'tolower($0) ~ needle {print; exit}')"
+          pr_hint="$(gh pr list --repo "$REPO" --state open --limit 100 \
+            --json number,title,headRefName,body \
+            --jq --arg op "$OP_ID" '[.[] | select((.title // "" | contains($op)) or (.body // "" | contains($op)) or (.headRefName // "" | ascii_downcase | contains($op | ascii_downcase)))] | .[0].number // empty')"
+
+          display="${OP_CONTROL:-${OP_ROUTE:-canonical pending operation}}"
+          title="[Laravel Handoff] $OP_ID — $display"
+          body_file="/tmp/handoff-body.md"
+          cat > "$body_file" <<EOF
+          Authority: #257
+          Repo operating system: #589
+
+          ## Canonical operation
+          - Operation ID: $OP_ID
+          - Domain: ${OP_DOMAIN:-unknown}
+          - Risk: ${OP_RISK:-unknown}
+          - Source: ${OP_SOURCE:-unknown}
+          - Route/screen: ${OP_ROUTE:-unknown}
+          - Visible control: ${OP_CONTROL:-unknown}
+
+          ## Existing lineage discovered by advance
+          - Branch hint: ${branch_hint:-none}
+          - Open PR hint: ${pr_hint:-none}
+
+          ## Single execution unit
+          Close exactly this canonical PENDING operation. Reconstruct live GitHub state first and reuse any existing branch/PR lineage for this operation. Do not create retry/v2/final duplicates while recoverable lineage exists.
+
+          ## Acceptance
+          - preserve Laravel variant boundary and tenant/security invariants from AGENTS.md and #257;
+          - implement the complete real vertical slice with deterministic tests/evidence;
+          - official parity materialization must transition exactly the intended operation without hand-editing counts;
+          - required exact-head Plan Link, Repo Hygiene, Cross-Domain Security, Parity Reconciliation, Convergence Preflight and Laravel Acceptance gates must be green;
+          - merge only into worker/laravel-aiwmweb-closure-composition;
+          - after merge, post-merge exact-head gates must be green and handoff must advance again.
+
+          Refs #257
+          Refs #589
+          EOF
+
+          new_url="$(gh issue create --repo "$REPO" \
+            --title "$title" \
+            --body-file "$body_file" \
+            --label "handoff:ready")"
+          new_issue="${new_url##*/}"
+          [[ "$new_issue" =~ ^[0-9]+$ ]] || {
+            echo "::error title=Unable to create next handoff leaf::Unexpected issue reference: $new_url"
+            exit 1
+          }
+
+          echo "HANDOFF_ADVANCE=CREATED"
+          echo "HANDOFF_ISSUE=#$new_issue"
+          echo "HANDOFF_OPERATION=$OP_ID"
+          echo "HANDOFF_PENDING_COUNT=$PENDING_COUNT"
 
       - name: Promote next ready unit
         shell: bash
