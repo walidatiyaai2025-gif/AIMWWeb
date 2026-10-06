@@ -13,12 +13,15 @@ use App\Models\BillingAudit;
 use App\Models\BillingPlan;
 use App\Models\BillingTransaction;
 use App\Models\TenantSubscription;
+use App\Tenancy\IdempotencyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 final class BillingController extends Controller
 {
+    public const CHECKOUT_OPERATION_ID = 'AIMW-BILL-8DD8F167D3';
+
     public function plans(): JsonResponse
     {
         return response()->json(['data' => BillingPlan::query()->where('enabled', true)->whereNull('retired_at')->orderBy('display_order')->get()->map(fn ($p) => $this->planResource($p))]);
