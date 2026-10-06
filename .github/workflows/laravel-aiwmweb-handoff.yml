@@ -215,7 +215,8 @@ jobs:
           if [[ -n "$existing_issue" ]]; then
             labels="$(gh issue view "$existing_issue" --repo "$REPO" --json labels --jq '[.labels[].name] | join(" ")')"
             if ! grep -Eq 'handoff:(active|blocked|done|umbrella)' <<<"$labels"; then
-              gh issue edit "$existing_issue" --repo "$REPO" --add-label "handoff:ready" >/dev/null
+              gh issue edit "$existing_issue" --repo "$REPO" --add-label "handoff:ready" --add-label "handoff:next" >/dev/null
+              echo "HANDOFF_SEEDED_ISSUE=$existing_issue" >> "$GITHUB_ENV"
             fi
             echo "HANDOFF_ADVANCE=REUSED_ISSUE"
             echo "HANDOFF_ISSUE=#$existing_issue"
@@ -266,13 +267,15 @@ jobs:
           new_url="$(gh issue create --repo "$REPO" \
             --title "$title" \
             --body-file "$body_file" \
-            --label "handoff:ready")"
+            --label "handoff:ready" \
+            --label "handoff:next")"
           new_issue="${new_url##*/}"
           [[ "$new_issue" =~ ^[0-9]+$ ]] || {
             echo "::error title=Unable to create next handoff leaf::Unexpected issue reference: $new_url"
             exit 1
           }
 
+          echo "HANDOFF_SEEDED_ISSUE=$new_issue" >> "$GITHUB_ENV"
           echo "HANDOFF_ADVANCE=CREATED"
           echo "HANDOFF_ISSUE=#$new_issue"
           echo "HANDOFF_OPERATION=$OP_ID"
@@ -282,6 +285,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          # A just-created/reused leaf may not be visible in GitHub label search yet.
+          # Promote by exact issue number carried through GITHUB_ENV to avoid index races.
+          if [[ -n "${HANDOFF_SEEDED_ISSUE:-}" ]]; then
+            gh issue edit "$HANDOFF_SEEDED_ISSUE" --repo "$REPO" --add-label "handoff:ready" --add-label "handoff:next" >/dev/null
+            echo "HANDOFF_NEXT=#$HANDOFF_SEEDED_ISSUE"
+            exit 0
+          fi
+
           mapfile -t current_next < <(gh issue list --repo "$REPO" --state open --label "handoff:next" --limit 100 --json number --jq '.[].number')
           for issue in "${current_next[@]}"; do
             gh issue edit "$issue" --repo "$REPO" --remove-label "handoff:next" >/dev/null 2>&1 || true
