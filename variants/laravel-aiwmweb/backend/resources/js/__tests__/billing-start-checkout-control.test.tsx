@@ -67,7 +67,7 @@ describe('AIMW-BILL-8DD8F167D3 billing checkout', () => {
         const { navigate } = renderControl();
         const button = await screen.findByRole('button', { name: 'Continue with PayPal' });
         expect(button).toHaveAttribute('data-canonical-operation', BILLING_START_CHECKOUT_OPERATION_ID);
-        expect(button).toBeEnabled();
+        await waitFor(() => expect(button).toBeEnabled());
 
         fireEvent.click(button);
 
