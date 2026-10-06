@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { AccountEmailSettingsSummary } from './account-email-settings-summary';
+import { AdminBillingSupportSettingsLink } from './admin-billing-support-settings-link';
 import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
 import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
 import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
@@ -160,6 +161,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
     if (route.key === 'system-health') return <SystemHealthWorkspace context={context} route={route} />;
