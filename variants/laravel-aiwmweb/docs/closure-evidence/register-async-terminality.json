@@ -1,0 +1,66 @@
+{
+  "operation_id": "AIMW-BILL-34B7686F5E",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-34B7686F5E",
+    "domain": "billing",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Register.razor",
+    "route_screen": "/register",
+    "visible_control": "RegisterAsync [RegisterAsync]",
+    "risk": "low",
+    "tenant_owned": true
+  },
+  "source_semantics": {
+    "validation": "RegisterAsync trims the username, validates registration through LocalAuthenticationService, and presents validation failure without mutation.",
+    "identity": "A successful registration creates a durable application identity before subscription assignment.",
+    "trial": "The source resolves the enabled free-trial plan and creates a trial subscription when no current subscription exists.",
+    "partial_failure": "If free-trial lookup or assignment fails after identity creation, the account remains created and the user sees a truthful administrator-contact message.",
+    "success": "Successful identity and trial creation redirects to /login?registered=true."
+  },
+  "laravel_adaptation": {
+    "get_route": "GET /register",
+    "post_route": "POST /register",
+    "route_name": "canonical.register.store",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Auth/RegistrationService.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/RegisterRouteServiceProvider.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/auth/register.blade.php",
+    "migration": "variants/laravel-aiwmweb/backend/database/migrations/2026_10_06_000001_add_registration_identity_to_users_table.php",
+    "canonical_operation_id": "AIMW-BILL-34B7686F5E"
+  },
+  "runtime_path": [
+    "anonymous web request with CSRF protection",
+    "strict username/password validation and caller-owned identity rejection",
+    "transactional durable User + Tenant + TenantMembership + owner RBAC + immutable tenant audit creation",
+    "tenant context activation",
+    "SubscriptionService::startTrial using the enabled free-trial plan",
+    "authoritative persisted subscription state",
+    "redirect to /login?registered=true on complete success",
+    "truthful account-created/trial-unavailable state when trial assignment fails"
+  ],
+  "security": {
+    "tenant_isolation": "The client cannot supply tenant, user, role, plan, billing-plan, or trial ownership identifiers; the workspace tenant and membership are created server-side.",
+    "credentials": "Passwords are validated server-side, stored through Laravel's hashed User cast, and never rendered back into the browser.",
+    "rbac": "The new workspace receives an owner membership and explicit tenant-scoped permissions.",
+    "csrf": "Both registration routes use the web middleware; POST is covered by Laravel CSRF validation.",
+    "cross_tenant_path": "No tenant-selected registration route exists; /tenants/{foreign}/register is proven unavailable."
+  },
+  "deterministic_evidence": {
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterAsyncTerminalityTest.php",
+    "assertions": [
+      "canonical operation metadata becomes ADAPTED",
+      "anonymous web route and canonical operation binding",
+      "foreign tenant path is 404 and caller ownership injection is rejected",
+      "source-faithful visible trial contract",
+      "weak credentials mutate nothing",
+      "successful registration creates identity/workspace/RBAC/trial/audit and username login",
+      "free-trial failure preserves the created account while remaining truthful",
+      "legacy email login remains supported"
+    ]
+  }
+}

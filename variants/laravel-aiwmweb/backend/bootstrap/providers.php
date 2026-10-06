@@ -17,6 +17,7 @@ use App\Providers\ErrorRouteServiceProvider;
 use App\Providers\LoginReadRouteServiceProvider;
 use App\Providers\OperationsMaintenanceRouteServiceProvider;
 use App\Providers\PublicWelcomeRouteServiceProvider;
+use App\Providers\RegisterRouteServiceProvider;
 use App\Providers\SeoVisibleControlRouteServiceProvider;
 use App\Providers\SetupRouteServiceProvider;
 use App\Providers\SiteEmailSettingsRouteServiceProvider;
@@ -36,6 +37,7 @@ return [
     ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
     PublicWelcomeRouteServiceProvider::class,
+    RegisterRouteServiceProvider::class,
     AboutBuildRouteServiceProvider::class,
     AiCenterRouteServiceProvider::class,
     AiCenterApprovalStatusRouteServiceProvider::class,
