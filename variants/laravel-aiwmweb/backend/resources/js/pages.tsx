@@ -197,6 +197,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         await queryClient.fetchQuery({
             queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, ''],
             queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
+            staleTime: 0,
         });
     };
 
