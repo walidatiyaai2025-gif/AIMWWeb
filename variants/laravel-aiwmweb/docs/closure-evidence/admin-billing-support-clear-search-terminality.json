@@ -19,7 +19,7 @@
     "risk": "low"
   },
   "source_semantics": "The source Clear button is always rendered and disabled only while the page is busy. ClearSearchAsync clears _query, clears _detail, clears _message, and then awaits SearchAsync, which rereads billing support data and surfaces failure without fabricating success.",
-  "laravel_adaptation": "The tenant Billing Support workspace now exposes an always-visible canonical Clear control whenever the server-authoritative billing-support endpoint is advertised. The caller clears the controlled search input, committed search value, page state, and any open support-action dialog before awaiting a React Query fetch of the unfiltered page-1 endpoint. The control owns no tenant, subscription, account, user, provider, payment reference, secret, queue, cache, or scheduler identifier.",
+  "laravel_adaptation": "The tenant Billing Support workspace exposes an always-visible canonical Clear control whenever the server-authoritative billing-support endpoint is advertised. The caller clears the controlled search input, committed search value, page state, and any open support-action dialog before awaiting an unfiltered page-1 fetch with staleTime 0, forcing a real server reread instead of accepting a fresh React Query cache entry. The control owns no tenant, subscription, account, user, provider, payment reference, secret, queue, cache, or scheduler identifier.",
   "runtime_path": "variants/laravel-aiwmweb/backend/resources/js/admin-billing-support-clear-search-control.tsx",
   "integration_path": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
   "focused_test_paths": [
@@ -31,11 +31,14 @@
     "The workspace and reread routes remain behind auth + tenant.context + platform.admin; a foreign tenant returns 404 and an authenticated non-platform-admin returns 403.",
     "Clearing is read-only and does not mutate subscription state, payment state, provider state, WordPress, Connector, AI, secrets, queues, cache, schedulers, or idempotency records.",
     "Duplicate clear requests are suppressed while the authoritative reread is in flight.",
-    "A failed reread is reported as failure and the control remains retryable; no successful clear/reload is fabricated."
+    "A failed reread is reported as failure and the control remains retryable; no successful clear/reload is fabricated.",
+    "Clear cannot treat a fresh client cache entry as authoritative success: the reread uses staleTime 0 and still executes through the tenant-scoped server endpoint."
   ],
-  "failure_behavior": "Local clear state is applied before the authoritative reread to match source ordering. If the tenant-scoped reread fails, the control surfaces an explicit error and releases its in-flight lock so the operator can retry.",
+  "failure_behavior": "Local clear state is applied before the authoritative reread to match source ordering. The reread explicitly uses staleTime 0 so an already-empty or recently loaded query still reaches the authoritative server endpoint. If that tenant-scoped reread fails, the control surfaces an explicit error and releases its in-flight lock so the operator can retry.",
   "scope_guards": {
-    "claimed_operations": ["AIMW-BILL-B4F030B126"],
+    "claimed_operations": [
+      "AIMW-BILL-B4F030B126"
+    ],
     "sibling_operations_claimed": false,
     "search_async_terminalized": false,
     "billing_mutation_added": false,
