@@ -5,8 +5,16 @@ import {
     ADMIN_BILLING_SUPPORT_CLEAR_SEARCH_OPERATION_ID,
     AdminBillingSupportClearSearchControl,
 } from '../admin-billing-support-clear-search-control';
+import { workspaceRoutes } from '../core';
 
 describe('canonical Billing Support ClearSearchAsync control AIMW-BILL-B4F030B126', () => {
+    it('binds the workspace to the server-issued billing-support API key', () => {
+        const route = workspaceRoutes.find((candidate) => candidate.key === 'admin-billing-support');
+
+        expect(route?.path).toBe('/admin/billing-support');
+        expect(route?.apiKey).toBe('admin-billing-support');
+    });
+
     it('renders even when the current search is blank once the authoritative endpoint is wired', () => {
         render(
             <AdminBillingSupportClearSearchControl
