@@ -102,6 +102,7 @@ final class AdminBillingSupportClearSearchTerminalityTest extends TestCase
         $this->assertStringContainsString('setPage(1);', $pages);
         $this->assertStringContainsString('setDialog(null);', $pages);
         $this->assertStringContainsString('queryClient.fetchQuery', $pages);
+        $this->assertStringContainsString('staleTime: 0', $pages);
         $this->assertStringContainsString("route.key === 'admin-billing-support'", $pages);
     }
 
