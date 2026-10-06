@@ -33,11 +33,21 @@ final class DemoController extends Controller
 {
     public function login(Request $request): JsonResponse
     {
-        $credentials = $request->validate(['email' => 'required|email', 'password' => 'required|string']);
+        $data = $request->validate([
+            'login' => 'nullable|string|max:255|required_without:email',
+            'email' => 'nullable|string|max:255|required_without:login',
+            'password' => 'required|string',
+        ]);
+
+        $identifier = trim((string) ($data['login'] ?? $data['email'] ?? ''));
+        $credentials = filter_var($identifier, FILTER_VALIDATE_EMAIL)
+            ? ['email' => $identifier, 'password' => $data['password']]
+            : ['normalized_username' => strtoupper($identifier), 'password' => $data['password']];
+
         abort_unless(Auth::attempt($credentials), 422, 'Invalid credentials.');
         $request->session()->regenerate();
 
-        return response()->json(['user' => $request->user()->only(['id', 'name', 'email'])]);
+        return response()->json(['user' => $request->user()->only(['id', 'name', 'username', 'email'])]);
     }
 
     public function logout(Request $request): JsonResponse
