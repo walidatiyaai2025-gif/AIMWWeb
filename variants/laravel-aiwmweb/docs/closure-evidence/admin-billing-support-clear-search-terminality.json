@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257 / handoff #622",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B4F030B126",
+  "domain": "billing",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-BILL-B4F030B126",
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/billing-support",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:ClearSearchAsync [ClearSearchAsync]",
+    "source_intent": "Clear the support query and transient selected/success state, then reread the authoritative billing-support collection.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_semantics": "The source Clear button is always rendered and disabled only while the page is busy. ClearSearchAsync clears _query, clears _detail, clears _message, and then awaits SearchAsync, which rereads billing support data and surfaces failure without fabricating success.",
+  "laravel_adaptation": "The tenant Billing Support workspace now exposes an always-visible canonical Clear control whenever the server-authoritative billing-support endpoint is advertised. The caller clears the controlled search input, committed search value, page state, and any open support-action dialog before awaiting a React Query fetch of the unfiltered page-1 endpoint. The control owns no tenant, subscription, account, user, provider, payment reference, secret, queue, cache, or scheduler identifier.",
+  "runtime_path": "variants/laravel-aiwmweb/backend/resources/js/admin-billing-support-clear-search-control.tsx",
+  "integration_path": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+  "focused_test_paths": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/admin-billing-support-clear-search-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSupportClearSearchTerminalityTest.php"
+  ],
+  "security_invariants": [
+    "The reread endpoint is supplied only by server-authored FrontendContext for the active tenant and is not synthesized from a caller-owned account, subscription, provider, or user identifier.",
+    "The workspace and reread routes remain behind auth + tenant.context + platform.admin; a foreign tenant returns 404 and an authenticated non-platform-admin returns 403.",
+    "Clearing is read-only and does not mutate subscription state, payment state, provider state, WordPress, Connector, AI, secrets, queues, cache, schedulers, or idempotency records.",
+    "Duplicate clear requests are suppressed while the authoritative reread is in flight.",
+    "A failed reread is reported as failure and the control remains retryable; no successful clear/reload is fabricated."
+  ],
+  "failure_behavior": "Local clear state is applied before the authoritative reread to match source ordering. If the tenant-scoped reread fails, the control surfaces an explicit error and releases its in-flight lock so the operator can retry.",
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-B4F030B126"],
+    "sibling_operations_claimed": false,
+    "search_async_terminalized": false,
+    "billing_mutation_added": false,
+    "provider_behavior_added": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "destructive_migration": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "6ce65b36a8db67d2f0bfee59ce082064cc4c8a1f",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-B4F030B126-clear-search"
+  }
+}
