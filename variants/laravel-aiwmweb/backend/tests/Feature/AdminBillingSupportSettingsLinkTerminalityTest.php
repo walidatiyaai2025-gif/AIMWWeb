@@ -40,6 +40,8 @@ final class AdminBillingSupportSettingsLinkTerminalityTest extends TestCase
 
     public function test_foreign_tenant_and_non_platform_admin_access_fail_closed(): void
     {
+        $this->withoutVite();
+
         $alphaAdmin = User::factory()->create(['platform_admin' => true]);
         $this->membership($alphaAdmin, 'alpha');
 
