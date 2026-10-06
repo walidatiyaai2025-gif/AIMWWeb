@@ -14,7 +14,8 @@ import {
 } from './core';
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
-import { AiCenterGenerateControl } from './ai-center-generate-control';\nimport { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
+import { AiCenterGenerateControl } from './ai-center-generate-control';
+import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
