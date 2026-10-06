@@ -91,6 +91,7 @@ final class BillingStartCheckoutTerminalityTest extends TestCase
     private function tenant(string $slug, array $permissions, string $roleName): array
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+
         return [$tenant, $this->member($tenant, $permissions, $roleName)];
     }
 
