@@ -43,15 +43,15 @@ final class BillingStartCheckoutTerminalityTest extends TestCase
         $this->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])->assertUnauthorized();
         $this->actingAs($betaOwner->user)->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])->assertNotFound();
 
+        $this->actingAs($owner->user)
+            ->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])
+            ->assertUnprocessable();
+
         $alphaViewer = $this->member($alpha, ['billing.view'], 'alpha-viewer');
         $this->actingAs($alphaViewer->user)
             ->withHeader('Idempotency-Key', 'billing-checkout-viewer-0001')
             ->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])
             ->assertForbidden();
-
-        $this->actingAs($owner->user)
-            ->postJson('/api/v1/tenants/alpha/billing/checkout', ['plan_code' => 'pro'])
-            ->assertUnprocessable();
 
         $this->actingAs($owner->user)
             ->withHeader('Idempotency-Key', 'billing-checkout-extra-0001')
