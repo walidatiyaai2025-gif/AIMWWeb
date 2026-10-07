@@ -445,6 +445,31 @@ return [
             ['key' => 'reason', 'type' => 'textarea', 'label' => ['en' => 'Support reason (5–500 characters)', 'ar' => 'سبب تدخل الدعم (5–500 حرف)'], 'required' => true],
         ],
     ],
+    'billing.support.search' => [
+        'operation_id' => 'AIMW-BILL-9414B3FFEF',
+        'canonical' => [
+            'kind' => 'visible_control',
+            'domain' => 'billing',
+            'route_screen' => '/admin/billing-support',
+            'visible_control' => 'SearchAsync [SearchAsync]',
+            'current_source' => 'src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor',
+        ],
+        'route_keys' => ['admin-billing-support'],
+        'ownership' => 'tenant',
+        'platform_admin' => true,
+        'permission' => null,
+        'capability' => 'billing.support.search',
+        'idempotency_required' => false,
+        'endpoint' => '/api/tenants/{tenant}/billing/admin/subscriptions',
+        'method' => 'GET',
+        'reconcile_api_key' => 'admin-billing-support',
+        'risk' => 'low',
+        'approval_required' => false,
+        'terminal_candidate' => true,
+        'fields' => [
+            ['key' => 'q', 'type' => 'text', 'label' => ['en' => 'Username, account ID, or PayPal reference', 'ar' => 'اسم المستخدم أو معرّف الحساب أو مرجع PayPal'], 'required' => false, 'query' => true],
+        ],
+    ],
     'billing.support.reconcile' => [
         'operation_id' => 'AIMW-BILL-7ECC5F8CBA',
         'canonical' => [
