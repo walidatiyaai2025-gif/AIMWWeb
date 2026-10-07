@@ -12,6 +12,15 @@ on:
       - worker/laravel-aiwmweb-closure-composition
     paths:
       - '.github/workflows/laravel-aiwmweb-branch-cleanup.yml'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Report eligible branches without deleting them'
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -86,6 +95,8 @@ jobs:
   sweep-obsolete-branches:
     if: >-
       github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
@@ -95,6 +106,9 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const dryRun =
+              context.eventName === 'workflow_dispatch' &&
+              String(context.payload.inputs?.dry_run ?? 'true').toLowerCase() === 'true';
             const permanent = new Set([
               'main',
               'lead/laravel-aiwmweb-final-convergence',
@@ -118,6 +132,8 @@ jobs:
             const GRACE_HOURS = 1;
             const graceMs = GRACE_HOURS * 60 * 60 * 1000;
             const now = Date.now();
+
+            core.info(`Sweep mode: ${dryRun ? 'DRY-RUN' : 'DELETE'}.`);
 
             const { data: rateLimit } = await github.rest.rateLimit.get();
             const remaining = rateLimit.resources?.core?.remaining ?? 0;
@@ -199,6 +215,7 @@ jobs:
             }
 
             const deleted = [];
+            const wouldDelete = [];
             const kept = [];
 
             for (const branch of branches) {
@@ -227,24 +244,31 @@ jobs:
 
               const exactMerged = mergedExactHeads.get(`${name}\n${branch.commit.sha}`);
               if (exactMerged) {
+                const reason = `exact-merged-pr#${exactMerged.number}-into-${exactMerged.base.ref}`;
+                if (dryRun) {
+                  wouldDelete.push([name, reason]);
+                  core.notice(`Dry-run: would delete obsolete branch ${name} (${reason}).`);
+                  continue;
+                }
+
                 try {
                   await github.rest.git.deleteRef({
                     owner,
                     repo,
                     ref: `heads/${name}`,
                   });
-                  deleted.push([name, `exact-merged-pr#${exactMerged.number}-into-${exactMerged.base.ref}`]);
+                  deleted.push([name, reason]);
                   core.notice(
                     `Deleted obsolete branch ${name} (exact merged PR #${exactMerged.number}).`,
                   );
                 } catch (error) {
                   const message = error.message || error.response?.data?.message || '';
-                if (
-                  error.status !== 404 &&
-                  !(error.status === 422 && /Reference does not exist/i.test(message))
-                ) {
-                  throw error;
-                }
+                  if (
+                    error.status !== 404 &&
+                    !(error.status === 422 && /Reference does not exist/i.test(message))
+                  ) {
+                    throw error;
+                  }
                 }
                 continue;
               }
@@ -298,13 +322,20 @@ jobs:
                 continue;
               }
 
+              const reason = `fully-contained-in-${containedIn}`;
+              if (dryRun) {
+                wouldDelete.push([name, reason]);
+                core.notice(`Dry-run: would delete obsolete branch ${name} (${reason}).`);
+                continue;
+              }
+
               try {
                 await github.rest.git.deleteRef({
                   owner,
                   repo,
                   ref: `heads/${name}`,
                 });
-                deleted.push([name, `fully-contained-in-${containedIn}`]);
+                deleted.push([name, reason]);
                 core.notice(`Deleted obsolete branch ${name} (contained in ${containedIn}).`);
               } catch (error) {
                 const message = error.message || error.response?.data?.message || '';
@@ -318,18 +349,28 @@ jobs:
             }
 
             core.info(`Deleted: ${deleted.length}`);
+            core.info(`Would delete: ${wouldDelete.length}`);
             core.info(`Kept: ${kept.length}`);
             await core.summary
               .addHeading('Laravel AIWMWeb branch garbage collection')
               .addTable([
                 [
+                  { data: 'Mode', header: true },
                   { data: 'Deleted', header: true },
+                  { data: 'Would delete', header: true },
                   { data: 'Kept', header: true },
                 ],
-                [String(deleted.length), String(kept.length)],
+                [
+                  dryRun ? 'DRY-RUN' : 'DELETE',
+                  String(deleted.length),
+                  String(wouldDelete.length),
+                  String(kept.length),
+                ],
               ])
               .addHeading('Deleted', 3)
               .addList(deleted.map(([name, reason]) => `${name} — ${reason}`))
+              .addHeading('Dry-run candidates', 3)
+              .addList(wouldDelete.map(([name, reason]) => `${name} — ${reason}`))
               .addHeading('Safety', 3)
               .addList([
                 'never delete permanent integration branches',
@@ -338,5 +379,7 @@ jobs:
                 'never delete branches referenced by open Issue branch state',
                 'delete exact merged heads only when merged into a permanent integration branch',
                 `for containment-only cleanup, wait at least ${GRACE_HOURS} hour and require zero commits ahead of a permanent integration branch`,
+                'manual workflow dispatch defaults to dry-run and performs no deletion unless explicitly disabled',
+                'scheduled sweeps run in delete mode',
               ])
               .write();
