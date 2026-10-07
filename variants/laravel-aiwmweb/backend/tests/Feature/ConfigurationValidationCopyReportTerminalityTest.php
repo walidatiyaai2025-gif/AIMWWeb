@@ -17,6 +17,7 @@ use Tests\TestCase;
 final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
 {
     // Exact-head CI anchor after official CopyReportAsync parity materialization.
+    // Exact-head CI anchor after official RunValidation parity materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-BILL-39BB044AF2';
