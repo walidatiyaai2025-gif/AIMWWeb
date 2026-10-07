@@ -173,7 +173,7 @@ jobs:
             const activeIssueBranches = new Set();
             const rememberBranchRefs = text => {
               if (!text) return;
-              const regex = /^\s*(?:canonical\s+branch|branch)\s*:\s*`?([A-Za-z0-9._/-]+)`?\s*$/gim;
+              const regex = /^\s*(?:[-*]\s*)?`?(?:canonical[_\s-]*task[_\s-]*branch|task[_\s-]*branch|canonical\s+branch|branch)`?\s*:\s*`?([A-Za-z0-9._/-]+)`?\s*$/gim;
               let match;
               while ((match = regex.exec(text)) !== null) {
                 activeIssueBranches.add(match[1]);
