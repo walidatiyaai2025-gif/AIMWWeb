@@ -21,6 +21,8 @@ final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-39BB044AF2';
 
+    private const RUN_VALIDATION_OPERATION_ID = 'AIMW-BILL-EE0BEAAC55';
+
     public function test_report_api_is_tenant_scoped_permission_guarded_and_canonical(): void
     {
         $route = Route::getRoutes()->match(Request::create('/tenants/alpha/configuration-validation/report', 'GET'));
@@ -28,6 +30,40 @@ final class ConfigurationValidationCopyReportTerminalityTest extends TestCase
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
+    }
+
+    public function test_run_validation_is_a_canonical_tenant_scoped_post_command(): void
+    {
+        $route = Route::getRoutes()->match(Request::create('/tenants/alpha/configuration-validation/run', 'POST'));
+        $this->assertSame(ConfigurationValidationController::class.'@run', ltrim($route->getActionName(), '\\'));
+        $this->assertSame(self::RUN_VALIDATION_OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
+        $this->assertContains('auth', $route->gatherMiddleware());
+        $this->assertContains('tenant.context', $route->gatherMiddleware());
+    }
+
+    public function test_run_validation_returns_authoritative_sanitized_result_and_fails_closed_across_tenants(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage', 'tenant.view']);
+
+        $response = $this->actingAs($user)
+            ->postJson('/tenants/alpha/configuration-validation/run')
+            ->assertOk()
+            ->assertJsonPath('operation_id', self::RUN_VALIDATION_OPERATION_ID)
+            ->assertJsonStructure(['checked_at_utc', 'critical_count', 'warning_count', 'items']);
+
+        $json = $response->getContent();
+        $this->assertStringNotContainsString(base_path(), $json);
+        $this->assertStringNotContainsString(storage_path(), $json);
+        $this->assertStringNotContainsString((string) config('app.key'), $json);
+
+        $limited = User::factory()->create();
+        $this->membership($limited, 'limited', ['tenant.view']);
+        $this->actingAs($limited)->postJson('/tenants/limited/configuration-validation/run')->assertForbidden();
+
+        $foreign = User::factory()->create();
+        $this->membership($foreign, 'beta', ['settings.manage', 'tenant.view']);
+        $this->actingAs($foreign)->postJson('/tenants/alpha/configuration-validation/run')->assertNotFound();
     }
 
     public function test_authorized_user_receives_sanitized_bounded_report(): void
