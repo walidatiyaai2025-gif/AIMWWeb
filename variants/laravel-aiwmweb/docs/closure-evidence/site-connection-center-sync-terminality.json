@@ -35,7 +35,8 @@
     "durable_run": "App\\Models\\SyncRun",
     "existing_provider_path_reused": true,
     "parallel_provider_path_created": false,
-    "placeholder_or_fake_success": false
+    "placeholder_or_fake_success": false,
+    "history_service": "App\\Sites\\SiteOperationHistoryService"
   },
   "security": {
     "session_authentication": true,
@@ -53,7 +54,8 @@
     "terminal_success": "only status=succeeded",
     "failed_cancelled_or_cancel_requested": "rendered as failure, never success",
     "authoritative_success_reread": "connection state and site operation history are fetched from the server after succeeded",
-    "failure_reread": "connection/history reread is attempted after failure while preserving the original synchronization error"
+    "failure_reread": "connection/history reread is attempted after failure while preserving the original synchronization error",
+    "operation_history": "SyncSiteJob records succeeded/failed synchronization history with affected-record count and redacted details; the UI rereads it authoritatively after terminal success."
   },
   "acceptance_tests": {
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionCenterSynchronizeTerminalityTest.php",
@@ -67,7 +69,8 @@
       "same-key replay without duplicate SyncRun or job dispatch",
       "authoritative connection and operation-history endpoints",
       "frontend success only after durable SyncRun success and server reread",
-      "cancelled and cancel_requested states are failures"
+      "cancelled and cancel_requested states are failures",
+      "SyncSiteJob success/failure history recording contract"
     ]
   },
   "scope_guards": {
@@ -80,6 +83,6 @@
   },
   "terminality": {
     "state": "ADAPTED",
-    "reason": "The Site Connection Center Sync-now control now invokes the existing tenant-owned, idempotent queued WordPress synchronization path, observes the durable run to a truthful terminal result, and rereads authoritative connection plus operation history state before reporting success."
+    "reason": "The Site Connection Center Sync-now control invokes the existing tenant-owned, idempotent queued WordPress synchronization path, observes the durable run to a truthful terminal result, persists succeeded/failed synchronization history from SyncSiteJob, and rereads authoritative connection plus operation history state before reporting success."
   }
 }
