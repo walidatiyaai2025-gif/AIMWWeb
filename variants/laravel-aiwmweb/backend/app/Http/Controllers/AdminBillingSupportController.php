@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\DB;
 final class AdminBillingSupportController extends Controller
 {
     public const REACTIVATE_OPERATION_ID = 'AIMW-BILL-29A4267B87';
+
     public const GRANT_GRACE_OPERATION_ID = 'AIMW-BILL-5A0140C699';
 
     private const IDEMPOTENCY_OPERATION = 'billing.support.reactivate';
+
     private const GRANT_GRACE_IDEMPOTENCY_OPERATION = 'billing.support.grant-grace';
 
     public function index(): JsonResponse
