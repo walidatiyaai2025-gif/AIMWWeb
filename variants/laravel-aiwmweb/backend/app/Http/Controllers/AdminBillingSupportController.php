@@ -305,10 +305,12 @@ final class AdminBillingSupportController extends Controller
         }, 3);
 
         $authoritative = TenantSubscription::query()->findOrFail((int) $result['data']['id']);
+        $expectedGraceEndsAt = $result['data']['grace_ends_at'] ?? null;
         abort_unless(
             $authoritative->state === SubscriptionState::GRACE
                 && $authoritative->grace_ends_at
-                && $authoritative->grace_ends_at->utc()->toIso8601String() === ($result['data']['grace_ends_at'] ?? null),
+                && is_string($expectedGraceEndsAt)
+                && $authoritative->grace_ends_at->greaterThanOrEqualTo($expectedGraceEndsAt),
             409,
             'Persisted billing state did not reconcile after support grace mutation.',
         );
