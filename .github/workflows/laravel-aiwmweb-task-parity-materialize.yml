@@ -1,13 +1,13 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-7ECC5F8CBA final-provenance-28ca2d7
+# trigger: AIMW-BILL-9414B3FFEF issue-632-search
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-7ECC5F8CBA-reconcile
+      - worker/laravel-aiwmweb-AIMW-BILL-9414B3FFEF-search
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-reconcile-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-search-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -48,5 +48,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-7ECC5F8CBA"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-9414B3FFEF"
           git push origin "HEAD:${{ github.ref_name }}"
