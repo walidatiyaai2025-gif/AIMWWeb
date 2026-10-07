@@ -11,7 +11,7 @@
     "route_screen": "/admin/billing-support",
     "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
     "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:SuspendAsync:SuspendAsync",
-    "source_intent": "Suspend local subscription access through a bounded audited platform-admin intervention without mutating payment-provider state or fabricating payment success",
+    "source_intent": "Suspend local subscription access through a bounded audited platform-admin intervention, matching the source state machine including Trialing, without mutating payment-provider state or fabricating payment success",
     "mutation": true,
     "tenant_owned": true,
     "risk": "low"
@@ -32,30 +32,33 @@
   },
   "semantics": {
     "allowed_source_states": [
+      "TRIALING",
       "ACTIVE",
       "PAST_DUE",
       "GRACE"
     ],
     "invalid_source_states": [
-      "TRIALING",
       "SUSPENDED",
       "CANCELLED",
       "EXPIRED"
     ],
     "provider_binding": "preserved exactly; support suspension changes local access state only and does not call or mutate the provider",
     "payment_success_recorded": false,
-    "persisted_state": "SUSPENDED"
+    "persisted_state": "SUSPENDED",
+    "grace_on_suspend": "cleared when entering SUSPENDED, matching the source transition model"
   },
   "security": {
     "tenant_selector": "server-owned tenant.context only",
     "subscription_ownership": "TenantSubscription global tenant scope rejects foreign direct IDs",
     "caller_owned_fields": [
       "tenant_id",
+      "account_id",
       "user_id",
       "actor_user_id",
       "provider",
       "provider_subscription_id",
       "provider_subscription_hash",
+      "encrypted_provider_subscription_id",
       "payment_status",
       "state",
       "grace_ends_at",
@@ -84,7 +87,9 @@
       "provider binding remains unchanged and no provider mutation occurs",
       "immutable tenant billing audit with actor, reason, request context and prior/terminal state",
       "no billing transaction or payment-success inference",
-      "active-tenant frontend contract binding and browser idempotency header"
+      "active-tenant frontend contract binding and browser idempotency header",
+      "Trialing can transition to SUSPENDED, matching the source state machine",
+      "suspending GRACE clears grace_ends_at while preserving provider binding"
     ]
   },
   "scope_guards": {
