@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 648,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-EE0BEAAC55",
+  "terminal_state": "ADAPTED",
+  "domain": "billing",
+  "kind": "visible_control",
+  "operation": {
+    "route_screen": "/configuration-validation | /module/configuration",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ConfigurationValidation.razor",
+    "source_control": "RunValidation [RunValidation]",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "laravel_runtime": {
+    "api": "POST /tenants/{tenant}/configuration-validation/run",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ConfigurationValidationController.php",
+    "browser_runtime": "variants/laravel-aiwmweb/backend/resources/js/configuration-validation-copy-report.tsx",
+    "workspace": "/module/configuration",
+    "authoritative_response": true,
+    "retryable": true,
+    "sanitized": true,
+    "success_semantics": "visible result is updated only after the tenant-scoped validation API returns successfully",
+    "failure_semantics": "failed validation clears stale result, reports bounded failure, and remains retryable"
+  },
+  "security": {
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "permission": "settings.manage",
+    "guest": "401/redirect per JSON/browser request",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "server_paths_exposed": false,
+    "app_key_exposed": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ConfigurationValidationCopyReportTerminalityTest.php",
+    "browser": "variants/laravel-aiwmweb/backend/resources/js/__tests__/configuration-validation-copy-report.test.ts",
+    "coverage": [
+      "canonical AIMW-BILL-EE0BEAAC55 route identity",
+      "POST command binding for the active tenant",
+      "settings.manage authorization",
+      "foreign-tenant direct-ID isolation",
+      "sanitized bounded authoritative read model",
+      "no server path or app-key leakage",
+      "retryable visible-control contract"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-EE0BEAAC55"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-EE0BEAAC55-run-validation"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Laravel exposes the source RunValidation control as an explicit tenant-scoped, permission-guarded, retryable command that returns and renders the same bounded sanitized validation model without fabricating success."
+  }
+}
