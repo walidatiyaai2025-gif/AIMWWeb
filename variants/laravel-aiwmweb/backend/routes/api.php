@@ -32,6 +32,11 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
         ->whereNumber('wordpressId')
         ->defaults('canonical_operation_id', ContentApiController::CONTENT_EDITOR_SAVE_OPERATION_ID)
         ->name('api.v1.content.editor.save');
+    Route::post('content/{type}/{wordpressId}/editor/approval', [ContentApiController::class, 'submitEditorForApproval'])
+        ->middleware('auth')
+        ->whereNumber('wordpressId')
+        ->defaults('canonical_operation_id', ContentApiController::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID)
+        ->name('api.v1.content.editor.submit-approval');
     Route::get('content/items/{content}', [ContentApiController::class, 'show']);
     Route::patch('content/items/{content}', [ContentApiController::class, 'update']);
     Route::post('content/items/{content}/state', [ContentApiController::class, 'state']);
