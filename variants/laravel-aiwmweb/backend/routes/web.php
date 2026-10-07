@@ -58,6 +58,7 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::get('/sync-runs/{run}', [DemoController::class, 'syncStatus']);
     Route::get('/billing/admin/subscriptions', [AdminBillingSupportController::class, 'index'])
         ->middleware('platform.admin')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::SEARCH_OPERATION_ID)
         ->name('canonical.api.billing-support.index');
     Route::post('/billing/admin/subscriptions/{subscription}/reactivate', [AdminBillingSupportController::class, 'reactivate'])
         ->middleware('platform.admin')
