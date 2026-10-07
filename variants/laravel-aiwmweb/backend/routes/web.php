@@ -64,6 +64,11 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->whereNumber('subscription')
         ->defaults('canonical_operation_id', AdminBillingSupportController::REACTIVATE_OPERATION_ID)
         ->name('canonical.api.billing-support.reactivate');
+    Route::post('/billing/admin/subscriptions/{subscription}/grace', [AdminBillingSupportController::class, 'grantGrace'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::GRANT_GRACE_OPERATION_ID)
+        ->name('canonical.api.billing-support.grant-grace');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
