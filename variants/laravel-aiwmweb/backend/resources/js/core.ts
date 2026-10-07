@@ -205,7 +205,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('site-reliability', '/site-reliability', 'operations', '◒', 'Site Reliability', 'موثوقية المواقع', 'Compare connectivity and synchronization reliability.', 'مقارنة موثوقية الاتصال والمزامنة.', { permission: 'sites.view' }),
     r('execution', '/module/execution', 'operations', '▶', 'Execution Center', 'مركز التنفيذ', 'Review queued, running, failed and completed jobs.', 'مراجعة المهام المنتظرة والجارية والفاشلة والمكتملة.', { permission: 'execution.view', controls: ['execution.retry', 'execution.cancel'] }),
     r('sync', '/module/sync', 'operations', '↻', 'Synchronization', 'المزامنة', 'Refresh local WordPress data with conflict visibility.', 'تحديث بيانات WordPress المحلية مع إظهار التعارضات.', { permission: 'sync.view', controls: ['sync.run'] }),
-    r('schedules', '/module/schedules', 'operations', '◷', 'Schedules', 'الجدولة', 'Manage scheduled operations.', 'إدارة العمليات المجدولة.', { permission: 'automation.view', controls: ['schedules.create', 'schedules.toggle'] }),
+    r('schedules', '/module/schedules', 'operations', '◷', 'Schedules', 'الجدولة', 'Manage scheduled operations.', 'إدارة العمليات المجدولة.', { permission: 'automation.view', controls: ['schedules.save', 'schedules.toggle'] }),
     r('notifications', '/notifications', 'operations', '●', 'Notification Inbox', 'صندوق الإشعارات', 'Review operational and workflow notifications.', 'مراجعة إشعارات التشغيل وسير العمل.', { permission: 'notifications.view' }),
     r('email-history', '/email/history', 'operations', '✉', 'Email Delivery History', 'سجل إرسال البريد', 'Inspect application email delivery history.', 'مراجعة سجل إرسال البريد من التطبيق.', { permission: 'diagnostics.view' }),
 
