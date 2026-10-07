@@ -161,7 +161,15 @@ final class ContentEditorSaveTerminalityTest extends TestCase
         $this->assertSame('v2', $saved->remote_version);
         $this->assertSame([3, 7], array_values($saved->metadata['categories'] ?? []));
         $this->assertSame([11], array_values($saved->metadata['tags'] ?? []));
-        $this->assertSame(1, ContentRevision::query()->where('content_item_id', $saved->id)->count());
+        $this->assertSame(2, ContentRevision::query()->where('content_item_id', $saved->id)->count());
+        $this->assertSame(
+            ['local-before-mutation', 'wordpress-sync'],
+            ContentRevision::query()
+                ->where('content_item_id', $saved->id)
+                ->orderBy('id')
+                ->pluck('source')
+                ->all(),
+        );
         $this->assertDatabaseHas('audit_events', [
             'event' => 'content.update',
             'subject_type' => 'post',
