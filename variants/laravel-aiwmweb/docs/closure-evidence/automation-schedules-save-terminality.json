@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 636,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B6BE029CB8",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/schedules | /automation-schedules",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AutomationSchedulesWorkspace.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AutomationSchedulesWorkspace.razor:/module/schedules | /automation-schedules:SaveAsync:SaveAsync",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AutomationCenterJobSaveController.php",
+    "route": "POST /api/tenants/{tenant}/automation-schedules/jobs/save",
+    "persistence_service": "variants/laravel-aiwmweb/backend/app/Operations/AutomationCenterJobSaveService.php",
+    "workspace": "GET /tenants/{tenant}/module/schedules",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "authoritative_reread": true,
+    "idempotency_on_create": true,
+    "optimistic_concurrency_on_update": true
+  },
+  "security": {
+    "active_tenant": "tenant.context",
+    "permission": "operations.manage",
+    "site_ownership": "tenant-qualified server lookup",
+    "job_ownership": "tenant plus authenticated owner",
+    "caller_identity_fields": "rejected",
+    "csrf": "web middleware",
+    "audit": "atomic per real mutation",
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationSchedulesSaveTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/automation-schedules-save-terminality.test.ts",
+    "coverage": [
+      "canonical operation route marker",
+      "guest and permission denial",
+      "foreign site IDOR rejection",
+      "server-derived tenant/owner/site name",
+      "create idempotency via existing service",
+      "edit optimistic concurrency via existing service",
+      "authoritative persisted reread",
+      "workspace visible-control binding"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-B6BE029CB8"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "aef72f086852afd190c9a5f4619fc4a815e7fca7",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-B6BE029CB8-schedule-save"
+  }
+}
