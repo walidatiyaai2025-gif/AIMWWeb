@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 use RuntimeException;
 use Tests\TestCase;
 
+// Exact-head CI retrigger after parity materialization; canonical scope remains AIMW-BILL-7ECC5F8CBA.
 final class AdminBillingReconcileTerminalityTest extends TestCase
 {
     use RefreshDatabase;
