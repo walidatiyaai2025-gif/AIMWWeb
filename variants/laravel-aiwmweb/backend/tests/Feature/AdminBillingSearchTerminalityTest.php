@@ -89,7 +89,8 @@ final class AdminBillingSearchTerminalityTest extends TestCase
         $this->actingAs($admin)
             ->getJson('/api/tenants/alpha/billing/admin/subscriptions?q=alpha')
             ->assertOk()
-            ->assertJsonPath('count', 2)
+            ->assertJsonPath('count', 1)
+            ->assertJsonPath('data.0.id', $paypal->id)
             ->assertJsonPath('data.0.account_slug', 'alpha');
 
         $this->actingAs($admin)
