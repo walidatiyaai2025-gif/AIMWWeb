@@ -232,7 +232,7 @@ final class AdminBillingSupportController extends Controller
                 'Grace cannot be granted to a cancelled or expired subscription.',
             );
 
-            $now = now();
+            $now = now()->startOfSecond();
             $previousState = $target->state;
             $previousGraceEndsAt = $target->grace_ends_at?->copy();
 
