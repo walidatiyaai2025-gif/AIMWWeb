@@ -37,7 +37,8 @@
     "extend": "existing GRACE uses the later of current grace end or server time as the base, then adds the requested bounded day count",
     "terminal_states": "CANCELLED and EXPIRED fail closed",
     "provider_binding": "provider identifiers remain unchanged; the operation does not call or mutate a provider",
-    "payment_success_recorded": false
+    "payment_success_recorded": false,
+    "server_time_precision": "grace deadlines are normalized to persisted second precision before authoritative reread comparison"
   },
   "security": {
     "tenant_selector": "server-owned tenant.context only",
@@ -94,6 +95,6 @@
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "ea589a044dc1093ce7ad527076db7280eefc6085",
     "branch": "worker/laravel-aiwmweb-AIMW-BILL-5A0140C699-grant-grace",
-    "implementation_sha": "648a1667266af0cff1a75435b7eb935a9d03fe8f"
+    "implementation_sha": "b26e37fc106970f8dddd9ffc238382b07a9b452b"
   }
 }
