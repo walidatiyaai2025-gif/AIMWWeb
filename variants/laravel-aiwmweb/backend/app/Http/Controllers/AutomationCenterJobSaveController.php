@@ -11,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 final class AutomationCenterJobSaveController extends Controller
 {
+    public const SCHEDULES_SAVE_OPERATION_ID = 'AIMW-BILL-B6BE029CB8';
+
     public function __construct(
         private readonly TenantAuthorizer $authorizer,
         private readonly AutomationCenterJobSaveService $service,
@@ -41,6 +43,42 @@ final class AutomationCenterJobSaveController extends Controller
         return response()->json(['data' => $saved]);
     }
 
+    public function save(Request $request, string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('operations.manage');
+        $this->rejectScheduleSaveUnknownFields($request);
+
+        $jobId = $request->input('id');
+        $update = $jobId !== null && $jobId !== '';
+        $data = $request->validate([
+            ...$this->rules($update),
+            'id' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        unset($data['id']);
+
+        if ($update) {
+            $saved = $this->service->update((int) $jobId, $data, (int) $request->user()->getAuthIdentifier());
+
+            return response()->json([
+                'operation_id' => self::SCHEDULES_SAVE_OPERATION_ID,
+                'data' => $saved,
+            ]);
+        }
+
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        if ($idempotencyKey === '' || strlen($idempotencyKey) > 120) {
+            throw ValidationException::withMessages(['Idempotency-Key' => 'A valid Idempotency-Key header is required.']);
+        }
+
+        $saved = $this->service->create($data, (int) $request->user()->getAuthIdentifier(), $idempotencyKey);
+
+        return response()->json([
+            'operation_id' => self::SCHEDULES_SAVE_OPERATION_ID,
+            'data' => $saved,
+        ], 201);
+    }
+
     private function rules(bool $update): array
     {
         $rules = [
@@ -58,6 +96,15 @@ final class AutomationCenterJobSaveController extends Controller
         }
 
         return $rules;
+    }
+
+    private function rejectScheduleSaveUnknownFields(Request $request): void
+    {
+        $allowed = ['id', 'name', 'site_id', 'type', 'frequency', 'interval_value', 'time_of_day', 'enabled', 'retry_count', 'expected_version'];
+        $unknown = array_values(array_diff(array_keys($request->all()), $allowed));
+        if ($unknown !== []) {
+            throw ValidationException::withMessages(['request' => 'Unsupported fields: '.implode(', ', $unknown)]);
+        }
     }
 
     private function rejectUnknownFields(Request $request, bool $update): void
