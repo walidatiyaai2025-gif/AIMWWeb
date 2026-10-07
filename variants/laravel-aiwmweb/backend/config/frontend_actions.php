@@ -227,6 +227,7 @@ return [
         ],
         'route_keys' => ['backups'],
         'ownership' => 'tenant',
+        'platform_admin' => true,
         'permission' => null,
         'capability' => 'backups.create',
         'endpoint' => '/api/tenants/{tenant}/backups',
