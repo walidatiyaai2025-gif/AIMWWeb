@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Content\ContentPlatformService;
 use App\Content\Remote\ContentRemoteDriver;
 use App\Http\Controllers\ContentApiController;
 use App\Models\ContentConflict;
@@ -202,6 +201,7 @@ final class ContentEditorSaveTerminalityTest extends TestCase
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
         $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+
         return $this->membershipExisting($user, $tenant, $permissions, $slug.'-role');
     }
 
