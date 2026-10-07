@@ -174,6 +174,8 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('site-details', '/sites/:siteId', 'overview', '◉', 'Site Details', 'تفاصيل الموقع', 'Inspect connection, capability, scope and site state.', 'فحص الاتصال والقدرات والنطاق وحالة الموقع.', { permission: 'sites.view', hidden: true }),
     r('site-snapshot', '/sites/:siteId/snapshot', 'operations', '↻', 'Site Data Snapshot', 'لقطة بيانات الموقع', 'Inspect cached site data and synchronize it from WordPress.', 'مراجعة بيانات الموقع المحفوظة ومزامنتها من WordPress.', { permission: 'sites.view', hidden: true }),
     r('site-offline-data', '/sites/:siteId/offline-data', 'operations', '↻', 'Site Offline Data', 'بيانات الموقع دون اتصال', 'Alias for the authoritative site data snapshot.', 'مسار بديل للقطة بيانات الموقع الفعلية.', { permission: 'sites.view', hidden: true }),
+    r('site-connection-center', '/sites/:siteId/connection', 'operations', '↻', 'Site Connection Center', 'مركز اتصال الموقع', 'Run synchronization and inspect authoritative connection history.', 'تشغيل المزامنة ومراجعة سجل الاتصال الفعلي.', { permission: 'sites.view', hidden: true }),
+    r('site-connection-operations', '/sites/:siteId/operations', 'operations', '≣', 'Site Operations', 'عمليات الموقع', 'Alias for the site connection operation history.', 'مسار بديل لسجل عمليات اتصال الموقع.', { permission: 'sites.view', hidden: true }),
     r('explorer', '/explorer', 'overview', '▦', 'Explorer', 'المستكشف', 'Explore tenant-scoped WordPress resources.', 'استكشاف موارد WordPress الخاصة بالحساب.', { permission: 'sites.view' }),
     r('system-overview', '/module/overview', 'overview', '▦', 'System Overview', 'مركز النظام', 'High-level platform modules and runtime state.', 'نظرة عامة على وحدات المنصة وحالة التشغيل.'),
 
