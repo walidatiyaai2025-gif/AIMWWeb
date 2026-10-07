@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 636,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B6BE029CB8",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/schedules | /automation-schedules",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AutomationSchedulesWorkspace.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AutomationSchedulesWorkspace.razor:/module/schedules | /automation-schedules:SaveAsync:SaveAsync",
+    "source_intent": "Create or edit an owned WordPress automation schedule from the Schedules workspace, persisting configuration only while enforcing site ownership, supported runtime types, plan limits, SEO entitlement, and safe retry semantics",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "source_behavior": {
+    "ui": "EditForm OnValidSubmit=SaveAsync",
+    "create_mode": "empty source Id creates a new owned schedule",
+    "edit_mode": "non-empty source Id updates only an existing owned schedule",
+    "site_ownership": "selected site must belong to the signed-in account",
+    "site_name": "derived from the owned site rather than trusted from the caller",
+    "supported_types": [
+      "Synchronization",
+      "SEO Audit"
+    ],
+    "frequency": [
+      "hourly",
+      "daily",
+      "weekly",
+      "monthly"
+    ],
+    "interval": "source UI bounds 1..365 and SaveAsync clamps before persistence; Laravel rejects out-of-range values fail closed",
+    "time_of_day": "UTC HH:mm",
+    "retry_count": "source UI bounds 0..10 and SaveAsync clamps before persistence; Laravel rejects out-of-range values fail closed",
+    "enabled": "persisted schedule state",
+    "execution": "SaveAsync persists configuration only; QueueNowAsync is a separate source operation"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AutomationSchedulesSaveController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Operations/AutomationCenterJobSaveService.php",
+    "route": "POST /api/tenants/{tenant}/automation-schedules/save",
+    "route_registration": "variants/laravel-aiwmweb/backend/app/Providers/AppServiceProvider.php",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_request_binding": "variants/laravel-aiwmweb/backend/resources/js/action-contract.ts",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "tenant_context_required": true,
+    "permission": "operations.manage",
+    "shared_service_reused": true,
+    "duplicate_business_implementation_added": false
+  },
+  "semantics": {
+    "create": "absence of job maps the source empty Id to AutomationCenterJobSaveService::create",
+    "edit": "job plus expected_version maps the source existing Id to AutomationCenterJobSaveService::update",
+    "plan_limit": "automation.rules.max enforced for create",
+    "seo_entitlement": "seo.audit.enabled enforced for SEO Audit",
+    "site_name": "server-derived from tenant-owned Site",
+    "owner_binding": "tenant_id and owner_user_id are server-derived",
+    "create_retry": "Idempotency-Key plus request hash returns the same persisted row for exact replay and rejects divergent reuse with 409",
+    "edit_retry": "expected_version optimistic concurrency; exact lost-response replay is a no-op and stale divergent edits return 409",
+    "audit": "one automation_center_job_audits row per real create/update mutation",
+    "authoritative_reread": "shared service rereads tenant+owner+job and verifies requested safe configuration before returning success",
+    "dispatch_on_save": false,
+    "fake_success": false
+  },
+  "security": {
+    "session": "required",
+    "csrf": "web middleware retained for POST mutation",
+    "tenant_selector": "server-owned tenant.context only",
+    "site_ownership": "tenant-qualified site lookup; foreign and missing site IDs share 404 behavior",
+    "job_ownership": "tenant plus authenticated owner query; foreign-owner, foreign-tenant and missing direct IDs fail closed",
+    "caller_owned_fields": [
+      "tenant_id",
+      "owner_user_id",
+      "site_name",
+      "api_key",
+      "provider",
+      "secret",
+      "token",
+      "payload"
+    ],
+    "caller_owned_fields_policy": "unknown fields rejected",
+    "authorization": "operations.manage required",
+    "provider_secret_disclosure_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationSchedulesSaveTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/automation-schedules-save-terminality.test.ts",
+    "shared_service_regression": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationCenterSaveTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and web/auth/tenant.context route contract",
+      "frontend Schedules workspace binds schedules.save to SaveAsync",
+      "create persists server-owned tenant, owner and authoritative site name",
+      "create Idempotency-Key replay is stable and divergent key reuse conflicts",
+      "edit uses source-style job identity plus expected_version optimistic concurrency",
+      "exact edit replay is a no-op and stale divergent edits conflict",
+      "guest and missing operations.manage permission fail closed",
+      "cross-tenant route, foreign site and foreign-owner direct job IDs fail closed",
+      "unsupported types, frequencies, time and numeric bounds fail closed",
+      "caller-owned tenant, owner, site-name and secret-like fields are rejected",
+      "plan and SEO entitlement denial produces no persisted schedule",
+      "one audit per real mutation with authoritative persisted reread",
+      "SaveAsync does not dispatch a queue or write generic scheduled_tasks/automation_rules",
+      "frontend discovered action validates active tenant and permission and supplies browser idempotency"
+    ]
+  },
+  "coexistence": {
+    "existing_operation": "AIMW-BILL-BC1C75CE0D",
+    "existing_source": "src/AIWordPressManager.Web/Components/Pages/AutomationCenter.razor",
+    "relationship": "Both controls intentionally reuse AutomationCenterJobSaveService, but each keeps its own canonical operation identity and source-screen adapter",
+    "existing_operation_modified": false
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-B6BE029CB8"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "shared_service_semantics_weakened": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "force_push": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "aef72f086852afd190c9a5f4619fc4a815e7fca7",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-B6BE029CB8-save"
+  }
+}
