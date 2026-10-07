@@ -30,6 +30,8 @@ final class ContentApiController extends Controller
 {
     public const MEDIA_DELETE_OPERATION_ID = 'AIMW-BILL-4DCB58743D';
 
+    public const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
+
     public function __construct(
         private readonly ContentPlatformService $content,
         private readonly ContentRemoteDriver $remote,
