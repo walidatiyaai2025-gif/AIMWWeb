@@ -11,6 +11,7 @@ use App\Http\Controllers\AiProviderSettingsReadController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
+use App\Http\Controllers\ConfigurationValidationController;
 use App\Http\Controllers\ContentPlannerController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\HealthController;
@@ -147,6 +148,9 @@ Route::middleware(['auth', 'tenant.context'])->prefix('api/v1/tenants/{tenant}/b
 });
 
 Route::middleware(['auth', 'tenant.context'])->group(function (): void {
+    Route::get('/tenants/{tenant}/configuration-validation/report', [ConfigurationValidationController::class, 'show'])
+        ->defaults('canonical_operation_id', ConfigurationValidationController::COPY_REPORT_OPERATION_ID)
+        ->name('tenant.configuration-validation.report');
     Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
         ->name('tenant.settings.ai-prompts');
     Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
@@ -203,6 +207,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'logs' => "/tenants/{$tenant}/admin/logs",
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
             'backups' => "/tenants/{$tenant}/admin/backups",
+            'configuration-validation' => "/tenants/{$tenant}/configuration-validation/report",
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
             'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
@@ -297,6 +302,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
+        Route::get('/module/configuration', 'show')->defaults('workspace_permissions', 'settings.manage')->name('canonical.workspace.configuration-validation');
         Route::get('/module/logs', 'show')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->name('canonical.workspace.logs');
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
@@ -328,6 +334,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/logs', 'redirect')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->defaults('workspace_target', '/module/logs')->name('canonical.alias.logs');
         Route::get('/operations/hub', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/operations')->name('canonical.alias.operations-hub');
         Route::get('/backups', 'redirect')->defaults('workspace_permissions', 'backup.manage,backups.view')->defaults('workspace_target', '/module/backups')->name('canonical.alias.backups');
+        Route::get('/configuration-validation', 'redirect')->defaults('workspace_permissions', 'settings.manage')->defaults('workspace_target', '/module/configuration')->name('canonical.alias.configuration-validation');
         Route::get('/reports', 'redirect')->defaults('workspace_permissions', 'reports.view')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
         Route::get('/operations/sites', 'redirect')->defaults('workspace_permissions', 'execution.view')->defaults('workspace_target', '/site-operations')->name('canonical.alias.operations-sites');
         Route::get('/automation-schedules', 'redirect')->defaults('workspace_permissions', 'operations.manage,automation.view')->defaults('workspace_target', '/module/schedules')->name('canonical.alias.automation-schedules');
