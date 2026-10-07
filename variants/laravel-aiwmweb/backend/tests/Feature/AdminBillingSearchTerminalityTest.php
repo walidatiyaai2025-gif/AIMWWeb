@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Billing\Enums\SubscriptionState;
 use App\Http\Controllers\AdminBillingSupportController;
-use App\Models\BillingAudit;
 use App\Models\BillingPlan;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
