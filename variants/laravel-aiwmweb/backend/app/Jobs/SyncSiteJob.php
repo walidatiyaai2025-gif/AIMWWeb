@@ -58,7 +58,7 @@ final class SyncSiteJob extends TenantAwareJob
             }
 
             $site->update(['last_sync_at' => now(), 'health_state' => 'healthy']);
-            $run->update(['status' => 'succeeded', 'processed' => count($items), 'completed_at' => now()]);
+            $run->update(['status' => 'succeeded', 'processed' => count($items), 'completed_at' => now()]);\n            $history->record(\n                $site->id,\n                'synchronization',\n                true,\n                'WordPress synchronization completed.',\n                ['sync_run_id' => (int) $run->getKey()],\n                count($items),\n                null,\n                $startedAt,\n            );
             $history->record(
                 $site->id,
                 'synchronization',
