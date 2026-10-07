@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 627,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-5A0140C699",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/billing-support",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:GrantGraceAsync:GrantGraceAsync",
+    "source_intent": "Grant or extend a bounded local subscription grace window from a platform-admin support intervention without fabricating provider or payment success",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportController.php",
+    "route": "POST /api/tenants/{tenant}/billing/admin/subscriptions/{subscription}/grace",
+    "readback": "GET /api/tenants/{tenant}/billing/admin/subscriptions",
+    "workspace": "GET /tenants/{tenant}/admin/billing-support",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_request_binding": "variants/laravel-aiwmweb/backend/resources/js/action-contract.ts",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "platform_admin_required": true,
+    "tenant_context_required": true,
+    "authoritative_reread": true,
+    "idempotency_header": "Idempotency-Key",
+    "transaction_retry_limit": 3,
+    "grace_days_min": 1,
+    "grace_days_max": 90
+  },
+  "semantics": {
+    "grant": "non-GRACE subscriptions may move to GRACE only when the canonical Laravel subscription state machine permits the transition",
+    "extend": "existing GRACE uses the later of current grace end or server time as the base, then adds the requested bounded day count",
+    "terminal_states": "CANCELLED and EXPIRED fail closed",
+    "provider_binding": "provider identifiers remain unchanged; the operation does not call or mutate a provider",
+    "payment_success_recorded": false
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "subscription_ownership": "TenantSubscription global tenant scope rejects foreign direct IDs",
+    "caller_owned_fields": [
+      "tenant_id",
+      "user_id",
+      "actor_user_id",
+      "provider",
+      "provider_subscription_id",
+      "provider_subscription_hash",
+      "payment_status",
+      "grace_ends_at"
+    ],
+    "caller_owned_fields_policy": "prohibited",
+    "csrf": "web route stack retained for POST mutation",
+    "audit": "immutable tenant-scoped BillingAudit records actor, reason, request context, prior state and authoritative grace end",
+    "provider_secret_disclosure_added": false,
+    "provider_mutation_added": false,
+    "payment_success_recorded": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingGrantGraceTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/admin-billing-grant-grace-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and route marker",
+      "platform-admin middleware plus guest and non-admin denial",
+      "tenant-scoped foreign subscription direct-ID rejection",
+      "bounded 1-90 day input and support reason validation",
+      "caller-owned tenant, actor, provider, payment and absolute grace fields rejected",
+      "grant and extend semantics use server-owned time and authoritative persisted state",
+      "idempotent replay with conflicting request protection",
+      "monotonic replay after a later extension cannot shorten grace",
+      "immutable tenant billing audit with actor and request context",
+      "provider binding remains unchanged and no provider mutation occurs",
+      "authoritative collection reread exposes the committed grace end",
+      "no billing transaction or payment-success inference",
+      "active-tenant frontend contract binding and browser idempotency header"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-5A0140C699"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "provider_mutation_added": false,
+    "payment_success_inferred": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "ea589a044dc1093ce7ad527076db7280eefc6085",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-5A0140C699-grant-grace",
+    "implementation_sha": "648a1667266af0cff1a75435b7eb935a9d03fe8f"
+  }
+}
