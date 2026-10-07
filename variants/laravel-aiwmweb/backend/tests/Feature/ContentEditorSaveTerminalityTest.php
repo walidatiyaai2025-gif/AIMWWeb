@@ -296,10 +296,15 @@ final class ContentEditorSaveTerminalityTest extends TestCase
 final class ContentEditorFakeDriver implements ContentRemoteDriver
 {
     public int $gets = 0;
+
     public int $mutations = 0;
+
     public bool $forceConflict = false;
+
     public ?int $lastMutationRemoteId = null;
+
     public ?string $lastMutationResource = null;
+
     public ?string $lastMutationAction = null;
 
     /** @var array<int, array<string, mixed>> */
