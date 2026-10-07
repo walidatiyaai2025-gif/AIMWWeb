@@ -99,6 +99,7 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "5a636e1c2757822177cedd53982d41de97a177b8",
-    "branch": "worker/laravel-aiwmweb-AIMW-BILL-7ECC5F8CBA-reconcile"
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-7ECC5F8CBA-reconcile",
+    "implementation_sha": "c74ca1bc29eb9b40465635f067f6078f401a412f"
   }
 }
