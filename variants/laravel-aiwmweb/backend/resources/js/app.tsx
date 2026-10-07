@@ -19,6 +19,7 @@ import { CommentsBackToSitesControl } from './comments-back-to-sites-control';
 import { CommentsCommentLinksControl } from './comments-comment-link-control';
 import { CommentsContentHubLink } from './comments-content-hub-link';
 import { CommentsManageSiteControl } from './comments-manage-site-control';
+import { ConfigurationValidationCopyReportControl } from './configuration-validation-copy-report';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
@@ -159,6 +160,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'operations') return <><OperationsHubReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'settings') return <><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
