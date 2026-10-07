@@ -1,6 +1,7 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Backup\TenantBackupCreateService;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminBillingSupportController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\AdminOperationsController;
 use App\Http\Controllers\AiPromptTemplateSaveController;
 use App\Http\Controllers\AiPromptTemplatesReadController;
 use App\Http\Controllers\AiProviderSettingsReadController;
+use App\Http\Controllers\BackupCreateController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
@@ -81,6 +83,10 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->whereNumber('subscription')
         ->defaults('canonical_operation_id', AdminBillingSupportController::RECONCILE_OPERATION_ID)
         ->name('canonical.api.billing-support.reconcile');
+    Route::post('/backups', BackupCreateController::class)
+        ->middleware('platform.admin')
+        ->defaults('canonical_operation_id', TenantBackupCreateService::OPERATION_ID)
+        ->name('canonical.api.backups.create');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
