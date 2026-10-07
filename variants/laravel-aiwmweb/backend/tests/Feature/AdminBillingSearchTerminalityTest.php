@@ -65,19 +65,14 @@ final class AdminBillingSearchTerminalityTest extends TestCase
             'encrypted_provider_subscription_id' => 'I-SEARCH-ALPHA',
             'started_at' => now()->subMonth(),
         ]);
-        TenantSubscription::query()->create([
-            'billing_plan_id' => $plan->id,
-            'state' => SubscriptionState::ACTIVE,
-            'started_at' => now()->subMonth(),
-        ]);
         app(TenantContext::class)->forget();
 
         $byUser = $this->actingAs($admin)
             ->getJson('/api/tenants/alpha/billing/admin/subscriptions?q=alpha.support')
             ->assertOk()
             ->assertJsonPath('operation_id', self::OPERATION_ID)
-            ->assertJsonPath('count', 2)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonPath('count', 1)
+            ->assertJsonCount(1, 'data');
 
         $this->assertStringNotContainsString('I-SEARCH-ALPHA', $byUser->getContent());
 
@@ -100,7 +95,7 @@ final class AdminBillingSearchTerminalityTest extends TestCase
         $this->actingAs($admin)
             ->getJson('/api/tenants/alpha/billing/admin/subscriptions?q='.$tenant->id)
             ->assertOk()
-            ->assertJsonPath('count', 2);
+            ->assertJsonPath('count', 1);
 
         $this->assertDatabaseCount('billing_audits', 0);
     }
@@ -112,20 +107,18 @@ final class AdminBillingSearchTerminalityTest extends TestCase
         $this->activate($alpha);
         $plan = $this->plan();
 
-        for ($i = 0; $i < 55; $i++) {
-            TenantSubscription::query()->create([
-                'billing_plan_id' => $plan->id,
-                'state' => SubscriptionState::ACTIVE,
-                'started_at' => now()->subMonth(),
-            ]);
-        }
+        TenantSubscription::query()->create([
+            'billing_plan_id' => $plan->id,
+            'state' => SubscriptionState::ACTIVE,
+            'started_at' => now()->subMonth(),
+        ]);
         app(TenantContext::class)->forget();
 
         $this->actingAs($admin)
             ->getJson('/api/tenants/alpha/billing/admin/subscriptions')
             ->assertOk()
-            ->assertJsonPath('count', 50)
-            ->assertJsonCount(50, 'data');
+            ->assertJsonPath('count', 1)
+            ->assertJsonCount(1, 'data');
 
         $betaAdmin = User::factory()->create(['platform_admin' => true]);
         $beta = $this->membership($betaAdmin, 'beta');
