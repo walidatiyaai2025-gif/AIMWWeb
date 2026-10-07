@@ -12,7 +12,7 @@ export type DiscoveredActionContract = Omit<ActionContract, 'method' | 'fields'>
     fixed?: Record<string, string | number>;
     reconcile_api_key?: string | null;
     idempotency_required?: boolean;
-    fields?: Array<NonNullable<ActionContract['fields']>[number] & { path?: boolean }>;
+    fields?: Array<NonNullable<ActionContract['fields']>[number] & { path?: boolean; query?: boolean }>;
 };
 
 type BoundContext = FrontendContext & {
@@ -71,6 +71,17 @@ export function prepareActionRequest(
     if (/\{[^}]+\}/.test(endpoint)) {
         throw new ActionContractError('The action endpoint still contains an unresolved ownership or path parameter.');
     }
+
+    const query = new URLSearchParams();
+    for (const field of action.fields ?? []) {
+        if (!field.query) continue;
+        const value = payload[field.key];
+        delete payload[field.key];
+        if (value === undefined || value === '') continue;
+        query.append(field.key, String(value));
+    }
+    const queryString = query.toString();
+    if (queryString) endpoint += `${endpoint.includes('?') ? '&' : '?'}${queryString}`;
 
     const body = ['GET', 'HEAD', 'DELETE'].includes(action.method.toUpperCase())
         ? undefined
