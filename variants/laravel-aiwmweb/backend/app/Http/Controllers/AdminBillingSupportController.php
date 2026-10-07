@@ -110,7 +110,6 @@ final class AdminBillingSupportController extends Controller
         ]);
     }
 
-
     public function suspend(
         Request $request,
         string $tenant,
