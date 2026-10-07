@@ -1,5 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-5A0140C699
+# trigger: AIMW-BILL-5A0140C699 exact-head-after-pint
 
 on:
   push:
