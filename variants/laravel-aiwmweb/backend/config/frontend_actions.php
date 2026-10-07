@@ -216,6 +216,31 @@ return [
         'terminal_candidate' => true,
         'fields' => [],
     ],
+    'backups.create' => [
+        'operation_id' => 'AIMW-BILL-DDA412F087',
+        'canonical' => [
+            'kind' => 'visible_control',
+            'domain' => 'billing',
+            'route_screen' => '/backups | /module/backups',
+            'visible_control' => 'CreateAsync [CreateAsync]',
+            'current_source' => 'src/AIWordPressManager.Web/Components/Pages/BackupRestore.razor',
+        ],
+        'route_keys' => ['backups'],
+        'ownership' => 'tenant',
+        'permission' => null,
+        'capability' => 'backups.create',
+        'endpoint' => '/api/tenants/{tenant}/backups',
+        'method' => 'POST',
+        'reconcile_api_key' => 'backups',
+        'risk' => 'high',
+        'approval_required' => false,
+        'terminal_candidate' => true,
+        'fields' => [
+            ['key' => 'note', 'type' => 'text', 'label' => ['en' => 'Backup note', 'ar' => 'ملاحظة النسخة']],
+            ['key' => 'recovery_secret', 'type' => 'password', 'label' => ['en' => 'Recovery secret', 'ar' => 'سر الاستعادة']],
+            ['key' => 'recovery_secret_confirmation', 'type' => 'password', 'label' => ['en' => 'Confirm recovery secret', 'ar' => 'تأكيد سر الاستعادة']],
+        ],
+    ],
     'backups.refresh' => [
         'operation_id' => 'AIMW-BILL-07A0F6427B',
         'canonical' => [
