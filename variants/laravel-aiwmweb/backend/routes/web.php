@@ -1,6 +1,7 @@
 <?php
 
 use App\Authorization\TenantAuthorizer;
+use App\Backup\TenantBackupCreateService;
 use App\Frontend\ActionContractRegistry;
 use App\Http\Controllers\AccessDeniedReadController;
 use App\Http\Controllers\AdminBillingSupportController;
@@ -84,7 +85,7 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->name('canonical.api.billing-support.reconcile');
     Route::post('/backups', BackupCreateController::class)
         ->middleware('platform.admin')
-        ->defaults('canonical_operation_id', \App\Backup\TenantBackupCreateService::OPERATION_ID)
+        ->defaults('canonical_operation_id', TenantBackupCreateService::OPERATION_ID)
         ->name('canonical.api.backups.create');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
