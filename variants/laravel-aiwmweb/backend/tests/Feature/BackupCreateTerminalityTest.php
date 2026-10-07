@@ -7,6 +7,7 @@ use App\Http\Controllers\BackupCreateController;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -124,12 +125,12 @@ final class BackupCreateTerminalityTest extends TestCase
     {
         $user = User::factory()->create(['platform_admin' => $platformAdmin]);
         $tenant = Tenant::query()->firstOrCreate(['slug' => $slug], ['name' => ucfirst($slug)]);
-        app(\App\Tenancy\TenantContext::class)->activate($tenant);
+        app(TenantContext::class)->activate($tenant);
         TenantMembership::query()->create([
             'user_id' => $user->id,
             'status' => 'active',
         ]);
-        app(\App\Tenancy\TenantContext::class)->forget();
+        app(TenantContext::class)->forget();
 
         return [$user, $tenant];
     }
