@@ -53,10 +53,11 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
         $providerHash = hash('sha256', 'I-SUSPEND-PRESERVED');
         $subscription = TenantSubscription::query()->create([
             'billing_plan_id' => $plan->id,
-            'state' => SubscriptionState::ACTIVE,
+            'state' => SubscriptionState::GRACE,
             'provider' => 'paypal',
             'provider_subscription_hash' => $providerHash,
             'encrypted_provider_subscription_id' => 'I-SUSPEND-PRESERVED',
+            'grace_ends_at' => now()->addDays(5),
             'started_at' => now()->subMonth(),
         ]);
         app(TenantContext::class)->forget();
@@ -74,6 +75,7 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
             ->assertJsonPath('data.state', SubscriptionState::SUSPENDED->value)
             ->assertJsonPath('data.provider_bound', true)
             ->assertJsonPath('data.local_access_restored', false)
+            ->assertJsonPath('data.grace_ends_at', null)
             ->assertJsonPath('data.payment_success_recorded', false);
 
         $this->actingAs($admin)
@@ -98,13 +100,14 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
         $this->assertSame('paypal', $persisted->provider);
         $this->assertSame($providerHash, $persisted->provider_subscription_hash);
         $this->assertSame('I-SUSPEND-PRESERVED', $persisted->encrypted_provider_subscription_id);
+        $this->assertNull($persisted->grace_ends_at);
         $this->assertDatabaseCount('billing_audits', 1);
 
         $audit = BillingAudit::query()->where('action', 'billing.support.suspended')->sole();
         $this->assertSame(self::OPERATION_ID, $audit->metadata['operation_id']);
         $this->assertSame('req-suspend-1', $audit->metadata['request_id']);
         $this->assertSame('Case SUP-3001 verified access suspension', $audit->metadata['reason']);
-        $this->assertSame(SubscriptionState::ACTIVE->value, $audit->metadata['from_state']);
+        $this->assertSame(SubscriptionState::GRACE->value, $audit->metadata['from_state']);
         $this->assertSame(SubscriptionState::SUSPENDED->value, $audit->metadata['to_state']);
         $this->assertTrue($audit->metadata['provider_bound']);
         $this->assertFalse($audit->metadata['payment_success_recorded']);
@@ -152,6 +155,34 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
         app(TenantContext::class)->forget();
     }
 
+    public function test_trialing_subscription_can_be_suspended_to_match_source_state_machine(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $tenant = $this->membership($admin, 'alpha');
+        $this->activate($tenant);
+        $plan = $this->plan('support-suspend-trial');
+        $subscription = TenantSubscription::query()->create([
+            'billing_plan_id' => $plan->id,
+            'state' => SubscriptionState::TRIALING,
+            'started_at' => now()->subDay(),
+        ]);
+        app(TenantContext::class)->forget();
+
+        $this->actingAs($admin)
+            ->withHeader('Idempotency-Key', 'trial-suspend')
+            ->postJson(
+                "/api/tenants/alpha/billing/admin/subscriptions/{$subscription->id}/suspend",
+                ['reason' => 'Case SUP-3003 trial access suspension'],
+            )
+            ->assertOk()
+            ->assertJsonPath('data.state', SubscriptionState::SUSPENDED->value);
+
+        $this->activate($tenant);
+        $this->assertSame(SubscriptionState::SUSPENDED, TenantSubscription::query()->findOrFail($subscription->id)->state);
+        $this->assertDatabaseCount('billing_audits', 1);
+        app(TenantContext::class)->forget();
+    }
+
     public function test_invalid_transitions_validation_caller_owned_fields_and_conflicting_replay_fail_closed(): void
     {
         $admin = User::factory()->create(['platform_admin' => true]);
@@ -160,7 +191,7 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
         $plan = $this->plan();
         $subscription = TenantSubscription::query()->create([
             'billing_plan_id' => $plan->id,
-            'state' => SubscriptionState::TRIALING,
+            'state' => SubscriptionState::CANCELLED,
             'started_at' => now()->subDay(),
         ]);
         app(TenantContext::class)->forget();
@@ -168,8 +199,8 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
         $url = "/api/tenants/alpha/billing/admin/subscriptions/{$subscription->id}/suspend";
 
         $this->actingAs($admin)
-            ->withHeader('Idempotency-Key', 'trial-suspend')
-            ->postJson($url, ['reason' => 'Case SUP-3003 trial transition denied'])
+            ->withHeader('Idempotency-Key', 'cancelled-suspend')
+            ->postJson($url, ['reason' => 'Case SUP-3007 cancelled transition denied'])
             ->assertConflict();
 
         $this->activate($tenant);
@@ -186,9 +217,11 @@ final class AdminBillingSuspendTerminalityTest extends TestCase
             ->postJson($url, [
                 'reason' => 'Case SUP-3004 ownership override attempt',
                 'tenant_id' => 999,
+                'account_id' => 999,
                 'actor_user_id' => 999,
                 'provider' => 'forged',
                 'provider_subscription_hash' => hash('sha256', 'forged'),
+                'encrypted_provider_subscription_id' => 'forged-secret',
                 'payment_status' => 'COMPLETED',
                 'state' => SubscriptionState::ACTIVE->value,
                 'grace_ends_at' => now()->addYear()->toIso8601String(),
