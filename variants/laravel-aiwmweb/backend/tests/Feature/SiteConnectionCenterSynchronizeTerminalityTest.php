@@ -143,6 +143,14 @@ final class SiteConnectionCenterSynchronizeTerminalityTest extends TestCase
             ->assertJsonMissingPath('provider_secret')
             ->assertJsonMissingPath('application_password');
 
+        $this->actingAs($user)
+            ->getJson('/api/tenants/alpha/sites/not-a-number/connection')
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->getJson('/api/tenants/alpha/sites/not-a-number/operations')
+            ->assertNotFound();
+
         $this->activate($tenant);
         app(SiteOperationHistoryService::class)->record(
             $site->id,
