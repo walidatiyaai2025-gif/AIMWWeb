@@ -55,6 +55,74 @@ final class ContentApiController extends Controller
         return response()->json($item);
     }
 
+    public function editor(TenantAuthorizer $auth, string $tenant, int $site, string $type, int $wordpressId): JsonResponse
+    {
+        $auth->authorize('content.view');
+        abort_unless(in_array($type, ['post', 'page'], true), 404);
+
+        $item = ContentItem::query()
+            ->where('site_id', $site)
+            ->where('type', $type)
+            ->where('remote_id', $wordpressId)
+            ->firstOrFail();
+
+        return response()->json($this->editorSnapshot($item));
+    }
+
+    public function saveEditor(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type, int $wordpressId): JsonResponse
+    {
+        $auth->authorize('content.edit');
+        abort_unless(in_array($type, ['post', 'page'], true), 404);
+
+        $callerOwned = [
+            'tenant', 'tenant_id', 'site', 'site_id', 'content_id', 'remote_id',
+            'wordpress_id', 'user_id', 'owner_user_id', 'actor_user_id',
+        ];
+        abort_if(array_intersect(array_keys($request->all()), $callerOwned) !== [], 422, 'Content save does not accept caller-owned identity fields.');
+
+        $item = ContentItem::query()
+            ->where('site_id', $site)
+            ->where('type', $type)
+            ->where('remote_id', $wordpressId)
+            ->firstOrFail();
+
+        $payload = $request->validate([
+            'title' => 'required|string|max:1000',
+            'slug' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
+            'excerpt' => 'nullable|string',
+            'status' => ['required', Rule::in(['draft', 'pending', 'publish', 'future', 'private'])],
+            'date_gmt' => 'nullable|date',
+            'featured_media' => 'nullable|integer|min:0',
+            'categories' => 'present|array',
+            'categories.*' => 'integer|min:1',
+            'tags' => 'present|array',
+            'tags.*' => 'integer|min:1',
+            'template' => 'nullable|string|max:255',
+            'comment_status' => ['required', Rule::in(['open', 'closed'])],
+            'ping_status' => ['required', Rule::in(['open', 'closed'])],
+            'format' => 'nullable|string|max:64',
+            'sticky' => 'required|boolean',
+            'expected_hash' => 'nullable|string|size:64',
+            'expected_modified_at' => 'nullable|date',
+            'expected_version' => 'nullable|string|max:255',
+        ]);
+
+        $expected = [
+            'hash' => $payload['expected_hash'] ?? $item->remote_hash,
+            'modified_at' => $payload['expected_modified_at'] ?? $item->remote_modified_at?->toIso8601String(),
+            'version' => $payload['expected_version'] ?? $item->remote_version,
+        ];
+        unset($payload['expected_hash'], $payload['expected_modified_at'], $payload['expected_version']);
+
+        return $this->mutationResponse(function () use ($site, $type, $wordpressId, $payload, $expected): array {
+            $this->content->mutateContent($site, $type, $wordpressId, 'update', $payload, $expected);
+            $reconciled = $this->content->reconcileContentItem($site, $type, $wordpressId);
+
+            return $this->editorSnapshot($reconciled);
+        });
+    }
+
     public function store(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type): JsonResponse
     {
         $auth->authorize('content.edit');
@@ -342,6 +410,36 @@ final class ContentApiController extends Controller
         $auth->authorize('content.view');
 
         return response()->json(ContentTransfer::query()->where('site_id', $site)->findOrFail($transfer));
+    }
+
+    private function editorSnapshot(ContentItem $item): array
+    {
+        $metadata = is_array($item->metadata) ? $item->metadata : [];
+
+        return [
+            'id' => (int) $item->id,
+            'wordpress_id' => (int) $item->remote_id,
+            'type' => (string) $item->type,
+            'title' => (string) ($item->title ?? ''),
+            'slug' => (string) ($item->slug ?? ''),
+            'content' => (string) ($item->body ?? ''),
+            'excerpt' => (string) ($item->excerpt ?? ''),
+            'status' => (string) ($item->status ?? 'draft'),
+            'date_gmt' => $item->published_at?->toIso8601String(),
+            'featured_media' => (int) ($item->featured_media_remote_id ?? 0),
+            'categories' => array_values(array_map('intval', (array) ($metadata['categories'] ?? []))),
+            'tags' => array_values(array_map('intval', (array) ($metadata['tags'] ?? []))),
+            'template' => (string) ($item->template ?? ''),
+            'comment_status' => (string) ($item->comment_status ?? 'open'),
+            'ping_status' => (string) ($item->ping_status ?? 'open'),
+            'format' => (string) ($item->format ?? 'standard'),
+            'sticky' => (bool) $item->sticky,
+            'link' => (string) ($item->link ?? ''),
+            'expected_hash' => $item->remote_hash,
+            'expected_modified_at' => $item->remote_modified_at?->toIso8601String(),
+            'expected_version' => $item->remote_version,
+            'reconciled_at' => $item->synced_at?->toIso8601String(),
+        ];
     }
 
     private function contentPayload(Request $request): array
