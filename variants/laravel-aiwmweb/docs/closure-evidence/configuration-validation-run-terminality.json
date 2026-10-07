@@ -65,7 +65,8 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "branch": "worker/laravel-aiwmweb-AIMW-BILL-EE0BEAAC55-run-validation"
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-EE0BEAAC55-run-validation",
+    "implementation_sha": "d3cd14ec8aa2d655189166853ef4f7b8ebb2103e"
   },
   "terminality": {
     "state": "ADAPTED",
