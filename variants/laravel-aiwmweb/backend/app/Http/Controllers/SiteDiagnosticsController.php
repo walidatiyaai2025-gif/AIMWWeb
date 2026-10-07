@@ -12,11 +12,11 @@ use Illuminate\Http\Request;
 
 final class SiteDiagnosticsController extends Controller
 {
-    public function status(int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
+    public function status(string|int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('tenant.view');
 
-        return response()->json($diagnostics->status(Site::query()->findOrFail($site)));
+        return response()->json($diagnostics->status(Site::query()->findOrFail((int) $site)));
     }
 
     public function recheck(int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
@@ -55,12 +55,13 @@ final class SiteDiagnosticsController extends Controller
         return response()->json(['items' => $diagnostics->diagnosticHistory($model, $request->integer('take', 100))]);
     }
 
-    public function operations(Request $request, int $site, TenantAuthorizer $auth, SiteOperationHistoryService $history): JsonResponse
+    public function operations(Request $request, string|int $site, TenantAuthorizer $auth, SiteOperationHistoryService $history): JsonResponse
     {
         $auth->authorize('tenant.view');
-        Site::query()->findOrFail($site);
+        $siteId = (int) $site;
+        Site::query()->findOrFail($siteId);
 
-        return response()->json(['items' => $history->get($site, $request->integer('take', 100))]);
+        return response()->json(['items' => $history->get($siteId, $request->integer('take', 100))]);
     }
 
     public function operationSummary(TenantAuthorizer $auth, SiteOperationHistoryService $history): JsonResponse

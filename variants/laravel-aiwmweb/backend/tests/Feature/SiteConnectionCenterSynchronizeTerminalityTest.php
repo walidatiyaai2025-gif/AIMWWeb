@@ -50,7 +50,7 @@ final class SiteConnectionCenterSynchronizeTerminalityTest extends TestCase
         $this->assertStringContainsString("'synchronization'", $job);
         $this->assertStringContainsString("'WordPress synchronization completed.'", $job);
         $this->assertStringContainsString("'WordPress synchronization failed.'", $job);
-        $this->assertStringContainsString("['sync_run_id' => (int) $run->getKey()]", $job);
+        $this->assertStringContainsString("['sync_run_id' => (int) \$run->getKey()]", $job);
 
         $connection = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/7/connection', 'GET'));
         $this->assertSame(SiteDiagnosticsController::class.'@status', ltrim($connection->getActionName(), '\\'));
