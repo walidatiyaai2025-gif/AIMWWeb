@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+// Exact-head CI anchor after official parity materialization.
 class AdminBillingGrantGraceTerminalityTest extends TestCase
 {
     use RefreshDatabase;
