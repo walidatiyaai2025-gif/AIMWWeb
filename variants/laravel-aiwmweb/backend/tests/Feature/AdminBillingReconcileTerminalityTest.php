@@ -212,6 +212,68 @@ final class AdminBillingReconcileTerminalityTest extends TestCase
         $this->assertDatabaseCount('billing_audits', 0);
     }
 
+    public function test_stale_provider_snapshot_is_audited_without_mutating_local_state(): void
+    {
+        $admin = User::factory()->create(['platform_admin' => true]);
+        $tenant = $this->membership($admin, 'alpha');
+        $this->activate($tenant);
+        $plan = $this->plan('reconcile-stale', 'Stale', 'P-STALE');
+
+        $providerReference = 'I-STALE';
+        $lastEvidence = now()->startOfSecond();
+        $subscription = TenantSubscription::query()->create([
+            'billing_plan_id' => $plan->id,
+            'state' => SubscriptionState::PAST_DUE,
+            'provider' => 'paypal',
+            'provider_subscription_hash' => hash('sha256', $providerReference),
+            'encrypted_provider_subscription_id' => $providerReference,
+            'started_at' => now()->subMonth(),
+            'last_provider_event_at' => $lastEvidence,
+        ]);
+        app(TenantContext::class)->forget();
+
+        $this->provider->snapshot = [
+            'provider_subscription_id' => $providerReference,
+            'status' => 'ACTIVE',
+            'provider_plan_id' => 'P-UNMAPPED-STALE-SNAPSHOT',
+            'occurred_at' => $lastEvidence->copy()->subMinute()->toIso8601String(),
+            'current_period_start' => $lastEvidence->copy()->subHour()->toIso8601String(),
+            'current_period_end' => $lastEvidence->copy()->addMonth()->toIso8601String(),
+            'cancel_at_period_end' => false,
+        ];
+
+        $url = "/api/tenants/alpha/billing/admin/subscriptions/{$subscription->id}/reconcile";
+        $this->actingAs($admin)
+            ->withHeader('Idempotency-Key', 'support-reconcile-stale')
+            ->withHeader('X-Request-Id', 'req-reconcile-stale')
+            ->postJson($url, ['reason' => 'Case SUP-3005 stale provider observation'])
+            ->assertOk()
+            ->assertJsonPath('operation_id', self::OPERATION_ID)
+            ->assertJsonPath('mutation', 'reconciled_stale')
+            ->assertJsonPath('changed', false)
+            ->assertJsonPath('data.state', SubscriptionState::PAST_DUE->value)
+            ->assertJsonPath('data.billing_plan_id', $plan->id)
+            ->assertJsonPath('data.payment_success_recorded', false);
+
+        $this->assertSame(1, $this->provider->reconcileCalls);
+
+        $this->activate($tenant);
+        $persisted = TenantSubscription::query()->findOrFail($subscription->id);
+        $this->assertSame(SubscriptionState::PAST_DUE, $persisted->state);
+        $this->assertSame($plan->id, $persisted->billing_plan_id);
+        $this->assertSame($lastEvidence->timestamp, $persisted->last_provider_event_at?->timestamp);
+
+        $audit = BillingAudit::query()->where('action', 'billing.support.reconciled')->sole();
+        $this->assertSame('stale_or_duplicate_provider_snapshot', $audit->metadata['result']);
+        $this->assertFalse($audit->metadata['changed']);
+        $this->assertFalse($audit->metadata['plan_changed']);
+        $this->assertFalse($audit->metadata['payment_success_recorded']);
+        $this->assertFalse($audit->metadata['provider_mutated']);
+        $this->assertSame('req-reconcile-stale', $audit->metadata['request_id']);
+        $this->assertSame(0, DB::table('billing_transactions')->where('tenant_id', $tenant->id)->count());
+        app(TenantContext::class)->forget();
+    }
+
     public function test_failed_provider_snapshot_does_not_stick_idempotency_and_same_key_can_retry(): void
     {
         $admin = User::factory()->create(['platform_admin' => true]);
