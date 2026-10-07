@@ -147,6 +147,10 @@ final class AdminBillingSearchTerminalityTest extends TestCase
             ->assertJsonPath('count', 0)
             ->assertJsonCount(0, 'data');
 
+        $this->actingAs($admin)
+            ->getJson('/api/tenants/beta/billing/admin/subscriptions?q=I-BETA-PRIVATE')
+            ->assertNotFound();
+
         auth()->logout();
         $this->getJson('/api/tenants/alpha/billing/admin/subscriptions?q=foreign')
             ->assertUnauthorized();
