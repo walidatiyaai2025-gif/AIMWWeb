@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 630,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-7ECC5F8CBA",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/billing-support",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:ReconcileAsync:ReconcileAsync",
+    "source_intent": "Reconcile a PayPal-bound subscription from a fresh authoritative provider snapshot, applying only newer provider evidence without fabricating payment success",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportController.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Billing/Providers/PayPalProvider.php",
+    "route": "POST /api/tenants/{tenant}/billing/admin/subscriptions/{subscription}/reconcile",
+    "readback": "GET /api/tenants/{tenant}/billing/admin/subscriptions",
+    "workspace": "GET /tenants/{tenant}/admin/billing-support",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_request_binding": "variants/laravel-aiwmweb/backend/resources/js/action-contract.ts",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "platform_admin_required": true,
+    "tenant_context_required": true,
+    "authoritative_provider_read": true,
+    "authoritative_local_reread": true,
+    "idempotency_header": "Idempotency-Key",
+    "transaction_retry_limit": 3
+  },
+  "semantics": {
+    "provider_read": "PayPal GET /v1/billing/subscriptions/{provider-reference}; browser returns and accepted commands are never success evidence",
+    "freshness": "provider observation must be newer than last_provider_event_at to mutate local state; stale or duplicate snapshots are audited without mutation",
+    "reference_integrity": "returned provider subscription reference must match the selected encrypted provider binding",
+    "plan_mapping": "provider plan changes apply only through a unique local PayPal plan mapping",
+    "state_mapping": "provider status is mapped through the canonical Laravel subscription state machine; invalid transitions do not override local state",
+    "period_mapping": "provider period timestamps are accepted only as a complete ordered pair",
+    "payment_success_recorded": false
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "subscription_ownership": "TenantSubscription global tenant scope rejects foreign direct IDs",
+    "caller_owned_fields": [
+      "tenant_id",
+      "user_id",
+      "actor_user_id",
+      "provider",
+      "provider_subscription_id",
+      "provider_subscription_hash",
+      "provider_plan_id",
+      "provider_status",
+      "payment_status",
+      "billing_plan_id",
+      "current_period_start",
+      "current_period_end",
+      "last_provider_event_at"
+    ],
+    "caller_owned_fields_policy": "prohibited",
+    "csrf": "web route stack retained for POST mutation",
+    "audit": "immutable tenant-scoped BillingAudit records trusted actor, support reason, masked provider reference, provider status, provider evidence time and request context",
+    "provider_secret_disclosure_added": false,
+    "provider_mutation_added": false,
+    "payment_success_recorded": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingReconcileTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/admin-billing-reconcile-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and route marker",
+      "platform-admin middleware plus guest and non-admin denial",
+      "tenant-scoped foreign subscription direct-ID rejection",
+      "caller-owned tenant, actor, provider, plan, payment and provider-evidence fields rejected",
+      "authoritative PayPal snapshot reference and provider-binding integrity",
+      "newer provider evidence updates local plan and billing period with authoritative reread",
+      "stale/duplicate evidence is non-mutating",
+      "idempotent replay and conflicting-request protection",
+      "failed provider call releases incomplete idempotency state so the same key can retry",
+      "immutable audit contains masked provider reference and no payment-success inference",
+      "provider credential/reference is never returned to browser",
+      "active-tenant frontend contract binding and browser idempotency header"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-7ECC5F8CBA"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "provider_mutation_added": false,
+    "payment_success_inferred": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "5a636e1c2757822177cedd53982d41de97a177b8",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-7ECC5F8CBA-reconcile"
+  }
+}
