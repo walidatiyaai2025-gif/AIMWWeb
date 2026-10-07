@@ -22,8 +22,7 @@ use Tests\TestCase;
 
 final class SiteConnectionCenterSynchronizeTerminalityTest extends TestCase
 {
-    // Exact-head CI anchor after route-ID normalization and official AIMW-BILL-3762C05261 parity materialization.
-    // Exact-head CI anchor after official AIMW-BILL-3762C05261 parity materialization on reconciled composition.
+    // Exact-head CI anchor after tenant/site route binding fix and official AIMW-BILL-3762C05261 materialization.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-BILL-3762C05261';
