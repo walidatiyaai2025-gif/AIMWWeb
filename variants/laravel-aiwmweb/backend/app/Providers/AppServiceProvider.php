@@ -74,5 +74,10 @@ class AppServiceProvider extends ServiceProvider
                     ->defaults('canonical_operation_id', 'AIMW-BILL-BC1C75CE0D')
                     ->name('tenant.automation-center.jobs.update');
             });
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->post('/api/tenants/{tenant}/automation-schedules/jobs/save', [AutomationCenterJobSaveController::class, 'save'])
+            ->defaults('canonical_operation_id', AutomationCenterJobSaveController::SCHEDULES_SAVE_OPERATION_ID)
+            ->name('tenant.automation-schedules.jobs.save');
     }
 }
