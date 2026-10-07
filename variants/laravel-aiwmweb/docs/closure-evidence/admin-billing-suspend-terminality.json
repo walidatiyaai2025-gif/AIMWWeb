@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "handoff_issue": 634,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-602CCA4A55",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/billing-support",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AdminBillingSupport.razor:/admin/billing-support:SuspendAsync:SuspendAsync",
+    "source_intent": "Suspend local subscription access through a bounded audited platform-admin intervention, matching the source state machine including Trialing, without mutating payment-provider state or fabricating payment success",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminBillingSupportController.php",
+    "route": "POST /api/tenants/{tenant}/billing/admin/subscriptions/{subscription}/suspend",
+    "readback": "GET /api/tenants/{tenant}/billing/admin/subscriptions",
+    "workspace": "GET /tenants/{tenant}/admin/billing-support",
+    "frontend_contract": "variants/laravel-aiwmweb/backend/config/frontend_actions.php",
+    "frontend_request_binding": "variants/laravel-aiwmweb/backend/resources/js/action-contract.ts",
+    "frontend_workspace": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "platform_admin_required": true,
+    "tenant_context_required": true,
+    "authoritative_reread": true,
+    "idempotency_header": "Idempotency-Key",
+    "transaction_retry_limit": 3
+  },
+  "semantics": {
+    "allowed_source_states": [
+      "TRIALING",
+      "ACTIVE",
+      "PAST_DUE",
+      "GRACE"
+    ],
+    "invalid_source_states": [
+      "SUSPENDED",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "provider_binding": "preserved exactly; support suspension changes local access state only and does not call or mutate the provider",
+    "payment_success_recorded": false,
+    "persisted_state": "SUSPENDED",
+    "grace_on_suspend": "cleared when entering SUSPENDED, matching the source transition model"
+  },
+  "security": {
+    "tenant_selector": "server-owned tenant.context only",
+    "subscription_ownership": "TenantSubscription global tenant scope rejects foreign direct IDs",
+    "caller_owned_fields": [
+      "tenant_id",
+      "account_id",
+      "user_id",
+      "actor_user_id",
+      "provider",
+      "provider_subscription_id",
+      "provider_subscription_hash",
+      "encrypted_provider_subscription_id",
+      "payment_status",
+      "state",
+      "grace_ends_at",
+      "cancelled_at",
+      "ended_at"
+    ],
+    "caller_owned_fields_policy": "prohibited",
+    "csrf": "web route stack retained for POST mutation",
+    "audit": "immutable tenant-scoped BillingAudit records actor, reason, request context, prior state and terminal SUSPENDED state",
+    "provider_secret_disclosure_added": false,
+    "provider_mutation_added": false,
+    "payment_success_recorded": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/AdminBillingSuspendTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/admin-billing-suspend-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and route marker",
+      "platform-admin middleware plus guest and non-admin denial",
+      "tenant-scoped foreign subscription direct-ID rejection",
+      "state-machine guarded transition to SUSPENDED with already-suspended and invalid-source-state denial",
+      "support reason and caller-owned state/tenant/provider/payment field validation",
+      "idempotent replay with conflicting request protection",
+      "authoritative persisted reread after mutation",
+      "provider binding remains unchanged and no provider mutation occurs",
+      "immutable tenant billing audit with actor, reason, request context and prior/terminal state",
+      "no billing transaction or payment-success inference",
+      "active-tenant frontend contract binding and browser idempotency header",
+      "Trialing can transition to SUSPENDED, matching the source state machine",
+      "suspending GRACE clears grace_ends_at while preserving provider binding"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-602CCA4A55"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "provider_mutation_added": false,
+    "payment_success_inferred": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "a69f447cc565a16d0fe2d0a815f94ba922a23077",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-602CCA4A55-suspend"
+  }
+}

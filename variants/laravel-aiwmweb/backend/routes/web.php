@@ -70,6 +70,11 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->whereNumber('subscription')
         ->defaults('canonical_operation_id', AdminBillingSupportController::GRANT_GRACE_OPERATION_ID)
         ->name('canonical.api.billing-support.grant-grace');
+    Route::post('/billing/admin/subscriptions/{subscription}/suspend', [AdminBillingSupportController::class, 'suspend'])
+        ->middleware('platform.admin')
+        ->whereNumber('subscription')
+        ->defaults('canonical_operation_id', AdminBillingSupportController::SUSPEND_OPERATION_ID)
+        ->name('canonical.api.billing-support.suspend');
     Route::post('/billing/admin/subscriptions/{subscription}/reconcile', [AdminBillingSupportController::class, 'reconcilePayPal'])
         ->middleware('platform.admin')
         ->whereNumber('subscription')
