@@ -1,13 +1,13 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-39BB044AF2 issue-640-copy-report
+# trigger: AIMW-BILL-DDA412F087 issue-639-backup-create-recovery
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-39BB044AF2-copy-report
+      - recovery/laravel-aiwmweb-AIMW-BILL-DDA412F087-parity-materialization
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/configuration-validation-copy-report-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/backup-create-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -48,5 +48,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-39BB044AF2"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-DDA412F087"
           git push origin "HEAD:${{ github.ref_name }}"
