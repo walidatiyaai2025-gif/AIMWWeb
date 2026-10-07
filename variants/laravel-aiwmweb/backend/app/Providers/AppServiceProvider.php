@@ -25,6 +25,7 @@ use App\Email\Services\NotificationPlatformService;
 use App\Email\Services\SymfonyEmailTransport;
 use App\Email\Services\SyncNotificationSubscriber;
 use App\Http\Controllers\AutomationCenterJobSaveController;
+use App\Http\Controllers\AutomationSchedulesSaveController;
 use App\Jobs\BackgroundExecutionIdentity;
 use App\Models\TenantSecret;
 use App\Policies\TenantSecretPolicy;
@@ -63,6 +64,11 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(TenantSecret::class, TenantSecretPolicy::class);
         Event::subscribe(SyncNotificationSubscriber::class);
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->post('/api/tenants/{tenant}/automation-schedules/save', [AutomationSchedulesSaveController::class, 'save'])
+            ->defaults('canonical_operation_id', AutomationSchedulesSaveController::OPERATION_ID)
+            ->name('tenant.automation-schedules.save');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->prefix('/api/tenants/{tenant}/automation-center')
