@@ -10,6 +10,7 @@ use App\Models\BillingPlan;
 use App\Models\BillingSubscriptionChange;
 use App\Models\IdempotencyKey;
 use App\Models\TenantSubscription;
+use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -24,27 +25,85 @@ final class AdminBillingSupportController extends Controller
 
     public const RECONCILE_OPERATION_ID = 'AIMW-BILL-7ECC5F8CBA';
 
+    public const SEARCH_OPERATION_ID = 'AIMW-BILL-9414B3FFEF';
+
     private const IDEMPOTENCY_OPERATION = 'billing.support.reactivate';
 
     private const GRANT_GRACE_IDEMPOTENCY_OPERATION = 'billing.support.grant-grace';
 
     private const RECONCILE_IDEMPOTENCY_OPERATION = 'billing.support.reconcile';
 
-    public function index(): JsonResponse
+    public function index(Request $request, TenantContext $tenantContext): JsonResponse
     {
-        $subscriptions = TenantSubscription::query()
-            ->with('plan:id,code,name')
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:200'],
+            'limit' => ['prohibited'],
+            'tenant_id' => ['prohibited'],
+            'account_id' => ['prohibited'],
+            'provider_subscription_id' => ['prohibited'],
+            'provider_subscription_hash' => ['prohibited'],
+        ]);
+
+        $search = trim((string) ($data['q'] ?? ''));
+        $tenant = $tenantContext->tenant();
+        $subscriptionsQuery = TenantSubscription::query()->with('plan:id,code,name');
+
+        $matchesActiveAccount = $search !== '' && (
+            (ctype_digit($search) && (int) $search === (int) $tenant->getKey())
+            || strcasecmp($search, (string) $tenant->slug) === 0
+        );
+
+        if ($search !== '' && ! $matchesActiveAccount) {
+            $normalized = mb_strtolower($search);
+            $subscriptionsQuery->where(function ($builder) use ($search, $normalized): void {
+                if (ctype_digit($search)) {
+                    $builder->orWhere('tenant_subscriptions.id', (int) $search);
+                }
+
+                $builder
+                    ->orWhere('tenant_subscriptions.provider_subscription_hash', hash('sha256', $search))
+                    ->orWhereExists(function ($memberships) use ($normalized): void {
+                        $memberships
+                            ->selectRaw('1')
+                            ->from('tenant_memberships')
+                            ->join('users', 'users.id', '=', 'tenant_memberships.user_id')
+                            ->whereColumn('tenant_memberships.tenant_id', 'tenant_subscriptions.tenant_id')
+                            ->where('tenant_memberships.status', 'active')
+                            ->where(function ($identity) use ($normalized): void {
+                                $identity
+                                    ->whereRaw('LOWER(users.username) = ?', [$normalized])
+                                    ->orWhereRaw('LOWER(users.email) = ?', [$normalized])
+                                    ->orWhereRaw('LOWER(users.name) = ?', [$normalized]);
+                            });
+                    });
+            });
+        }
+
+        $subscriptions = $subscriptionsQuery
             ->latest('updated_at')
             ->latest('id')
+            ->limit(50)
             ->get()
             ->map(fn (TenantSubscription $subscription): array => [
                 ...$this->snapshot($subscription),
+                'account_id' => (int) $tenant->getKey(),
+                'account_slug' => (string) $tenant->slug,
                 'plan_code' => $subscription->plan?->code,
                 'plan_name' => $subscription->plan?->name,
+                'provider' => $subscription->provider,
+                'masked_provider_subscription_reference' => $this->maskedProviderReference(
+                    $subscription->encrypted_provider_subscription_id,
+                ),
+                'current_period_end' => $subscription->current_period_end?->utc()->toIso8601String(),
+                'last_provider_event_at' => $subscription->last_provider_event_at?->utc()->toIso8601String(),
             ])
             ->values();
 
-        return response()->json(['data' => $subscriptions]);
+        return response()->json([
+            'operation_id' => self::SEARCH_OPERATION_ID,
+            'count' => $subscriptions->count(),
+            'data' => $subscriptions,
+        ]);
     }
 
     public function reactivate(
