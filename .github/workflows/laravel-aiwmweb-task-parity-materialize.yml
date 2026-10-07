@@ -1,13 +1,13 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-602CCA4A55 issue-634-suspend
+# trigger: AIMW-BILL-39BB044AF2 issue-640-copy-report
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-602CCA4A55-suspend
+      - worker/laravel-aiwmweb-AIMW-BILL-39BB044AF2-copy-report
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/admin-billing-suspend-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/configuration-validation-copy-report-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -48,5 +48,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-602CCA4A55"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-39BB044AF2"
           git push origin "HEAD:${{ github.ref_name }}"
