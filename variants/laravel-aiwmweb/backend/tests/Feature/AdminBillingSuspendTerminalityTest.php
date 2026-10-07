@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+// Exact-head CI retrigger after official SuspendAsync parity materialization.
 final class AdminBillingSuspendTerminalityTest extends TestCase
 {
     use RefreshDatabase;
