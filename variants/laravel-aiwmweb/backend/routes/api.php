@@ -23,6 +23,15 @@ Route::post('v1/sync/webhooks/connector', [SyncApiController::class, 'webhook'])
 Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.context'])->group(function () {
     Route::get('content/{type}', [ContentApiController::class, 'index']);
     Route::post('content/{type}', [ContentApiController::class, 'store']);
+    Route::get('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'editor'])
+        ->middleware('auth')
+        ->whereNumber('wordpressId')
+        ->name('api.v1.content.editor.show');
+    Route::patch('content/{type}/{wordpressId}/editor', [ContentApiController::class, 'saveEditor'])
+        ->middleware('auth')
+        ->whereNumber('wordpressId')
+        ->defaults('canonical_operation_id', ContentApiController::CONTENT_EDITOR_SAVE_OPERATION_ID)
+        ->name('api.v1.content.editor.save');
     Route::get('content/items/{content}', [ContentApiController::class, 'show']);
     Route::patch('content/items/{content}', [ContentApiController::class, 'update']);
     Route::post('content/items/{content}/state', [ContentApiController::class, 'state']);

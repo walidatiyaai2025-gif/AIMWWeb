@@ -23,6 +23,7 @@ import { ConfigurationValidationCopyReportControl } from './configuration-valida
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
+import { ContentEditorSaveControl } from './content-editor-save-control';
 import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
 import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
 import { DashboardExecutionLinkControl } from './dashboard-execution-link-control';
@@ -126,6 +127,11 @@ function ApprovalQueueRoute({ context, route }: { context: FrontendContext; rout
     );
 }
 
+function ContentEditorRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <ContentEditorSaveControl context={context} />;
+}
+
 function AccountEmailSettingsRoute() {
     const { context } = useOutletContext<OutletState>();
     return <AccountEmailSettingsSummary context={context} />;
@@ -195,6 +201,7 @@ function AppRoutes() {
                 <Route path="account/email-settings" element={<AccountEmailSettingsRoute />} />
                 <Route path="ai-workspace" element={<AiWorkspaceRoute />} />
                 <Route path="sites/onboarding" element={<RouteElement route={workspaceRoutes.find((route) => route.key === 'site-connect')!} />} />
+                <Route path="sites/:siteId/content/:contentType/:wordpressId/edit" element={<ContentEditorRoute />} />
                 {workspaceRoutes.map((route) => {
                     const relative = route.path === '/' ? undefined : route.path.replace(/^\//, '');
                     return route.path === '/'
