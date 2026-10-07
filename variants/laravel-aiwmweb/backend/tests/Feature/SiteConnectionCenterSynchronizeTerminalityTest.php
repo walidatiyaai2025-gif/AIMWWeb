@@ -12,6 +12,7 @@ use App\Models\SyncRun;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -41,6 +42,13 @@ final class SiteConnectionCenterSynchronizeTerminalityTest extends TestCase
         $this->assertStringContainsString('/operations?take=100', $frontend);
         $this->assertStringContainsString('/sync', $frontend);
         $this->assertStringContainsString('Idempotency-Key', $frontend);
+
+        $job = (string) file_get_contents(app_path('Jobs/SyncSiteJob.php'));
+        $this->assertStringContainsString('SiteOperationHistoryService $history', $job);
+        $this->assertSame(2, substr_count($job, '$history->record('));
+        $this->assertStringContainsString("'synchronization'", $job);
+        $this->assertStringContainsString("'WordPress synchronization completed.'", $job);
+        $this->assertStringContainsString("'WordPress synchronization failed.'", $job);
 
         $connection = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/7/connection', 'GET'));
         $this->assertSame(SiteDiagnosticsController::class.'@status', ltrim($connection->getActionName(), '\\'));
@@ -133,10 +141,24 @@ final class SiteConnectionCenterSynchronizeTerminalityTest extends TestCase
             ->assertJsonMissingPath('provider_secret')
             ->assertJsonMissingPath('application_password');
 
+        $this->activate($tenant);
+        app(SiteOperationHistoryService::class)->record(
+            $site->id,
+            'synchronization',
+            true,
+            'WordPress synchronization completed.',
+            ['sync_run_id' => $runId],
+            4,
+        );
+        app(TenantContext::class)->forget();
+
         $this->actingAs($user)
             ->getJson("/api/tenants/alpha/sites/{$site->id}/operations?take=100")
             ->assertOk()
-            ->assertJsonStructure(['items']);
+            ->assertJsonPath('items.0.operation', 'synchronization')
+            ->assertJsonPath('items.0.status', 'succeeded')
+            ->assertJsonPath('items.0.affected_records', 4)
+            ->assertJsonMissingPath('items.0.details.provider_secret');
 
         $this->activate($tenant);
         $this->assertSame(1, SyncRun::query()->count());
