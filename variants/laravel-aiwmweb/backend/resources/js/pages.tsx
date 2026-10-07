@@ -15,6 +15,7 @@ import {
 import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StatePanel, useToast } from './components';
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
+import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
@@ -186,6 +187,20 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         });
     };
 
+    const clearAdminBillingSupportSearch = async (): Promise<void> => {
+        if (route.key !== 'admin-billing-support' || !endpoint || query.isFetching) return;
+
+        setSearchInput('');
+        setSearch('');
+        setPage(1);
+        setDialog(null);
+        await queryClient.fetchQuery({
+            queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, ''],
+            queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
+            staleTime: 0,
+        });
+    };
+
     const refreshWorkspace = async (): Promise<void> => {
         if (route.key !== 'backups') {
             await query.refetch();
@@ -277,6 +292,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             locale={locale}
                             authorized={applicationUsersClearAuthorized}
                             onClearRequested={clearApplicationUsersSearch}
+                        />
+                    ) : null}
+                    {route.key === 'admin-billing-support' ? (
+                        <AdminBillingSupportClearSearchControl
+                            busy={query.isFetching}
+                            locale={locale}
+                            available={Boolean(endpoint)}
+                            onClearRequested={clearAdminBillingSupportSearch}
                         />
                     ) : null}
                 </form>
