@@ -50,6 +50,7 @@ jobs:
       PR_MERGED: ${{ github.event.pull_request.merged || false }}
       PR_NUMBER: ${{ github.event.pull_request.number || '' }}
       PR_BASE: ${{ github.event.pull_request.base.ref || '' }}
+      HANDOFF_PARALLEL_TARGET: "4"
     steps:
       - name: Bootstrap labels
         shell: bash
@@ -153,8 +154,11 @@ jobs:
           queued="$(gh issue list --repo "$REPO" --state open --limit 100 \
             --json number,labels \
             --jq '[.[] | select(.labels | map(.name) | any(. == "handoff:active" or . == "handoff:next" or . == "handoff:ready"))] | length')"
-          if [[ "$queued" != "0" ]]; then
-            echo "HANDOFF_ADVANCE=QUEUE_PRESENT"
+          target="${HANDOFF_PARALLEL_TARGET:-4}"
+          if (( queued >= target )); then
+            echo "HANDOFF_ADVANCE=PARALLEL_TARGET_REACHED"
+            echo "HANDOFF_QUEUE_COUNT=$queued"
+            echo "HANDOFF_PARALLEL_TARGET=$target"
             exit 0
           fi
 
