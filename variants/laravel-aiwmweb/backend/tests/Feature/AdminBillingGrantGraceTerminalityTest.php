@@ -175,40 +175,41 @@ class AdminBillingGrantGraceTerminalityTest extends TestCase
         $this->activate($tenant);
         $plan = $this->plan();
 
-        $cancelled = TenantSubscription::query()->create([
+        $subscription = TenantSubscription::query()->create([
             'billing_plan_id' => $plan->id,
             'state' => SubscriptionState::CANCELLED,
             'started_at' => now()->subMonth(),
             'cancelled_at' => now()->subDay(),
         ]);
-        $active = TenantSubscription::query()->create([
-            'billing_plan_id' => $plan->id,
-            'state' => SubscriptionState::ACTIVE,
-            'started_at' => now()->subMonth(),
-        ]);
         app(TenantContext::class)->forget();
 
-        $cancelledUrl = "/api/tenants/alpha/billing/admin/subscriptions/{$cancelled->id}/grace";
-        $activeUrl = "/api/tenants/alpha/billing/admin/subscriptions/{$active->id}/grace";
+        $url = "/api/tenants/alpha/billing/admin/subscriptions/{$subscription->id}/grace";
 
         $this->actingAs($admin)
             ->withHeader('Idempotency-Key', 'cancelled-grace')
-            ->postJson($cancelledUrl, ['days' => 7, 'reason' => 'Case SUP-2003 terminal state'])
+            ->postJson($url, ['days' => 7, 'reason' => 'Case SUP-2003 terminal state'])
             ->assertConflict();
+
+        $this->activate($tenant);
+        $subscription->forceFill([
+            'state' => SubscriptionState::ACTIVE,
+            'cancelled_at' => null,
+        ])->save();
+        app(TenantContext::class)->forget();
 
         $this->actingAs($admin)
             ->withHeader('Idempotency-Key', 'invalid-days')
-            ->postJson($activeUrl, ['days' => 0, 'reason' => 'Case SUP-2004 invalid days'])
+            ->postJson($url, ['days' => 0, 'reason' => 'Case SUP-2004 invalid days'])
             ->assertUnprocessable();
 
         $this->actingAs($admin)
             ->withHeader('Idempotency-Key', 'short-reason')
-            ->postJson($activeUrl, ['days' => 7, 'reason' => 'bad'])
+            ->postJson($url, ['days' => 7, 'reason' => 'bad'])
             ->assertUnprocessable();
 
         $this->actingAs($admin)
             ->withHeader('Idempotency-Key', 'caller-owned-grace')
-            ->postJson($activeUrl, [
+            ->postJson($url, [
                 'days' => 7,
                 'reason' => 'Case SUP-2005 ownership override attempt',
                 'tenant_id' => 999,
@@ -221,16 +222,18 @@ class AdminBillingGrantGraceTerminalityTest extends TestCase
 
         $this->actingAs($admin)
             ->withHeader('Idempotency-Key', 'conflict-grace')
-            ->postJson($activeUrl, ['days' => 5, 'reason' => 'Case SUP-2006 first request'])
+            ->postJson($url, ['days' => 5, 'reason' => 'Case SUP-2006 first request'])
             ->assertOk();
 
         $this->actingAs($admin)
             ->withHeader('Idempotency-Key', 'conflict-grace')
-            ->postJson($activeUrl, ['days' => 6, 'reason' => 'Case SUP-2006 conflicting retry'])
+            ->postJson($url, ['days' => 6, 'reason' => 'Case SUP-2006 conflicting retry'])
             ->assertConflict();
 
         $this->activate($tenant);
-        $this->assertSame(SubscriptionState::CANCELLED, TenantSubscription::query()->findOrFail($cancelled->id)->state);
+        $persisted = TenantSubscription::query()->findOrFail($subscription->id);
+        $this->assertSame(SubscriptionState::GRACE, $persisted->state);
+        $this->assertNotNull($persisted->grace_ends_at);
         $this->assertDatabaseCount('billing_audits', 1);
         $this->assertSame(0, DB::table('billing_transactions')->where('tenant_id', $tenant->id)->count());
         app(TenantContext::class)->forget();
