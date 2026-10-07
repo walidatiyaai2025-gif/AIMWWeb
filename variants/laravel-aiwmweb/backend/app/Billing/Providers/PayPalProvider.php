@@ -123,14 +123,38 @@ class PayPalProvider implements BillingProvider
 
     public function reconcile(TenantSubscription $subscription): array
     {
-        $id = $subscription->encrypted_provider_subscription_id;
-        if (! $id) {
+        $id = trim((string) $subscription->encrypted_provider_subscription_id);
+        if ($id === '') {
             throw new RuntimeException('PayPal subscription id is unavailable.');
-        } $r = $this->auth()->get(rtrim(config('billing.paypal.base_url'), '/').'/v1/billing/subscriptions/'.rawurlencode($id));
+        }
+
+        $r = $this->auth()->get(rtrim(config('billing.paypal.base_url'), '/').'/v1/billing/subscriptions/'.rawurlencode($id));
         if (! $r->successful()) {
             throw new RuntimeException('PayPal reconciliation failed.');
         }
 
-        return ['status' => (string) $r->json('status'), 'provider_plan_id' => (string) $r->json('plan_id'), 'occurred_at' => now()->toAtomString()];
+        $returnedId = trim((string) $r->json('id'));
+        if ($returnedId === '' || strcasecmp($returnedId, $id) !== 0) {
+            throw new RuntimeException('PayPal reconciliation returned a different subscription id.');
+        }
+
+        $periodStart = $r->json('billing_info.last_payment.time');
+        $periodEnd = $r->json('billing_info.next_billing_time');
+        if (! is_string($periodStart) || ! is_string($periodEnd)) {
+            $periodStart = null;
+            $periodEnd = null;
+        }
+
+        $providerPlanId = trim((string) $r->json('plan_id'));
+
+        return [
+            'provider_subscription_id' => $returnedId,
+            'status' => strtoupper(trim((string) $r->json('status'))),
+            'provider_plan_id' => $providerPlanId !== '' ? $providerPlanId : null,
+            'occurred_at' => now()->startOfSecond()->toIso8601String(),
+            'current_period_start' => $periodStart,
+            'current_period_end' => $periodEnd,
+            'cancel_at_period_end' => false,
+        ];
     }
 }
