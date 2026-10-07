@@ -9,9 +9,21 @@ final class ConfigurationValidationController extends Controller
 {
     public const COPY_REPORT_OPERATION_ID = 'AIMW-BILL-39BB044AF2';
 
+    public const RUN_VALIDATION_OPERATION_ID = 'AIMW-BILL-EE0BEAAC55';
+
     public function __construct(private readonly TenantAuthorizer $authorizer) {}
 
     public function show(string $tenant): JsonResponse
+    {
+        return $this->validationResponse(self::COPY_REPORT_OPERATION_ID);
+    }
+
+    public function run(string $tenant): JsonResponse
+    {
+        return $this->validationResponse(self::RUN_VALIDATION_OPERATION_ID);
+    }
+
+    private function validationResponse(string $operationId): JsonResponse
     {
         $this->authorizer->authorize('settings.manage');
 
@@ -43,7 +55,7 @@ final class ConfigurationValidationController extends Controller
         $warnings = count(array_filter($items, fn (array $item) => $item['status'] === 'warning'));
 
         return response()->json([
-            'operation_id' => self::COPY_REPORT_OPERATION_ID,
+            'operation_id' => $operationId,
             'checked_at_utc' => now('UTC')->toIso8601String(),
             'critical_count' => $critical,
             'warning_count' => $warnings,

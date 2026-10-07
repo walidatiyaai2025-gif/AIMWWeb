@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { apiRequest, type FrontendContext } from './core';
 
+export const COPY_REPORT_OPERATION_ID = 'AIMW-BILL-39BB044AF2';
+export const RUN_VALIDATION_OPERATION_ID = 'AIMW-BILL-EE0BEAAC55';
+
 export type ConfigurationValidationItem = {
     key: string;
     title: string;
@@ -17,7 +20,12 @@ export type ConfigurationValidationReport = {
     items: ConfigurationValidationItem[];
 };
 
-const FAILURE_MESSAGE = 'The browser did not confirm a clipboard write. No copy success was reported; you can retry.';
+const COPY_FAILURE_MESSAGE = 'The browser did not confirm a clipboard write. No copy success was reported; you can retry.';
+const RUN_FAILURE_MESSAGE = 'Configuration validation could not complete. Internal server details were withheld; you can retry.';
+
+export function buildConfigurationValidationRunRequest(endpoint: string): { url: string; init: RequestInit } {
+    return { url: endpoint, init: { method: 'POST' } };
+}
 
 export function formatConfigurationValidationReport(report: ConfigurationValidationReport): string {
     const result = report.critical_count > 0
@@ -42,18 +50,44 @@ export function formatConfigurationValidationReport(report: ConfigurationValidat
 
 export function ConfigurationValidationCopyReportControl({ context }: { context: FrontendContext }) {
     const endpoint = context.api['configuration-validation'];
+    const runEndpoint = context.api['configuration-validation-run'];
     const [copying, setCopying] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState('');
+    const [running, setRunning] = useState(false);
+    const [copySuccess, setCopySuccess] = useState(false);
+    const [copyError, setCopyError] = useState('');
+    const [runError, setRunError] = useState('');
     const [report, setReport] = useState<ConfigurationValidationReport | null>(null);
 
-    const disabled = !endpoint || copying;
+    const copyDisabled = !endpoint || copying;
+    const runDisabled = !runEndpoint || running;
+
+    const runValidation = async () => {
+        if (runDisabled || !runEndpoint) return;
+
+        setRunning(true);
+        setRunError('');
+        setCopySuccess(false);
+        setCopyError('');
+
+        try {
+            const request = buildConfigurationValidationRunRequest(runEndpoint);
+            const loaded = await apiRequest<ConfigurationValidationReport>(request.url, request.init);
+            if (loaded.operation_id !== RUN_VALIDATION_OPERATION_ID) throw new Error('Unexpected validation operation');
+            setReport(loaded);
+        } catch {
+            setReport(null);
+            setRunError(RUN_FAILURE_MESSAGE);
+        } finally {
+            setRunning(false);
+        }
+    };
 
     const copy = async () => {
-        if (disabled) return;
+        if (copyDisabled || !endpoint) return;
+
         setCopying(true);
-        setSuccess(false);
-        setError('');
+        setCopySuccess(false);
+        setCopyError('');
 
         try {
             const loaded = report ?? await apiRequest<ConfigurationValidationReport>(endpoint);
@@ -63,27 +97,68 @@ export function ConfigurationValidationCopyReportControl({ context }: { context:
             if (!clipboard || typeof clipboard.writeText !== 'function') throw new Error('Clipboard API unavailable');
 
             await clipboard.writeText(formatConfigurationValidationReport(loaded));
-            setSuccess(true);
+            setCopySuccess(true);
         } catch {
-            setError(FAILURE_MESSAGE);
+            setCopyError(COPY_FAILURE_MESSAGE);
         } finally {
             setCopying(false);
         }
     };
 
-    const label = useMemo(() => copying ? 'Copying…' : error ? 'Retry copy' : 'Copy report', [copying, error]);
+    const copyLabel = useMemo(
+        () => copying ? 'Copying…' : copyError ? 'Retry copy' : 'Copy report',
+        [copying, copyError],
+    );
+    const runLabel = useMemo(
+        () => running ? 'Running…' : runError ? 'Retry validation' : 'Run validation',
+        [running, runError],
+    );
 
     return (
-        <section className="hero-panel" data-canonical-operation="AIMW-BILL-39BB044AF2">
+        <section className="hero-panel" data-canonical-operation={COPY_REPORT_OPERATION_ID}>
             <div>
                 <span className="workspace-kicker">CONFIGURATION</span>
                 <h2>Configuration Validation</h2>
-                <p>Copy a sanitized bounded validation report without exposing server paths or secrets.</p>
+                <p>Run bounded runtime, storage and security checks, then copy only the sanitized result.</p>
             </div>
             <div>
-                <button type="button" className="btn" disabled={disabled} aria-busy={copying} onClick={() => void copy()}>{label}</button>
-                {success ? <p role="status">Validation report copied. The browser confirmed the clipboard write.</p> : null}
-                {error ? <p role="alert">{error}</p> : null}
+                <button
+                    type="button"
+                    className="btn primary"
+                    disabled={runDisabled}
+                    aria-busy={running}
+                    data-canonical-operation={RUN_VALIDATION_OPERATION_ID}
+                    onClick={() => void runValidation()}
+                >
+                    {runLabel}
+                </button>
+                <button type="button" className="btn" disabled={copyDisabled} aria-busy={copying} onClick={() => void copy()}>
+                    {copyLabel}
+                </button>
+
+                {runError ? <p role="alert">{runError}</p> : null}
+                {copySuccess ? <p role="status">Validation report copied. The browser confirmed the clipboard write.</p> : null}
+                {copyError ? <p role="alert">{copyError}</p> : null}
+
+                {report ? (
+                    <div data-validation-result>
+                        <p role="status">
+                            {report.critical_count > 0
+                                ? 'Blocking errors found in the configuration checks.'
+                                : report.warning_count > 0
+                                    ? 'No blocking errors; warnings require review.'
+                                    : 'No blocking errors detected in these configuration checks.'}
+                        </p>
+                        <p>Critical: {report.critical_count} · Warnings: {report.warning_count}</p>
+                        <ul>
+                            {report.items.map((item) => (
+                                <li key={item.key}>
+                                    <strong>{item.title}</strong>: {item.value} — {item.message}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : null}
             </div>
         </section>
     );
