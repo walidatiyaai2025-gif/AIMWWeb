@@ -305,6 +305,8 @@ Route::prefix('/tenants/{tenant}')
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
         Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
+        Route::get('/sites/{site}/connection', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.connection');
+        Route::get('/sites/{site}/operations', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.operations-center');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');

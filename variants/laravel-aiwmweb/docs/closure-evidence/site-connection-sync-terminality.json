@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-3762C05261",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+    "source_screen": "/sites/{Id:guid}/connection | /sites/{Id:guid}/operations",
+    "source_control": "SynchronizeAsync / Sync now",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "action": "WordPressSyncWebService.SynchronizeAsync(Id)",
+    "busy_state": "_syncing prevents repeat interaction",
+    "result": "truthful synchronization result and notification",
+    "authoritative_follow_up": "site operation history is refreshed after synchronization"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/site-connection-sync-control.tsx",
+    "frontend_routes": [
+      "/tenants/{tenant}/sites/{siteId}/connection",
+      "/tenants/{tenant}/sites/{siteId}/operations"
+    ],
+    "connection_endpoint": "GET /api/tenants/{tenant}/sites/{site}/connection",
+    "history_endpoint": "GET /api/tenants/{tenant}/sites/{site}/operations",
+    "sync_endpoint": "POST /api/tenants/{tenant}/sites/{site}/sync",
+    "run_endpoint": "GET /api/tenants/{tenant}/sync-runs/{run}",
+    "queue_job": "App\\\\Jobs\\\\SyncSiteJob",
+    "history_service": "App\\\\Sites\\\\SiteOperationHistoryService",
+    "existing_provider_path_reused": true,
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "session_authentication": true,
+    "active_tenant_from_server_context": true,
+    "site_ownership": "explicit tenant predicate on sync admission plus tenant-scoped workspace/API reads; foreign direct site ID is 404",
+    "read_permission": "tenant.view + sites.view",
+    "mutation_permission": "sites.manage",
+    "csrf": "web route stack and apiRequest X-CSRF-TOKEN",
+    "connector_gate": "sync control stays disabled when the tenant-owned connector is missing or revoked",
+    "provider_secret_exposed": false
+  },
+  "retry_and_reconciliation": {
+    "idempotency_header": "Idempotency-Key",
+    "receipt_scope": "tenant + key with request hash bound to tenant/site/site.sync",
+    "active_run_dedupe": "queued/running SyncRun for the same site is reused",
+    "queue_dispatch_failure": "run is persisted failed; no success is returned",
+    "frontend_mutation_retry": "disabled; one key per explicit user action",
+    "terminal_success": "only status=succeeded",
+    "failed_cancelled_or_cancel_requested": "shown as failure, never success",
+    "authoritative_reread": "connection status and operation history are fetched only after a succeeded SyncRun",
+    "operation_history": "SyncSiteJob records succeeded/failed synchronization history without provider secrets"
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionCenterSynchronizeTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-sync-terminality.test.tsx",
+    "coverage": [
+      "canonical source and dual route identity",
+      "guest and permission denial",
+      "foreign tenant site direct-ID denial",
+      "real queued SyncSiteJob dispatch",
+      "idempotent replay without duplicate SyncRun or job dispatch",
+      "connector gating",
+      "truthful terminal failure classification",
+      "authoritative connection and operation-history reread"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-3762C05261",
+    "supporting_routes_terminalized": false,
+    "sibling_sync_operation_terminalized": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "The Site Connection Center Sync-now control is a real tenant-owned queued WordPress synchronization path on both canonical screens, is permission and connector gated, uses replay-safe idempotency and active-run convergence, treats failed/cancelled runs as failure, records operation history, and shows success only after a succeeded run followed by authoritative connection/history reread."
+  }
+}

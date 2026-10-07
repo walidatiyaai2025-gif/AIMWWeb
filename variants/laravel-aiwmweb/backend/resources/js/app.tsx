@@ -44,6 +44,7 @@ import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-con
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SiteOnboardingSaveTestSyncControl } from './site-onboarding-save-test-sync-control';
 import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
+import { SiteConnectionCenterSyncControl } from './site-connection-sync-control';
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
 import { SitesDeleteControl } from './sites-delete-control';
 import { SystemHealthWorkspace } from './system-health-workspace';
@@ -137,6 +138,7 @@ function AiWorkspaceRoute() {
 
 function RouteElement({ route }: { route: WorkspaceRoute }) {
     const { context } = useOutletContext<OutletState>();
+    if (route.key === 'site-connection' || route.key === 'site-connection-operations') return <SiteConnectionCenterSyncControl context={context} />;
     if (route.key === 'site-snapshot' || route.key === 'site-offline-data') return <SiteDataSnapshotSyncControl context={context} />;
     if (route.key === 'site-connect') return <SiteOnboardingSaveTestSyncControl context={context} />;
     if (route.key === 'site-details') return (
