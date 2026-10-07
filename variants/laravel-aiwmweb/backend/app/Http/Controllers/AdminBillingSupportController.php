@@ -257,7 +257,7 @@ final class AdminBillingSupportController extends Controller
             } else {
                 try {
                     $states->assert($target->state, SubscriptionState::GRACE);
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     abort(409, "Subscription transition {$target->state->value} -> GRACE is not allowed.");
                 }
 
