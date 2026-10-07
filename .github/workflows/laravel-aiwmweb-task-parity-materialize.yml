@@ -1,5 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-7ECC5F8CBA issue-630-reconcile-retry
+# trigger: AIMW-BILL-7ECC5F8CBA issue-630-rematerialize-retry
 
 on:
   push:
