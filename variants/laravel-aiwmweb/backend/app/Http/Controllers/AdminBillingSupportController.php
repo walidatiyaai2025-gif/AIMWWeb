@@ -119,11 +119,13 @@ final class AdminBillingSupportController extends Controller
         $data = $request->validate([
             'reason' => ['required', 'string', 'min:5', 'max:500'],
             'tenant_id' => ['prohibited'],
+            'account_id' => ['prohibited'],
             'user_id' => ['prohibited'],
             'actor_user_id' => ['prohibited'],
             'provider' => ['prohibited'],
             'provider_subscription_id' => ['prohibited'],
             'provider_subscription_hash' => ['prohibited'],
+            'encrypted_provider_subscription_id' => ['prohibited'],
             'payment_status' => ['prohibited'],
             'state' => ['prohibited'],
             'grace_ends_at' => ['prohibited'],
@@ -176,6 +178,9 @@ final class AdminBillingSupportController extends Controller
             );
 
             $before = $target->state;
+            $providerBefore = $target->provider;
+            $providerHashBefore = $target->provider_subscription_hash;
+            $encryptedProviderBefore = $target->encrypted_provider_subscription_id;
             try {
                 $states->assert($before, SubscriptionState::SUSPENDED);
             } catch (Throwable) {
@@ -184,11 +189,15 @@ final class AdminBillingSupportController extends Controller
 
             $target->forceFill([
                 'state' => SubscriptionState::SUSPENDED,
+                'grace_ends_at' => null,
             ])->save();
 
             $persisted = TenantSubscription::query()->findOrFail((int) $target->getKey());
             abort_unless(
-                $persisted->state === SubscriptionState::SUSPENDED,
+                $persisted->state === SubscriptionState::SUSPENDED
+                && $persisted->provider === $providerBefore
+                && $persisted->provider_subscription_hash === $providerHashBefore
+                && $persisted->encrypted_provider_subscription_id === $encryptedProviderBefore,
                 409,
                 'Persisted billing state did not reconcile after support suspension.',
             );
