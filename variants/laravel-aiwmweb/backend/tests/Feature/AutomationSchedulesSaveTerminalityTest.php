@@ -32,7 +32,10 @@ final class AutomationSchedulesSaveTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame(['tenant'], $route->parameterNames());
 
-        $contract = config('frontend_actions.schedules.save');
+        $contracts = config('frontend_actions');
+        $this->assertIsArray($contracts);
+        $contract = $contracts['schedules.save'] ?? null;
+        $this->assertIsArray($contract);
         $this->assertSame(self::OPERATION_ID, $contract['operation_id']);
         $this->assertSame('/module/schedules | /automation-schedules', $contract['canonical']['route_screen']);
         $this->assertSame('SaveAsync [SaveAsync]', $contract['canonical']['visible_control']);
