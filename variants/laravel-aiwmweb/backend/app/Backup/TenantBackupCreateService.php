@@ -27,13 +27,13 @@ final class TenantBackupCreateService
 
         $dataKey = $recoverySecret !== null ? random_bytes(32) : null;
         $wrappedKey = $dataKey !== null ? $this->wrapKey($dataKey, $recoverySecret) : null;
-        if ($wrappedKey !== null && !hash_equals($dataKey, $this->unwrapKey($wrappedKey, $recoverySecret))) {
+        if ($wrappedKey !== null && ! hash_equals($dataKey, $this->unwrapKey($wrappedKey, $recoverySecret))) {
             throw new RuntimeException('Wrapped recovery key verification failed.');
         }
 
         $tables = [];
         foreach (Schema::getTableListing() as $table) {
-            if ($table === 'backup_archives' || !Schema::hasColumn($table, 'tenant_id')) {
+            if ($table === 'backup_archives' || ! Schema::hasColumn($table, 'tenant_id')) {
                 continue;
             }
 
@@ -90,8 +90,8 @@ final class TenantBackupCreateService
         $sha256 = hash('sha256', $stored);
         $decoded = gzdecode($stored);
         $verifiedPayload = $decoded !== false ? json_decode($decoded, true) : null;
-        if (!hash_equals(hash('sha256', $compressed), $sha256)
-            || !is_array($verifiedPayload)
+        if (! hash_equals(hash('sha256', $compressed), $sha256)
+            || ! is_array($verifiedPayload)
             || (int) ($verifiedPayload['tenant_id'] ?? 0) !== $tenantId
             || ($verifiedPayload['operation_id'] ?? null) !== self::OPERATION_ID) {
             Storage::disk('local')->delete($filename);
@@ -100,15 +100,15 @@ final class TenantBackupCreateService
 
         try {
             $archiveId = DB::table('backup_archives')->insertGetId([
-            'tenant_id' => $tenantId,
-            'actor_user_id' => $actorUserId,
-            'operation_id' => self::OPERATION_ID,
-            'path' => $filename,
-            'sha256' => $sha256,
-            'size_bytes' => strlen($stored),
-            'note' => $payload['note'],
-            'protected_secret_recovery' => $wrappedKey !== null,
-            'created_at' => $createdAt,
+                'tenant_id' => $tenantId,
+                'actor_user_id' => $actorUserId,
+                'operation_id' => self::OPERATION_ID,
+                'path' => $filename,
+                'sha256' => $sha256,
+                'size_bytes' => strlen($stored),
+                'note' => $payload['note'],
+                'protected_secret_recovery' => $wrappedKey !== null,
+                'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
         } catch (\Throwable $exception) {
