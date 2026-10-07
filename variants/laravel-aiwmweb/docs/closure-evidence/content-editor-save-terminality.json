@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-42F7590F00",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source_control": "SaveAsync / Save to WordPress",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "source_behavior": {
+    "authorization": "Content.Edit is required before mutation",
+    "optimistic_concurrency": "UpdateAsync receives the previous ExpectedModifiedGmt baseline",
+    "mutation": "IWordPressPostEditorService.UpdateAsync persists the requested WordPress edit",
+    "post_success": "the editor updates its link/version baseline and invokes WordPress synchronization",
+    "failure": "provider or concurrency failure remains a visible failure"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "frontend_route": "/tenants/{tenant}/sites/{siteId}/content/{contentType}/{wordpressId}/edit",
+    "read_endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "save_endpoint": "PATCH /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "controller": "App\\Http\\Controllers\\ContentApiController::saveEditor",
+    "domain_service": "App\\Content\\ContentPlatformService",
+    "remote_driver": "App\\Content\\Remote\\ContentRemoteDriver",
+    "existing_wordpress_path_reused": true,
+    "parallel_provider_path_created": false,
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "session_authentication": true,
+    "active_tenant_from_server_context": true,
+    "site_and_content_ownership": "tenant-scoped Site/ContentItem resolution plus site/type/remote-id binding; foreign tenant/site/content IDs fail closed",
+    "read_permission": "content.view",
+    "mutation_permission": "content.edit",
+    "csrf": "web middleware plus apiRequest X-CSRF-TOKEN",
+    "caller_owned_identity_fields": "tenant/site/content/remote/user/actor ownership fields are rejected with 422",
+    "secrets_exposed": false
+  },
+  "conflict_and_reconciliation": {
+    "optimistic_inputs": [
+      "expected_hash",
+      "expected_modified_at",
+      "expected_version"
+    ],
+    "conflict_result": "409 ContentConflict; remote mutation is not invoked",
+    "pre_mutation_remote_check": true,
+    "pre_mutation_local_revision_snapshot": true,
+    "authoritative_success_reread": "after the WordPress mutation, Laravel performs a fresh remote GET, upserts authoritative state, and returns only the reconciled local snapshot",
+    "browser_success_reread": "the React editor performs a follow-up GET and only then displays success",
+    "audit_event": "content.update",
+    "unsafe_retry_added": false
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorSaveTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-save-terminality.test.ts",
+    "coverage": [
+      "exact source SaveAsync contract and canonical operation identity",
+      "route method, auth, tenant middleware and canonical marker",
+      "guest 401 and missing content.edit 403",
+      "foreign tenant and foreign site 404 isolation",
+      "caller-owned identity rejection before remote mutation",
+      "real ContentRemoteDriver update path",
+      "optimistic remote-version conflict returns 409 without overwrite",
+      "pre-mutation revision snapshot and immutable audit event",
+      "authoritative WordPress reread and local persistence before success",
+      "frontend active tenant/site/type/WordPress route binding",
+      "frontend payload contains only editor fields plus optimistic version evidence"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-42F7590F00",
+    "sibling_controls_terminalized": false,
+    "submit_for_approval_claimed": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "payment_provider_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "force_push": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "faca0af1473ad5dd306f0e4056f7c538b90a9656",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-42F7590F00-save",
+    "implementation_sha": "f838c1b81dab5e45e53b76e113381b01f2727c32"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "The Laravel editor preserves the source SaveAsync contract with content.edit authorization, tenant/site/WordPress identity binding, optimistic conflict detection, real WordPress mutation, durable local revision/audit evidence, and authoritative remote reread before reporting success."
+  }
+}
