@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+// Exact-head CI retrigger after official SearchAsync parity materialization.
 final class AdminBillingSearchTerminalityTest extends TestCase
 {
     use RefreshDatabase;
