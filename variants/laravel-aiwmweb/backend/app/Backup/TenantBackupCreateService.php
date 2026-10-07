@@ -88,12 +88,18 @@ final class TenantBackupCreateService
         Storage::disk('local')->put($filename, $compressed);
         $stored = Storage::disk('local')->get($filename);
         $sha256 = hash('sha256', $stored);
-        if (! hash_equals(hash('sha256', $compressed), $sha256)) {
+        $decoded = gzdecode($stored);
+        $verifiedPayload = $decoded !== false ? json_decode($decoded, true) : null;
+        if (! hash_equals(hash('sha256', $compressed), $sha256)
+            || ! is_array($verifiedPayload)
+            || (int) ($verifiedPayload['tenant_id'] ?? 0) !== $tenantId
+            || ($verifiedPayload['operation_id'] ?? null) !== self::OPERATION_ID) {
             Storage::disk('local')->delete($filename);
             throw new RuntimeException('Stored backup verification failed.');
         }
 
-        $archiveId = DB::table('backup_archives')->insertGetId([
+        try {
+            $archiveId = DB::table('backup_archives')->insertGetId([
             'tenant_id' => $tenantId,
             'actor_user_id' => $actorUserId,
             'operation_id' => self::OPERATION_ID,
@@ -103,8 +109,12 @@ final class TenantBackupCreateService
             'note' => $payload['note'],
             'protected_secret_recovery' => $wrappedKey !== null,
             'created_at' => $createdAt,
-            'updated_at' => $createdAt,
-        ]);
+                'updated_at' => $createdAt,
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($filename);
+            throw $exception;
+        }
 
         return [
             'id' => (int) $archiveId,
