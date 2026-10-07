@@ -157,6 +157,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     Route::get('/tenants/{tenant}/configuration-validation/report', [ConfigurationValidationController::class, 'show'])
         ->defaults('canonical_operation_id', ConfigurationValidationController::COPY_REPORT_OPERATION_ID)
         ->name('tenant.configuration-validation.report');
+    Route::post('/tenants/{tenant}/configuration-validation/run', [ConfigurationValidationController::class, 'run'])
+        ->defaults('canonical_operation_id', ConfigurationValidationController::RUN_VALIDATION_OPERATION_ID)
+        ->name('tenant.configuration-validation.run');
     Route::get('/tenants/{tenant}/settings/ai-prompts', AiPromptTemplatesReadController::class)
         ->name('tenant.settings.ai-prompts');
     Route::patch('/tenants/{tenant}/settings/ai-prompts/{template}', AiPromptTemplateSaveController::class)
@@ -214,6 +217,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
             'backups' => "/tenants/{$tenant}/admin/backups",
             'configuration-validation' => "/tenants/{$tenant}/configuration-validation/report",
+            'configuration-validation-run' => "/tenants/{$tenant}/configuration-validation/run",
             'ai-usage' => "/api/v1/tenants/{$tenant}/ai/usage",
             'account.billing' => "/tenants/{$tenant}/route-api/billing-overview",
             'admin-billing-support' => "/api/tenants/{$tenant}/billing/admin/subscriptions",
