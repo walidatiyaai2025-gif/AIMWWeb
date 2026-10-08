@@ -27,6 +27,7 @@ import { MediaDeleteControl } from './media-delete-control';
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
+export const CONTENT_PLANNER_NEW_ITEM_OPERATION_ID = 'AIMW-BILL-3ABDE4E48F';
 
 const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previous?: string; refresh?: string }>> = {
     comments: { load: 'AIMW-SYNC-12F15A0A80', previous: 'AIMW-SYNC-CB01197D47', refresh: 'AIMW-SYNC-DBD736FACC' },
@@ -334,7 +335,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 : text(commonText.refresh)}
                     </button>
                     {route.controls?.map((actionKey) => {
-                        const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
+                        const canonicalOperation = route.key === 'content-planner' && actionKey === 'planner.save'
+                            ? CONTENT_PLANNER_NEW_ITEM_OPERATION_ID
+                            : AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
                         return (
                             <span key={actionKey} data-canonical-operation={canonicalOperation}>
                                 <ActionButton route={route} actionKey={actionKey} context={context} onAvailable={(contract) => setDialog({ key: actionKey, contract })} />
