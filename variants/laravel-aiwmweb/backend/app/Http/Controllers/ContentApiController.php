@@ -357,6 +357,11 @@ final class ContentApiController extends Controller
                     'status' => 'conflict',
                     'conflict_id' => $exception->conflictId,
                 ];
+            } catch (\Throwable) {
+                $results[] = [
+                    ...$target,
+                    'status' => 'failed',
+                ];
             }
         }
 
@@ -368,7 +373,7 @@ final class ContentApiController extends Controller
             'total' => $targets->count(),
             'message' => $failed === 0
                 ? 'Selected content moved to trash.'
-                : 'Bulk trash completed with conflicts.',
+                : 'Bulk trash completed with failures.',
             'results' => $results,
         ]);
     }
