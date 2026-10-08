@@ -3,6 +3,7 @@
 use App\Http\Controllers\AiUsageReadController;
 use App\Http\Controllers\ContentApiController;
 use App\Http\Controllers\EmailNotificationController;
+use App\Http\Controllers\GlobalPagesTrashController;
 use App\Http\Controllers\LegacyNotificationReadController;
 use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SeoRemediationClosureController;
@@ -105,6 +106,11 @@ Route::prefix('v1/tenants/{tenant}')
     ->middleware(['auth', 'tenant.context'])
     ->group(function (): void {
         Route::get('/ai/usage', [AiUsageReadController::class, 'index'])->name('canonical.api.ai-usage');
+        Route::get('/global-pages', [GlobalPagesTrashController::class, 'index'])
+            ->name('api.v1.global-pages.index');
+        Route::post('/global-pages/trash', [GlobalPagesTrashController::class, 'trash'])
+            ->defaults('canonical_operation_id', GlobalPagesTrashController::OPERATION_ID)
+            ->name('api.v1.global-pages.trash');
         Route::get('/notifications', [EmailNotificationController::class, 'index']);
         Route::get('/notifications/unread-count', [EmailNotificationController::class, 'unreadCount']);
         Route::post('/notifications/{notification}/read', [EmailNotificationController::class, 'markRead']);
