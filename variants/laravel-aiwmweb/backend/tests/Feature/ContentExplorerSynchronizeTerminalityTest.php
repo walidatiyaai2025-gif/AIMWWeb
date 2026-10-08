@@ -22,6 +22,7 @@ final class ContentExplorerSynchronizeTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Exact-head CI anchor after official AIMW-BILL-5DC460397B parity materialization.
     private const OPERATION_ID = 'AIMW-BILL-5DC460397B';
 
     public function test_source_route_and_visible_laravel_control_bind_exact_synchronize_contract(): void
