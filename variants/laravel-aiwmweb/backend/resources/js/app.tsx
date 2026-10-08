@@ -33,6 +33,7 @@ import { ContentPlannerReloadControl } from './content-planner-reload-control';
 import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
 import { DashboardExecutionLinkControl } from './dashboard-execution-link-control';
 import { ExecutionConnectSiteControl } from './execution-connect-site-control';
+import { EmailSchedulesCreateControl } from './email-schedules-create-control';
 import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
@@ -169,6 +170,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
+    if (route.key === 'email-schedules') return <><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'operations') return <><OperationsHubReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
