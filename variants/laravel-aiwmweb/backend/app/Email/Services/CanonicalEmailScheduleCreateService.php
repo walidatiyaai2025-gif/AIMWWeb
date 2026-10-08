@@ -61,6 +61,7 @@ final class CanonicalEmailScheduleCreateService
         $monthDay = isset($input['month_day']) ? (int) $input['month_day'] : null;
         $culture = strtolower((string) ($input['culture'] ?? 'en')) === 'ar' ? 'ar' : 'en';
 
+        // Canonical recurrence intervals mirror the source scheduling contract.
         return [
             'site_id' => $siteId,
             'template_stable_id' => 'operation.alert',
