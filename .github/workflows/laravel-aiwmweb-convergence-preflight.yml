@@ -60,7 +60,7 @@ jobs:
 
       - name: Strict Pint gate
         working-directory: variants/laravel-aiwmweb/backend
-        run: vendor/bin/pint --test
+        run: vendor/bin/pint --test --diff
 
       - name: SQLite migrate fresh
         working-directory: variants/laravel-aiwmweb/backend
