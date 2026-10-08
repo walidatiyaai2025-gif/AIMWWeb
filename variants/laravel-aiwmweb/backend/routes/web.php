@@ -329,7 +329,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
 
         Route::get('/module/posts', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.posts');
-        Route::get('/module/pages', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
+        Route::get('/module/pages', 'show')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.pages');
         Route::get('/module/media', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.media');
         Route::get('/module/comments', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.comments');
         Route::get('/module/taxonomy', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.taxonomy');
