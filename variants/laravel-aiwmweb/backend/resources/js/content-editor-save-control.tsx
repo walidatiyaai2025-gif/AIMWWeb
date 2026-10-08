@@ -4,6 +4,7 @@ import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
+export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
 
 export type ContentEditorSnapshot = {
     id: number;
@@ -52,6 +53,17 @@ export function contentEditorEndpoint(
     if (!['post', 'page'].includes(type)) return null;
 
     return `/api/v1/tenants/${encodeURIComponent(tenantSlug)}/sites/${encodeURIComponent(site)}/content/${type}/${encodeURIComponent(remote)}/editor`;
+}
+
+export function contentEditorApprovalEndpoint(
+    tenantSlug: string,
+    siteId: string | number,
+    contentType: string,
+    wordpressId: string | number,
+): string | null {
+    const editor = contentEditorEndpoint(tenantSlug, siteId, contentType, wordpressId);
+
+    return editor ? `${editor}/approval` : null;
 }
 
 function parseIds(value: string): number[] {
@@ -114,6 +126,32 @@ export function buildContentEditorSavePayload(snapshot: ContentEditorSnapshot, d
     };
 }
 
+export type ContentEditorApprovalResponse = {
+    data: {
+        id: number;
+        status: string;
+        site_id: number;
+        site_name: string;
+        operation_type: string;
+        title: string;
+        risk_level: string;
+        request_key: string;
+        created_at?: string | null;
+    };
+    replayed: boolean;
+};
+
+export function buildContentEditorApprovalPayload(
+    snapshot: ContentEditorSnapshot,
+    draft: ContentEditorDraft,
+    requestKey: string,
+) {
+    return {
+        request_key: requestKey,
+        ...buildContentEditorSavePayload(snapshot, draft),
+    };
+}
+
 export function ContentEditorSaveControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
     const { siteId, contentType, wordpressId } = useParams();
@@ -127,6 +165,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
     const [draft, setDraft] = useState<ContentEditorDraft | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [submittingApproval, setSubmittingApproval] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
@@ -166,7 +205,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
 
     const save = async (event: FormEvent) => {
         event.preventDefault();
-        if (!endpoint || !snapshot || !draft || !canEdit || saving) return;
+        if (!endpoint || !snapshot || !draft || !canEdit || saving || submittingApproval) return;
 
         setSaving(true);
         setError('');
@@ -187,6 +226,34 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
             setError(cause instanceof Error ? cause.message : 'Content save failed.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const submitForApproval = async () => {
+        const approvalEndpoint = contentEditorApprovalEndpoint(
+            context.tenant.slug,
+            siteId ?? '',
+            contentType ?? '',
+            wordpressId ?? '',
+        );
+        if (!approvalEndpoint || !snapshot || !draft || !canEdit || saving || submittingApproval) return;
+
+        setSubmittingApproval(true);
+        setError('');
+        setMessage('');
+        try {
+            const response = await apiRequest<ContentEditorApprovalResponse>(approvalEndpoint, {
+                method: 'POST',
+                body: JSON.stringify(buildContentEditorApprovalPayload(snapshot, draft, crypto.randomUUID())),
+            });
+            setMessage(locale === 'ar'
+                ? `تم إرسال التعديل للموافقة. رقم الطلب: ${response.data.id}.`
+                : `Change submitted for approval. Request: ${response.data.id}.`);
+        } catch (cause: unknown) {
+            setMessage('');
+            setError(cause instanceof Error ? cause.message : 'Approval submission failed.');
+        } finally {
+            setSubmittingApproval(false);
         }
     };
 
@@ -211,14 +278,27 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                         : 'Direct editing with optimistic conflict protection and authoritative reread after save.'}</p>
                 </div>
                 {canEdit ? (
-                    <button
-                        type="submit"
-                        className="btn primary"
-                        disabled={saving || !draft.title.trim()}
-                        data-canonical-operation={CONTENT_EDITOR_SAVE_OPERATION_ID}
-                    >
-                        {saving ? (locale === 'ar' ? 'جارٍ الحفظ…' : 'Saving…') : (locale === 'ar' ? 'حفظ إلى WordPress' : 'Save to WordPress')}
-                    </button>
+                    <div className="cluster">
+                        <button
+                            type="button"
+                            className="btn"
+                            disabled={saving || submittingApproval || !draft.title.trim()}
+                            data-canonical-operation={CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID}
+                            onClick={submitForApproval}
+                        >
+                            {submittingApproval
+                                ? (locale === 'ar' ? 'جارٍ الإرسال…' : 'Submitting…')
+                                : (locale === 'ar' ? 'إرسال للموافقة' : 'Submit for approval')}
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn primary"
+                            disabled={saving || submittingApproval || !draft.title.trim()}
+                            data-canonical-operation={CONTENT_EDITOR_SAVE_OPERATION_ID}
+                        >
+                            {saving ? (locale === 'ar' ? 'جارٍ الحفظ…' : 'Saving…') : (locale === 'ar' ? 'حفظ إلى WordPress' : 'Save to WordPress')}
+                        </button>
+                    </div>
                 ) : null}
             </section>
 
@@ -226,7 +306,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
             {error ? <div role="alert" className="state-panel state-danger">{error}</div> : null}
             {message ? <div role="status" className="state-panel state-success">{message}</div> : null}
 
-            <fieldset disabled={!canEdit || saving} className="panel form-stack">
+            <fieldset disabled={!canEdit || saving || submittingApproval} className="panel form-stack">
                 <label><span>{locale === 'ar' ? 'العنوان' : 'Title'}</span><input required value={draft.title} onChange={(e) => set('title', e.target.value)} /></label>
                 <label><span>Slug</span><input value={draft.slug} onChange={(e) => set('slug', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span><textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} /></label>
