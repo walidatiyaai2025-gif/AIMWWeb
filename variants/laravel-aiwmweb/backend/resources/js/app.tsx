@@ -29,6 +29,7 @@ import { ContentEditorSaveControl } from './content-editor-save-control';
 import { ContentPlannerAiCenterLinkControl } from './content-planner-ai-center-link-control';
 import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
 import { ContentPlannerNewItemControl } from './content-planner-new-item-control';
+import { ContentPlannerReloadControl } from './content-planner-reload-control';
 import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
 import { DashboardExecutionLinkControl } from './dashboard-execution-link-control';
 import { ExecutionConnectSiteControl } from './execution-connect-site-control';
@@ -163,7 +164,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
