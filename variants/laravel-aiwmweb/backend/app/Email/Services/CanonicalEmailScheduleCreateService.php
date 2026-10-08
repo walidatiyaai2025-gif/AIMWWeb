@@ -35,6 +35,7 @@ final class CanonicalEmailScheduleCreateService
                 if (! $this->matches($existing, $desired)) {
                     throw new ConflictHttpException('Idempotency key was already used for a different email schedule.');
                 }
+
                 return $existing;
             }
 
@@ -136,6 +137,7 @@ final class CanonicalEmailScheduleCreateService
         if (! filter_var($actorEmail, FILTER_VALIDATE_EMAIL)) {
             throw ValidationException::withMessages(['recipient' => 'The authenticated user has no valid delivery email address.']);
         }
+
         return $actorEmail;
     }
 
