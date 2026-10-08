@@ -71,7 +71,7 @@ export function EmailSchedulesCreateControl({ context }: { context: FrontendCont
             await apiRequest(endpoint, {
                 method: 'POST',
                 headers: { 'Idempotency-Key': crypto.randomUUID() },
-                body: buildEmailSchedulePayload(draft),
+                body: JSON.stringify(buildEmailSchedulePayload(draft)),
             });
             await apiRequest(endpoint);
             window.location.reload();
