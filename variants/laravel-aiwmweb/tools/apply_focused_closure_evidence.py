@@ -116,7 +116,7 @@ def security_contract(row: dict[str, Any], tests: list[reconcile.FileEvidence]) 
     return True, signals
 
 
-def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
+def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> tuple[list[str], list[str]]:
     source_sha = str(manifest.get("focused_closure_evidence_source_sha") or "").strip()
     if not source_sha:
         raise SystemExit("manifest must declare focused_closure_evidence_source_sha")
@@ -151,9 +151,17 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
         evidence_by_operation[op_id] = (path, document)
 
     applied: list[str] = []
+    refreshed: list[str] = []
     for op_id in sorted(evidence_by_operation):
         row = rows_by_id[op_id]
-        if row.get("migration_state") != "PENDING":
+        current_state = str(row.get("migration_state") or "")
+        current_reconciliation = row.get("reconciliation") or {}
+        refresh_existing = (
+            current_state in TERMINAL_STATES
+            and isinstance(current_reconciliation, dict)
+            and current_reconciliation.get("evidence_mode") == "focused_closure_contract"
+        )
+        if current_state != "PENDING" and not refresh_existing:
             continue
 
         path, document = evidence_by_operation[op_id]
@@ -184,7 +192,8 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
 
         marker = markers[0]
         test = tests[0]
-        row["migration_state"] = state
+        decision = current_state if refresh_existing else state
+        row["migration_state"] = decision
         row["laravel_destination"] = marker.path
         row["acceptance_test"] = test.path
         row["evidence"] = (
@@ -192,7 +201,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
             f"focused-closure:{op_id}; test:{test.path}; evidence:{path}"
         )
         row["reconciliation"] = {
-            "decision": state,
+            "decision": decision,
             "reason": (
                 "Exact pushed focused closure evidence is linked to the canonical operation ID "
                 "in production code and focused acceptance tests; tenant/security assertions are "
@@ -211,7 +220,10 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
                 *security_signals,
             ],
         }
-        applied.append(op_id)
+        if refresh_existing:
+            refreshed.append(op_id)
+        else:
+            applied.append(op_id)
 
     finalize.finalize_summary(payload, payload["operations"], manifest)
     payload["classification_policy"]["focused_visible_control_policy"] = (
@@ -250,6 +262,8 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     validation["focused_closure_source_sha"] = source_sha
     validation["focused_closure_contract_terminals"] = applied
     validation["focused_closure_contract_count"] = len(applied)
+    validation["focused_closure_provenance_refreshed"] = refreshed
+    validation["focused_closure_provenance_refreshed_count"] = len(refreshed)
     validation["route_or_visible_placeholder_terminals"] = placeholder_terminals
     validation["frontend_placeholders_not_counted"] = not placeholder_terminals
     validation["status_totals_reconcile"] = state_total == len(payload["operations"])
@@ -259,7 +273,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     if errors:
         raise SystemExit("focused closure validation failed:\n- " + "\n- ".join(errors))
 
-    return applied
+    return applied, refreshed
 
 
 def main() -> int:
@@ -278,7 +292,7 @@ def main() -> int:
             f"expected {args.check_total} canonical operations, found {len(payload.get('operations', []))}"
         )
 
-    applied = apply(payload, manifest)
+    applied, refreshed = apply(payload, manifest)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.summary_output:
         compact = {key: value for key, value in payload.items() if key != "operations"}
@@ -297,6 +311,10 @@ def main() -> int:
 
     totals = payload["totals"]
     print(f"FOCUSED_VISIBLE_CONTROLS_APPLIED={len(applied)}")
+    print(
+        "FOCUSED_VISIBLE_CONTROLS_PROVENANCE_REFRESHED="
+        f"{payload.get('validation', {}).get('focused_closure_provenance_refreshed_count', 0)}"
+    )
     print(f"TERMINAL={totals['terminal']}")
     print(f"PENDING={totals['pending']}")
     print(f"PARITY_PERCENT={totals['overall_parity_percent']:.2f}")
