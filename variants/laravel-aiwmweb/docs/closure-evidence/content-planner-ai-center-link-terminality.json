@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-CAFE798AA3",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/content-planner",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor:/content-planner:/ai-center:/ai-center",
+    "source_intent": "Content Planner navigation to /ai-center",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-planner-ai-center-link-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "target": "/tenants/{activeTenant}/ai-center",
+    "target_route_key": "ai-center",
+    "source_permission": "content.view",
+    "target_permission": "ai.use",
+    "target_semantics": "existing Laravel AI Center workspace under authenticated tenant shell"
+  },
+  "security": {
+    "control_visibility_permissions": ["content.view", "ai.use"],
+    "tenant_selector": "authoritative FrontendContext tenant slug only, URL encoded through tenantUrl",
+    "foreign_tenant_destination_synthesis": false,
+    "direct_resource_id": false,
+    "mutation_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerAiCenterLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-planner-ai-center-link-control.test.ts",
+    "coverage": [
+      "exact canonical operation and source-operation key",
+      "active-tenant-only URL construction through tenantUrl",
+      "content.view plus ai.use visibility contract",
+      "wildcard permission semantics",
+      "authenticated tenant-scoped AI Center shell",
+      "no mutation, fake success, or secret exposure"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-CAFE798AA3"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "7e60df342d0ce957d2e47f643184e9bb853bc646",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-CAFE798AA3-ai-center-nav"
+  }
+}
