@@ -17,7 +17,8 @@ final class CanonicalEmailScheduleCreateService
     public function __construct(
         private readonly TenantContext $context,
         private readonly EmailScheduleService $schedules,
-    ) {}
+    ) {
+    }
 
     public function create(array $input, string $actorEmail, string $idempotencyKey): array
     {
@@ -105,7 +106,9 @@ final class CanonicalEmailScheduleCreateService
             $target = $weekday ?? 1;
             $days = ($target - (int) $candidate->dayOfWeek + 7) % 7;
             $candidate = $candidate->addDays($days);
-            if ($candidate->lessThanOrEqualTo($now)) $candidate = $candidate->addWeek();
+            if ($candidate->lessThanOrEqualTo($now)) {
+                $candidate = $candidate->addWeek();
+            }
         } elseif ($frequency === 'Monthly') {
             $day = min($monthDay ?? 1, $candidate->daysInMonth);
             $candidate = $candidate->day($day);
@@ -128,7 +131,9 @@ final class CanonicalEmailScheduleCreateService
                 ->where('is_enabled', true)
                 ->orderBy('id')
                 ->value('email_address');
-            if (is_string($configured) && filter_var($configured, FILTER_VALIDATE_EMAIL)) return $configured;
+            if (is_string($configured) && filter_var($configured, FILTER_VALIDATE_EMAIL)) {
+                return $configured;
+            }
         }
         if (! filter_var($actorEmail, FILTER_VALIDATE_EMAIL)) {
             throw ValidationException::withMessages(['recipient' => 'The authenticated user has no valid delivery email address.']);
