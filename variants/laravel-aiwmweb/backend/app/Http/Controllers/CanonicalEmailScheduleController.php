@@ -18,7 +18,8 @@ final class CanonicalEmailScheduleController extends Controller
         private readonly TenantAuthorizer $authorizer,
         private readonly CanonicalEmailScheduleCreateService $creator,
         private readonly EmailScheduleService $schedules,
-    ) {}
+    ) {
+    }
 
     public function index(string $tenant): JsonResponse
     {
@@ -30,7 +31,7 @@ final class CanonicalEmailScheduleController extends Controller
     public function store(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('operations.manage');
-        $allowed = ['scope','site_id','frequency','time_of_day','weekday','month_day','timezone_id','culture','retry_count','retry_delay_minutes','enabled'];
+        $allowed = ['scope', 'site_id', 'frequency', 'time_of_day', 'weekday', 'month_day', 'timezone_id', 'culture', 'retry_count', 'retry_delay_minutes', 'enabled'];
         $unknown = array_values(array_diff(array_keys($request->all()), $allowed));
         if ($unknown !== []) {
             throw ValidationException::withMessages(['request' => 'Unsupported fields: '.implode(', ', $unknown)]);
@@ -40,17 +41,17 @@ final class CanonicalEmailScheduleController extends Controller
             throw ValidationException::withMessages(['Idempotency-Key' => 'A valid Idempotency-Key header is required.']);
         }
         $data = $request->validate([
-            'scope' => ['required', Rule::in(['Account','Site'])],
-            'site_id' => ['nullable','integer','min:1','required_if:scope,Site'],
-            'frequency' => ['required', Rule::in(['Hourly','Daily','Weekly','Monthly'])],
-            'time_of_day' => ['required','date_format:H:i'],
-            'weekday' => ['nullable','integer','between:0,6','required_if:frequency,Weekly'],
-            'month_day' => ['nullable','integer','between:1,31','required_if:frequency,Monthly'],
-            'timezone_id' => ['required','timezone'],
-            'culture' => ['required',Rule::in(['en','ar'])],
-            'retry_count' => ['required','integer','between:0,10'],
-            'retry_delay_minutes' => ['required','integer','between:1,1440'],
-            'enabled' => ['required','boolean'],
+            'scope' => ['required', Rule::in(['Account', 'Site'])],
+            'site_id' => ['nullable', 'integer', 'min:1', 'required_if:scope,Site'],
+            'frequency' => ['required', Rule::in(['Hourly', 'Daily', 'Weekly', 'Monthly'])],
+            'time_of_day' => ['required', 'date_format:H:i'],
+            'weekday' => ['nullable', 'integer', 'between:0,6', 'required_if:frequency,Weekly'],
+            'month_day' => ['nullable', 'integer', 'between:1,31', 'required_if:frequency,Monthly'],
+            'timezone_id' => ['required', 'timezone'],
+            'culture' => ['required', Rule::in(['en', 'ar'])],
+            'retry_count' => ['required', 'integer', 'between:0,10'],
+            'retry_delay_minutes' => ['required', 'integer', 'between:1,1440'],
+            'enabled' => ['required', 'boolean'],
         ]);
         $created = $this->creator->create($data, (string) $request->user()->email, $key);
 
