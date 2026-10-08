@@ -311,7 +311,10 @@ def main() -> int:
 
     totals = payload["totals"]
     print(f"FOCUSED_VISIBLE_CONTROLS_APPLIED={len(applied)}")
-    print(f"FOCUSED_VISIBLE_CONTROLS_PROVENANCE_REFRESHED={len(refreshed)}")
+    print(
+        "FOCUSED_VISIBLE_CONTROLS_PROVENANCE_REFRESHED="
+        f"{payload.get('validation', {}).get('focused_closure_provenance_refreshed_count', 0)}"
+    )
     print(f"TERMINAL={totals['terminal']}")
     print(f"PENDING={totals['pending']}")
     print(f"PARITY_PERCENT={totals['overall_parity_percent']:.2f}")
