@@ -25,7 +25,10 @@
     "target_semantics": "existing Laravel AI Center workspace under authenticated tenant shell"
   },
   "security": {
-    "control_visibility_permissions": ["content.view", "ai.use"],
+    "control_visibility_permissions": [
+      "content.view",
+      "ai.use"
+    ],
     "tenant_selector": "authoritative FrontendContext tenant slug only, URL encoded through tenantUrl",
     "foreign_tenant_destination_synthesis": false,
     "direct_resource_id": false,
@@ -46,7 +49,9 @@
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-BILL-CAFE798AA3"],
+    "claimed_operations": [
+      "AIMW-BILL-CAFE798AA3"
+    ],
     "authorization_weakened": false,
     "tenant_isolation_weakened": false,
     "sibling_operations_claimed": false,
@@ -56,6 +61,7 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "7e60df342d0ce957d2e47f643184e9bb853bc646",
-    "branch": "worker/laravel-aiwmweb-AIMW-BILL-CAFE798AA3-ai-center-nav"
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-CAFE798AA3-ai-center-nav",
+    "implementation_sha": "77935cf5a1a4397a231d2d6dc9e50b3518d514d1"
   }
 }
