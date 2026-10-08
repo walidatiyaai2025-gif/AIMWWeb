@@ -80,12 +80,11 @@ final class CanonicalEmailScheduleCreateService
             'month_day' => $monthDay,
             'retry_count' => (int) ($input['retry_count'] ?? 3),
             'retry_delay_minutes' => (int) ($input['retry_delay_minutes'] ?? 5),
-            'interval_minutes' => match ($frequency) {
+            'interval_minutes' => [
                 'Hourly' => 60,
                 'Weekly' => 10080,
                 'Monthly' => 43200,
-                default => 1440,
-            },
+            ][$frequency] ?? 1440,
             'next_run_at' => $this->nextRun($frequency, $timezone, $time, $weekday, $monthDay),
         ];
     }
