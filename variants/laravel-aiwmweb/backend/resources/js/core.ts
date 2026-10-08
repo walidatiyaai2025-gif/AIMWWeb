@@ -209,6 +209,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('sync', '/module/sync', 'operations', '↻', 'Synchronization', 'المزامنة', 'Refresh local WordPress data with conflict visibility.', 'تحديث بيانات WordPress المحلية مع إظهار التعارضات.', { permission: 'sync.view', controls: ['sync.run'] }),
     r('schedules', '/module/schedules', 'operations', '◷', 'Schedules', 'الجدولة', 'Manage scheduled operations.', 'إدارة العمليات المجدولة.', { permission: 'automation.view', controls: ['schedules.save', 'schedules.create', 'schedules.toggle'] }),
     r('notifications', '/notifications', 'operations', '●', 'Notification Inbox', 'صندوق الإشعارات', 'Review operational and workflow notifications.', 'مراجعة إشعارات التشغيل وسير العمل.', { permission: 'notifications.view' }),
+    r('email-schedules', '/email/schedules', 'operations', '◷', 'Email Schedules', 'جدولة البريد', 'Create and inspect tenant-scoped email schedules.', 'إنشاء ومراجعة جداول البريد الخاصة بالحساب.', { apiKey: 'email-schedules', permission: 'operations.manage' }),
     r('email-history', '/email/history', 'operations', '✉', 'Email Delivery History', 'سجل إرسال البريد', 'Inspect application email delivery history.', 'مراجعة سجل إرسال البريد من التطبيق.', { permission: 'diagnostics.view' }),
 
     r('reports', '/module/reports', 'reports', '▥', 'Reports & Exports', 'التقارير والتصدير', 'Build reports from real tenant data.', 'إنشاء تقارير من بيانات الحساب الحقيقية.', { permission: 'reports.view', controls: ['reports.export'] }),

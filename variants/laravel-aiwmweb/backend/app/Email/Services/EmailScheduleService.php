@@ -37,7 +37,7 @@ final class EmailScheduleService
 
         $schedule ??= new EmailSchedule;
         $schedule->fill(Arr::only($input, [
-            'site_id', 'name', 'template_stable_id', 'locale', 'variables', 'enabled', 'interval_minutes', 'next_run_at',
+            'site_id', 'name', 'template_stable_id', 'locale', 'variables', 'enabled', 'frequency', 'timezone_id', 'time_of_day', 'weekday', 'month_day', 'retry_count', 'retry_delay_minutes', 'interval_minutes', 'next_run_at',
         ]));
         $schedule->recipient = $recipient;
         $schedule->interval_minutes = min(max((int) ($schedule->interval_minutes ?: 1440), 15), 525600);
@@ -47,6 +47,13 @@ final class EmailScheduleService
         $this->audit->record('email.schedule.changed', [
             'schedule_id' => $schedule->id,
             'enabled' => (bool) $schedule->enabled,
+            'frequency' => $schedule->frequency,
+            'timezone_id' => $schedule->timezone_id,
+            'time_of_day' => $schedule->time_of_day,
+            'weekday' => $schedule->weekday,
+            'month_day' => $schedule->month_day,
+            'retry_count' => $schedule->retry_count,
+            'retry_delay_minutes' => $schedule->retry_delay_minutes,
             'interval_minutes' => $schedule->interval_minutes,
         ], EmailSchedule::class, $schedule->id);
 
@@ -70,6 +77,7 @@ final class EmailScheduleService
                     'template_stable_id' => $schedule->template_stable_id,
                     'locale' => $schedule->locale,
                     'variables' => $schedule->variables ?? [],
+                    'max_attempts' => min(max(((int) ($schedule->retry_count ?? 3)) + 1, 1), 5),
                 ]);
                 $schedule->update([
                     'last_run_at' => now(),

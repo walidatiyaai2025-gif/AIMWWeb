@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-7101AC9489",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/email/schedules",
+    "source": "src/AIWordPressManager.Web/Components/Pages/EmailSchedules.razor",
+    "source_intent": "Create an account or site email schedule using the selected recurrence, timezone, locale and retry settings",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/email-schedules-create-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalEmailScheduleController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Email/Services/CanonicalEmailScheduleCreateService.php",
+    "route": "POST /api/tenants/{tenant}/email/schedules",
+    "permission": "operations.manage",
+    "authoritative_reread": true,
+    "idempotency": "required Idempotency-Key serialized by tenant lock"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "site_lookup_tenant_scoped": true,
+    "caller_owned_tenant_override_rejected": true,
+    "caller_owned_user_override_rejected": true,
+    "caller_owned_recipient_override_rejected": true,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesCreateTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-create-control.test.ts",
+    "coverage": [
+      "exact canonical operation identity and source CreateClicked contract",
+      "tenant middleware and operations.manage authorization",
+      "idempotent create with authoritative persistence reread",
+      "foreign site IDOR fail-closed",
+      "caller-owned identity and recipient overrides rejected",
+      "guest and missing permission fail-closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-7101AC9489"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "b44f40326c932b1e8392d738e57b6aa0a56c5979",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-7101AC9489-create-schedule",
+    "implementation_sha": "f13043b3aceb077da597e0b0a68ff27a78719c43"
+  }
+}
