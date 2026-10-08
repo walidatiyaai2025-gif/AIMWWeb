@@ -638,7 +638,7 @@ final class ContentApiController extends Controller
 
     private function normalizeEditorApprovalState(mixed $value): mixed
     {
-        if (is_array($value) === false) {
+        if (! is_array($value)) {
             return $value;
         }
 
@@ -664,7 +664,7 @@ final class ContentApiController extends Controller
             $approval->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
             || (int) $approval->site_id !== $site
             || (int) $approval->actor_user_id !== (int) $request->user()->getKey()
-            || $approval->proposed_state != $proposed,
+            || ! $this->sameEditorApprovalState((array) $approval->proposed_state, $proposed),
             409,
             'Approval request key is already bound to a different proposal.',
         );
