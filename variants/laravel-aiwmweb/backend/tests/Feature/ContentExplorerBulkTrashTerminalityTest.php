@@ -35,7 +35,7 @@ final class ContentExplorerBulkTrashTerminalityTest extends TestCase
         $this->assertStringContainsString('ApplicationPermissionCatalog.ContentEdit', $source);
         $this->assertStringContainsString('TrashService.RunAsync', $source);
         $this->assertStringContainsString('ContentExplorerBulkTrashControl', $app);
-        $this->assertStringContainsString(self::OPERATION_ID, $widget);
+        $this->assertStringContainsString('CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID', $widget);
         $this->assertStringContainsString('mutation.mutate(selectedTargets)', $widget);
         $this->assertStringContainsString('postsQuery.refetch()', $widget);
         $this->assertStringContainsString('pagesQuery.refetch()', $widget);
