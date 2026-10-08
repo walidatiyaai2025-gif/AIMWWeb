@@ -169,6 +169,20 @@ final class ContentApiController extends Controller
             'expected_version' => 'nullable|string|max:255',
         ]);
 
+        $proposed = $this->editorProposedApprovalState($item, $data);
+        $existing = Approval::query()
+            ->where('request_key', $data['request_key'])
+            ->first();
+
+        if ($existing !== null) {
+            $this->assertEditorApprovalReplayMatches($existing, $request, $site, $proposed);
+
+            return response()->json([
+                'data' => $this->serializeEditorApproval($existing),
+                'replayed' => true,
+            ]);
+        }
+
         $expected = [
             'hash' => $data['expected_hash'] ?? $item->remote_hash,
             'modified_at' => $data['expected_modified_at'] ?? $item->remote_modified_at?->toIso8601String(),
@@ -179,17 +193,13 @@ final class ContentApiController extends Controller
             $baseline = $this->content->assertContentVersion($site, $type, $wordpressId, $expected);
             $before = $this->editorApprovalState($baseline);
             $proposed = $this->editorProposedApprovalState($baseline, $data);
-            $existing = Approval::query()->where('request_key', $data['request_key'])->first();
+
+            $existing = Approval::query()
+                ->where('request_key', $data['request_key'])
+                ->first();
 
             if ($existing !== null) {
-                abort_if(
-                    $existing->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
-                    || (int) $existing->site_id !== $site
-                    || ! $this->sameEditorApprovalState($existing->before_state, $before)
-                    || ! $this->sameEditorApprovalState($existing->proposed_state, $proposed),
-                    409,
-                    'Approval request key is already bound to a different proposal.',
-                );
+                $this->assertEditorApprovalReplayMatches($existing, $request, $site, $proposed);
 
                 return ['data' => $this->serializeEditorApproval($existing), 'replayed' => true];
             }
@@ -199,6 +209,7 @@ final class ContentApiController extends Controller
             if ($actorLabel === '') {
                 $actorLabel = (string) $actor->getKey();
             }
+
             $plainTitle = trim(html_entity_decode(strip_tags((string) $data['title'])));
             $title = "Update {$type} #{$wordpressId}".($plainTitle !== '' ? " — {$plainTitle}" : '');
 
@@ -221,18 +232,15 @@ final class ContentApiController extends Controller
             try {
                 $approval = Approval::query()->create($attributes);
             } catch (QueryException $exception) {
-                $approval = Approval::query()->where('request_key', $data['request_key'])->first();
+                $approval = Approval::query()
+                    ->where('request_key', $data['request_key'])
+                    ->first();
+
                 if ($approval === null) {
                     throw $exception;
                 }
-                abort_if(
-                    $approval->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
-                    || (int) $approval->site_id !== $site
-                    || ! $this->sameEditorApprovalState($approval->before_state, $before)
-                    || ! $this->sameEditorApprovalState($approval->proposed_state, $proposed),
-                    409,
-                    'Approval request key is already bound to a different proposal.',
-                );
+
+                $this->assertEditorApprovalReplayMatches($approval, $request, $site, $proposed);
 
                 return ['data' => $this->serializeEditorApproval($approval), 'replayed' => true];
             }
@@ -641,6 +649,18 @@ final class ContentApiController extends Controller
         ksort($value);
 
         return array_map(fn (mixed $item): mixed => $this->normalizeEditorApprovalState($item), $value);
+    }
+
+    private function assertEditorApprovalReplayMatches(Approval $approval, Request $request, int $site, array $proposed): void
+    {
+        abort_if(
+            $approval->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
+            || (int) $approval->site_id !== $site
+            || (int) $approval->actor_user_id !== (int) $request->user()->getKey()
+            || $approval->proposed_state != $proposed,
+            409,
+            'Approval request key is already bound to a different proposal.',
+        );
     }
 
     private function serializeEditorApproval(Approval $approval): array
