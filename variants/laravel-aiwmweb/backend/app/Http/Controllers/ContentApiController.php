@@ -42,9 +42,7 @@ final class ContentApiController extends Controller
         private readonly ContentRemoteDriver $remote,
         private readonly TenantContext $tenant,
         private readonly MediaDeleteService $mediaDelete,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site, string $type): JsonResponse
     {
