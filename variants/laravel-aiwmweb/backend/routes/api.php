@@ -42,6 +42,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('content/items/{content}/state', [ContentApiController::class, 'state']);
     Route::delete('content/items/{content}', [ContentApiController::class, 'destroy']);
     Route::post('content/bulk', [ContentApiController::class, 'bulk']);
+    Route::post('content/bulk/trash', [ContentApiController::class, 'bulkTrash'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', ContentApiController::CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID)
+        ->name('api.v1.content.explorer.bulk-trash');
     Route::get('content/items/{content}/revisions', [ContentApiController::class, 'revisions']);
     Route::get('content/items/{content}/revisions/compare/{from}/{to}', [ContentApiController::class, 'compareRevisions']);
     Route::post('content/items/{content}/revisions/{revision}/restore', [ContentApiController::class, 'restoreRevision']);
