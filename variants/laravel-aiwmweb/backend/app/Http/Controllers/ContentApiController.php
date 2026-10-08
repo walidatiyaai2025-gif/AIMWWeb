@@ -185,8 +185,8 @@ final class ContentApiController extends Controller
                 abort_if(
                     $existing->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
                     || (int) $existing->site_id !== $site
-                    || $existing->before_state != $before
-                    || $existing->proposed_state != $proposed,
+                    || ! $this->sameEditorApprovalState($existing->before_state, $before)
+                    || ! $this->sameEditorApprovalState($existing->proposed_state, $proposed),
                     409,
                     'Approval request key is already bound to a different proposal.',
                 );
@@ -228,8 +228,8 @@ final class ContentApiController extends Controller
                 abort_if(
                     $approval->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
                     || (int) $approval->site_id !== $site
-                    || $approval->before_state != $before
-                    || $approval->proposed_state != $proposed,
+                    || ! $this->sameEditorApprovalState($approval->before_state, $before)
+                    || ! $this->sameEditorApprovalState($approval->proposed_state, $proposed),
                     409,
                     'Approval request key is already bound to a different proposal.',
                 );
@@ -622,24 +622,25 @@ final class ContentApiController extends Controller
 
     private function editorApprovalStateFingerprint(array $state): string
     {
-        $normalize = function (mixed $value) use (&$normalize): mixed {
-            if (! is_array($value)) {
-                return $value;
-            }
-
-            if (array_is_list($value)) {
-                return array_map($normalize, $value);
-            }
-
-            ksort($value);
-
-            return array_map($normalize, $value);
-        };
-
         return hash(
             'sha256',
-            json_encode($normalize($state), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            json_encode($this->normalizeEditorApprovalState($state), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         );
+    }
+
+    private function normalizeEditorApprovalState(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        if (array_is_list($value)) {
+            return array_map(fn (mixed $item): mixed => $this->normalizeEditorApprovalState($item), $value);
+        }
+
+        ksort($value);
+
+        return array_map(fn (mixed $item): mixed => $this->normalizeEditorApprovalState($item), $value);
     }
 
     private function serializeEditorApproval(Approval $approval): array
