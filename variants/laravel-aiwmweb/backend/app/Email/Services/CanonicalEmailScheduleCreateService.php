@@ -32,7 +32,7 @@ final class CanonicalEmailScheduleCreateService
             DB::table('tenants')->where('id', $tenantId)->lockForUpdate()->first();
             $existing = EmailSchedule::query()->where('name', $name)->first();
             if ($existing) {
-                if (!$this->matches($existing, $desired)) {
+                if (! $this->matches($existing, $desired)) {
                     throw new ConflictHttpException('Idempotency key was already used for a different email schedule.');
                 }
                 return $existing;
@@ -44,7 +44,7 @@ final class CanonicalEmailScheduleCreateService
         }, 3);
 
         $fresh = EmailSchedule::query()->findOrFail($schedule->id);
-        if (!$this->matches($fresh, $desired)) {
+        if (! $this->matches($fresh, $desired)) {
             throw new \RuntimeException('Email schedule create could not be verified from authoritative persistence.');
         }
 
@@ -133,7 +133,7 @@ final class CanonicalEmailScheduleCreateService
                 return $configured;
             }
         }
-        if (!filter_var($actorEmail, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($actorEmail, FILTER_VALIDATE_EMAIL)) {
             throw ValidationException::withMessages(['recipient' => 'The authenticated user has no valid delivery email address.']);
         }
         return $actorEmail;
