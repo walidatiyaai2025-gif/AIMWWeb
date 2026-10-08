@@ -22,6 +22,7 @@ import { CommentsManageSiteControl } from './comments-manage-site-control';
 import { ConfigurationValidationCopyReportControl } from './configuration-validation-copy-report';
 import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
 import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
+import { ContentExplorerBulkTrashControl } from './content-explorer-bulk-trash-widget';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
 import { ContentEditorSaveControl } from './content-editor-save-control';
 import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
@@ -158,7 +159,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
