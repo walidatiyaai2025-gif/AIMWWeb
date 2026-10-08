@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-452B93663B",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_screen": "/sites/{Id:guid}/explorer",
+    "source_control": "BulkTrashAsync / Move to trash",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "authorization": "Content.Edit is required before bulk trash",
+    "selection": "selected content is reduced to content type plus WordPress identifier",
+    "execution": "TrashService.RunAsync executes the selected targets synchronously",
+    "result": "the source reports succeeded/failed counts and reloads authoritative explorer data"
+  },
+  "laravel_adaptation": {
+    "frontend_contract": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-trash-control.ts",
+    "endpoint": "POST /api/v1/tenants/{tenant}/sites/{site}/content/bulk/trash",
+    "controller": "App\\Http\\Controllers\\ContentApiController::bulkTrash",
+    "operation_marker": "AIMW-BILL-452B93663B",
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "session_authentication": true,
+    "active_tenant_from_server_context": true,
+    "permission": "content.edit",
+    "tenant_site_content_ownership": "tenant-scoped ContentItem resolution by route-owned site plus content type and WordPress identifier",
+    "caller_owned_identity_fields": "tenant/site/user/actor identity fields are rejected",
+    "secrets_exposed": false
+  },
+  "execution_semantics": {
+    "target_types": ["post", "page"],
+    "unique_targets_required": true,
+    "optimistic_wordpress_guard": true,
+    "successful_target": "moved to trash through ContentPlatformService::mutateContent",
+    "stale_target": "reported as conflict with durable conflict evidence and no overwrite",
+    "partial_result": true
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerBulkTrashTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-bulk-trash-terminality.test.ts",
+    "coverage": [
+      "exact source BulkTrashAsync contract",
+      "canonical route identity and middleware",
+      "content.edit authorization boundary",
+      "server-owned tenant/site identity",
+      "target type and WordPress ID boundary",
+      "success and conflict result semantics"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-452B93663B",
+    "sibling_bulk_status_controls_terminalized": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "force_push": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-452B93663B-bulk-trash"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "Laravel now exposes a canonical tenant-scoped BulkTrashAsync endpoint with content.edit authorization, server-owned identity, exact selected target binding, optimistic WordPress conflict protection, synchronous per-target execution, and succeeded/failed summary semantics."
+  }
+}
