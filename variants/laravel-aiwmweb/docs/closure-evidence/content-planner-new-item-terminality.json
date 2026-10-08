@@ -42,7 +42,9 @@
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-BILL-3ABDE4E48F"],
+    "claimed_operations": [
+      "AIMW-BILL-3ABDE4E48F"
+    ],
     "authorization_weakened": false,
     "tenant_isolation_weakened": false,
     "sibling_operations_claimed": false,
@@ -52,6 +54,7 @@
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
     "base_composition_sha": "0a0192be6021f177c59b831cf433aeff4e3aca5f",
-    "branch": "worker/laravel-aiwmweb-AIMW-BILL-3ABDE4E48F-new-item"
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-3ABDE4E48F-new-item",
+    "implementation_sha": "29b7cb39f8894bff0e1d375aab73da12c4efe460"
   }
 }
