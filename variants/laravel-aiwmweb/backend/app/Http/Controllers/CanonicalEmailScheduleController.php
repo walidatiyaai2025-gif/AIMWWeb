@@ -18,8 +18,7 @@ final class CanonicalEmailScheduleController extends Controller
         private readonly TenantAuthorizer $authorizer,
         private readonly CanonicalEmailScheduleCreateService $creator,
         private readonly EmailScheduleService $schedules,
-    ) {
-    }
+    ) {}
 
     public function index(string $tenant): JsonResponse
     {
