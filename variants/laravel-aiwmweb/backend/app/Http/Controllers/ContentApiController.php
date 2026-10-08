@@ -292,6 +292,7 @@ final class ContentApiController extends Controller
     public function bulkTrash(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.edit');
+        Site::query()->findOrFail($site);
 
         $callerOwned = ['tenant', 'tenant_id', 'site', 'site_id', 'user_id', 'actor_user_id'];
         abort_if(array_intersect(array_keys($request->all()), $callerOwned) !== [], 422, 'Bulk trash does not accept caller-owned identity fields.');
