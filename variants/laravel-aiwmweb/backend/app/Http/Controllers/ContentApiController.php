@@ -37,6 +37,8 @@ final class ContentApiController extends Controller
 
     public const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
 
+    public const CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID = 'AIMW-BILL-452B93663B';
+
     public function __construct(
         private readonly ContentPlatformService $content,
         private readonly ContentRemoteDriver $remote,
@@ -285,6 +287,96 @@ final class ContentApiController extends Controller
         BulkContentMutationJob::dispatch($this->tenant->id(), $site, array_values(array_unique($data['ids'])), $data['action'], $data['payload'] ?? []);
 
         return response()->json(['state' => 'queued', 'count' => $count], 202);
+    }
+
+    public function bulkTrash(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
+    {
+        $auth->authorize('content.edit');
+        Site::query()->findOrFail($site);
+
+        $callerOwned = ['tenant', 'tenant_id', 'site', 'site_id', 'user_id', 'actor_user_id'];
+        abort_if(array_intersect(array_keys($request->all()), $callerOwned) !== [], 422, 'Bulk trash does not accept caller-owned identity fields.');
+
+        $data = $request->validate([
+            'targets' => 'required|array|min:1|max:500',
+            'targets.*.content_type' => ['required', Rule::in(['post', 'page'])],
+            'targets.*.wordpress_id' => 'required|integer|min:1',
+        ]);
+
+        $targets = collect($data['targets'])
+            ->map(fn (array $target): array => [
+                'content_type' => (string) $target['content_type'],
+                'wordpress_id' => (int) $target['wordpress_id'],
+            ])
+            ->unique(fn (array $target): string => $target['content_type'].':'.$target['wordpress_id'])
+            ->values();
+
+        abort_if($targets->count() !== count($data['targets']), 422, 'Bulk trash targets must be unique.');
+
+        $items = ContentItem::query()
+            ->where('site_id', $site)
+            ->where(function ($query) use ($targets): void {
+                foreach ($targets as $target) {
+                    $query->orWhere(function ($itemQuery) use ($target): void {
+                        $itemQuery
+                            ->where('type', $target['content_type'])
+                            ->where('remote_id', $target['wordpress_id']);
+                    });
+                }
+            })
+            ->get()
+            ->keyBy(fn (ContentItem $item): string => $item->type.':'.$item->remote_id);
+
+        abort_unless($items->count() === $targets->count(), 422, 'Bulk trash selection includes unavailable content.');
+
+        $results = [];
+        $succeeded = 0;
+
+        foreach ($targets as $target) {
+            $key = $target['content_type'].':'.$target['wordpress_id'];
+            /** @var ContentItem $item */
+            $item = $items->get($key);
+
+            try {
+                $this->content->mutateContent(
+                    $site,
+                    $item->type,
+                    $item->remote_id,
+                    'trash',
+                    [],
+                    [
+                        'hash' => $item->remote_hash,
+                        'modified_at' => $item->remote_modified_at?->toIso8601String(),
+                        'version' => $item->remote_version,
+                    ],
+                );
+                $succeeded++;
+                $results[] = [...$target, 'status' => 'trashed'];
+            } catch (ContentConflictException $exception) {
+                $results[] = [
+                    ...$target,
+                    'status' => 'conflict',
+                    'conflict_id' => $exception->conflictId,
+                ];
+            } catch (\Throwable) {
+                $results[] = [
+                    ...$target,
+                    'status' => 'failed',
+                ];
+            }
+        }
+
+        $failed = $targets->count() - $succeeded;
+
+        return response()->json([
+            'succeeded' => $succeeded,
+            'failed' => $failed,
+            'total' => $targets->count(),
+            'message' => $failed === 0
+                ? 'Selected content moved to trash.'
+                : 'Bulk trash completed with failures.',
+            'results' => $results,
+        ]);
     }
 
     public function revisions(TenantAuthorizer $auth, string $tenant, int $site, int $content): JsonResponse
