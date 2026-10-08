@@ -17,43 +17,66 @@
   },
   "source_behavior": {
     "authorization": "Content.Edit is required before bulk trash",
-    "selection": "selected content is reduced to content type plus WordPress identifier",
-    "execution": "TrashService.RunAsync executes the selected targets synchronously",
-    "result": "the source reports succeeded/failed counts and reloads authoritative explorer data"
+    "selection": "selected explorer rows are reduced to content type plus WordPress identifier",
+    "execution": "BulkTrashExecutionService.RunAsync performs bounded per-target WordPress trash mutations and continues across item failures",
+    "feedback": "Succeeded/failed counts are surfaced to the operator",
+    "reconciliation": "the explorer reloads authoritative content after the operation"
   },
   "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-trash-widget.tsx",
     "frontend_contract": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-bulk-trash-control.ts",
+    "frontend_mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
     "endpoint": "POST /api/v1/tenants/{tenant}/sites/{site}/content/bulk/trash",
     "controller": "App\\Http\\Controllers\\ContentApiController::bulkTrash",
+    "mutation_service": "App\\Content\\ContentPlatformService::mutateContent",
     "operation_marker": "AIMW-BILL-452B93663B",
+    "post_mutation_refresh": "posts and pages queries are refetched before success feedback",
     "placeholder_or_fake_success": false
   },
   "security": {
     "session_authentication": true,
     "active_tenant_from_server_context": true,
     "permission": "content.edit",
-    "tenant_site_content_ownership": "tenant-scoped ContentItem resolution by route-owned site plus content type and WordPress identifier",
-    "caller_owned_identity_fields": "tenant/site/user/actor identity fields are rejected",
+    "tenant_site_ownership": "tenant-scoped Site::findOrFail resolves the route-owned site before target processing",
+    "content_ownership": "all selected ContentItem rows must belong to the route-owned site and active tenant before any remote mutation",
+    "caller_owned_identity_fields": "tenant/site/user/actor identity fields are rejected with 422",
+    "target_boundary": "only post/page plus positive WordPress IDs are accepted; duplicates and unavailable targets fail before mutation",
     "secrets_exposed": false
   },
   "execution_semantics": {
-    "target_types": ["post", "page"],
+    "target_types": [
+      "post",
+      "page"
+    ],
+    "max_targets": 500,
     "unique_targets_required": true,
     "optimistic_wordpress_guard": true,
-    "successful_target": "moved to trash through ContentPlatformService::mutateContent",
-    "stale_target": "reported as conflict with durable conflict evidence and no overwrite",
-    "partial_result": true
+    "successful_target": "moved to trash through ContentPlatformService::mutateContent and reflected in local status",
+    "stale_target": "reported as conflict with durable ContentConflict evidence and no overwrite",
+    "remote_failure": "reported as failed without aborting remaining selected targets",
+    "partial_result": true,
+    "summary_fields": [
+      "succeeded",
+      "failed",
+      "total",
+      "message",
+      "results"
+    ]
   },
   "acceptance_tests": {
     "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerBulkTrashTerminalityTest.php",
     "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-bulk-trash-terminality.test.ts",
     "coverage": [
-      "exact source BulkTrashAsync contract",
-      "canonical route identity and middleware",
-      "content.edit authorization boundary",
-      "server-owned tenant/site identity",
-      "target type and WordPress ID boundary",
-      "success and conflict result semantics"
+      "exact source BulkTrashAsync contract and canonical route marker",
+      "visible Laravel explorer control is mounted and calls the canonical endpoint",
+      "guest 401 and missing content.edit 403",
+      "foreign tenant and foreign site fail closed with 404",
+      "caller-owned identity injection is rejected before remote work",
+      "duplicates and unavailable content are rejected before remote work",
+      "mixed post/page success mutates both authoritative targets",
+      "stale target creates durable conflict evidence without overwrite",
+      "remote item failure is isolated and later targets continue",
+      "frontend refreshes posts and pages after mutation"
     ]
   },
   "scope_guards": {
@@ -67,10 +90,12 @@
   },
   "provenance": {
     "base_branch": "worker/laravel-aiwmweb-closure-composition",
-    "branch": "worker/laravel-aiwmweb-AIMW-BILL-452B93663B-bulk-trash"
+    "base_composition_sha": "cf43a85d655070103ca3141a9ff8ac8683859a25",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-452B93663B-bulk-trash",
+    "implementation_sha": "55dc4196d30cfc1e36461fd0558bbcc48c981dad"
   },
   "terminality": {
     "state": "ADAPTED",
-    "reason": "Laravel now exposes a canonical tenant-scoped BulkTrashAsync endpoint with content.edit authorization, server-owned identity, exact selected target binding, optimistic WordPress conflict protection, synchronous per-target execution, and succeeded/failed summary semantics."
+    "reason": "Laravel now renders the canonical BulkTrashAsync control in the tenant/site Explorer, submits only server-validated post/page WordPress targets, enforces content.edit plus tenant/site ownership, preserves optimistic conflict protection, isolates per-target remote failures, reports partial outcomes, and refetches authoritative content after mutation."
   }
 }
