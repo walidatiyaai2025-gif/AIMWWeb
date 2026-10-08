@@ -187,7 +187,7 @@ final class ContentApiController extends Controller
                 abort_if(
                     $existing->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
                     || (int) $existing->site_id !== $site
-                    || $this->sameEditorApprovalState($existing->before_state, $before)
+                    || $this->sameEditorApprovalState($existing->before_state, $before) === false
                     || $this->sameEditorApprovalState($existing->proposed_state, $proposed) === false,
                     409,
                     'Approval request key is already bound to a different proposal.',
@@ -230,7 +230,7 @@ final class ContentApiController extends Controller
                 abort_if(
                     $approval->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
                     || (int) $approval->site_id !== $site
-                    || $this->sameEditorApprovalState($approval->before_state, $before)
+                    || $this->sameEditorApprovalState($approval->before_state, $before) === false
                     || $this->sameEditorApprovalState($approval->proposed_state, $proposed) === false,
                     409,
                     'Approval request key is already bound to a different proposal.',
