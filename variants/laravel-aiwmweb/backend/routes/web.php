@@ -13,6 +13,7 @@ use App\Http\Controllers\BackupCreateController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BillingPlanAdminController;
 use App\Http\Controllers\CanonicalWorkspaceRouteController;
+use App\Http\Controllers\CanonicalEmailScheduleController;
 use App\Http\Controllers\ConfigurationValidationController;
 use App\Http\Controllers\ContentPlannerController;
 use App\Http\Controllers\DemoController;
@@ -87,6 +88,10 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
         ->middleware('platform.admin')
         ->defaults('canonical_operation_id', TenantBackupCreateService::OPERATION_ID)
         ->name('canonical.api.backups.create');
+    Route::get('/email/schedules', [CanonicalEmailScheduleController::class, 'index'])->name('canonical.api.email-schedules.index');
+    Route::post('/email/schedules', [CanonicalEmailScheduleController::class, 'store'])
+        ->defaults('canonical_operation_id', CanonicalEmailScheduleController::CREATE_OPERATION_ID)
+        ->name('canonical.api.email-schedules.create');
     Route::get('/content-planner/items', [ContentPlannerController::class, 'index'])->name('canonical.api.content-planner');
     Route::post('/content-planner/items/save', [ContentPlannerController::class, 'save'])
         ->defaults('canonical_operation_id', ContentPlannerController::SAVE_OPERATION_ID)
@@ -212,6 +217,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'site-operations' => "/tenants/{$tenant}/route-api/site-operations",
             'notifications' => "/api/v1/tenants/{$tenant}/notifications",
             'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
+            'email-schedules' => "/api/tenants/{$tenant}/email/schedules",
             'reports' => "/tenants/{$tenant}/route-api/report-exports",
             'logs' => "/tenants/{$tenant}/admin/logs",
             'diagnostics' => "/tenants/{$tenant}/admin/diagnostics",
