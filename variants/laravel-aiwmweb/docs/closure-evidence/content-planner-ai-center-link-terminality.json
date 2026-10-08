@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-CAFE798AA3",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor",
+    "source_screen": "/content-planner",
+    "source_control": "/ai-center -> /ai-center",
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "navigation": "ContentPlanner renders a visible AI Center anchor with href /ai-center.",
+    "mutation": false,
+    "destination": "The source control navigates to the existing AI Center workspace without mutating planner or AI state."
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/content-planner-ai-center-link-control.tsx",
+    "frontend_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination_route": "GET /tenants/{tenant}/ai-center",
+    "destination_route_name": "canonical.workspace.ai-center",
+    "behavior": "Content Planner exposes the exact AI Center navigation as a tenant-qualified React Router link only when both the planner source and AI Center destination permissions are available.",
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "authentication": "web/authenticated same-origin session",
+    "source_permission": "content.view",
+    "destination_permission": "ai.use",
+    "tenant_permission": "tenant.view",
+    "tenant_isolation": "tenantUrl derives the destination from server-provided tenant context and the destination route is guarded by auth plus tenant.context",
+    "foreign_tenant_fails_closed": true,
+    "caller_owned_identity_fields": false,
+    "secrets_exposed": false
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerAiCenterLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-planner-ai-center-link-control.test.tsx",
+    "coverage": [
+      "exact source visible-control binding",
+      "tenant-qualified AI Center destination",
+      "source and destination permission gating",
+      "existing guarded AI Center route",
+      "foreign tenant isolation",
+      "non-mutating navigation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-CAFE798AA3",
+    "sibling_operations_terminalized": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "7e60df342d0ce957d2e47f643184e9bb853bc646",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-CAFE798AA3-ai-center-link"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "Laravel preserves the ContentPlanner AI Center visible navigation with tenant-derived routing, guarded source/destination permissions, exact canonical operation evidence, and no mutation side effects."
+  }
+}
