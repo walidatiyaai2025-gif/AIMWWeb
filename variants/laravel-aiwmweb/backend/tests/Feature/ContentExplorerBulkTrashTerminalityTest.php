@@ -34,8 +34,8 @@ final class ContentExplorerBulkTrashTerminalityTest extends TestCase
 
         $this->assertStringContainsString("\$auth->authorize('content.edit')", $controller);
         $this->assertStringContainsString('Bulk trash does not accept caller-owned identity fields.', $controller);
-        $this->assertStringContainsString("'content_type' => ['required', Rule::in(['post', 'page'])]", $controller);
-        $this->assertStringContainsString("'wordpress_id' => 'required|integer|min:1'", $controller);
+        $this->assertStringContainsString("'targets.*.content_type' => ['required', Rule::in(['post', 'page'])]", $controller);
+        $this->assertStringContainsString("'targets.*.wordpress_id' => 'required|integer|min:1'", $controller);
         $this->assertStringContainsString("->where('site_id', \$site)", $controller);
         $this->assertStringContainsString("'status' => 'conflict'", $controller);
         $this->assertStringContainsString("'status' => 'trashed'", $controller);
