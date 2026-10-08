@@ -175,7 +175,7 @@ final class ContentApiController extends Controller
             'version' => $data['expected_version'] ?? $item->remote_version,
         ];
 
-        return $this->mutationResponse(function () use ($request, $site, $type, $wordpressId, $item, $ownedSite, $data, $expected): array {
+        return $this->mutationResponse(function () use ($request, $site, $type, $wordpressId, $ownedSite, $data, $expected): array {
             $baseline = $this->content->assertContentVersion($site, $type, $wordpressId, $expected);
             $before = $this->editorApprovalState($baseline);
             $proposed = $this->editorProposedApprovalState($baseline, $data);
@@ -185,8 +185,8 @@ final class ContentApiController extends Controller
                 abort_if(
                     $existing->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
                     || (int) $existing->site_id !== $site
-                    || $existing->before_state !== $before
-                    || $existing->proposed_state !== $proposed,
+                    || $existing->before_state != $before
+                    || $existing->proposed_state != $proposed,
                     409,
                     'Approval request key is already bound to a different proposal.',
                 );
@@ -228,8 +228,8 @@ final class ContentApiController extends Controller
                 abort_if(
                     $approval->source_operation_id !== self::CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID
                     || (int) $approval->site_id !== $site
-                    || $approval->before_state !== $before
-                    || $approval->proposed_state !== $proposed,
+                    || $approval->before_state != $before
+                    || $approval->proposed_state != $proposed,
                     409,
                     'Approval request key is already bound to a different proposal.',
                 );
