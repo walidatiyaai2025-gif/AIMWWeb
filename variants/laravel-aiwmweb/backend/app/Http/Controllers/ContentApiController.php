@@ -612,6 +612,36 @@ final class ContentApiController extends Controller
         ];
     }
 
+    private function sameEditorApprovalState(array $stored, array $candidate): bool
+    {
+        return hash_equals(
+            $this->editorApprovalStateFingerprint($stored),
+            $this->editorApprovalStateFingerprint($candidate),
+        );
+    }
+
+    private function editorApprovalStateFingerprint(array $state): string
+    {
+        $normalize = function (mixed $value) use (&$normalize): mixed {
+            if (! is_array($value)) {
+                return $value;
+            }
+
+            if (array_is_list($value)) {
+                return array_map($normalize, $value);
+            }
+
+            ksort($value);
+
+            return array_map($normalize, $value);
+        };
+
+        return hash(
+            'sha256',
+            json_encode($normalize($state), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        );
+    }
+
     private function serializeEditorApproval(Approval $approval): array
     {
         return [
