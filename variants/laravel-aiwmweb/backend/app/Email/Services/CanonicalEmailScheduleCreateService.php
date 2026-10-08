@@ -72,18 +72,15 @@ final class CanonicalEmailScheduleCreateService
                 'message' => $scope === 'Account'
                     ? 'Scheduled dashboard digest.'
                     : 'Scheduled operational report for '.($siteName ?: 'site').'.',
-                'canonical' => [
-                    'scope' => $scope,
-                    'frequency' => $frequency,
-                    'timezone_id' => $timezone,
-                    'time_of_day' => $time,
-                    'weekday' => $weekday,
-                    'month_day' => $monthDay,
-                    'retry_count' => (int) ($input['retry_count'] ?? 3),
-                    'retry_delay_minutes' => (int) ($input['retry_delay_minutes'] ?? 5),
-                ],
             ],
             'enabled' => (bool) ($input['enabled'] ?? true),
+            'frequency' => $frequency,
+            'timezone_id' => $timezone,
+            'time_of_day' => $time,
+            'weekday' => $weekday,
+            'month_day' => $monthDay,
+            'retry_count' => (int) ($input['retry_count'] ?? 3),
+            'retry_delay_minutes' => (int) ($input['retry_delay_minutes'] ?? 5),
             'interval_minutes' => match ($frequency) {
                 'Hourly' => 60,
                 'Weekly' => 10080,
@@ -146,6 +143,13 @@ final class CanonicalEmailScheduleCreateService
             && (string) $schedule->recipient === $desired['recipient']
             && (string) $schedule->locale === $desired['locale']
             && (bool) $schedule->enabled === $desired['enabled']
+            && (string) $schedule->frequency === $desired['frequency']
+            && (string) $schedule->timezone_id === $desired['timezone_id']
+            && (string) $schedule->time_of_day === $desired['time_of_day']
+            && ($schedule->weekday === null ? null : (int) $schedule->weekday) === $desired['weekday']
+            && ($schedule->month_day === null ? null : (int) $schedule->month_day) === $desired['month_day']
+            && (int) $schedule->retry_count === $desired['retry_count']
+            && (int) $schedule->retry_delay_minutes === $desired['retry_delay_minutes']
             && (int) $schedule->interval_minutes === $desired['interval_minutes']
             && ($schedule->variables ?? []) == $desired['variables'];
     }
@@ -160,7 +164,13 @@ final class CanonicalEmailScheduleCreateService
             'locale' => (string) $schedule->locale,
             'enabled' => (bool) $schedule->enabled,
             'next_run_at' => $schedule->next_run_at?->toIso8601String(),
-            'canonical' => (array) data_get($schedule->variables, 'canonical', []),
+            'frequency' => (string) $schedule->frequency,
+            'timezone_id' => (string) $schedule->timezone_id,
+            'time_of_day' => (string) $schedule->time_of_day,
+            'weekday' => $schedule->weekday === null ? null : (int) $schedule->weekday,
+            'month_day' => $schedule->month_day === null ? null : (int) $schedule->month_day,
+            'retry_count' => (int) $schedule->retry_count,
+            'retry_delay_minutes' => (int) $schedule->retry_delay_minutes,
         ];
     }
 }
