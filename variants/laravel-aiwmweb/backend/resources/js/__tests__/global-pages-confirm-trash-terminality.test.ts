@@ -32,10 +32,7 @@ describe('GlobalPagesExplorer ConfirmTrashAsync terminality', () => {
     });
 
     it('requires confirmation and authoritative reread before visible success reconciliation', () => {
-        const widget = readFileSync(
-            new URL('../global-pages-confirm-trash-widget.tsx', import.meta.url),
-            'utf8',
-        );
+        const widget = readFileSync('resources/js/global-pages-confirm-trash-widget.tsx', 'utf8');
 
         expect(widget).toContain('setConfirmOpen(true)');
         expect(widget).toContain('role="dialog"');
