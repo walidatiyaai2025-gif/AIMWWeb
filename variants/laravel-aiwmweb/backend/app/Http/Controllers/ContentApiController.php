@@ -638,17 +638,24 @@ final class ContentApiController extends Controller
 
     private function normalizeEditorApprovalState(mixed $value): mixed
     {
-        if (! is_array($value)) {
+        if (is_array($value) === false) {
             return $value;
         }
 
         if (array_is_list($value)) {
-            return array_map(fn (mixed $item): mixed => $this->normalizeEditorApprovalState($item), $value);
+            foreach ($value as $index => $item) {
+                $value[$index] = $this->normalizeEditorApprovalState($item);
+            }
+
+            return $value;
         }
 
         ksort($value);
+        foreach ($value as $key => $item) {
+            $value[$key] = $this->normalizeEditorApprovalState($item);
+        }
 
-        return array_map(fn (mixed $item): mixed => $this->normalizeEditorApprovalState($item), $value);
+        return $value;
     }
 
     private function assertEditorApprovalReplayMatches(Approval $approval, Request $request, int $site, array $proposed): void
