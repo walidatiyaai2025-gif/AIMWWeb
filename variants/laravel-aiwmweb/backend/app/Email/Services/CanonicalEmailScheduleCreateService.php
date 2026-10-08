@@ -17,8 +17,7 @@ final class CanonicalEmailScheduleCreateService
     public function __construct(
         private readonly TenantContext $context,
         private readonly EmailScheduleService $schedules,
-    ) {
-    }
+    ) {}
 
     public function create(array $input, string $actorEmail, string $idempotencyKey): array
     {
@@ -39,10 +38,9 @@ final class CanonicalEmailScheduleCreateService
                 return $existing;
             }
 
-            return $this->schedules->save(null, [
-                ...$desired,
+            return $this->schedules->save(null, array_merge($desired, [
                 'name' => $name,
-            ]);
+            ]));
         }, 3);
 
         $fresh = EmailSchedule::query()->findOrFail($schedule->id);
