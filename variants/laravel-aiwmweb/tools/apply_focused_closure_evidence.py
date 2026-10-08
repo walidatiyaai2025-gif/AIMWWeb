@@ -116,7 +116,7 @@ def security_contract(row: dict[str, Any], tests: list[reconcile.FileEvidence]) 
     return True, signals
 
 
-def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
+def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> tuple[list[str], list[str]]:
     source_sha = str(manifest.get("focused_closure_evidence_source_sha") or "").strip()
     if not source_sha:
         raise SystemExit("manifest must declare focused_closure_evidence_source_sha")
@@ -273,7 +273,7 @@ def apply(payload: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
     if errors:
         raise SystemExit("focused closure validation failed:\n- " + "\n- ".join(errors))
 
-    return applied
+    return applied, refreshed
 
 
 def main() -> int:
@@ -292,7 +292,7 @@ def main() -> int:
             f"expected {args.check_total} canonical operations, found {len(payload.get('operations', []))}"
         )
 
-    applied = apply(payload, manifest)
+    applied, refreshed = apply(payload, manifest)
     args.output.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.summary_output:
         compact = {key: value for key, value in payload.items() if key != "operations"}
