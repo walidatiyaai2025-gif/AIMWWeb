@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('email_schedules', function (Blueprint $table): void {
-            $table->dropColumn(['frequency','timezone_id','time_of_day','weekday','month_day','retry_count','retry_delay_minutes']);
+            $table->dropColumn(['frequency', 'timezone_id', 'time_of_day', 'weekday', 'month_day', 'retry_count', 'retry_delay_minutes']);
         });
     }
 };
