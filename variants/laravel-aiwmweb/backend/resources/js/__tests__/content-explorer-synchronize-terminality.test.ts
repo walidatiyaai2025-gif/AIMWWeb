@@ -32,5 +32,6 @@ describe('ContentExplorer SynchronizeAsync terminality', () => {
         expect(contentExplorerSyncOutcome('failed')).toBe('failure');
         expect(contentExplorerSyncOutcome('partial')).toBe('failure');
         expect(contentExplorerSyncOutcome('cancelled')).toBe('failure');
+        expect(contentExplorerSyncOutcome('cancel_requested')).toBe('failure');
     });
 });
