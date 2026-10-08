@@ -19,6 +19,8 @@ final class ContentPlannerAiCenterLinkTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-CAFE798AA3';
 
+    // Exact-head CI anchor after official AIMW-BILL-CAFE798AA3 parity materialization.
+
     public function test_exact_canonical_operation_matches_content_planner_ai_center_visible_control(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor'));
