@@ -60,7 +60,11 @@ jobs:
 
       - name: Strict Pint gate
         working-directory: variants/laravel-aiwmweb/backend
-        run: vendor/bin/pint --test --diff
+        shell: bash
+        run: |
+          vendor/bin/pint app/Email/Services/CanonicalEmailScheduleCreateService.php
+          git diff -- app/Email/Services/CanonicalEmailScheduleCreateService.php
+          exit 1
 
       - name: SQLite migrate fresh
         working-directory: variants/laravel-aiwmweb/backend
