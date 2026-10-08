@@ -36542,6 +36542,8 @@
       "AIMW-SYNC-F340B5445A"
     ],
     "focused_closure_contract_count": 183,
+    "focused_closure_provenance_refreshed": [],
+    "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
       "AIMW-PLAT-A2624EDC66",
       "AIMW-OPER-55C6982761",
