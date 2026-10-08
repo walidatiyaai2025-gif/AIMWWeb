@@ -1,13 +1,13 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-5DC460397B issue-657-content-explorer-synchronize
+# trigger: AIMW-BILL-3ABDE4E48F issue-662-content-planner-new-item
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-5DC460397B-synchronize
+      - worker/laravel-aiwmweb-AIMW-BILL-3ABDE4E48F-new-item
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-synchronize-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/content-planner-new-item-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -48,5 +48,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-5DC460397B"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-3ABDE4E48F"
           git push origin "HEAD:${{ github.ref_name }}"
