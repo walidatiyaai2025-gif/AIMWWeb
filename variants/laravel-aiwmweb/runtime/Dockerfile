@@ -14,6 +14,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 FROM php:8.4.24-fpm-trixie AS app
+ARG PHPREDIS_VERSION=6.3.0
 ENV APP_ENV=production \
     APP_DEBUG=false \
     COMPOSER_ALLOW_SUPERUSER=1
@@ -28,10 +29,20 @@ RUN apt-get update \
         libzip-dev \
         unzip \
     && docker-php-ext-install -j"$(nproc)" curl intl mbstring pcntl pdo_mysql opcache \
-    && pecl install redis \
+    && curl -fsSL --retry 5 --retry-all-errors \
+        "https://github.com/phpredis/phpredis/archive/refs/tags/${PHPREDIS_VERSION}.tar.gz" \
+        -o /tmp/phpredis.tar.gz \
+    && mkdir -p /tmp/phpredis \
+    && tar -xzf /tmp/phpredis.tar.gz --strip-components=1 -C /tmp/phpredis \
+    && cd /tmp/phpredis \
+    && phpize \
+    && ./configure \
+    && make -j"$(nproc)" \
+    && make install \
     && docker-php-ext-enable redis \
+    && cd / \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/pear
+    && rm -rf /var/lib/apt/lists/* /tmp/pear /tmp/phpredis /tmp/phpredis.tar.gz
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
