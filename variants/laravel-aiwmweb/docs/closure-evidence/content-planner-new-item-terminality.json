@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-3ABDE4E48F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/content-planner",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor:/content-planner:NewItem:NewItem",
+    "source_intent": "Reset Content Planner editor to a blank new-item state",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-planner-new-item-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "semantics": "local editor-state reset only; no backend request",
+    "visibility_permission": "content.view"
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerNewItemTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-planner-new-item-control.test.ts",
+    "coverage": [
+      "exact canonical operation identity",
+      "source NewItem reset semantics",
+      "editingId reset to null",
+      "site/title/idea/scheduled fields reset to empty",
+      "fresh state object per reset",
+      "no API or mutation introduced"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-3ABDE4E48F"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "0a0192be6021f177c59b831cf433aeff4e3aca5f",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-3ABDE4E48F-new-item"
+  }
+}
