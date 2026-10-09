@@ -4,7 +4,7 @@ name: Laravel AIWMWeb Task Parity Materialize
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-A152D6A7DE-security-audit
+      - worker/laravel-aiwmweb-AIMW-BILL-5887A977D7-review-conflicts
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-review-conflicts-terminality.json'
