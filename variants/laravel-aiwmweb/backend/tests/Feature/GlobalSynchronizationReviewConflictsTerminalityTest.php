@@ -19,6 +19,7 @@ use Tests\TestCase;
 
 final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
 {
+    // Exact-head human trigger after parity materialization.
     use RefreshDatabase;
 
     private FakeReviewRemoteDriver $driver;
