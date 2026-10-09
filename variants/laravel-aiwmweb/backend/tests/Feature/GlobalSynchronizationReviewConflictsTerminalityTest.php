@@ -110,6 +110,9 @@ final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
         $beta = $this->membership($betaOwner, 'beta', ['content.view']);
         $betaSite = $this->site($beta, 'Beta Site');
 
+        $this->getJson("/api/v1/tenants/alpha/sites/{$alphaSite->id}/sync/review-conflicts")
+            ->assertUnauthorized();
+
         $this->actingAs($viewer)
             ->getJson("/api/v1/tenants/alpha/sites/{$alphaSite->id}/sync/review-conflicts")
             ->assertForbidden();
@@ -117,9 +120,6 @@ final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
         $this->actingAs($owner)
             ->getJson("/api/v1/tenants/alpha/sites/{$betaSite->id}/sync/review-conflicts")
             ->assertNotFound();
-
-        $this->getJson("/api/v1/tenants/alpha/sites/{$alphaSite->id}/sync/review-conflicts")
-            ->assertUnauthorized();
     }
 
     private function remoteContent(int $id, string $title, string $slug, string $modified): array
@@ -193,6 +193,7 @@ final class FakeReviewRemoteDriver implements ContentRemoteDriver
     public function list(int $siteId, string $resource, array $query = []): array
     {
         $this->lists++;
+
         return $resource === 'posts' ? $this->posts : ($resource === 'pages' ? $this->pages : []);
     }
 
