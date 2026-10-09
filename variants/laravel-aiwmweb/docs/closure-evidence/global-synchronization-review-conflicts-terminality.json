@@ -9,7 +9,7 @@
     "kind": "visible_control",
     "route_screen": "/module/sync",
     "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
-    "source_intent": "Review synchronization conflict evidence for the selected site without changing the local cache or WordPress",
+    "source_intent": "Compare the selected site's cached posts/pages with live WordPress without mutating either side, surfacing remote updates, deletions and additions.",
     "mutation": false,
     "tenant_owned": true,
     "risk": "low"
@@ -17,10 +17,11 @@
   "laravel_runtime": {
     "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-review-conflicts-control.tsx",
     "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php",
-    "route": "GET /api/v1/tenants/{tenant}/sites/{site}/conflicts",
+    "route": "GET /api/v1/tenants/{tenant}/sites/{site}/sync/review-conflicts",
     "permission": "content.view",
     "read_only": true,
-    "authoritative_conflict_source": "ContentConflict rows emitted by the real SyncRuntimeService"
+    "authoritative_conflict_source": "Live ContentRemoteDriver posts/pages compared against tenant-scoped ContentItem cache",
+    "service": "variants/laravel-aiwmweb/backend/app/Sync/GlobalSynchronizationConflictReviewService.php"
   },
   "security": {
     "tenant_context_required": true,
@@ -36,15 +37,18 @@
     "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-review-conflicts-terminality.test.ts",
     "coverage": [
       "exact ReviewConflictsAsync source contract and operation identity",
-      "tenant/site endpoint derivation",
-      "content.view authorization",
+      "live posts/pages comparison through the existing ContentRemoteDriver",
+      "remote updates, deletions and additions returned without cache mutation",
+      "content.view authorization and tenant-scoped site ownership",
       "foreign-site IDOR fail-closed behavior",
       "guest authentication enforcement",
-      "no sync run or conflict mutation from the review control"
+      "no sync run, remote mutation or local cache mutation from review"
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-BILL-5887A977D7"],
+    "claimed_operations": [
+      "AIMW-BILL-5887A977D7"
+    ],
     "authorization_weakened": false,
     "tenant_isolation_weakened": false,
     "sibling_operations_claimed": false,
