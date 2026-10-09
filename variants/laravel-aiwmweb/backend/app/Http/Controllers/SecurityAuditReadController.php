@@ -41,23 +41,23 @@ final class SecurityAuditReadController
             ->orderByDesc('audit_events.id')
             ->limit(1000)
             ->get([
-                'audit_events.id','audit_events.tenant_id','audit_events.actor_user_id',
-                'audit_events.event','audit_events.subject_type','audit_events.subject_id',
-                'audit_events.metadata','audit_events.occurred_at','users.name as actor_name',
-                'users.email as actor_email','tenants.name as tenant_name','tenants.slug as tenant_slug',
+                'audit_events.id', 'audit_events.tenant_id', 'audit_events.actor_user_id',
+                'audit_events.event', 'audit_events.subject_type', 'audit_events.subject_id',
+                'audit_events.metadata', 'audit_events.occurred_at', 'users.name as actor_name',
+                'users.email as actor_email', 'tenants.name as tenant_name', 'tenants.slug as tenant_slug',
             ])
             ->map(fn ($row): array => $this->snapshot($row))
             ->filter(fn (array $row): bool => $category === '' || strcasecmp($row['category'], $category) === 0)
             ->filter(fn (array $row): bool => $outcome === '' || strcasecmp($row['outcome'], $outcome) === 0)
             ->filter(function (array $row) use ($search): bool {
                 if ($search === '') return true;
-                $haystack = mb_strtolower(implode(' ', [$row['event'],$row['actor'],$row['target'],$row['tenant'],$row['metadata_text']]));
+                $haystack = mb_strtolower(implode(' ', [$row['event'], $row['actor'], $row['target'], $row['tenant'], $row['metadata_text']]));
                 return str_contains($haystack, mb_strtolower($search));
             })
             ->take($take)
             ->values();
 
-        return view('security.audit', compact('events','category','outcome','search','take') + [
+        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take') + [
             'canonicalOperationId' => self::OPERATION_ID,
         ]);
     }
@@ -93,9 +93,9 @@ final class SecurityAuditReadController
     private function outcome(string $event, array $metadata): string
     {
         $raw = mb_strtolower(trim((string) ($metadata['outcome'] ?? $metadata['status'] ?? '')));
-        if (in_array($raw, ['failed','failure','error'], true)) return 'Failed';
-        if (in_array($raw, ['blocked','denied','forbidden'], true)) return 'Blocked';
-        if (in_array($raw, ['success','succeeded','ok','completed'], true)) return 'Succeeded';
+        if (in_array($raw, ['failed', 'failure', 'error'], true)) return 'Failed';
+        if (in_array($raw, ['blocked', 'denied', 'forbidden'], true)) return 'Blocked';
+        if (in_array($raw, ['success', 'succeeded', 'ok', 'completed'], true)) return 'Succeeded';
         $value = mb_strtolower($event);
         if (str_contains($value, 'failed') || str_contains($value, 'error')) return 'Failed';
         if (str_contains($value, 'blocked') || str_contains($value, 'denied') || str_contains($value, 'forbidden')) return 'Blocked';
