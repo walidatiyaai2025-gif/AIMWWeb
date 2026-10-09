@@ -56,7 +56,7 @@ final class GlobalSynchronizationConflictReviewService
 
         $conflicts = [];
         foreach ($localMap as $key => $localVersion) {
-            if (! array_key_exists($key, $remoteMap)) {
+            if (!array_key_exists($key, $remoteMap)) {
                 $conflicts[] = [
                     'content_type' => $localVersion['content_type'],
                     'wordpress_id' => $localVersion['wordpress_id'],
@@ -190,7 +190,7 @@ final class GlobalSynchronizationConflictReviewService
 
     private function rendered(mixed $value): string
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return $value === null ? '' : (string) $value;
         }
         return (string) ($value['rendered'] ?? $value['raw'] ?? '');
@@ -198,7 +198,7 @@ final class GlobalSynchronizationConflictReviewService
 
     private function rawOrRendered(mixed $value): string
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return $value === null ? '' : (string) $value;
         }
         return (string) ($value['raw'] ?? $value['rendered'] ?? '');
