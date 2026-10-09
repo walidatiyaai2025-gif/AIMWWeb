@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #687",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-A6E9CF63BC",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/reports | /module/reports",
+    "visible_control": "LoadAsync [LoadAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/ReportsExports.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/views/reports/approvals-export.blade.php",
+    "behavior": "GET refresh of the current reports alias reloads authoritative tenant-scoped report read models",
+    "permission": "reports.view",
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ReportsLoadAsyncTerminalityTest.php",
+    "assertions": [
+      "canonical source row identity",
+      "both report aliases render refresh control",
+      "fresh request reflects newly persisted tenant data",
+      "repeated refresh is read-only",
+      "tenant isolation and permission failures fail closed"
+    ]
+  }
+}
