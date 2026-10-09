@@ -11,6 +11,7 @@ use App\Http\Controllers\SeoRemediationClosureController;
 use App\Http\Controllers\SiteSyncCancellationController;
 use App\Http\Controllers\SyncApiController;
 use App\Sync\GlobalSynchronizationAcceptRemoteService;
+use App\Sync\GlobalSynchronizationConflictReviewService;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
@@ -91,6 +92,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('sync/runs/{run}/resume', [SyncApiController::class, 'resume']);
     Route::post('sync/items/{item}/retry', [SyncApiController::class, 'retryItem']);
     Route::get('sync/diagnostics', [SyncApiController::class, 'diagnostics']);
+    Route::get('sync/review-conflicts', [SyncApiController::class, 'reviewConflicts'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', GlobalSynchronizationConflictReviewService::OPERATION_ID)
+        ->name('api.v1.sites.sync.review-conflicts');
     Route::get('conflicts', [SyncApiController::class, 'conflicts']);
     Route::post('conflicts/{conflict}/resolve', [SyncApiController::class, 'resolveConflict']);
 
