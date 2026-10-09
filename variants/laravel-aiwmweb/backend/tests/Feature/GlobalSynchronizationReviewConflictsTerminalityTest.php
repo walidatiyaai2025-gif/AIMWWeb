@@ -205,6 +205,7 @@ final class FakeReviewRemoteDriver implements ContentRemoteDriver
     public function mutate(int $siteId, string $resource, ?int $remoteId, string $action, array $payload = []): array
     {
         $this->mutations++;
+
         return [];
     }
 
