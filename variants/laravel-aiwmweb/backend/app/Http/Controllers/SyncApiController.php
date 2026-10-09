@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
 use App\Models\ContentConflict;
+use App\Models\Site;
 use App\Models\SyncEvent;
 use App\Models\SyncItem;
 use App\Models\SyncRun;
@@ -64,6 +65,8 @@ final class SyncApiController extends Controller
         int $site,
     ): JsonResponse {
         $auth->authorize('content.edit');
+
+        Site::query()->findOrFail($site);
 
         $callerOwned = ['tenant', 'tenant_id', 'user_id', 'actor_user_id', 'mode', 'full', 'resources'];
         abort_if(
