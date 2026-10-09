@@ -16,8 +16,7 @@ final class GlobalSynchronizationConflictReviewService
     public function __construct(
         private readonly ContentRemoteDriver $remote,
         private readonly SyncSiteGuard $sites,
-    ) {
-    }
+    ) {}
 
     public function review(int $siteId): array
     {
