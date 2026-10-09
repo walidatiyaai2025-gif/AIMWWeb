@@ -56,7 +56,7 @@ final class GlobalSynchronizationConflictReviewService
 
         $conflicts = [];
         foreach ($localMap as $key => $localVersion) {
-            if (!array_key_exists($key, $remoteMap)) {
+            if (! array_key_exists($key, $remoteMap)) {
                 $conflicts[] = [
                     'content_type' => $localVersion['content_type'],
                     'wordpress_id' => $localVersion['wordpress_id'],
