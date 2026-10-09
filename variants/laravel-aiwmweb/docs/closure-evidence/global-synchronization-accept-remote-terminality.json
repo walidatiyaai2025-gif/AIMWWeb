@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-6928C148FF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "Confirm accepting the authoritative WordPress version, force a complete synchronization, and reread authoritative state",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-accept-remote-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Sync/GlobalSynchronizationAcceptRemoteService.php",
+    "route": "POST /api/v1/tenants/{tenant}/sites/{site}/sync/accept-remote",
+    "permission": "content.edit",
+    "authoritative_reread": true,
+    "idempotency": "required tenant-scoped Idempotency-Key replays the original sync run and rejects key reuse for a different request"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "site_lookup_tenant_scoped": true,
+    "caller_owned_tenant_override_rejected": true,
+    "caller_owned_user_override_rejected": true,
+    "caller_owned_sync_mode_override_rejected": true,
+    "foreign_site_idor_rejected": true,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationAcceptRemoteTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-accept-remote-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and source AcceptRemoteAsync contract",
+      "confirmation before mutation",
+      "server-forced full synchronization using the real SyncRuntimeService",
+      "tenant middleware, content.edit authorization and foreign-site IDOR fail-closed",
+      "required idempotency with single sync dispatch",
+      "authoritative run polling until completed before visible success and page reread",
+      "caller-owned tenant, actor, mode and resource overrides rejected"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-6928C148FF"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "22aa785c76ef9424ba3f50cb6f92261bb4023a05",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-6928C148FF-accept-remote",
+    "implementation_sha": "19f4126e557cef93e49cd02c1a370bcf9d2e12a6"
+  }
+}

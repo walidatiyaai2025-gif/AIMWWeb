@@ -10,6 +10,7 @@ use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SeoRemediationClosureController;
 use App\Http\Controllers\SiteSyncCancellationController;
 use App\Http\Controllers\SyncApiController;
+use App\Sync\GlobalSynchronizationAcceptRemoteService;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
@@ -74,6 +75,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('taxonomy/bulk-assign', [ContentApiController::class, 'bulkAssignTerms']);
 
     Route::post('sync', [SyncApiController::class, 'start']);
+    Route::post('sync/accept-remote', [SyncApiController::class, 'acceptRemote'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', GlobalSynchronizationAcceptRemoteService::OPERATION_ID)
+        ->name('api.v1.sites.sync.accept-remote');
     Route::get('sync', [SyncApiController::class, 'index']);
     Route::get('sync/active', [SiteSyncCancellationController::class, 'active'])
         ->middleware('auth')

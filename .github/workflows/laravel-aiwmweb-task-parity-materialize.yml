@@ -1,13 +1,14 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-AD4781C803 issue-672-global-posts-confirm-trash
+# trigger: AIMW-BILL-6928C148FF issue-674-global-sync-accept-remote
+# retry-head: f256c2fb70f3944fec77330efea434cf9b5f7a26
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-AD4781C803-confirm-trash
+      - worker/laravel-aiwmweb-AIMW-BILL-6928C148FF-accept-remote
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/global-posts-confirm-trash-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-accept-remote-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -48,5 +49,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-AD4781C803"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-6928C148FF"
           git push origin "HEAD:${{ github.ref_name }}"
