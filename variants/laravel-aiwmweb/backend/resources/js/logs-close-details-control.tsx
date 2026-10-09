@@ -148,7 +148,7 @@ export function LogsCloseDetailsControl({ context }: { context: FrontendContext 
                                 className="btn"
                                 aria-label={locale === 'ar' ? 'إغلاق تفاصيل السجل' : 'Close log details'}
                                 data-canonical-operation={LOGS_CLOSE_DETAILS_OPERATION_ID}
-                                onClick={() => { setSelected(null); setCopyState('idle'); }}
+                                onClick={() => setSelected(null)}
                             >
                                 ×
                             </button>
