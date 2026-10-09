@@ -129,9 +129,9 @@ class SecurityAuditLoadAsyncTerminalityTest extends TestCase
         $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
         $this->membership($tenant->id, $admin->id, 'active');
 
-        $this->actingAs($admin)->get('/admin/security-audit?tenant_id='.$tenant->id)->assertUnprocessable();
-        $this->actingAs($admin)->get('/admin/security-audit?actor_user_id='.$admin->id)->assertUnprocessable();
-        $this->actingAs($admin)->get('/admin/security-audit?take=201')->assertUnprocessable();
+        $this->actingAs($admin)->getJson('/admin/security-audit?tenant_id='.$tenant->id)->assertUnprocessable();
+        $this->actingAs($admin)->getJson('/admin/security-audit?actor_user_id='.$admin->id)->assertUnprocessable();
+        $this->actingAs($admin)->getJson('/admin/security-audit?take=201')->assertUnprocessable();
     }
 
     private function membership(int $tenantId, int $userId, string $status): void
