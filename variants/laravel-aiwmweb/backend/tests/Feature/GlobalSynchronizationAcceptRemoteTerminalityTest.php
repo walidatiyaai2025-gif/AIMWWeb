@@ -22,6 +22,7 @@ final class GlobalSynchronizationAcceptRemoteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Exact-head gate anchor after official parity materialization.
     private const OPERATION_ID = 'AIMW-BILL-6928C148FF';
 
     public function test_source_contract_and_canonical_route_bind_exact_accept_remote_operation(): void
