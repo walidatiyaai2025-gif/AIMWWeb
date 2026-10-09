@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #689",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-A152D6A7DE",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/admin/security-audit",
+    "visible_control": "LoadAsync [LoadAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SecurityAudit.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/SecurityAuditRouteServiceProvider.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/security/audit.blade.php",
+    "route": "/admin/security-audit",
+    "authorization": "auth + platform.admin",
+    "tenant_scope": "active tenant memberships of authenticated platform admin only",
+    "read_model": "audit_events joined to users and tenants",
+    "filters": ["category", "outcome", "search", "take<=200"],
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditLoadAsyncTerminalityTest.php",
+    "assertions": [
+      "canonical source row identity",
+      "exact platform-admin read-only route",
+      "active membership tenant isolation",
+      "category/outcome/search filtering",
+      "repeated load is read-only",
+      "guest/non-admin fail closed",
+      "caller cannot override tenant or actor scope"
+    ]
+  }
+}
