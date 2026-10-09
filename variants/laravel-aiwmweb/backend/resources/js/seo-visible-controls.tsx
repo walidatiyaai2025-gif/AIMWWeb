@@ -14,6 +14,7 @@ export const SEO_OPERATIONS = {
     previousPage: 'AIMW-SEO-9FE309C9AE',
     resetFilters: 'AIMW-SEO-250C53DAC5',
     applyFilters: 'AIMW-BILL-B9C3030764',
+    generateSuggestions: 'AIMW-BILL-E3C47C563B',
 } as const;
 
 export type SeoConfig = {
@@ -282,15 +283,47 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
         }
     };
 
+    const requestAiProposal = async (finding: Finding): Promise<Record<string, unknown>> => {
+        const payload = await requestJson<{ proposal?: Record<string, unknown>; requires_approval?: boolean }>(
+            config.urls.ai_proposal.replace('__FINDING__', String(finding.id)),
+            { method: 'POST', body: JSON.stringify({}) },
+        );
+        if (!payload.proposal || payload.requires_approval !== true) throw new Error('The AI proposal contract did not return an approval-gated proposal.');
+        return payload.proposal;
+    };
+
+    const generateSuggestions = async () => {
+        if (busy || findings.length === 0) return;
+        setBusy(true);
+        setFeedback({ tone: 'info', text: 'Generating suggestions from persisted SEO findings...' });
+        try {
+            const generated: ProposalState = {};
+            let usable = 0;
+            for (const finding of findings) {
+                try {
+                    generated[finding.id] = await requestAiProposal(finding);
+                    usable += 1;
+                } catch {
+                    // Keep processing independent findings; the aggregate feedback remains truthful.
+                }
+            }
+            setProposalOverrides((current) => ({ ...current, ...generated }));
+            setFeedback({
+                tone: usable === 0 ? 'error' : 'success',
+                text: usable === 0
+                    ? 'The AI provider produced no usable suggestion. Review provider configuration and try again.'
+                    : `Generated ${usable} reviewable suggestion(s). No WordPress mutation occurred.`,
+            });
+        } finally {
+            setBusy(false);
+        }
+    };
+
     const generateAiProposal = async (finding: Finding) => {
         setBusy(true);
         try {
-            const payload = await requestJson<{ proposal?: Record<string, unknown>; requires_approval?: boolean }>(
-                config.urls.ai_proposal.replace('__FINDING__', String(finding.id)),
-                { method: 'POST', body: JSON.stringify({}) },
-            );
-            if (!payload.proposal || payload.requires_approval !== true) throw new Error('The AI proposal contract did not return an approval-gated proposal.');
-            setProposalOverrides((current) => ({ ...current, [finding.id]: payload.proposal! }));
+            const proposal = await requestAiProposal(finding);
+            setProposalOverrides((current) => ({ ...current, [finding.id]: proposal }));
             setFeedback({ tone: 'info', text: `AI proposal generated for finding ${finding.id}; it still requires explicit approval.` });
         } catch (error) {
             setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'AI proposal generation failed.' });
@@ -356,6 +389,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                 <header className="panel-header"><div><span className="workspace-kicker">GOVERNED REMEDIATION</span><h2>Prepare for approval</h2></div><span className="count-badge">{persistedProposalCount} persisted</span></header>
                 <p>{safeCount} finding(s) currently have a deterministic or AI proposal. Preparing a remediation creates a pending Approval; it does not mutate WordPress.</p>
                 <div className="toolbar-actions">
+                    <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.generateSuggestions} disabled={busy || findings.length === 0} onClick={generateSuggestions}>Generate suggestions</button>
                     <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.applySelected} disabled={busy || selected.size === 0} onClick={applySelected}>Apply selected</button>
                     <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.applyAllSafe} disabled={busy || safeCount === 0} onClick={applyAllSafe}>Apply all safe</button>
                     <button type="button" className="btn" data-testid="seo-retry-failed" data-canonical-operation={SEO_OPERATIONS.retryFailed} disabled={busy || failedProposalCount === 0} onClick={retryFailed}>Retry failed</button>
