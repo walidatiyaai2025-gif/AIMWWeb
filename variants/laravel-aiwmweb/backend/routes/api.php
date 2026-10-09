@@ -77,7 +77,7 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('sync', [SyncApiController::class, 'start']);
     Route::post('sync/accept-remote', [SyncApiController::class, 'acceptRemote'])
         ->middleware('auth')
-        ->defaults('canonical_operation_id', \App\Sync\GlobalSynchronizationAcceptRemoteService::OPERATION_ID)
+        ->defaults('canonical_operation_id', GlobalSynchronizationAcceptRemoteService::OPERATION_ID)
         ->name('api.v1.sites.sync.accept-remote');
     Route::get('sync', [SyncApiController::class, 'index']);
     Route::get('sync/active', [SiteSyncCancellationController::class, 'active'])
