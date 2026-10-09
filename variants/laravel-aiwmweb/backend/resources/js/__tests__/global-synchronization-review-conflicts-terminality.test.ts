@@ -9,7 +9,7 @@ describe('GlobalSynchronizationWorkspace ReviewConflictsAsync terminality', () =
     it('binds the exact canonical operation and tenant/site endpoint', () => {
         expect(GLOBAL_SYNCHRONIZATION_REVIEW_CONFLICTS_OPERATION_ID).toBe('AIMW-BILL-5887A977D7');
         expect(globalSynchronizationConflictReviewEndpoint('alpha team', 7))
-            .toBe('/api/v1/tenants/alpha%20team/sites/7/conflicts');
+            .toBe('/api/v1/tenants/alpha%20team/sites/7/sync/review-conflicts');
         expect(globalSynchronizationConflictReviewEndpoint('', 7)).toBeNull();
         expect(globalSynchronizationConflictReviewEndpoint('alpha/beta', 7)).toBeNull();
         expect(globalSynchronizationConflictReviewEndpoint('alpha', 0)).toBeNull();
@@ -20,10 +20,10 @@ describe('GlobalSynchronizationWorkspace ReviewConflictsAsync terminality', () =
 
         expect(widget).toContain('data-review-conflicts');
         expect(widget).toContain('onClick={() => query.refetch()}');
-        expect(widget).toContain("queryFn: () => apiRequest<ConflictPage>(endpoint as string)");
+        expect(widget).toContain("queryFn: () => apiRequest<ConflictReview>(endpoint as string)");
         expect(widget).not.toContain("method: 'POST'");
         expect(widget).not.toContain("method: 'PUT'");
         expect(widget).not.toContain("method: 'DELETE'");
-        expect(widget).toContain('No resolution is executed by this review control.');
+        expect(widget).toContain('Review is read-only.');
     });
 });
