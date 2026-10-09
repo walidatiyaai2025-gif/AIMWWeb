@@ -35,7 +35,11 @@ final class SeoController extends Controller
     {
         $siteId = (int) $site;
         $auth->authorize('seo.manage');
-        Site::query()->findOrFail($siteId);
+        Site::query()
+            ->withoutGlobalScopes()
+            ->whereKey($siteId)
+            ->where('tenant_id', $context->id())
+            ->firstOrFail();
         $audit = SeoAudit::query()->create(['site_id' => $siteId, 'actor_user_id' => $request->user()->id]);
         RunSeoAuditJob::dispatch($context->id(), $audit->id);
 
