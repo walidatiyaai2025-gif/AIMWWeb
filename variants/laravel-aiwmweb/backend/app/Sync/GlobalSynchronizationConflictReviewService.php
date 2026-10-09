@@ -13,10 +13,15 @@ final class GlobalSynchronizationConflictReviewService
 
     private const PAGE_SIZE = 100;
 
-    public function __construct(
-        private readonly ContentRemoteDriver $remote,
-        private readonly SyncSiteGuard $sites,
-    ) {}
+    private readonly ContentRemoteDriver $remote;
+
+    private readonly SyncSiteGuard $sites;
+
+    public function __construct(ContentRemoteDriver $remote, SyncSiteGuard $sites)
+    {
+        $this->remote = $remote;
+        $this->sites = $sites;
+    }
 
     public function review(int $siteId): array
     {
