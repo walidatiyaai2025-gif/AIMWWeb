@@ -22,6 +22,8 @@ final class GlobalSynchronizationAcceptRemoteTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const OPERATION_ID = 'AIMW-BILL-6928C148FF';
+
     public function test_source_contract_and_canonical_route_bind_exact_accept_remote_operation(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor'));
@@ -31,7 +33,8 @@ final class GlobalSynchronizationAcceptRemoteTerminalityTest extends TestCase
         $this->assertStringContainsString('OnConfirm="AcceptRemoteAsync"', $source);
         $this->assertStringContainsString('SyncService.SynchronizeAsync(_selectedSiteId, forceFullRefresh: true)', $source);
         $this->assertStringContainsString('await LoadSnapshotAsync();', $source);
-        $this->assertStringContainsString(GlobalSynchronizationAcceptRemoteService::OPERATION_ID, $frontend);
+        $this->assertSame(self::OPERATION_ID, GlobalSynchronizationAcceptRemoteService::OPERATION_ID);
+        $this->assertStringContainsString(self::OPERATION_ID, $frontend);
         $this->assertStringContainsString('GlobalSynchronizationAcceptRemoteControl', $app);
 
         $route = Route::getRoutes()->match(Request::create('/api/v1/tenants/alpha/sites/7/sync/accept-remote', 'POST'));
