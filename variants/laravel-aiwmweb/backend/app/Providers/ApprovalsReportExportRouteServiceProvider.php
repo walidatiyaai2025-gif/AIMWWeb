@@ -17,6 +17,8 @@ final class ApprovalsReportExportRouteServiceProvider extends ServiceProvider
                     ->name('tenant.reports.approvals-download');
                 Route::get('/reports/sites.csv', [ApprovalsReportExportController::class, 'downloadSites'])
                     ->name('tenant.reports.sites-download');
+                Route::get('/reports/content-planner.csv', [ApprovalsReportExportController::class, 'downloadPlanner'])
+                    ->name('tenant.reports.content-planner-download');
             });
 
         $this->app->booted(function (): void {

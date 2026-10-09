@@ -43,6 +43,36 @@
         @endif
     </section>
 
+    <section data-canonical-operation="AIMW-BILL-5E76AD4FAE">
+        <header>
+            <h2>Content planner report</h2>
+            @if ($canExport)
+                <a href="{{ $plannerDownloadUrl }}" download="content-planner-report.csv">CSV</a>
+            @else
+                <span aria-disabled="true">CSV — reports.manage required</span>
+            @endif
+        </header>
+
+        @if ($plannerRows->isEmpty())
+            <p>No content planner rows are available for this tenant.</p>
+        @else
+            <table>
+                <thead>
+                <tr><th>Title</th><th>Site</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                @foreach ($plannerRows->take(12) as $row)
+                    <tr>
+                        <td>{{ $row['title'] }}</td>
+                        <td>{{ $row['site'] }}</td>
+                        <td>{{ $row['status'] }}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        @endif
+    </section>
+
     <section data-canonical-operation="AIMW-APPR-A8F5FB3762">
         <header>
             <h2>Approvals report</h2>
