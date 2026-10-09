@@ -21,6 +21,8 @@ use Throwable;
 
 final class SeoController extends Controller
 {
+    public const RUN_FULL_AUDIT_OPERATION_ID = 'AIMW-BILL-3C55B3C299';
+
     public function audits(int $site, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');

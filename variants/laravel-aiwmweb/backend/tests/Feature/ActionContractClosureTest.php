@@ -60,10 +60,11 @@ class ActionContractClosureTest extends TestCase
         $this->assertSame($alphaSite->id, $action['site_id']);
         $this->assertSame('seo.manage', $action['permission']);
         $this->assertSame("/api/tenants/alpha/sites/{$alphaSite->id}/seo/audits", $action['endpoint']);
-        $this->assertSame('pending_integration', $action['availability']['state']);
-        $this->assertSame($definition['blocked_reason'], $action['availability']['reason']);
-        $this->assertTrue($action['approval_required']);
-        $this->assertFalse($action['terminal_candidate']);
+        $this->assertSame('enabled', $action['availability']['state']);
+        $this->assertNull($action['availability']['reason']);
+        $this->assertFalse($action['approval_required']);
+        $this->assertTrue($action['terminal_candidate']);
+        $this->assertSame('low', $action['risk']);
 
         $outsider = User::factory()->create();
         $betaMembership = $this->tenantMembership($outsider, 'beta', ['tenant.view']);

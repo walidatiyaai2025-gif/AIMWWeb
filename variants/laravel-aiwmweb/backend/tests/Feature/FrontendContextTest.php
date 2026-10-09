@@ -55,7 +55,7 @@ class FrontendContextTest extends TestCase
         $this->assertIsArray($capabilities);
         $this->assertSame('permission_denied', $capabilities['sites.sites.connect']['state']);
         $this->assertSame('permission_denied', $capabilities['site-connect.sites.connect']['state']);
-        $this->assertSame('pending_integration', $capabilities['seo-audit.seo.audit.run']['state']);
+        $this->assertArrayNotHasKey('seo-audit.seo.audit.run', $capabilities);
         $this->assertArrayNotHasKey('sites.sites.refresh', $capabilities);
 
         $this->assertSame($alpha->tenant_id, Tenant::query()->where('slug', 'alpha')->value('id'));
