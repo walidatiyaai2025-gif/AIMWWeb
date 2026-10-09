@@ -77,7 +77,6 @@ final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
         $alpha = $this->membership($owner, 'alpha', ['content.view']);
         $site = $this->site($alpha, 'Alpha Site');
 
-        $this->post('/logout');
         $this->getJson("/api/v1/tenants/alpha/sites/{$site->id}/conflicts")
             ->assertUnauthorized();
     }
