@@ -25,6 +25,7 @@ import { AppShell, LoadingState, StatePanel, ToastProvider } from './components'
 import { ContentExplorerBulkTrashControl } from './content-explorer-bulk-trash-widget';
 import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
 import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
+import { GlobalSynchronizationAcceptRemoteControl } from './global-synchronization-accept-remote-control';
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
 import { ContentEditorSaveControl } from './content-editor-save-control';
@@ -170,6 +171,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sync') return <><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'email-schedules') return <><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
