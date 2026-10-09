@@ -26,7 +26,7 @@ final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->driver = new FakeReviewRemoteDriver();
+        $this->driver = new FakeReviewRemoteDriver;
         $this->app->instance(ContentRemoteDriver::class, $this->driver);
     }
 
@@ -182,8 +182,11 @@ final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
 final class FakeReviewRemoteDriver implements ContentRemoteDriver
 {
     public array $posts = [];
+
     public array $pages = [];
+
     public int $lists = 0;
+
     public int $mutations = 0;
 
     public function list(int $siteId, string $resource, array $query = []): array
