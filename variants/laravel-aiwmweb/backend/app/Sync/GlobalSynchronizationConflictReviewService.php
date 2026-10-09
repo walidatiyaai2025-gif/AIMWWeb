@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 final class GlobalSynchronizationConflictReviewService
 {
     public const OPERATION_ID = 'AIMW-BILL-5887A977D7';
+
     private const PAGE_SIZE = 100;
 
     public function __construct(
