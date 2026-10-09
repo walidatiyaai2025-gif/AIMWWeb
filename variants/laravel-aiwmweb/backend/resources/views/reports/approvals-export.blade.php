@@ -11,6 +11,11 @@
         <p>BUSINESS INTELLIGENCE</p>
         <h1>Reports &amp; Exports</h1>
         <p>Live reports from real application data.</p>
+        <a
+            data-canonical-operation="AIMW-BILL-A6E9CF63BC"
+            href="{{ request()->getRequestUri() }}"
+            aria-label="Refresh reports"
+        >Refresh</a>
     </section>
 
     <section data-canonical-operation="AIMW-SYNC-D8581471A2">
