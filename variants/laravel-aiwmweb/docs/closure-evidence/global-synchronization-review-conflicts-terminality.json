@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-5887A977D7",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/sync",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalSynchronizationWorkspace.razor",
+    "source_intent": "Review synchronization conflict evidence for the selected site without changing the local cache or WordPress",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-synchronization-review-conflicts-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SyncApiController.php",
+    "route": "GET /api/v1/tenants/{tenant}/sites/{site}/conflicts",
+    "permission": "content.view",
+    "read_only": true,
+    "authoritative_conflict_source": "ContentConflict rows emitted by the real SyncRuntimeService"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "site_lookup_tenant_scoped": true,
+    "foreign_site_idor_rejected": true,
+    "authorization_required": true,
+    "mutation_added": false,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalSynchronizationReviewConflictsTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-synchronization-review-conflicts-terminality.test.ts",
+    "coverage": [
+      "exact ReviewConflictsAsync source contract and operation identity",
+      "tenant/site endpoint derivation",
+      "content.view authorization",
+      "foreign-site IDOR fail-closed behavior",
+      "guest authentication enforcement",
+      "no sync run or conflict mutation from the review control"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-5887A977D7"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "7901a463e3bc106b7d18fb55c6ea756ab9efa38b",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-5887A977D7-review-conflicts",
+    "implementation_sha": "6b16092420cd8db02dba05b7aa30cb3c9be67caa"
+  }
+}
