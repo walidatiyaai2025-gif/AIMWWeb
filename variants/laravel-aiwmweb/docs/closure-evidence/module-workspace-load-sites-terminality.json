@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-39472863C8",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/{Key}",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ModuleWorkspace.razor",
+    "source_intent": "Load the authenticated account's real WordPress sites for the SEO audit and SEO suggestions gateways with loading, error, retry, refresh and empty states.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/module-workspace-load-sites-control.tsx",
+    "route_binding": "seo-audit | seo-suggestions",
+    "authoritative_read": "GET /api/tenants/{tenant}/sites",
+    "permissions": ["tenant.view", "seo.view"],
+    "read_only": true,
+    "fake_sites": false
+  },
+  "security": {
+    "tenant_context_required": true,
+    "advertised_endpoint_must_match_active_tenant": true,
+    "foreign_tenant_rejected": true,
+    "authorization_required": true,
+    "server_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleWorkspaceLoadSitesTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/module-workspace-load-sites-control.test.tsx",
+    "coverage": [
+      "exact ModuleWorkspace LoadSitesAsync source contract and operation identity",
+      "authenticated tenant-scoped site collection authority",
+      "automatic initial load for SEO gateways",
+      "authoritative refresh and retry",
+      "truthful empty state with no sample sites",
+      "tenant-qualified real SEO site destination",
+      "foreign advertised endpoint fail-closed behavior",
+      "no server mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-39472863C8"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
