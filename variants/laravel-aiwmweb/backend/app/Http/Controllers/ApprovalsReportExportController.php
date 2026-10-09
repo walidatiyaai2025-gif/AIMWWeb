@@ -21,13 +21,16 @@ final class ApprovalsReportExportController extends Controller
 
         $rows = $this->rows($context);
         $siteRows = $this->siteRows($context);
+        $plannerRows = $this->plannerRows($context);
 
         return view('reports.approvals-export', [
             'rows' => $rows,
             'siteRows' => $siteRows,
+            'plannerRows' => $plannerRows,
             'canExport' => $context->membership()->hasPermission('reports.manage'),
             'downloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/approvals.csv',
             'sitesDownloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/sites.csv',
+            'plannerDownloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/content-planner.csv',
         ]);
     }
 
@@ -77,6 +80,29 @@ final class ApprovalsReportExportController extends Controller
         }, 'sites-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    public function downloadPlanner(
+        string $tenant,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+    ): StreamedResponse {
+        $authorizer->authorize('reports.manage');
+        $this->assertTenant($tenant, $context);
+
+        $rows = $this->plannerRows($context);
+
+        return response()->streamDownload(function () use ($rows): void {
+            $stream = fopen('php://output', 'wb');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, ['Id', 'Title', 'Site', 'Status']);
+
+            foreach ($rows as $row) {
+                fputcsv($stream, [$row['id'], $row['title'], $row['site'], $row['status']]);
+            }
+
+            fclose($stream);
+        }, 'content-planner-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     private function rows(TenantContext $context): Collection
     {
         return DB::table('approvals')
@@ -120,6 +146,29 @@ final class ApprovalsReportExportController extends Controller
                 'name' => (string) $row->name,
                 'url' => (string) $row->url,
                 'status' => (string) ($row->connection_status ?? 'unknown'),
+            ]);
+    }
+
+    private function plannerRows(TenantContext $context): Collection
+    {
+        return DB::table('content_planner_items')
+            ->leftJoin('sites', function ($join): void {
+                $join->on('sites.id', '=', 'content_planner_items.site_id')
+                    ->on('sites.tenant_id', '=', 'content_planner_items.tenant_id');
+            })
+            ->where('content_planner_items.tenant_id', $context->id())
+            ->orderBy('content_planner_items.id')
+            ->get([
+                'content_planner_items.id',
+                'content_planner_items.title',
+                'content_planner_items.scheduled_at',
+                'sites.name as site_name',
+            ])
+            ->map(fn ($row): array => [
+                'id' => (string) $row->id,
+                'title' => (string) $row->title,
+                'site' => trim((string) ($row->site_name ?? '')) !== '' ? (string) $row->site_name : '—',
+                'status' => $row->scheduled_at === null ? 'Draft' : 'Scheduled',
             ]);
     }
 
