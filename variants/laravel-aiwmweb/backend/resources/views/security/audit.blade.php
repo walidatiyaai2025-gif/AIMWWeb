@@ -38,7 +38,7 @@
                 <span>Search</span>
                 <input type="search" name="q" value="{{ $search }}" maxlength="200" aria-label="Search security audit trail">
             </label>
-            <button type="submit" data-canonical-operation="{{ $canonicalOperationId }}">Apply</button>
+            <button type="submit" data-canonical-operation="AIMW-BILL-A152D6A7DE">Apply</button>
             <a href="/admin/security-audit">Clear</a>
         </form>
     </section>
