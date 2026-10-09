@@ -67,6 +67,7 @@ final class LogsCopySelectedTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         $context->forget();
+
         return $membership->fresh('tenant');
     }
 }
