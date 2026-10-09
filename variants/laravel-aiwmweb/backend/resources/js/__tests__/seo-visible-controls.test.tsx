@@ -106,6 +106,23 @@ describe('SEO visible-control mass closure', () => {
         expect(screen.getByText(/Safe remediation batch: 12 change\(s\) prepared for approval/)).toBeInTheDocument();
     });
 
+    it('generates reviewable suggestions for persisted findings through the canonical aggregate control without mutation', async () => {
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+
+        const button = container.querySelector(`[data-canonical-operation="${SEO_OPERATIONS.generateSuggestions}"]`) as HTMLElement;
+        expect(button).toBeInTheDocument();
+        expect(SEO_OPERATIONS.generateSuggestions).toBe('AIMW-BILL-E3C47C563B');
+
+        fireEvent.click(button);
+        await screen.findByText('Generated 12 reviewable suggestion(s). No WordPress mutation occurred.');
+
+        const aiCalls = fetchMock.mock.calls.filter(([url, init]) => String(url).includes('/ai-proposal') && init?.method === 'POST');
+        expect(aiCalls).toHaveLength(12);
+        expect(aiCalls.every(([, init]) => JSON.parse(String(init?.body)) && true)).toBe(true);
+        expect(screen.getAllByText(/AI title/).length).toBeGreaterThan(0);
+    });
+
     it('surfaces the canonical Retry failed control only for retryable failed proposals and posts through the governed retry endpoint', async () => {
         proposalsPayload = [
             { proposed_state: { seo_title: 'Retry title' }, execution: { id: 501, status: 'failed', attempts: 2 } },
