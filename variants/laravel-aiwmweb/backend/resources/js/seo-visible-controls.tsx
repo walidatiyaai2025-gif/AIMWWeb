@@ -13,6 +13,7 @@ export const SEO_OPERATIONS = {
     billing: 'AIMW-BILL-1EA01528A9',
     previousPage: 'AIMW-SEO-9FE309C9AE',
     resetFilters: 'AIMW-SEO-250C53DAC5',
+    applyFilters: 'AIMW-BILL-B9C3030764',
 } as const;
 
 export type SeoConfig = {
@@ -183,6 +184,16 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
 
     const proposalFor = useCallback((finding: Finding) => proposalOverrides[finding.id] ?? deterministicProposal(finding), [proposalOverrides]);
 
+    const applyFilters = async () => {
+        setPage(1);
+        try {
+            await loadAuthoritative(false);
+            setFeedback({ tone: 'info', text: 'SEO results refreshed from the authoritative Laravel read model.' });
+        } catch (error) {
+            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'SEO results could not be refreshed.' });
+        }
+    };
+
     const resetFilters = async () => {
         setQuery('');
         setSeverity('all');
@@ -311,6 +322,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
                 <label>Search <input aria-label="Search SEO findings" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label>
                 <label>Severity <select aria-label="SEO severity" value={severity} onChange={(event) => { setSeverity(event.target.value); setPage(1); }}><option value="all">All</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
                 <label>Rows <select aria-label="SEO page size" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label>
+                <button type="button" className="btn primary" data-canonical-operation={SEO_OPERATIONS.applyFilters} onClick={applyFilters}>Analyze</button>
                 <button type="button" className="btn" data-canonical-operation={SEO_OPERATIONS.resetFilters} onClick={resetFilters}>Reset filters</button>
             </section>
 

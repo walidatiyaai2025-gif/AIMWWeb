@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 652 |
-| PENDING | 279 |
+| ADAPTED | 653 |
+| PENDING | 278 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 652 |
-| OVERALL_PARITY_PERCENT | 70.03% |
+| TERMINAL | 653 |
+| OVERALL_PARITY_PERCENT | 70.14% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **195**
-- Pending: **251**
+- Terminal: **196**
+- Pending: **250**
 - Blocked: **0**
-- Parity: **43.72%**
+- Parity: **43.95%**
 
 ## By domain
 
@@ -33,7 +33,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | approvals | 25 | 0 | 25 | 0 | 0 | 0 | 25 | 100.00% |
 | automation | 59 | 0 | 59 | 0 | 0 | 0 | 59 | 100.00% |
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
-| billing | 178 | 0 | 146 | 32 | 0 | 0 | 146 | 82.02% |
+| billing | 178 | 0 | 147 | 31 | 0 | 0 | 147 | 82.58% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
 | content | 164 | 0 | 35 | 129 | 0 | 0 | 35 | 21.34% |
 | email | 82 | 0 | 60 | 22 | 0 | 0 | 60 | 73.17% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 56 | 28 | 0 | 0 | 56 | 66.67% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 195 | 251 | 0 | 0 | 195 | 43.72% |
+| visible_control | 446 | 0 | 196 | 250 | 0 | 0 | 196 | 43.95% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **41**
-- Focused visible-control contracts: **195**
+- Focused visible-control contracts: **196**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -91,7 +91,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### billing (32)
+### billing (31)
 
 - `AIMW-BILL-3C55B3C299`
 - `AIMW-BILL-3EAD5A351E`
@@ -112,7 +112,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-BILL-B00411742F`
 - `AIMW-BILL-B26D5099F8`
 - `AIMW-BILL-B84663A4C0`
-- `AIMW-BILL-B9C3030764`
 - `AIMW-BILL-BC093D6418`
 - `AIMW-BILL-C37235F06A`
 - `AIMW-BILL-D307963B59`
