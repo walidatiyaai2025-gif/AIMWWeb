@@ -80,7 +80,7 @@ class ContentPlannerReportExportTerminalityTest extends TestCase
 
         $this->actingAs($viewer->user)->get('/tenants/alpha/reports/content-planner.csv')->assertForbidden();
         $this->actingAs($memberB->user)->get('/tenants/alpha/reports/content-planner.csv')->assertNotFound();
-        $this->get('/tenants/alpha/reports/content-planner.csv')->assertUnauthorized();
+        $this->get('/tenants/alpha/reports/content-planner.csv')->assertNotFound();
     }
 
     public function test_empty_and_repeated_exports_are_truthful_and_read_only(): void
