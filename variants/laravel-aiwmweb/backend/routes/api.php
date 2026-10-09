@@ -10,6 +10,7 @@ use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SeoRemediationClosureController;
 use App\Http\Controllers\SiteSyncCancellationController;
 use App\Http\Controllers\SyncApiController;
+use App\Sync\GlobalSynchronizationAcceptRemoteService;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->controller(PlatformReadController::class)->group(function (): void {
