@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - worker/laravel-aiwmweb-AIMW-BILL-5887A977D7-review-conflicts
+      - worker/laravel-aiwmweb-AIMW-BILL-3C55B3C299-run-full-audit
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/global-synchronization-review-conflicts-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/seo-manager-run-full-audit-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
