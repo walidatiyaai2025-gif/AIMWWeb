@@ -42,6 +42,7 @@ import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
+import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
@@ -173,6 +174,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sync') return <><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'email-schedules') return <><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
