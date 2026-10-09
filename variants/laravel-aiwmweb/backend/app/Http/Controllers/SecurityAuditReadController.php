@@ -54,6 +54,7 @@ final class SecurityAuditReadController
                     return true;
                 }
                 $haystack = mb_strtolower(implode(' ', [$row['event'], $row['actor'], $row['target'], $row['tenant'], $row['metadata_text']]));
+
                 return str_contains($haystack, mb_strtolower($search));
             })
             ->take($take)
@@ -67,6 +68,7 @@ final class SecurityAuditReadController
     private function snapshot(object $row): array
     {
         $metadata = is_array($row->metadata) ? $row->metadata : (json_decode((string) $row->metadata, true) ?: []);
+
         return [
             'id' => (int) $row->id,
             'tenant' => (string) ($row->tenant_name ?: $row->tenant_slug),
@@ -99,6 +101,7 @@ final class SecurityAuditReadController
         if (str_contains($value, 'login') || str_contains($value, 'auth')) {
             return 'Authentication';
         }
+
         return 'Account';
     }
 
@@ -121,6 +124,7 @@ final class SecurityAuditReadController
         if (str_contains($value, 'blocked') || str_contains($value, 'denied') || str_contains($value, 'forbidden')) {
             return 'Blocked';
         }
+
         return 'Succeeded';
     }
 
@@ -131,6 +135,7 @@ final class SecurityAuditReadController
         if ($name !== '' && $email !== '') {
             return $name.' <'.$email.'>';
         }
+
         return $name !== '' ? $name : ($email !== '' ? $email : 'System / unknown');
     }
 
@@ -141,6 +146,7 @@ final class SecurityAuditReadController
         if ($type === '' && $id === '') {
             return '—';
         }
+
         return $id === '' ? $type : ($type === '' ? 'Target' : $type).': '.$id;
     }
 
@@ -150,6 +156,7 @@ final class SecurityAuditReadController
             if (is_array($value) || is_object($value)) {
                 $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
+
             return $key.'='.(string) $value;
         })->implode(' · ');
     }
