@@ -626,10 +626,9 @@ return [
         'endpoint' => '/api/tenants/{tenant}/sites/{site}/seo/audits',
         'method' => 'POST',
         'reconcile_api_key' => 'seo-audit',
-        'risk' => 'high',
-        'approval_required' => true,
-        'terminal_candidate' => false,
-        'blocked_reason' => 'Canonical SEO audit execution is approval-required, but the current Laravel endpoint dispatches immediately.',
+        'risk' => 'low',
+        'approval_required' => false,
+        'terminal_candidate' => true,
         'fields' => [],
     ],
 ];

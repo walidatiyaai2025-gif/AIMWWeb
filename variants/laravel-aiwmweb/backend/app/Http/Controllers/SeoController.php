@@ -21,6 +21,8 @@ use Throwable;
 
 final class SeoController extends Controller
 {
+    public const RUN_FULL_AUDIT_OPERATION_ID = 'AIMW-BILL-3C55B3C299';
+
     public function audits(int $site, TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
@@ -29,11 +31,16 @@ final class SeoController extends Controller
         return response()->json(SeoAudit::query()->where('site_id', $site)->latest()->paginate());
     }
 
-    public function startAudit(int $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function startAudit(int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
+        $siteId = (int) $site;
         $auth->authorize('seo.manage');
-        Site::query()->findOrFail($site);
-        $audit = SeoAudit::query()->create(['site_id' => $site, 'actor_user_id' => $request->user()->id]);
+        Site::query()
+            ->withoutGlobalScopes()
+            ->whereKey($siteId)
+            ->where('tenant_id', $context->id())
+            ->firstOrFail();
+        $audit = SeoAudit::query()->create(['site_id' => $siteId, 'actor_user_id' => $request->user()->id]);
         RunSeoAuditJob::dispatch($context->id(), $audit->id);
 
         return response()->json($audit, 202);
