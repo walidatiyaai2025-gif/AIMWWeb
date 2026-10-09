@@ -14,6 +14,7 @@ use App\Models\SyncWebhookEvent;
 use App\Models\Tenant;
 use App\Sync\Contracts\SyncWebhookVerifier;
 use App\Sync\GlobalSynchronizationAcceptRemoteService;
+use App\Sync\GlobalSynchronizationConflictReviewService;
 use App\Sync\SyncRuntimeService;
 use App\Tenancy\TenantContext;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -143,6 +144,18 @@ final class SyncApiController extends Controller
         $this->runtime->retryItem($this->tenant->id(), $syncItem);
 
         return response()->json($syncItem->fresh(), 202);
+    }
+
+    public function reviewConflicts(
+        TenantAuthorizer $auth,
+        GlobalSynchronizationConflictReviewService $review,
+        string $tenant,
+        int $site,
+    ): JsonResponse {
+        $auth->authorize('content.view');
+        Site::query()->findOrFail($site);
+
+        return response()->json($review->review($site));
     }
 
     public function conflicts(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
