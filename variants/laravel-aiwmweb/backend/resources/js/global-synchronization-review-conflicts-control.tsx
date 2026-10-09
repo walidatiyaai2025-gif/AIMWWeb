@@ -5,31 +5,36 @@ import { useLocale } from './i18n';
 
 export const GLOBAL_SYNCHRONIZATION_REVIEW_CONFLICTS_OPERATION_ID = 'AIMW-BILL-5887A977D7';
 
-type ActiveSite = {
-    id: number;
-    name: string;
-};
+type ActiveSite = { id: number; name: string };
+type ContextWithActiveSite = FrontendContext & { active_site?: ActiveSite | null };
 
-type ContextWithActiveSite = FrontendContext & {
-    active_site?: ActiveSite | null;
+type ConflictVersion = {
+    title: string;
+    slug: string;
+    status: string;
+    link: string;
+    rendered_content: string;
+    rendered_excerpt: string;
+    modified_at?: string | null;
 };
 
 type Conflict = {
-    id: number;
-    site_id: number;
-    resource: string;
-    remote_id: number;
-    status: string;
-    resolution?: string | null;
-    detected_at?: string | null;
-    local_snapshot?: Record<string, unknown> | null;
-    remote_snapshot?: Record<string, unknown> | null;
+    content_type: 'post' | 'page';
+    wordpress_id: number;
+    kind: 'RemoteUpdated' | 'RemoteDeleted';
+    local: ConflictVersion;
+    remote: ConflictVersion | null;
 };
 
-type ConflictPage = {
-    data: Conflict[];
-    current_page: number;
-    total: number;
+type ConflictReview = {
+    operation_id: string;
+    has_baseline: boolean;
+    local_synchronized_at?: string | null;
+    remote_additions: number;
+    remote_updates: number;
+    remote_deletions: number;
+    has_conflicts: boolean;
+    conflicts: Conflict[];
 };
 
 export function globalSynchronizationConflictReviewEndpoint(tenantSlug: string, siteId: number | string): string | null {
@@ -38,18 +43,7 @@ export function globalSynchronizationConflictReviewEndpoint(tenantSlug: string, 
     if (!tenant || /[\\/]/.test(tenant)) return null;
     if (!/^[1-9]\d*$/.test(site)) return null;
 
-    return `/api/v1/tenants/${encodeURIComponent(tenant)}/sites/${encodeURIComponent(site)}/conflicts`;
-}
-
-function snapshotTitle(snapshot: Record<string, unknown> | null | undefined): string {
-    const title = snapshot?.title;
-    if (typeof title === 'string') return title;
-    if (title && typeof title === 'object') {
-        const value = title as Record<string, unknown>;
-        if (typeof value.rendered === 'string') return value.rendered;
-        if (typeof value.raw === 'string') return value.raw;
-    }
-    return '';
+    return `/api/v1/tenants/${encodeURIComponent(tenant)}/sites/${encodeURIComponent(site)}/sync/review-conflicts`;
 }
 
 export function GlobalSynchronizationReviewConflictsControl({ context }: { context: FrontendContext }) {
@@ -60,82 +54,96 @@ export function GlobalSynchronizationReviewConflictsControl({ context }: { conte
 
     const query = useQuery({
         queryKey: ['global-sync-conflict-review', context.tenant.slug, activeSite?.id],
-        queryFn: () => apiRequest<ConflictPage>(endpoint as string),
+        queryFn: () => apiRequest<ConflictReview>(endpoint as string),
         enabled: false,
         retry: false,
     });
 
     if (!activeSite || !endpoint || !canView) return null;
 
-    const open = (query.data?.data ?? []).filter((conflict) => conflict.status === 'open');
+    const review = query.data;
 
     return (
         <section
             className="panel data-panel"
             data-canonical-operation={GLOBAL_SYNCHRONIZATION_REVIEW_CONFLICTS_OPERATION_ID}
-            aria-label={locale === 'ar' ? 'مراجعة تعارضات المزامنة' : 'Review synchronization conflicts'}
+            aria-label={locale === 'ar' ? 'مراجعة تغييرات WordPress' : 'Review WordPress changes'}
         >
             <header className="panel-header">
                 <div>
                     <span className="workspace-kicker">SYNC & CONFLICTS</span>
-                    <h2>{locale === 'ar' ? 'مراجعة التغييرات والتعارضات' : 'Review remote changes & conflicts'}</h2>
+                    <h2>{locale === 'ar' ? 'مراجعة التغييرات البعيدة' : 'Review remote changes'}</h2>
                     <p>
                         {locale === 'ar'
-                            ? `الموقع: ${activeSite.name}. تعرض هذه المراجعة أدلة التعارض التي اكتشفها محرك المزامنة بدون تغيير المحتوى المحلي أو WordPress.`
-                            : `Site: ${activeSite.name}. This review reads conflict evidence detected by the sync engine without changing local content or WordPress.`}
+                            ? `الموقع: ${activeSite.name}. تتم المقارنة مباشرة مع WordPress بدون تغيير الكاش المحلي.`
+                            : `Site: ${activeSite.name}. Compares the local mirror with live WordPress without mutating local data.`}
                     </p>
                 </div>
-                <button
-                    type="button"
-                    className="btn"
-                    data-review-conflicts
-                    onClick={() => query.refetch()}
-                    disabled={query.isFetching}
-                >
+                <button type="button" className="btn" data-review-conflicts onClick={() => query.refetch()} disabled={query.isFetching}>
                     {query.isFetching
-                        ? (locale === 'ar' ? 'جارٍ المراجعة…' : 'Reviewing…')
+                        ? (locale === 'ar' ? 'جارٍ المقارنة…' : 'Comparing…')
                         : (locale === 'ar' ? 'مراجعة التغييرات' : 'Review remote changes')}
                 </button>
             </header>
 
             {query.error ? (
                 <div className="alert error">
-                    {query.error instanceof Error ? query.error.message : (locale === 'ar' ? 'تعذر تحميل التعارضات.' : 'Conflict review could not be loaded.')}
+                    {query.error instanceof Error ? query.error.message : (locale === 'ar' ? 'تعذر تنفيذ المراجعة.' : 'Conflict review failed.')}
                 </div>
             ) : null}
 
-            {query.data ? (
-                open.length === 0 ? (
-                    <div className="panel">
-                        <strong>{locale === 'ar' ? 'لا توجد تعارضات مفتوحة.' : 'No open synchronization conflicts.'}</strong>
-                        <p>
-                            {locale === 'ar'
-                                ? 'آخر مراجعة لحالة التعارضات لم تجد عناصر مفتوحة تحتاج قرارًا.'
-                                : 'The latest conflict-state review found no open items requiring a decision.'}
-                        </p>
-                    </div>
+            {review ? (
+                review.operation_id !== GLOBAL_SYNCHRONIZATION_REVIEW_CONFLICTS_OPERATION_ID ? (
+                    <div className="alert error">{locale === 'ar' ? 'هوية عملية المراجعة غير متوقعة.' : 'Unexpected conflict review operation identity.'}</div>
                 ) : (
-                    <div className="workspace-stack" data-conflict-count={open.length}>
-                        <p>
-                            <strong>{open.length}</strong>{' '}
-                            {locale === 'ar' ? 'تعارض مفتوح يحتاج مراجعة.' : 'open conflict(s) require review.'}
-                        </p>
-                        {open.map((conflict) => (
-                            <article className="panel" key={conflict.id} data-conflict-id={conflict.id}>
-                                <header className="panel-header">
-                                    <div>
-                                        <span className="workspace-kicker">{conflict.resource} #{conflict.remote_id}</span>
-                                        <h3>{snapshotTitle(conflict.remote_snapshot) || snapshotTitle(conflict.local_snapshot) || (locale === 'ar' ? 'عنصر متعارض' : 'Conflicting item')}</h3>
-                                    </div>
-                                    <span className="badge warning">{locale === 'ar' ? 'مفتوح' : 'Open'}</span>
-                                </header>
+                    <div className="workspace-stack" data-conflict-count={review.conflicts.length}>
+                        <div className="panel">
+                            <p>
+                                <strong>{review.remote_updates}</strong> {locale === 'ar' ? 'تحديثات بعيدة' : 'remote updates'} ·{' '}
+                                <strong>{review.remote_deletions}</strong> {locale === 'ar' ? 'محذوفة بعيدًا' : 'remote deletions'} ·{' '}
+                                <strong>{review.remote_additions}</strong> {locale === 'ar' ? 'عناصر جديدة' : 'remote additions'}
+                            </p>
+                        </div>
+
+                        {!review.has_baseline ? (
+                            <div className="panel">
+                                <strong>{locale === 'ar' ? 'لا توجد نسخة محلية سابقة.' : 'No local baseline yet.'}</strong>
+                            </div>
+                        ) : review.conflicts.length === 0 ? (
+                            <div className="panel">
+                                <strong>{locale === 'ar' ? 'لا توجد تعارضات محتوى.' : 'No content conflicts detected.'}</strong>
                                 <p>
-                                    {locale === 'ar'
-                                        ? 'تم اكتشاف اختلاف بين الحالة المحلية وحالة WordPress أثناء المزامنة. لم يتم تنفيذ أي قرار من شاشة المراجعة.'
-                                        : 'The sync engine detected a local/WordPress difference. No resolution is executed by this review control.'}
+                                    {review.remote_additions > 0
+                                        ? (locale === 'ar' ? 'توجد عناصر جديدة فقط ويمكن جلبها بالمزامنة.' : 'Only new remote items were found; synchronization can import them.')
+                                        : (locale === 'ar' ? 'النسخة المحلية مطابقة للنسخة الحية.' : 'The local mirror matches live WordPress.')}
                                 </p>
-                            </article>
-                        ))}
+                            </div>
+                        ) : (
+                            review.conflicts.map((conflict) => (
+                                <article className="panel" key={`${conflict.content_type}:${conflict.wordpress_id}:${conflict.kind}`}>
+                                    <header className="panel-header">
+                                        <div>
+                                            <span className="workspace-kicker">{conflict.content_type} #{conflict.wordpress_id}</span>
+                                            <h3>{conflict.remote?.title || conflict.local.title || (locale === 'ar' ? 'عنصر متعارض' : 'Conflicting item')}</h3>
+                                        </div>
+                                        <span className="badge warning">
+                                            {conflict.kind === 'RemoteDeleted'
+                                                ? (locale === 'ar' ? 'محذوف على WordPress' : 'Deleted in WordPress')
+                                                : (locale === 'ar' ? 'معدّل على WordPress' : 'Updated in WordPress')}
+                                        </span>
+                                    </header>
+                                    <p>
+                                        {conflict.kind === 'RemoteDeleted'
+                                            ? (locale === 'ar'
+                                                ? 'العنصر لم يعد موجودًا على WordPress. المراجعة لا تغيّر الكاش.'
+                                                : 'This item no longer exists in WordPress. Review does not mutate the cache.')
+                                            : (locale === 'ar'
+                                                ? 'تختلف النسخة الحية عن النسخة المحلية. المراجعة للقراءة فقط.'
+                                                : 'The live WordPress version differs from the local mirror. Review is read-only.')}
+                                    </p>
+                                </article>
+                            ))
+                        )}
                     </div>
                 )
             ) : null}
