@@ -15,6 +15,8 @@ class SecurityAuditLoadAsyncTerminalityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const OPERATION_ID = 'AIMW-BILL-A152D6A7DE';
+
     public function test_exact_canonical_row_is_the_pending_security_audit_load_control(): void
     {
         $ledger = json_decode(file_get_contents(base_path('../docs/capability-parity-ledger.json')), true, 512, JSON_THROW_ON_ERROR);
@@ -116,6 +118,9 @@ class SecurityAuditLoadAsyncTerminalityTest extends TestCase
             ->assertOk()
             ->assertSee('No matching security events.')
             ->assertDontSee('foreign.secret');
+
+        // There is deliberately no tenant-addressable alias: guessed foreign/cross-tenant surfaces fail closed.
+        $this->actingAs($admin)->get('/tenants/foreign/admin/security-audit')->assertNotFound();
     }
 
     public function test_caller_cannot_override_tenant_or_actor_scope(): void
