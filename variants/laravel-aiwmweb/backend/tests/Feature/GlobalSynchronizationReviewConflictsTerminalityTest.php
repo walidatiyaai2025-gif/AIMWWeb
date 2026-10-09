@@ -19,6 +19,8 @@ use Tests\TestCase;
 
 final class GlobalSynchronizationReviewConflictsTerminalityTest extends TestCase
 {
+    private const OPERATION_ID = 'AIMW-BILL-5887A977D7';
+
     // Exact-head human trigger after parity materialization.
     use RefreshDatabase;
 
