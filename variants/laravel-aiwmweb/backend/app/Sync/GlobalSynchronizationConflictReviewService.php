@@ -44,6 +44,7 @@ final class GlobalSynchronizationConflictReviewService
         $localMap = [];
         foreach ($local as $item) {
             if ((int) $item->remote_id < 1) {
+
                 continue;
             }
             $localMap[$this->key((string) $item->type, (int) $item->remote_id)] = $this->localComparable($item);
@@ -54,6 +55,7 @@ final class GlobalSynchronizationConflictReviewService
             $remoteId = (int) ($entry['id'] ?? 0);
             $type = ($entry['_aiwm_resource'] ?? '') === 'pages' ? 'page' : 'post';
             if ($remoteId < 1) {
+
                 continue;
             }
             $remoteMap[$this->key($type, $remoteId)] = $this->remoteComparable($type, $entry);
@@ -69,6 +71,7 @@ final class GlobalSynchronizationConflictReviewService
                     'local' => $this->version($localVersion),
                     'remote' => null,
                 ];
+
                 continue;
             }
 
@@ -129,6 +132,7 @@ final class GlobalSynchronizationConflictReviewService
             }
 
             if (count($batch) < self::PAGE_SIZE) {
+
                 break;
             }
         }
