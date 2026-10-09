@@ -31,11 +31,12 @@ final class SeoController extends Controller
         return response()->json(SeoAudit::query()->where('site_id', $site)->latest()->paginate());
     }
 
-    public function startAudit(int $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function startAudit(int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
+        $siteId = (int) $site;
         $auth->authorize('seo.manage');
-        Site::query()->findOrFail($site);
-        $audit = SeoAudit::query()->create(['site_id' => $site, 'actor_user_id' => $request->user()->id]);
+        Site::query()->findOrFail($siteId);
+        $audit = SeoAudit::query()->create(['site_id' => $siteId, 'actor_user_id' => $request->user()->id]);
         RunSeoAuditJob::dispatch($context->id(), $audit->id);
 
         return response()->json($audit, 202);
