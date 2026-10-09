@@ -190,7 +190,7 @@ final class GlobalSynchronizationConflictReviewService
 
     private function rendered(mixed $value): string
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return $value === null ? '' : (string) $value;
         }
         return (string) ($value['rendered'] ?? $value['raw'] ?? '');
