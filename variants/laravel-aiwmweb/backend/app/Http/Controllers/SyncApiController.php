@@ -12,6 +12,7 @@ use App\Models\SyncTombstone;
 use App\Models\SyncWebhookEvent;
 use App\Models\Tenant;
 use App\Sync\Contracts\SyncWebhookVerifier;
+use App\Sync\GlobalSynchronizationAcceptRemoteService;
 use App\Sync\SyncRuntimeService;
 use App\Tenancy\TenantContext;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -53,6 +54,46 @@ final class SyncApiController extends Controller
         }
 
         return response()->json($run, 202);
+    }
+
+    public function acceptRemote(
+        Request $request,
+        TenantAuthorizer $auth,
+        GlobalSynchronizationAcceptRemoteService $acceptRemote,
+        string $tenant,
+        int $site,
+    ): JsonResponse {
+        $auth->authorize('content.edit');
+
+        $callerOwned = ['tenant', 'tenant_id', 'user_id', 'actor_user_id', 'mode', 'full', 'resources'];
+        abort_if(
+            array_intersect(array_keys($request->all()), $callerOwned) !== [],
+            422,
+            'Accept remote sync does not accept caller-owned identity or sync-mode fields.',
+        );
+
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        abort_if($idempotencyKey === '', 422, 'Idempotency-Key is required.');
+        abort_if(strlen($idempotencyKey) > 128, 422, 'Idempotency-Key must not exceed 128 characters.');
+
+        try {
+            $result = $acceptRemote->accept($site, $idempotencyKey, auth()->id());
+        } catch (RuntimeException $exception) {
+            return response()->json(['code' => 'SYNC_CONFLICT', 'message' => $exception->getMessage()], 409);
+        }
+
+        /** @var SyncRun $run */
+        $run = $result['run'];
+
+        return response()->json([
+            'operation_id' => GlobalSynchronizationAcceptRemoteService::OPERATION_ID,
+            'id' => (int) $run->getKey(),
+            'site_id' => (int) $run->site_id,
+            'state' => (string) $run->state,
+            'mode' => (string) $run->mode,
+            'trigger' => (string) $run->trigger,
+            'idempotent_replay' => (bool) $result['replay'],
+        ], $result['replay'] ? 200 : 202);
     }
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
