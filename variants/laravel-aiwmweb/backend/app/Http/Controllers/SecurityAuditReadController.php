@@ -50,7 +50,9 @@ final class SecurityAuditReadController
             ->filter(fn (array $row): bool => $category === '' || strcasecmp($row['category'], $category) === 0)
             ->filter(fn (array $row): bool => $outcome === '' || strcasecmp($row['outcome'], $outcome) === 0)
             ->filter(function (array $row) use ($search): bool {
-                if ($search === '') return true;
+                if ($search === '') {
+                    return true;
+                }
                 $haystack = mb_strtolower(implode(' ', [$row['event'], $row['actor'], $row['target'], $row['tenant'], $row['metadata_text']]));
                 return str_contains($haystack, mb_strtolower($search));
             })
@@ -81,24 +83,44 @@ final class SecurityAuditReadController
     private function category(string $event, array $metadata): string
     {
         $explicit = trim((string) ($metadata['category'] ?? ''));
-        if ($explicit !== '') return $explicit;
+        if ($explicit !== '') {
+            return $explicit;
+        }
         $value = mb_strtolower($event);
-        if (str_contains($value, 'session')) return 'Session';
-        if (str_contains($value, 'permission') || str_contains($value, 'role') || str_contains($value, 'authoriz')) return 'Authorization';
-        if (str_contains($value, 'config') || str_contains($value, 'setting') || str_contains($value, 'provider') || str_contains($value, 'connector')) return 'Configuration';
-        if (str_contains($value, 'login') || str_contains($value, 'auth')) return 'Authentication';
+        if (str_contains($value, 'session')) {
+            return 'Session';
+        }
+        if (str_contains($value, 'permission') || str_contains($value, 'role') || str_contains($value, 'authoriz')) {
+            return 'Authorization';
+        }
+        if (str_contains($value, 'config') || str_contains($value, 'setting') || str_contains($value, 'provider') || str_contains($value, 'connector')) {
+            return 'Configuration';
+        }
+        if (str_contains($value, 'login') || str_contains($value, 'auth')) {
+            return 'Authentication';
+        }
         return 'Account';
     }
 
     private function outcome(string $event, array $metadata): string
     {
         $raw = mb_strtolower(trim((string) ($metadata['outcome'] ?? $metadata['status'] ?? '')));
-        if (in_array($raw, ['failed', 'failure', 'error'], true)) return 'Failed';
-        if (in_array($raw, ['blocked', 'denied', 'forbidden'], true)) return 'Blocked';
-        if (in_array($raw, ['success', 'succeeded', 'ok', 'completed'], true)) return 'Succeeded';
+        if (in_array($raw, ['failed', 'failure', 'error'], true)) {
+            return 'Failed';
+        }
+        if (in_array($raw, ['blocked', 'denied', 'forbidden'], true)) {
+            return 'Blocked';
+        }
+        if (in_array($raw, ['success', 'succeeded', 'ok', 'completed'], true)) {
+            return 'Succeeded';
+        }
         $value = mb_strtolower($event);
-        if (str_contains($value, 'failed') || str_contains($value, 'error')) return 'Failed';
-        if (str_contains($value, 'blocked') || str_contains($value, 'denied') || str_contains($value, 'forbidden')) return 'Blocked';
+        if (str_contains($value, 'failed') || str_contains($value, 'error')) {
+            return 'Failed';
+        }
+        if (str_contains($value, 'blocked') || str_contains($value, 'denied') || str_contains($value, 'forbidden')) {
+            return 'Blocked';
+        }
         return 'Succeeded';
     }
 
@@ -106,7 +128,9 @@ final class SecurityAuditReadController
     {
         $name = trim((string) ($row->actor_name ?? ''));
         $email = trim((string) ($row->actor_email ?? ''));
-        if ($name !== '' && $email !== '') return $name.' <'.$email.'>';
+        if ($name !== '' && $email !== '') {
+            return $name.' <'.$email.'>';
+        }
         return $name !== '' ? $name : ($email !== '' ? $email : 'System / unknown');
     }
 
@@ -114,14 +138,18 @@ final class SecurityAuditReadController
     {
         $type = trim((string) ($row->subject_type ?? ''));
         $id = trim((string) ($row->subject_id ?? ''));
-        if ($type === '' && $id === '') return '—';
+        if ($type === '' && $id === '') {
+            return '—';
+        }
         return $id === '' ? $type : ($type === '' ? 'Target' : $type).': '.$id;
     }
 
     private function metadataText(array $metadata): string
     {
         return collect($metadata)->map(function ($value, $key): string {
-            if (is_array($value) || is_object($value)) $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if (is_array($value) || is_object($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            }
             return $key.'='.(string) $value;
         })->implode(' · ');
     }
