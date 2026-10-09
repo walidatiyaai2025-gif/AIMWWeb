@@ -15,6 +15,7 @@
     "risk": "low"
   },
   "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/views/security/audit.blade.php",
     "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
     "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/SecurityAuditRouteServiceProvider.php",
     "view": "variants/laravel-aiwmweb/backend/resources/views/security/audit.blade.php",
