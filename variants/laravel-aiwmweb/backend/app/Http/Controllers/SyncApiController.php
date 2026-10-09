@@ -148,6 +148,7 @@ final class SyncApiController extends Controller
     public function conflicts(TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        Site::query()->findOrFail($site);
 
         return response()->json(ContentConflict::query()->where('site_id', $site)->latest('id')->paginate(50));
     }
