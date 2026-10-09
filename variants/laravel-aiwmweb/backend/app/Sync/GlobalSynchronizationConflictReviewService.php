@@ -87,6 +87,7 @@ final class GlobalSynchronizationConflictReviewService
         usort($conflicts, static function (array $left, array $right): int {
             $leftModified = (string) ($left['remote']['modified_at'] ?? $left['local']['modified_at'] ?? '');
             $rightModified = (string) ($right['remote']['modified_at'] ?? $right['local']['modified_at'] ?? '');
+
             return $rightModified <=> $leftModified
                 ?: ($left['content_type'] <=> $right['content_type'])
                 ?: ($left['wordpress_id'] <=> $right['wordpress_id']);
@@ -172,6 +173,7 @@ final class GlobalSynchronizationConflictReviewService
                 return true;
             }
         }
+
         return false;
     }
 
@@ -198,6 +200,7 @@ final class GlobalSynchronizationConflictReviewService
         if (is_array($value) === false) {
             return $value === null ? '' : (string) $value;
         }
+
         return (string) ($value['rendered'] ?? $value['raw'] ?? '');
     }
 
@@ -206,6 +209,7 @@ final class GlobalSynchronizationConflictReviewService
         if (is_array($value) === false) {
             return $value === null ? '' : (string) $value;
         }
+
         return (string) ($value['raw'] ?? $value['rendered'] ?? '');
     }
 
@@ -214,6 +218,7 @@ final class GlobalSynchronizationConflictReviewService
         if ($value === null || $value === '') {
             return null;
         }
+
         return CarbonImmutable::parse((string) $value, 'UTC')->utc()->toIso8601String();
     }
 }
