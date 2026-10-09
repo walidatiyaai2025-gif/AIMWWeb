@@ -91,7 +91,10 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('sync/runs/{run}/resume', [SyncApiController::class, 'resume']);
     Route::post('sync/items/{item}/retry', [SyncApiController::class, 'retryItem']);
     Route::get('sync/diagnostics', [SyncApiController::class, 'diagnostics']);
-    Route::get('conflicts', [SyncApiController::class, 'conflicts']);
+    Route::get('conflicts', [SyncApiController::class, 'conflicts'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', 'AIMW-BILL-5887A977D7')
+        ->name('api.v1.sites.sync.review-conflicts');
     Route::post('conflicts/{conflict}/resolve', [SyncApiController::class, 'resolveConflict']);
 
     Route::post('transfers/export', [ContentApiController::class, 'export']);
