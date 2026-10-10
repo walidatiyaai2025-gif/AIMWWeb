@@ -1,7 +1,7 @@
 # Latest AI Knowledge-System Handoff
 
 Task: Issue #698 — repository-native AI knowledge + skills framework
-Canonical task branch: `task/aimwweb-t0698-laravel-ai-skills`
+Canonical task branch: `docs/aimwweb-t0698-laravel-ai-skills`
 Base composition SHA: `f8d50324021a8d96b74b8d4384607882dc888bab`
 Target: `LARAVEL_AIWMWEB`
 Scope: `variants/laravel-aiwmweb/**`
