@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-BILL-D4E1DA62D9",
+  "operation": "CopyDiagnosticsAsync",
+  "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+  "route_screen": [
+    "/sites/{Id:guid}/connection",
+    "/sites/{Id:guid}/operations"
+  ],
+  "decision": "PORTED",
+  "risk": "low",
+  "implementation": [
+    "backend/resources/js/site-connection-center-sync-control.tsx",
+    "backend/resources/js/__tests__/site-connection-copy-diagnostics.test.tsx",
+    "backend/tests/Feature/SiteConnectionCopyDiagnosticsTerminalityTest.php"
+  ],
+  "invariants": [
+    "reads only tenant-scoped authenticated connection and operation-history endpoints",
+    "does not request or render provider secrets, application passwords, tokens, or credentials",
+    "copies at most the twenty most recent authoritative operations",
+    "reports clipboard success only after navigator.clipboard.writeText resolves",
+    "read-only tenant viewers may copy diagnostics; no mutation permission is required"
+  ]
+}
