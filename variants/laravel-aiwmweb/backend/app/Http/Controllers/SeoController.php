@@ -31,7 +31,7 @@ final class SeoController extends Controller
         return response()->json(SeoAudit::query()->where('site_id', $site)->latest()->paginate());
     }
 
-    public function startAudit(int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
+    public function startAudit(string $tenant, int|string $site, Request $request, TenantContext $context, TenantAuthorizer $auth): JsonResponse
     {
         $siteId = (int) $site;
         $auth->authorize('seo.manage');
