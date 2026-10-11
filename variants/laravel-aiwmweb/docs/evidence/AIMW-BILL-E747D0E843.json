@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "operation_id": "AIMW-BILL-E747D0E843",
+  "operation": "RetestAsync",
+  "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+  "route_screen": [
+    "/sites/{Id:guid}/connection",
+    "/sites/{Id:guid}/operations"
+  ],
+  "decision": "PORTED",
+  "risk": "low",
+  "implementation": [
+    "backend/resources/js/site-connection-center-sync-control.tsx",
+    "backend/app/Http/Controllers/SiteDiagnosticsController.php",
+    "backend/routes/web.php",
+    "backend/resources/js/__tests__/site-connection-retest.test.tsx",
+    "backend/tests/Feature/SiteConnectionRetestTerminalityTest.php"
+  ],
+  "invariants": [
+    "uses the authoritative tenant-scoped diagnostics recheck endpoint",
+    "requires connector.manage for mutation",
+    "rereads authoritative connection state and operation history after completion or failure",
+    "does not expose connector credentials or secrets",
+    "preserves tenant.context middleware and site ownership isolation"
+  ]
+}
