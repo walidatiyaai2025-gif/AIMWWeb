@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\CanonicalWorkspaceRouteController;
 use App\Http\Controllers\SystemHealthReadController;
 use App\Models\Permission;
 use App\Models\Role;
