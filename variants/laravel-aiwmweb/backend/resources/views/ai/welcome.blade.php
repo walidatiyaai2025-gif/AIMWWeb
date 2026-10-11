@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ $welcomeLocale }}" dir="{{ $welcomeLocale === 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -43,32 +43,36 @@
                 <span class="brand-mark" aria-hidden="true">AI</span>
                 <span class="brand-copy">
                     <strong>AI WordPress Manager</strong>
-                    <small>WORDPRESS OPERATIONS OS</small>
+                    <small>{{ $welcomeLocale === 'ar' ? 'نظام إدارة عمليات ووردبريس' : 'WORDPRESS OPERATIONS OS' }}</small>
                 </span>
             </a>
-            <a class="signin" href="/login">Sign in</a>
+            <a class="signin" data-canonical-operation="AIMW-BILL-3EAD5A351E"
+                href="{{ route('public.welcome', ['lang' => $welcomeLocale === 'ar' ? 'en' : 'ar'], false) }}"
+                lang="{{ $welcomeLocale === 'ar' ? 'en' : 'ar' }}"
+                aria-label="{{ $welcomeLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية' }}">{{ $welcomeLocale === 'ar' ? 'EN' : 'AR' }}</a>
+            <a class="signin" href="/login">{{ $welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in' }}</a>
         </header>
 
         <main class="hero">
             <section>
-                <div class="eyebrow">AI-ASSISTED WORDPRESS OPERATIONS</div>
-                <h1>Operate WordPress as one system.</h1>
-                <p class="lead">A public, identity-neutral entry point for AI WordPress Manager. Sign in to reach tenant-owned sites, operations, content, SEO and automation through their protected application routes.</p>
-                <div class="proof" aria-label="Platform boundaries">
-                    <span>Public welcome</span>
-                    <span>Protected tenant workspace</span>
-                    <span>Auditable operations</span>
+                <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'إدارة ووردبريس بمساعدة الذكاء الاصطناعي' : 'AI-ASSISTED WORDPRESS OPERATIONS' }}</div>
+                <h1>{{ $welcomeLocale === 'ar' ? 'أدر ووردبريس كنظام واحد.' : 'Operate WordPress as one system.' }}</h1>
+                <p class="lead">{{ $welcomeLocale === 'ar' ? 'بوابة عامة لإدارة ووردبريس بالذكاء الاصطناعي. سجل الدخول للوصول إلى مواقع حسابك والعمليات والمحتوى وتحسين محركات البحث والأتمتة عبر مسارات التطبيق المحمية.' : 'A public, identity-neutral entry point for AI WordPress Manager. Sign in to reach tenant-owned sites, operations, content, SEO and automation through their protected application routes.' }}</p>
+                <div class="proof" aria-label="{{ $welcomeLocale === 'ar' ? 'حدود المنصة' : 'Platform boundaries' }}">
+                    <span>{{ $welcomeLocale === 'ar' ? 'صفحة ترحيب عامة' : 'Public welcome' }}</span>
+                    <span>{{ $welcomeLocale === 'ar' ? 'مساحة عمل محمية للحساب' : 'Protected tenant workspace' }}</span>
+                    <span>{{ $welcomeLocale === 'ar' ? 'عمليات قابلة للتدقيق' : 'Auditable operations' }}</span>
                 </div>
             </section>
 
-            <aside class="panel" aria-label="Workspace preview">
-                <div class="panel-kicker">OPERATIONS OVERVIEW</div>
-                <h2>One operating layer</h2>
+            <aside class="panel" aria-label="{{ $welcomeLocale === 'ar' ? 'معاينة مساحة العمل' : 'Workspace preview' }}">
+                <div class="panel-kicker">{{ $welcomeLocale === 'ar' ? 'نظرة عامة على العمليات' : 'OPERATIONS OVERVIEW' }}</div>
+                <h2>{{ $welcomeLocale === 'ar' ? 'طبقة إدارة واحدة' : 'One operating layer' }}</h2>
                 <div class="rows">
-                    <div class="row"><span>Sites</span><b>Connected</b></div>
-                    <div class="row"><span>Content</span><b>Managed</b></div>
-                    <div class="row"><span>SEO</span><b>Observed</b></div>
-                    <div class="row"><span>AI actions</span><b>Governed</b></div>
+                    <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'المواقع' : 'Sites' }}</span><b>{{ $welcomeLocale === 'ar' ? 'متصلة' : 'Connected' }}</b></div>
+                    <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'المحتوى' : 'Content' }}</span><b>{{ $welcomeLocale === 'ar' ? 'مُدار' : 'Managed' }}</b></div>
+                    <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'تحسين محركات البحث' : 'SEO' }}</span><b>{{ $welcomeLocale === 'ar' ? 'مراقب' : 'Observed' }}</b></div>
+                    <div class="row"><span>{{ $welcomeLocale === 'ar' ? 'إجراءات الذكاء الاصطناعي' : 'AI actions' }}</span><b>{{ $welcomeLocale === 'ar' ? 'خاضعة للضوابط' : 'Governed' }}</b></div>
                 </div>
             </aside>
         </main>
