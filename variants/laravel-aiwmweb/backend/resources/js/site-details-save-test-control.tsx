@@ -5,6 +5,7 @@ import { useLocale } from './i18n';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 
 export const SITE_DETAILS_SAVE_TEST_OPERATION_ID = 'AIMW-AI-387F3E5D5F';
+export const SITE_DETAILS_SAVE_AND_TEST_HANDLER_OPERATION_ID = 'AIMW-BILL-C37235F06A';
 export const SITE_CONNECTION_CLEAR_HISTORY_OPERATION_ID = 'AIMW-BILL-0938ECBF66';
 
 type SiteDetailsPayload = {
@@ -143,6 +144,7 @@ function AuthorizedSiteDetailsSaveTestControl({
             <button
                 type="button"
                 className="btn primary"
+                data-canonical-operation={SITE_DETAILS_SAVE_AND_TEST_HANDLER_OPERATION_ID}
                 disabled={mutation.isPending || details.isLoading}
                 onClick={() => mutation.mutate()}
             >
