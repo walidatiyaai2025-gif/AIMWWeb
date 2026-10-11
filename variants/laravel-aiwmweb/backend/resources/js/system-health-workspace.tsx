@@ -5,11 +5,7 @@ import { LoadingState, StatePanel } from './components';
 import { useLocale } from './i18n';
 import { SystemHealthOpenLogsControl } from './system-health-open-logs-control';
 
-type SystemHealthSnapshot = {
-    tenant: string;
-    status: string;
-    checks: Record<string, { status: string }>;
-};
+import { SystemHealthCopySummaryControl, type SystemHealthSnapshot } from './system-health-copy-summary-control';
 
 export function SystemHealthWorkspace({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
     const { locale } = useLocale();
@@ -83,6 +79,7 @@ export function SystemHealthWorkspace({ context, route }: { context: FrontendCon
                 <strong>{locale === 'ar' ? 'إجراءات' : 'Actions'}</strong>
                 <p>{locale === 'ar' ? 'افتح السجلات فقط بعد نجاح تحميل لقطة صحة النظام.' : 'Open logs only after the System Health snapshot has loaded successfully.'}</p>
                 <SystemHealthOpenLogsControl context={context} snapshotReady={true} />
+                <SystemHealthCopySummaryControl key={context.tenant.slug} context={context} snapshot={snapshot} loading={query.isFetching} />
             </section>
         </div>
     );
