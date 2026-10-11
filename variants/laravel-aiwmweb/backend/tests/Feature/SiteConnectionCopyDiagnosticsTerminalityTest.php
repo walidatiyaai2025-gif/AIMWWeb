@@ -49,6 +49,7 @@ final class SiteConnectionCopyDiagnosticsTerminalityTest extends TestCase
         $this->assertContains('auth', $operations->gatherMiddleware());
         $this->assertContains('tenant.context', $operations->gatherMiddleware());
     }
+
     public function test_copy_diagnostics_authoritative_reads_fail_closed_for_foreign_tenant_site(): void
     {
         $reader = User::factory()->create();
@@ -99,5 +100,4 @@ final class SiteConnectionCopyDiagnosticsTerminalityTest extends TestCase
     {
         app(TenantContext::class)->activate($tenant);
     }
-
 }
