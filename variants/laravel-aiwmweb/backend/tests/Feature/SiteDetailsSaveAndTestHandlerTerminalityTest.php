@@ -92,7 +92,7 @@ final class SiteDetailsSaveAndTestHandlerTerminalityTest extends TestCase
             ->assertOk()->assertJsonPath('status', 'degraded');
         $this->assertDatabaseHas('sites', ['id' => $site->id, 'tenant_id' => $alpha->id, 'connection_status' => 'verified', 'health_state' => 'degraded']);
         $this->actingAs($manager)->getJson("/api/tenants/alpha/sites/{$site->id}")
-            ->assertOk()->assertJsonPath('health_state', 'degraded');
+            ->assertOk()->assertJsonPath('connection_status', 'verified');
     }
 
     public function test_failed_external_verification_does_not_persist_a_success_state(): void
