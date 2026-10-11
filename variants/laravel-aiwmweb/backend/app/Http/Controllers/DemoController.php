@@ -31,6 +31,8 @@ use Throwable;
 
 final class DemoController extends Controller
 {
+    public const SAVE_AND_TEST_OPERATION_ID = 'AIMW-BILL-C37235F06A';
+
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -157,9 +159,19 @@ final class DemoController extends Controller
         return response()->json(['rotated' => true]);
     }
 
-    public function verify(int $site, WordPressGateway $wordpress, TenantAuthorizer $auth): JsonResponse
-    {
+    public function verify(
+        string $tenant,
+        int|string $site,
+        WordPressGateway $wordpress,
+        TenantContext $context,
+        TenantAuthorizer $auth,
+    ): JsonResponse {
         $auth->authorize('connector.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+        $site = (int) $site;
+        abort_if($site < 1, 404);
+
         $model = Site::query()->findOrFail($site);
         $health = $wordpress->health($model);
         $model->update(['connection_status' => 'verified', 'health_state' => $health['status'] ?? 'healthy', 'last_verified_at' => now()]);
