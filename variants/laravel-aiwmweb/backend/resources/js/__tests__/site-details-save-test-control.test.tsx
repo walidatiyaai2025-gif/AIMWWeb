@@ -6,6 +6,7 @@ import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
     SITE_DETAILS_SAVE_TEST_OPERATION_ID,
+    SITE_DETAILS_SAVE_AND_TEST_HANDLER_OPERATION_ID,
     SiteDetailsSaveTestControl,
     canonicalSiteVerifyEndpoint,
 } from '../site-details-save-test-control';
@@ -50,6 +51,8 @@ describe('AIMW-AI-387F3E5D5F Site Details Save & Test adaptation', () => {
 
         const button = await screen.findByRole('button', { name: 'Save & test' });
         expect(button.closest('section')).toHaveAttribute('data-canonical-operation', SITE_DETAILS_SAVE_TEST_OPERATION_ID);
+        expect(button).toHaveAttribute('data-canonical-operation', SITE_DETAILS_SAVE_AND_TEST_HANDLER_OPERATION_ID);
+        expect(SITE_DETAILS_SAVE_AND_TEST_HANDLER_OPERATION_ID).toBe('AIMW-BILL-C37235F06A');
         expect(SITE_DETAILS_SAVE_TEST_OPERATION_ID).toBe('AIMW-AI-387F3E5D5F');
 
         await screen.findByText(/Status: paired/i);
