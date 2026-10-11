@@ -45,6 +45,7 @@ describe('SEO visible-control mass closure', () => {
         proposalsPayload = [];
         fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
             const url = String(input);
+            if (url.endsWith('/seo/audits') && init?.method === 'POST') return jsonResponse({ id: 45, status: 'queued' }, 202);
             if (url.endsWith('/seo/audits')) return jsonResponse({ data: [{ id: 44, status: 'succeeded' }] });
             if (url.includes('/seo/audits/44/findings')) return jsonResponse(findings);
             if (url.endsWith('/seo/presentation')) return jsonResponse({ audit_id: 44, links: { '1': 'https://alpha.test/real-content/' } });
@@ -86,6 +87,24 @@ describe('SEO visible-control mass closure', () => {
         fireEvent.click(container.querySelector(`[data-canonical-operation="${SEO_OPERATIONS.previousPage}"]`) as HTMLElement);
         await waitFor(() => expect(screen.getByText('Page 1 of 2')).toBeInTheDocument());
         expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/seo/audits/44/findings'))).toBe(true);
+    });
+
+    it('runs the canonical full SEO audit through the real queued audit endpoint', async () => {
+        const { container } = render(<SeoVisibleControls config={config} />);
+        await screen.findByText('finding-1');
+
+        const button = screen.getByTestId('seo-run-full-audit');
+        expect(button).toHaveAttribute('data-canonical-operation', SEO_OPERATIONS.runFullAudit);
+        expect(SEO_OPERATIONS.runFullAudit).toBe('AIMW-BILL-3C55B3C299');
+
+        fireEvent.click(button);
+        await screen.findByText('SEO audit 45 queued successfully; authoritative results will refresh from Laravel as the job completes.');
+
+        const auditPost = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith('/seo/audits') && init?.method === 'POST');
+        expect(auditPost).toBeTruthy();
+        expect(JSON.parse(String(auditPost?.[1]?.body))).toEqual({});
+        expect(new Headers(auditPost?.[1]?.headers).get('X-CSRF-TOKEN')).toBe('csrf-test');
+        expect(container.querySelector(`[data-canonical-operation="${SEO_OPERATIONS.runFullAudit}"]`)).toBeEnabled();
     });
 
     it('prepares selected and all-safe remediations through the real bulk contract and reports approval-gated feedback', async () => {

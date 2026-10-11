@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #696",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-3C55B3C299",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/seo",
+    "visible_control": "RunFullAuditAsync [RunFullAuditAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SeoManager.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/seo-visible-controls.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoController.php::startAudit",
+    "route": "/api/tenants/{tenant}/sites/{site}/seo/audits",
+    "job": "variants/laravel-aiwmweb/backend/app/Jobs/RunSeoAuditJob.php",
+    "authorization": "auth + tenant.context + seo.manage",
+    "tenant_scope": "active tenant membership and owned site only",
+    "persistence": "creates queued seo_audits row with actor_user_id",
+    "execution": "dispatches tenant-aware RunSeoAuditJob; audit analyzes persisted synchronized content",
+    "approval_required": false,
+    "external_mutation": false,
+    "fake_success": false
+  },
+  "action_contract": {
+    "key": "seo.audit.run",
+    "availability": "enabled when site context and seo.manage permission are present",
+    "risk": "low",
+    "approval_required": false,
+    "terminal_candidate": true
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SeoManagerRunFullAuditTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/seo-visible-controls.test.tsx",
+    "assertions": [
+      "exact canonical operation route binding",
+      "real persisted queued audit creation",
+      "tenant-aware RunSeoAuditJob dispatch",
+      "seo.manage enforcement",
+      "cross-tenant site access returns not found",
+      "canonical visible control posts with CSRF and reports queued state"
+    ]
+  }
+}

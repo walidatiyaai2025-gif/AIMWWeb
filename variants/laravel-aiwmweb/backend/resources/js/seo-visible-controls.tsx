@@ -15,6 +15,7 @@ export const SEO_OPERATIONS = {
     resetFilters: 'AIMW-SEO-250C53DAC5',
     applyFilters: 'AIMW-BILL-B9C3030764',
     generateSuggestions: 'AIMW-BILL-E3C47C563B',
+    runFullAudit: 'AIMW-BILL-3C55B3C299',
 } as const;
 
 export type SeoConfig = {
@@ -128,6 +129,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(1);
     const [busy, setBusy] = useState(false);
+    const [auditRunning, setAuditRunning] = useState(false);
     const [loading, setLoading] = useState(true);
     const [feedback, setFeedback] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
 
@@ -184,6 +186,24 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
     const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     const proposalFor = useCallback((finding: Finding) => proposalOverrides[finding.id] ?? deterministicProposal(finding), [proposalOverrides]);
+
+    const runFullAudit = async () => {
+        if (auditRunning) return;
+        setAuditRunning(true);
+        setFeedback({ tone: 'info', text: 'Starting the full SEO audit...' });
+        try {
+            const audit = await requestJson<{ id?: number; status?: string }>(config.urls.audits, { method: 'POST', body: JSON.stringify({}) });
+            await loadAuthoritative(false);
+            setFeedback({
+                tone: 'success',
+                text: `SEO audit ${audit.id ?? ''} queued successfully; authoritative results will refresh from Laravel as the job completes.`.replace('audit  queued', 'audit queued'),
+            });
+        } catch (error) {
+            setFeedback({ tone: 'error', text: error instanceof Error ? error.message : 'SEO audit could not be started.' });
+        } finally {
+            setAuditRunning(false);
+        }
+    };
 
     const applyFilters = async () => {
         setPage(1);
@@ -342,6 +362,7 @@ export function SeoVisibleControls({ config }: { config: SeoConfig }) {
             <section className="hero-panel">
                 <div><span className="workspace-kicker">SEO MANAGER</span><h1>{config.site.name}</h1><p>Review real Laravel SEO findings and prepare governed remediations for approval.</p></div>
                 <div className="toolbar-actions">
+                    <button type="button" className="btn primary" data-testid="seo-run-full-audit" data-canonical-operation={SEO_OPERATIONS.runFullAudit} disabled={auditRunning} aria-busy={auditRunning} onClick={runFullAudit}>{auditRunning ? 'Running audit...' : 'Run full audit'}</button>
                     <a className="btn" data-canonical-operation={SEO_OPERATIONS.execution} href={config.urls.execution}>Execution Center</a>
                     <a className="btn" data-canonical-operation={SEO_OPERATIONS.sites} href={config.urls.sites}>Back to Sites</a>
                     <a className="btn" data-canonical-operation={SEO_OPERATIONS.explorer} href={config.urls.explorer}>Back to Explorer</a>

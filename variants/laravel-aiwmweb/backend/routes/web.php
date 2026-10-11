@@ -107,7 +107,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::get('/executions/{execution}/receipt', [DemoController::class, 'receipt']);
 
     Route::get('/sites/{site}/seo/audits', [SeoController::class, 'audits']);
-    Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit']);
+    Route::post('/sites/{site}/seo/audits', [SeoController::class, 'startAudit'])
+        ->defaults('canonical_operation_id', SeoController::RUN_FULL_AUDIT_OPERATION_ID)
+        ->name('canonical.api.seo.audit.run');
     Route::get('/sites/{site}/seo/audits/{audit}/findings', [SeoController::class, 'findings']);
     Route::get('/sites/{site}/seo/metadata/{type}/{remoteId}', [SeoController::class, 'metadata']);
     Route::get('/sites/{site}/seo/content/{content}/provider', [SeoController::class, 'provider']);
