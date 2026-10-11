@@ -54,7 +54,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::put('/sites/{site}/connector/scopes', [DemoController::class, 'scopes']);
     Route::post('/sites/{site}/connector/rotate', [DemoController::class, 'rotate']);
     Route::delete('/sites/{site}/connector', [DemoController::class, 'revoke']);
-    Route::post('/sites/{site}/verify', [DemoController::class, 'verify']);
+    Route::post('/sites/{site}/verify', [DemoController::class, 'verify'])
+        ->defaults('canonical_operation_id', DemoController::SAVE_AND_TEST_OPERATION_ID)
+        ->name('canonical.api.site-details.save-and-test');
     Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
     Route::get('/sites/{site}/snapshot', SiteDataSnapshotController::class)
         ->defaults('canonical_operation_id', SiteDataSnapshotController::OPERATION_ID)
