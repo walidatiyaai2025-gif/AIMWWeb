@@ -32,6 +32,7 @@ final class SiteConnectionRetestTerminalityTest extends TestCase
         $route = Route::getRoutes()->match(Request::create('/api/tenants/alpha/sites/7/connection/recheck', 'POST'));
         $this->assertSame(SiteDiagnosticsController::class.'@recheck', ltrim($route->getActionName(), '\\'));
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
+        $this->assertSame('canonical.api.site-connection.retest', $route->getName());
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
 
