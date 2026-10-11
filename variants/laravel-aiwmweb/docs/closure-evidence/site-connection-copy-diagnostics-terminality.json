@@ -1,24 +1,58 @@
 {
   "schema_version": 1,
+  "authority": "AIMWWeb Issue #705",
+  "target_variant": "LARAVEL_AIWMWEB",
   "operation_id": "AIMW-BILL-D4E1DA62D9",
-  "operation": "CopyDiagnosticsAsync",
-  "source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
-  "route_screen": [
-    "/sites/{Id:guid}/connection",
-    "/sites/{Id:guid}/operations"
-  ],
-  "decision": "PORTED",
-  "risk": "low",
-  "implementation": [
-    "backend/resources/js/site-connection-center-sync-control.tsx",
-    "backend/resources/js/__tests__/site-connection-copy-diagnostics.test.tsx",
-    "backend/tests/Feature/SiteConnectionCopyDiagnosticsTerminalityTest.php"
-  ],
-  "invariants": [
-    "reads only tenant-scoped authenticated connection and operation-history endpoints",
-    "does not request or render provider secrets, application passwords, tokens, or credentials",
-    "copies at most the twenty most recent authoritative operations",
-    "reports clipboard success only after navigator.clipboard.writeText resolves",
-    "read-only tenant viewers may copy diagnostics; no mutation permission is required"
-  ]
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/connection | /sites/{Id:guid}/operations",
+    "visible_control": "CopyDiagnosticsAsync [CopyDiagnosticsAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteConnectionCenter.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/site-connection-center-sync-control.tsx",
+    "connection_read": "GET /api/tenants/{tenant}/sites/{site}/connection",
+    "operations_read": "GET /api/tenants/{tenant}/sites/{site}/operations?take=100",
+    "clipboard": "navigator.clipboard.writeText",
+    "report_limit": 20,
+    "source_of_truth": "authoritative Laravel tenant-scoped connection state and operation history",
+    "secret_exposure": "no credential, token, provider secret, application password, cookie, or authorization field is requested by the control"
+  },
+  "security": {
+    "route_guards": "web + auth + tenant.context",
+    "tenant_scope": "active tenant context and tenant-scoped Site model queries",
+    "foreign_tenant_site": "404 for connection and operations reads",
+    "mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "secret_exposure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionCopyDiagnosticsTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-connection-copy-diagnostics.test.tsx",
+    "assertions": [
+      "exact canonical operation identity and source intent",
+      "authenticated tenant-context route binding",
+      "foreign tenant site returns 404 for authoritative connection and operations reads",
+      "report is bounded to twenty recent operations",
+      "clipboard success is shown only after writeText resolves",
+      "read-only tenant viewers can copy diagnostics without mutation authority",
+      "secret-bearing fields are not requested or emitted"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-D4E1DA62D9"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  }
 }
