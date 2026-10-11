@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 
 final class SiteDiagnosticsController extends Controller
 {
+    public const RETEST_OPERATION_ID = 'AIMW-BILL-E747D0E843';
     public function status(string $tenant, int|string $site, TenantContext $context, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('tenant.view');
