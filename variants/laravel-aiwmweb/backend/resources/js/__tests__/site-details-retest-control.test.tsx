@@ -61,6 +61,8 @@ describe('AIMW-BILL-D6B3460675 Site Details RetestAsync', () => {
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sites/17/connection/recheck');
         expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: 'POST' });
         expect(fetchMock.mock.calls[2]?.[0]).toBe('/api/tenants/alpha/sites/17');
+        expect(JSON.stringify(fetchMock.mock.calls)).not.toContain('password');
+        expect(JSON.stringify(fetchMock.mock.calls)).not.toContain('encrypted_secret');
     });
 
     it('fails closed before hooks when connector.manage is absent', () => {
