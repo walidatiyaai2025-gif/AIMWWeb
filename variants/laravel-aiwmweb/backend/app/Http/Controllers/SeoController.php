@@ -40,7 +40,7 @@ final class SeoController extends Controller
             ->whereKey($siteId)
             ->where('tenant_id', $context->id())
             ->firstOrFail();
-        $audit = SeoAudit::query()->create(['site_id' => $siteId, 'actor_user_id' => $request->user()->id]);
+        $audit = SeoAudit::query()->create(['site_id' => $siteId, 'actor_user_id' => $request->user()->id, 'status' => 'queued']);
         RunSeoAuditJob::dispatch($context->id(), $audit->id);
 
         return response()->json($audit, 202);
