@@ -120,6 +120,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/seo/executions/{execution}/retry', [SeoController::class, 'retry']);
 
     Route::get('/sites/{site}/connection', [SiteDiagnosticsController::class, 'status']);
+    Route::post('/sites/{site}/retest', [SiteDiagnosticsController::class, 'recheck'])
+        ->defaults('canonical_operation_id', SiteDiagnosticsController::DETAILS_RETEST_OPERATION_ID)
+        ->name('canonical.api.site-details.retest');
     Route::post('/sites/{site}/connection/recheck', [SiteDiagnosticsController::class, 'recheck'])
         ->defaults('canonical_operation_id', SiteDiagnosticsController::RETEST_OPERATION_ID)
         ->name('canonical.api.site-connection.retest');

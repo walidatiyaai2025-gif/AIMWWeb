@@ -15,6 +15,8 @@ final class SiteDiagnosticsController extends Controller
 {
     public const RETEST_OPERATION_ID = 'AIMW-BILL-E747D0E843';
 
+    public const DETAILS_RETEST_OPERATION_ID = 'AIMW-BILL-D6B3460675';
+
     public function status(string $tenant, int|string $site, TenantContext $context, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('tenant.view');

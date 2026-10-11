@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #711",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-D6B3460675",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}",
+    "visible_control": "RetestAsync [RetestAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/site-details-retest-control.tsx",
+    "recheck": "POST /api/tenants/{tenant}/sites/{site}/retest",
+    "authoritative_reread": [
+      "GET /api/tenants/{tenant}/sites/{site}/connection",
+      "GET /api/tenants/{tenant}/sites/{site}/operations?take=100"
+    ],
+    "authorization": "connector.manage",
+    "source_of_truth": "tenant-scoped SiteDiagnosticsService recheck plus persisted SiteDiagnostic and SiteOperationHistory records",
+    "success_semantics": "success is surfaced only after the real recheck returns and authoritative connection/history are reread"
+  },
+  "security": {
+    "route_guards": "web + auth + tenant.context",
+    "tenant_scope": "active tenant context and tenant-scoped Site model queries",
+    "foreign_tenant_site": "404 on recheck for a foreign tenant site after authorized tenant context resolution",
+    "unauthorized_retest": "403 without connector.manage",
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "secret_exposure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsRetestTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-details-retest.test.tsx",
+    "assertions": [
+      "exact canonical RetestAsync source intent and operation identity",
+      "authenticated tenant-context route binding",
+      "foreign tenant site fails closed with 404",
+      "retest without connector.manage fails with 403",
+      "real recheck POST is followed by authoritative connection and history rereads",
+      "frontend success is not fabricated before server completion"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-D6B3460675"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "destructive_migration": false
+  }
+}

@@ -52,6 +52,7 @@ import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control
 import { SettingsBillingSupportLinkControl } from './settings-billing-support-link-control';
 import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
 import { SiteDetailsBackControl } from './site-details-back-control';
+import { SiteDetailsRetestControl } from './site-details-retest-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
@@ -162,6 +163,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'site-details') return (
         <>
             <SiteDetailsBackControl context={context} />
+            <SiteDetailsRetestControl context={context} />
             <SiteDetailsCancelSynchronizationControl context={context} />
             <SiteDetailsSettingsLinkControl context={context} />
             <SiteDetailsSiteUrlControl context={context} />
