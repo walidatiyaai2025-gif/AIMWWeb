@@ -4,6 +4,7 @@ import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const SITE_CONNECTION_CENTER_SYNC_OPERATION_ID = 'AIMW-BILL-3762C05261';
+export const SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID = 'AIMW-BILL-D4E1DA62D9';
 
 type ConnectionSnapshot = {
     site: {
@@ -27,6 +28,29 @@ type OperationHistoryItem = {
 
 type OperationHistoryPayload = { items: OperationHistoryItem[] };
 type SyncRun = { id: number; status: string; processed?: number; failure?: string | null };
+
+export function formatSiteDiagnosticsReport(connection: ConnectionSnapshot, history: OperationHistoryItem[]): string {
+    const site = connection.site as ConnectionSnapshot['site'] & { url?: string | null; wordpress_version?: string | null; language_code?: string | null; last_verified_at?: string | null };
+    const lines = [
+        'AI WordPress Manager - Site Diagnostics',
+        `Site: ${site.name}`,
+        `URL: ${site.url ?? '—'}`,
+        `Status: ${site.connection_status ?? connection.connection ?? '—'}`,
+        `WordPress: ${site.wordpress_version ?? '—'}`,
+        `Language: ${site.language_code ?? '—'}`,
+        `Last test: ${connection.last_verified_at ?? site.last_verified_at ?? '—'}`,
+        '',
+        'Recent operations:',
+    ];
+
+    for (const item of history.slice(0, 20)) {
+        const started = item.started_at ?? '—';
+        const outcome = item.status.toLowerCase() === 'succeeded' ? 'OK' : item.status.toUpperCase();
+        lines.push(`[${started}] ${item.operation} ${outcome} - ${item.message}`);
+    }
+
+    return lines.join('\n');
+}
 
 export function siteConnectionCenterEndpoints(tenantSlug: string, siteId: string | number) {
     const raw = String(siteId).trim();
@@ -62,6 +86,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [copying, setCopying] = useState(false);
 
     const reload = useCallback(async () => {
         if (!endpoints) throw new ApiError('Invalid active site.', 404, 'invalid_site');
@@ -89,6 +114,28 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
             setError(cause instanceof Error ? cause.message : 'Connection center unavailable.');
         });
     }, [reload]);
+
+    const copyDiagnostics = async () => {
+        if (!connection || copying) return;
+
+        setCopying(true);
+        setError('');
+        setMessage('');
+
+        try {
+            const clipboard = navigator.clipboard;
+            if (!clipboard || typeof clipboard.writeText !== 'function') {
+                throw new Error(locale === 'ar' ? 'واجهة الحافظة غير متاحة في هذا المتصفح.' : 'Clipboard API is unavailable in this browser.');
+            }
+
+            await clipboard.writeText(formatSiteDiagnosticsReport(connection, history));
+            setMessage(locale === 'ar' ? 'تم نسخ تقرير التشخيص.' : 'Diagnostic report copied.');
+        } catch (cause: unknown) {
+            setError(cause instanceof Error ? cause.message : 'Diagnostic report could not be copied.');
+        } finally {
+            setCopying(false);
+        }
+    };
 
     const synchronize = async () => {
         if (!endpoints || !canManage || busy) return;
@@ -152,6 +199,18 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                             : 'Run real WordPress synchronization and review authoritative connection and operation state.'}
                     </p>
                 </div>
+                <div className="d-flex gap-2 flex-wrap">
+                    <button
+                        type="button"
+                        className="btn"
+                        disabled={!connection || copying}
+                        onClick={() => void copyDiagnostics()}
+                        data-canonical-operation={SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID}
+                    >
+                        {copying
+                            ? (locale === 'ar' ? 'جارٍ النسخ…' : 'Copying…')
+                            : (locale === 'ar' ? 'نسخ التشخيص' : 'Copy diagnostics')}
+                    </button>
                 {canManage ? (
                     <button
                         type="button"
@@ -165,6 +224,7 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
                             : (locale === 'ar' ? 'مزامنة الآن' : 'Sync now')}
                     </button>
                 ) : null}
+                </div>
             </section>
 
             {error ? <div role="alert" className="state-panel state-danger">{error}</div> : null}
