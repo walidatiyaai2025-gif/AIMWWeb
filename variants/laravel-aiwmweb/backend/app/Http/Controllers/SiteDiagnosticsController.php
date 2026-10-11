@@ -24,11 +24,13 @@ final class SiteDiagnosticsController extends Controller
         return response()->json($diagnostics->status(Site::query()->findOrFail($siteId)));
     }
 
-    public function recheck(int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
+    public function recheck(string $tenant, int|string $site, TenantContext $context, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
     {
         $auth->authorize('connector.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        $siteId = $this->siteId($site);
 
-        return response()->json($diagnostics->recheck(Site::query()->findOrFail($site)));
+        return response()->json($diagnostics->recheck(Site::query()->findOrFail($siteId)));
     }
 
     public function reconnect(int $site, TenantAuthorizer $auth, SiteDiagnosticsService $diagnostics): JsonResponse
