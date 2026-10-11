@@ -5,6 +5,7 @@ import { useLocale } from './i18n';
 
 export const SITE_CONNECTION_CENTER_SYNC_OPERATION_ID = 'AIMW-BILL-3762C05261';
 export const SITE_CONNECTION_CENTER_COPY_DIAGNOSTICS_OPERATION_ID = 'AIMW-BILL-D4E1DA62D9';
+export const SITE_CONNECTION_CENTER_RETEST_OPERATION_ID = 'AIMW-BILL-E747D0E843';
 
 type ConnectionSnapshot = {
     site: {
@@ -62,6 +63,7 @@ export function siteConnectionCenterEndpoints(tenantSlug: string, siteId: string
     return {
         connection: `/api/tenants/${tenant}/sites/${site}/connection`,
         operations: `/api/tenants/${tenant}/sites/${site}/operations?take=100`,
+        recheck: `/api/tenants/${tenant}/sites/${site}/connection/recheck`,
         sync: `/api/tenants/${tenant}/sites/${site}/sync`,
         run: (runId: number) => `/api/tenants/${tenant}/sync-runs/${runId}`,
     };
@@ -81,12 +83,14 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
     const { siteId } = useParams();
     const endpoints = siteConnectionCenterEndpoints(context.tenant.slug, siteId ?? '');
     const canManage = context.permissions.includes('*') || context.permissions.includes('sites.manage');
+    const canRetest = context.permissions.includes('*') || context.permissions.includes('connector.manage');
     const [connection, setConnection] = useState<ConnectionSnapshot | null>(null);
     const [history, setHistory] = useState<OperationHistoryItem[]>([]);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [copying, setCopying] = useState(false);
+    const [retesting, setRetesting] = useState(false);
 
     const reload = useCallback(async () => {
         if (!endpoints) throw new ApiError('Invalid active site.', 404, 'invalid_site');
@@ -134,6 +138,28 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
             setError(cause instanceof Error ? cause.message : 'Diagnostic report could not be copied.');
         } finally {
             setCopying(false);
+        }
+    };
+
+    const retestConnection = async () => {
+        if (!endpoints || !canRetest || retesting) return;
+
+        setRetesting(true);
+        setError('');
+        setMessage('');
+
+        try {
+            await apiRequest(endpoints.recheck, { method: 'POST', body: JSON.stringify({}) });
+            await reload();
+            setMessage(locale === 'ar'
+                ? 'اكتمل اختبار الاتصال وتمت إعادة قراءة الحالة وسجل العمليات من الخادم.'
+                : 'Connection test completed and authoritative state plus operation history were reread from the server.');
+        } catch (cause: unknown) {
+            try { await reload(); } catch { /* keep the test failure primary */ }
+            setMessage('');
+            setError(cause instanceof Error ? cause.message : 'Connection test failed.');
+        } finally {
+            setRetesting(false);
         }
     };
 
@@ -233,6 +259,19 @@ export function SiteConnectionCenterSyncControl({ context }: { context: Frontend
             <section className="workspace-card">
                 <strong>{locale === 'ar' ? 'حالة الاتصال' : 'Connection'}: {connection?.connection ?? '—'}</strong>
                 <p>{locale === 'ar' ? 'حالة الموقع' : 'Site state'}: {connection?.site.connection_status ?? '—'}</p>
+                {canRetest ? (
+                    <button
+                        type="button"
+                        className="btn primary"
+                        disabled={!connection || retesting}
+                        onClick={() => void retestConnection()}
+                        data-canonical-operation={SITE_CONNECTION_CENTER_RETEST_OPERATION_ID}
+                    >
+                        {retesting
+                            ? (locale === 'ar' ? 'جارٍ الاختبار…' : 'Testing…')
+                            : (locale === 'ar' ? 'تشغيل الاختبار' : 'Run test')}
+                    </button>
+                ) : null}
             </section>
 
             <section className="workspace-card">
