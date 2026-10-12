@@ -91,7 +91,9 @@ describe(`${OPERATION_ID} Taxonomy ShowCategories`, () => {
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         expect(String(fetchMock.mock.calls[1][0])).toContain('/api/v1/tenants/alpha/sites/17/taxonomy?page=1&taxonomy=post_tag');
 
-        fireEvent.click(categories);
+        const categoriesAfterTags = screen.getByRole('button', { name: 'Categories' });
+        expect(categoriesAfterTags).toHaveAttribute('aria-pressed', 'false');
+        fireEvent.click(categoriesAfterTags);
 
         expect(await screen.findByText('Guides')).toBeInTheDocument();
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
