@@ -4,6 +4,9 @@ import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID = 'AIMW-BILL-2EF6B8A27A';
+export const SITE_ONBOARDING_NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
+
+type Locale = 'en' | 'ar';
 
 type OnboardingResponse = {
     operation_id: string;
@@ -37,6 +40,43 @@ export function onboardingRetryTokenFromError(error: unknown): string | null {
     return typeof token === 'string' && token.trim() !== '' ? token : null;
 }
 
+export function validateOnboardingStep(
+    step: 1 | 2,
+    values: { name: string; url: string; username: string; applicationPassword: string },
+    locale: Locale,
+): string | null {
+    if (step === 1) {
+        if (values.name.trim() === '') {
+            return locale === 'ar' ? 'اسم الموقع مطلوب.' : 'Site name is required.';
+        }
+
+        try {
+            const parsed = new URL(values.url.trim());
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                throw new Error('Unsupported protocol');
+            }
+        } catch {
+            return locale === 'ar'
+                ? 'أدخل رابطًا صحيحًا يبدأ بـ http أو https.'
+                : 'Enter a valid URL starting with http or https.';
+        }
+
+        return null;
+    }
+
+    if (values.username.trim() === '') {
+        return locale === 'ar' ? 'اسم مستخدم WordPress مطلوب.' : 'WordPress username is required.';
+    }
+
+    if (values.applicationPassword.trim().length < 8) {
+        return locale === 'ar'
+            ? 'Application Password مطلوب ويجب ألا يقل عن 8 أحرف.'
+            : 'Application Password is required and must contain at least 8 characters.';
+    }
+
+    return null;
+}
+
 function nextIdempotencyKey(): string {
     if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
     return `site-onboarding-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -46,6 +86,8 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
     const { locale } = useLocale();
     const endpoint = canonicalSiteOnboardingEndpoint(context.api.sites);
     const canManage = context.permissions.includes('*') || context.permissions.includes('sites.manage');
+    const [step, setStep] = useState<1 | 2 | 3>(1);
+    const [stepError, setStepError] = useState('');
     const [name, setName] = useState('');
     const [url, setUrl] = useState('');
     const [username, setUsername] = useState('');
@@ -103,15 +145,38 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
         : error instanceof Error
             ? error.message
             : null;
-    const disabled = mutation.isPending
-        || name.trim() === ''
-        || url.trim() === ''
-        || username.trim() === ''
-        || applicationPassword.length < 8;
+
+    const values = { name, url, username, applicationPassword };
+    const continueStep = () => {
+        if (step === 3 || mutation.isPending) return;
+
+        const validationError = validateOnboardingStep(step, values, locale);
+        if (validationError) {
+            setStepError(validationError);
+            return;
+        }
+
+        setStepError('');
+        setStep((step + 1) as 2 | 3);
+    };
+
+    const previousStep = () => {
+        if (step === 1 || mutation.isPending) return;
+        setStepError('');
+        setStep((step - 1) as 1 | 2);
+    };
+
+    const finalSubmitDisabled = mutation.isPending
+        || validateOnboardingStep(1, values, locale) !== null
+        || validateOnboardingStep(2, values, locale) !== null;
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        mutation.mutate();
+        if (step < 3) {
+            continueStep();
+            return;
+        }
+        if (!finalSubmitDisabled) mutation.mutate();
     };
 
     return (
@@ -126,46 +191,128 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                     <h2>{locale === 'ar' ? 'ربط موقع WordPress' : 'Connect a WordPress site'}</h2>
                     <p>
                         {locale === 'ar'
-                            ? 'يُحفظ ملف الموقع أولًا، ثم يتم اختبار REST API، ولا تُحفظ بيانات الاعتماد المشفرة ولا تبدأ المزامنة الأولية إلا بعد نجاح الاختبار.'
-                            : 'The site profile is saved first, the REST API is tested next, credentials are encrypted only after verification succeeds, and then initial synchronization starts.'}
+                            ? 'أدخل بيانات الموقع، ثم بيانات اعتماد WordPress، ثم راجعها قبل الحفظ والاختبار والمزامنة.'
+                            : 'Enter the site profile, then WordPress credentials, then review them before save, test and synchronization.'}
                     </p>
                 </div>
             </section>
 
             <form className="toolbar-panel" onSubmit={submit}>
-                <label>
-                    <span>{locale === 'ar' ? 'اسم الموقع' : 'Site name'}</span>
-                    <input value={name} disabled={mutation.isPending} onChange={(event) => { setName(event.target.value); resetRequestIdentity(); }} />
-                </label>
-                <label>
-                    <span>{locale === 'ar' ? 'رابط الموقع' : 'Site URL'}</span>
-                    <input type="url" value={url} disabled={mutation.isPending} placeholder="https://example.com" onChange={(event) => { setUrl(event.target.value); resetRequestIdentity(); }} />
-                </label>
-                <label>
-                    <span>{locale === 'ar' ? 'اسم مستخدم WordPress' : 'WordPress username'}</span>
-                    <input autoComplete="username" value={username} disabled={mutation.isPending} onChange={(event) => { setUsername(event.target.value); resetRequestIdentity(); }} />
-                </label>
-                <label>
-                    <span>Application Password</span>
-                    <input
-                        type="password"
-                        autoComplete="new-password"
-                        value={applicationPassword}
-                        disabled={mutation.isPending}
-                        onChange={(event) => setApplicationPassword(event.target.value)}
-                    />
-                </label>
-                <p className="settings-note">
-                    {locale === 'ar'
-                        ? 'لا تتم إعادة عرض Application Password بعد الإرسال.'
-                        : 'The Application Password is cleared from the browser after submission and is never echoed back.'}
-                </p>
+                <div aria-live="polite">
+                    <strong>{locale === 'ar' ? `الخطوة ${step} من 3` : `Step ${step} of 3`}</strong>
+                </div>
+
+                {step === 1 ? (
+                    <>
+                        <label>
+                            <span>{locale === 'ar' ? 'اسم الموقع' : 'Site name'}</span>
+                            <input
+                                value={name}
+                                disabled={mutation.isPending}
+                                onChange={(event) => {
+                                    setName(event.target.value);
+                                    setStepError('');
+                                    resetRequestIdentity();
+                                }}
+                            />
+                        </label>
+                        <label>
+                            <span>{locale === 'ar' ? 'رابط الموقع' : 'Site URL'}</span>
+                            <input
+                                type="url"
+                                value={url}
+                                disabled={mutation.isPending}
+                                placeholder="https://example.com"
+                                onChange={(event) => {
+                                    setUrl(event.target.value);
+                                    setStepError('');
+                                    resetRequestIdentity();
+                                }}
+                            />
+                        </label>
+                    </>
+                ) : null}
+
+                {step === 2 ? (
+                    <>
+                        <label>
+                            <span>{locale === 'ar' ? 'اسم مستخدم WordPress' : 'WordPress username'}</span>
+                            <input
+                                autoComplete="username"
+                                value={username}
+                                disabled={mutation.isPending}
+                                onChange={(event) => {
+                                    setUsername(event.target.value);
+                                    setStepError('');
+                                    resetRequestIdentity();
+                                }}
+                            />
+                        </label>
+                        <label>
+                            <span>Application Password</span>
+                            <input
+                                type="password"
+                                autoComplete="new-password"
+                                value={applicationPassword}
+                                disabled={mutation.isPending}
+                                onChange={(event) => {
+                                    setApplicationPassword(event.target.value);
+                                    setStepError('');
+                                }}
+                            />
+                        </label>
+                        <p className="settings-note">
+                            {locale === 'ar'
+                                ? 'لا تتم إعادة عرض Application Password بعد الإرسال.'
+                                : 'The Application Password is cleared from the browser after submission and is never echoed back.'}
+                        </p>
+                    </>
+                ) : null}
+
+                {step === 3 ? (
+                    <section className="panel" aria-label={locale === 'ar' ? 'مراجعة بيانات الربط' : 'Connection review'}>
+                        <dl className="contract-details">
+                            <div><dt>{locale === 'ar' ? 'الموقع' : 'Site'}</dt><dd>{name.trim()}</dd></div>
+                            <div><dt>{locale === 'ar' ? 'الرابط' : 'URL'}</dt><dd>{url.trim()}</dd></div>
+                            <div><dt>{locale === 'ar' ? 'المستخدم' : 'Username'}</dt><dd>{username.trim()}</dd></div>
+                            <div><dt>{locale === 'ar' ? 'كلمة مرور التطبيق' : 'Application Password'}</dt><dd>••••••••</dd></div>
+                        </dl>
+                    </section>
+                ) : null}
+
+                {stepError ? <p role="alert">{stepError}</p> : null}
                 {errorMessage ? <p role="alert">{errorMessage}</p> : null}
-                <button type="submit" className="btn primary" disabled={disabled} data-canonical-operation={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}>
-                    {mutation.isPending
-                        ? (locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…')
-                        : (locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize')}
-                </button>
+
+                <div className="toolbar-actions">
+                    {step > 1 ? (
+                        <button type="button" className="btn" disabled={mutation.isPending} onClick={previousStep}>
+                            {locale === 'ar' ? 'السابق' : 'Previous'}
+                        </button>
+                    ) : null}
+
+                    {step < 3 ? (
+                        <button
+                            type="button"
+                            className="btn primary"
+                            disabled={mutation.isPending}
+                            data-canonical-operation={SITE_ONBOARDING_NEXT_OPERATION_ID}
+                            onClick={continueStep}
+                        >
+                            {locale === 'ar' ? 'التالي' : 'Continue'}
+                        </button>
+                    ) : (
+                        <button
+                            type="submit"
+                            className="btn primary"
+                            disabled={finalSubmitDisabled}
+                            data-canonical-operation={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}
+                        >
+                            {mutation.isPending
+                                ? (locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…')
+                                : (locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize')}
+                        </button>
+                    )}
+                </div>
             </form>
 
             {result ? (
