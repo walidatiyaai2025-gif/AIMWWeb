@@ -55,10 +55,10 @@ describe('AIMW-BILL-94755B17E4 Site Details SynchronizeAsync', () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3), { timeout: 2000 });
         expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/tenants/alpha/sites/17/sync');
-        expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-            method: 'POST',
-            headers: { 'Idempotency-Key': '11111111-1111-4111-8111-111111111111' },
-        });
+        expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' });
+        const requestHeaders = fetchMock.mock.calls[0]?.[1]?.headers;
+        expect(requestHeaders).toBeInstanceOf(Headers);
+        expect((requestHeaders as Headers).get('Idempotency-Key')).toBe('11111111-1111-4111-8111-111111111111');
         expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/tenants/alpha/sync-runs/41');
         expect(fetchMock.mock.calls[2]?.[0]).toBe('/api/tenants/alpha/sites/17');
         expect(await screen.findByRole('status')).toHaveTextContent('authoritative Site Details');
