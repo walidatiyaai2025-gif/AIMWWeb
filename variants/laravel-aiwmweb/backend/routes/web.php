@@ -61,7 +61,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/{site}/verify', [DemoController::class, 'verify'])
         ->defaults('canonical_operation_id', DemoController::SAVE_AND_TEST_OPERATION_ID)
         ->name('canonical.api.site-details.save-and-test');
-    Route::post('/sites/{site}/sync', [DemoController::class, 'sync']);
+    Route::post('/sites/{site}/sync', [DemoController::class, 'sync'])
+        ->defaults('canonical_operation_id', DemoController::SITE_DETAILS_SYNC_OPERATION_ID)
+        ->name('canonical.api.site-details.synchronize');
     Route::get('/sites/{site}/snapshot', SiteDataSnapshotController::class)
         ->defaults('canonical_operation_id', SiteDataSnapshotController::OPERATION_ID)
         ->name('canonical.api.site-data-snapshot');
