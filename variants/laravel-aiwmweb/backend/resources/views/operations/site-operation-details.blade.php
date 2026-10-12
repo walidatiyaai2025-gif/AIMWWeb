@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/site-operation-details-copy-report.ts'])
 </head>
 <body>
-    <main class="workspace-main" data-canonical-operation="AIMW-AI-3CDB30A4C2">
+    <main class="workspace-main" data-canonical-operation="AIMW-AI-3CDB30A4C2" data-canonical-load-operation="{{ \App\Http\Controllers\SiteOperationDetailsReadController::LOAD_OPERATION_ID }}">
         <section class="hero-panel" aria-labelledby="site-operation-heading">
             <div>
                 <span class="workspace-kicker">SITE OPERATION</span>
