@@ -1,6 +1,6 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-TAXO-D5A5B530C7 issue-1005-show-categories
-# exact-head: ff99e6ae08c6463d3b539fdeceaa2da76269495c
+# exact-head: 29ae8eef648a2c3ec85da55766d2221e4d3b9f3a
 # retrigger: issue-1005-materialize
 
 on:
