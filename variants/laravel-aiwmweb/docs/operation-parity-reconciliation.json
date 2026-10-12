@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 690,
-    "pending": 241,
+    "adapted": 691,
+    "pending": 240,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 690,
-    "overall_parity_percent": 74.11
+    "terminal": 691,
+    "overall_parity_percent": 74.22
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 40,
-      "pending": 124,
+      "adapted": 41,
+      "pending": 123,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 40,
-      "percent": 24.39
+      "terminal": 41,
+      "percent": 25.0
     },
     "email": {
       "total": 82,
@@ -16832,21 +16832,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubRouteTerminalityTest.php",
+      "evidence": "Global Content Hub /content canonical route terminality@fa06abdfabc3d435386644615f7d59f3adb49d94: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-CONT-65F2819526; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-content-hub-content-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "Global Content Hub /content canonical route terminality",
+        "source_sha": "fa06abdfabc3d435386644615f7d59f3adb49d94",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-content-hub-content-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-65F2819526",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -35980,12 +35993,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 57,
-      "pending": 27,
+      "adapted": 58,
+      "pending": 26,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 57,
-      "percent": 67.86
+      "terminal": 58,
+      "percent": 69.05
     },
     "service": {
       "total": 349,
@@ -36068,7 +36081,6 @@
       "AIMW-CONT-63EDB4BA6F",
       "AIMW-CONT-6458D3030B",
       "AIMW-CONT-659BEF8765",
-      "AIMW-CONT-65F2819526",
       "AIMW-CONT-6700342002",
       "AIMW-CONT-69B5134C7E",
       "AIMW-CONT-6AB0ED6C83",
@@ -36636,6 +36648,18 @@
           "AIMW-CONT-95341D9AB0"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "Global Content Hub /content canonical route terminality",
+        "sha": "fa06abdfabc3d435386644615f7d59f3adb49d94",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-65F2819526"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -36679,6 +36703,7 @@
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
+      "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "fcdb592864636e096ec75a4fab8beb580c380f6c"
     ],
@@ -36760,6 +36785,7 @@
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2F2E40D7F0",
       "AIMW-CONT-475267F150",
+      "AIMW-CONT-65F2819526",
       "AIMW-CONT-6F699A5C14",
       "AIMW-CONT-95341D9AB0",
       "AIMW-EMAI-2D94EFDD53",
@@ -36775,7 +36801,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 24,
+    "explicit_route_api_contract_count": 25,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
