@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/js/seo-visible-controls.tsx',
                 'resources/js/site-operations-maintenance-refresh.ts',
                 'resources/js/site-operations-maintenance-reload.ts',
+                'resources/js/site-operation-details-copy-report.ts',
             ],
             refresh: true,
             fonts: [
