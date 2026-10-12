@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #748 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-1A08B49164",
+  "terminal_state": "PENDING_CI",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/admin/application-users",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ApplicationUsers.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ApplicationUsers.razor:/admin/application-users:/admin/roles-permissions -> /admin/roles-permissions",
+    "source_intent": "Open the Roles & permissions workspace from Application Users.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "medium"
+  },
+  "laravel_runtime": {
+    "source_route": "GET /tenants/{tenant}/admin/application-users -> /admin/users",
+    "destination_browser_route": "GET /tenants/{tenant}/admin/roles-permissions via authenticated tenant SPA fallback",
+    "destination_workspace": "roles",
+    "authoritative_read": "GET /tenants/{tenant}/admin/roles",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/application-users-roles-permissions-link-control.tsx",
+    "operation_marker": "AIMW-CONT-1A08B49164"
+  },
+  "security": {
+    "control_permission": "roles.view or wildcard",
+    "server_shell_guard": "auth + tenant.context + tenant.view",
+    "authoritative_read_guard": "auth + tenant.context + tenant.view (roles read) with tenant isolation",
+    "tenant_selector": "active tenant slug encoded by tenantUrl",
+    "foreign_tenant": "404/fail closed",
+    "mutation_added": false,
+    "secrets_exposed": false
+  },
+  "acceptance": {
+    "vitest": "variants/laravel-aiwmweb/backend/resources/js/__tests__/application-users-roles-permissions-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationUsersRolesPermissionsLinkTerminalityTest.php",
+    "coverage": [
+      "exact source href semantics",
+      "exact canonical operation marker",
+      "roles.view fail-closed control visibility",
+      "encoded active-tenant destination",
+      "SPA destination resolves to real roles workspace",
+      "authoritative roles API read",
+      "foreign-tenant 404",
+      "no adjacent operation claim"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-1A08B49164"
+    ],
+    "sibling_operations_claimed": false,
+    "explicitly_not_claimed": [
+      "AIMW-CONT-E38ADF8481",
+      "AIMW-CONT-47C0477703",
+      "AIMW-CONT-9CF12067E6"
+    ],
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "ad16cfb46231cd4746a8db0709ac2be95fd742d3",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-1A08B49164-roles-permissions-link"
+  }
+}
