@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "63e1e34a1b7550e3c4500b5c827f3e2f8eda547e",
+  "previous_reconciliation_sha": "98f717b05a129cd33486d3ef8322aee948933815",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -850,6 +850,14 @@
       "observed_pr_head": "63d495a439a925c1353cca7477c98607a2c6f609",
       "operation_ids": [
         "AIMW-CONT-4209A8ADF4"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
+      "sha": "e8f82da6b81091a37a6ce844314577eb97e9d69d",
+      "observed_pr_head": "e8f82da6b81091a37a6ce844314577eb97e9d69d",
+      "operation_ids": [
+        "AIMW-EMAI-EC34E40629"
       ]
     }
   ]
