@@ -27,6 +27,7 @@
   },
   "acceptance_tests": [
     "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-details-synchronize-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsSynchronizeTerminalityTest.php",
     "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionCenterSynchronizeTerminalityTest.php"
   ],
   "issue": 724
