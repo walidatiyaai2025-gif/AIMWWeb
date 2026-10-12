@@ -131,6 +131,37 @@ final class SiteEmailSettingsController extends Controller
             ->with('success', 'Mail profile saved securely.');
     }
 
+    public function saveEdit(
+        Request $request,
+        string $tenant,
+        int $site,
+        int $recipient,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+        SiteEmailRecipientService $recipients,
+    ): RedirectResponse {
+        $this->authorizeWorkspace($tenant, $authorizer, $context);
+        Site::query()->findOrFail($site);
+
+        $validated = $request->validate([
+            'email_address' => ['required', 'email', 'max:320'],
+            'display_name' => ['nullable', 'string', 'max:120'],
+            'is_enabled' => ['required', 'boolean'],
+        ]);
+
+        $recipients->updateAsync(
+            $site,
+            $recipient,
+            (string) $validated['email_address'],
+            isset($validated['display_name']) ? (string) $validated['display_name'] : null,
+            (bool) $validated['is_enabled'],
+        );
+
+        return redirect()
+            ->route('canonical.workspace.site-email-settings.site', ['tenant' => $tenant, 'site' => $site])
+            ->with('success', 'Email recipient updated.');
+    }
+
     public function store(
         Request $request,
         string $tenant,
