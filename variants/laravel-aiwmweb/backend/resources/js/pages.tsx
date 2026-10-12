@@ -28,6 +28,7 @@ import { SiteOperationsExportControl } from './site-operations-export-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
+export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 
 const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previous?: string; refresh?: string }>> = {
@@ -291,7 +292,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 <form className="search-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput); }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
-                    <button type="submit" className="btn">{text(commonText.search)}</button>
+                    <button
+                        type="submit"
+                        className="btn"
+                        data-canonical-operation={route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined}
+                        disabled={route.key === 'comments' && query.isFetching}
+                        aria-busy={route.key === 'comments' && query.isFetching ? 'true' : 'false'}
+                    >
+                        {text(commonText.search)}
+                    </button>
                     {route.key === 'application-users' ? (
                         <ApplicationUsersClearSearchControl
                             searchValue={searchInput}
