@@ -6,23 +6,6 @@
     "focused_closure_evidence_source_sha": "04414452ca58aeacb52cbba8b43902a5f05c62e4",
     "countable_sources": [
         {
-            "label": "AIMW-BILL-94755B17E4 Site Details SynchronizeAsync closure",
-            "sha": "6b50bea6ec3f52d42748882bfad12570f2ff149e",
-            "observed_pr_head": "6b50bea6ec3f52d42748882bfad12570f2ff149e",
-            "domains": [
-                "billing"
-            ],
-            "supporting_only": true,
-            "operation_evidence": {
-                "AIMW-BILL-94755B17E4": {
-                    "destination_path": "variants/laravel-aiwmweb/backend/resources/js/site-details-synchronize-control.tsx",
-                    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php",
-                    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsSynchronizeTerminalityTest.php",
-                    "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-details-synchronize-terminality.json"
-                }
-            }
-        },
-        {
             "label": "Live Laravel closure composition after MainLayout, Approval Queue, and guarded-route provenance closure",
             "sha": "e26a7d9a254f7df980714b778491d0f864605087",
             "observed_pr_head": "e26a7d9a254f7df980714b778491d0f864605087",
