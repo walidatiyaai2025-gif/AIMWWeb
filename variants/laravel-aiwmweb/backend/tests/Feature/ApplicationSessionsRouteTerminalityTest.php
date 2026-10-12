@@ -134,11 +134,11 @@ final class ApplicationSessionsRouteTerminalityTest extends TestCase
         $core = (string) file_get_contents(resource_path('js/core.ts'));
 
         $this->assertStringContainsString(
-            "'sessions' => "/api/tenants/{\$tenant}/sessions"",
+            "'sessions' => \"/api/tenants/{\$tenant}/sessions\"",
             $routes,
         );
         $this->assertStringContainsString(
-            "'application-sessions' => "/api/tenants/{\$tenant}/admin/sessions"",
+            "'application-sessions' => \"/api/tenants/{\$tenant}/admin/sessions\"",
             $routes,
         );
         $this->assertStringContainsString(
