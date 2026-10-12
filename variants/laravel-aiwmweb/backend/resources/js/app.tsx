@@ -55,6 +55,7 @@ import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-con
 import { SiteDetailsBackControl } from './site-details-back-control';
 import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
 import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
+import { SiteDetailsSynchronizeControl } from './site-details-synchronize-control';
 import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
 import { SiteOnboardingSaveTestSyncControl } from './site-onboarding-save-test-sync-control';
 import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
@@ -166,6 +167,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
             <SiteDetailsBackControl context={context} />
             <SiteDetailsCancelSynchronizationControl context={context} />
             <SiteDetailsSettingsLinkControl context={context} />
+            <SiteDetailsSynchronizeControl context={context} />
             <SiteDetailsSiteUrlControl context={context} />
             <SiteDetailsRoute context={context} route={route} />
         </>
