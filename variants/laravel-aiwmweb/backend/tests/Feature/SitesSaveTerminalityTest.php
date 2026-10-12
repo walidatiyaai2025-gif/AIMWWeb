@@ -67,11 +67,16 @@ final class SitesSaveTerminalityTest extends TestCase
         $user = User::factory()->create();
         $tenant = $this->membership($user, 'owner-save', ['tenant.view', 'sites.view', 'sites.manage']);
 
-        $created = $this->actingAs($user)->postJson('/api/tenants/owner-save/sites', [
+        $this->actingAs($user)->postJson('/api/tenants/owner-save/sites', [
             'name' => 'Alpha',
             'url' => 'https://alpha.test/',
             'tenant_id' => 999,
             'status' => 'disabled',
+        ])->assertUnprocessable();
+
+        $created = $this->actingAs($user)->postJson('/api/tenants/owner-save/sites', [
+            'name' => 'Alpha',
+            'url' => 'https://alpha.test/',
         ])->assertCreated()->json();
 
         $this->assertDatabaseHas('sites', [
