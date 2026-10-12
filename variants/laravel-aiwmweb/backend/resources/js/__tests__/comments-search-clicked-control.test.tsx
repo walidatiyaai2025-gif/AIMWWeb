@@ -62,7 +62,7 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         expect(await screen.findByText('Second page')).toBeInTheDocument();
 
-        fireEvent.change(screen.getByRole('searchbox'), { target: { value: ' needle ' } });
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: ' needle ' } });
         const search = screen.getByRole('button', { name: 'Search' });
         expect(search).toHaveAttribute('data-canonical-operation', COMMENTS_SEARCH_OPERATION_ID);
         fireEvent.click(search);
@@ -84,7 +84,7 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
 
         renderComments();
         await screen.findByRole('button', { name: 'Search' });
-        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'missing' } });
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'missing' } });
         fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
         await waitFor(() => expect(fetchMock.mock.calls[1][0]).toBe('/api/v1/tenants/alpha/sites/7/comments?page=1&search=missing'));
@@ -104,7 +104,7 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
 
         renderComments();
         expect(await screen.findByText('Loaded')).toBeInTheDocument();
-        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'boom' } });
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'boom' } });
         fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
         expect(await screen.findByText('Data could not be loaded')).toBeInTheDocument();
