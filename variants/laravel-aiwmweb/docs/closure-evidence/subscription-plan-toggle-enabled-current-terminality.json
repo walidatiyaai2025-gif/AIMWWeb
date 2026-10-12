@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B00411742F",
+  "terminal_state": "ADAPTED",
+  "domain": "billing",
+  "kind": "visible_control",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-B00411742F",
+    "domain": "billing",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "source_control": "ToggleEnabledAsync"
+  },
+  "adaptation": {
+    "runtime_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlanEnabledController.php",
+    "route": "PATCH /tenants/{tenant}/admin/subscription-plans/{plan}/enabled",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "note": "The current canonical scanner identity maps to the already-real ToggleEnabledAsync Laravel runtime; no duplicate endpoint or mutation path is introduced."
+  },
+  "security": {
+    "permission": "settings.manage",
+    "active_tenant_server_derived": true,
+    "foreign_tenant_fails_closed": true,
+    "actor_server_derived": true,
+    "provider_fields_not_exposed_by_toggle": true
+  },
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlanToggleEnabledCurrentCanonicalTerminalityTest.php",
+  "issue": 739
+}
