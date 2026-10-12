@@ -16,6 +16,7 @@ use RuntimeException;
 final class SiteManagementController extends Controller
 {
     public const SAVE_OPERATION_ID = 'AIMW-BILL-54E4003BE9';
+
     public function index(TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
