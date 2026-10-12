@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-887504EDDD",
+  "terminal_state": "ADAPTED",
+  "domain": "billing",
+  "kind": "visible_control",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-887504EDDD",
+    "domain": "billing",
+    "kind": "visible_control",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "source_control": "SaveEntitlementsAsync"
+  },
+  "adaptation": {
+    "runtime_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlanEntitlementsController.php",
+    "route": "PATCH /tenants/{tenant}/admin/subscription-plans/{plan}/entitlements",
+    "read_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlansAdminReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "note": "The Laravel control persists the nine canonical entitlement definitions atomically, preserves unrelated legacy keys, rejects stale writes with a server-derived state token, rereads authoritative persistence, and records one server-actor audit for meaningful changes."
+  },
+  "security": {
+    "permission": "settings.manage",
+    "active_tenant_server_derived": true,
+    "foreign_tenant_fails_closed": true,
+    "actor_server_derived": true,
+    "identity_override_fields_prohibited": true,
+    "provider_fields_prohibited": true,
+    "optimistic_conflict_detection": true
+  },
+  "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlanSaveEntitlementsTerminalityTest.php",
+  "issue": 738
+}
