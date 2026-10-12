@@ -133,6 +133,18 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
     }
 
+    public function test_load_async_has_deterministic_storage_failure_retry_state(): void
+    {
+        $controller = (string) file_get_contents(app_path('Http/Controllers/SiteOperationDetailsReadController.php'));
+        $errorView = (string) file_get_contents(resource_path('views/operations/site-operation-details-load-error.blade.php'));
+
+        $this->assertStringContainsString("response()->view('operations.site-operation-details-load-error'", $controller);
+        $this->assertStringContainsString("], 503)", $controller);
+        $this->assertStringContainsString('data-load-operation-retry', $errorView);
+        $this->assertStringContainsString('SiteOperationDetailsReadController::LOAD_OPERATION_ID', $errorView);
+        $this->assertStringContainsString('storage failure has not been presented as an operation-not-found result', $errorView);
+    }
+
     public function test_canonical_and_source_alias_routes_are_explicit_uuid_guarded_reads(): void
     {
         $canonical = Route::getRoutes()->getByName('canonical.workspace.site-operation-details');
