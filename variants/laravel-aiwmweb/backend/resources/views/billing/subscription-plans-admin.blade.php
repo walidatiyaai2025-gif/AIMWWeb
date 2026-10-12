@@ -37,7 +37,14 @@
 
     <section data-canonical-operation="AIMW-BILL-5AF09ADABA" aria-label="{{ app()->getLocale() === 'ar' ? 'إنشاء خطة' : 'Create plan' }}">
         <h2>{{ app()->getLocale() === 'ar' ? 'إنشاء خطة اشتراك' : 'Create subscription plan' }}</h2>
-        <form method="post" action="{{ route('tenant.admin.subscription-plans.save', ['tenant' => $tenant->slug]) }}">
+        <p
+            role="status"
+            aria-live="polite"
+            data-clone-current-status
+            data-canonical-operation="AIMW-BILL-7BD7B04B26"
+            hidden
+        ></p>
+        <form method="post" action="{{ route('tenant.admin.subscription-plans.save', ['tenant' => $tenant->slug]) }}" data-plan-create-form>
             @csrf
             <label>Plan code <input name="code" required maxlength="64" pattern="[a-z0-9][a-z0-9._-]{0,63}" value="{{ old('code') }}"></label>
             <label>English name <input name="name_en" required maxlength="160" value="{{ old('name_en') }}"></label>
@@ -79,7 +86,7 @@
                     <dt>{{ app()->getLocale() === 'ar' ? 'الحالة' : 'Status' }}</dt><dd>{{ $plan->enabled && $plan->retired_at === null ? (app()->getLocale() === 'ar' ? 'مفعلة' : 'Enabled') : (app()->getLocale() === 'ar' ? 'معطلة' : 'Disabled') }}</dd>
                 </dl>
 
-                <form method="post" action="{{ route('tenant.admin.subscription-plans.update', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-5AF09ADABA">
+                <form method="post" action="{{ route('tenant.admin.subscription-plans.update', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-5AF09ADABA" data-plan-editor>
                     @csrf
                     @method('PATCH')
                     <label>English name <input name="name_en" required maxlength="160" value="{{ $nameEn }}"></label>
@@ -101,6 +108,14 @@
                     <label><input name="clear_gateway_plan_id" type="checkbox" value="1"> Clear PayPal Plan ID</label>
                     <button type="submit">{{ app()->getLocale() === 'ar' ? 'حفظ الخطة' : 'Save plan' }}</button>
                 </form>
+
+                <button
+                    type="button"
+                    data-clone-current
+                    data-canonical-operation="AIMW-BILL-7BD7B04B26"
+                    data-message-en="A disabled clone is ready. Adjust its code and details, then save it."
+                    data-message-ar="تم تجهيز نسخة غير مفعلة. غيّر الكود والبيانات ثم احفظها."
+                >{{ app()->getLocale() === 'ar' ? 'نسخ كخطة جديدة' : 'Clone as new' }}</button>
 
                 <form method="post" action="{{ route('tenant.admin.subscription-plans.enabled', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-B00411742F" data-runtime-operation="AIMW-BILL-812D1C53B6">
                     @csrf
@@ -148,5 +163,6 @@
         @endforelse
     </section>
 </main>
+<script src="{{ asset('js/subscription-plans-clone-current.js') }}" defer></script>
 </body>
 </html>
