@@ -58,7 +58,7 @@ export function buildSiteOperationsCsv(rows: Row[]): string {
             row.started_at ?? '',
             siteName(row),
             row.site_id ?? '',
-            row.execution_job_id ?? row.correlation_id ?? '',
+            row.execution_job_id ?? '',
             row.operation ?? '',
             result,
             durationMs(row),
