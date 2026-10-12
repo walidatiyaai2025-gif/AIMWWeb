@@ -406,7 +406,7 @@ return [
             ['key' => 'last_name', 'type' => 'text', 'label' => ['en' => 'Last name', 'ar' => 'اسم العائلة']],
             ['key' => 'url', 'type' => 'text', 'label' => ['en' => 'Website', 'ar' => 'الموقع']],
             ['key' => 'description', 'type' => 'textarea', 'label' => ['en' => 'Description', 'ar' => 'الوصف']],
-            ['key' => 'role', 'type' => 'select', 'label' => ['en' => 'Role', 'ar' => 'الدور'], 'required' => true, 'options' => [
+            ['key' => 'role', 'type' => 'select', 'label' => ['en' => 'Role (defaults to Subscriber)', 'ar' => 'الدور (الافتراضي: مشترك)'], 'options' => [
                 ['value' => 'administrator', 'label' => ['en' => 'Administrator', 'ar' => 'مدير']],
                 ['value' => 'editor', 'label' => ['en' => 'Editor', 'ar' => 'محرر']],
                 ['value' => 'author', 'label' => ['en' => 'Author', 'ar' => 'كاتب']],
