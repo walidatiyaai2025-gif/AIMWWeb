@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Email\Services\SiteEmailRecipientService;
 use App\Email\Services\SiteMailProfileService;
+use App\Email\Services\SmtpDiagnosticsService;
 use App\Models\Site;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,8 @@ final class SiteEmailSettingsController extends Controller
     public const DIAGNOSTICS_BACK_OPERATION_ID = 'AIMW-EMAI-8E56589573';
 
     public const SAVE_MAIL_PROFILE_OPERATION_ID = 'AIMW-BILL-609F15BFCA';
+
+    public const SEND_TEST_OPERATION_ID = 'AIMW-BILL-BC093D6418';
 
     public function module(
         Request $request,
@@ -86,7 +89,31 @@ final class SiteEmailSettingsController extends Controller
             'profile' => $profile,
             'suggestedRecipient' => $siteRecipients->firstWhere('is_enabled', true),
             'backOperationId' => self::DIAGNOSTICS_BACK_OPERATION_ID,
+            'sendTestOperationId' => self::SEND_TEST_OPERATION_ID,
         ]);
+    }
+
+    public function sendTest(
+        Request $request,
+        string $tenant,
+        int $site,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+        SmtpDiagnosticsService $diagnostics,
+    ): RedirectResponse {
+        $this->authorizeWorkspace($tenant, $authorizer, $context);
+        Site::query()->findOrFail($site);
+
+        $validated = $request->validate([
+            'recipient' => ['required', 'email', 'max:320'],
+        ]);
+
+        $result = $diagnostics->sendTest($site, (string) $validated['recipient']);
+
+        return redirect()
+            ->route('canonical.workspace.site-email-diagnostics', ['tenant' => $tenant, 'site' => $site])
+            ->withInput()
+            ->with('smtp_diagnostic_result', $result);
     }
 
     public function saveMailProfile(
