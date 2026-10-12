@@ -30,7 +30,8 @@
     "not_found": "Invalid UUID, unavailable record, foreign tenant and cross-tenant correlation identifiers fail closed as 404.",
     "mutation": false,
     "external_call": false,
-    "fake_success_path": "none"
+    "fake_success_path": "none",
+    "error_state": "Retained-history storage/read failure renders a dedicated 503 state with a Retry link bound to the same canonical LoadAsync operation; it is not presented as not-found."
   },
   "security_boundary": {
     "authentication": "Laravel auth middleware",
@@ -41,11 +42,12 @@
     "direct_object_identifier": "correlation UUID is resolved only inside active tenant scope"
   },
   "acceptance_tests": [
-    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php — binds AIMW-BILL-B26D5099F8 to the real tenant-scoped read, proves no persistence mutation, authoritative rendering, redaction, and guest/permission/foreign-tenant/cross-tenant fail-closed behavior."
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php — binds AIMW-BILL-B26D5099F8 to the real tenant-scoped read, proves no persistence mutation, authoritative rendering, redaction, and guest/permission/foreign-tenant/cross-tenant fail-closed behavior.",
+    "The focused feature test also verifies the dedicated 503 storage-failure view, canonical Retry marker, and explicit non-404 failure copy."
   ],
   "terminality": {
     "state": "ADAPTED",
-    "basis": "The canonical LoadAsync behavior is backed by the real tenant-scoped retained operation history read, renders authoritative data without mutation, and preserves the source fail-closed security boundary."
+    "basis": "The canonical LoadAsync behavior is backed by the real tenant-scoped retained operation-history read, renders authoritative data without mutation, distinguishes unavailable records from storage/read failures, and preserves the source fail-closed security boundary."
   },
   "scope_exclusions": [
     "No ASP.NET runtime changes",
