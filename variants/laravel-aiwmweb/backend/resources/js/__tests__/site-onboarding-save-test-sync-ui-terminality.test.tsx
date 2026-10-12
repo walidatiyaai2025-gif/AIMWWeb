@@ -148,10 +148,12 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             application_password: 'application-secret-123',
         });
 
-        await waitFor(() => expect(secret).toHaveValue(''));
         expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
         expect(screen.getByText('Sync: queued')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(screen.getByLabelText('Application Password')).toHaveValue('');
     });
 
     it('retries the failed saved profile only with the server-issued opaque retry token', async () => {
@@ -203,10 +205,10 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             username: 'wp-admin',
             application_password: 'first-secret-value',
         });
-        await waitFor(() => expect(secret).toHaveValue(''));
         expect(await screen.findByRole('alert')).toHaveTextContent('WordPress connection test failed');
 
         fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        expect(screen.getByLabelText('Application Password')).toHaveValue('');
         fireEvent.change(screen.getByLabelText('Application Password'), { target: { value: 'second-secret-value' } });
         fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
         fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
