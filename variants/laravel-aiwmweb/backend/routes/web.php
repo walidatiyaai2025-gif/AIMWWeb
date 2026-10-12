@@ -368,7 +368,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/logs', 'redirect')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->defaults('workspace_target', '/module/logs')->name('canonical.alias.logs');
         Route::get('/operations/hub', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/operations')->name('canonical.alias.operations-hub');
         Route::get('/backups', 'redirect')->defaults('workspace_permissions', 'backup.manage,backups.view')->defaults('workspace_target', '/module/backups')->name('canonical.alias.backups');
-        Route::get('/configuration-validation', 'redirect')->defaults('workspace_permissions', 'settings.manage')->defaults('workspace_target', '/module/configuration')->name('canonical.alias.configuration-validation');
+        Route::get('/configuration-validation', 'redirect')->defaults('workspace_permissions', 'settings.manage')->defaults('workspace_target', '/module/configuration')->defaults('canonical_operation_id', 'AIMW-CONT-95341D9AB0')->name('canonical.alias.configuration-validation');
         Route::get('/reports', 'redirect')->defaults('workspace_permissions', 'reports.view')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
         Route::get('/operations/sites', 'redirect')->defaults('workspace_permissions', 'execution.view')->defaults('workspace_target', '/site-operations')->name('canonical.alias.operations-sites');
         Route::get('/operations/reliability', 'redirect')->defaults('workspace_permissions', 'sites.view')->defaults('workspace_target', '/site-reliability')->name('canonical.alias.operations-reliability');
