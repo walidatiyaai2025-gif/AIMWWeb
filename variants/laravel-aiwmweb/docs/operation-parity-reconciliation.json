@@ -35896,12 +35896,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-categories-control.test.tsx",
-      "evidence": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure@ff99e6ae08c6463d3b539fdeceaa2da76269495c: variants/laravel-aiwmweb/backend/resources/js/pages.tsx; focused-closure:AIMW-TAXO-D5A5B530C7; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-categories-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-show-categories-terminality.json",
+      "evidence": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure@c7ef213efe1db541c88bb202110b53fbdf61200e: variants/laravel-aiwmweb/backend/resources/js/pages.tsx; focused-closure:AIMW-TAXO-D5A5B530C7; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-categories-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-show-categories-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
-        "source_sha": "ff99e6ae08c6463d3b539fdeceaa2da76269495c",
+        "source_sha": "c7ef213efe1db541c88bb202110b53fbdf61200e",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-show-categories-terminality.json",
@@ -37021,7 +37021,7 @@
       },
       {
         "label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
-        "sha": "ff99e6ae08c6463d3b539fdeceaa2da76269495c",
+        "sha": "c7ef213efe1db541c88bb202110b53fbdf61200e",
         "operation_ids": [
           "AIMW-TAXO-D5A5B530C7"
         ]
