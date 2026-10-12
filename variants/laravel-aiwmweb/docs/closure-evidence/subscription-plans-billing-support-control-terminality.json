@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "9e97c2bf5e6a85fd0213973a73366a806ad2b281",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-5E8896CD58",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "source_screen": "/admin/subscription-plans",
+    "source_control": "Billing support / دعم الفوترة -> /admin/billing-support",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "medium",
+    "external_dependency": "payment_provider",
+    "verification": "source-equivalent read-only navigation reaches the existing real guarded global billing-support surface without fabricating provider state"
+  },
+  "source_behavior": {
+    "summary": "The Subscription Plans administration toolbar exposes a visible Billing support action to /admin/billing-support while the source page requires Settings.Manage.",
+    "side_effect": "navigation only",
+    "mutation": false,
+    "billing_provider_behavior": "none; the control does not call PayPal, claim readiness, or mutate billing/provider state",
+    "success_semantics": "browser navigation only; no success receipt or provider outcome is synthesized"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/admin/subscription-plans",
+    "source_route_name": "tenant.admin.subscription-plans",
+    "source_controller": "App\\Http\\Controllers\\SubscriptionPlansAdminReadController",
+    "source_authorization": "settings.manage",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "target_builder": "route('canonical.admin.billing-support')",
+    "target_route": "/admin/billing-support",
+    "target_route_name": "canonical.admin.billing-support",
+    "target_controller": "App\\Http\\Controllers\\AdminBillingSupportReadController",
+    "target_authorization": "platform.admin",
+    "caller_selected_resource_id": false,
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false,
+    "provider_secret_exposure": false
+  },
+  "runtime_path": [
+    "authenticated tenant member requests /tenants/{tenant}/admin/subscription-plans",
+    "auth + tenant.context resolve the active membership and SubscriptionPlansAdminReadController enforces settings.manage plus exact tenant slug match",
+    "the persisted plan catalog renders the source-equivalent Billing support anchor using the named global route, ignoring caller tenant/return overrides",
+    "navigation reaches the real global /admin/billing-support route",
+    "the destination independently enforces auth + platform.admin and renders authoritative support state without provider-success fabrication"
+  ],
+  "authorization": {
+    "source_route": [
+      "auth",
+      "tenant.context",
+      "settings.manage"
+    ],
+    "target_route": [
+      "auth",
+      "platform.admin"
+    ],
+    "guest_source": "redirects to canonical login",
+    "missing_settings_manage": "403 on source",
+    "non_platform_admin_destination": "403 on destination",
+    "note": "Laravel keeps the already-established stronger global platform-admin boundary on the billing-support surface; the visible source control itself does not grant destination authority."
+  },
+  "tenant_isolation": {
+    "source_tenant_source": "server-resolved TenantContext tenant slug",
+    "foreign_tenant_source": "404 when the authenticated user has no active membership for the requested tenant",
+    "query_override": "caller tenant/return query values do not alter the generated global target",
+    "direct_id_surface": "none; control and destination carry no plan, subscription, provider, user, or membership ID",
+    "idor_result": "no cross-tenant direct-ID surface is introduced"
+  },
+  "runtime_semantics": {
+    "real_visible_control": true,
+    "real_explicit_source_route": true,
+    "real_explicit_destination_route": true,
+    "read_only": true,
+    "persistence_mutation": false,
+    "provider_side_effect": false,
+    "provider_success_fabricated": false,
+    "idempotency": "repeated navigation is read-only",
+    "retry_safety": "safe to repeat without side effects"
+  },
+  "acceptance_tests": {
+    "php_feature": [
+      "SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_canonical_ledger_row_is_the_pending_billing_support_visible_control",
+      "SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_reference_control_is_settings_manage_navigation_only",
+      "SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_source_and_destination_are_real_guarded_routes_without_resource_ids",
+      "SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_platform_admin_settings_manager_sees_source_equivalent_control_and_reaches_real_support_surface_without_mutation",
+      "SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_guest_missing_source_permission_foreign_tenant_and_non_platform_destination_fail_closed"
+    ]
+  },
+  "implementation_snapshot_sha": "a4d7e415fbfa599c3f4b33ec83bd6f58739f3b9d",
+  "canonical_denominator": {
+    "source": "authoritative composition 9e97c2bf5e6a85fd0213973a73366a806ad2b281",
+    "total": 931,
+    "previous_terminal": 684,
+    "expected_terminal_after_this_one_operation": 685,
+    "previous_pending": 247,
+    "expected_pending_after_this_one_operation": 246,
+    "blocked": 0
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-5E8896CD58",
+    "destination_route_operation_claimed": false,
+    "other_subscription_plan_controls_claimed": false,
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The exact source navigation is rendered on the real guarded Subscription Plans admin route, points to the real guarded billing-support route, introduces no caller-selected resource or billing mutation surface, fabricates no provider state, preserves fail-closed source/destination authorization, and has focused deterministic acceptance coverage."
+  }
+}
