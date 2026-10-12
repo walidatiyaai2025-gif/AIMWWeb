@@ -282,7 +282,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::get('/roles', 'roles');
         Route::post('/roles', 'saveRole');
         Route::put('/roles/{role}', 'saveRole');
-        Route::get('/sessions', 'sessions');
+        Route::get('/sessions', 'sessions')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-6B051BD8C0')
+            ->name('canonical.application-sessions');
         Route::delete('/sessions/others', 'revokeOtherSessions');
         Route::delete('/sessions/{session}', 'revokeSession');
         Route::get('/settings/platform', 'platformSettings');
