@@ -1,14 +1,14 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-TAXO-ECDD00F787 issue-1007-back-to-explorer refresh-base-516e6857
-# exact-head: d99a587944f0af7d0901f7b6f07891a4b5f5329e
+# trigger: AIMW-BILL-5DE86937F7 issue-728-site-onboarding-next
+# exact-head: a070e4aa94502cfb48375ce3f5ac0b5a3b70bef4
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-TAXO-ECDD00F787-parity-materialize
+      - worker/laravel-aiwmweb-AIMW-BILL-5DE86937F7-parity-materialize
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-back-to-explorer-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/site-onboarding-next-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -49,5 +49,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-TAXO-ECDD00F787"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-5DE86937F7"
           git push origin "HEAD:${{ github.ref_name }}"
