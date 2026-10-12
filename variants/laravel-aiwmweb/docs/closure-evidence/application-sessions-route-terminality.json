@@ -36,16 +36,17 @@
     "route": "/tenants/{tenant}/admin/sessions",
     "method": "GET",
     "route_name": "canonical.application-sessions",
-    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApplicationSessionsReadController.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php#sessions",
     "view": "variants/laravel-aiwmweb/backend/resources/views/admin/application-sessions.blade.php",
-    "provider": "variants/laravel-aiwmweb/backend/app/Providers/ApplicationSessionsRouteServiceProvider.php",
+    "provider": "variants/laravel-aiwmweb/backend/routes/web.php",
     "authoritative_data": "Laravel database sessions joined to active tenant memberships",
-    "operation_marker": "AIMW-CONT-6B051BD8C0"
+    "operation_marker": "AIMW-CONT-6B051BD8C0",
+    "compatibility": "The pre-existing JSON sessions contract remains available when the client requests JSON; browser HTML requests render the canonical read surface."
   },
   "authorization_and_isolation": {
     "session": "required",
     "tenant_context": "required",
-    "permission_mapping": "members.manage (Laravel administrative user-management boundary)",
+    "permission_mapping": "members.manage for the canonical HTML admin surface; sessions.manage retained for the existing JSON self-session API",
     "foreign_tenant": "404/fail closed",
     "foreign_tenant_sessions_exposed": false,
     "expired_sessions_exposed": false
@@ -56,7 +57,8 @@
     "placeholder": false,
     "fake_success": false,
     "deterministic_empty_state": true,
-    "secret_exposure": false
+    "secret_exposure": false,
+    "backward_compatible_json_api": true
   },
   "scope_guards": {
     "only_operation_claimed": "AIMW-CONT-6B051BD8C0",
