@@ -8,11 +8,15 @@ use App\Models\Site;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Throwable;
 
 final class SiteOperationDetailsReadController extends Controller
 {
     public const EXECUTION_CENTER_OPERATION_ID = 'AIMW-AI-98F705F888';
+
+    public const LOAD_OPERATION_ID = 'AIMW-BILL-B26D5099F8';
 
     public function __invoke(
         string $tenant,
@@ -20,12 +24,25 @@ final class SiteOperationDetailsReadController extends Controller
         SiteOperationHistoryService $history,
         TenantAuthorizer $authorizer,
         TenantContext $context,
-    ): View {
+    ): View|Response {
         $authorizer->authorize('execution.view');
         abort_unless($context->tenant()->slug === $tenant, 404);
         abort_unless(Str::isUuid($operationId), 404);
 
-        $operation = $history->getByCorrelationId($operationId);
+        try {
+            $operation = $history->getByCorrelationId($operationId);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->view('operations.site-operation-details-load-error', [
+                'retryUrl' => route('canonical.workspace.site-operation-details', [
+                    'tenant' => $tenant,
+                    'operationId' => $operationId,
+                ]),
+                'historyUrl' => route('canonical.workspace.site-operations', ['tenant' => $tenant]),
+            ], 503);
+        }
+
         abort_if($operation === null, 404);
 
         $site = Site::query()->find($operation->site_id);

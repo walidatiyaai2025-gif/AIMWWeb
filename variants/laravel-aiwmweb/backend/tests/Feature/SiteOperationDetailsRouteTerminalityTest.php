@@ -31,6 +31,8 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
 
     private const COPY_REPORT_OPERATION_ID = 'AIMW-BILL-AA8C2FD5B3';
 
+    private const LOAD_OPERATION_ID = 'AIMW-BILL-B26D5099F8';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -102,6 +104,45 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
             ->assertDontSee('never-render-this-secret');
 
         $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
+    }
+
+    public function test_load_async_control_reads_the_authoritative_tenant_scoped_operation_without_mutation(): void
+    {
+        $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor'));
+        $this->assertStringContainsString('private async Task LoadAsync()', $source);
+        $this->assertStringContainsString('History.GetById', $source);
+
+        $tenant = Tenant::query()->create(['name' => 'Alpha Load', 'slug' => 'alpha-load']);
+        $user = User::factory()->create();
+        $membership = $this->membership($user, $tenant, ['tenant.view', 'execution.view']);
+        $correlationId = (string) Str::uuid();
+        $this->recordOperation($membership, $correlationId, 'Load Site');
+
+        $before = SiteOperationHistory::query()->withoutGlobalScopes()->count();
+
+        $response = $this->actingAs($user)->get("/tenants/alpha-load/site-operations/{$correlationId}");
+
+        $response->assertOk()
+            ->assertSee('data-canonical-load-operation="'.self::LOAD_OPERATION_ID.'"', false)
+            ->assertSee($correlationId)
+            ->assertSee('Load Site')
+            ->assertSee('Synced authoritative content')
+            ->assertDontSee('never-render-this-secret');
+
+        $this->assertSame(SiteOperationDetailsReadController::LOAD_OPERATION_ID, self::LOAD_OPERATION_ID);
+        $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
+    }
+
+    public function test_load_async_has_deterministic_storage_failure_retry_state(): void
+    {
+        $controller = (string) file_get_contents(app_path('Http/Controllers/SiteOperationDetailsReadController.php'));
+        $errorView = (string) file_get_contents(resource_path('views/operations/site-operation-details-load-error.blade.php'));
+
+        $this->assertStringContainsString('response()->view(\'operations.site-operation-details-load-error\'', $controller);
+        $this->assertStringContainsString('], 503)', $controller);
+        $this->assertStringContainsString('data-load-operation-retry', $errorView);
+        $this->assertStringContainsString('SiteOperationDetailsReadController::LOAD_OPERATION_ID', $errorView);
+        $this->assertStringContainsString('storage failure has not been presented as an operation-not-found result', $errorView);
     }
 
     public function test_canonical_and_source_alias_routes_are_explicit_uuid_guarded_reads(): void
