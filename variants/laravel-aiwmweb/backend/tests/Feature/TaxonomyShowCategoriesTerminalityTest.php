@@ -86,7 +86,7 @@ final class TaxonomyShowCategoriesTerminalityTest extends TestCase
         $this->assertStringContainsString("setTaxonomyType('category')", $pages);
         $this->assertStringContainsString('{ taxonomy: taxonomyType }', $pages);
         $this->assertStringContainsString('Site::query()->findOrFail($site)', $controller);
-        $this->assertStringContainsString("where('taxonomy', $taxonomy)", $controller);
+        $this->assertStringContainsString("where('taxonomy', \$taxonomy)", $controller);
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
