@@ -82,11 +82,11 @@ final class TaxonomyShowTagsTerminalityTest extends TestCase
 
         $this->assertStringContainsString('ShowTags', $source);
         $this->assertStringContainsString(self::OPERATION_ID, $pages);
-        $this->assertStringContainsString("useState<'category' | 'post_tag'>('category')", $pages);
-        $this->assertStringContainsString("setTaxonomyType('post_tag')", $pages);
-        $this->assertStringContainsString("{ taxonomy: taxonomyType }", $pages);
-        $this->assertStringContainsString("Site::query()->findOrFail(\$site)", $controller);
-        $this->assertStringContainsString("where('taxonomy', \$taxonomy)", $controller);
+        $this->assertStringContainsString('useState<\'category\' | \'post_tag\'>(\'category\')', $pages);
+        $this->assertStringContainsString('setTaxonomyType(\'post_tag\')', $pages);
+        $this->assertStringContainsString('{ taxonomy: taxonomyType }', $pages);
+        $this->assertStringContainsString('Site::query()->findOrFail($site)', $controller);
+        $this->assertStringContainsString('where(\'taxonomy\', $taxonomy)', $controller);
     }
 
     private function membership(User $user, string $slug, array $permissions): TenantMembership
