@@ -173,7 +173,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
 
-    const taxonomyFilter = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
+    const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
     const query = useQuery({
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
