@@ -255,6 +255,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
                 'comments' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/comments",
                 'taxonomy' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/taxonomy",
+                'wp-users' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/users",
                 'sync' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/sync",
                 'seo-audit' => "/api/tenants/{$tenant}/sites/{$siteId}/seo/audits",
             ];
