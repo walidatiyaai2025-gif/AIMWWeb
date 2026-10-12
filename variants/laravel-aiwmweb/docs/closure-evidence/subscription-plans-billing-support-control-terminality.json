@@ -91,7 +91,7 @@
       "SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_guest_missing_source_permission_foreign_tenant_and_non_platform_destination_fail_closed"
     ]
   },
-  "implementation_snapshot_sha": "a4d7e415fbfa599c3f4b33ec83bd6f58739f3b9d",
+  "implementation_snapshot_sha": "0fae3d6828752173b266b29f296ae566625dc906",
   "canonical_denominator": {
     "source": "authoritative composition 9e97c2bf5e6a85fd0213973a73366a806ad2b281",
     "total": 931,
