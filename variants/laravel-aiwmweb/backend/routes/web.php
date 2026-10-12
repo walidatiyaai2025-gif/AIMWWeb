@@ -42,6 +42,10 @@ Route::post('/api/logout', [DemoController::class, 'logout'])->middleware('auth'
 
 Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->group(function () {
     Route::get('/sites', [SiteManagementController::class, 'index']);
+    Route::get('/sessions', [AdminOperationsController::class, 'sessions'])
+        ->name('canonical.api.my-sessions');
+    Route::get('/admin/sessions', [AdminOperationsController::class, 'applicationSessions'])
+        ->name('canonical.api.application-sessions');
     Route::post('/sites/onboarding', [SiteOnboardingController::class, 'store'])
         ->defaults('canonical_operation_id', SiteOnboardingController::OPERATION_ID)
         ->name('canonical.api.site-onboarding.save-test-sync');
@@ -244,7 +248,8 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'content-planner' => "/api/tenants/{$tenant}/content-planner/items",
             'application-users' => "/tenants/{$tenant}/admin/members",
             'roles' => "/tenants/{$tenant}/admin/roles",
-            'sessions' => "/tenants/{$tenant}/admin/sessions",
+            'sessions' => "/api/tenants/{$tenant}/sessions",
+            'application-sessions' => "/api/tenants/{$tenant}/admin/sessions",
         ];
         if ($site) {
             $siteId = (int) $site->getKey();
@@ -282,7 +287,6 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::get('/roles', 'roles');
         Route::post('/roles', 'saveRole');
         Route::put('/roles/{role}', 'saveRole');
-        Route::get('/sessions', 'sessions');
         Route::delete('/sessions/others', 'revokeOtherSessions');
         Route::delete('/sessions/{session}', 'revokeSession');
         Route::get('/settings/platform', 'platformSettings');
@@ -338,6 +342,10 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
+        Route::get('/admin/sessions', 'show')
+            ->defaults('workspace_permissions', 'users.manage')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-6B051BD8C0')
+            ->name('canonical.workspace.admin-sessions');
         Route::get('/admin/billing-support', 'show')->middleware('platform.admin')->defaults('workspace_permissions', '')->name('canonical.workspace.admin-billing-support');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
