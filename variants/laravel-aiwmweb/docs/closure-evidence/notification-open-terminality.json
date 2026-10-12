@@ -43,11 +43,19 @@
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-EMAI-BDF888551C"],
+    "claimed_operations": [
+      "AIMW-EMAI-BDF888551C"
+    ],
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false,
     "core_variant_modified": false,
     "mutation_added": false,
     "destructive_migration": false
+  },
+  "materialization": {
+    "workflow_run": 38209135721,
+    "materialized_head": "836eeaa7fe1729005859ad9d24aafd9d2ae3cb5f",
+    "result": "success",
+    "note": "Official parity materializer completed before this evidence-sealing commit; this commit changes evidence metadata only."
   }
 }
