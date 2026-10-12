@@ -16,6 +16,8 @@ final class SiteEmailRecipientService
 {
     public const ADD_OPERATION_ID = 'AIMW-BILL-07134347F9';
 
+    public const UPDATE_OPERATION_ID = 'AIMW-BILL-F189D80354';
+
     public const ENTITLEMENT_KEY = 'email.siteRecipients.max';
 
     public function __construct(
@@ -67,6 +69,48 @@ final class SiteEmailRecipientService
                 'is_enabled' => true,
                 'created_by_user_id' => $userId > 0 ? $userId : null,
             ]);
+        }, 3);
+    }
+
+    public function updateAsync(
+        int $siteId,
+        int $recipientId,
+        string $emailAddress,
+        ?string $displayName,
+        bool $enabled,
+    ): SiteEmailRecipient {
+        $this->authorizer->authorize('settings.manage');
+        $email = $this->normalizeEmail($emailAddress);
+        $normalized = mb_strtoupper($email, 'UTF-8');
+        $display = $this->normalizeDisplayName($displayName);
+
+        return DB::transaction(function () use ($siteId, $recipientId, $email, $normalized, $display, $enabled): SiteEmailRecipient {
+            Site::query()->whereKey($siteId)->lockForUpdate()->firstOrFail();
+            $recipient = SiteEmailRecipient::query()
+                ->where('site_id', $siteId)
+                ->whereKey($recipientId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $duplicate = SiteEmailRecipient::query()
+                ->where('site_id', $siteId)
+                ->where('normalized_email_address', $normalized)
+                ->where('id', '<>', $recipientId)
+                ->exists();
+            if ($duplicate) {
+                throw ValidationException::withMessages([
+                    'email_address' => 'This email address is already configured for the selected site.',
+                ]);
+            }
+
+            $recipient->update([
+                'email_address' => $email,
+                'normalized_email_address' => $normalized,
+                'display_name' => $display,
+                'is_enabled' => $enabled,
+            ]);
+
+            return $recipient->refresh();
         }, 3);
     }
 

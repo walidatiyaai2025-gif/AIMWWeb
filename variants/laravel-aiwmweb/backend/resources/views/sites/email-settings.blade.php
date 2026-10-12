@@ -27,6 +27,9 @@
         'empty' => 'لا يوجد مستلمون لهذا الموقع.',
         'status' => 'الحالة',
         'enabled' => 'مفعّل',
+        'disabled' => 'متوقف',
+        'edit' => 'تعديل',
+        'save' => 'حفظ',
         'back' => 'العودة إلى تفاصيل الموقع',
     ] : [
         'title' => 'Site email settings',
@@ -55,6 +58,9 @@
         'empty' => 'No recipients are configured for this site.',
         'status' => 'Status',
         'enabled' => 'Enabled',
+        'disabled' => 'Disabled',
+        'edit' => 'Edit',
+        'save' => 'Save',
         'back' => 'Back to site details',
     ];
 @endphp
@@ -196,9 +202,33 @@
                         <tbody>
                         @foreach ($recipients as $recipient)
                             <tr>
-                                <td>{{ $recipient->email_address }}</td>
-                                <td>{{ $recipient->display_name ?: '—' }}</td>
-                                <td>{{ $recipient->is_enabled ? $copy['enabled'] : '—' }}</td>
+                                <td colspan="3">
+                                    <details>
+                                        <summary>
+                                            <strong>{{ $recipient->email_address }}</strong>
+                                            · {{ $recipient->display_name ?: '—' }}
+                                            · {{ $recipient->is_enabled ? $copy['enabled'] : $copy['disabled'] }}
+                                            · {{ $copy['edit'] }}
+                                        </summary>
+                                        <form
+                                            method="post"
+                                            action="{{ route('canonical.workspace.site-email-settings.recipient-update', ['tenant' => $tenant, 'site' => $selectedSite->getKey(), 'recipient' => $recipient->getKey()]) }}"
+                                            data-canonical-operation="AIMW-BILL-F189D80354"
+                                            data-source-handler="SaveEditAsync"
+                                            onsubmit="this.querySelector('button[type=submit]').disabled = true"
+                                        >
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="grid">
+                                                <label>{{ $copy['email'] }}<input type="email" name="email_address" value="{{ $recipient->email_address }}" maxlength="320" required></label>
+                                                <label>{{ $copy['name'] }}<input type="text" name="display_name" value="{{ $recipient->display_name }}" maxlength="120"></label>
+                                            </div>
+                                            <input type="hidden" name="is_enabled" value="0">
+                                            <label><span><input type="checkbox" name="is_enabled" value="1" @checked($recipient->is_enabled)> {{ $copy['enabled'] }}</span></label>
+                                            <button type="submit" data-canonical-operation="AIMW-BILL-F189D80354">{{ $copy['save'] }}</button>
+                                        </form>
+                                    </details>
+                                </td>
                             </tr>
                         @endforeach
                         </tbody>
