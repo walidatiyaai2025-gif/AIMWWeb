@@ -17,6 +17,7 @@ import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
+import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
 import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
@@ -376,6 +377,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : null}
                 </form>
                 <div className="toolbar-actions">
+                    {route.key === 'application-users' ? (
+                        <ApplicationUsersRolesPermissionsLinkControl context={context} />
+                    ) : null}
                     {route.key === 'sites' ? (
                         <button
                             type="button"
