@@ -1,6 +1,6 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-BILL-887504EDDD issue-738-save-entitlements
-# exact-head: 65aa4654192c39f051f4d69af8608e9566cc9957
+# exact-head: 567b2998d666b70f01f30f2b96346d0c04c1a38c
 
 on:
   push:
