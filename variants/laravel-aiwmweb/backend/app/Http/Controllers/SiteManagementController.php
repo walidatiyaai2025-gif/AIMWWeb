@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Models\Execution;
 use App\Models\Site;
+use App\Sites\SiteConnectionState;
+use App\Sites\SiteDiagnosticsService;
 use App\Sites\SiteEntitlementHook;
 use App\Sites\SiteManagementService;
 use App\Tenancy\TenantContext;
@@ -12,10 +14,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Throwable;
 
 final class SiteManagementController extends Controller
 {
     public const SAVE_OPERATION_ID = 'AIMW-BILL-54E4003BE9';
+
+    public const RETEST_SELECTED_OPERATION_ID = 'AIMW-BILL-DD0FD9926B';
 
     public function index(TenantAuthorizer $auth): JsonResponse
     {
@@ -141,6 +146,64 @@ final class SiteManagementController extends Controller
         abort_if($stillExists, 409, 'Site deletion could not be verified.');
 
         return response()->json([], 204);
+    }
+
+    public function retestSelected(
+        Request $request,
+        string $tenant,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+        SiteDiagnosticsService $diagnostics,
+    ): JsonResponse {
+        $auth->authorize('sites.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['required', 'integer', 'min:1', 'distinct'],
+        ]);
+        $ids = array_values(array_map('intval', $data['ids']));
+
+        $sites = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        abort_unless($sites->count() === count($ids), 404, 'One or more selected sites do not belong to the active tenant.');
+
+        $items = [];
+        foreach ($ids as $siteId) {
+            $site = $sites->get($siteId);
+
+            try {
+                $diagnostic = $diagnostics->recheck($site);
+                $isSuccess = $diagnostic->classification === SiteConnectionState::CONNECTED;
+                $items[] = [
+                    'site_id' => $siteId,
+                    'site_name' => $site->name,
+                    'is_success' => $isSuccess,
+                    'message' => $diagnostic->failure_message ?: $diagnostic->classification,
+                    'classification' => $diagnostic->classification,
+                ];
+            } catch (Throwable $e) {
+                $items[] = [
+                    'site_id' => $siteId,
+                    'site_name' => $site->name,
+                    'is_success' => false,
+                    'message' => $e->getMessage(),
+                    'classification' => null,
+                ];
+            }
+        }
+
+        return response()->json([
+            'requested' => count($ids),
+            'succeeded' => count(array_filter($items, fn (array $item): bool => $item['is_success'])),
+            'failed' => count(array_filter($items, fn (array $item): bool => ! $item['is_success'])),
+            'items' => $items,
+        ]);
     }
 
     public function bulkDestroy(Request $request, string $tenant, TenantAuthorizer $auth, TenantContext $context): JsonResponse
