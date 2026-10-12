@@ -1,7 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-EMAI-EC34E40629 issue-902-delivery-history-link
-# exact-head: e8f82da6b81091a37a6ce844314577eb97e9d69d
-# retrigger: issue-902-materialize
+# exact-head: e3daa2befe7234d544281a6e0a63036b037105d9
+# retrigger: issue-902-style-fix-materialize
 
 on:
   push:
