@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\ApplicationSessionsReadController;
+use App\Http\Controllers\AdminOperationsController;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Tenant;
@@ -37,7 +37,7 @@ final class ApplicationSessionsRouteTerminalityTest extends TestCase
             Request::create('/tenants/alpha/admin/sessions', 'GET'),
         );
 
-        $this->assertSame(ApplicationSessionsReadController::class, ltrim($route->getActionName(), '\\'));
+        $this->assertSame(AdminOperationsController::class.'@sessions', ltrim($route->getActionName(), '\\'));
         $this->assertSame('canonical.application-sessions', $route->getName());
         $this->assertSame(self::OPERATION_ID, $route->defaults['canonical_operation_id'] ?? null);
         $this->assertContains('web', $route->gatherMiddleware());
@@ -101,6 +101,23 @@ final class ApplicationSessionsRouteTerminalityTest extends TestCase
         $after = DB::table('sessions')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all();
         $this->assertSame($before, $after);
         $this->assertStringNotContainsString('password', strtolower($response->getContent()));
+    }
+
+
+    public function test_existing_json_sessions_contract_remains_available_for_sessions_manage_clients(): void
+    {
+        [$alpha, $member] = $this->tenantWithUser('alpha', ['tenant.view', 'sessions.manage'], 'member');
+        DB::table('sessions')->insert(
+            $this->sessionRow('json-session', $member->user_id, time() - 10, '127.0.0.1', 'JSON Browser'),
+        );
+
+        $this->actingAs($member->user)
+            ->getJson('/tenants/alpha/admin/sessions')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', 'json-session')
+            ->assertJsonPath('data.0.ip_address', '127.0.0.1');
+
+        $this->assertSame('alpha', $alpha->slug);
     }
 
     public function test_empty_state_is_truthful_and_get_has_no_side_effect(): void
