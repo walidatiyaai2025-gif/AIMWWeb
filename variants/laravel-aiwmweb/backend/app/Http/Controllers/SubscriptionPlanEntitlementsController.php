@@ -31,15 +31,15 @@ final class SubscriptionPlanEntitlementsController extends Controller
         'premium_seo' => 'premium.seo',
     ];
 
-    public function __construct(
-        private readonly TenantAuthorizer $authorizer,
-        private readonly TenantContext $context,
-    ) {}
-
-    public function __invoke(Request $request, string $tenant, int $plan): RedirectResponse
-    {
-        $this->authorizer->authorize('settings.manage');
-        abort_unless($this->context->tenant()->slug === $tenant, 404);
+    public function __invoke(
+        Request $request,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+        string $tenant,
+        int $plan,
+    ): RedirectResponse {
+        $authorizer->authorize('settings.manage');
+        abort_unless($context->tenant()->slug === $tenant, 404);
 
         $data = $this->validated($request);
 
