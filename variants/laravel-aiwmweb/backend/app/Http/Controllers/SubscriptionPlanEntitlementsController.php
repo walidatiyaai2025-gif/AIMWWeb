@@ -34,7 +34,8 @@ final class SubscriptionPlanEntitlementsController extends Controller
     public function __construct(
         private readonly TenantAuthorizer $authorizer,
         private readonly TenantContext $context,
-    ) {}
+    ) {
+    }
 
     public function __invoke(Request $request, string $tenant, int $plan): RedirectResponse
     {
