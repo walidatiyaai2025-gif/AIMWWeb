@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\CarbonImmutable;
 use App\Authorization\TenantAuthorizer;
 use App\Billing\EntitlementService;
 use App\Billing\UsageQuotaService;
@@ -11,6 +10,7 @@ use App\Models\TenantSubscription;
 use App\Operations\OperationsControlPlaneService;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 
 final class RouteApiAdapterController extends Controller
@@ -48,18 +48,11 @@ final class RouteApiAdapterController extends Controller
 
         $siteNames = Site::query()->pluck('name', 'id');
         $rows = collect($this->siteOperations->getAll(2000))
-            ->filter(function (array $item): bool {
-                $operation = strtolower((string) ($item['operation'] ?? ''));
-
-                return str_contains($operation, 'connection')
-                    || str_contains($operation, 'synchron')
-                    || str_contains($operation, 'sync');
-            })
-            ->filter(function (array $item): bool {
-                $startedAt = $item['started_at'] ?? null;
-
-                return $startedAt !== null && CarbonImmutable::parse($startedAt)->greaterThanOrEqualTo(now()->subDays(30));
-            })
+            ->filter(fn (array $item): bool => str_contains(strtolower((string) ($item['operation'] ?? '')), 'connection')
+                || str_contains(strtolower((string) ($item['operation'] ?? '')), 'synchron')
+                || str_contains(strtolower((string) ($item['operation'] ?? '')), 'sync'))
+            ->filter(fn (array $item): bool => ($item['started_at'] ?? null) !== null
+                && CarbonImmutable::parse($item['started_at'])->greaterThanOrEqualTo(now()->subDays(30)))
             ->groupBy('site_id')
             ->map(function ($items, $siteId) use ($siteNames): array {
                 $total = $items->count();
