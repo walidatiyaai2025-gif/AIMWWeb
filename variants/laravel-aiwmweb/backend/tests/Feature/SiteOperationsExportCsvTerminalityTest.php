@@ -33,10 +33,12 @@ final class SiteOperationsExportCsvTerminalityTest extends TestCase
 
         $control = (string) file_get_contents(resource_path('js/site-operations-export-control.tsx'));
         $pages = (string) file_get_contents(resource_path('js/pages.tsx'));
+        $adapter = (string) file_get_contents(app_path('Http/Controllers/RouteApiAdapterController.php'));
         $this->assertStringContainsString(self::OPERATION_ID, $control);
         $this->assertStringContainsString('buildSiteOperationsCsv', $control);
         $this->assertStringContainsString('URL.createObjectURL', $control);
         $this->assertStringContainsString('SiteOperationsExportControl rows={visibleRows}', $pages);
+        $this->assertStringContainsString('$this->siteOperations->getAll(2000)', $adapter);
 
         $route = Route::getRoutes()->match(Request::create('/tenants/alpha/route-api/site-operations', 'GET'));
         $this->assertSame(RouteApiAdapterController::class.'@siteOperations', ltrim($route->getActionName(), '\\'));
