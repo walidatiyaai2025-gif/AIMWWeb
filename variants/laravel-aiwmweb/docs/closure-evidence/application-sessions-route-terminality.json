@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #746",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-6B051BD8C0",
+    "domain": "content",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ApplicationSessions.razor",
+    "source_screen": "/admin/sessions",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "authorization": "ApplicationPermissionCatalog.UsersManage",
+    "read_surface": "active accounts plus session inventory",
+    "fields": [
+      "account",
+      "role",
+      "last activity",
+      "expiry",
+      "IP",
+      "device",
+      "current session marker"
+    ],
+    "route_side_effect": "none",
+    "sibling_mutations": [
+      "EndSessionAsync",
+      "EndUserSessionsAsync"
+    ]
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/admin/sessions",
+    "method": "GET",
+    "route_name": "canonical.application-sessions",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApplicationSessionsReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/admin/application-sessions.blade.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/ApplicationSessionsRouteServiceProvider.php",
+    "authoritative_data": "Laravel database sessions joined to active tenant memberships",
+    "operation_marker": "AIMW-CONT-6B051BD8C0"
+  },
+  "authorization_and_isolation": {
+    "session": "required",
+    "tenant_context": "required",
+    "permission_mapping": "members.manage (Laravel administrative user-management boundary)",
+    "foreign_tenant": "404/fail closed",
+    "foreign_tenant_sessions_exposed": false,
+    "expired_sessions_exposed": false
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "get_mutation": false,
+    "placeholder": false,
+    "fake_success": false,
+    "deterministic_empty_state": true,
+    "secret_exposure": false
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-6B051BD8C0",
+    "end_session_operation_claimed": false,
+    "end_user_sessions_operation_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "tenant_isolation_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}
