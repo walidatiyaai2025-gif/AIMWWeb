@@ -20,6 +20,7 @@ use Tests\TestCase;
 
 final class SiteEmailSettingsClearMailPasswordTerminalityTest extends TestCase
 {
+    // The committed reconciliation is materialized before exact-head CI executes.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-BILL-F56F7955DA';
