@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "ad16cfb46231cd4746a8db0709ac2be95fd742d3",
+  "previous_reconciliation_sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -730,5 +730,15 @@
     }
   ],
   "excluded_sources": [],
-  "known_composition_blockers": []
+  "known_composition_blockers": [],
+  "focused_closure_operation_sources": [
+    {
+      "label": "AIMW-CONT-E38ADF8481 application user StartCreate focused closure",
+      "sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
+      "observed_pr_head": "3b63ea9ff3274e9e4ffa812be0f5d246a98b3a6a",
+      "operation_ids": [
+        "AIMW-CONT-E38ADF8481"
+      ]
+    }
+  ]
 }
