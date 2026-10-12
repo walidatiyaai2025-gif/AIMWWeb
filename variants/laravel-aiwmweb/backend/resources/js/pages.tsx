@@ -187,7 +187,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
     const query = useQuery({
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        queryFn: () => route.key === 'email-history'
+            ? apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters))
+            : apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
