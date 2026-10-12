@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #736",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-5E8896CD58",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "route_screen": "/admin/subscription-plans",
+    "visible_control": "Billing support / دعم الفوترة -> /admin/billing-support",
+    "authorization": "Settings.Manage",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "medium",
+    "external_dependency_metadata": "payment_provider"
+  },
+  "source_semantics": {
+    "behavior": "The Subscription Plans admin toolbar exposes a read-only Billing support navigation action to /admin/billing-support.",
+    "side_effect": "navigation only",
+    "provider_behavior": "The control does not contact PayPal, reconcile provider state, or claim payment success.",
+    "caller_scope": "No tenant, subscription, provider, account, or user resource identifier is carried by the destination URL."
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/admin/subscription-plans",
+    "source_route_name": "tenant.admin.subscription-plans",
+    "source_controller": "App\\Http\\Controllers\\SubscriptionPlansAdminReadController",
+    "source_authorization": "settings.manage plus active tenant context",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "operation_marker": "AIMW-BILL-5E8896CD58",
+    "target_builder": "route('canonical.admin.billing-support')",
+    "target_route": "/admin/billing-support",
+    "target_route_name": "canonical.admin.billing-support",
+    "target_controller": "App\\Http\\Controllers\\AdminBillingSupportReadController",
+    "target_authorization": "platform.admin",
+    "target_tenant_parameter": false,
+    "target_resource_id": false,
+    "placeholder_or_catch_all": false
+  },
+  "authorization_and_isolation": {
+    "source_guest": "redirected by auth middleware",
+    "source_missing_settings_manage": "403",
+    "source_foreign_tenant": "404",
+    "destination_non_platform_admin": "403",
+    "destination_platform_admin": "allowed",
+    "navigation_target_source": "server-defined named route; caller query or return values cannot rewrite it",
+    "idor_surface": "none introduced by this control"
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "csrf_write_path": "not applicable",
+    "persistence_mutation": false,
+    "queue_cache_scheduler_side_effect": false,
+    "wordpress_or_connector_side_effect": false,
+    "ai_provider_side_effect": false,
+    "payment_provider_side_effect": false,
+    "payment_success_claim": false,
+    "idempotency": "repeated navigation is side-effect free"
+  },
+  "acceptance_tests": [
+    "Tests\\Feature\\SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_reference_control_is_settings_manage_navigation_to_billing_support_only",
+    "Tests\\Feature\\SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_source_and_destination_are_explicit_guarded_read_routes_without_resource_ids",
+    "Tests\\Feature\\SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_settings_manager_sees_global_support_target_derived_from_route_not_caller_input",
+    "Tests\\Feature\\SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_destination_independently_fails_closed_for_non_platform_admin_and_opens_for_platform_admin",
+    "Tests\\Feature\\SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_guest_missing_source_permission_and_foreign_tenant_fail_closed",
+    "Tests\\Feature\\SubscriptionPlansAdminBillingSupportControlTerminalityTest::test_laravel_control_is_navigation_only_and_does_not_claim_provider_success"
+  ],
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-5E8896CD58",
+    "clone_current_not_claimed": "AIMW-BILL-7BD7B04B26",
+    "new_plan_not_claimed": "AIMW-BILL-F73C7348C3",
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The exact source Billing support action is now rendered on the real tenant-scoped Subscription Plans admin page, targets the existing explicit global Billing Support route, preserves independent source and destination authorization, accepts no caller-selected resource identifier, performs no provider or persistence mutation, and has deterministic fail-closed coverage."
+  }
+}
