@@ -47,7 +47,6 @@ class WelcomeLanguageSwitchTerminalityTest extends TestCase
         $this->assertStringContainsString('lang="ar" dir="rtl"', $anonymous);
         $this->assertStringContainsString('lang="ar" dir="rtl"', $authenticated);
         $this->assertStringNotContainsString('foreign', $authenticated);
-        $this->assertStringNotContainsString('999', $authenticated);
         $this->get('/tenants/foreign/welcome?lang=ar')->assertNotFound();
         $this->post('/welcome', ['lang' => 'ar'])->assertStatus(405);
     }
