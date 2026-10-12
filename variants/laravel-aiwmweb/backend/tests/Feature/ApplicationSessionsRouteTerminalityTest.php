@@ -103,7 +103,6 @@ final class ApplicationSessionsRouteTerminalityTest extends TestCase
         $this->assertStringNotContainsString('password', strtolower($response->getContent()));
     }
 
-
     public function test_existing_json_sessions_contract_remains_available_for_sessions_manage_clients(): void
     {
         [$alpha, $member] = $this->tenantWithUser('alpha', ['tenant.view', 'sessions.manage'], 'member');
