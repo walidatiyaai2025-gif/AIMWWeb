@@ -70,9 +70,9 @@ final class EmailSchedulesHistoryLinkTerminalityTest extends TestCase
         $app = (string) file_get_contents(resource_path('js/app.tsx'));
         $control = (string) file_get_contents(resource_path('js/email-schedules-history-link-control.tsx'));
 
-        $this->assertStringContainsString("<EmailSchedulesHistoryLinkControl context={context} />", $app);
+        $this->assertStringContainsString('<EmailSchedulesHistoryLinkControl context={context} />', $app);
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, EMAIL_SCHEDULES_HISTORY_TARGET_PATH)", $control);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, EMAIL_SCHEDULES_HISTORY_TARGET_PATH)', $control);
         $this->assertStringContainsString("'tenant.manage'", $control);
         $this->assertStringContainsString("'diagnostics.view'", $control);
         $this->assertStringNotContainsString('apiRequest', $control);
