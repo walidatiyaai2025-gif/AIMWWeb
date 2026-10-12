@@ -1,6 +1,6 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-EMAI-F8E8A2BEE9 issue-723-email-history-apply-filters
-# exact-head: d48c2ba4a67a9bc20223f4f10bd0d88dfb8ed322
+# exact-head: fdac4c68cf93ae7f1720a9da28604f3d28715ebf
 
 on:
   push:
