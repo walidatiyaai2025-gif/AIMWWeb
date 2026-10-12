@@ -228,6 +228,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('admin-billing-support', '/admin/billing-support', 'system', '◇', 'Billing Support', 'دعم الفوترة', 'Perform bounded audited local subscription support actions without fabricating provider success.', 'تنفيذ تدخلات دعم محلية محدودة ومدققة للاشتراك دون اختلاق نجاح من مزود الدفع.', { apiKey: 'admin-billing-support', kind: 'settings', controls: ['billing.support.search', 'billing.support.grant-grace', 'billing.support.suspend', 'billing.support.reactivate', 'billing.support.reconcile'] }),
     r('roles', '/admin/roles', 'system', '⌘', 'Roles & Permissions', 'الأدوار والصلاحيات', 'Manage tenant-scoped roles and permissions.', 'إدارة الأدوار والصلاحيات الخاصة بالحساب.', { permission: 'roles.view', controls: ['roles.create', 'roles.assign'] }),
     r('sessions', '/account/sessions', 'system', '◉', 'Sessions', 'الجلسات', 'Inspect and revoke authenticated sessions.', 'مراجعة وإلغاء جلسات تسجيل الدخول.', { permission: 'sessions.view', controls: ['sessions.revoke'] }),
+    r('application-sessions', '/admin/sessions', 'system', '◉', 'Application Sessions', 'جلسات التطبيق', 'Review tenant user sessions from authoritative Laravel session storage.', 'مراجعة جلسات مستخدمي الحساب من مخزن جلسات Laravel الموثوق.', { apiKey: 'application-sessions', permission: 'users.manage' }),
 ];
 
 export const actionSchema = z.record(z.string(), z.union([z.string(), z.number()]));
