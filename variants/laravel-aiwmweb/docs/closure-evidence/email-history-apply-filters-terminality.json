@@ -38,8 +38,8 @@
     ]
   },
   "materialization": {
-    "reconciliation_commit": "08a38b7c47849ee2210c06dd850817bec50a9619",
-    "result": "AIMW-EMAI-F8E8A2BEE9 ADAPTED",
+    "reconciliation_commit": "60bcab263876bcdaffc3b257f6f9a2ef800a20ce",
+    "result": "AIMW-EMAI-F8E8A2BEE9 ADAPTED; AIMW-BILL-94755B17E4 preserved ADAPTED",
     "exact_head_recheck": true
   },
   "synchronized_composition": {
