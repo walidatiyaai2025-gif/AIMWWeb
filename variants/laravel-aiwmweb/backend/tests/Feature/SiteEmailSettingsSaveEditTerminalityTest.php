@@ -19,6 +19,7 @@ use Tests\TestCase;
 
 final class SiteEmailSettingsSaveEditTerminalityTest extends TestCase
 {
+    // The committed reconciliation is materialized before exact-head CI executes.
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-BILL-F189D80354';
