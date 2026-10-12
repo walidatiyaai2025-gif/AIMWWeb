@@ -3,7 +3,7 @@
   "authority": "AIMWWeb Issue #748 / umbrella #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "operation_id": "AIMW-CONT-1A08B49164",
-  "terminal_state": "PENDING_CI",
+  "terminal_state": "ADAPTED",
   "operation": {
     "domain": "content",
     "kind": "visible_control",
@@ -44,7 +44,16 @@
       "authoritative roles API read",
       "foreign-tenant 404",
       "no adjacent operation claim"
-    ]
+    ],
+    "exact_green_implementation_sha": "cc4d1ec066af8291d9843be592d378970e3f4e1f",
+    "required_gates": {
+      "pr_plan_link": "success",
+      "repo_hygiene": "success",
+      "cross_domain_security": "success",
+      "parity_reconciliation": "success",
+      "convergence_preflight": "success",
+      "laravel_acceptance": "success"
+    }
   },
   "scope_guards": {
     "claimed_operations": [
