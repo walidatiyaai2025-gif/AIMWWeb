@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Site operation details</title>
-    @vite('resources/css/app.css')
+    @vite(['resources/css/app.css', 'resources/js/site-operation-details-copy-report.ts'])
 </head>
 <body>
     <main class="workspace-main" data-canonical-operation="AIMW-AI-3CDB30A4C2">
@@ -24,6 +24,22 @@
                     >Execution Center</a>
                 @endif
             </div>
+        </section>
+
+        <section class="panel" aria-labelledby="operation-actions-heading">
+            <h2 id="operation-actions-heading">Operation actions</h2>
+            <button
+                type="button"
+                data-copy-operation-report
+                data-canonical-operation="AIMW-BILL-AA8C2FD5B3"
+                aria-busy="false"
+            >Copy report</button>
+            <p data-copy-operation-report-success role="status" hidden>Report copied to the clipboard.</p>
+            <div data-copy-operation-report-error role="alert" hidden>
+                <p data-copy-operation-report-error-message>The report could not be written to the clipboard. No copy success was reported; check browser clipboard access and retry.</p>
+                <button type="button" data-copy-operation-report-retry>Retry copy</button>
+            </div>
+            <script id="site-operation-report-payload" type="application/json">@json($operationReport, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
         </section>
 
         <section class="panel" aria-labelledby="operation-summary-heading">
