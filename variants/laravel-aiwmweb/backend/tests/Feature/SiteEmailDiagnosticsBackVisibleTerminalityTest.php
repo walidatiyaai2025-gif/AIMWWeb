@@ -21,6 +21,8 @@ final class SiteEmailDiagnosticsBackVisibleTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-EMAI-8E56589573';
 
+    // Official parity materialization is complete before this exact-head verification commit.
+
     public function test_exact_canonical_back_control_is_adapted(): void
     {
         $document = json_decode(
