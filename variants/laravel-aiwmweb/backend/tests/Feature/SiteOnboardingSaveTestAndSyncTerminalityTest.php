@@ -25,6 +25,23 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-BILL-2EF6B8A27A';
 
+    private const NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
+
+    public function test_next_async_is_a_client_only_control_inside_the_same_tenant_guarded_onboarding_boundary(): void
+    {
+        $frontend = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
+
+        $this->assertStringContainsString(self::NEXT_OPERATION_ID, $frontend);
+        $this->assertStringContainsString('data-canonical-operation={SITE_ONBOARDING_NEXT_OPERATION_ID}', $frontend);
+        $this->assertStringContainsString('validateOnboardingStep', $frontend);
+        $this->assertStringContainsString('onClick={continueStep}', $frontend);
+        $this->assertStringNotContainsString('apiRequest<OnboardingResponse>(endpoint, {\n                    method: \'POST\'', substr(
+            $frontend,
+            (int) strpos($frontend, 'const continueStep = () =>'),
+            (int) strpos($frontend, 'const previousStep = () =>') - (int) strpos($frontend, 'const continueStep = () =>'),
+        ));
+    }
+
     public function test_exact_mutation_route_is_guarded_and_bound_to_the_canonical_operation(): void
     {
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/SiteOnboarding.razor'));
