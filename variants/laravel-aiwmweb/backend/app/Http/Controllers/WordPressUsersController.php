@@ -98,7 +98,7 @@ final class WordPressUsersController extends Controller
             $payload['password'] = (string) $data['password'];
         }
 
-        $accepted = $this->wordpress->mutate($site, 'users', $remoteId, $creating ? 'create' : 'update', $payload);
+        $accepted = $this->wordpress->mutateOnce($site, 'users', $remoteId, $payload);
         $savedId = (int) ($accepted['id'] ?? $remoteId ?? 0);
         abort_if($savedId <= 0, 502, 'WordPress accepted the request without a verifiable user id.');
 
