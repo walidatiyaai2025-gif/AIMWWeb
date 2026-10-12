@@ -23,6 +23,7 @@ import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { NotificationOpenControl } from './notification-open-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
@@ -415,6 +416,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                     if (refreshed.error) throw refreshed.error;
                                 }}
                             />
+                        ) : route.key === 'notifications' ? (row) => (
+                            <NotificationOpenControl context={context} row={row} />
                         ) : undefined}
                     />
                 ) : <div className="empty-state"><strong>{text(commonText.empty)}</strong><p>{locale === 'ar' ? 'لا يتم إنشاء صفوف تجريبية عندما يعيد الخادم نتيجة فارغة.' : 'No sample rows are synthesized when the server returns an empty result.'}</p></div>}
