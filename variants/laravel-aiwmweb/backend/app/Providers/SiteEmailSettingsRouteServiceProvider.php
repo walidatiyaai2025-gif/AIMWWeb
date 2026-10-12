@@ -38,6 +38,13 @@ final class SiteEmailSettingsRouteServiceProvider extends ServiceProvider
             ->name('canonical.workspace.site-email-settings.mail-profile-save');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
+            ->patch('/tenants/{tenant}/sites/{site}/email-settings/recipients/{recipient}', [SiteEmailSettingsController::class, 'saveEdit'])
+            ->defaults('canonical_operation_id', SiteEmailRecipientService::UPDATE_OPERATION_ID)
+            ->whereNumber('site')
+            ->whereNumber('recipient')
+            ->name('canonical.workspace.site-email-settings.recipient-update');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
             ->post('/tenants/{tenant}/sites/{site}/email-settings/recipients', [SiteEmailSettingsController::class, 'store'])
             ->defaults('canonical_operation_id', SiteEmailRecipientService::ADD_OPERATION_ID)
             ->whereNumber('site')
