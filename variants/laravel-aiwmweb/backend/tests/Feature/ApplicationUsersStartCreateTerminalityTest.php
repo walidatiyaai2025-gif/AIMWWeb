@@ -64,7 +64,10 @@ final class ApplicationUsersStartCreateTerminalityTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame('active', $membership->status);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
         $this->assertTrue($membership->roles()->whereKey($role->id)->exists());
+        $context->forget();
 
         $this->actingAs($actor)
             ->getJson('/tenants/alpha/admin/members')
