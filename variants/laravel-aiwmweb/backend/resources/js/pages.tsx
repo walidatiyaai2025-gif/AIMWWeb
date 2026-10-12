@@ -23,6 +23,7 @@ import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { CurrentUserLogsControl } from './current-user-logs-control';
 import { MediaDeleteControl } from './media-delete-control';
+import { SiteOperationsExportControl } from './site-operations-export-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
@@ -341,6 +342,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             </span>
                         );
                     })}
+                    {route.key === 'site-operations' ? (
+                        <SiteOperationsExportControl rows={visibleRows} locale={locale} />
+                    ) : null}
                     {route.key === 'schedules' ? (
                         <button
                             type="button"
