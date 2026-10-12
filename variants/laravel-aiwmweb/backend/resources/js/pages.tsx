@@ -69,10 +69,13 @@ function normalizeCollection(payload: unknown) {
     return { rows, total, page, lastPage };
 }
 
-function endpointWithQuery(endpoint: string, page: number, search: string) {
+function endpointWithQuery(endpoint: string, page: number, search: string, filters: Record<string, string> = {}) {
     const url = new URL(endpoint, window.location.origin);
     url.searchParams.set('page', String(page));
     if (search.trim()) url.searchParams.set('search', search.trim());
+    for (const [key, value] of Object.entries(filters)) {
+        url.searchParams.set(key, value);
+    }
     return `${url.pathname}${url.search}`;
 }
 
@@ -164,14 +167,16 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected'>('all');
+    const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
 
+    const taxonomyFilter = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
     const query = useQuery({
-        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search],
-        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search)),
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
@@ -313,6 +318,22 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             aria-pressed={sitesFilter === 'all'}
                             onClick={() => setSitesFilter('all')}
                         >{locale === 'ar' ? 'الكل' : 'All'}</button>
+                    ) : null}
+                    {route.key === 'taxonomy' ? (
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation="AIMW-TAXO-D784149312"
+                            aria-pressed={taxonomyType === 'post_tag'}
+                            onClick={() => {
+                                setPage(1);
+                                if (taxonomyType === 'post_tag') {
+                                    void query.refetch();
+                                } else {
+                                    setTaxonomyType('post_tag');
+                                }
+                            }}
+                        >{locale === 'ar' ? 'الوسوم' : 'Tags'}</button>
                     ) : null}
                     <button
                         type="button"
