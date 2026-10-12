@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Email\Services\SiteEmailRecipientService;
+use App\Email\Services\SiteMailProfileService;
 use App\Http\Controllers\SiteEmailSettingsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +37,12 @@ final class SiteEmailSettingsRouteServiceProvider extends ServiceProvider
             ->defaults('canonical_operation_id', SiteEmailSettingsController::SAVE_MAIL_PROFILE_OPERATION_ID)
             ->whereNumber('site')
             ->name('canonical.workspace.site-email-settings.mail-profile-save');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->delete('/tenants/{tenant}/sites/{site}/email-settings/mail-profile/password', [SiteEmailSettingsController::class, 'clearMailPassword'])
+            ->defaults('canonical_operation_id', SiteMailProfileService::CLEAR_PASSWORD_OPERATION_ID)
+            ->whereNumber('site')
+            ->name('canonical.workspace.site-email-settings.mail-profile-password-clear');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->patch('/tenants/{tenant}/sites/{site}/email-settings/recipients/{recipient}', [SiteEmailSettingsController::class, 'saveEdit'])
