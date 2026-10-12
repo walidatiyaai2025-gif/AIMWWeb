@@ -18,6 +18,10 @@
                 href="{{ route('canonical.workspace.account-billing', ['tenant' => $tenant->slug]) }}"
                 data-canonical-operation="AIMW-BILL-0CE205B851"
             >{{ app()->getLocale() === 'ar' ? 'صفحة العميل' : 'Customer billing' }}</a>
+            <a
+                href="{{ route('canonical.admin.billing-support') }}"
+                data-canonical-operation="AIMW-BILL-5E8896CD58"
+            >{{ app()->getLocale() === 'ar' ? 'دعم الفوترة' : 'Billing support' }}</a>
         </nav>
     </header>
 
