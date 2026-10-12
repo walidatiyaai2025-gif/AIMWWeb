@@ -1,14 +1,14 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-F56F7955DA issue-727-clear-mail-password
-# exact-head: fef32f8cd157a64d7f0963f106a30c6971bdc53b
+# trigger: AIMW-EMAI-F8E8A2BEE9 issue-723-email-history-apply-filters
+# exact-head: 13c861af374cd43298871e7462ed5000a64fb303
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-F56F7955DA-clear-mail-password
+      - worker/laravel-aiwmweb-AIMW-EMAI-F8E8A2BEE9-email-history-filters
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-clear-mail-password-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/email-history-apply-filters-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -49,5 +49,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-F56F7955DA"
+          git commit -m "chore(laravel): materialize parity for AIMW-EMAI-F8E8A2BEE9"
           git push origin "HEAD:${{ github.ref_name }}"
