@@ -8,6 +8,21 @@
         'email' => 'عنوان البريد الإلكتروني',
         'name' => 'اسم العرض (اختياري)',
         'add' => 'إضافة المستلم',
+        'profile' => 'إعداد الإرسال',
+        'use_account_profile' => 'استخدام إعداد بريد الحساب',
+        'smtp_host' => 'SMTP Host',
+        'smtp_port' => 'SMTP Port',
+        'username' => 'اسم المستخدم',
+        'password' => 'كلمة المرور',
+        'saved_password' => 'يوجد سر محفوظ ومشفر. اترك الحقل فارغاً للاحتفاظ به.',
+        'no_password' => 'لا يوجد سر محفوظ.',
+        'from_address' => 'بريد المرسل',
+        'from_name' => 'اسم المرسل',
+        'reply_to' => 'الرد إلى',
+        'ssl' => 'TLS / SSL',
+        'enabled_mail' => 'تفعيل إرسال البريد لهذا الموقع',
+        'save_profile' => 'حفظ إعداد البريد',
+        'save_note' => 'الحفظ لا يعني أن اتصال SMTP تم اختباره.',
         'recipients' => 'المستلمون الحاليون',
         'empty' => 'لا يوجد مستلمون لهذا الموقع.',
         'status' => 'الحالة',
@@ -21,6 +36,21 @@
         'email' => 'Email address',
         'name' => 'Display name (optional)',
         'add' => 'Add recipient',
+        'profile' => 'Outbound mail profile',
+        'use_account_profile' => 'Use dashboard/account mail profile',
+        'smtp_host' => 'SMTP Host',
+        'smtp_port' => 'SMTP Port',
+        'username' => 'Username',
+        'password' => 'Password',
+        'saved_password' => 'An encrypted password is saved. Leave this blank to keep it.',
+        'no_password' => 'No password is currently stored.',
+        'from_address' => 'From address',
+        'from_name' => 'From name',
+        'reply_to' => 'Reply-to address',
+        'ssl' => 'TLS / SSL',
+        'enabled_mail' => 'Enable outbound email for this site',
+        'save_profile' => 'Save mail profile',
+        'save_note' => 'Saving does not claim SMTP connectivity has been verified.',
         'recipients' => 'Current recipients',
         'empty' => 'No recipients are configured for this site.',
         'status' => 'Status',
@@ -77,6 +107,46 @@
     </section>
 
     @if ($selectedSite)
+        <section aria-labelledby="mail-profile-heading" data-canonical-operation="AIMW-BILL-609F15BFCA">
+            <h2 id="mail-profile-heading">{{ $copy['profile'] }}</h2>
+            @php($profile = $mailProfile ?? [])
+            <form
+                method="post"
+                action="{{ route('canonical.workspace.site-email-settings.mail-profile-save', ['tenant' => $tenant, 'site' => $selectedSite->getKey()]) }}"
+                data-canonical-operation="AIMW-BILL-609F15BFCA"
+                data-source-handler="SaveMailProfileAsync"
+                onsubmit="this.querySelector('button[type=submit]').disabled = true"
+            >
+                @csrf
+                <input type="hidden" name="use_account_profile" value="0">
+                <label>
+                    <span>
+                        <input type="checkbox" name="use_account_profile" value="1" @checked(old('use_account_profile', (bool)($profile['use_account_profile'] ?? true)))>
+                        {{ $copy['use_account_profile'] }}
+                    </span>
+                </label>
+                <div class="grid">
+                    <label>{{ $copy['smtp_host'] }}<input type="text" name="host" value="{{ old('host', $profile['host'] ?? '') }}" maxlength="255"></label>
+                    <label>{{ $copy['smtp_port'] }}<input type="number" name="port" min="1" max="65535" value="{{ old('port', $profile['port'] ?? 587) }}"></label>
+                    <label>{{ $copy['username'] }}<input type="text" name="username" value="{{ old('username', $profile['username'] ?? '') }}" maxlength="320" autocomplete="username"></label>
+                    <label>
+                        {{ $copy['password'] }}
+                        <input type="password" name="password" value="" maxlength="2048" autocomplete="new-password">
+                        <small>{{ ($profile['has_saved_password'] ?? false) ? $copy['saved_password'] : $copy['no_password'] }}</small>
+                    </label>
+                    <label>{{ $copy['from_address'] }}<input type="email" name="from_address" value="{{ old('from_address', $profile['from_address'] ?? '') }}" maxlength="320"></label>
+                    <label>{{ $copy['from_name'] }}<input type="text" name="from_name" value="{{ old('from_name', $profile['from_name'] ?? '') }}" maxlength="160"></label>
+                    <label>{{ $copy['reply_to'] }}<input type="email" name="reply_to" value="{{ old('reply_to', $profile['reply_to'] ?? '') }}" maxlength="320"></label>
+                </div>
+                <input type="hidden" name="enable_ssl" value="0">
+                <label><span><input type="checkbox" name="enable_ssl" value="1" @checked(old('enable_ssl', (bool)($profile['enable_ssl'] ?? true)))> {{ $copy['ssl'] }}</span></label>
+                <input type="hidden" name="enabled" value="0">
+                <label><span><input type="checkbox" name="enabled" value="1" @checked(old('enabled', (bool)($profile['enabled'] ?? false)))> {{ $copy['enabled_mail'] }}</span></label>
+                <button type="submit" data-canonical-operation="AIMW-BILL-609F15BFCA">{{ $copy['save_profile'] }}</button>
+                <p>{{ $copy['save_note'] }}</p>
+            </form>
+        </section>
+
         <section aria-labelledby="add-recipient-heading">
             <h2 id="add-recipient-heading">{{ $copy['add'] }}</h2>
 
