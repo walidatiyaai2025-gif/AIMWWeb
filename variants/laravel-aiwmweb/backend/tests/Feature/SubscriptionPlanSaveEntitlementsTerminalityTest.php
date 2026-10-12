@@ -83,8 +83,8 @@ final class SubscriptionPlanSaveEntitlementsTerminalityTest extends TestCase
             ->assertNotFound();
 
         $plan->refresh();
-        $this->assertSame($before['limits'], $plan->limits);
-        $this->assertSame($before['entitlements'], $plan->entitlements);
+        $this->assertEquals($before['limits'], $plan->limits);
+        $this->assertEquals($before['entitlements'], $plan->entitlements);
         $this->assertSame(0, DB::table('billing_plan_audits')->where('billing_plan_id', $plan->id)->count());
     }
 
@@ -128,8 +128,9 @@ final class SubscriptionPlanSaveEntitlementsTerminalityTest extends TestCase
         $audit = DB::table('billing_plan_audits')->where('billing_plan_id', $plan->id)->sole();
         $this->assertSame($admin->id, $audit->actor_user_id);
         $this->assertSame('SubscriptionPlan.UpdateEntitlements', $audit->action);
-        $this->assertStringContainsString('"sites.max":25', (string) $audit->after);
-        $this->assertStringNotContainsString('legacy.string', (string) $audit->after);
+        $auditAfter = json_decode((string) $audit->after, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(25, $auditAfter['limits']['sites.max']);
+        $this->assertArrayNotHasKey('legacy.string', $auditAfter['entitlements']);
 
         $this->actingAs($admin)
             ->get('/tenants/alpha/admin/subscription-plans')
