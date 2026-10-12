@@ -170,7 +170,7 @@ final class WordPressUsersSaveTerminalityTest extends TestCase
         Http::assertSentCount(3);
         Http::assertSent(fn ($request) => $request->method() === 'POST'
             && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55'
-            && !array_key_exists('password', $request->data())
+            && ! array_key_exists('password', $request->data())
             && ($request->data()['roles'] ?? null) === ['author']
         );
     }
