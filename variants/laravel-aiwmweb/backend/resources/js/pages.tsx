@@ -185,11 +185,13 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ...(emailHistoryFilters.correlation.trim() ? { correlation: emailHistoryFilters.correlation.trim() } : {}),
     } : {};
     const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
-    const query = useQuery({
+    const query = useQuery(route.key === 'email-history' ? {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation],
-        queryFn: () => route.key === 'email-history'
-            ? apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters))
-            : apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
