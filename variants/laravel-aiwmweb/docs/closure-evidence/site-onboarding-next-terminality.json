@@ -38,6 +38,7 @@
     "truthful_success": "No success message or server state is claimed by Continue; it only changes local wizard step state."
   },
   "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php — binds AIMW-BILL-5DE86937F7 to the client-only Continue control and carries the real guest / missing-permission / foreign-tenant assertNotFound boundary for the onboarding surface",
     "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-ui-terminality.test.tsx — validates source-equivalent step gating, no API call, masked secret, and permission denial",
     "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-onboarding-save-test-sync-terminality.test.ts — preserves the independent Save/Test/Sync endpoint contract"
   ],
