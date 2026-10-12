@@ -33,6 +33,42 @@
         </dl>
 
         @if ($canManageSite)
+            <section aria-labelledby="site-profile-heading" data-canonical-operation="AIMW-BILL-5C15471E4B">
+                <h2 id="site-profile-heading">Site profile</h2>
+                <p>Change the display name or primary WordPress URL.</p>
+                <form method="POST"
+                      action="{{ route('canonical.site.settings.profile', ['tenant' => $tenant, 'site' => $site->getKey()]) }}"
+                      data-site-profile-form
+                      data-canonical-operation="AIMW-BILL-5C15471E4B">
+                    @csrf
+                    <label for="site-profile-name">Site name</label>
+                    <input id="site-profile-name"
+                           name="name"
+                           type="text"
+                           maxlength="150"
+                           value="{{ old('name', $site->name) }}"
+                           required>
+                    @error('name')
+                        <p role="alert">{{ $message }}</p>
+                    @enderror
+
+                    <label for="site-profile-url">Site URL</label>
+                    <input id="site-profile-url"
+                           name="url"
+                           type="url"
+                           maxlength="2048"
+                           value="{{ old('url', $site->url) }}"
+                           required>
+                    @error('url')
+                        <p role="alert">{{ $message }}</p>
+                    @enderror
+
+                    <button type="submit" data-canonical-operation="AIMW-BILL-5C15471E4B">Save changes</button>
+                </form>
+            </section>
+        @endif
+
+        @if ($canManageSite)
             @php($isOperationallyDisabled = strtolower((string) $site->connection_status) === 'disabled')
             <section aria-labelledby="operational-state-heading" data-canonical-operation="AIMW-BILL-84B63E3F42">
                 <h2 id="operational-state-heading">Operational state</h2>
