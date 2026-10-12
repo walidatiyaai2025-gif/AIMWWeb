@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "3f2fa2a065338d2cd9ee77140ad7419027d15c51",
+  "previous_reconciliation_sha": "9ed514198808cdad6e9f2edd94093bce33574a34",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -760,6 +760,14 @@
       "observed_pr_head": "3b63ea9ff3274e9e4ffa812be0f5d246a98b3a6a",
       "operation_ids": [
         "AIMW-CONT-E38ADF8481"
+      ]
+    },
+    {
+      "label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
+      "sha": "c7ef213efe1db541c88bb202110b53fbdf61200e",
+      "observed_pr_head": "c7ef213efe1db541c88bb202110b53fbdf61200e",
+      "operation_ids": [
+        "AIMW-TAXO-D5A5B530C7"
       ]
     }
   ]
