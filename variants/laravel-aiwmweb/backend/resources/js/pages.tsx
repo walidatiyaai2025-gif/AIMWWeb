@@ -18,6 +18,7 @@ import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
+import { ApplicationUsersStartCreateControl } from './application-users-start-create-control';
 import { runAuthoritativeBackupReload } from './backup-reload-control';
 import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
@@ -378,7 +379,17 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 </form>
                 <div className="toolbar-actions">
                     {route.key === 'application-users' ? (
-                        <ApplicationUsersRolesPermissionsLinkControl context={context} />
+                        <>
+                            <ApplicationUsersRolesPermissionsLinkControl context={context} />
+                            <ApplicationUsersStartCreateControl
+                                context={context}
+                                busy={query.isFetching}
+                                onCreated={async () => {
+                                    const refreshed = await query.refetch();
+                                    if (refreshed.error) throw refreshed.error;
+                                }}
+                            />
+                        </>
                     ) : null}
                     {route.key === 'sites' ? (
                         <button
