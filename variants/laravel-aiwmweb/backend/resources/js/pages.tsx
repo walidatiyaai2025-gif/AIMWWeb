@@ -404,6 +404,22 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         <button
                             type="button"
                             className="btn"
+                            data-canonical-operation="AIMW-TAXO-D5A5B530C7"
+                            aria-pressed={taxonomyType === 'category'}
+                            onClick={() => {
+                                setPage(1);
+                                if (taxonomyType === 'category') {
+                                    void query.refetch();
+                                } else {
+                                    setTaxonomyType('category');
+                                }
+                            }}
+                        >{locale === 'ar' ? 'التصنيفات' : 'Categories'}</button>
+                    ) : null}
+                    {route.key === 'taxonomy' ? (
+                        <button
+                            type="button"
+                            className="btn"
                             data-canonical-operation="AIMW-TAXO-D784149312"
                             aria-pressed={taxonomyType === 'post_tag'}
                             onClick={() => {
