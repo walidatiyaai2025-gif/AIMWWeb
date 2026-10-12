@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\TenantAuthorizer;
-use App\Http\Controllers\SubscriptionPlanEntitlementsController;
 use App\Models\BillingPlan;
 use App\Tenancy\TenantContext;
 use Illuminate\Contracts\View\View;
