@@ -67,7 +67,12 @@ final class SubscriptionPlanEntitlementsController extends Controller
                 'entitlements' => self::orderedManaged($entitlements, self::BOOLEAN_FIELDS),
             ];
 
-            if ($beforeState !== $afterState) {
+            $missingManagedKey = collect(array_values(self::INTEGER_FIELDS))
+                ->contains(fn (string $key): bool => ! array_key_exists($key, $persisted->limits ?? []))
+                || collect(array_values(self::BOOLEAN_FIELDS))
+                    ->contains(fn (string $key): bool => ! array_key_exists($key, $persisted->entitlements ?? []));
+
+            if ($beforeState !== $afterState || $missingManagedKey) {
                 $persisted->limits = $limits;
                 $persisted->entitlements = $entitlements;
                 $persisted->save();
@@ -105,6 +110,27 @@ final class SubscriptionPlanEntitlementsController extends Controller
         return [
             'limits' => self::orderedManaged($plan->limits ?? [], self::INTEGER_FIELDS),
             'entitlements' => self::orderedManaged($plan->entitlements ?? [], self::BOOLEAN_FIELDS),
+        ];
+    }
+
+    /**
+     * @return array<string, int|bool|string>
+     */
+    public static function formState(BillingPlan $plan): array
+    {
+        $state = self::managedState($plan);
+
+        return [
+            'expected_state' => self::stateToken($state),
+            'sites_max' => $state['limits']['sites.max'],
+            'email_site_recipients_max' => $state['limits']['email.siteRecipients.max'],
+            'email_schedules_max' => $state['limits']['email.schedules.max'],
+            'email_dashboard_digest' => $state['entitlements']['email.dashboardDigest'],
+            'automation_schedules_max' => $state['limits']['automation.schedules.max'],
+            'ai_enabled' => $state['entitlements']['ai.enabled'],
+            'ai_monthly_requests_max' => $state['limits']['ai.monthlyRequests.max'],
+            'backup_retention_days' => $state['limits']['backup.retentionDays'],
+            'premium_seo' => $state['entitlements']['premium.seo'],
         ];
     }
 
