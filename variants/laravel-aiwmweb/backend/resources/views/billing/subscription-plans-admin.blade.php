@@ -98,7 +98,7 @@
                     <button type="submit">{{ app()->getLocale() === 'ar' ? 'حفظ الخطة' : 'Save plan' }}</button>
                 </form>
 
-                <form method="post" action="{{ route('tenant.admin.subscription-plans.enabled', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-812D1C53B6">
+                <form method="post" action="{{ route('tenant.admin.subscription-plans.enabled', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-B00411742F" data-runtime-operation="AIMW-BILL-812D1C53B6">
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="expected_enabled" value="{{ $plan->enabled ? '1' : '0' }}">
