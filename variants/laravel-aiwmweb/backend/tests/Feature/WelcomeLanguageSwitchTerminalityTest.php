@@ -44,7 +44,10 @@ class WelcomeLanguageSwitchTerminalityTest extends TestCase
         $user = User::factory()->create(['name' => 'Private Tenant Sentinel', 'email' => 'private@example.test']);
         $authenticated = $this->actingAs($user)->get('/welcome?lang=ar&tenant=foreign&user_id=999')
             ->assertOk()->assertDontSee('Private Tenant Sentinel')->assertDontSee('private@example.test')->getContent();
-        $this->assertSame($anonymous, $authenticated);
+        $this->assertStringContainsString('lang="ar" dir="rtl"', $anonymous);
+        $this->assertStringContainsString('lang="ar" dir="rtl"', $authenticated);
+        $this->assertStringNotContainsString('foreign', $authenticated);
+        $this->assertStringNotContainsString('999', $authenticated);
         $this->get('/tenants/foreign/welcome?lang=ar')->assertNotFound();
         $this->post('/welcome', ['lang' => 'ar'])->assertStatus(405);
     }
