@@ -42,6 +42,24 @@ function detailsText(value: unknown): string {
     }
 }
 
+function localTimestamp(value: unknown): string {
+    if (typeof value !== 'string' || !value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    const parts = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+        ' ',
+        String(date.getHours()).padStart(2, '0'),
+        ':',
+        String(date.getMinutes()).padStart(2, '0'),
+        ':',
+        String(date.getSeconds()).padStart(2, '0'),
+    ];
+    return parts.join('');
+}
+
 function durationMs(row: Row): string {
     const started = typeof row.started_at === 'string' ? Date.parse(row.started_at) : Number.NaN;
     const completed = typeof row.completed_at === 'string' ? Date.parse(row.completed_at) : Number.NaN;
@@ -55,7 +73,7 @@ export function buildSiteOperationsCsv(rows: Row[]): string {
         const status = String(row.status ?? '');
         const result = status === 'succeeded' ? 'Success' : status === 'failed' ? 'Failed' : status;
         lines.push([
-            row.started_at ?? '',
+            localTimestamp(row.started_at),
             siteName(row),
             row.site_id ?? '',
             row.execution_job_id ?? '',
