@@ -43,6 +43,7 @@ final class SubscriptionPlanEntitlementsController extends Controller
 
         $data = $this->validated($request);
 
+        // Keep the optimistic-state check and persistence in one locked transaction.
         $result = DB::transaction(function () use ($request, $plan, $data): array {
             $persisted = BillingPlan::query()->lockForUpdate()->findOrFail($plan);
             $beforeState = self::managedState($persisted);
