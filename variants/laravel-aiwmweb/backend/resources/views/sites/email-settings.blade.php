@@ -22,6 +22,7 @@
         'ssl' => 'TLS / SSL',
         'enabled_mail' => 'تفعيل إرسال البريد لهذا الموقع',
         'save_profile' => 'حفظ إعداد البريد',
+        'clear_password' => 'مسح كلمة المرور المحفوظة',
         'save_note' => 'الحفظ لا يعني أن اتصال SMTP تم اختباره.',
         'recipients' => 'المستلمون الحاليون',
         'empty' => 'لا يوجد مستلمون لهذا الموقع.',
@@ -53,6 +54,7 @@
         'ssl' => 'TLS / SSL',
         'enabled_mail' => 'Enable outbound email for this site',
         'save_profile' => 'Save mail profile',
+        'clear_password' => 'Clear saved password',
         'save_note' => 'Saving does not claim SMTP connectivity has been verified.',
         'recipients' => 'Current recipients',
         'empty' => 'No recipients are configured for this site.',
@@ -151,6 +153,21 @@
                 <button type="submit" data-canonical-operation="AIMW-BILL-609F15BFCA">{{ $copy['save_profile'] }}</button>
                 <p>{{ $copy['save_note'] }}</p>
             </form>
+
+            @if (($profile['has_saved_password'] ?? false) && !($profile['use_account_profile'] ?? true))
+                <form
+                    method="post"
+                    action="{{ route('canonical.workspace.site-email-settings.mail-profile-password-clear', ['tenant' => $tenant, 'site' => $selectedSite->getKey()]) }}"
+                    data-canonical-operation="AIMW-BILL-F56F7955DA"
+                    data-source-handler="ClearMailPasswordAsync"
+                    onsubmit="this.querySelector('button[type=submit]').disabled = true"
+                    style="margin-top:12px"
+                >
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" data-canonical-operation="AIMW-BILL-F56F7955DA">{{ $copy['clear_password'] }}</button>
+                </form>
+            @endif
         </section>
 
         <section aria-labelledby="add-recipient-heading">
