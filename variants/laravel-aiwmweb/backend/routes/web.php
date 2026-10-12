@@ -285,6 +285,9 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
         Route::patch('/members/{membership}', 'updateMember');
         Route::delete('/members/{membership}', 'removeMember');
         Route::get('/roles', 'roles');
+        Route::get('/sessions', 'sessions')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-6B051BD8C0')
+            ->name('canonical.workspace.admin-sessions');
         Route::post('/roles', 'saveRole');
         Route::put('/roles/{role}', 'saveRole');
         Route::delete('/sessions/others', 'revokeOtherSessions');
@@ -342,10 +345,6 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
         Route::get('/admin/users', 'show')->defaults('workspace_permissions', 'tenant.view,users.view')->name('canonical.workspace.admin-users');
-        Route::get('/admin/sessions', 'show')
-            ->defaults('workspace_permissions', 'users.manage')
-            ->defaults('canonical_operation_id', 'AIMW-CONT-6B051BD8C0')
-            ->name('canonical.workspace.admin-sessions');
         Route::get('/admin/billing-support', 'show')->middleware('platform.admin')->defaults('workspace_permissions', '')->name('canonical.workspace.admin-billing-support');
         Route::get('/account/sessions', 'show')->defaults('workspace_permissions', 'sessions.manage,sessions.view')->name('canonical.workspace.account-sessions');
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
