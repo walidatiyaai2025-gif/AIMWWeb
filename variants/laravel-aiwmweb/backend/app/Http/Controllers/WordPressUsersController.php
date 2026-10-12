@@ -17,7 +17,7 @@ final class WordPressUsersController extends Controller
 
     public function index(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
-        $auth->authorize('content.view');
+        $auth->authorize('sites.view');
         Site::query()->findOrFail($site);
 
         $query = [
