@@ -15,6 +15,7 @@ use RuntimeException;
 
 final class SiteManagementController extends Controller
 {
+    public const SAVE_OPERATION_ID = 'AIMW-BILL-54E4003BE9';
     public function index(TenantAuthorizer $auth): JsonResponse
     {
         $auth->authorize('tenant.view');
@@ -22,9 +23,15 @@ final class SiteManagementController extends Controller
         return response()->json(Site::query()->latest()->get());
     }
 
-    public function store(Request $request, TenantAuthorizer $auth, SiteEntitlementHook $entitlements): JsonResponse
-    {
+    public function store(
+        Request $request,
+        string $tenant,
+        TenantAuthorizer $auth,
+        SiteEntitlementHook $entitlements,
+        TenantContext $context,
+    ): JsonResponse {
         $auth->authorize('sites.manage');
+        abort_unless($tenant === $context->tenant()->slug, 404);
         try {
             $entitlements->assertCanCreate();
         } catch (RuntimeException $e) {
@@ -57,21 +64,32 @@ final class SiteManagementController extends Controller
         return response()->json($details);
     }
 
-    public function update(Request $request, int $site, TenantAuthorizer $auth): JsonResponse
-    {
+    public function update(
+        Request $request,
+        string $tenant,
+        int|string $site,
+        TenantAuthorizer $auth,
+        TenantContext $context,
+    ): JsonResponse {
         $auth->authorize('sites.manage');
-        $model = Site::query()->findOrFail($site);
+        abort_unless($tenant === $context->tenant()->slug, 404);
+        abort_unless(is_int($site) || ctype_digit($site), 404);
+        $siteId = (int) $site;
+        abort_if($siteId < 1, 404);
+
+        $model = Site::query()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $context->id())
+            ->whereKey($siteId)
+            ->firstOrFail();
         $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'url' => 'sometimes|required|url|max:2048',
-            'status' => 'sometimes|in:active,disabled',
+            'name' => 'required|string|max:255',
+            'url' => 'required|url|max:2048',
         ]);
-        if (isset($data['url'])) {
-            $data['url'] = rtrim($data['url'], '/');
-        }
+        $data['url'] = rtrim($data['url'], '/');
         $model->update($data);
 
-        return response()->json($model);
+        return response()->json($model->fresh());
     }
 
     public function destroy(
