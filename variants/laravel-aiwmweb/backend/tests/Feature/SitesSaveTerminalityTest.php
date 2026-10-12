@@ -118,6 +118,7 @@ final class SitesSaveTerminalityTest extends TestCase
         }
         $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
         app(TenantContext::class)->forget();
+
         return $membership->fresh('tenant');
     }
 
@@ -126,6 +127,7 @@ final class SitesSaveTerminalityTest extends TestCase
         app(TenantContext::class)->activate($membership->tenant, $membership);
         $site = Site::query()->create(['name' => $name, 'url' => 'https://'.strtolower(str_replace(' ', '-', $name)).'.test', 'status' => 'active']);
         app(TenantContext::class)->forget();
+
         return $site;
     }
 }
