@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #906",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-8E56589573",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/email-diagnostics",
+    "visible_control": "@(L.IsArabic ? -> @($",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteEmailDiagnostics.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external": "email_provider"
+  },
+  "laravel_runtime": {
+    "explicit_route": "GET /tenants/{tenant}/sites/{site}/email-diagnostics",
+    "controller": "App\\Http\\Controllers\\SiteEmailSettingsController::diagnostics",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/email-diagnostics.blade.php",
+    "destination": "GET /tenants/{tenant}/sites/{site}/email-settings",
+    "destination_route": "canonical.workspace.site-email-settings.site",
+    "authoritative_reads": [
+      "tenant-scoped Site model",
+      "SiteMailProfileService::getAsync",
+      "SiteEmailRecipientService::listAsync"
+    ],
+    "adaptation": "the source SiteId navigation is represented with the active Laravel tenant slug and the same tenant-scoped site primary key"
+  },
+  "security": {
+    "route_guards": "web + auth + tenant.context",
+    "permissions": ["tenant.view", "sites.view", "settings.manage"],
+    "site_scope": "Site global tenant scope under active TenantContext",
+    "foreign_tenant_access": "404",
+    "foreign_site_access": "404",
+    "secret_exposure": "profile serialization exposes configuration metadata and has_secret only; the diagnostics view never renders secret material",
+    "mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailDiagnosticsBackVisibleTerminalityTest.php",
+    "coverage": [
+      "exact canonical visible-control identity and source intent",
+      "explicit diagnostics route rather than SPA catch-all",
+      "real tenant/site/profile/recipient reads",
+      "same-site Back to email settings destination",
+      "no secret material in rendered response",
+      "guest and permission denial",
+      "foreign tenant and foreign site fail closed",
+      "no mutation is introduced"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-EMAI-8E56589573"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  }
+}
