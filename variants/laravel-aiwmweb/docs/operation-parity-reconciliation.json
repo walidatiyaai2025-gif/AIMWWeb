@@ -21959,12 +21959,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-history-link-control.test.tsx",
-      "evidence": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure@e8f82da6b81091a37a6ce844314577eb97e9d69d: variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx; focused-closure:AIMW-EMAI-EC34E40629; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-history-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-history-link-terminality.json",
+      "evidence": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure@e3daa2befe7234d544281a6e0a63036b037105d9: variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx; focused-closure:AIMW-EMAI-EC34E40629; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-history-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-history-link-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
-        "source_sha": "e8f82da6b81091a37a6ce844314577eb97e9d69d",
+        "source_sha": "e3daa2befe7234d544281a6e0a63036b037105d9",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-history-link-terminality.json",
@@ -37150,7 +37150,7 @@
       },
       {
         "label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
-        "sha": "e8f82da6b81091a37a6ce844314577eb97e9d69d",
+        "sha": "e3daa2befe7234d544281a6e0a63036b037105d9",
         "operation_ids": [
           "AIMW-EMAI-EC34E40629"
         ]
