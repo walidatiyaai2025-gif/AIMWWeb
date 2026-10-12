@@ -1,6 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-BILL-B84663A4C0 issue-732-reload-async
 # exact-head: 736276e4bac5eab5e53aae86ec1c3f0d330c7a6b
+# retrigger: issue-732-materialize
 
 on:
   push:
