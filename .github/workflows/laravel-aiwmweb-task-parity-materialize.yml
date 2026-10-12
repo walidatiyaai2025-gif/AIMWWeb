@@ -1,7 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-BILL-5C15471E4B issue-735-site-settings-save-profile
 # exact-head: d6972731ae33351861d90d9eb1b39a9138b703c1
-# retrigger: issue-735-materialize
+# retrigger: issue-735-materialize-race-retry
 
 on:
   push:
