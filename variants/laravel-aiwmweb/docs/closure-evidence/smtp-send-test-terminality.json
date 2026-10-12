@@ -48,7 +48,7 @@
     "aspnet_runtime_modified": false
   },
   "branch": "worker/laravel-aiwmweb-AIMW-BILL-BC093D6418-send-test",
-  "evidence_head_sha": "cb01c89f81e69ed90969515f6150a25d57c2426b",
+  "evidence_head_sha": "052f098e2480e9932b69d099475190f8acf4c898",
   "acceptance": {
     "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsSendTestTerminalityTest.php",
     "proofs": [
