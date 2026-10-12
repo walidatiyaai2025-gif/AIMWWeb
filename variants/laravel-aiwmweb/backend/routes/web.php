@@ -227,6 +227,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             'schedules' => "/tenants/{$tenant}/admin/schedules",
             'execution' => "/tenants/{$tenant}/admin/operations",
             'site-operations' => "/tenants/{$tenant}/route-api/site-operations",
+            'site-reliability' => "/tenants/{$tenant}/route-api/site-reliability",
             'notifications' => "/api/v1/tenants/{$tenant}/notifications",
             'email-history' => "/api/v1/tenants/{$tenant}/email/deliveries",
             'email-schedules' => "/api/tenants/{$tenant}/email/schedules",
@@ -316,6 +317,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
     Route::prefix('/tenants/{tenant}/route-api')->controller(RouteApiAdapterController::class)->group(function (): void {
         Route::get('/report-exports', 'reportExports')->name('canonical.api.report-exports');
         Route::get('/site-operations', 'siteOperations')->name('canonical.api.site-operations');
+        Route::get('/site-reliability', 'siteReliability')->name('canonical.api.site-reliability');
         Route::get('/billing-overview', 'billingOverview')->name('canonical.api.billing-overview');
         Route::get('/account-profile', 'accountProfile')->name('canonical.api.account-profile');
     });
@@ -349,6 +351,7 @@ Route::prefix('/tenants/{tenant}')
 
         Route::get('/module/reports', 'show')->defaults('workspace_permissions', 'reports.view')->name('canonical.workspace.reports');
         Route::get('/site-operations', 'show')->defaults('workspace_permissions', 'execution.view')->name('canonical.workspace.site-operations');
+        Route::get('/site-reliability', 'show')->defaults('workspace_permissions', 'sites.view')->name('canonical.workspace.site-reliability');
         Route::get('/automation-center', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.automation');
         Route::get('/module/schedules', 'show')->defaults('workspace_permissions', 'operations.manage,automation.view')->name('canonical.workspace.schedules');
         Route::get('/module/execution', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.execution');
@@ -365,6 +368,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/configuration-validation', 'redirect')->defaults('workspace_permissions', 'settings.manage')->defaults('workspace_target', '/module/configuration')->name('canonical.alias.configuration-validation');
         Route::get('/reports', 'redirect')->defaults('workspace_permissions', 'reports.view')->defaults('workspace_target', '/module/reports')->name('canonical.alias.reports');
         Route::get('/operations/sites', 'redirect')->defaults('workspace_permissions', 'execution.view')->defaults('workspace_target', '/site-operations')->name('canonical.alias.operations-sites');
+        Route::get('/operations/reliability', 'redirect')->defaults('workspace_permissions', 'sites.view')->defaults('workspace_target', '/site-reliability')->name('canonical.alias.operations-reliability');
         Route::get('/automation-schedules', 'redirect')->defaults('workspace_permissions', 'operations.manage,automation.view')->defaults('workspace_target', '/module/schedules')->name('canonical.alias.automation-schedules');
         Route::get('/execution-center', 'redirect')->defaults('workspace_permissions', 'operations.manage,execution.view')->defaults('workspace_target', '/module/execution')->name('canonical.alias.execution-center');
     });
