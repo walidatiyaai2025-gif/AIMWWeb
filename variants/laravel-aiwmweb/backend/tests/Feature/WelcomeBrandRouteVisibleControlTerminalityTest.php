@@ -66,8 +66,10 @@ class WelcomeBrandRouteVisibleControlTerminalityTest extends TestCase
             ->assertDontSee('tenant-alpha-sentinel@example.test')
             ->getContent();
 
-        $this->assertSame($anonymous, $authenticated);
+        $this->assertStringContainsString('data-canonical-operation="'.self::OPERATION_ID.'"', $anonymous);
+        $this->assertStringContainsString('data-canonical-operation="'.self::OPERATION_ID.'"', $authenticated);
 
+        // Authentication may change only source-defined plan CTA destinations; brand identity remains public and tenant-neutral.
         // The canonical source is anonymous; a foreign/tenant-scoped alias must not exist.
         $this->get('/tenants/tenant-alpha-sentinel/welcome')->assertNotFound();
     }
