@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 689,
-    "pending": 242,
+    "adapted": 690,
+    "pending": 241,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 689,
-    "overall_parity_percent": 74.01
+    "terminal": 690,
+    "overall_parity_percent": 74.11
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 231,
-    "pending": 215,
+    "terminal": 232,
+    "pending": 214,
     "blocked": 0,
-    "percent": 51.79
+    "percent": 52.02
   },
   "domains": {
     "ai": {
@@ -213,12 +213,12 @@
     "taxonomy": {
       "total": 13,
       "ported": 0,
-      "adapted": 4,
-      "pending": 9,
+      "adapted": 5,
+      "pending": 8,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 4,
-      "percent": 30.77
+      "terminal": 5,
+      "percent": 38.46
     }
   },
   "uncounted_work": [],
@@ -35888,21 +35888,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-categories-control.test.tsx",
+      "evidence": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure@ff99e6ae08c6463d3b539fdeceaa2da76269495c: variants/laravel-aiwmweb/backend/resources/js/pages.tsx; focused-closure:AIMW-TAXO-D5A5B530C7; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-categories-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-show-categories-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
+        "source_sha": "ff99e6ae08c6463d3b539fdeceaa2da76269495c",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-show-categories-terminality.json",
+        "signals": [
+          "operation:AIMW-TAXO-D5A5B530C7",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-categories-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-show-categories-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -35990,12 +36000,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 231,
-      "pending": 215,
+      "adapted": 232,
+      "pending": 214,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 231,
-      "percent": 51.79
+      "terminal": 232,
+      "percent": 52.02
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36261,7 +36271,6 @@
       "AIMW-TAXO-602DE140EB",
       "AIMW-TAXO-770DAA668D",
       "AIMW-TAXO-A96714F338",
-      "AIMW-TAXO-D5A5B530C7",
       "AIMW-TAXO-D6126926AD",
       "AIMW-TAXO-EC57E21E70"
     ]
@@ -36998,6 +37007,7 @@
       "AIMW-SYNC-EF652932D6",
       "AIMW-SYNC-F135B261B2",
       "AIMW-SYNC-F340B5445A",
+      "AIMW-TAXO-D5A5B530C7",
       "AIMW-TAXO-D784149312",
       "AIMW-TAXO-ECDD00F787"
     ],
@@ -37008,10 +37018,17 @@
         "operation_ids": [
           "AIMW-CONT-E38ADF8481"
         ]
+      },
+      {
+        "label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
+        "sha": "ff99e6ae08c6463d3b539fdeceaa2da76269495c",
+        "operation_ids": [
+          "AIMW-TAXO-D5A5B530C7"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 1,
-    "focused_closure_contract_count": 231,
+    "focused_closure_operation_scoped_count": 2,
+    "focused_closure_contract_count": 232,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
