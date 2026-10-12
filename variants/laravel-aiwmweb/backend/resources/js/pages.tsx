@@ -26,6 +26,7 @@ import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './emai
 import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
@@ -235,6 +236,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     };
 
     const refreshWorkspace = async (): Promise<void> => {
+        if (route.key === 'site-operations') {
+            await runAuthoritativeSiteOperationsReload({
+                busy: query.isFetching,
+                refetch: () => query.refetch(),
+            });
+            return;
+        }
+
         if (route.key !== 'backups') {
             await query.refetch();
             return;
@@ -306,10 +315,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? ((query.data as CollectionEnvelope).meta ?? null)
         : null;
     const aiCenterSites = Array.isArray(aiCenterMeta?.sites) ? aiCenterMeta.sites : [];
-    const refreshOperationId = AUTOMATION_PHASE_REFRESH_OPERATIONS[route.key]
-        ?? (route.key === 'ai-center'
-            ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
-            : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined));
+    const refreshOperationId = route.key === 'site-operations'
+        ? SITE_OPERATIONS_RELOAD_OPERATION_ID
+        : (AUTOMATION_PHASE_REFRESH_OPERATIONS[route.key]
+            ?? (route.key === 'ai-center'
+                ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
+                : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined)));
 
     return (
         <div className="workspace-stack">
@@ -385,8 +396,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         data-canonical-operation={refreshOperationId}
                         data-canonical-load-operation={readOperations?.load}
                         data-canonical-refresh-operation={readOperations?.refresh}
-                        disabled={(route.key === 'ai-center' || route.key === 'backups') && query.isFetching}
-                        aria-busy={(route.key === 'ai-center' || route.key === 'backups') && query.isFetching ? 'true' : 'false'}
+                        disabled={(route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations') && query.isFetching}
+                        aria-busy={(route.key === 'ai-center' || route.key === 'backups' || route.key === 'site-operations') && query.isFetching ? 'true' : 'false'}
                         onClick={() => void refreshWorkspace()}
                     >
                         {route.key === 'ai-center'
@@ -397,7 +408,11 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 ? (query.isFetching
                                     ? (locale === 'ar' ? 'جارٍ إعادة تحميل النسخ…' : 'Reloading backups…')
                                     : (locale === 'ar' ? 'إعادة تحميل النسخ' : 'Reload backups'))
-                                : text(commonText.refresh)}
+                                : route.key === 'site-operations'
+                                    ? (query.isFetching
+                                        ? (locale === 'ar' ? 'جارٍ تحديث سجل العمليات…' : 'Refreshing operation history…')
+                                        : text(commonText.refresh))
+                                    : text(commonText.refresh)}
                     </button>
                     {route.controls?.map((actionKey) => {
                         const canonicalOperation = AUTOMATION_PHASE_ACTION_OPERATIONS[actionKey];
