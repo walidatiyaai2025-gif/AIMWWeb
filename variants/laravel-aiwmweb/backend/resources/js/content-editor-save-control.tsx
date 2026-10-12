@@ -1,11 +1,32 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { ApiError, apiRequest, type FrontendContext } from './core';
+import { Link, useParams } from 'react-router-dom';
+import { ApiError, apiRequest, tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
 export const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
 export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
 export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
+export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
+
+export function ContentEditorSitesLinkControl({ context }: { context: FrontendContext }) {
+    const { locale } = useLocale();
+    const target = tenantUrl(context.tenant.slug, '/sites');
+
+    return (
+        <nav
+            className="toolbar-panel content-editor-breadcrumbs"
+            aria-label={locale === 'ar' ? 'تنقل محرر المحتوى' : 'Content editor navigation'}
+        >
+            <Link
+                className="btn"
+                to={target}
+                data-canonical-operation={CONTENT_EDITOR_SITES_LINK_OPERATION_ID}
+            >
+                {locale === 'ar' ? 'المواقع' : 'Sites'}
+            </Link>
+        </nav>
+    );
+}
 
 export type ContentEditorSnapshot = {
     id: number;
@@ -300,6 +321,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
 
     return (
         <form className="workspace-stack" onSubmit={save} data-canonical-operation={CONTENT_EDITOR_SAVE_OPERATION_ID}>
+            <ContentEditorSitesLinkControl context={context} />
             <section className="hero-panel">
                 <div>
                     <span className="workspace-kicker">CONTENT EDITOR</span>
