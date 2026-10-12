@@ -41,5 +41,12 @@
     "reconciliation_commit": "08a38b7c47849ee2210c06dd850817bec50a9619",
     "result": "AIMW-EMAI-F8E8A2BEE9 ADAPTED",
     "exact_head_recheck": true
+  },
+  "synchronized_composition": {
+    "commit": "d6f8bf77a4d09106b2e75037efd370a17b1ca062",
+    "preserves": [
+      "AIMW-BILL-94755B17E4"
+    ],
+    "rematerialize_exact_operation": "AIMW-EMAI-F8E8A2BEE9"
   }
 }
