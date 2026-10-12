@@ -192,6 +192,7 @@ final class SmtpDiagnosticsDiagnoseTerminalityTest extends TestCase
 final class DiagnoseOnlyTransport implements EmailTransport
 {
     public int $diagnoseAttempts = 0;
+
     public int $sendAttempts = 0;
 
     public function send(MailConfiguration $configuration, ?string $secret, array $message): array
@@ -212,6 +213,7 @@ final class DiagnoseOnlyTransport implements EmailTransport
 final class DeterministicSmtpProbe implements SmtpConnectionProbe
 {
     public ?string $host = null;
+
     public ?int $port = null;
 
     public function __construct(private readonly bool $dnsOk, private readonly bool $tcpOk) {}
