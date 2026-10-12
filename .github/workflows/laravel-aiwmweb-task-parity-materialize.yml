@@ -11,23 +11,19 @@ on:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-reload-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
-  pull_request:
-    branches:
-      - worker/laravel-aiwmweb-closure-composition
 
 permissions:
   contents: write
 
 jobs:
   materialize:
-    if: github.event_name == 'push' || github.head_ref == 'worker/laravel-aiwmweb-AIMW-BILL-8F4FA80ED6-parity-materialize'
     runs-on: ubuntu-latest
     env:
       PYTHONHASHSEED: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
@@ -55,5 +51,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize parity for AIMW-BILL-8F4FA80ED6"
-          TARGET_REF="${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}"
-          git push origin "HEAD:$TARGET_REF"
+          git push origin "HEAD:${{ github.ref_name }}"
