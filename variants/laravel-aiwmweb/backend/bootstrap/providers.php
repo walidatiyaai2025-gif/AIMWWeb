@@ -8,6 +8,7 @@ use App\Providers\AiCenterRouteServiceProvider;
 use App\Providers\AiPromptTemplatesRouteServiceProvider;
 use App\Providers\AiProviderApiKeyRemovalRouteServiceProvider;
 use App\Providers\AiWorkspaceRouteServiceProvider;
+use App\Providers\ApplicationSessionsRouteServiceProvider;
 use App\Providers\ApplicationUserPasswordResetRouteServiceProvider;
 use App\Providers\ApprovalQueueRouteServiceProvider;
 use App\Providers\ApprovalsReportExportRouteServiceProvider;
@@ -34,6 +35,7 @@ return [
     AppServiceProvider::class,
     AccountEmailSettingsRouteServiceProvider::class,
     AdminBillingSupportRouteServiceProvider::class,
+    ApplicationSessionsRouteServiceProvider::class,
     ApplicationUserPasswordResetRouteServiceProvider::class,
     ApprovalsReportExportRouteServiceProvider::class,
     LoginReadRouteServiceProvider::class,
