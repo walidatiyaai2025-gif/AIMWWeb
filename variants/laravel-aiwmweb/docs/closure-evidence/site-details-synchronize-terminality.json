@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-94755B17E4",
+  "terminal_state": "ADAPTED",
+  "domain": "billing",
+  "kind": "visible_control",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-94755B17E4",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "source_control": "SynchronizeAsync",
+    "route_screen": "/sites/{Id:guid}"
+  },
+  "adaptation": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/site-details-synchronize-control.tsx",
+    "backend": "variants/laravel-aiwmweb/backend/app/Http/Controllers/DemoController.php::sync",
+    "route": "POST /api/tenants/{tenant}/sites/{site}/sync",
+    "status_route": "GET /api/tenants/{tenant}/sync-runs/{run}",
+    "semantics": "Start real tenant/site scoped sync with idempotency, poll authoritative run state, then reread Site Details before success."
+  },
+  "security": {
+    "permission": "sites.manage",
+    "tenant_context": true,
+    "exact_site_binding": true,
+    "caller_cannot_choose_tenant_identity": true
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-details-synchronize-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteDetailsSynchronizeTerminalityTest.php",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectionCenterSynchronizeTerminalityTest.php"
+  ],
+  "issue": 724
+}
