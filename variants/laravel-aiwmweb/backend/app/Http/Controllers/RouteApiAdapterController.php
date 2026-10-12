@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Authorization\TenantAuthorizer;
 use App\Billing\EntitlementService;
 use App\Billing\UsageQuotaService;
+use App\Models\Site;
 use App\Models\TenantSubscription;
 use App\Operations\OperationsControlPlaneService;
 use App\Sites\SiteOperationHistoryService;
 use App\Tenancy\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 
 final class RouteApiAdapterController extends Controller
@@ -37,6 +39,56 @@ final class RouteApiAdapterController extends Controller
 
         return response()->json([
             'data' => $this->siteOperations->getAll(2000),
+        ]);
+    }
+
+    public function siteReliability(string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('sites.view');
+
+        $siteNames = Site::query()->pluck('name', 'id');
+        $rows = collect($this->siteOperations->getAll(2000))
+            ->filter(fn (array $item): bool => str_contains(strtolower((string) ($item['operation'] ?? '')), 'connection')
+                || str_contains(strtolower((string) ($item['operation'] ?? '')), 'synchron')
+                || str_contains(strtolower((string) ($item['operation'] ?? '')), 'sync'))
+            ->filter(fn (array $item): bool => ($item['started_at'] ?? null) !== null
+                && CarbonImmutable::parse($item['started_at'])->greaterThanOrEqualTo(now()->subDays(30)))
+            ->groupBy('site_id')
+            ->map(function ($items, $siteId) use ($siteNames): array {
+                $total = $items->count();
+                $successful = $items->where('status', 'succeeded')->count();
+                $failed = $total - $successful;
+                $lastFailure = $items
+                    ->reject(fn (array $item): bool => ($item['status'] ?? null) === 'succeeded')
+                    ->sortByDesc('started_at')
+                    ->first();
+
+                return [
+                    'site_id' => (int) $siteId,
+                    'site_name' => (string) ($siteNames[(int) $siteId] ?? ('Site '.(int) $siteId)),
+                    'total_operations' => $total,
+                    'successful' => $successful,
+                    'failed' => $failed,
+                    'success_rate' => $total === 0 ? 0 : round(($successful * 100) / $total, 1),
+                    'last_failure_at' => $lastFailure['started_at'] ?? null,
+                    'retained_history_only' => true,
+                ];
+            })
+            ->sortBy([
+                ['success_rate', 'asc'],
+                ['total_operations', 'desc'],
+            ])
+            ->values()
+            ->all();
+
+        return response()->json([
+            'data' => $rows,
+            'meta' => [
+                'period_days' => 30,
+                'retained_history_limit' => 2000,
+                'history_may_be_truncated' => count($this->siteOperations->getAll(2000)) >= 2000,
+                'live_health_monitor' => false,
+            ],
         ]);
     }
 
