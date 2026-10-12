@@ -399,7 +399,7 @@ return [
         'fields' => [
             ['key' => 'wordpress_user_id', 'type' => 'number', 'label' => ['en' => 'WordPress user ID (blank to create)', 'ar' => 'معرّف مستخدم WordPress (اتركه فارغًا للإنشاء)']],
             ['key' => 'username', 'type' => 'text', 'label' => ['en' => 'Username (required when creating)', 'ar' => 'اسم المستخدم (مطلوب عند الإنشاء)']],
-            ['key' => 'email', 'type' => 'text', 'label' => ['en' => 'Email', 'ar' => 'البريد الإلكتروني'], 'required' => true],
+            ['key' => 'email', 'type' => 'email', 'label' => ['en' => 'Email', 'ar' => 'البريد الإلكتروني'], 'required' => true],
             ['key' => 'password', 'type' => 'password', 'label' => ['en' => 'Password (required when creating)', 'ar' => 'كلمة المرور (مطلوبة عند الإنشاء)']],
             ['key' => 'name', 'type' => 'text', 'label' => ['en' => 'Display name', 'ar' => 'اسم العرض']],
             ['key' => 'first_name', 'type' => 'text', 'label' => ['en' => 'First name', 'ar' => 'الاسم الأول']],
