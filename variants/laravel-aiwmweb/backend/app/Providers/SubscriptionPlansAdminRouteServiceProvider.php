@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Controllers\SubscriptionPlanEnabledController;
+use App\Http\Controllers\SubscriptionPlanEntitlementsController;
 use App\Http\Controllers\SubscriptionPlansAdminReadController;
 use App\Http\Controllers\SubscriptionPlanSaveController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,9 @@ final class SubscriptionPlansAdminRouteServiceProvider extends ServiceProvider
             Route::patch('/tenants/{tenant}/admin/subscription-plans/{plan}/enabled', SubscriptionPlanEnabledController::class)
                 ->whereNumber('plan')
                 ->name('tenant.admin.subscription-plans.enabled');
+            Route::patch('/tenants/{tenant}/admin/subscription-plans/{plan}/entitlements', SubscriptionPlanEntitlementsController::class)
+                ->whereNumber('plan')
+                ->name('tenant.admin.subscription-plans.entitlements');
         });
     }
 }
