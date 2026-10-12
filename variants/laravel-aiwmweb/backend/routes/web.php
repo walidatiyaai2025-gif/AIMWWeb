@@ -333,6 +333,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
         Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
+        Route::get('/email/schedules', 'show')->defaults('workspace_permissions', 'operations.manage')->defaults('canonical_operation_id', 'AIMW-EMAI-F77DB6435F')->name('canonical.workspace.email-schedules');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
         Route::get('/module/configuration', 'show')->defaults('workspace_permissions', 'settings.manage')->name('canonical.workspace.configuration-validation');
