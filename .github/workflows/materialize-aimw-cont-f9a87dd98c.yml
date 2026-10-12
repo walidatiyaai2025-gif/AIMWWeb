@@ -22,11 +22,12 @@ jobs:
     env:
       PYTHONHASHSEED: '0'
       PREVIOUS_SHA: 08f10a85b57f829b84930ee90aaf997976aa8525
-      EVIDENCE_SHA: 541515ca8497ac8d4ee4b16979a511d1e4b2dd28
+      FOCUSED_BASE_SHA: 227da332fb337b5d6f720be36abce7814b7cefc7
       OPERATION_ID: AIMW-CONT-F9A87DD98C
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Fetch exact evidence refs
@@ -36,8 +37,38 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Point manifest at immutable focused evidence source
+      - name: Build isolated pushed evidence snapshot
+        id: evidence
+        run: |
+          set -euo pipefail
+          worker_head="$(git rev-parse HEAD)"
+          paths=(
+            variants/laravel-aiwmweb/backend/resources/views/admin/application-sessions.blade.php
+            variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsSettingsLinkTerminalityTest.php
+            variants/laravel-aiwmweb/docs/closure-evidence/application-sessions-settings-link-terminality.json
+          )
+
+          git checkout --detach "$FOCUSED_BASE_SHA"
+          for path in "${paths[@]}"; do
+            mkdir -p "$(dirname "$path")"
+            git show "$worker_head:$path" > "$path"
+          done
+          git add "${paths[@]}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(laravel): isolate AIMW-CONT-F9A87DD98C evidence snapshot'
+          evidence_sha="$(git rev-parse HEAD)"
+
+          git checkout -B "${GITHUB_REF_NAME}" "$worker_head"
+          git merge -s ours --no-ff "$evidence_sha" -m 'chore(laravel): retain AIMW-CONT-F9A87DD98C evidence provenance'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          echo "sha=$evidence_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Point manifest at isolated focused evidence source
         working-directory: variants/laravel-aiwmweb
+        env:
+          EVIDENCE_SHA: ${{ steps.evidence.outputs.sha }}
         run: |
           python - <<'PY'
           import json
@@ -96,10 +127,8 @@ jobs:
       - name: Commit generated authority and retire materializer
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/materialize-aimw-cont-f9a87dd98c.yml
           git add             variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json             variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json             variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md
           git diff --cached --check
           git commit -m 'chore(laravel): materialize AIMW-CONT-F9A87DD98C parity'
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin "HEAD:${GITHUB_REF_NAME}"
