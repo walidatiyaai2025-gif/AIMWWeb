@@ -22,14 +22,19 @@
                 href="{{ route('canonical.admin.billing-support') }}"
                 data-canonical-operation="AIMW-BILL-5E8896CD58"
             >{{ app()->getLocale() === 'ar' ? 'دعم الفوترة' : 'Billing support' }}</a>
+            <button
+                type="button"
+                data-new-plan
+                data-canonical-operation="AIMW-BILL-F73C7348C3"
+            >{{ app()->getLocale() === 'ar' ? 'خطة جديدة' : 'New plan' }}</button>
         </nav>
     </header>
 
     @if (session('status'))
-        <p role="status">{{ session('status') }}</p>
+        <p role="status" data-new-plan-feedback>{{ session('status') }}</p>
     @endif
     @if ($errors->any())
-        <section role="alert" aria-label="Validation errors">
+        <section role="alert" aria-label="Validation errors" data-new-plan-feedback>
             <strong>{{ app()->getLocale() === 'ar' ? 'تعذر حفظ الخطة.' : 'Plan could not be saved.' }}</strong>
             <ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
         </section>
@@ -163,6 +168,7 @@
         @endforelse
     </section>
 </main>
+<script src="{{ asset('js/subscription-plans-new-plan.js') }}" defer></script>
 <script src="{{ asset('js/subscription-plans-clone-current.js') }}" defer></script>
 </body>
 </html>
