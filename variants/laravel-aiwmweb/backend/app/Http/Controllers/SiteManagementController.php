@@ -37,7 +37,13 @@ final class SiteManagementController extends Controller
         } catch (RuntimeException $e) {
             return response()->json(['state' => 'CAPABILITY_DISABLED', 'message' => $e->getMessage()], 403);
         }
-        $data = $request->validate(['name' => 'required|string|max:255', 'url' => 'required|url|max:2048']);
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'url' => 'required|url|max:2048',
+            'id' => 'prohibited',
+            'tenant_id' => 'prohibited',
+            'status' => 'prohibited',
+        ]);
         $data['url'] = rtrim($data['url'], '/');
 
         return response()->json(Site::query()->create($data), 201);
@@ -85,6 +91,9 @@ final class SiteManagementController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'required|url|max:2048',
+            'id' => 'prohibited',
+            'tenant_id' => 'prohibited',
+            'status' => 'prohibited',
         ]);
         $data['url'] = rtrim($data['url'], '/');
         $model->update($data);
