@@ -222,6 +222,7 @@ function AppRoutes() {
                 <Route path="account/email-settings" element={<AccountEmailSettingsRoute />} />
                 <Route path="ai-workspace" element={<AiWorkspaceRoute />} />
                 <Route path="sites/onboarding" element={<RouteElement route={workspaceRoutes.find((route) => route.key === 'site-connect')!} />} />
+                <Route path="admin/roles-permissions" element={<RouteElement route={workspaceRoutes.find((route) => route.key === 'roles')!} />} />
                 <Route path="sites/:siteId/content/:contentType/:wordpressId/edit" element={<ContentEditorRoute />} />
                 {workspaceRoutes.map((route) => {
                     const relative = route.path === '/' ? undefined : route.path.replace(/^\//, '');
