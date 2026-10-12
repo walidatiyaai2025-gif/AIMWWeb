@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 666 |
-| PENDING | 265 |
+| ADAPTED | 667 |
+| PENDING | 264 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 666 |
-| OVERALL_PARITY_PERCENT | 71.54% |
+| TERMINAL | 667 |
+| OVERALL_PARITY_PERCENT | 71.64% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **209**
-- Pending: **237**
+- Terminal: **210**
+- Pending: **236**
 - Blocked: **0**
-- Parity: **46.86%**
+- Parity: **47.09%**
 
 ## By domain
 
@@ -46,7 +46,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | settings | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 100.00% |
 | sites | 12 | 0 | 12 | 0 | 0 | 0 | 12 | 100.00% |
 | sync | 213 | 0 | 139 | 74 | 0 | 0 | 139 | 65.26% |
-| taxonomy | 13 | 0 | 2 | 11 | 0 | 0 | 2 | 15.38% |
+| taxonomy | 13 | 0 | 3 | 10 | 0 | 0 | 3 | 23.08% |
 
 ## By kind
 
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 56 | 28 | 0 | 0 | 56 | 66.67% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 209 | 237 | 0 | 0 | 209 | 46.86% |
+| visible_control | 446 | 0 | 210 | 236 | 0 | 0 | 210 | 47.09% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **41**
-- Focused visible-control contracts: **209**
+- Focused visible-control contracts: **210**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -392,7 +392,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-SYNC-FD27B795ED`
 - `AIMW-SYNC-FF579F0EBF`
 
-### taxonomy (11)
+### taxonomy (10)
 
 - `AIMW-TAXO-005925568C`
 - `AIMW-TAXO-39CDD7EF81`
@@ -402,6 +402,5 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-TAXO-A96714F338`
 - `AIMW-TAXO-D5A5B530C7`
 - `AIMW-TAXO-D6126926AD`
-- `AIMW-TAXO-D784149312`
 - `AIMW-TAXO-EC57E21E70`
 - `AIMW-TAXO-ECDD00F787`
