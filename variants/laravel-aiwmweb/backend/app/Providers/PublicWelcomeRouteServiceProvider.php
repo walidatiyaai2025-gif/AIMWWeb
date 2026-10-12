@@ -15,5 +15,9 @@ final class PublicWelcomeRouteServiceProvider extends ServiceProvider
             ->defaults('canonical_operation_id', 'AIMW-AI-4C07560F0B')
             ->defaults('canonical_route_operation_id', 'AIMW-CONT-86346F4C6C')
             ->name('public.welcome');
+
+        Route::middleware(['web', 'auth'])
+            ->get('/account/billing', [PublicWelcomeReadController::class, 'billing'])
+            ->name('public.account-billing.bridge');
     }
 }
