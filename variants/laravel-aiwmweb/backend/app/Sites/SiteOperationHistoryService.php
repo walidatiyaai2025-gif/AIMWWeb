@@ -17,7 +17,12 @@ final class SiteOperationHistoryService
 
     public function getAll(int $take = 250): array
     {
-        return SiteOperationHistory::query()->latest('started_at')->limit(max(1, min(self::MAX_RECORDS, $take)))->get()->toArray();
+        return SiteOperationHistory::query()
+            ->with('site:id,name')
+            ->latest('started_at')
+            ->limit(max(1, min(self::MAX_RECORDS, $take)))
+            ->get()
+            ->toArray();
     }
 
     public function getById(int $id): ?SiteOperationHistory

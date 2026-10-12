@@ -36,7 +36,7 @@ final class RouteApiAdapterController extends Controller
         $this->authorizer->authorize('execution.view');
 
         return response()->json([
-            'data' => $this->siteOperations->getAll(),
+            'data' => $this->siteOperations->getAll(2000),
         ]);
     }
 
