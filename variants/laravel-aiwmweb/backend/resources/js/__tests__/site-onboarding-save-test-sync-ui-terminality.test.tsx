@@ -5,16 +5,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
 import {
+    SITE_ONBOARDING_NEXT_OPERATION_ID,
     SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID,
     SiteOnboardingSaveTestSyncControl,
 } from '../site-onboarding-save-test-sync-control';
 
-function context(): FrontendContext {
+function context(permissions: string[] = ['tenant.view', 'sites.manage']): FrontendContext {
     return {
         user: { id: 7, name: 'Operator', email: 'operator@example.test' },
         tenant: { slug: 'alpha', name: 'Alpha' },
         tenants: [{ slug: 'alpha', name: 'Alpha' }],
-        permissions: ['tenant.view', 'sites.manage'],
+        permissions,
         connectors: [],
         capabilities: {},
         api: { sites: '/api/tenants/alpha/sites' },
@@ -22,21 +23,86 @@ function context(): FrontendContext {
     };
 }
 
-function renderControl() {
+function renderControl(permissions?: string[]) {
     const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
             <LocaleProvider>
-                <SiteOnboardingSaveTestSyncControl context={context()} />
+                <SiteOnboardingSaveTestSyncControl context={context(permissions)} />
             </LocaleProvider>
         </QueryClientProvider>,
     );
+}
+
+function completeProfileStep(name: string, url: string): void {
+    fireEvent.change(screen.getByLabelText('Site name'), { target: { value: name } });
+    fireEvent.change(screen.getByLabelText('Site URL'), { target: { value: url } });
+    const continueButton = screen.getByRole('button', { name: 'Continue' });
+    expect(continueButton).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_NEXT_OPERATION_ID);
+    fireEvent.click(continueButton);
+}
+
+function completeCredentialStep(username: string, password: string): HTMLInputElement {
+    fireEvent.change(screen.getByLabelText('WordPress username'), { target: { value: username } });
+    const secret = screen.getByLabelText('Application Password') as HTMLInputElement;
+    fireEvent.change(secret, { target: { value: password } });
+    const continueButton = screen.getByRole('button', { name: 'Continue' });
+    expect(continueButton).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_NEXT_OPERATION_ID);
+    fireEvent.click(continueButton);
+    return secret;
 }
 
 afterEach(() => {
     document.querySelector('meta[name="csrf-token"]')?.remove();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+});
+
+describe('AIMW-BILL-5DE86937F7 onboarding NextAsync browser proof', () => {
+    it('validates each source step before advancing and never calls the onboarding API', () => {
+        const fetchMock = vi.fn();
+        vi.stubGlobal('fetch', fetchMock);
+
+        renderControl();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(screen.getByRole('alert')).toHaveTextContent('Site name is required.');
+        expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Site name'), { target: { value: 'Alpha Site' } });
+        fireEvent.change(screen.getByLabelText('Site URL'), { target: { value: 'ftp://alpha.example.test' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid URL starting with http or https.');
+        expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Site URL'), { target: { value: 'https://alpha.example.test' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(screen.getByRole('alert')).toHaveTextContent('WordPress username is required.');
+
+        fireEvent.change(screen.getByLabelText('WordPress username'), { target: { value: 'wp-admin' } });
+        fireEvent.change(screen.getByLabelText('Application Password'), { target: { value: 'short' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(screen.getByRole('alert')).toHaveTextContent('Application Password is required and must contain at least 8 characters.');
+
+        fireEvent.change(screen.getByLabelText('Application Password'), { target: { value: 'application-secret-123' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+        expect(screen.getByText('Step 3 of 3')).toBeInTheDocument();
+        expect(screen.getByText('Alpha Site')).toBeInTheDocument();
+        expect(screen.getByText('https://alpha.example.test')).toBeInTheDocument();
+        expect(screen.getByText('wp-admin')).toBeInTheDocument();
+        expect(screen.queryByText('application-secret-123')).not.toBeInTheDocument();
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when sites.manage is absent', () => {
+        renderControl(['tenant.view']);
+        expect(screen.queryByText('SITE ONBOARDING')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+    });
 });
 
 describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
@@ -63,12 +129,8 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         vi.stubGlobal('crypto', { randomUUID: () => '11111111-1111-4111-8111-111111111111' });
 
         renderControl();
-        const inputs = screen.getAllByRole('textbox');
-        fireEvent.change(inputs[0], { target: { value: 'Alpha Site' } });
-        fireEvent.change(inputs[1], { target: { value: 'https://alpha.example.test' } });
-        fireEvent.change(inputs[2], { target: { value: 'wp-admin' } });
-        const secret = screen.getByLabelText('Application Password');
-        fireEvent.change(secret, { target: { value: 'application-secret-123' } });
+        completeProfileStep('Alpha Site', 'https://alpha.example.test');
+        const secret = completeCredentialStep('wp-admin', 'application-secret-123');
 
         const button = screen.getByRole('button', { name: 'Save, test and synchronize' });
         expect(button).toHaveAttribute('data-canonical-operation', SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID);
@@ -130,12 +192,8 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderControl();
-        const inputs = screen.getAllByRole('textbox');
-        fireEvent.change(inputs[0], { target: { value: 'Retry Site' } });
-        fireEvent.change(inputs[1], { target: { value: 'https://retry.example.test' } });
-        fireEvent.change(inputs[2], { target: { value: 'wp-admin' } });
-        const secret = screen.getByLabelText('Application Password');
-        fireEvent.change(secret, { target: { value: 'first-secret-value' } });
+        completeProfileStep('Retry Site', 'https://retry.example.test');
+        const secret = completeCredentialStep('wp-admin', 'first-secret-value');
         fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -148,7 +206,9 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
         await waitFor(() => expect(secret).toHaveValue(''));
         expect(await screen.findByRole('alert')).toHaveTextContent('WordPress connection test failed');
 
-        fireEvent.change(secret, { target: { value: 'second-secret-value' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        fireEvent.change(screen.getByLabelText('Application Password'), { target: { value: 'second-secret-value' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
         fireEvent.click(screen.getByRole('button', { name: 'Save, test and synchronize' }));
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -162,7 +222,6 @@ describe('AIMW-BILL-2EF6B8A27A onboarding browser proof', () => {
             application_password: 'second-secret-value',
             retry_token: 'opaque-server-issued-retry-token',
         });
-        await waitFor(() => expect(secret).toHaveValue(''));
         expect(await screen.findByText('verified / healthy')).toBeInTheDocument();
     });
 });
