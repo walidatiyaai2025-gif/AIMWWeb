@@ -128,6 +128,7 @@ final class WordPressUsersSaveTerminalityTest extends TestCase
             if ($request->method() === 'GET'
                 && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55?context=edit') {
                 $reads++;
+
                 return Http::response([
                     'id' => 55,
                     'username' => 'existing',
