@@ -14,6 +14,7 @@ use Illuminate\View\View;
 final class SiteEmailSettingsController extends Controller
 {
     public const DIAGNOSTICS_BACK_OPERATION_ID = 'AIMW-EMAI-8E56589573';
+
     public function module(
         Request $request,
         string $tenant,
