@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #735",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-5C15471E4B",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteSettings.razor",
+    "service": "src/AIWordPressManager.Web/Services/SiteWebService.cs",
+    "route_screen": "/sites/{Id:guid}/settings",
+    "visible_control": "SaveProfileAsync",
+    "behavior": "Validate the site name and primary WordPress URL, persist the tenant-owned site profile, then reload the authoritative settings state before announcing success.",
+    "tenant_owned": true,
+    "mutation": true,
+    "risk": "low"
+  },
+  "source_semantics": {
+    "permission": "SiteWebService.UpdateSiteAsync requires SitesManage.",
+    "name": "Name is required, trimmed, and limited to 150 characters.",
+    "url": "URL must be absolute http/https; the source normalizes host casing, clears query/fragment, and resets the path to root.",
+    "persistence": "Only site name and primary URL are changed.",
+    "authoritative_reread": "SaveProfileAsync calls LoadAsync after UpdateSiteAsync before leaving the operation complete.",
+    "external_dependency": "No WordPress, Connector, AI provider, or payment-provider request is made by this operation."
+  },
+  "laravel_adaptation": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsSaveProfileController.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+    "route": "POST /tenants/{tenant}/sites/{site}/settings/profile",
+    "route_name": "canonical.site.settings.profile",
+    "operation_marker": "AIMW-BILL-5C15471E4B",
+    "authorization": [
+      "tenant.view",
+      "sites.view",
+      "sites.manage"
+    ],
+    "tenant_isolation": "The active TenantContext slug must equal the route tenant and the site write/reread both use explicit active tenant_id plus route site key.",
+    "csrf": "The route uses web middleware and the visible Blade form renders @csrf.",
+    "locking": "The active-tenant site row is locked inside a bounded DB transaction before comparison/write.",
+    "replay": "Submitting an already-normalized identical name/URL is a no-op before the authoritative reread.",
+    "success": "The success redirect is emitted only after rereading and verifying the exact persisted name and normalized URL.",
+    "failure": "Validation, permission, foreign-tenant/site, or verification failures fail closed without a fabricated success state."
+  },
+  "security_and_truthfulness": {
+    "caller_owned_fields_rejected": [
+      "tenant_id",
+      "site_id",
+      "actor_user_id",
+      "status",
+      "connection_status",
+      "health_state"
+    ],
+    "unrelated_state_preserved": "status, connection_status, health_state, credentials, executions, and provider state are not changed.",
+    "foreign_tenant": "404",
+    "foreign_site": "404",
+    "missing_manage_permission": "403",
+    "invalid_input": "422",
+    "verification_failure": "409",
+    "payment_provider": "No provider call or readiness/success claim is introduced.",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": [
+    "Tests\\Feature\\SiteSettingsSaveProfileTerminalityTest::test_route_and_visible_control_are_bound_to_the_exact_canonical_operation",
+    "Tests\\Feature\\SiteSettingsSaveProfileTerminalityTest::test_save_profile_matches_source_normalization_and_verifies_authoritative_state",
+    "Tests\\Feature\\SiteSettingsSaveProfileTerminalityTest::test_missing_permission_hides_control_and_direct_post_fails_closed",
+    "Tests\\Feature\\SiteSettingsSaveProfileTerminalityTest::test_foreign_tenant_and_foreign_site_ids_cannot_be_updated",
+    "Tests\\Feature\\SiteSettingsSaveProfileTerminalityTest::test_invalid_profile_and_server_derived_field_spoofing_are_rejected_before_write",
+    "Tests\\Feature\\SiteSettingsSaveProfileTerminalityTest::test_source_semantics_and_laravel_runtime_remain_local_tenant_scoped_and_provider_free"
+  ],
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No credential-save behavior claimed",
+    "No operational-state behavior claimed",
+    "No delete behavior claimed",
+    "No generated parity counts hand-edited",
+    "No payment-provider state fabricated"
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The exact SaveProfileAsync control now has a real authenticated tenant-scoped sites.manage mutation, source-aligned input normalization, deterministic validation and failure behavior, row-locked persistence, authoritative reread verification, and focused isolation tests."
+  }
+}

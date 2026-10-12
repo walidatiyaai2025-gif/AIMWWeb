@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Controllers\SiteCredentialController;
 use App\Http\Controllers\SiteSettingsDeleteController;
 use App\Http\Controllers\SiteSettingsReadController;
+use App\Http\Controllers\SiteSettingsSaveProfileController;
 use App\Http\Controllers\SiteSettingsToggleDisabledController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +19,13 @@ final class SiteSettingsRouteServiceProvider extends ServiceProvider
             ->defaults('canonical_operation_id', 'AIMW-SITE-9F9F2977B5')
             ->whereNumber('site')
             ->name('canonical.site.settings');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
+            ->post('/tenants/{tenant}/sites/{site}/settings/profile', SiteSettingsSaveProfileController::class)
+            ->defaults('workspace_permissions', 'tenant.view,sites.view,sites.manage')
+            ->defaults('canonical_operation_id', SiteSettingsSaveProfileController::OPERATION_ID)
+            ->whereNumber('site')
+            ->name('canonical.site.settings.profile');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->post('/tenants/{tenant}/sites/{site}/settings/operational-state', SiteSettingsToggleDisabledController::class)
