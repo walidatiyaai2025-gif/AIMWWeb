@@ -48,6 +48,9 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites', [SiteManagementController::class, 'store'])
         ->defaults('canonical_operation_id', SiteManagementController::SAVE_OPERATION_ID)
         ->name('canonical.api.sites.save.create');
+    Route::post('/sites/retest-selected', [SiteManagementController::class, 'retestSelected'])
+        ->defaults('canonical_operation_id', SiteManagementController::RETEST_SELECTED_OPERATION_ID)
+        ->name('canonical.api.sites.retest-selected');
     Route::get('/sites/{site}', [SiteManagementController::class, 'show']);
     Route::patch('/sites/{site}', [SiteManagementController::class, 'update'])
         ->defaults('canonical_operation_id', SiteManagementController::SAVE_OPERATION_ID)
