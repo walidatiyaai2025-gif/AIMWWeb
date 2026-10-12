@@ -65,7 +65,7 @@ describe(`${EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID} ApplyFiltersAsync`, () => 
         vi.stubGlobal('fetch', fetchMock);
 
         renderWorkspace();
-        expect(await screen.findByText('before')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: 'QUEUED' })).toBeInTheDocument();
 
         fireEvent.change(screen.getByPlaceholderText('Site ID'), { target: { value: '7' } });
         fireEvent.change(screen.getByRole('combobox', { name: 'Status' }), { target: { value: 'SENT' } });
@@ -75,7 +75,7 @@ describe(`${EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID} ApplyFiltersAsync`, () => 
         expect(apply).toHaveAttribute('data-canonical-operation', EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID);
         fireEvent.click(apply);
 
-        expect(await screen.findByText('after')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: 'SENT' })).toBeInTheDocument();
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         const url = String(fetchMock.mock.calls[1]?.[0]);
         expect(url).toContain('/api/v1/tenants/alpha/email/deliveries?page=1');
