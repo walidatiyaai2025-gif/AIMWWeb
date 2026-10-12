@@ -14,6 +14,8 @@ final class SiteOperationDetailsReadController extends Controller
 {
     public const EXECUTION_CENTER_OPERATION_ID = 'AIMW-AI-98F705F888';
 
+    public const LOAD_OPERATION_ID = 'AIMW-BILL-B26D5099F8';
+
     public function __invoke(
         string $tenant,
         string $operationId,
