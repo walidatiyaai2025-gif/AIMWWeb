@@ -127,10 +127,18 @@ final class EmailNotificationController extends Controller
         return response()->json($this->templates->serialize($this->templates->save($stableId, $locale, $data)));
     }
 
-    public function deliveries(string $tenant): JsonResponse
+    public function deliveries(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.manage');
+        $filters = $request->validate([
+            'site_id' => ['nullable', 'integer', 'min:1'],
+            'status' => ['nullable', 'in:QUEUED,SENDING,RETRYING,SENT,FAILED,SUPPRESSED'],
+            'correlation' => ['nullable', 'string', 'max:100'],
+            'search' => ['nullable', 'string', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'between:1,100'],
+        ]);
 
-        return response()->json($this->deliveries->history());
+        return response()->json($this->deliveries->history($filters));
     }
 }
