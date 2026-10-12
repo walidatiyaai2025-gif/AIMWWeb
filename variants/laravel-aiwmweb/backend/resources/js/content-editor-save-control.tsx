@@ -5,6 +5,7 @@ import { useLocale } from './i18n';
 
 export const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
 export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
+export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
 
 export type ContentEditorSnapshot = {
     id: number;
@@ -124,6 +125,36 @@ export function buildContentEditorSavePayload(snapshot: ContentEditorSnapshot, d
         expected_modified_at: snapshot.expected_modified_at ?? null,
         expected_version: snapshot.expected_version ?? null,
     };
+}
+
+export function clearContentEditorFeaturedMedia(draft: ContentEditorDraft): ContentEditorDraft {
+    return { ...draft, featured_media: 0 };
+}
+
+export function ContentEditorClearFeaturedControl({
+    featuredMediaId,
+    disabled,
+    locale,
+    onClear,
+}: {
+    featuredMediaId: number;
+    disabled: boolean;
+    locale: 'en' | 'ar';
+    onClear: () => void;
+}) {
+    if (featuredMediaId <= 0) return null;
+
+    return (
+        <button
+            type="button"
+            className="btn"
+            disabled={disabled}
+            data-canonical-operation={CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID}
+            onClick={onClear}
+        >
+            {locale === 'ar' ? 'إزالة الصورة البارزة' : 'Remove featured image'}
+        </button>
+    );
 }
 
 export type ContentEditorApprovalResponse = {
@@ -322,6 +353,12 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                 </label>
                 <label><span>{locale === 'ar' ? 'تاريخ النشر' : 'Publish date'}</span><input type="datetime-local" value={draft.date_gmt ?? ''} onChange={(e) => set('date_gmt', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'معرف الصورة البارزة' : 'Featured media ID'}</span><input type="number" min={0} value={draft.featured_media} onChange={(e) => set('featured_media', Number(e.target.value))} /></label>
+                <ContentEditorClearFeaturedControl
+                    featuredMediaId={draft.featured_media}
+                    disabled={!canEdit || saving || submittingApproval}
+                    locale={locale}
+                    onClear={() => setDraft((current) => current ? clearContentEditorFeaturedMedia(current) : current)}
+                />
                 {snapshot.type === 'post' ? (
                     <>
                         <label><span>{locale === 'ar' ? 'معرفات التصنيفات' : 'Category IDs'}</span><input value={draft.categories_text} onChange={(e) => set('categories_text', e.target.value)} /></label>
