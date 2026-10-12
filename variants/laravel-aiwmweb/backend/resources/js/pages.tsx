@@ -27,6 +27,7 @@ import { CurrentUserLogsControl } from './current-user-logs-control';
 import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
+import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
 import { runAuthoritativeSiteOperationsReload, SITE_OPERATIONS_RELOAD_OPERATION_ID } from './site-operations-reload-control';
 import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATION_ID } from './site-reliability-reload-control';
@@ -510,7 +511,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        renderActions={route.key === 'media' && endpoint ? (row) => (
+                        renderActions={route.key === 'pages' ? (row) => (
+                            <PagesWordPressLinkControl value={row.link} />
+                        ) : route.key === 'media' && endpoint ? (row) => (
                             <MediaDeleteControl
                                 context={context}
                                 endpoint={endpoint}
