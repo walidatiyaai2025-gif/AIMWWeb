@@ -105,6 +105,39 @@
                     <input type="hidden" name="enabled" value="{{ $plan->enabled ? '0' : '1' }}">
                     <button type="submit">{{ $plan->enabled ? (app()->getLocale() === 'ar' ? 'تعطيل' : 'Disable') : (app()->getLocale() === 'ar' ? 'تفعيل' : 'Enable') }}</button>
                 </form>
+
+                @php($entitlementForm = $entitlementForms[$plan->id])
+                <section data-canonical-operation="AIMW-BILL-887504EDDD" aria-label="{{ app()->getLocale() === 'ar' ? 'حدود ومميزات الخطة' : 'Plan capabilities and limits' }}">
+                    <h3>{{ app()->getLocale() === 'ar' ? 'حدود ومميزات الخطة' : 'Plan capabilities & limits' }}</h3>
+                    <p>{{ app()->getLocale() === 'ar'
+                        ? 'هذه القيم تستخدمها خدمات التطبيق كحدود فعلية على الخادم.'
+                        : 'These values are authoritative server-side plan limits and capabilities.' }}</p>
+                    <form method="post" action="{{ route('tenant.admin.subscription-plans.entitlements', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="expected_state" value="{{ $entitlementForm['expected_state'] }}">
+
+                        <label>sites.max <input name="sites_max" type="number" min="0" max="999999999" required value="{{ $entitlementForm['sites_max'] }}"></label>
+                        <label>email.siteRecipients.max <input name="email_site_recipients_max" type="number" min="0" max="999999999" required value="{{ $entitlementForm['email_site_recipients_max'] }}"></label>
+                        <label>email.schedules.max <input name="email_schedules_max" type="number" min="0" max="999999999" required value="{{ $entitlementForm['email_schedules_max'] }}"></label>
+
+                        <input type="hidden" name="email_dashboard_digest" value="0">
+                        <label>email.dashboardDigest <input name="email_dashboard_digest" type="checkbox" value="1" {{ $entitlementForm['email_dashboard_digest'] ? 'checked' : '' }}></label>
+
+                        <label>automation.schedules.max <input name="automation_schedules_max" type="number" min="0" max="999999999" required value="{{ $entitlementForm['automation_schedules_max'] }}"></label>
+
+                        <input type="hidden" name="ai_enabled" value="0">
+                        <label>ai.enabled <input name="ai_enabled" type="checkbox" value="1" {{ $entitlementForm['ai_enabled'] ? 'checked' : '' }}></label>
+
+                        <label>ai.monthlyRequests.max <input name="ai_monthly_requests_max" type="number" min="0" max="999999999" required value="{{ $entitlementForm['ai_monthly_requests_max'] }}"></label>
+                        <label>backup.retentionDays <input name="backup_retention_days" type="number" min="0" max="999999999" required value="{{ $entitlementForm['backup_retention_days'] }}"></label>
+
+                        <input type="hidden" name="premium_seo" value="0">
+                        <label>premium.seo <input name="premium_seo" type="checkbox" value="1" {{ $entitlementForm['premium_seo'] ? 'checked' : '' }}></label>
+
+                        <button type="submit">{{ app()->getLocale() === 'ar' ? 'حفظ الحدود' : 'Save limits' }}</button>
+                    </form>
+                </section>
             </article>
         @empty
             <p role="status">{{ app()->getLocale() === 'ar' ? 'لا توجد خطط اشتراك محفوظة.' : 'No persisted subscription plans.' }}</p>
