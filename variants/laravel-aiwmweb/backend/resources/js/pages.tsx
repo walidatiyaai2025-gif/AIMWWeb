@@ -315,12 +315,12 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? ((query.data as CollectionEnvelope).meta ?? null)
         : null;
     const aiCenterSites = Array.isArray(aiCenterMeta?.sites) ? aiCenterMeta.sites : [];
-    const refreshOperationId = AUTOMATION_PHASE_REFRESH_OPERATIONS[route.key]
-        ?? (route.key === 'ai-center'
-            ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
-            : (route.key === 'sites'
-                ? SITES_RELOAD_OPERATION_ID
-                : (route.key === 'site-operations' ? SITE_OPERATIONS_RELOAD_OPERATION_ID : undefined)));
+    const refreshOperationId = route.key === 'site-operations'
+        ? SITE_OPERATIONS_RELOAD_OPERATION_ID
+        : (AUTOMATION_PHASE_REFRESH_OPERATIONS[route.key]
+            ?? (route.key === 'ai-center'
+                ? AI_CENTER_METADATA_REFRESH_OPERATION_ID
+                : (route.key === 'sites' ? SITES_RELOAD_OPERATION_ID : undefined)));
 
     return (
         <div className="workspace-stack">
