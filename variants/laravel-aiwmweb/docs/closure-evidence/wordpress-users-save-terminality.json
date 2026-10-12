@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #742",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-D307963B59",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "branch": "worker/laravel-aiwmweb-AIMW-BILL-D307963B59-users-save",
+  "evidence_head_sha": "445fd51a72bc6adf2e9b7f834e4ab2750fe8c5e9",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
+    "route_screen": "/sites/{SiteId:guid}/users",
+    "visible_control": "SaveAsync [SaveAsync]",
+    "service": "WordPressUsersWebService",
+    "permission": "Content.Edit",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high",
+    "external_dependency_metadata": "payment_provider"
+  },
+  "source_semantics": {
+    "mode_selection": "CreateAsync when editing id is zero; UpdateAsync otherwise",
+    "create_validation": [
+      "username required",
+      "email required",
+      "password minimum 6"
+    ],
+    "update_validation": [
+      "positive user id",
+      "email required",
+      "blank password omitted"
+    ],
+    "roles": "single selected WordPress role",
+    "post_success": "ResetForm then LoadAsync authoritative re-read"
+  },
+  "laravel_adaptation": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/WordPressUsersController.php",
+    "read_route": "GET /api/v1/tenants/{tenant}/sites/{site}/users",
+    "save_route": "POST /api/v1/tenants/{tenant}/sites/{site}/users/save",
+    "route_name": "api.v1.wordpress-users.save",
+    "action_contract": "wordpress-users.save",
+    "action_endpoint": "/api/v1/tenants/{tenant}/sites/{site}/users/save",
+    "permission": "content.edit",
+    "ownership": "site",
+    "connector_scope": "users.read",
+    "wordpress_resource": "/wp-json/wp/v2/users",
+    "create_behavior": "POST exactly once then GET /users/{id}?context=edit",
+    "update_behavior": "GET baseline, POST exactly once, then GET /users/{id}?context=edit",
+    "empty_update_password": "omitted from outbound WordPress payload",
+    "automatic_mutation_retry": false,
+    "success_requires_authoritative_reread": true
+  },
+  "authorization_and_isolation": {
+    "guest": "401",
+    "missing_content_edit": "403",
+    "foreign_tenant": "404",
+    "foreign_site": "404",
+    "caller_owned_identity_fields": "422 before WordPress request"
+  },
+  "frontend": {
+    "route_key": "wp-users",
+    "api_key": "wp-users",
+    "control": "wordpress-users.save",
+    "reconciliation": "generic mutateThenReconcile refetches wp-users collection after server-confirmed mutation",
+    "success_message_only_after_reconciliation": true
+  },
+  "acceptance": {
+    "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersSaveTerminalityTest.php",
+    "proofs": [
+      "exact canonical source binding",
+      "route/session/auth/tenant binding",
+      "create POST then authoritative GET",
+      "update baseline GET, one POST, authoritative GET",
+      "blank update password not sent",
+      "permission and tenant isolation fail closed",
+      "caller cannot override tenant/site identity"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-D307963B59",
+    "adjacent_user_operations_not_claimed": true,
+    "aspnet_runtime_modified": false,
+    "fake_success": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "Laravel AIWMWeb exposes a real content.edit/site-owned SaveAsync contract that performs the WordPress create/update mutation exactly once and refuses to surface success until authoritative WordPress state is re-read and the frontend collection reconciliation completes."
+  }
+}
