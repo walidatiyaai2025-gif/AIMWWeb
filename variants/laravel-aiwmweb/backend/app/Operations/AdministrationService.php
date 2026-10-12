@@ -169,6 +169,49 @@ final class AdministrationService
         });
     }
 
+    public function applicationSessions(?string $currentSessionId): array
+    {
+        $memberships = TenantMembership::query()
+            ->with(['user:id,name,email', 'roles:id,name'])
+            ->where('status', 'active')
+            ->get()
+            ->keyBy('user_id');
+
+        if ($memberships->isEmpty()) {
+            return [];
+        }
+
+        $lifetimeSeconds = max(1, (int) config('session.lifetime', 120)) * 60;
+        $now = time();
+
+        return DB::table('sessions')
+            ->whereIn('user_id', $memberships->keys()->all())
+            ->orderByDesc('last_activity')
+            ->get()
+            ->map(function ($session) use ($memberships, $currentSessionId, $lifetimeSeconds, $now): array {
+                $membership = $memberships->get((int) $session->user_id);
+                $lastActivity = (int) $session->last_activity;
+                $expiresAt = $lastActivity + $lifetimeSeconds;
+
+                return [
+                    'id' => (string) $session->id,
+                    'user_id' => (int) $session->user_id,
+                    'user_name' => (string) ($membership?->user?->name ?? ''),
+                    'user_email' => (string) ($membership?->user?->email ?? ''),
+                    'role' => $membership?->roles?->pluck('name')->sort()->implode(', ') ?: '—',
+                    'current' => $currentSessionId !== null && hash_equals((string) $session->id, $currentSessionId),
+                    'active' => $expiresAt > $now,
+                    'ip_address' => $session->ip_address,
+                    'user_agent' => $session->user_agent,
+                    'last_activity' => $lastActivity,
+                    'last_activity_at' => date(DATE_ATOM, $lastActivity),
+                    'expires_at' => date(DATE_ATOM, $expiresAt),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     public function sessions(int $actorUserId, ?string $currentSessionId): array
     {
         return DB::table('sessions')->where('user_id', $actorUserId)->orderByDesc('last_activity')->get()->map(fn ($session) => [
