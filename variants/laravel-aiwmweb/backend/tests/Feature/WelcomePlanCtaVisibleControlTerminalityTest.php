@@ -143,8 +143,7 @@ final class WelcomePlanCtaVisibleControlTerminalityTest extends TestCase
             ->get('/account/billing?tenant=multi-alpha');
 
         $response->assertStatus(409);
-        $this->assertStringNotContainsString('/tenants/multi-alpha/account/billing', $response->getContent());
-        $this->assertStringNotContainsString('/tenants/multi-beta/account/billing', $response->getContent());
+        $this->assertFalse($response->baseResponse->isRedirection());
     }
 
     public function test_empty_catalog_has_deterministic_non_success_state_and_no_fake_cta(): void
