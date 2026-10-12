@@ -32,6 +32,7 @@ use Throwable;
 final class DemoController extends Controller
 {
     public const SAVE_AND_TEST_OPERATION_ID = 'AIMW-BILL-C37235F06A';
+    public const SITE_DETAILS_SYNC_OPERATION_ID = 'AIMW-BILL-94755B17E4';
 
     public function login(Request $request): JsonResponse
     {
