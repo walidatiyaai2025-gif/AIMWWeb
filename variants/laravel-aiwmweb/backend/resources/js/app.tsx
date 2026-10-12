@@ -63,6 +63,7 @@ import { SiteConnectionCenterSyncControl } from './site-connection-center-sync-c
 import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
 import { SitesDeleteControl } from './sites-delete-control';
 import { SitesSaveControl } from './sites-save-control';
+import { SitesRetestSelectedControl } from './sites-retest-selected-control';
 import { SystemHealthWorkspace } from './system-health-workspace';
 
 const queryClient = new QueryClient({
@@ -173,7 +174,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
         </>
     );
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
-    if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
