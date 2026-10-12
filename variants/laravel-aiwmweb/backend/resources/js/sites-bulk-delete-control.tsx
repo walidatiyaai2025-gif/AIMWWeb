@@ -8,11 +8,9 @@ import { mutateThenReconcile } from './reconciliation';
 const OPERATION_ID = 'AIMW-BILL-337E4FF969';
 const REQUEST_OPERATION_ID = 'AIMW-SYNC-7C3B0E834E';
 const TOGGLE_VISIBLE_OPERATION_ID = 'AIMW-BILL-F8102254A8';
-export const RETEST_SELECTED_OPERATION_ID = 'AIMW-BILL-DD0FD9926B';
 const MAX_SITES = 100;
 
 type SiteRow = { id: number; name?: string; url?: string; status?: string };
-type RetestSelectedResult = { requested: number; succeeded: number; failed: number; items: Array<{ site_id: number; site_name: string; is_success: boolean; message: string; classification?: string | null }> };
 
 export function SitesBulkDeleteControl({ context }: { context: FrontendContext }) {
     const { locale } = useLocale();
@@ -57,35 +55,10 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
         onError: (error) => notify(error instanceof Error ? error.message : (locale === 'ar' ? 'فشل حذف المواقع المحددة.' : 'Bulk site deletion failed.'), 'error'),
     });
 
-    const retestMutation = useMutation({
-        mutationFn: async (ids: number[]) => mutateThenReconcile(
-            () => apiRequest<RetestSelectedResult>(`${endpoint}/retest-selected`, {
-                method: 'POST',
-                body: JSON.stringify({ ids }),
-            }),
-            async () => {
-                const refreshed = await query.refetch();
-                if (refreshed.error) throw refreshed.error;
-            },
-        ),
-        onSuccess: async (result) => {
-            await queryClient.invalidateQueries({ queryKey: ['workspace', context.tenant.slug, 'sites'] });
-            notify(
-                locale === 'ar'
-                    ? `اكتمل اختبار ${result.requested} موقع: ${result.succeeded} ناجح، ${result.failed} يحتاج مراجعة.`
-                    : `Retested ${result.requested} sites: ${result.succeeded} succeeded, ${result.failed} need review.`,
-                result.failed === 0 ? 'success' : 'error',
-            );
-        },
-        onError: (error) => notify(error instanceof Error ? error.message : (locale === 'ar' ? 'فشل إعادة اختبار المواقع المحددة.' : 'Selected site retest failed.'), 'error'),
-    });
-
-    const busy = mutation.isPending || retestMutation.isPending;
-
     if (!allowed || !endpoint) return null;
 
     const toggle = (id: number) => {
-        if (busy) return;
+        if (mutation.isPending) return;
         setSelected((current) => {
             const next = new Set(current);
             if (next.has(id)) next.delete(id);
@@ -95,7 +68,7 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
     };
 
     const toggleSelectAllVisible = () => {
-        if (busy) return;
+        if (mutation.isPending) return;
         setSelected((current) => {
             const next = new Set(current);
             const clearVisible = visibleIds.length > 0 && visibleIds.every((id) => next.has(id));
@@ -134,22 +107,15 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                             className="btn"
                             data-canonical-operation={TOGGLE_VISIBLE_OPERATION_ID}
                             onClick={toggleSelectAllVisible}
-                            disabled={busy}
+                            disabled={mutation.isPending}
                         >{allVisibleSelected ? (locale === 'ar' ? 'إلغاء تحديد الظاهر' : 'Clear visible') : (locale === 'ar' ? 'تحديد الظاهر' : 'Select visible')}</button>
-                        <button type="button" className="btn" onClick={() => setSelected(new Set())} disabled={busy || selectedIds.length === 0}>{locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}</button>
-                        <button
-                            type="button"
-                            className="btn"
-                            data-canonical-operation={RETEST_SELECTED_OPERATION_ID}
-                            onClick={() => retestMutation.mutate(selectedIds)}
-                            disabled={busy || selectedIds.length === 0}
-                        >{retestMutation.isPending ? (locale === 'ar' ? 'جارٍ إعادة الاختبار…' : 'Retesting…') : (locale === 'ar' ? 'إعادة اختبار المحدد' : 'Retest selected')}</button>
+                        <button type="button" className="btn" onClick={() => setSelected(new Set())} disabled={mutation.isPending || selectedIds.length === 0}>{locale === 'ar' ? 'مسح التحديد' : 'Clear selection'}</button>
                         <button
                             type="button"
                             className="btn"
                             data-canonical-operation={REQUEST_OPERATION_ID}
                             onClick={requestBulkDelete}
-                            disabled={busy || selectedIds.length === 0}
+                            disabled={mutation.isPending || selectedIds.length === 0}
                         >{locale === 'ar' ? 'حذف المحدد' : 'Delete selected'}</button>
                     </div>
                     <div className="table-scroll" role="region" aria-label={locale === 'ar' ? 'اختيار المواقع للحذف' : 'Select sites for deletion'}>
@@ -157,7 +123,7 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                             <thead><tr><th scope="col">{locale === 'ar' ? 'تحديد' : 'Select'}</th><th scope="col">ID</th><th scope="col">{locale === 'ar' ? 'الاسم' : 'Name'}</th><th scope="col">{locale === 'ar' ? 'الحالة' : 'Status'}</th></tr></thead>
                             <tbody>{sites.map((site) => (
                                 <tr key={site.id}>
-                                    <td><input type="checkbox" checked={selected.has(site.id)} onChange={() => toggle(site.id)} disabled={busy} aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${site.name ?? site.id}`} /></td>
+                                    <td><input type="checkbox" checked={selected.has(site.id)} onChange={() => toggle(site.id)} disabled={mutation.isPending} aria-label={`${locale === 'ar' ? 'تحديد' : 'Select'} ${site.name ?? site.id}`} /></td>
                                     <td>{site.id}</td><td>{site.name ?? '—'}</td><td>{site.status ?? '—'}</td>
                                 </tr>
                             ))}</tbody>
@@ -172,13 +138,13 @@ export function SitesBulkDeleteControl({ context }: { context: FrontendContext }
                         <h2 id="sites-bulk-delete-title">{locale === 'ar' ? 'تأكيد حذف المواقع المحددة' : 'Confirm deletion of selected sites'}</h2>
                         <p>{locale === 'ar' ? `سيتم طلب حذف ${selectedIds.length} ملف موقع. لا يبدأ أي حذف إذا كانت المجموعة تحتوي موقعًا خارج الحساب أو عملية نشطة.` : `You are requesting deletion of ${selectedIds.length} site profiles. Nothing is deleted if the set contains a foreign site or an active execution.`}</p>
                         <div className="dialog-actions">
-                            <button type="button" className="btn" onClick={() => setConfirmOpen(false)} disabled={busy}>{locale === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+                            <button type="button" className="btn" onClick={() => setConfirmOpen(false)} disabled={mutation.isPending}>{locale === 'ar' ? 'إلغاء' : 'Cancel'}</button>
                             <button
                                 type="button"
                                 className="btn primary"
                                 data-canonical-operation={OPERATION_ID}
                                 onClick={() => mutation.mutate(selectedIds)}
-                                disabled={busy || selectedIds.length === 0}
+                                disabled={mutation.isPending || selectedIds.length === 0}
                             >{mutation.isPending ? (locale === 'ar' ? 'جارٍ الحذف…' : 'Deleting…') : (locale === 'ar' ? 'تأكيد الحذف' : 'Confirm delete')}</button>
                         </div>
                     </div>
