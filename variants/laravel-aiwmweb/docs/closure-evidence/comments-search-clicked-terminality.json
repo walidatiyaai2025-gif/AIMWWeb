@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #722 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-4E3C0156FC",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId}/comments",
+    "source": "src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/CommentsManager.razor:/sites/{SiteId}/comments:SearchClickedAsync:SearchClickedAsync",
+    "source_intent": "Execute comment search against the current site, reset pagination to page one, and reload authoritative WordPress-backed comment state.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "read_source": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php::comments",
+    "semantics": "the comments workspace search form commits the current search text, resets page state to 1, and issues a tenant/site-scoped GET with search query parameters; the controller filters synchronized WordPress comment state by author name, author email, or body",
+    "visibility_permission": "content.view",
+    "loading_error_empty_behavior": "the comments search button is disabled/busy while its query is fetching; empty responses remain empty authoritative collections; API failures render the shared query error state and never emit a success toast"
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsSearchClickedTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-search-clicked-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "source SearchClickedAsync reload-from-first-page semantics",
+      "GET search request with page reset",
+      "authoritative matching result refresh",
+      "empty search result behavior",
+      "request failure rendering without fake success",
+      "foreign-tenant 404 isolation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-4E3C0156FC"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-SYNC-4E3C0156FC-comments-search"
+  }
+}
