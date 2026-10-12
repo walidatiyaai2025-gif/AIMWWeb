@@ -35,8 +35,8 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 160 | 18 | 0 | 0 | 160 | 89.89% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
-| content | 164 | 0 | 35 | 129 | 0 | 0 | 35 | 21.34% |
-| email | 82 | 0 | 61 | 21 | 0 | 0 | 61 | 74.39% |
+| content | 164 | 0 | 36 | 128 | 0 | 0 | 36 | 21.95% |
+| email | 82 | 0 | 60 | 22 | 0 | 0 | 60 | 73.17% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 4 | 11 | 0 | 0 | 4 | 26.67% |
 | operations | 5 | 0 | 5 | 0 | 0 | 0 | 5 | 100.00% |
@@ -116,7 +116,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### content (129)
+### content (128)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
@@ -155,7 +155,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-50DF6B23CC`
 - `AIMW-CONT-519B93F503`
 - `AIMW-CONT-55FA799054`
-- `AIMW-CONT-564636DDC9`
 - `AIMW-CONT-566A1899F1`
 - `AIMW-CONT-56873F3DD6`
 - `AIMW-CONT-5BE26C7AB5`
@@ -248,7 +247,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-FE1F15935E`
 - `AIMW-CONT-FE6EE5740C`
 
-### email (21)
+### email (22)
 
 - `AIMW-EMAI-00CC1272F6`
 - `AIMW-EMAI-01F5713C4F`
@@ -267,6 +266,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-EMAI-8E56589573`
 - `AIMW-EMAI-9EB09C490D`
 - `AIMW-EMAI-A9CB66F400`
+- `AIMW-EMAI-BDF888551C`
 - `AIMW-EMAI-E4EEF1914B`
 - `AIMW-EMAI-EC34E40629`
 - `AIMW-EMAI-F77DB6435F`
