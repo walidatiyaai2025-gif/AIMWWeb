@@ -30,7 +30,7 @@
             <h1>{{ __('Application sessions') }}</h1>
             <p>{{ __('Review active application sessions for accounts that belong to this tenant. Opening this page is read-only.') }}</p>
         </div>
-        <a href="{{ route('canonical.alias.settings-sessions', ['tenant' => $tenant->slug]) }}" data-canonical-operation="AIMW-CONT-F9A87DD98C">{{ __('My sessions') }}</a>
+        <a href="{{ route('canonical.alias.settings-sessions', ['tenant' => $tenant->slug], false) }}" data-canonical-operation="AIMW-CONT-F9A87DD98C">{{ __('My sessions') }}</a>
     </section>
 
     <section class="panel">
