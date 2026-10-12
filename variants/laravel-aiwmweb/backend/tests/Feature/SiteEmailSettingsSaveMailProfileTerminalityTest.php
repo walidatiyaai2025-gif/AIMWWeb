@@ -115,6 +115,8 @@ final class SiteEmailSettingsSaveMailProfileTerminalityTest extends TestCase
             ->post("/tenants/alpha/sites/{$site->id}/email-settings/mail-profile", $payload)
             ->assertRedirect("/tenants/alpha/sites/{$site->id}/email-settings");
 
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+
         $this->assertSame(
             'super-secret-password',
             TenantSecret::query()
