@@ -45,9 +45,13 @@ Route::prefix('/api/tenants/{tenant}')->middleware(['auth', 'tenant.context'])->
     Route::post('/sites/onboarding', [SiteOnboardingController::class, 'store'])
         ->defaults('canonical_operation_id', SiteOnboardingController::OPERATION_ID)
         ->name('canonical.api.site-onboarding.save-test-sync');
-    Route::post('/sites', [SiteManagementController::class, 'store']);
+    Route::post('/sites', [SiteManagementController::class, 'store'])
+        ->defaults('canonical_operation_id', SiteManagementController::SAVE_OPERATION_ID)
+        ->name('canonical.api.sites.save.create');
     Route::get('/sites/{site}', [SiteManagementController::class, 'show']);
-    Route::patch('/sites/{site}', [SiteManagementController::class, 'update']);
+    Route::patch('/sites/{site}', [SiteManagementController::class, 'update'])
+        ->defaults('canonical_operation_id', SiteManagementController::SAVE_OPERATION_ID)
+        ->name('canonical.api.sites.save.update');
     Route::delete('/sites/{site}', [SiteManagementController::class, 'destroy']);
     Route::post('/sites/{site}/pairing', [DemoController::class, 'pairing']);
     Route::get('/sites/{site}/connector', [DemoController::class, 'connector']);
