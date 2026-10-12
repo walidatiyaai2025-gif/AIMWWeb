@@ -17,6 +17,8 @@ final class NotificationOpenVisibleControlTerminalityTest extends TestCase
 
     private const OPERATION_ID = 'AIMW-EMAI-BDF888551C';
 
+    // Reconciliation was officially materialized on this leaf before the final exact-head gate pass.
+
     public function test_exact_canonical_notification_open_control_is_adapted(): void
     {
         $document = json_decode(
