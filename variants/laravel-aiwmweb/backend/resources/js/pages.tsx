@@ -22,6 +22,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { CurrentUserLogsControl } from './current-user-logs-control';
+import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
