@@ -16,6 +16,9 @@
         'configured' => 'ملف SMTP محفوظ',
         'empty' => 'لا يوجد ملف SMTP محفوظ لهذا الموقع بعد.',
         'none' => 'لا يوجد مستلم مفعّل.',
+        'test_recipient' => 'بريد الاختبار',
+        'send_test' => 'إرسال بريد تجريبي',
+        'result' => 'نتيجة اختبار SMTP',
     ] : [
         'title' => 'Site email diagnostics',
         'subtitle' => 'Inspect the saved SMTP profile for this site without exposing any password.',
@@ -31,6 +34,9 @@
         'configured' => 'Saved SMTP profile',
         'empty' => 'No saved SMTP profile exists for this site yet.',
         'none' => 'No enabled recipient is configured.',
+        'test_recipient' => 'Test recipient',
+        'send_test' => 'Send test email',
+        'result' => 'SMTP test result',
     ];
 @endphp
 <!DOCTYPE html>
@@ -51,6 +57,10 @@
         dt { font-weight: 700; }
         dd { margin: 0; overflow-wrap: anywhere; }
         .empty { padding: 14px; border-radius: 8px; background: color-mix(in srgb, CanvasText 6%, transparent); }
+        form { display: grid; gap: 10px; margin-top: 18px; }
+        input, button { font: inherit; padding: 10px 12px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 28%, transparent); }
+        button { cursor: pointer; font-weight: 700; }
+        .result { margin-top: 16px; padding: 14px; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 10px; }
         @media (max-width: 640px) { main { margin-top: 20px; } header { display: grid; } dl { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -83,6 +93,47 @@
         @else
             <p class="empty">{{ $copy['empty'] }}</p>
             <p>{{ $copy['recipient'] }}: {{ $suggestedRecipient?->email_address ?? $copy['none'] }}</p>
+        @endif
+
+        @if ($errors->any())
+            <div class="result" role="alert">
+                <ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+            </div>
+        @endif
+
+        <form
+            method="post"
+            action="{{ route('canonical.workspace.site-email-diagnostics.send-test', ['tenant' => $tenant, 'site' => $selectedSite->getKey()]) }}"
+            data-canonical-operation="{{ $sendTestOperationId }}"
+            data-source-handler="SendTestAsync"
+            onsubmit="this.querySelector('button[type=submit]').disabled = true"
+        >
+            @csrf
+            <label>
+                {{ $copy['test_recipient'] }}
+                <input
+                    type="email"
+                    name="recipient"
+                    maxlength="320"
+                    required
+                    value="{{ old('recipient', $suggestedRecipient?->email_address ?? '') }}"
+                >
+            </label>
+            <button type="submit" data-canonical-operation="{{ $sendTestOperationId }}">{{ $copy['send_test'] }}</button>
+        </form>
+
+        @php($smtpResult = session('smtp_diagnostic_result'))
+        @if (is_array($smtpResult))
+            <div class="result" role="status" data-smtp-test-result>
+                <h3>{{ $copy['result'] }}: {{ ($smtpResult['is_success'] ?? false) ? 'PASS' : 'FAIL' }}</h3>
+                <p>{{ $smtpResult['message'] ?? '' }}</p>
+                <small>{{ (int)($smtpResult['duration_milliseconds'] ?? 0) }} ms</small>
+                <ul>
+                    @foreach (($smtpResult['steps'] ?? []) as $step)
+                        <li><strong>{{ $step['name'] ?? 'SMTP' }}</strong>: {{ ($step['is_success'] ?? false) ? '✓' : '✕' }} {{ $step['message'] ?? '' }}</li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
     </section>
 </main>

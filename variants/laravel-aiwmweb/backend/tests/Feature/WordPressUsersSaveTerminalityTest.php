@@ -105,15 +105,13 @@ final class WordPressUsersSaveTerminalityTest extends TestCase
             ->assertJsonPath('data.email', 'new@example.test');
 
         Http::assertSentCount(2);
-        Http::assertSent(fn ($request) =>
-            $request->method() === 'POST'
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
             && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users'
             && ($request->data()['username'] ?? null) === 'new-user'
             && ($request->data()['password'] ?? null) === 'secret-123'
             && ($request->data()['roles'] ?? null) === ['editor']
         );
-        Http::assertSent(fn ($request) =>
-            $request->method() === 'GET'
+        Http::assertSent(fn ($request) => $request->method() === 'GET'
             && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/77?context=edit'
         );
     }
@@ -130,6 +128,7 @@ final class WordPressUsersSaveTerminalityTest extends TestCase
             if ($request->method() === 'GET'
                 && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55?context=edit') {
                 $reads++;
+
                 return Http::response([
                     'id' => 55,
                     'username' => 'existing',
@@ -170,10 +169,9 @@ final class WordPressUsersSaveTerminalityTest extends TestCase
 
         $this->assertSame(2, $reads);
         Http::assertSentCount(3);
-        Http::assertSent(fn ($request) =>
-            $request->method() === 'POST'
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
             && $request->url() === 'https://alpha.example.test/wp-json/wp/v2/users/55'
-            && ! array_key_exists('password', $request->data())
+            && array_key_exists('password', $request->data()) === false
             && ($request->data()['roles'] ?? null) === ['author']
         );
     }
