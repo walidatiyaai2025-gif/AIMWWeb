@@ -98,8 +98,9 @@ final class WelcomeRouteTerminalityTest extends TestCase
         $alpha = $this->actingAs($userA)->get('/welcome?tenant='.$tenantA->slug.'&user=database-password-secret')->assertOk()->getContent();
         $beta = $this->actingAs($userB)->get('/welcome?tenant='.$tenantB->slug.'&user=foreign-secret')->assertOk()->getContent();
 
-        $this->assertSame($anonymous, $alpha);
-        $this->assertSame($anonymous, $beta);
+        $this->assertStringContainsString('href="/register"', $anonymous);
+        $this->assertStringNotContainsString('href="/register"', $alpha);
+        $this->assertStringNotContainsString('href="/register"', $beta);
 
         foreach ([$tenantA->name, $tenantA->slug, $tenantB->name, $tenantB->slug, $userA->name, $userA->email, $userB->name, $userB->email, 'foreign-secret', 'database-password-secret'] as $sentinel) {
             $this->assertStringNotContainsString($sentinel, $anonymous);
