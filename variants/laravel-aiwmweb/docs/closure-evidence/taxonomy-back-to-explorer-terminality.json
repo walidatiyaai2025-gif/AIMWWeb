@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-TAXO-ECDD00F787",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/TaxonomyManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/taxonomy",
+    "source_control": "BackToExplorer",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "The Taxonomy toolbar BackToExplorer control navigates from the selected site's taxonomy screen to that same site's explorer.",
+    "source_destination": "/sites/{SiteId}/explorer",
+    "side_effect": "read-only navigation"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/taxonomy-back-to-explorer-control.tsx",
+    "production_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/explorer?site={active_site.id}",
+    "destination_derivation": "The tenant slug and site id come from the authenticated frontend context. The taxonomy API path must exactly match that tenant/site pair before the link is rendered.",
+    "mutation_surface": "none"
+  },
+  "authorization": {
+    "session_required": true,
+    "tenant_context_required": true,
+    "taxonomy_permission": "content.view",
+    "explorer_permission": "sites.view",
+    "taxonomy_connector_scope": "taxonomy.read",
+    "foreign_tenant_fails_closed": true,
+    "foreign_site_fails_closed": true
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "caller_tenant_override": false,
+    "caller_site_override": false,
+    "foreign_origin_rejected": true,
+    "query_or_fragment_override_rejected": true,
+    "persistence_mutation": false,
+    "provider_write": "none",
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-back-to-explorer-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/TaxonomyBackToExplorerControlTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker on the real taxonomy Back to Explorer control",
+      "destination is derived from the authoritative active_site",
+      "taxonomy API tenant/site authority must match before rendering",
+      "guest, missing permission, disabled capability, foreign tenant, foreign site and foreign origin fail closed",
+      "navigation performs no persistence mutation"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-TAXO-ECDD00F787",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

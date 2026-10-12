@@ -15,6 +15,7 @@ import { BillingProfileLink } from './billing-profile-link';
 import { BillingStartCheckoutControl } from './billing-start-checkout-control';
 import { BackupCopyPathControl } from './backup-copy-path-control';
 import { CommentsBackToExplorerControl } from './comments-back-to-explorer-control';
+import { TaxonomyBackToExplorerControl } from './taxonomy-back-to-explorer-control';
 import { CommentsBackToSitesControl } from './comments-back-to-sites-control';
 import { CommentsCommentLinksControl } from './comments-comment-link-control';
 import { CommentsContentHubLink } from './comments-content-hub-link';
@@ -178,6 +179,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'sync') return <><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
     if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
+    if (route.key === 'taxonomy') return <><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
     if (route.key === 'email-schedules') return <><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
