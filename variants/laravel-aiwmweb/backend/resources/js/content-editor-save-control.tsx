@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 export const CONTENT_EDITOR_SAVE_OPERATION_ID = 'AIMW-BILL-42F7590F00';
 export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE';
 export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
+export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
 
 export function ContentEditorSitesLinkControl({ context }: { context: FrontendContext }) {
@@ -150,6 +151,39 @@ export function buildContentEditorSavePayload(snapshot: ContentEditorSnapshot, d
 
 export function clearContentEditorFeaturedMedia(draft: ContentEditorDraft): ContentEditorDraft {
     return { ...draft, featured_media: 0 };
+}
+
+export function generateContentEditorSlug(title: string): string {
+    const withoutTags = (title ?? '').replace(/<.*?>/gs, '');
+    const decoder = document.createElement('textarea');
+    decoder.innerHTML = withoutTags;
+    const plain = decoder.value.trim().toLowerCase();
+
+    return plain.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+}
+
+export function ContentEditorGenerateSlugControl({
+    title,
+    disabled,
+    locale,
+    onGenerate,
+}: {
+    title: string;
+    disabled: boolean;
+    locale: 'en' | 'ar';
+    onGenerate: (slug: string) => void;
+}) {
+    return (
+        <button
+            type="button"
+            className="btn compact"
+            disabled={disabled}
+            data-canonical-operation={CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID}
+            onClick={() => onGenerate(generateContentEditorSlug(title))}
+        >
+            {locale === 'ar' ? 'توليد' : 'Generate'}
+        </button>
+    );
 }
 
 export function ContentEditorClearFeaturedControl({
@@ -361,7 +395,18 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
 
             <fieldset disabled={!canEdit || saving || submittingApproval} className="panel form-stack">
                 <label><span>{locale === 'ar' ? 'العنوان' : 'Title'}</span><input required value={draft.title} onChange={(e) => set('title', e.target.value)} /></label>
-                <label><span>Slug</span><input value={draft.slug} onChange={(e) => set('slug', e.target.value)} /></label>
+                <label>
+                    <span>Slug</span>
+                    <div className="editor-slug-row">
+                        <input value={draft.slug} onChange={(e) => set('slug', e.target.value)} />
+                        <ContentEditorGenerateSlugControl
+                            title={draft.title}
+                            disabled={!canEdit || saving || submittingApproval}
+                            locale={locale}
+                            onGenerate={(slug) => set('slug', slug)}
+                        />
+                    </div>
+                </label>
                 <label><span>{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span><textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'الملخص' : 'Excerpt'}</span><textarea rows={4} value={draft.excerpt} onChange={(e) => set('excerpt', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'الحالة' : 'Status'}</span>

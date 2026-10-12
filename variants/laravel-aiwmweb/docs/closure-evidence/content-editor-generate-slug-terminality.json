@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #721 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-564636DDC9",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor:/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit:GenerateSlug:GenerateSlug",
+    "source_intent": "Generate the editor slug locally from the current title by stripping markup, HTML-decoding, lowercasing, replacing non-letter/non-number runs with hyphens, and trimming edge hyphens.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "semantics": "local draft-state slug generation from the current Content Editor title using Unicode letter/number preservation; no WordPress/API write occurs until the separately governed Save control is invoked",
+    "visibility_permission": "content.edit",
+    "loading_error_empty_behavior": "inherits the authoritative tenant-scoped Content Editor loading/error states; the control is disabled whenever editing is unavailable or save/approval work is active"
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorGenerateSlugTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-generate-slug-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "source GenerateSlug normalization semantics",
+      "Unicode letter/number preservation",
+      "HTML tag/entity normalization",
+      "disabled-state behavior",
+      "no API/provider mutation or fake success"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-564636DDC9"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-564636DDC9-generate-slug"
+  }
+}
