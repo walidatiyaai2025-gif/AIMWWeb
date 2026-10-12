@@ -138,8 +138,8 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $controller = (string) file_get_contents(app_path('Http/Controllers/SiteOperationDetailsReadController.php'));
         $errorView = (string) file_get_contents(resource_path('views/operations/site-operation-details-load-error.blade.php'));
 
-        $this->assertStringContainsString("response()->view('operations.site-operation-details-load-error'", $controller);
-        $this->assertStringContainsString("], 503)", $controller);
+        $this->assertStringContainsString('response()->view(\'operations.site-operation-details-load-error\'', $controller);
+        $this->assertStringContainsString('], 503)', $controller);
         $this->assertStringContainsString('data-load-operation-retry', $errorView);
         $this->assertStringContainsString('SiteOperationDetailsReadController::LOAD_OPERATION_ID', $errorView);
         $this->assertStringContainsString('storage failure has not been presented as an operation-not-found result', $errorView);
