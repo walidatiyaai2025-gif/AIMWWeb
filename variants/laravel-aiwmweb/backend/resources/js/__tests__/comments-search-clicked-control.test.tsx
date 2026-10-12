@@ -57,17 +57,17 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderComments();
-        expect(await screen.findByText('1')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '1' })).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        expect(await screen.findByText('2')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '2' })).toBeInTheDocument();
 
         fireEvent.change(screen.getByRole('textbox'), { target: { value: ' needle ' } });
         const search = screen.getByRole('button', { name: 'Search' });
         expect(search).toHaveAttribute('data-canonical-operation', COMMENTS_SEARCH_OPERATION_ID);
         fireEvent.click(search);
 
-        expect(await screen.findByText('3')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '3' })).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/v1/tenants/alpha/sites/7/comments?page=1&search=needle'));
         expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
     });
@@ -103,7 +103,7 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderComments();
-        expect(await screen.findByText('1')).toBeInTheDocument();
+        expect(await screen.findByRole('cell', { name: '1' })).toBeInTheDocument();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'boom' } });
         fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
