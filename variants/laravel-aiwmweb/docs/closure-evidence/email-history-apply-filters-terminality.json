@@ -38,14 +38,15 @@
     ]
   },
   "materialization": {
-    "reconciliation_commit": "60bcab263876bcdaffc3b257f6f9a2ef800a20ce",
-    "result": "AIMW-EMAI-F8E8A2BEE9 ADAPTED; AIMW-BILL-94755B17E4 preserved ADAPTED",
+    "reconciliation_commit": "de013d91fcb5a000a998e0129be4f2342e9af8de",
+    "result": "AIMW-EMAI-F8E8A2BEE9 ADAPTED; AIMW-BILL-94755B17E4 and AIMW-BILL-609F15BFCA preserved ADAPTED",
     "exact_head_recheck": true
   },
   "synchronized_composition": {
-    "commit": "d6f8bf77a4d09106b2e75037efd370a17b1ca062",
+    "commit": "0242a96a0576b8a2dfb77898cc92ad3aaf228cf5",
     "preserves": [
-      "AIMW-BILL-94755B17E4"
+      "AIMW-BILL-94755B17E4",
+      "AIMW-BILL-609F15BFCA"
     ],
     "rematerialize_exact_operation": "AIMW-EMAI-F8E8A2BEE9"
   }
