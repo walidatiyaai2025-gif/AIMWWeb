@@ -31,6 +31,7 @@ import { GlobalSynchronizationReviewConflictsControl } from './global-synchroniz
 import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
 import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
 import { ContentEditorSaveControl } from './content-editor-save-control';
+import { ContentHubAllSitesControl } from './content-hub-all-sites-control';
 import { ContentPlannerAiCenterLinkControl } from './content-planner-ai-center-link-control';
 import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
 import { ContentPlannerNewItemControl } from './content-planner-new-item-control';
@@ -176,6 +177,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
