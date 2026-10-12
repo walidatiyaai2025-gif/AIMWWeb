@@ -22,6 +22,7 @@ import { prepareActionRequest } from './action-contract';
 import { AUTOMATION_PHASE_ACTION_OPERATIONS, AUTOMATION_PHASE_REFRESH_OPERATIONS, SCHEDULE_CANCEL_EDIT_OPERATION_ID } from './automation-phase-controls';
 import { AuthoritativeReconciliationError, mutateThenReconcile } from './reconciliation';
 import { CurrentUserLogsControl } from './current-user-logs-control';
+import { EmailHistoryFiltersControl, type EmailHistoryFilterState } from './email-history-filters-control';
 import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
@@ -170,13 +171,25 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [page, setPage] = useState(1);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected'>('all');
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
+    const [emailHistoryDraft, setEmailHistoryDraft] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
+    const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [dialog, setDialog] = useState<{ key: string; contract: ActionContract } | null>(null);
     const state = resolveCapability(context, route);
     const endpoint = route.apiKey ? context.api[route.apiKey] : undefined;
     const readOperations = COLLECTION_READ_OPERATIONS[route.key];
 
     const taxonomyFilter: Record<string, string> = route.key === 'taxonomy' ? { taxonomy: taxonomyType } : {};
-    const query = useQuery({
+    const emailHistoryQueryFilters: Record<string, string> = route.key === 'email-history' ? {
+        ...(emailHistoryFilters.siteId ? { site_id: emailHistoryFilters.siteId } : {}),
+        ...(emailHistoryFilters.status ? { status: emailHistoryFilters.status } : {}),
+        ...(emailHistoryFilters.correlation.trim() ? { correlation: emailHistoryFilters.correlation.trim() } : {}),
+    } : {};
+    const resourceFilters = { ...taxonomyFilter, ...emailHistoryQueryFilters };
+    const query = useQuery(route.key === 'email-history' ? {
+        queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType, emailHistoryFilters.siteId, emailHistoryFilters.status, emailHistoryFilters.correlation],
+        queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, resourceFilters)),
+        enabled: state.state === 'enabled' && Boolean(endpoint),
+    } : {
         queryKey: ['workspace', context.tenant.slug, route.key, endpoint, page, search, taxonomyType],
         queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint!, page, search, taxonomyFilter)),
         enabled: state.state === 'enabled' && Boolean(endpoint),
@@ -207,6 +220,18 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
             staleTime: 0,
         });
+    };
+
+    const applyEmailHistoryFilters = async (): Promise<void> => {
+        if (route.key !== 'email-history' || !endpoint || query.isFetching) return;
+        const next = { ...emailHistoryDraft, correlation: emailHistoryDraft.correlation.trim() };
+        const unchanged = page === 1
+            && next.siteId === emailHistoryFilters.siteId
+            && next.status === emailHistoryFilters.status
+            && next.correlation === emailHistoryFilters.correlation;
+        setPage(1);
+        setEmailHistoryFilters(next);
+        if (unchanged) await query.refetch();
     };
 
     const refreshWorkspace = async (): Promise<void> => {
@@ -289,6 +314,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     return (
         <div className="workspace-stack">
             <section className="toolbar-panel" aria-label={locale === 'ar' ? 'أدوات مساحة العمل' : 'Workspace tools'}>
+                {route.key === 'email-history' ? (
+                    <EmailHistoryFiltersControl
+                        value={emailHistoryDraft}
+                        locale={locale}
+                        busy={query.isFetching}
+                        onChange={setEmailHistoryDraft}
+                        onApply={() => { void applyEmailHistoryFilters(); }}
+                    />
+                ) : null}
                 <form className="search-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput); }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
