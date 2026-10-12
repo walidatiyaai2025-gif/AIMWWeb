@@ -1,14 +1,14 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-BILL-B00411742F issue-739-toggle-enabled
-# exact-head: 704cb7c95af588a5bded3fe02f7515628f29b2ef
+# trigger: AIMW-BILL-887504EDDD issue-738-save-entitlements
+# exact-head: 65aa4654192c39f051f4d69af8608e9566cc9957
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-BILL-B00411742F-toggle-enabled
+      - worker/laravel-aiwmweb-AIMW-BILL-887504EDDD-save-entitlements
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/subscription-plan-toggle-enabled-current-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/subscription-plan-save-entitlements-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -49,5 +49,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-BILL-B00411742F"
+          git commit -m "chore(laravel): materialize parity for AIMW-BILL-887504EDDD"
           git push origin "HEAD:${{ github.ref_name }}"
