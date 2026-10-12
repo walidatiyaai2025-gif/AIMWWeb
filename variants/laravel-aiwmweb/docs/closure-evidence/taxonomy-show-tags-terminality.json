@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-TAXO-D784149312",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/TaxonomyManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/taxonomy",
+    "source_control": "ShowTags",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "ShowTags switches TaxonomyManager from categories to WordPress tags and reloads the authoritative terms for the selected site.",
+    "side_effect": "read-only taxonomy selection and reload"
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "read_endpoint": "GET /api/v1/tenants/{tenant}/sites/{site}/taxonomy?taxonomy=post_tag",
+    "backend_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "destination_derivation": "Tenant and site remain server-authoritative through tenant.context and the tenant-scoped Site model. The control supplies only the fixed WordPress taxonomy discriminator post_tag.",
+    "mutation_surface": "none"
+  },
+  "authorization": {
+    "session_required": true,
+    "tenant_context_required": true,
+    "permission": "content.view",
+    "foreign_tenant_fails_closed": true,
+    "foreign_site_fails_closed": true
+  },
+  "runtime_semantics": {
+    "read_only": true,
+    "caller_tenant_override": false,
+    "caller_site_override": false,
+    "taxonomy_value": "post_tag",
+    "authoritative_filter": "taxonomy_terms.taxonomy = post_tag",
+    "persistence_mutation": false,
+    "queue_cache_scheduler": "none",
+    "provider_write": "none",
+    "fake_success": false
+  },
+  "acceptance_tests": {
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-show-tags-control.test.tsx",
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/TaxonomyShowTagsTerminalityTest.php",
+    "proof": [
+      "exact canonical operation marker on the real Tags control",
+      "initial taxonomy read remains category",
+      "ShowTags changes the authoritative read to post_tag",
+      "the control issues GET-only reads and no mutation",
+      "guest, missing content.view, foreign tenant, and foreign site fail closed"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-TAXO-D784149312",
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "security_assertions_weakened": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true
+  }
+}

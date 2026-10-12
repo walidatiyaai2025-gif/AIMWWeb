@@ -497,6 +497,7 @@ final class ContentApiController extends Controller
     public function taxonomy(Request $request, TenantAuthorizer $auth, string $tenant, int $site): JsonResponse
     {
         $auth->authorize('content.view');
+        Site::query()->findOrFail($site);
         $q = TaxonomyTerm::query()->where('site_id', $site);
         if ($taxonomy = $request->query('taxonomy')) {
             $q->where('taxonomy', $taxonomy);
