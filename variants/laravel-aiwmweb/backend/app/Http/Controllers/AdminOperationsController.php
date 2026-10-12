@@ -67,6 +67,19 @@ final class AdminOperationsController extends Controller
         return response()->json($this->administration->saveRole($role, $data['name'], $data['permissions'] ?? [], (int) $request->user()->getAuthIdentifier()), $role ? 200 : 201);
     }
 
+    public function applicationSessions(Request $request, string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('users.manage');
+        $rows = $this->administration->applicationSessions($this->sessionId($request));
+
+        return response()->json([
+            'data' => $rows,
+            'total' => count($rows),
+            'current_page' => 1,
+            'last_page' => 1,
+        ]);
+    }
+
     public function sessions(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('sessions.manage');
