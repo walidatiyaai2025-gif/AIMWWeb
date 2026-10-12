@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #758 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-B6BB292F85",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor:/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit:/sites:/sites",
+    "source_intent": "Navigate from the Content Editor breadcrumb back to the sites list.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "semantics": "client-side navigation to the tenant-scoped sites workspace using tenantUrl(context.tenant.slug, '/sites')",
+    "visibility_permission": "inherits Content Editor access; no extra mutation permission is introduced",
+    "loading_error_empty_behavior": "the breadcrumb is rendered only with the authoritative loaded Content Editor form and therefore inherits the editor loading/error/empty states"
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorSitesLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-sites-link-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity",
+      "source /sites breadcrumb semantics",
+      "tenant-scoped target construction",
+      "encoded tenant slug handling",
+      "navigation-only behavior",
+      "no API/provider mutation or identity override"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-B6BB292F85"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-B6BB292F85-sites-link"
+  }
+}

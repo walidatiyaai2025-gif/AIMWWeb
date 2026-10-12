@@ -1,5 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-TAXO-ECDD00F787 issue-1007-back-to-explorer refresh-base-1bc39478
+# trigger: AIMW-TAXO-ECDD00F787 issue-1007-back-to-explorer refresh-base-585a96bd
 # exact-head: 78fecd0d48076dd322d7120a3dc6c591c2b182e2
 
 on:
