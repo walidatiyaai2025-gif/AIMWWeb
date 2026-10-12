@@ -95,7 +95,7 @@ final class SiteEmailRecipientService
             $duplicate = SiteEmailRecipient::query()
                 ->where('site_id', $siteId)
                 ->where('normalized_email_address', $normalized)
-                ->whereKeyNot($recipientId)
+                ->where('id', '<>', $recipientId)
                 ->exists();
             if ($duplicate) {
                 throw ValidationException::withMessages([
