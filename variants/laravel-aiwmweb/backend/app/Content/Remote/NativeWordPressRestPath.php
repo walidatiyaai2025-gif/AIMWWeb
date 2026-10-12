@@ -51,6 +51,21 @@ final class NativeWordPressRestPath
         return $this->request($siteId)->post($this->url($siteId, $endpoint), $payload)->throw()->json() ?? [];
     }
 
+    /**
+     * Execute a non-idempotent WordPress mutation exactly once.
+     *
+     * Callers must reconcile with an authoritative read before surfacing success.
+     */
+    public function mutateOnce(int $siteId, string $resource, ?int $remoteId, array $payload = []): array
+    {
+        $endpoint = $this->endpoint($resource).($remoteId ? '/'.$remoteId : '');
+
+        return $this->requestWithoutRetry($siteId)
+            ->post($this->url($siteId, $endpoint), $payload)
+            ->throw()
+            ->json() ?? [];
+    }
+
     public function deletePermanently(int $siteId, int $remoteId): array
     {
         $endpoint = $this->endpoint('media').'/'.$remoteId;
@@ -139,7 +154,7 @@ final class NativeWordPressRestPath
     private function endpoint(string $resource): string
     {
         return match ($resource) {
-            'posts','pages','media','comments','categories','tags' => '/wp-json/wp/v2/'.$resource,
+            'posts','pages','media','comments','categories','tags','users' => '/wp-json/wp/v2/'.$resource,
             default => throw new RuntimeException("WordPress REST resource '{$resource}' is not directly supported."),
         };
     }

@@ -187,7 +187,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('taxonomy', '/module/taxonomy', 'content', '#', 'Categories & Tags', 'التصنيفات والوسوم', 'Manage content taxonomy.', 'إدارة تصنيفات ووسوم المحتوى.', { permission: 'content.view', connectorScope: 'taxonomy.read', controls: ['taxonomy.manage'] }),
     r('categories', '/module/categories', 'content', '#', 'Categories', 'التصنيفات', 'Manage WordPress categories.', 'إدارة تصنيفات WordPress.', { permission: 'content.view', connectorScope: 'taxonomy.read', controls: ['categories.create'] }),
     r('tags', '/module/tags', 'content', '#', 'Tags', 'الوسوم', 'Manage WordPress tags.', 'إدارة وسوم WordPress.', { permission: 'content.view', connectorScope: 'taxonomy.read', controls: ['tags.create'] }),
-    r('wp-users', '/module/users', 'content', '◎', 'WordPress Users', 'مستخدمو WordPress', 'Manage users exposed by connected WordPress sites.', 'إدارة مستخدمي مواقع WordPress المتصلة.', { permission: 'sites.view', connectorScope: 'users.read' }),
+    r('wp-users', '/module/users', 'content', '◎', 'WordPress Users', 'مستخدمو WordPress', 'Manage users exposed by connected WordPress sites.', 'إدارة مستخدمي مواقع WordPress المتصلة.', { permission: 'sites.view', connectorScope: 'users.read', controls: ['wordpress-users.save'] }),
 
     r('seo-audit', '/module/seo-audit', 'seo', '◈', 'SEO Audit', 'تدقيق SEO', 'Run and inspect real SEO audits.', 'تشغيل ومراجعة تدقيقات SEO الحقيقية.', { permission: 'seo.view', controls: ['seo.audit.run'] }),
     r('seo-findings', '/module/seo-findings', 'seo', '!', 'SEO Findings', 'نتائج SEO', 'Inspect persisted audit findings.', 'مراجعة نتائج التدقيق المحفوظة.', { permission: 'seo.view' }),
