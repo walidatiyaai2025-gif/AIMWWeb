@@ -77,6 +77,8 @@ final class SiteEmailSettingsSaveMailProfileTerminalityTest extends TestCase
             ->assertRedirect("/tenants/alpha/sites/{$site->id}/email-settings")
             ->assertSessionHas('success', 'Mail profile saved securely.');
 
+        app(TenantContext::class)->activate($membership->tenant, $membership);
+
         $configuration = MailConfiguration::query()
             ->where('configuration_key', "site:{$site->id}")
             ->firstOrFail();
@@ -124,6 +126,8 @@ final class SiteEmailSettingsSaveMailProfileTerminalityTest extends TestCase
             'Alpha Updated',
             MailConfiguration::query()->findOrFail($configuration->id)->from_name,
         );
+
+        app(TenantContext::class)->forget();
     }
 
     public function test_validation_permission_and_foreign_site_fail_closed_without_mutating_profile_state(): void
