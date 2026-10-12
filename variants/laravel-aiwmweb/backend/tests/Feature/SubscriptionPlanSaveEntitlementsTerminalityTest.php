@@ -58,7 +58,7 @@ final class SubscriptionPlanSaveEntitlementsTerminalityTest extends TestCase
 
         $view = (string) file_get_contents(resource_path('views/billing/subscription-plans-admin.blade.php'));
         $this->assertStringContainsString('@csrf', $view);
-        $this->assertStringContainsString("name=\"expected_state\"", $view);
+        $this->assertStringContainsString('name="expected_state"', $view);
     }
 
     public function test_guest_missing_permission_and_foreign_tenant_fail_closed_without_mutation(): void
