@@ -29,6 +29,8 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
 
     private const BACK_OPERATION_ID = 'AIMW-AI-BC89B13AF8';
 
+    private const COPY_REPORT_OPERATION_ID = 'AIMW-BILL-AA8C2FD5B3';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -74,6 +76,32 @@ class SiteOperationDetailsRouteTerminalityTest extends TestCase
         $this->assertSame('src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor', $operation['current_source']);
         $this->assertFalse((bool) $operation['mutation']);
         $this->assertTrue((bool) $operation['tenant_owned']);
+    }
+
+    public function test_copy_report_control_uses_the_authoritative_tenant_scoped_operation_payload_without_mutation(): void
+    {
+        $tenant = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
+        $user = User::factory()->create();
+        $membership = $this->membership($user, $tenant, ['tenant.view', 'execution.view']);
+        $correlationId = (string) Str::uuid();
+        $this->recordOperation($membership, $correlationId, 'Alpha Site');
+
+        $before = SiteOperationHistory::query()->withoutGlobalScopes()->count();
+
+        $response = $this->actingAs($user)->get("/tenants/alpha/site-operations/{$correlationId}");
+
+        $response->assertOk()
+            ->assertSee('data-canonical-operation="'.self::COPY_REPORT_OPERATION_ID.'"', false)
+            ->assertSee('data-copy-operation-report', false)
+            ->assertSee('site-operation-report-payload', false)
+            ->assertSee($correlationId)
+            ->assertSee('Alpha Site')
+            ->assertSee('content.sync')
+            ->assertSee('Synced authoritative content')
+            ->assertSee('[REDACTED]')
+            ->assertDontSee('never-render-this-secret');
+
+        $this->assertSame($before, SiteOperationHistory::query()->withoutGlobalScopes()->count());
     }
 
     public function test_canonical_and_source_alias_routes_are_explicit_uuid_guarded_reads(): void
