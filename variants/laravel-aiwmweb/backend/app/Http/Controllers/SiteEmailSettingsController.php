@@ -20,6 +20,8 @@ final class SiteEmailSettingsController extends Controller
 
     public const SEND_TEST_OPERATION_ID = 'AIMW-BILL-BC093D6418';
 
+    public const DIAGNOSE_OPERATION_ID = 'AIMW-BILL-EE42461195';
+
     public function module(
         Request $request,
         string $tenant,
@@ -90,7 +92,25 @@ final class SiteEmailSettingsController extends Controller
             'suggestedRecipient' => $siteRecipients->firstWhere('is_enabled', true),
             'backOperationId' => self::DIAGNOSTICS_BACK_OPERATION_ID,
             'sendTestOperationId' => self::SEND_TEST_OPERATION_ID,
+            'diagnoseOperationId' => self::DIAGNOSE_OPERATION_ID,
         ]);
+    }
+
+    public function diagnoseConnection(
+        string $tenant,
+        int $site,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+        SmtpDiagnosticsService $diagnostics,
+    ): RedirectResponse {
+        $this->authorizeWorkspace($tenant, $authorizer, $context);
+        Site::query()->findOrFail($site);
+
+        $result = $diagnostics->diagnose($site);
+
+        return redirect()
+            ->route('canonical.workspace.site-email-diagnostics', ['tenant' => $tenant, 'site' => $site])
+            ->with('smtp_diagnostic_result', $result);
     }
 
     public function sendTest(

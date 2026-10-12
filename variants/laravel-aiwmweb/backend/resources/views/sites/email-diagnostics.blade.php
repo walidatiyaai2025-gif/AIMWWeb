@@ -17,6 +17,7 @@
         'empty' => 'لا يوجد ملف SMTP محفوظ لهذا الموقع بعد.',
         'none' => 'لا يوجد مستلم مفعّل.',
         'test_recipient' => 'بريد الاختبار',
+        'diagnose' => 'فحص الاتصال',
         'send_test' => 'إرسال بريد تجريبي',
         'result' => 'نتيجة اختبار SMTP',
     ] : [
@@ -35,6 +36,7 @@
         'empty' => 'No saved SMTP profile exists for this site yet.',
         'none' => 'No enabled recipient is configured.',
         'test_recipient' => 'Test recipient',
+        'diagnose' => 'Diagnose connection',
         'send_test' => 'Send test email',
         'result' => 'SMTP test result',
     ];
@@ -100,6 +102,17 @@
                 <ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
             </div>
         @endif
+
+        <form
+            method="post"
+            action="{{ route('canonical.workspace.site-email-diagnostics.diagnose', ['tenant' => $tenant, 'site' => $selectedSite->getKey()]) }}"
+            data-canonical-operation="{{ $diagnoseOperationId }}"
+            data-source-handler="DiagnoseAsync"
+            onsubmit="this.querySelector('button[type=submit]').disabled = true"
+        >
+            @csrf
+            <button type="submit" data-canonical-operation="{{ $diagnoseOperationId }}">{{ $copy['diagnose'] }}</button>
+        </form>
 
         <form
             method="post"

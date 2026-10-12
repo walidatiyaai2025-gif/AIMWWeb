@@ -4,6 +4,7 @@ namespace App\Email\Services;
 
 use App\Authorization\TenantAuthorizer;
 use App\Email\Contracts\EmailTransport;
+use App\Email\Contracts\SmtpConnectionProbe;
 use App\Email\Exceptions\EmailTransportException;
 use App\Models\MailConfiguration;
 use App\Models\Site;
@@ -15,7 +16,53 @@ final class SmtpDiagnosticsService
         private readonly EmailTransport $transport,
         private readonly EmailSecretStore $secrets,
         private readonly TenantAuthorizer $authorizer,
+        private readonly SmtpConnectionProbe $connectionProbe,
     ) {}
+
+    public function diagnose(int $siteId): array
+    {
+        $this->authorizer->authorize('settings.manage');
+        Site::query()->findOrFail($siteId);
+
+        $configuration = $this->resolveConfiguration($siteId);
+        $secret = $this->secrets->get($configuration);
+        $started = hrtime(true);
+        $steps = [];
+
+        $config = $this->transport->diagnose($configuration, $secret);
+        $configOk = (bool) ($config['ok'] ?? false);
+        $configMessage = $this->safe((string) ($config['message'] ?? 'SMTP configuration check failed.'));
+        $steps[] = [
+            'name' => 'CONFIG',
+            'is_success' => $configOk,
+            'message' => $configMessage,
+        ];
+
+        if (! $configOk) {
+            return $this->result(false, $configMessage, $steps, $started);
+        }
+
+        $probe = $this->connectionProbe->diagnose((string) $configuration->host, (int) $configuration->port);
+        $steps[] = [
+            'name' => 'DNS',
+            'is_success' => (bool) ($probe['dns_ok'] ?? false),
+            'message' => $this->safe((string) ($probe['dns_message'] ?? 'DNS probe failed.')),
+        ];
+        $steps[] = [
+            'name' => 'TCP',
+            'is_success' => (bool) ($probe['tcp_ok'] ?? false),
+            'message' => $this->safe((string) ($probe['tcp_message'] ?? 'TCP probe failed.')),
+        ];
+
+        $success = $steps[1]['is_success'] && $steps[2]['is_success'];
+
+        return $this->result(
+            $success,
+            $success ? 'SMTP connection diagnostics passed.' : 'SMTP connection diagnostics failed.',
+            $steps,
+            $started,
+        );
+    }
 
     public function sendTest(int $siteId, string $recipient): array
     {

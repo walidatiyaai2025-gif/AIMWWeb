@@ -21,6 +21,8 @@ use App\Content\Remote\ContentRemoteDriver;
 use App\Content\Remote\DualPathContentDriver;
 use App\Email\Contracts\EmailTransport;
 use App\Email\Contracts\NotificationEventSink;
+use App\Email\Contracts\SmtpConnectionProbe;
+use App\Email\Services\NativeSmtpConnectionProbe;
 use App\Email\Services\NotificationPlatformService;
 use App\Email\Services\SymfonyEmailTransport;
 use App\Email\Services\SyncNotificationSubscriber;
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PlannerApprovalGateway::class, UnconfiguredPlannerApprovalGateway::class);
         $this->app->bind(PlannerSiteGateway::class, UnconfiguredPlannerSiteGateway::class);
         $this->app->bind(EmailTransport::class, SymfonyEmailTransport::class);
+        $this->app->bind(SmtpConnectionProbe::class, NativeSmtpConnectionProbe::class);
         $this->app->bind(NotificationEventSink::class, NotificationPlatformService::class);
     }
 

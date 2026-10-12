@@ -33,6 +33,12 @@ final class SiteEmailSettingsRouteServiceProvider extends ServiceProvider
             ->name('canonical.workspace.site-email-diagnostics');
 
         Route::middleware(['web', 'auth', 'tenant.context'])
+            ->post('/tenants/{tenant}/sites/{site}/email-diagnostics/diagnose', [SiteEmailSettingsController::class, 'diagnoseConnection'])
+            ->defaults('canonical_operation_id', SiteEmailSettingsController::DIAGNOSE_OPERATION_ID)
+            ->whereNumber('site')
+            ->name('canonical.workspace.site-email-diagnostics.diagnose');
+
+        Route::middleware(['web', 'auth', 'tenant.context'])
             ->post('/tenants/{tenant}/sites/{site}/email-diagnostics/send-test', [SiteEmailSettingsController::class, 'sendTest'])
             ->defaults('canonical_operation_id', SiteEmailSettingsController::SEND_TEST_OPERATION_ID)
             ->whereNumber('site')
