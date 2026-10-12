@@ -3,7 +3,7 @@
     "authority": "AIMWWeb Issue #257",
     "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
     "previous_reconciliation_sha": "b9cea57d78c2b8f065bc3a536b334e1e066c09f6",
-    "focused_closure_evidence_source_sha": "d32e97a917fe23c9b7306bf6759a8d0cb2d78b1c",
+    "focused_closure_evidence_source_sha": "04414452ca58aeacb52cbba8b43902a5f05c62e4",
     "countable_sources": [
         {
             "label": "AIMW-BILL-94755B17E4 Site Details SynchronizeAsync closure",
