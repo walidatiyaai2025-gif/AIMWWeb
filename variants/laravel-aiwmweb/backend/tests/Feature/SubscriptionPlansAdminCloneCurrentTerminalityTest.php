@@ -72,9 +72,9 @@ final class SubscriptionPlansAdminCloneCurrentTerminalityTest extends TestCase
         $this->assertStringContainsString("button.addEventListener('click'", $script);
         $this->assertStringContainsString("article?.querySelector('[data-plan-editor]')", $script);
         $this->assertStringContainsString("const planCode = String(article.dataset.planCode ?? '').trim();", $script);
-        $this->assertStringContainsString("setValue(createForm, 'code', `${planCode}-copy`);", $script);
-        $this->assertStringContainsString("setValue(createForm, 'name_en', `${value(editor, 'name_en')} Copy`);", $script);
-        $this->assertStringContainsString("setValue(createForm, 'name_ar', `نسخة ${value(editor, 'name_ar')}`);", $script);
+        $this->assertStringContainsString('setValue(createForm, \'code\', `${planCode}-copy`);', $script);
+        $this->assertStringContainsString('setValue(createForm, \'name_en\', `${value(editor, \'name_en\')} Copy`);', $script);
+        $this->assertStringContainsString('setValue(createForm, \'name_ar\', `نسخة ${value(editor, \'name_ar\')}`);', $script);
 
         foreach ([
             'description_en',
