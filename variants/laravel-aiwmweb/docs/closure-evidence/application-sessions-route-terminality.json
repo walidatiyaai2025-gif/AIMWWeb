@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #746",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6B051BD8C0",
+  "domain": "content",
+  "kind": "route",
+  "terminal_state": "ADAPTED",
+  "branch": "worker/laravel-aiwmweb-AIMW-CONT-6B051BD8C0-admin-sessions-route",
+  "evidence_head_sha": "b9f06d37aaeadb1f5233a3b2e0acb3bf0a364584",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/ApplicationSessions.razor",
+    "route": "/admin/sessions",
+    "permission": "Users.Manage",
+    "behavior": "render application session management from authoritative session storage"
+  },
+  "laravel_adaptation": {
+    "rendered_route": "GET /tenants/{tenant}/admin/sessions",
+    "route_name": "canonical.workspace.admin-sessions",
+    "permission": "users.manage",
+    "read_api": "GET /api/tenants/{tenant}/admin/sessions",
+    "source": "Laravel sessions table joined to active tenant memberships",
+    "tenant_isolation": true,
+    "my_sessions_api": "GET /api/tenants/{tenant}/sessions",
+    "fake_data": false
+  },
+  "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-6B051BD8C0",
+    "session_mutation_controls_not_claimed": true,
+    "aspnet_runtime_modified": false
+  }
+}
