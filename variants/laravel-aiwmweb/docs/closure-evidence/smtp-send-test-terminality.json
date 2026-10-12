@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #744",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-BC093D6418",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Shared/SmtpDiagnosticsPanel.razor",
+    "route_screen": "component:SmtpDiagnosticsPanel",
+    "visible_control": "Send test email [SendTestAsync]",
+    "mutation": false,
+    "risk": "low",
+    "external_dependency": "payment_provider"
+  },
+  "source_semantics": {
+    "uses_saved_profile": true,
+    "recipient_required": true,
+    "preflight": true,
+    "performs_real_smtp_submission": true,
+    "success_requires_transport_acceptance": true,
+    "result": "PASS/FAIL with steps and duration"
+  },
+  "laravel_adaptation": {
+    "route": "POST /tenants/{tenant}/sites/{site}/email-diagnostics/send-test",
+    "controller": "SiteEmailSettingsController::sendTest",
+    "service": "SmtpDiagnosticsService::sendTest",
+    "transport": "EmailTransport",
+    "operation_marker": "AIMW-BILL-BC093D6418",
+    "fake_success": false
+  },
+  "authorization_and_isolation": {
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "settings.manage"
+    ],
+    "foreign_tenant_site": "404",
+    "invalid_recipient": "validation error",
+    "secret_redaction": true
+  },
+  "focused_test": "tests/Feature/SmtpDiagnosticsSendTestTerminalityTest.php",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-BC093D6418",
+    "diagnose_async_not_claimed": "AIMW-BILL-EE42461195",
+    "aspnet_runtime_modified": false
+  },
+  "branch": "worker/laravel-aiwmweb-AIMW-BILL-BC093D6418-send-test",
+  "evidence_head_sha": "4ae19eecfd9eacfc029b8b8a961e378ca422bba0",
+  "acceptance": {
+    "focused_test": "variants/laravel-aiwmweb/backend/tests/Feature/SmtpDiagnosticsSendTestTerminalityTest.php",
+    "proofs": [
+      "saved-profile SMTP preflight",
+      "real transport submission",
+      "success only after transport acceptance",
+      "invalid-recipient validation",
+      "tenant/settings authorization",
+      "cross-tenant fail closed",
+      "secret redaction on failure"
+    ]
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "SendTestAsync is a real tenant-authorized SMTP test path using the saved profile and EmailTransport; PASS is emitted only after transport acceptance, while failures remain visible and secret-redacted."
+  }
+}
