@@ -69,9 +69,9 @@ final class SubscriptionPlanEntitlementsController extends Controller
             ];
 
             $missingManagedKey = collect(array_values(self::INTEGER_FIELDS))
-                ->contains(fn (string $key): bool => !array_key_exists($key, $persisted->limits ?? []))
+                ->contains(fn (string $key): bool => ! array_key_exists($key, $persisted->limits ?? []))
                 || collect(array_values(self::BOOLEAN_FIELDS))
-                    ->contains(fn (string $key): bool => !array_key_exists($key, $persisted->entitlements ?? []));
+                    ->contains(fn (string $key): bool => ! array_key_exists($key, $persisted->entitlements ?? []));
 
             if ($beforeState !== $afterState || $missingManagedKey) {
                 $persisted->limits = $limits;
