@@ -15,22 +15,27 @@ final class SiteEmailSettingsController extends Controller
 {
     public const DIAGNOSTICS_BACK_OPERATION_ID = 'AIMW-EMAI-8E56589573';
 
+    public const SAVE_MAIL_PROFILE_OPERATION_ID = 'AIMW-BILL-609F15BFCA';
+
     public function module(
         Request $request,
         string $tenant,
         TenantAuthorizer $authorizer,
         TenantContext $context,
         SiteEmailRecipientService $recipients,
+        SiteMailProfileService $profiles,
     ): View {
         $this->authorizeWorkspace($tenant, $authorizer, $context);
 
         $sites = Site::query()->orderBy('name')->get();
         $selectedSite = null;
         $siteRecipients = collect();
+        $mailProfile = null;
         $requestedSite = $request->integer('site');
         if ($requestedSite > 0) {
             $selectedSite = Site::query()->findOrFail($requestedSite);
             $siteRecipients = $recipients->listAsync((int) $selectedSite->getKey());
+            $mailProfile = $profiles->getAsync((int) $selectedSite->getKey());
         }
 
         return view('sites.email-settings', [
@@ -38,6 +43,7 @@ final class SiteEmailSettingsController extends Controller
             'sites' => $sites,
             'selectedSite' => $selectedSite,
             'recipients' => $siteRecipients,
+            'mailProfile' => $mailProfile,
         ]);
     }
 
@@ -47,6 +53,7 @@ final class SiteEmailSettingsController extends Controller
         TenantAuthorizer $authorizer,
         TenantContext $context,
         SiteEmailRecipientService $recipients,
+        SiteMailProfileService $profiles,
     ): View {
         $this->authorizeWorkspace($tenant, $authorizer, $context);
         $selectedSite = Site::query()->findOrFail($site);
@@ -56,6 +63,7 @@ final class SiteEmailSettingsController extends Controller
             'sites' => Site::query()->orderBy('name')->get(),
             'selectedSite' => $selectedSite,
             'recipients' => $recipients->listAsync($site),
+            'mailProfile' => $profiles->getAsync($site),
         ]);
     }
 
@@ -79,6 +87,48 @@ final class SiteEmailSettingsController extends Controller
             'suggestedRecipient' => $siteRecipients->firstWhere('is_enabled', true),
             'backOperationId' => self::DIAGNOSTICS_BACK_OPERATION_ID,
         ]);
+    }
+
+    public function saveMailProfile(
+        Request $request,
+        string $tenant,
+        int $site,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+        SiteMailProfileService $profiles,
+    ): RedirectResponse {
+        $this->authorizeWorkspace($tenant, $authorizer, $context);
+        Site::query()->findOrFail($site);
+
+        $validated = $request->validate([
+            'use_account_profile' => ['required', 'boolean'],
+            'host' => ['nullable', 'string', 'max:255'],
+            'port' => ['nullable', 'integer', 'between:1,65535'],
+            'username' => ['nullable', 'string', 'max:320'],
+            'password' => ['nullable', 'string', 'max:2048'],
+            'from_address' => ['nullable', 'email', 'max:320'],
+            'from_name' => ['nullable', 'string', 'max:160'],
+            'reply_to' => ['nullable', 'email', 'max:320'],
+            'enable_ssl' => ['required', 'boolean'],
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $profiles->saveAsync($site, [
+            'use_account_profile' => (bool) $validated['use_account_profile'],
+            'host' => (string) ($validated['host'] ?? ''),
+            'port' => (int) ($validated['port'] ?? 587),
+            'username' => (string) ($validated['username'] ?? ''),
+            'password' => (string) ($validated['password'] ?? ''),
+            'from_address' => (string) ($validated['from_address'] ?? ''),
+            'from_name' => (string) ($validated['from_name'] ?? ''),
+            'reply_to' => (string) ($validated['reply_to'] ?? ''),
+            'enable_ssl' => (bool) $validated['enable_ssl'],
+            'enabled' => (bool) $validated['enabled'],
+        ]);
+
+        return redirect()
+            ->route('canonical.workspace.site-email-settings.site', ['tenant' => $tenant, 'site' => $site])
+            ->with('success', 'Mail profile saved securely.');
     }
 
     public function store(
