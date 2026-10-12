@@ -104,7 +104,7 @@ final class SiteSettingsSaveProfileController extends Controller
 
         $scheme = strtolower((string) $parts['scheme']);
         $host = strtolower(rtrim((string) $parts['host'], '.'));
-        if ($host === '' || filter_var($host, FILTER_VALIDATE_IP) === false && ! str_contains($host, '.')) {
+        if ($host === '') {
             throw ValidationException::withMessages([
                 'url' => 'Enter a valid site URL starting with http or https.',
             ]);
