@@ -35,35 +35,23 @@
         </section>
     @endif
 
-    @php
-        $createDefaults = $cloneForm ?? [];
-        $createBillingInterval = old('billing_interval', $createDefaults['billing_interval'] ?? 'Monthly');
-        $createEnabled = old('is_enabled', $createDefaults['is_enabled'] ?? '1');
-    @endphp
     <section data-canonical-operation="AIMW-BILL-5AF09ADABA" aria-label="{{ app()->getLocale() === 'ar' ? 'إنشاء خطة' : 'Create plan' }}">
         <h2>{{ app()->getLocale() === 'ar' ? 'إنشاء خطة اشتراك' : 'Create subscription plan' }}</h2>
-        @if ($cloneForm)
-            <p role="status" data-canonical-operation="AIMW-BILL-7BD7B04B26">
-                {{ app()->getLocale() === 'ar'
-                    ? 'تم تجهيز نسخة غير مفعلة. غيّر الكود والبيانات ثم احفظها.'
-                    : 'A disabled clone is ready. Adjust its code and details, then save it.' }}
-            </p>
-        @endif
         <form method="post" action="{{ route('tenant.admin.subscription-plans.save', ['tenant' => $tenant->slug]) }}">
             @csrf
-            <label>Plan code <input name="code" required maxlength="64" pattern="[a-z0-9][a-z0-9._-]{0,63}" value="{{ old('code', $createDefaults['code'] ?? '') }}"></label>
-            <label>English name <input name="name_en" required maxlength="160" value="{{ old('name_en', $createDefaults['name_en'] ?? '') }}"></label>
-            <label>Arabic name <input name="name_ar" required maxlength="160" dir="rtl" value="{{ old('name_ar', $createDefaults['name_ar'] ?? '') }}"></label>
-            <label>English description <textarea name="description_en" maxlength="1000">{{ old('description_en', $createDefaults['description_en'] ?? '') }}</textarea></label>
-            <label>Arabic description <textarea name="description_ar" maxlength="1000" dir="rtl">{{ old('description_ar', $createDefaults['description_ar'] ?? '') }}</textarea></label>
-            <label>Billing interval <select name="billing_interval"><option value="Monthly" {{ $createBillingInterval === 'Monthly' ? 'selected' : '' }}>Monthly</option><option value="Yearly" {{ $createBillingInterval === 'Yearly' ? 'selected' : '' }}>Yearly</option></select></label>
-            <label>Price <input name="price" type="number" min="0" max="1000000" step="0.01" required value="{{ old('price', $createDefaults['price'] ?? '0.00') }}"></label>
-            <label>Currency <input name="currency" maxlength="3" required value="{{ old('currency', $createDefaults['currency'] ?? 'USD') }}"></label>
-            <label>Trial days <input name="trial_days" type="number" min="0" max="365" required value="{{ old('trial_days', $createDefaults['trial_days'] ?? 0) }}"></label>
-            <label>Grace days <input name="grace_period_days" type="number" min="0" max="90" required value="{{ old('grace_period_days', $createDefaults['grace_period_days'] ?? 7) }}"></label>
-            <label>Sort order <input name="sort_order" type="number" min="0" max="100000" required value="{{ old('sort_order', $createDefaults['sort_order'] ?? 100) }}"></label>
+            <label>Plan code <input name="code" required maxlength="64" pattern="[a-z0-9][a-z0-9._-]{0,63}" value="{{ old('code') }}"></label>
+            <label>English name <input name="name_en" required maxlength="160" value="{{ old('name_en') }}"></label>
+            <label>Arabic name <input name="name_ar" required maxlength="160" dir="rtl" value="{{ old('name_ar') }}"></label>
+            <label>English description <textarea name="description_en" maxlength="1000">{{ old('description_en') }}</textarea></label>
+            <label>Arabic description <textarea name="description_ar" maxlength="1000" dir="rtl">{{ old('description_ar') }}</textarea></label>
+            <label>Billing interval <select name="billing_interval"><option value="Monthly">Monthly</option><option value="Yearly">Yearly</option></select></label>
+            <label>Price <input name="price" type="number" min="0" max="1000000" step="0.01" required value="{{ old('price', '0.00') }}"></label>
+            <label>Currency <input name="currency" maxlength="3" required value="{{ old('currency', 'USD') }}"></label>
+            <label>Trial days <input name="trial_days" type="number" min="0" max="365" required value="{{ old('trial_days', 0) }}"></label>
+            <label>Grace days <input name="grace_period_days" type="number" min="0" max="90" required value="{{ old('grace_period_days', 7) }}"></label>
+            <label>Sort order <input name="sort_order" type="number" min="0" max="100000" required value="{{ old('sort_order', 100) }}"></label>
             <input type="hidden" name="is_enabled" value="0">
-            <label>Customer visible <input name="is_enabled" type="checkbox" value="1" {{ $createEnabled === '1' ? 'checked' : '' }}></label>
+            <label>Customer visible <input name="is_enabled" type="checkbox" value="1" {{ old('is_enabled', '1') === '1' ? 'checked' : '' }}></label>
             <label>PayPal Product ID <input name="gateway_product_id" maxlength="200" autocomplete="off" value=""></label>
             <label>PayPal Plan ID <input name="gateway_plan_id" maxlength="200" autocomplete="off" value=""></label>
             <button type="submit">{{ app()->getLocale() === 'ar' ? 'حفظ الخطة' : 'Save plan' }}</button>
@@ -113,11 +101,6 @@
                     <label><input name="clear_gateway_plan_id" type="checkbox" value="1"> Clear PayPal Plan ID</label>
                     <button type="submit">{{ app()->getLocale() === 'ar' ? 'حفظ الخطة' : 'Save plan' }}</button>
                 </form>
-
-                <a
-                    href="{{ route('tenant.admin.subscription-plans', ['tenant' => $tenant->slug, 'clone' => $plan->id]) }}"
-                    data-canonical-operation="AIMW-BILL-7BD7B04B26"
-                >{{ app()->getLocale() === 'ar' ? 'نسخ كخطة جديدة' : 'Clone as new' }}</a>
 
                 <form method="post" action="{{ route('tenant.admin.subscription-plans.enabled', ['tenant' => $tenant->slug, 'plan' => $plan->id]) }}" data-canonical-operation="AIMW-BILL-B00411742F" data-runtime-operation="AIMW-BILL-812D1C53B6">
                     @csrf
