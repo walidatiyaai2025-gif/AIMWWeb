@@ -7,6 +7,7 @@ import {
     ContentEditorSitesLinkControl,
 } from '../content-editor-save-control';
 import type { FrontendContext } from '../core';
+import { LocaleProvider } from '../i18n';
 
 const context: FrontendContext = {
     user: { id: 1, name: 'Editor', email: 'editor@example.test' },
@@ -23,7 +24,9 @@ describe('AIMW-CONT-B6BB292F85 Content Editor sites link', () => {
     it('binds the exact canonical operation to the tenant-scoped sites route', () => {
         render(
             <MemoryRouter>
-                <ContentEditorSitesLinkControl context={context} />
+                <LocaleProvider>
+                    <ContentEditorSitesLinkControl context={context} />
+                </LocaleProvider>
             </MemoryRouter>,
         );
 
