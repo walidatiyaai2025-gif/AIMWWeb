@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class SiteMailProfileService
 {
+    public const CLEAR_PASSWORD_OPERATION_ID = 'AIMW-BILL-F56F7955DA';
+
     public function __construct(
         private readonly MailConfigurationService $configurations,
         private readonly TenantAuthorizer $authorizer,
