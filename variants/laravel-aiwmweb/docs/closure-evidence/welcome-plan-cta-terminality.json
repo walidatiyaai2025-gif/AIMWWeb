@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "leaf_issue": 743,
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "4e17908a8201f14fcd6a08b3c7430e38e6156c1f",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-616576D8F7",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_screen": "/welcome",
+    "source_control": "@PlanCtaHref(plan) -> @PlanCtaHref(plan)",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency": "payment_provider"
+  },
+  "source_behavior": {
+    "catalog": "Loads enabled subscription plans for the public Welcome pricing surface; an unavailable/empty catalog renders a non-success availability state.",
+    "free_trial_definition": "plan code free-trial (case-insensitive) or zero price",
+    "anonymous_cta": "/register",
+    "authenticated_free_cta": "/",
+    "authenticated_paid_cta": "/account/billing",
+    "payment_semantics": "CTA navigation is not payment evidence and does not mutate subscription/provider state"
+  },
+  "laravel_adaptation": {
+    "public_route": "/welcome",
+    "public_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "catalog_source": "billing_plans enabled=true and retired_at=null, ordered by display_order then id",
+    "selected_catalog_fields": [
+      "id",
+      "code",
+      "name",
+      "localized_name",
+      "description",
+      "localized_description",
+      "price_minor",
+      "currency",
+      "billing_interval",
+      "trial_period_days",
+      "display_order"
+    ],
+    "provider_identifiers_selected": false,
+    "anonymous_cta": "/register",
+    "authenticated_free_cta": "/",
+    "authenticated_paid_cta": "/account/billing",
+    "paid_bridge": {
+      "route": "/account/billing",
+      "route_name": "public.account-billing.bridge",
+      "middleware": [
+        "web",
+        "auth"
+      ],
+      "tenant_resolution": "server-side active TenantMembership for authenticated user only",
+      "single_membership": "redirects to /tenants/{owned-slug}/account/billing",
+      "zero_memberships": "409 fail closed",
+      "multiple_memberships": "409 fail closed; never picks a caller-supplied or arbitrary tenant",
+      "caller_tenant_override": false
+    }
+  },
+  "authorization_and_isolation": {
+    "welcome": "anonymous web route; pricing remains tenant-identity neutral",
+    "bridge": "authenticated only",
+    "destination": "existing canonical.workspace.account-billing route independently enforces tenant.context plus billing.view",
+    "direct_object_identifier_surface": false,
+    "query_tenant_authority": false,
+    "tenant_slug_disclosed_on_welcome": false
+  },
+  "runtime_semantics": {
+    "authoritative_read": true,
+    "deterministic_order": true,
+    "disabled_plans_hidden": true,
+    "retired_plans_hidden": true,
+    "empty_catalog_state": "The plan catalog is temporarily unavailable.",
+    "mutation": false,
+    "provider_call": false,
+    "provider_success_fabricated": false,
+    "retry_safety": "GET/navigation only"
+  },
+  "acceptance_tests": {
+    "php_feature": [
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_canonical_ledger_row_is_the_pending_welcome_plan_cta_control",
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_reference_semantics_are_anonymous_register_authenticated_free_root_and_authenticated_paid_billing",
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_public_welcome_renders_only_authoritative_enabled_non_retired_plans_and_anonymous_ctas_register",
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_authenticated_ctas_match_source_paths_without_exposing_tenant_identity",
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_account_billing_bridge_is_authenticated_no_id_surface_and_redirects_one_owned_membership_to_real_guarded_workspace",
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_account_billing_bridge_fails_closed_when_membership_context_is_missing_or_ambiguous",
+      "WelcomePlanCtaVisibleControlTerminalityTest::test_empty_catalog_has_deterministic_non_success_state_and_no_fake_cta",
+      "WelcomeRouteTerminalityTest::test_anonymous_and_authenticated_callers_receive_identity_neutral_content_without_tenant_or_user_disclosure"
+    ]
+  },
+  "implementation_snapshot_sha": "7f5b3a589274e8b130db1e3a0b7b19b02cae9700",
+  "canonical_denominator": {
+    "total": 931,
+    "previous_terminal": 685,
+    "expected_terminal_after_this_one_operation": 686,
+    "previous_pending": 246,
+    "expected_pending_after_this_one_operation": 245
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-616576D8F7",
+    "adjacent_welcome_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "fake_checkout_or_provider_state_added": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The exact PlanCtaHref visible control is backed by the authoritative enabled catalog, preserves anonymous/free/paid source navigation, routes paid authenticated navigation through a fail-closed owned-tenant bridge to the real billing workspace, and never treats browser navigation as provider or payment evidence."
+  }
+}
