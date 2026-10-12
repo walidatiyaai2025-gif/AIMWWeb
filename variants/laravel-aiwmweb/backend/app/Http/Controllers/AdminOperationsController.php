@@ -9,6 +9,7 @@ use App\Operations\OperationsControlPlaneService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class AdminOperationsController extends Controller
@@ -80,11 +81,22 @@ final class AdminOperationsController extends Controller
         ]);
     }
 
-    public function sessions(Request $request, string $tenant): JsonResponse
+    public function sessions(Request $request, string $tenant): JsonResponse|View
     {
-        $this->authorizer->authorize('sessions.manage');
+        if ($request->expectsJson()) {
+            $this->authorizer->authorize('sessions.manage');
 
-        return response()->json(['data' => $this->administration->sessions((int) $request->user()->getAuthIdentifier(), $this->sessionId($request))]);
+            return response()->json([
+                'data' => $this->administration->sessions(
+                    (int) $request->user()->getAuthIdentifier(),
+                    $this->sessionId($request),
+                ),
+            ]);
+        }
+
+        $this->authorizer->authorize('users.manage');
+
+        return view('app');
     }
 
     public function revokeSession(Request $request, string $tenant, string $session): JsonResponse
