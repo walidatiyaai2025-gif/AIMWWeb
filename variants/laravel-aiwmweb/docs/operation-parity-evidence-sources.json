@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "32aa6f9b200024462599f4731ffd7a042098c133",
+  "previous_reconciliation_sha": "63e1e34a1b7550e3c4500b5c827f3e2f8eda547e",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -790,6 +790,28 @@
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubModuleRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubModuleRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-content-hub-module-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-EMAI-F77DB6435F Email Schedules canonical route terminality",
+      "sha": "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
+      "observed_pr_head": "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
+      "domains": [
+        "email"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-EMAI-F77DB6435F"
+      ],
+      "route_api_provenance": {
+        "AIMW-EMAI-F77DB6435F": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-route-terminality.json",
           "security_mode": "tenant_selected"
         }
       }

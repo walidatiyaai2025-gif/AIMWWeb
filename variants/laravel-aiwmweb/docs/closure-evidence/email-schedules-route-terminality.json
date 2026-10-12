@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #903 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-F77DB6435F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "email",
+    "kind": "route",
+    "route_screen": "/email/schedules",
+    "source": "src/AIWordPressManager.Web/Components/Pages/EmailSchedules.razor",
+    "source_intent": "Open and render the tenant-scoped Email Schedules workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_route": "GET /tenants/{tenant}/email/schedules",
+    "source_route_name": "canonical.workspace.email-schedules",
+    "action": "CanonicalWorkspaceRouteController@show",
+    "frontend_workspace": "/email/schedules",
+    "operation_marker": "AIMW-EMAI-F77DB6435F"
+  },
+  "security": {
+    "route_middleware": ["web", "auth", "tenant.context"],
+    "permission": "operations.manage",
+    "tenant_selector": "authenticated server-derived tenant context",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php",
+    "coverage": [
+      "exact canonical source identity",
+      "GET/HEAD-only explicit route",
+      "canonical operation marker",
+      "operations.manage authorization",
+      "real React email-schedules workspace route",
+      "guest redirect",
+      "missing-permission 403",
+      "foreign-tenant 404",
+      "caller query identity cannot override tenant",
+      "read-only route behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-EMAI-F77DB6435F"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

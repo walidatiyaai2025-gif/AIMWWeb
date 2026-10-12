@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 694,
-    "pending": 237,
+    "adapted": 695,
+    "pending": 236,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 694,
-    "overall_parity_percent": 74.54
+    "terminal": 695,
+    "overall_parity_percent": 74.65
   },
   "visible_controls": {
     "total": 446,
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 63,
-      "pending": 19,
+      "adapted": 64,
+      "pending": 18,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 63,
-      "percent": 76.83
+      "terminal": 64,
+      "percent": 78.05
     },
     "identity": {
       "total": 7,
@@ -21982,21 +21982,34 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php",
+      "evidence": "AIMW-EMAI-F77DB6435F Email Schedules canonical route terminality@a3890ef1d4dac7e4e4bb5123d23625dd11269e7a: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-EMAI-F77DB6435F; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-EMAI-F77DB6435F Email Schedules canonical route terminality",
+        "source_sha": "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-route-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-F77DB6435F",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/EmailSchedulesRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -36026,12 +36039,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 59,
-      "pending": 25,
+      "adapted": 60,
+      "pending": 24,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 59,
-      "percent": 70.24
+      "terminal": 60,
+      "percent": 71.43
     },
     "service": {
       "total": 349,
@@ -36208,8 +36221,7 @@
       "AIMW-EMAI-9EB09C490D",
       "AIMW-EMAI-A9CB66F400",
       "AIMW-EMAI-E4EEF1914B",
-      "AIMW-EMAI-EC34E40629",
-      "AIMW-EMAI-F77DB6435F"
+      "AIMW-EMAI-EC34E40629"
     ],
     "identity": [],
     "media": [
@@ -36702,6 +36714,18 @@
           "AIMW-CONT-859135B2D1"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-EMAI-F77DB6435F Email Schedules canonical route terminality",
+        "sha": "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
+        "domains": [
+          "email"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-EMAI-F77DB6435F"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -36730,6 +36754,7 @@
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+      "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
       "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
@@ -36836,6 +36861,7 @@
       "AIMW-EMAI-7F2D7C5921",
       "AIMW-EMAI-B2CFCF818C",
       "AIMW-EMAI-BFDC050625",
+      "AIMW-EMAI-F77DB6435F",
       "AIMW-MEDI-8BADBE1261",
       "AIMW-OPER-ABB41FC891",
       "AIMW-PLAT-18A8EE0324",
@@ -36845,7 +36871,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 26,
+    "explicit_route_api_contract_count": 27,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
