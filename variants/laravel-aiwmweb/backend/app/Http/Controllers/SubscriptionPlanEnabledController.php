@@ -15,7 +15,7 @@ final class SubscriptionPlanEnabledController extends Controller
 {
     public const OPERATION_ID = 'AIMW-BILL-812D1C53B6';
 
-    /** Current canonical scanner identity for the same ToggleEnabledAsync runtime contract. */
+    /** Canonical scanner identity for the same ToggleEnabledAsync runtime contract. */
     public const CANONICAL_OPERATION_ID = 'AIMW-BILL-B00411742F';
 
     public function __construct(
