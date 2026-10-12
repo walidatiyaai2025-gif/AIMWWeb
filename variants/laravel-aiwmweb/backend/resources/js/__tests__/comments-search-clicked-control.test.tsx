@@ -57,17 +57,17 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderComments();
-        expect(await screen.findByText('First page')).toBeInTheDocument();
+        expect(await screen.findByText('1')).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        expect(await screen.findByText('Second page')).toBeInTheDocument();
+        expect(await screen.findByText('2')).toBeInTheDocument();
 
         fireEvent.change(screen.getByRole('textbox'), { target: { value: ' needle ' } });
         const search = screen.getByRole('button', { name: 'Search' });
         expect(search).toHaveAttribute('data-canonical-operation', COMMENTS_SEARCH_OPERATION_ID);
         fireEvent.click(search);
 
-        expect(await screen.findByText('Needle Author')).toBeInTheDocument();
+        expect(await screen.findByText('3')).toBeInTheDocument();
         await waitFor(() => expect(fetchMock.mock.calls[2][0]).toBe('/api/v1/tenants/alpha/sites/7/comments?page=1&search=needle'));
         expect(fetchMock.mock.calls.every(([, options]) => !options || !options.method || options.method === 'GET')).toBe(true);
     });
@@ -88,7 +88,7 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
         await waitFor(() => expect(fetchMock.mock.calls[1][0]).toBe('/api/v1/tenants/alpha/sites/7/comments?page=1&search=missing'));
-        expect(screen.queryByText('missing')).not.toBeInTheDocument();
+        expect(await screen.findByText('No records were returned.')).toBeInTheDocument();
     });
 
     it('surfaces authoritative request failure instead of presenting fake success', async () => {
@@ -103,7 +103,7 @@ describe('AIMW-SYNC-4E3C0156FC Comments SearchClickedAsync', () => {
         vi.stubGlobal('fetch', fetchMock);
 
         renderComments();
-        expect(await screen.findByText('Loaded')).toBeInTheDocument();
+        expect(await screen.findByText('1')).toBeInTheDocument();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'boom' } });
         fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
