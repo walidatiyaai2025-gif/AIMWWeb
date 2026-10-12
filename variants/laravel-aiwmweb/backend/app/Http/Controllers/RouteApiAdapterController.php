@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\CarbonImmutable;
 use App\Authorization\TenantAuthorizer;
 use App\Billing\EntitlementService;
 use App\Billing\UsageQuotaService;
@@ -57,7 +58,7 @@ final class RouteApiAdapterController extends Controller
             ->filter(function (array $item): bool {
                 $startedAt = $item['started_at'] ?? null;
 
-                return $startedAt !== null && \Carbon\CarbonImmutable::parse($startedAt)->greaterThanOrEqualTo(now()->subDays(30));
+                return $startedAt !== null && CarbonImmutable::parse($startedAt)->greaterThanOrEqualTo(now()->subDays(30));
             })
             ->groupBy('site_id')
             ->map(function ($items, $siteId) use ($siteNames): array {
