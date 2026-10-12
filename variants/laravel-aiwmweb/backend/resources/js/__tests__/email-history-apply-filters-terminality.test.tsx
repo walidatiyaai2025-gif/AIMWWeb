@@ -96,7 +96,7 @@ describe(`${EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID} ApplyFiltersAsync`, () => 
         vi.stubGlobal('fetch', fetchMock);
 
         renderWorkspace();
-        expect(await screen.findByText('No data')).toBeInTheDocument();
+        expect(await screen.findByText('No records were returned.')).toBeInTheDocument();
 
         fireEvent.change(screen.getByRole('combobox', { name: 'Status' }), { target: { value: 'FAILED' } });
         fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
