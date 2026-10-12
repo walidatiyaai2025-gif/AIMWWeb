@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #734",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-DD0FD9926B",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "route_screen": "/sites",
+    "visible_control": "RetestSelectedAsync",
+    "behavior": "Retest each selected visible site using the real connection test, report aggregate success/failure truthfully, then reread the authoritative Sites collection.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sites-retest-selected-control.tsx",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "authoritative_collection": "GET /api/tenants/{tenant}/sites",
+    "real_recheck": "POST /api/tenants/{tenant}/sites/{site}/connection/recheck",
+    "authorization": "connector.manage",
+    "operation_marker": "AIMW-BILL-DD0FD9926B",
+    "success": "Every selected real recheck completes and the Sites collection is reread before a success status is rendered.",
+    "partial_failure": "Per-site recheck failures are counted and rendered as an alert after the authoritative reread.",
+    "foreign_collection": "The control is not rendered if the advertised Sites endpoint does not match the active tenant.",
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authentication": "Laravel auth middleware",
+    "tenant_context": "tenant.context scopes each recheck request and the collection read",
+    "permission": "connector.manage is required by the existing real recheck endpoint and by the control",
+    "foreign_site": "focused feature coverage proves a site owned by another tenant fails closed as 404",
+    "missing_authority": "focused feature coverage proves a viewer without connector.manage receives 403"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-retest-selected-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SitesRetestSelectedTerminalityTest.php"
+  ],
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No duplicate diagnostics backend",
+    "No adjacent Sites bulk actions are claimed",
+    "No payment-provider state is fabricated",
+    "No manual generated parity-count edit"
+  ]
+}
