@@ -8,7 +8,7 @@
   "previous_state": "PENDING",
   "terminal_state": "ADAPTED",
   "branch": "worker/laravel-aiwmweb-AIMW-BILL-D307963B59-users-save",
-  "evidence_head_sha": "445fd51a72bc6adf2e9b7f834e4ab2750fe8c5e9",
+  "evidence_head_sha": "015a34caeec590aae50e7d19eab5e06dae37bc38",
   "canonical_source": {
     "file": "src/AIWordPressManager.Web/Components/Pages/UsersManager.razor",
     "route_screen": "/sites/{SiteId:guid}/users",
@@ -50,7 +50,9 @@
     "update_behavior": "GET baseline, POST exactly once, then GET /users/{id}?context=edit",
     "empty_update_password": "omitted from outbound WordPress payload",
     "automatic_mutation_retry": false,
-    "success_requires_authoritative_reread": true
+    "success_requires_authoritative_reread": true,
+    "read_permission": "sites.view",
+    "save_permission": "content.edit"
   },
   "authorization_and_isolation": {
     "guest": "401",
