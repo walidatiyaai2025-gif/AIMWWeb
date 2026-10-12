@@ -102,9 +102,6 @@ final class SubscriptionPlanEntitlementsController extends Controller
             ->with('status', 'Plan limits and capabilities saved.');
     }
 
-    /**
-     * @return array{limits: array<string, int>, entitlements: array<string, bool>}
-     */
     public static function managedState(BillingPlan $plan): array
     {
         return [
@@ -113,9 +110,6 @@ final class SubscriptionPlanEntitlementsController extends Controller
         ];
     }
 
-    /**
-     * @return array<string, int|bool|string>
-     */
     public static function formState(BillingPlan $plan): array
     {
         $state = self::managedState($plan);
@@ -134,19 +128,11 @@ final class SubscriptionPlanEntitlementsController extends Controller
         ];
     }
 
-    /**
-     * @param array{limits: array<string, int>, entitlements: array<string, bool>} $state
-     */
     public static function stateToken(array $state): string
     {
         return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
     }
 
-    /**
-     * @param array<string, mixed> $source
-     * @param array<string, string> $fieldMap
-     * @return array<string, int|bool>
-     */
     private static function orderedManaged(array $source, array $fieldMap): array
     {
         $result = [];
