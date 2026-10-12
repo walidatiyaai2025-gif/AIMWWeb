@@ -41,9 +41,16 @@ final class SubscriptionPlansAdminReadController extends Controller
                 'entitlements',
             ]);
 
+        $entitlementForms = $plans
+            ->mapWithKeys(fn (BillingPlan $plan): array => [
+                $plan->getKey() => SubscriptionPlanEntitlementsController::formState($plan),
+            ])
+            ->all();
+
         return view('billing.subscription-plans-admin', [
             'tenant' => $this->context->tenant(),
             'plans' => $plans,
+            'entitlementForms' => $entitlementForms,
         ]);
     }
 }
