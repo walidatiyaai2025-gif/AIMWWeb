@@ -10,6 +10,7 @@ use App\Http\Controllers\PlatformReadController;
 use App\Http\Controllers\SeoRemediationClosureController;
 use App\Http\Controllers\SiteSyncCancellationController;
 use App\Http\Controllers\SyncApiController;
+use App\Http\Controllers\WordPressUsersController;
 use App\Sync\GlobalSynchronizationAcceptRemoteService;
 use App\Sync\GlobalSynchronizationConflictReviewService;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +67,14 @@ Route::prefix('v1/tenants/{tenant}/sites/{site}')->middleware(['web', 'tenant.co
     Route::post('comments/{comment}/action', [ContentApiController::class, 'commentAction']);
     Route::post('comments/{comment}/reply', [ContentApiController::class, 'replyComment']);
     Route::post('comments/bulk', [ContentApiController::class, 'bulkComments']);
+
+    Route::get('users', [WordPressUsersController::class, 'index'])
+        ->middleware('auth')
+        ->name('api.v1.wordpress-users.index');
+    Route::post('users/save', [WordPressUsersController::class, 'save'])
+        ->middleware('auth')
+        ->defaults('canonical_operation_id', WordPressUsersController::SAVE_OPERATION_ID)
+        ->name('api.v1.wordpress-users.save');
 
     Route::get('taxonomy', [ContentApiController::class, 'taxonomy']);
     Route::get('taxonomy/discover', [ContentApiController::class, 'discoverTaxonomy']);
