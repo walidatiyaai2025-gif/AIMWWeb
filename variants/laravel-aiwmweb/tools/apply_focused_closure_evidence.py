@@ -11,6 +11,9 @@ composition contains all of the following for one canonical operation:
 - tenant/security assertions when the canonical row requires them.
 
 Anything that cannot satisfy the contract remains PENDING.
+
+The focused source is the latest pushed closure composition, not a historical
+per-operation feature SHA, so previously terminal focused controls stay refreshable.
 """
 from __future__ import annotations
 
