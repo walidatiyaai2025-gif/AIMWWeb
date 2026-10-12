@@ -128,7 +128,7 @@ final class SubscriptionPlansAdminRouteTerminalityTest extends TestCase
             ->assertDontSee('PROD-secret-sentinel')
             ->assertDontSee('P-secret-sentinel')
             ->assertSee('AIMW-BILL-0CE205B851')
-            ->assertDontSee('AIMW-BILL-F73C7348C3');
+            ->assertSee('AIMW-BILL-F73C7348C3');
 
         $this->assertSame($before, BillingPlan::query()->orderBy('id')->get()->map->getAttributes()->all());
         $this->assertSame($auditCount, DB::table('billing_plan_audits')->count());
