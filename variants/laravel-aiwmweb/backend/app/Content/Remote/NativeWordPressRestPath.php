@@ -139,7 +139,7 @@ final class NativeWordPressRestPath
     private function endpoint(string $resource): string
     {
         return match ($resource) {
-            'posts','pages','media','comments','categories','tags' => '/wp-json/wp/v2/'.$resource,
+            'posts','pages','media','comments','categories','tags','users' => '/wp-json/wp/v2/'.$resource,
             default => throw new RuntimeException("WordPress REST resource '{$resource}' is not directly supported."),
         };
     }
