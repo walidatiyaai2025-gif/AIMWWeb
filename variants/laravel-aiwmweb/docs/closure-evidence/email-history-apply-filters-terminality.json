@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #723",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-F8E8A2BEE9",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/email/history",
+    "visible_control": "ApplyFiltersAsync [ApplyFiltersAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/EmailDeliveryHistory.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/email-history-filters-control.tsx",
+    "workspace_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "backend_service": "variants/laravel-aiwmweb/backend/app/Email/Services/EmailDeliveryService.php",
+    "endpoint": "/api/v1/tenants/{tenant}/email/deliveries",
+    "authorization": "auth + tenant.context + tenant.manage; route workspace also diagnostics.view",
+    "tenant_scope": "EmailDelivery and MailConfiguration use BelongsToTenant; site_id is resolved through tenant-scoped Site::findOrFail",
+    "read_model": "authoritative email_deliveries filtered server-side by site/status/correlation/search with pagination",
+    "action": "Apply commits draft filters, resets page to 1, and React Query rereads authoritative Laravel email history",
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/EmailHistoryApplyFiltersTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/email-history-apply-filters-terminality.test.tsx",
+    "assertions": [
+      "exact canonical operation marker exists in production UI",
+      "site/status/correlation map to real backend query parameters",
+      "matching authoritative rows are returned with pagination",
+      "empty results render without synthesized rows",
+      "backend failures surface as real error state",
+      "foreign-tenant site filter returns not found"
+    ]
+  },
+  "materialization": {
+    "reconciliation_commit": "60bcab263876bcdaffc3b257f6f9a2ef800a20ce",
+    "result": "AIMW-EMAI-F8E8A2BEE9 ADAPTED; AIMW-BILL-94755B17E4 preserved ADAPTED",
+    "exact_head_recheck": true
+  },
+  "synchronized_composition": {
+    "commit": "d6f8bf77a4d09106b2e75037efd370a17b1ca062",
+    "preserves": [
+      "AIMW-BILL-94755B17E4"
+    ],
+    "rematerialize_exact_operation": "AIMW-EMAI-F8E8A2BEE9"
+  }
+}
