@@ -131,6 +131,22 @@ final class SiteEmailSettingsController extends Controller
             ->with('success', 'Mail profile saved securely.');
     }
 
+    public function clearMailPassword(
+        string $tenant,
+        int $site,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+        SiteMailProfileService $profiles,
+    ): RedirectResponse {
+        $this->authorizeWorkspace($tenant, $authorizer, $context);
+        Site::query()->findOrFail($site);
+        $profiles->clearPasswordAsync($site);
+
+        return redirect()
+            ->route('canonical.workspace.site-email-settings.site', ['tenant' => $tenant, 'site' => $site])
+            ->with('success', 'Saved SMTP password cleared.');
+    }
+
     public function saveEdit(
         Request $request,
         string $tenant,
