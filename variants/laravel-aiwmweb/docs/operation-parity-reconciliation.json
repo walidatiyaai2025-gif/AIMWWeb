@@ -36745,6 +36745,16 @@
           "AIMW-EMAI-12A6FEB2FF"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-DF8B12B6DE GlobalPostsExplorer WordPress link focused closure",
+        "sha": "34e66eba87657e5283f29765c083529b08ba7625",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-DF8B12B6DE"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -36765,6 +36775,7 @@
       "0074d9dc9ec10fe1e7c64e40f4e1c7166c03cf01",
       "2497296794e0f1fde94d8c0fd30babb047c912ae",
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
+      "34e66eba87657e5283f29765c083529b08ba7625",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "3ef0d094b3211f0e67966346f1a896d2daf164a9",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
