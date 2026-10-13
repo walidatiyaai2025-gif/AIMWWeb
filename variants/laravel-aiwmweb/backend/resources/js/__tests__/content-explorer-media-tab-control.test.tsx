@@ -82,3 +82,5 @@ describe('AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab', () => {
         expect(screen.queryByRole('link', { name: /Media/ })).not.toBeInTheDocument();
     });
 });
+
+// exact-head gate retrigger after parity materialization
