@@ -831,20 +831,6 @@
       "operation_ids": [
         "AIMW-CONT-DF8B12B6DE"
       ]
-    },
-    {
-      "label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
-      "sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
-      "operation_ids": [
-        "AIMW-EMAI-54E7EEFB15"
-      ]
-    },
-    {
-      "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
-      "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
-      "operation_ids": [
-        "AIMW-EMAI-00CC1272F6"
-      ]
     }
   ],
   "excluded_sources": [],
@@ -911,6 +897,20 @@
       "sha": "80d4a8c548171dbd31ca988fb3151fe2bcbf1e0f",
       "operation_ids": [
         "AIMW-EMAI-2E59E39808"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
+      "sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
+      "operation_ids": [
+        "AIMW-EMAI-54E7EEFB15"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
+      "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
+      "operation_ids": [
+        "AIMW-EMAI-00CC1272F6"
       ]
     }
   ]
