@@ -1,15 +1,15 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-EMAI-E4EEF1914B issue-907-email-diagnostics-route-converged
-# exact-head: b8950bfb0b879e969918ddcc26ed1105f3fde81f
-# retrigger: issue-907-converged-materialize
+# trigger: AIMW-EMAI-00CC1272F6 issue-895-save-profile
+# exact-head: 5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05
+# retrigger: issue-895-materialize
 
 on:
   push:
     branches:
-      - worker/laravel-AIMW-EMAI-E4EEF1914B-email-diagnostics-route
+      - worker/laravel-aiwmweb-AIMW-EMAI-00CC1272F6-save-profile
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/closure-evidence/site-email-diagnostics-route-terminality.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-save-profile-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -50,5 +50,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-EMAI-E4EEF1914B"
+          git commit -m "chore(laravel): materialize parity for AIMW-EMAI-00CC1272F6"
           git push origin "HEAD:${{ github.ref_name }}"
