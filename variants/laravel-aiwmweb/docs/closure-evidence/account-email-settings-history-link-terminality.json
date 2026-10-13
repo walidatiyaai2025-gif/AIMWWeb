@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #896 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-0AA71A5EF6",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-EMAI-0AA71A5EF6",
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/account/email-settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AccountEmailSettings.razor",
+    "source_intent": "Expose the localized Delivery history action and navigate to the tenant email delivery history workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-history-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-summary.tsx",
+    "destination": "/tenants/{tenant}/email/history",
+    "operation_marker": "AIMW-EMAI-0AA71A5EF6"
+  },
+  "security": {
+    "destination_permissions": ["tenant.manage", "diagnostics.view"],
+    "tenant_destination": "active tenant slug from server-authenticated frontend context",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-history-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsHistoryLinkTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-EMAI-0AA71A5EF6"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

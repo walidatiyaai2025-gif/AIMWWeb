@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
 import { LoadingState, StatePanel } from './components';
 import { useLocale } from './i18n';
+import { AccountEmailSettingsHistoryLinkControl } from './account-email-settings-history-link-control';
 
 type MailConfigurationSummary = {
     configuration_key?: string;
@@ -65,7 +66,13 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                         <h2>{locale === 'ar' ? 'إعدادات البريد' : 'Email settings'}</h2>
                         <p>{locale === 'ar' ? 'حالة الإرسال الموثوقة للحساب الحالي.' : 'Authoritative mail delivery state for the active tenant.'}</p>
                     </div>
+                    <div className="toolbar-actions">
+                        <AccountEmailSettingsHistoryLinkControl context={context} />
+                        <div className="toolbar-actions">
+                    <AccountEmailSettingsHistoryLinkControl context={context} />
                     <span className="tenant-badge">{context.tenant.name}</span>
+                </div>
+                    </div>
                 </section>
                 <StatePanel title={locale === 'ar' ? 'البريد غير مهيأ' : 'Mail is not configured'}>
                     {locale === 'ar'
