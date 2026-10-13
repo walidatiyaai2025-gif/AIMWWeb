@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 698,
-    "pending": 233,
+    "adapted": 699,
+    "pending": 232,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 698,
-    "overall_parity_percent": 74.97
+    "terminal": 699,
+    "overall_parity_percent": 75.08
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 237,
-    "pending": 209,
+    "terminal": 238,
+    "pending": 208,
     "blocked": 0,
-    "percent": 53.14
+    "percent": 53.36
   },
   "domains": {
     "ai": {
@@ -83,12 +83,12 @@
     "billing": {
       "total": 178,
       "ported": 0,
-      "adapted": 172,
-      "pending": 6,
+      "adapted": 173,
+      "pending": 5,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 172,
-      "percent": 96.63
+      "terminal": 173,
+      "percent": 97.19
     },
     "comments": {
       "total": 8,
@@ -13362,21 +13362,31 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminCloneCurrentTerminalityTest.php",
+      "evidence": "AIMW-BILL-7BD7B04B26 SubscriptionPlans CloneCurrent focused closure@54b50b93c6a172f4e009d2bd46c11c6f83c2aacc: variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php; focused-closure:AIMW-BILL-7BD7B04B26; test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminCloneCurrentTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-clone-current-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-BILL-7BD7B04B26 SubscriptionPlans CloneCurrent focused closure",
+        "source_sha": "54b50b93c6a172f4e009d2bd46c11c6f83c2aacc",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-clone-current-terminality.json",
+        "signals": [
+          "operation:AIMW-BILL-7BD7B04B26",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminCloneCurrentTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-clone-current-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36089,12 +36099,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 237,
-      "pending": 209,
+      "adapted": 238,
+      "pending": 208,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 237,
-      "percent": 53.14
+      "terminal": 238,
+      "percent": 53.36
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36104,7 +36114,6 @@
     "backup": [],
     "billing": [
       "AIMW-BILL-616576D8F7",
-      "AIMW-BILL-7BD7B04B26",
       "AIMW-BILL-BC093D6418",
       "AIMW-BILL-D307963B59",
       "AIMW-BILL-EE42461195",
@@ -37034,6 +37043,7 @@
       "AIMW-BILL-723BEA8F1D",
       "AIMW-BILL-75CF9DBDA4",
       "AIMW-BILL-77E7F0D972",
+      "AIMW-BILL-7BD7B04B26",
       "AIMW-BILL-7DACB1EFDF",
       "AIMW-BILL-7ECC5F8CBA",
       "AIMW-BILL-81D0940A0A",
@@ -37210,10 +37220,17 @@
         "operation_ids": [
           "AIMW-CONT-DF8B12B6DE"
         ]
+      },
+      {
+        "label": "AIMW-BILL-7BD7B04B26 SubscriptionPlans CloneCurrent focused closure",
+        "sha": "54b50b93c6a172f4e009d2bd46c11c6f83c2aacc",
+        "operation_ids": [
+          "AIMW-BILL-7BD7B04B26"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 7,
-    "focused_closure_contract_count": 237,
+    "focused_closure_operation_scoped_count": 8,
+    "focused_closure_contract_count": 238,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
