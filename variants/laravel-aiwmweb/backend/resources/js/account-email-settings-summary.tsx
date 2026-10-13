@@ -5,6 +5,7 @@ import { LoadingState, StatePanel } from './components';
 import { useLocale } from './i18n';
 import { AccountEmailSettingsHistoryLinkControl } from './account-email-settings-history-link-control';
 import { AccountEmailSettingsSchedulesLinkControl } from './account-email-settings-schedules-link-control';
+import { AccountEmailSettingsClearPasswordControl } from './account-email-settings-clear-password-control';
 
 type MailConfigurationSummary = {
     configuration_key?: string;
@@ -70,6 +71,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                     <div className="toolbar-actions">
                         <AccountEmailSettingsSchedulesLinkControl context={context} />
                         <AccountEmailSettingsHistoryLinkControl context={context} />
+                        <AccountEmailSettingsClearPasswordControl context={context} hasSecret={Boolean(configuration?.has_secret)} onCleared={() => query.refetch()} />
                         <span className="tenant-badge">{context.tenant.name}</span>
                     </div>
                 </section>
@@ -93,6 +95,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                 <div className="toolbar-actions">
                     <AccountEmailSettingsSchedulesLinkControl context={context} />
                     <AccountEmailSettingsHistoryLinkControl context={context} />
+                    <AccountEmailSettingsClearPasswordControl context={context} hasSecret={Boolean(configuration?.has_secret)} onCleared={() => query.refetch()} />
                     <span className="tenant-badge">{context.tenant.name}</span>
                 </div>
             </section>
