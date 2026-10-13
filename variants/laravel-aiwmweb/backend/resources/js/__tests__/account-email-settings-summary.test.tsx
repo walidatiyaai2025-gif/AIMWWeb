@@ -1,6 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountEmailSettingsSummary } from '../account-email-settings-summary';
 import type { FrontendContext } from '../core';
@@ -20,11 +21,13 @@ const context = (permissions: string[], slug = 'alpha'): FrontendContext => ({
 const renderSummary = (value: FrontendContext) => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
-        <QueryClientProvider client={client}>
-            <LocaleProvider>
+        <MemoryRouter>
+            <QueryClientProvider client={client}>
+                <LocaleProvider>
                 <AccountEmailSettingsSummary context={value} />
             </LocaleProvider>
-        </QueryClientProvider>,
+            </QueryClientProvider>
+        </MemoryRouter>,
     );
 };
 
