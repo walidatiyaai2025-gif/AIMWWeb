@@ -68,10 +68,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                     </div>
                     <div className="toolbar-actions">
                         <AccountEmailSettingsHistoryLinkControl context={context} />
-                        <div className="toolbar-actions">
-                    <AccountEmailSettingsHistoryLinkControl context={context} />
-                    <span className="tenant-badge">{context.tenant.name}</span>
-                </div>
+                        <span className="tenant-badge">{context.tenant.name}</span>
                     </div>
                 </section>
                 <StatePanel title={locale === 'ar' ? 'البريد غير مهيأ' : 'Mail is not configured'}>
@@ -91,7 +88,10 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                     <h2>{locale === 'ar' ? 'إعدادات البريد' : 'Email settings'}</h2>
                     <p>{locale === 'ar' ? 'عرض للتهيئة الفعلية دون كشف كلمة مرور SMTP.' : 'Read-only view of the active configuration without exposing the SMTP secret.'}</p>
                 </div>
-                <span className="tenant-badge">{context.tenant.name}</span>
+                <div className="toolbar-actions">
+                    <AccountEmailSettingsHistoryLinkControl context={context} />
+                    <span className="tenant-badge">{context.tenant.name}</span>
+                </div>
             </section>
             <section className="panel" aria-label={locale === 'ar' ? 'تهيئة البريد الفعلية' : 'Authoritative mail configuration'}>
                 <dl className="contract-details">
