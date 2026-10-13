@@ -145,7 +145,9 @@ Route::prefix('v1/tenants/{tenant}')
         Route::get('/notification-preferences/tenant', [EmailNotificationController::class, 'tenantPreferences']);
         Route::put('/notification-preferences/tenant', [EmailNotificationController::class, 'saveTenantPreference']);
         Route::get('/email/configuration', [EmailNotificationController::class, 'configuration']);
-        Route::put('/email/configuration', [EmailNotificationController::class, 'saveConfiguration']);
+        Route::put('/email/configuration', [EmailNotificationController::class, 'saveConfiguration'])
+            ->defaults('canonical_operation_id', 'AIMW-EMAI-00CC1272F6')
+            ->name('api.v1.email.configuration.save');
         Route::delete('/email/configuration/secret', [EmailNotificationController::class, 'clearConfigurationSecret'])
             ->defaults('canonical_operation_id', 'AIMW-EMAI-54E7EEFB15')
             ->name('api.v1.email.configuration.secret.clear');
