@@ -37,6 +37,7 @@ afterEach(() => {
     window.localStorage.clear();
 });
 
+// AIMW-EMAI-2E59E39808 schedules navigation is asserted in this destination suite.
 describe('account email settings destination', () => {
     it('fails closed before requesting configuration when tenant.manage is missing', () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
