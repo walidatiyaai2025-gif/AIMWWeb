@@ -102,6 +102,17 @@ final class EmailNotificationController extends Controller
         return response()->json($this->configuration->serialize($this->configuration->save($key, $data)));
     }
 
+    public function clearConfigurationSecret(Request $request, string $tenant): JsonResponse
+    {
+        $this->authorizer->authorize('tenant.manage');
+        $data = $request->validate([
+            'configuration_key' => ['nullable', 'string', 'max:160'],
+        ]);
+        $key = (string) ($data['configuration_key'] ?? 'default');
+
+        return response()->json($this->configuration->serialize($this->configuration->clearSecret($key)));
+    }
+
     public function diagnose(Request $request, string $tenant): JsonResponse
     {
         $this->authorizer->authorize('tenant.manage');
