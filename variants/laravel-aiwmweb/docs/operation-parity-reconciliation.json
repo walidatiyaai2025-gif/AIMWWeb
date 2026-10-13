@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 700,
-    "pending": 231,
+    "adapted": 701,
+    "pending": 230,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 700,
-    "overall_parity_percent": 75.19
+    "terminal": 701,
+    "overall_parity_percent": 75.3
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 239,
-    "pending": 207,
+    "terminal": 240,
+    "pending": 206,
     "blocked": 0,
-    "percent": 53.59
+    "percent": 53.81
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 67,
-      "pending": 15,
+      "adapted": 69,
+      "pending": 13,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 67,
-      "percent": 81.71
+      "terminal": 69,
+      "percent": 84.15
     },
     "identity": {
       "total": 7,
@@ -133,12 +133,12 @@
     "media": {
       "total": 15,
       "ported": 0,
-      "adapted": 5,
-      "pending": 10,
+      "adapted": 4,
+      "pending": 11,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 5,
-      "percent": 33.33
+      "terminal": 4,
+      "percent": 26.67
     },
     "operations": {
       "total": 5,
@@ -21691,21 +21691,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-clear-password-control.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-clear-password-control.test.tsx",
+      "evidence": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure@b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-clear-password-control.tsx; focused-closure:AIMW-EMAI-54E7EEFB15; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-clear-password-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-clear-password-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
+        "source_sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-clear-password-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-clear-password-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-54E7EEFB15",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-clear-password-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-clear-password-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-clear-password-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -21753,21 +21763,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-profile-form.test.tsx",
+      "evidence": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure@5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05: variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx; focused-closure:AIMW-EMAI-00CC1272F6; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-profile-form.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-save-profile-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
+        "source_sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-save-profile-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-00CC1272F6",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-profile-form.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/account-email-settings-save-profile-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -24595,31 +24615,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-tab-control.test.tsx",
-      "evidence": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure@8644489a398d272c8bbe6e500ad95dd25f27e874: variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx; focused-closure:AIMW-MEDI-73C0DA6B3D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-tab-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
-        "source_sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json",
-        "signals": [
-          "operation:AIMW-MEDI-73C0DA6B3D",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-tab-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36109,12 +36119,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 239,
-      "pending": 207,
+      "adapted": 240,
+      "pending": 206,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 239,
-      "percent": 53.59
+      "terminal": 240,
+      "percent": 53.81
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36253,12 +36263,10 @@
       "AIMW-CONT-FE6EE5740C"
     ],
     "email": [
-      "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-01F5713C4F",
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-470599356B",
-      "AIMW-EMAI-54E7EEFB15",
       "AIMW-EMAI-62B0B8EE4C",
       "AIMW-EMAI-77C637E3E3",
       "AIMW-EMAI-7A54150265",
@@ -36278,6 +36286,7 @@
       "AIMW-MEDI-34E7DCA832",
       "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-727FAEEB01",
+      "AIMW-MEDI-73C0DA6B3D",
       "AIMW-MEDI-799B36D113",
       "AIMW-MEDI-8F93BEDD59",
       "AIMW-MEDI-F55A549341"
@@ -36791,26 +36800,6 @@
           "AIMW-CONT-DF8B12B6DE"
         ],
         "explicit_operation_evidence_ids": []
-      },
-      {
-        "label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
-        "sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
-        "domains": [],
-        "supporting_only": false,
-        "operation_ids": [
-          "AIMW-EMAI-54E7EEFB15"
-        ],
-        "explicit_operation_evidence_ids": []
-      },
-      {
-        "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
-        "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
-        "domains": [],
-        "supporting_only": false,
-        "operation_ids": [
-          "AIMW-EMAI-00CC1272F6"
-        ],
-        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -36838,7 +36827,6 @@
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "53d1178f4ec9e1a9134650bf9d3ac22a68ccf081",
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
-      "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
@@ -36847,7 +36835,6 @@
       "af67f421f2850ccb7afc8089aaad15149f7a636a",
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
-      "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
@@ -37140,8 +37127,10 @@
       "AIMW-CONT-E38ADF8481",
       "AIMW-CONT-EBD53650BC",
       "AIMW-CONT-F9A87DD98C",
+      "AIMW-EMAI-00CC1272F6",
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
+      "AIMW-EMAI-54E7EEFB15",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-EC34E40629",
@@ -37153,7 +37142,6 @@
       "AIMW-IDEN-BF78057C28",
       "AIMW-IDEN-CD4ADA5087",
       "AIMW-IDEN-FC900E61B8",
-      "AIMW-MEDI-73C0DA6B3D",
       "AIMW-OPER-21EC1BDE45",
       "AIMW-PLAT-17BC7DA9E5",
       "AIMW-PLAT-4BAE8344AF",
@@ -37261,15 +37249,22 @@
         ]
       },
       {
-        "label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
-        "sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
+        "label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
+        "sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
         "operation_ids": [
-          "AIMW-MEDI-73C0DA6B3D"
+          "AIMW-EMAI-54E7EEFB15"
+        ]
+      },
+      {
+        "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
+        "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
+        "operation_ids": [
+          "AIMW-EMAI-00CC1272F6"
         ]
       }
     ],
-    "focused_closure_operation_scoped_count": 9,
-    "focused_closure_contract_count": 239,
+    "focused_closure_operation_scoped_count": 10,
+    "focused_closure_contract_count": 240,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

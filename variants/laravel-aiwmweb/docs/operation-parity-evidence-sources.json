@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "23ba9e02e6a9c4c24c8bd420fff625f1381902c1",
+  "previous_reconciliation_sha": "ab6a77511a6e8d3d4e69d76c317f30d28b6e1f7f",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -831,20 +831,6 @@
       "operation_ids": [
         "AIMW-CONT-DF8B12B6DE"
       ]
-    },
-    {
-      "label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
-      "sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
-      "operation_ids": [
-        "AIMW-EMAI-54E7EEFB15"
-      ]
-    },
-    {
-      "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
-      "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
-      "operation_ids": [
-        "AIMW-EMAI-00CC1272F6"
-      ]
     }
   ],
   "excluded_sources": [],
@@ -914,11 +900,17 @@
       ]
     },
     {
-      "label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
-      "sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
-      "observed_pr_head": "8644489a398d272c8bbe6e500ad95dd25f27e874",
+      "label": "AIMW-EMAI-54E7EEFB15 Account Email Settings clear password focused closure",
+      "sha": "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
       "operation_ids": [
-        "AIMW-MEDI-73C0DA6B3D"
+        "AIMW-EMAI-54E7EEFB15"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
+      "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
+      "operation_ids": [
+        "AIMW-EMAI-00CC1272F6"
       ]
     }
   ]
