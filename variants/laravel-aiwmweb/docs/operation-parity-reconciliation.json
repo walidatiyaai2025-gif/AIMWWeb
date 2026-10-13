@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 695,
-    "pending": 236,
+    "adapted": 696,
+    "pending": 235,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 695,
-    "overall_parity_percent": 74.65
+    "terminal": 696,
+    "overall_parity_percent": 74.76
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 234,
-    "pending": 212,
+    "terminal": 235,
+    "pending": 211,
     "blocked": 0,
-    "percent": 52.47
+    "percent": 52.69
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 64,
-      "pending": 18,
+      "adapted": 65,
+      "pending": 17,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 64,
-      "percent": 78.05
+      "terminal": 65,
+      "percent": 79.27
     },
     "identity": {
       "total": 7,
@@ -21951,21 +21951,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-history-link-control.test.tsx",
+      "evidence": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure@e3daa2befe7234d544281a6e0a63036b037105d9: variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx; focused-closure:AIMW-EMAI-EC34E40629; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-history-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-history-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
+        "source_sha": "e3daa2befe7234d544281a6e0a63036b037105d9",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-history-link-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-EC34E40629",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/email-schedules-history-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/email-schedules-history-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-schedules-history-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36059,12 +36069,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 234,
-      "pending": 212,
+      "adapted": 235,
+      "pending": 211,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 234,
-      "percent": 52.47
+      "terminal": 235,
+      "percent": 52.69
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36220,8 +36230,7 @@
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-9EB09C490D",
       "AIMW-EMAI-A9CB66F400",
-      "AIMW-EMAI-E4EEF1914B",
-      "AIMW-EMAI-EC34E40629"
+      "AIMW-EMAI-E4EEF1914B"
     ],
     "identity": [],
     "media": [
@@ -37052,6 +37061,7 @@
       "AIMW-CONT-F9A87DD98C",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
+      "AIMW-EMAI-EC34E40629",
       "AIMW-EMAI-F8E8A2BEE9",
       "AIMW-IDEN-03760967D1",
       "AIMW-IDEN-2387758315",
@@ -37137,10 +37147,17 @@
         "operation_ids": [
           "AIMW-CONT-4209A8ADF4"
         ]
+      },
+      {
+        "label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
+        "sha": "e3daa2befe7234d544281a6e0a63036b037105d9",
+        "operation_ids": [
+          "AIMW-EMAI-EC34E40629"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 4,
-    "focused_closure_contract_count": 234,
+    "focused_closure_operation_scoped_count": 5,
+    "focused_closure_contract_count": 235,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
