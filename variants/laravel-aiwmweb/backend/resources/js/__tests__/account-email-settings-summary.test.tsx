@@ -37,6 +37,7 @@ afterEach(() => {
     window.localStorage.clear();
 });
 
+// AIMW-EMAI-2E59E39808 schedules navigation is asserted in this destination suite.
 describe('account email settings destination', () => {
     it('fails closed before requesting configuration when tenant.manage is missing', () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
@@ -100,14 +101,16 @@ describe('account email settings destination', () => {
                 text: async () => '',
             } as Response);
 
-        const first = renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view']));
+        const first = renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view', 'operations.manage']));
         await waitFor(() => expect(screen.getByText('Mail is not configured')).toBeInTheDocument());
         expect(screen.getAllByRole('link', { name: 'Delivery history' })).toHaveLength(1);
+        expect(screen.getByText('Dashboard email schedules')).toBeInTheDocument();
         first.unmount();
 
-        renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view']));
+        renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view', 'operations.manage']));
         await waitFor(() => expect(screen.getByText('smtp.example.test')).toBeInTheDocument());
         expect(screen.getAllByRole('link', { name: 'Delivery history' })).toHaveLength(1);
+        expect(screen.getByText('Dashboard email schedules')).toBeInTheDocument();
         expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 

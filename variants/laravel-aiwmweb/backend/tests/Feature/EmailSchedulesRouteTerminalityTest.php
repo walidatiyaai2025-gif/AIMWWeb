@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+// AIMW-EMAI-2E59E39808 account-email schedules link reuses this guarded tenant route.
 final class EmailSchedulesRouteTerminalityTest extends TestCase
 {
     use RefreshDatabase;

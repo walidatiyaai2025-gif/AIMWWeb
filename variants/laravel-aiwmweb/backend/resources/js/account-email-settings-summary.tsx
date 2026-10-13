@@ -4,6 +4,7 @@ import { ApiError, apiRequest, type FrontendContext } from './core';
 import { LoadingState, StatePanel } from './components';
 import { useLocale } from './i18n';
 import { AccountEmailSettingsHistoryLinkControl } from './account-email-settings-history-link-control';
+import { AccountEmailSettingsSchedulesLinkControl } from './account-email-settings-schedules-link-control';
 
 type MailConfigurationSummary = {
     configuration_key?: string;
@@ -67,6 +68,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                         <p>{locale === 'ar' ? 'حالة الإرسال الموثوقة للحساب الحالي.' : 'Authoritative mail delivery state for the active tenant.'}</p>
                     </div>
                     <div className="toolbar-actions">
+                        <AccountEmailSettingsSchedulesLinkControl context={context} />
                         <AccountEmailSettingsHistoryLinkControl context={context} />
                         <span className="tenant-badge">{context.tenant.name}</span>
                     </div>
@@ -89,6 +91,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                     <p>{locale === 'ar' ? 'عرض للتهيئة الفعلية دون كشف كلمة مرور SMTP.' : 'Read-only view of the active configuration without exposing the SMTP secret.'}</p>
                 </div>
                 <div className="toolbar-actions">
+                    <AccountEmailSettingsSchedulesLinkControl context={context} />
                     <AccountEmailSettingsHistoryLinkControl context={context} />
                     <span className="tenant-badge">{context.tenant.name}</span>
                 </div>
