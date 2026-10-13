@@ -104,11 +104,13 @@ describe('account email settings destination', () => {
         const first = renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view']));
         await waitFor(() => expect(screen.getByText('Mail is not configured')).toBeInTheDocument());
         expect(screen.getAllByRole('link', { name: 'Delivery history' })).toHaveLength(1);
+        expect(screen.getByText('Dashboard email schedules')).toBeInTheDocument();
         first.unmount();
 
         renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view']));
         await waitFor(() => expect(screen.getByText('smtp.example.test')).toBeInTheDocument());
         expect(screen.getAllByRole('link', { name: 'Delivery history' })).toHaveLength(1);
+        expect(screen.getByText('Dashboard email schedules')).toBeInTheDocument();
         expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 
