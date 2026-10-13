@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 701,
-    "pending": 230,
+    "adapted": 702,
+    "pending": 229,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 701,
-    "overall_parity_percent": 75.3
+    "terminal": 702,
+    "overall_parity_percent": 75.4
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 240,
-    "pending": 206,
+    "terminal": 241,
+    "pending": 205,
     "blocked": 0,
-    "percent": 53.81
+    "percent": 54.04
   },
   "domains": {
     "ai": {
@@ -133,12 +133,12 @@
     "media": {
       "total": 15,
       "ported": 0,
-      "adapted": 4,
-      "pending": 11,
+      "adapted": 5,
+      "pending": 10,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 4,
-      "percent": 26.67
+      "terminal": 5,
+      "percent": 33.33
     },
     "operations": {
       "total": 5,
@@ -24615,21 +24615,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-tab-control.test.tsx",
+      "evidence": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure@8644489a398d272c8bbe6e500ad95dd25f27e874: variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx; focused-closure:AIMW-MEDI-73C0DA6B3D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-tab-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
+        "source_sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-73C0DA6B3D",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-media-tab-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-media-tab-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36119,12 +36129,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 240,
-      "pending": 206,
+      "adapted": 241,
+      "pending": 205,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 240,
-      "percent": 53.81
+      "terminal": 241,
+      "percent": 54.04
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36286,7 +36296,6 @@
       "AIMW-MEDI-34E7DCA832",
       "AIMW-MEDI-56F4EF0AFB",
       "AIMW-MEDI-727FAEEB01",
-      "AIMW-MEDI-73C0DA6B3D",
       "AIMW-MEDI-799B36D113",
       "AIMW-MEDI-8F93BEDD59",
       "AIMW-MEDI-F55A549341"
@@ -37142,6 +37151,7 @@
       "AIMW-IDEN-BF78057C28",
       "AIMW-IDEN-CD4ADA5087",
       "AIMW-IDEN-FC900E61B8",
+      "AIMW-MEDI-73C0DA6B3D",
       "AIMW-OPER-21EC1BDE45",
       "AIMW-PLAT-17BC7DA9E5",
       "AIMW-PLAT-4BAE8344AF",
@@ -37261,10 +37271,17 @@
         "operation_ids": [
           "AIMW-EMAI-00CC1272F6"
         ]
+      },
+      {
+        "label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
+        "sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
+        "operation_ids": [
+          "AIMW-MEDI-73C0DA6B3D"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 10,
-    "focused_closure_contract_count": 240,
+    "focused_closure_operation_scoped_count": 11,
+    "focused_closure_contract_count": 241,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
