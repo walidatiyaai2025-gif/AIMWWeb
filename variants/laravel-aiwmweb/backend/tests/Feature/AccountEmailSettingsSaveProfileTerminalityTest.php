@@ -32,6 +32,11 @@ final class AccountEmailSettingsSaveProfileTerminalityTest extends TestCase
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame(['PUT'], $route->methods());
         $this->assertSame(['tenant'], $route->parameterNames());
+        $this->assertStringNotContainsString('{user}', $route->uri());
+        $this->assertStringNotContainsString('{site}', $route->uri());
+        $this->assertStringNotContainsString('{provider}', $route->uri());
+        $this->assertStringNotContainsString('{secret}', $route->uri());
+        $this->assertStringNotContainsString('{password}', $route->uri());
     }
 
     public function test_save_updates_profile_and_blank_secret_preserves_existing_credential(): void
