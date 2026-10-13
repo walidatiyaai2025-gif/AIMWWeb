@@ -92,7 +92,7 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                 </div>
                 <div className="toolbar-actions">
                     <AccountEmailSettingsSchedulesLinkControl context={context} />
-                        <AccountEmailSettingsHistoryLinkControl context={context} />
+                    <AccountEmailSettingsHistoryLinkControl context={context} />
                     <span className="tenant-badge">{context.tenant.name}</span>
                 </div>
             </section>
