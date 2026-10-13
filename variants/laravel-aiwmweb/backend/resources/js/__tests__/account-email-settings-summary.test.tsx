@@ -1,6 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountEmailSettingsSummary } from '../account-email-settings-summary';
 import type { FrontendContext } from '../core';
@@ -20,11 +21,13 @@ const context = (permissions: string[], slug = 'alpha'): FrontendContext => ({
 const renderSummary = (value: FrontendContext) => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
-        <QueryClientProvider client={client}>
-            <LocaleProvider>
+        <MemoryRouter>
+            <QueryClientProvider client={client}>
+                <LocaleProvider>
                 <AccountEmailSettingsSummary context={value} />
             </LocaleProvider>
-        </QueryClientProvider>,
+            </QueryClientProvider>
+        </MemoryRouter>,
     );
 };
 
@@ -73,4 +76,39 @@ describe('account email settings destination', () => {
         expect(screen.getByText('Stored securely')).toBeInTheDocument();
         expect(screen.queryByText('must-not-render')).not.toBeInTheDocument();
     });
+    it('renders exactly one Delivery history control for configured and unconfigured authoritative states', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch')
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                headers: new Headers({ 'content-type': 'application/json' }),
+                json: async () => ({ configured: false }),
+                text: async () => '',
+            } as Response)
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                headers: new Headers({ 'content-type': 'application/json' }),
+                json: async () => ({
+                    configured: true,
+                    enabled: true,
+                    transport: 'smtp',
+                    host: 'smtp.example.test',
+                    port: 587,
+                    has_secret: false,
+                }),
+                text: async () => '',
+            } as Response);
+
+        const first = renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view']));
+        await waitFor(() => expect(screen.getByText('Mail is not configured')).toBeInTheDocument());
+        expect(screen.getAllByRole('link', { name: 'Delivery history' })).toHaveLength(1);
+        first.unmount();
+
+        renderSummary(context(['tenant.view', 'tenant.manage', 'diagnostics.view']));
+        await waitFor(() => expect(screen.getByText('smtp.example.test')).toBeInTheDocument());
+        expect(screen.getAllByRole('link', { name: 'Delivery history' })).toHaveLength(1);
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+
 });
