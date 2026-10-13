@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "ab6a77511a6e8d3d4e69d76c317f30d28b6e1f7f",
+  "previous_reconciliation_sha": "58005562c83e53a3db8e6dbf54acecad3afa3eb9",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -890,6 +890,14 @@
       "observed_pr_head": "34e66eba87657e5283f29765c083529b08ba7625",
       "operation_ids": [
         "AIMW-CONT-DF8B12B6DE"
+      ]
+    },
+    {
+      "label": "AIMW-BILL-7BD7B04B26 SubscriptionPlans CloneCurrent focused closure",
+      "sha": "54b50b93c6a172f4e009d2bd46c11c6f83c2aacc",
+      "observed_pr_head": "54b50b93c6a172f4e009d2bd46c11c6f83c2aacc",
+      "operation_ids": [
+        "AIMW-BILL-7BD7B04B26"
       ]
     }
   ]
