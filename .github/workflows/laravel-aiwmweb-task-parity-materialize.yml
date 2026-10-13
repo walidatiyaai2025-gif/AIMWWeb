@@ -1,15 +1,15 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: focused-source-registration-repair
-# exact-head: governance-repair
-# retrigger: email-focused-source-registration
+# trigger: AIMW-MEDI-73C0DA6B3D issue-913-converged
+# exact-head: 8644489a398d272c8bbe6e500ad95dd25f27e874
+# retrigger: issue-913-converged-materialize
 
 on:
   push:
     branches:
-      - fix/laravel-aiwmweb-email-focused-source-registration
+      - worker/laravel-aiwmweb-AIMW-MEDI-73C0DA6B3D-media-tab
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-media-tab-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
