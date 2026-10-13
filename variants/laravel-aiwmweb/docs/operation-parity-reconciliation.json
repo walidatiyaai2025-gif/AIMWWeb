@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 699,
-    "pending": 232,
+    "adapted": 700,
+    "pending": 231,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 699,
-    "overall_parity_percent": 75.08
+    "terminal": 700,
+    "overall_parity_percent": 75.19
   },
   "visible_controls": {
     "total": 446,
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 67,
-      "pending": 15,
+      "adapted": 68,
+      "pending": 14,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 67,
-      "percent": 81.71
+      "terminal": 68,
+      "percent": 82.93
     },
     "identity": {
       "total": 7,
@@ -22218,21 +22218,34 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailDiagnosticsRouteTerminalityTest.php",
+      "evidence": "AIMW-EMAI-E4EEF1914B site email diagnostics route closure@b8950bfb0b879e969918ddcc26ed1105f3fde81f: variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php; explicit-route-api:AIMW-EMAI-E4EEF1914B; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailDiagnosticsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-email-diagnostics-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-EMAI-E4EEF1914B site email diagnostics route closure",
+        "source_sha": "b8950bfb0b879e969918ddcc26ed1105f3fde81f",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-email-diagnostics-route-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-E4EEF1914B",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailDiagnosticsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailDiagnosticsRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -36079,12 +36092,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 60,
-      "pending": 24,
+      "adapted": 61,
+      "pending": 23,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 60,
-      "percent": 71.43
+      "terminal": 61,
+      "percent": 72.62
     },
     "service": {
       "total": 349,
@@ -36256,8 +36269,7 @@
       "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-9EB09C490D",
-      "AIMW-EMAI-A9CB66F400",
-      "AIMW-EMAI-E4EEF1914B"
+      "AIMW-EMAI-A9CB66F400"
     ],
     "identity": [],
     "media": [
@@ -36792,6 +36804,16 @@
           "AIMW-EMAI-54E7EEFB15"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-EMAI-E4EEF1914B site email diagnostics route closure",
+        "sha": "b8950bfb0b879e969918ddcc26ed1105f3fde81f",
+        "domains": [
+          "email"
+        ],
+        "supporting_only": true,
+        "operation_ids": [],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -36828,6 +36850,7 @@
       "b1822544144bd7b2e27d1bdaa20bb7b688e4f5be",
       "b4af1a8e8e4160699ad9b44e72488c33be56a7c7",
       "b60fda8e2c4ce0f4d1505c243596cb1f773ae5d0",
+      "b8950bfb0b879e969918ddcc26ed1105f3fde81f",
       "c19ba111947512de296aa73dd62e03c334bd8f43",
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
@@ -36930,6 +36953,7 @@
       "AIMW-EMAI-7F2D7C5921",
       "AIMW-EMAI-B2CFCF818C",
       "AIMW-EMAI-BFDC050625",
+      "AIMW-EMAI-E4EEF1914B",
       "AIMW-EMAI-F77DB6435F",
       "AIMW-MEDI-8BADBE1261",
       "AIMW-OPER-ABB41FC891",
@@ -36940,7 +36964,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 27,
+    "explicit_route_api_contract_count": 28,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
