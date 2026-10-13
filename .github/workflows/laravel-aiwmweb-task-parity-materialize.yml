@@ -1,12 +1,12 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: focused-source-registration-repair
-# exact-head: governance-repair
-# retrigger: email-focused-source-registration
+# trigger: AIMW-EMAI-E4EEF1914B issue-907-final-convergence
+# exact-head: b8950bfb0b879e969918ddcc26ed1105f3fde81f
+# retrigger: issue-907-final-materialize
 
 on:
   push:
     branches:
-      - fix/laravel-aiwmweb-email-focused-source-registration
+      - worker/laravel-AIMW-EMAI-E4EEF1914B-email-diagnostics-route
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
