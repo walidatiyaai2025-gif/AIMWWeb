@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 import { AccountEmailSettingsHistoryLinkControl } from './account-email-settings-history-link-control';
 import { AccountEmailSettingsSchedulesLinkControl } from './account-email-settings-schedules-link-control';
 import { AccountEmailSettingsClearPasswordControl } from './account-email-settings-clear-password-control';
+import { AccountEmailSettingsProfileForm } from './account-email-settings-profile-form';
 
 type MailConfigurationSummary = {
     configuration_key?: string;
@@ -80,6 +81,11 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                         ? 'لم يُرجع الخادم إعداد SMTP محفوظًا. لا تنشئ الواجهة قيماً تجريبية.'
                         : 'The server returned no saved SMTP configuration. The interface does not synthesize demo values.'}
                 </StatePanel>
+                <AccountEmailSettingsProfileForm
+                    context={context}
+                    configuration={configuration}
+                    onSaved={() => query.refetch()}
+                />
             </div>
         );
     }
@@ -99,6 +105,11 @@ export function AccountEmailSettingsSummary({ context }: { context: FrontendCont
                     <span className="tenant-badge">{context.tenant.name}</span>
                 </div>
             </section>
+            <AccountEmailSettingsProfileForm
+                context={context}
+                configuration={configuration}
+                onSaved={() => query.refetch()}
+            />
             <section className="panel" aria-label={locale === 'ar' ? 'تهيئة البريد الفعلية' : 'Authoritative mail configuration'}>
                 <dl className="contract-details">
                     <div><dt>{locale === 'ar' ? 'الحالة' : 'Status'}</dt><dd>{configuration.enabled ? (locale === 'ar' ? 'مفعّل' : 'Enabled') : (locale === 'ar' ? 'معطّل' : 'Disabled')}</dd></div>
