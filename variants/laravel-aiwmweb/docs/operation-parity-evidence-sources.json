@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "557584a03d24c25e980d549ef61b4eb49b379c0d",
+  "previous_reconciliation_sha": "4ed28a93414c29406cc2fd2e5449bea1401c7893",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -822,6 +822,14 @@
       "observed_pr_head": "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
       "operation_ids": [
         "AIMW-EMAI-12A6FEB2FF"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-DF8B12B6DE GlobalPostsExplorer WordPress link focused closure",
+      "sha": "34e66eba87657e5283f29765c083529b08ba7625",
+      "observed_pr_head": "34e66eba87657e5283f29765c083529b08ba7625",
+      "operation_ids": [
+        "AIMW-CONT-DF8B12B6DE"
       ]
     }
   ],
