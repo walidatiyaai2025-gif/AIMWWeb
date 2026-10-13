@@ -66,6 +66,24 @@ final class MailConfigurationService
         return $configuration;
     }
 
+    public function clearSecret(string $key = 'default'): MailConfiguration
+    {
+        if (! preg_match('/^[a-zA-Z0-9:._-]{1,160}$/', $key)) {
+            throw ValidationException::withMessages(['configuration_key' => 'Invalid mail configuration key.']);
+        }
+
+        $configuration = MailConfiguration::query()->where('configuration_key', $key)->firstOrFail();
+        $this->secrets->clear($configuration);
+
+        $this->audit->record('email.configuration.secret_cleared', [
+            'configuration_key' => $key,
+            'site_id' => $configuration->site_id,
+            'has_secret' => false,
+        ], MailConfiguration::class, $configuration->id);
+
+        return $configuration->refresh();
+    }
+
     public function diagnose(string $key = 'default'): array
     {
         $configuration = MailConfiguration::query()->where('configuration_key', $key)->firstOrFail();
