@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #904 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-12A6FEB2FF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-EMAI-12A6FEB2FF",
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/notifications",
+    "source": "src/AIWordPressManager.Web/Components/Pages/NotificationInbox.razor",
+    "source_intent": "Refresh the inbox from the authoritative current-user notification source without mutation.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "route_contract": "variants/laravel-aiwmweb/backend/resources/js/core.ts",
+    "endpoint": "/api/v1/tenants/{tenant}/notifications",
+    "operation_marker": "AIMW-EMAI-12A6FEB2FF",
+    "refresh_semantics": "React Query refetch of the server-advertised tenant endpoint"
+  },
+  "security": {
+    "workspace_permissions": ["tenant.view", "notifications.view"],
+    "tenant_endpoint": "server-derived active tenant context",
+    "foreign_tenant": "404/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-inbox-reload-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/NotificationInboxReloadTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-EMAI-12A6FEB2FF"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

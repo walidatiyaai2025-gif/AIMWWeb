@@ -36,6 +36,7 @@ const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
+export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
 
 const COLLECTION_READ_OPERATIONS: Partial<Record<string, { load: string; previous?: string; refresh?: string }>> = {
     comments: { load: 'AIMW-SYNC-12F15A0A80', previous: 'AIMW-SYNC-CB01197D47', refresh: 'AIMW-SYNC-DBD736FACC' },
@@ -327,7 +328,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         ? ((query.data as CollectionEnvelope).meta ?? null)
         : null;
     const aiCenterSites = Array.isArray(aiCenterMeta?.sites) ? aiCenterMeta.sites : [];
-    const refreshOperationId = route.key === 'site-operations'
+    const refreshOperationId = route.key === 'notifications'
+        ? NOTIFICATION_INBOX_RELOAD_OPERATION_ID
+        : route.key === 'site-operations'
         ? SITE_OPERATIONS_RELOAD_OPERATION_ID
         : route.key === 'site-reliability'
             ? SITE_RELIABILITY_RELOAD_OPERATION_ID
