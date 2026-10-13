@@ -1,1 +1,8 @@
-{}
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #897 / umbrella #257",
+  "operation_id": "AIMW-EMAI-2E59E39808",
+  "terminal_state": "ADAPTED",
+  "domain": "email",
+  "kind": "visible_control"
+}
