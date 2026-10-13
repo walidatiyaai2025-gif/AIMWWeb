@@ -31,6 +31,12 @@ final class AccountEmailSettingsClearPasswordTerminalityTest extends TestCase
         $this->assertContains('auth', $route->gatherMiddleware());
         $this->assertContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame(['DELETE'], $route->methods());
+        $this->assertSame(['tenant'], $route->parameterNames());
+        $this->assertStringNotContainsString('{user}', $route->uri());
+        $this->assertStringNotContainsString('{site}', $route->uri());
+        $this->assertStringNotContainsString('{provider}', $route->uri());
+        $this->assertStringNotContainsString('{secret}', $route->uri());
+        $this->assertStringNotContainsString('{password}', $route->uri());
     }
 
     public function test_clear_password_removes_only_secret_and_preserves_mail_profile(): void
