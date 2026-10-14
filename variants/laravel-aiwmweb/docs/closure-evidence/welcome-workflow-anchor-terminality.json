@@ -35,10 +35,10 @@
     "tenant_context_required": false,
     "tenant_selector_consumed": false,
     "direct_object_surface": false,
-    "tenant_alias": "none; /tenants/{tenant}/welcome remains 404",
     "mutation_added": false,
     "secret_exposure_added": false,
-    "authorization_weakened": false
+    "authorization_weakened": false,
+    "tenant_boundary": "canonical public route has no route parameters and no tenant.context middleware"
   },
   "acceptance": {
     "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeWorkflowAnchorTerminalityTest.php",
@@ -49,7 +49,7 @@
       "canonical workflow control points to exactly one workflow target",
       "workflow target contains source-aligned Observe, Understand, Review, Execute content",
       "POST /welcome remains rejected with 405",
-      "tenant-scoped /tenants/{tenant}/welcome alias remains unavailable",
+      "canonical public route has no tenant parameter and no tenant.context middleware",
       "no sibling Welcome canonical operations are claimed"
     ]
   },
