@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #886 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-D4607F943C",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:#workspace-preview -> #workspace-preview",
+    "source_intent": "Navigate from the public Welcome hero to the rendered workspace preview on the same page.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "navigation_href": "#workspace-preview",
+    "target_id": "workspace-preview",
+    "operation_marker": "AIMW-CONT-D4607F943C",
+    "localized_labels": [
+      "Explore the workspace",
+      "شاهد مساحة العمل"
+    ]
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "canonical public route has no tenant parameter, no tenant.context middleware, and no tenant-scoped Welcome alias",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeWorkspacePreviewAnchorTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source workspace-preview href and target are verified",
+      "Laravel renders the canonical link and exactly one target",
+      "English and Arabic labels render on the public Welcome route",
+      "existing PublicWelcomeReadController route remains authoritative",
+      "public Welcome remains web-only, anonymous, and tenant-neutral",
+      "404 tenant boundary is proved from the route table without dispatching tenant data",
+      "POST /welcome remains rejected with 405"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-D4607F943C"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "8c588495d83aca72a8cf9432c76d7bab310ff24a",
+    "branch": "worker/886-welcome-workspace-preview-anchor"
+  }
+}

@@ -1033,6 +1033,14 @@
       "operation_ids": [
         "AIMW-CONT-16D09482D4"
       ]
+    },
+    {
+      "label": "AIMW-CONT-D4607F943C Welcome workspace preview anchor focused closure",
+      "sha": "bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07",
+      "observed_pr_head": "bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07",
+      "operation_ids": [
+        "AIMW-CONT-D4607F943C"
+      ]
     }
   ]
 }

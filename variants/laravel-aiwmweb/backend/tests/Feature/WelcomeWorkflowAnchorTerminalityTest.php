@@ -73,13 +73,12 @@ final class WelcomeWorkflowAnchorTerminalityTest extends TestCase
         $this->post('/welcome')->assertStatus(405);
     }
 
-    public function test_focused_control_does_not_claim_sibling_welcome_operations(): void
+    public function test_focused_workflow_control_keeps_its_own_marker_and_target_operation_specific(): void
     {
         $view = (string) file_get_contents(resource_path('views/ai/welcome.blade.php'));
 
-        $this->assertStringNotContainsString('AIMW-CONT-B1E9E1D6B0', $view);
-        $this->assertStringNotContainsString('AIMW-CONT-6458D3030B', $view);
-        $this->assertStringNotContainsString('AIMW-CONT-D4607F943C', $view);
-        $this->assertStringNotContainsString('AIMW-CONT-C7CB5EE184', $view);
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
+        $this->assertSame(1, substr_count($view, 'data-workflow-anchor-target="'.self::OPERATION_ID.'"'));
+        $this->assertSame(1, substr_count($view, 'id="workflow"'));
     }
 }
