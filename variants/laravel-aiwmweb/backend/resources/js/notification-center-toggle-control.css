@@ -55,6 +55,17 @@
     gap: 0.2rem;
 }
 
+.notification-center-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.notification-center-refresh:disabled {
+    cursor: wait;
+    opacity: 0.5;
+}
+
 .notification-center-popover > header small,
 .notification-center-item small,
 .notification-center-item time,
