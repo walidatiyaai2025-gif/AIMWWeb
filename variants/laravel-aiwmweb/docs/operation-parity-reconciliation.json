@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 711,
-    "pending": 220,
+    "adapted": 712,
+    "pending": 219,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 711,
-    "overall_parity_percent": 76.37
+    "terminal": 712,
+    "overall_parity_percent": 76.48
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 249,
-    "pending": 197,
+    "terminal": 250,
+    "pending": 196,
     "blocked": 0,
-    "percent": 55.83
+    "percent": 56.05
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 47,
-      "pending": 117,
+      "adapted": 48,
+      "pending": 116,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 47,
-      "percent": 28.66
+      "terminal": 48,
+      "percent": 29.27
     },
     "email": {
       "total": 82,
@@ -18102,21 +18102,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditSettingsNavigationTerminalityTest.php",
+      "evidence": "AIMW-CONT-16D09482D4 SecurityAudit Back to settings focused closure@8133faf788d919e047deb21067697ea0ce8d4652: variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php; focused-closure:AIMW-CONT-16D09482D4; test:variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditSettingsNavigationTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/security-audit-settings-navigation-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-16D09482D4 SecurityAudit Back to settings focused closure",
+        "source_sha": "8133faf788d919e047deb21067697ea0ce8d4652",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/security-audit-settings-navigation-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-16D09482D4",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditSettingsNavigationTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/security-audit-settings-navigation-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36222,12 +36232,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 249,
-      "pending": 197,
+      "adapted": 250,
+      "pending": 196,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 249,
-      "percent": 55.83
+      "terminal": 250,
+      "percent": 56.05
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36249,7 +36259,6 @@
       "AIMW-CONT-041B5ED720",
       "AIMW-CONT-10AFCDF334",
       "AIMW-CONT-1456BE001F",
-      "AIMW-CONT-16D09482D4",
       "AIMW-CONT-16D4AD8DC8",
       "AIMW-CONT-1C2443112C",
       "AIMW-CONT-247E791DA7",
@@ -37217,6 +37226,7 @@
       "AIMW-COMM-B16FBF4792",
       "AIMW-COMM-C083D47BC4",
       "AIMW-CONT-058F41BD1B",
+      "AIMW-CONT-16D09482D4",
       "AIMW-CONT-1A08B49164",
       "AIMW-CONT-2CDC790742",
       "AIMW-CONT-4209A8ADF4",
@@ -37438,10 +37448,17 @@
         "operation_ids": [
           "AIMW-CONT-EE531AE1FC"
         ]
+      },
+      {
+        "label": "AIMW-CONT-16D09482D4 SecurityAudit Back to settings focused closure",
+        "sha": "8133faf788d919e047deb21067697ea0ce8d4652",
+        "operation_ids": [
+          "AIMW-CONT-16D09482D4"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 19,
-    "focused_closure_contract_count": 249,
+    "focused_closure_operation_scoped_count": 20,
+    "focused_closure_contract_count": 250,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [

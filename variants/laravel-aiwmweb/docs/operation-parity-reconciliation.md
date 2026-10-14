@@ -8,22 +8,22 @@ Authority: AIMWWeb Issue #257. Evidence-only reconciliation; no feature completi
 |---|---:|
 | TOTAL | 931 |
 | PORTED | 0 |
-| ADAPTED | 711 |
-| PENDING | 220 |
+| ADAPTED | 712 |
+| PENDING | 219 |
 | BLOCKED | 0 |
 | VERIFIED_UNAVAILABLE_EXTERNAL | 0 |
-| TERMINAL | 711 |
-| OVERALL_PARITY_PERCENT | 76.37% |
+| TERMINAL | 712 |
+| OVERALL_PARITY_PERCENT | 76.48% |
 
 Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`; `BLOCKED` is not progress.
 
 ## Visible controls
 
 - Total: **446**
-- Terminal: **249**
-- Pending: **197**
+- Terminal: **250**
+- Pending: **196**
 - Blocked: **0**
-- Parity: **55.83%**
+- Parity: **56.05%**
 
 ## By domain
 
@@ -35,7 +35,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | backup | 14 | 0 | 14 | 0 | 0 | 0 | 14 | 100.00% |
 | billing | 178 | 0 | 172 | 6 | 0 | 0 | 172 | 96.63% |
 | comments | 8 | 0 | 8 | 0 | 0 | 0 | 8 | 100.00% |
-| content | 164 | 0 | 47 | 117 | 0 | 0 | 47 | 28.66% |
+| content | 164 | 0 | 48 | 116 | 0 | 0 | 48 | 29.27% |
 | email | 82 | 0 | 73 | 9 | 0 | 0 | 73 | 89.02% |
 | identity | 7 | 0 | 7 | 0 | 0 | 0 | 7 | 100.00% |
 | media | 15 | 0 | 6 | 9 | 0 | 0 | 6 | 40.00% |
@@ -56,7 +56,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
 | route | 84 | 0 | 61 | 23 | 0 | 0 | 61 | 72.62% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
-| visible_control | 446 | 0 | 249 | 197 | 0 | 0 | 249 | 55.83% |
+| visible_control | 446 | 0 | 250 | 196 | 0 | 0 | 250 | 56.05% |
 
 ## Reproducibility / guard results
 
@@ -66,7 +66,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - Totals reconcile: **PASS**
 - Evidence references exist for terminal code rows: **PASS**
 - Explicit route contracts: **41**
-- Focused visible-control contracts: **249**
+- Focused visible-control contracts: **250**
 - Focused service contracts: **32**
 - Focused background-job contracts: **7**
 - Unpushed countable sources: **0**
@@ -104,13 +104,12 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 
 - None
 
-### content (117)
+### content (116)
 
 - `AIMW-CONT-0154E7772B`
 - `AIMW-CONT-041B5ED720`
 - `AIMW-CONT-10AFCDF334`
 - `AIMW-CONT-1456BE001F`
-- `AIMW-CONT-16D09482D4`
 - `AIMW-CONT-16D4AD8DC8`
 - `AIMW-CONT-1C2443112C`
 - `AIMW-CONT-247E791DA7`
