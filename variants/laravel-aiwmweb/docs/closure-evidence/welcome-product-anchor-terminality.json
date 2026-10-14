@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #884 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-B1E9E1D6B0",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:#product -> #product",
+    "source_intent": "Navigate from the public Welcome navigation to the rendered product hero on the same page.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "navigation_href": "#product",
+    "target_id": "product",
+    "operation_marker": "AIMW-CONT-B1E9E1D6B0",
+    "localized_labels": [
+      "Product",
+      "المنتج"
+    ]
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "canonical public route has no tenant parameter, no tenant.context middleware, and no tenant-scoped Welcome alias",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeProductAnchorTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source product href and product target are verified",
+      "Laravel renders the canonical Product link and exactly one product target",
+      "English and Arabic labels render on the public Welcome route",
+      "existing PublicWelcomeReadController route remains authoritative",
+      "public Welcome remains web-only, anonymous, and tenant-neutral",
+      "404 tenant boundary is proved from the route table without dispatching tenant data",
+      "POST /welcome remains rejected with 405",
+      "operation-specific marker and target assertions do not claim Welcome siblings"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-B1E9E1D6B0"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "65661852f3abf2342a0e2598a5a16440e04d960a",
+    "branch": "worker/884-welcome-product-anchor"
+  }
+}
