@@ -20,6 +20,9 @@
         .eyebrow { color: #72e2d1; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
         h1 { margin: 16px 0 20px; max-width: 760px; font-size: clamp(42px, 6vw, 78px); line-height: .98; letter-spacing: -.055em; }
         .lead { margin: 0; max-width: 700px; color: #aabbd1; font-size: clamp(17px, 2vw, 21px); line-height: 1.7; }
+        .hero-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .hero-secondary { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; color: #d9e7fb; text-decoration: none; font-weight: 800; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; background: rgba(255,255,255,.035); }
+        .hero-secondary:hover, .hero-secondary:focus-visible { border-color: rgba(114,226,209,.55); outline: none; }
         .proof { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; color: #c9d8ec; }
         .proof span { padding: 10px 13px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: rgba(255,255,255,.035); }
         .panel { padding: 28px; border: 1px solid rgba(255,255,255,.1); border-radius: 24px; background: linear-gradient(180deg, rgba(20,35,59,.92), rgba(8,18,32,.92)); box-shadow: 0 30px 80px rgba(0,0,0,.32); }
@@ -85,6 +88,13 @@
                 <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'إدارة ووردبريس بمساعدة الذكاء الاصطناعي' : 'AI-ASSISTED WORDPRESS OPERATIONS' }}</div>
                 <h1>{{ $welcomeLocale === 'ar' ? 'أدر ووردبريس كنظام واحد.' : 'Operate WordPress as one system.' }}</h1>
                 <p class="lead">{{ $welcomeLocale === 'ar' ? 'بوابة عامة لإدارة ووردبريس بالذكاء الاصطناعي. سجل الدخول للوصول إلى مواقع حسابك والعمليات والمحتوى وتحسين محركات البحث والأتمتة عبر مسارات التطبيق المحمية.' : 'A public, identity-neutral entry point for AI WordPress Manager. Sign in to reach tenant-owned sites, operations, content, SEO and automation through their protected application routes.' }}</p>
+                <div class="hero-actions">
+                    <a
+                        class="hero-secondary"
+                        href="#workspace-preview"
+                        data-canonical-operation="AIMW-CONT-D4607F943C"
+                    >{{ $welcomeLocale === 'ar' ? 'شاهد مساحة العمل' : 'Explore the workspace' }}</a>
+                </div>
                 <div class="proof" aria-label="{{ $welcomeLocale === 'ar' ? 'حدود المنصة' : 'Platform boundaries' }}">
                     <span>{{ $welcomeLocale === 'ar' ? 'صفحة ترحيب عامة' : 'Public welcome' }}</span>
                     <span>{{ $welcomeLocale === 'ar' ? 'مساحة عمل محمية للحساب' : 'Protected tenant workspace' }}</span>
@@ -92,7 +102,12 @@
                 </div>
             </section>
 
-            <aside class="panel" aria-label="{{ $welcomeLocale === 'ar' ? 'معاينة مساحة العمل' : 'Workspace preview' }}">
+            <aside
+                class="panel"
+                id="workspace-preview"
+                data-workspace-preview-anchor-target="AIMW-CONT-D4607F943C"
+                aria-label="{{ $welcomeLocale === 'ar' ? 'معاينة مساحة العمل' : 'Workspace preview' }}"
+            >
                 <div class="panel-kicker">{{ $welcomeLocale === 'ar' ? 'نظرة عامة على العمليات' : 'OPERATIONS OVERVIEW' }}</div>
                 <h2>{{ $welcomeLocale === 'ar' ? 'طبقة إدارة واحدة' : 'One operating layer' }}</h2>
                 <div class="rows">
