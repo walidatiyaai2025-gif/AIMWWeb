@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - fix/laravel-aiwmweb-email-focused-source-registration
+      - worker/894-notification-center-toggle
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
