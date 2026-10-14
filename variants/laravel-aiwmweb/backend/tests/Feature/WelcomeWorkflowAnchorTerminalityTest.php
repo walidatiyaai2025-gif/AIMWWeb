@@ -33,7 +33,7 @@ final class WelcomeWorkflowAnchorTerminalityTest extends TestCase
         $this->assertSame(1, substr_count($view, 'id="workflow"'));
     }
 
-    public function test_public_welcome_route_keeps_existing_authoritative_controller_and_tenant_neutral_boundary(): void
+    public function test_public_welcome_has_404_tenant_alias_boundary_without_tenant_selector(): void
     {
         $route = Route::getRoutes()->match(Request::create('/welcome', 'GET'));
 
@@ -43,6 +43,18 @@ final class WelcomeWorkflowAnchorTerminalityTest extends TestCase
         $this->assertNotContains('auth', $route->gatherMiddleware());
         $this->assertNotContains('tenant.context', $route->gatherMiddleware());
         $this->assertSame([], $route->parameterNames());
+
+        $welcomeUris = collect(Route::getRoutes()->getRoutes())
+            ->map(static fn ($candidate): string => $candidate->uri())
+            ->filter(static fn (string $uri): bool => str_contains($uri, 'welcome'))
+            ->values()
+            ->all();
+
+        $this->assertNotContains(
+            'tenants/{tenant}/welcome',
+            $welcomeUris,
+            'A tenant-scoped Welcome alias would violate the canonical public 404 boundary.',
+        );
     }
 
     public function test_public_welcome_renders_real_workflow_navigation_and_target_without_mutation(): void
