@@ -995,6 +995,14 @@
       "operation_ids": [
         "AIMW-TAXO-EC57E21E70"
       ]
+    },
+    {
+      "label": "AIMW-CONT-EE531AE1FC Welcome workflow anchor focused closure",
+      "sha": "aa946474e09653e7d847373049052cc860816187",
+      "observed_pr_head": "aa946474e09653e7d847373049052cc860816187",
+      "operation_ids": [
+        "AIMW-CONT-EE531AE1FC"
+      ]
     }
   ]
 }
