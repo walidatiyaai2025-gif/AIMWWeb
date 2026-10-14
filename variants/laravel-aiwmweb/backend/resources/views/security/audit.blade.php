@@ -11,6 +11,12 @@
         <p>SECURITY</p>
         <h1>Security Audit</h1>
         <p>Read-only security events from tenant-owned audit data.</p>
+        @if ($settingsHref !== null)
+            <a
+                href="{{ $settingsHref }}"
+                data-canonical-operation="{{ $settingsNavigationOperationId }}"
+            >Back to settings</a>
+        @endif
     </section>
 
     <section>

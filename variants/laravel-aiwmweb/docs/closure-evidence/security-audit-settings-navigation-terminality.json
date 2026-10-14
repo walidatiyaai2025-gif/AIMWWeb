@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #800 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-16D09482D4",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-CONT-16D09482D4",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/admin/security-audit",
+    "visible_control": "/settings -> /settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SecurityAudit.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/security/audit.blade.php",
+    "source_route": "/admin/security-audit",
+    "destination": "/tenants/{tenant}/settings",
+    "operation_marker": "AIMW-CONT-16D09482D4",
+    "behavior": "Render Back to settings only when exactly one active tenant membership is authoritative and that membership has tenant.view."
+  },
+  "security": {
+    "source_authorization": "auth + platform.admin",
+    "destination_authorization": "auth + tenant.context + tenant.view",
+    "ambiguous_active_tenant": "link omitted",
+    "missing_tenant_view": "link omitted and destination 403",
+    "foreign_tenant": "404/fail closed",
+    "caller_supplied_tenant": false,
+    "mutation_added": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditSettingsNavigationTerminalityTest.php",
+    "proof": [
+      "exact canonical operation identity and source route",
+      "exact tenant-qualified /settings destination",
+      "required tenant.view permission",
+      "ambiguous active tenant fails closed",
+      "foreign tenant direct navigation returns 404",
+      "navigation-only operation introduces no audit mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-16D09482D4"
+    ],
+    "sibling_operations_claimed": false,
+    "welcome_runtime_modified": false,
+    "aspnet_product_modified": false
+  }
+}

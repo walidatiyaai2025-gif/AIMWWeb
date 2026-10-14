@@ -10,6 +10,8 @@ final class SecurityAuditReadController
 {
     public const OPERATION_ID = 'AIMW-BILL-A152D6A7DE';
 
+    public const SETTINGS_NAVIGATION_OPERATION_ID = 'AIMW-CONT-16D09482D4';
+
     public function __invoke(Request $request): View
     {
         $input = $request->validate([
@@ -32,6 +34,8 @@ final class SecurityAuditReadController
             ->pluck('tenant_id')
             ->map(fn ($id): int => (int) $id)
             ->all();
+
+        $settingsHref = $this->settingsHref($request, $tenantIds);
 
         $events = $tenantIds === [] ? collect() : DB::table('audit_events')
             ->leftJoin('users', 'users.id', '=', 'audit_events.actor_user_id')
@@ -60,9 +64,56 @@ final class SecurityAuditReadController
             ->take($take)
             ->values();
 
-        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take') + [
+        return view('security.audit', compact('events', 'category', 'outcome', 'search', 'take', 'settingsHref') + [
             'canonicalOperationId' => self::OPERATION_ID,
+            'settingsNavigationOperationId' => self::SETTINGS_NAVIGATION_OPERATION_ID,
         ]);
+    }
+
+    /**
+     * The platform-admin audit route has no tenant route parameter. Only expose
+     * Settings navigation when the authenticated user has exactly one active
+     * tenant membership and that membership can actually view Settings. This
+     * operation is navigation-only and never mutates the active tenant.
+     *
+     * @param  list<int>  $tenantIds
+     */
+    private function settingsHref(Request $request, array $tenantIds): ?string
+    {
+        if (count($tenantIds) !== 1) {
+            return null;
+        }
+
+        $tenantId = (int) $tenantIds[0];
+        $membership = DB::table('tenant_memberships')
+            ->where('tenant_id', $tenantId)
+            ->where('user_id', (int) $request->user()->getAuthIdentifier())
+            ->where('status', 'active')
+            ->first(['id']);
+
+        if ($membership === null) {
+            return null;
+        }
+
+        $canViewSettings = DB::table('role_tenant_membership as rtm')
+            ->join('permission_role as pr', 'pr.role_id', '=', 'rtm.role_id')
+            ->join('permissions as p', 'p.id', '=', 'pr.permission_id')
+            ->where('rtm.tenant_membership_id', (int) $membership->id)
+            ->where('rtm.tenant_id', $tenantId)
+            ->where('pr.tenant_id', $tenantId)
+            ->whereIn('p.name', ['tenant.view', '*'])
+            ->exists();
+
+        if ($canViewSettings === false) {
+            return null;
+        }
+
+        $slug = DB::table('tenants')->where('id', $tenantId)->value('slug');
+        if (is_string($slug) === false || trim((string) $slug) === '') {
+            return null;
+        }
+
+        return '/tenants/'.rawurlencode($slug).'/settings';
     }
 
     private function snapshot(object $row): array
