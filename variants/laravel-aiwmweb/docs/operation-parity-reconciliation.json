@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 707,
-    "pending": 224,
+    "adapted": 708,
+    "pending": 223,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 707,
-    "overall_parity_percent": 75.94
+    "terminal": 708,
+    "overall_parity_percent": 76.05
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 245,
-    "pending": 201,
+    "terminal": 246,
+    "pending": 200,
     "blocked": 0,
-    "percent": 54.93
+    "percent": 55.16
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 72,
-      "pending": 10,
+      "adapted": 73,
+      "pending": 9,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 72,
-      "percent": 87.8
+      "terminal": 73,
+      "percent": 89.02
     },
     "identity": {
       "total": 7,
@@ -21505,21 +21505,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-close-control.test.tsx",
+      "evidence": "AIMW-EMAI-77C637E3E3 NotificationCenter Close focused closure@93bd664e46a9508ccc1a1b47278199043b505c17: variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx; focused-closure:AIMW-EMAI-77C637E3E3; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-close-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/notification-center-close-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-77C637E3E3 NotificationCenter Close focused closure",
+        "source_sha": "93bd664e46a9508ccc1a1b47278199043b505c17",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/notification-center-close-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-77C637E3E3",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-close-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/notification-center-close-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36182,12 +36192,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 245,
-      "pending": 201,
+      "adapted": 246,
+      "pending": 200,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 245,
-      "percent": 54.93
+      "terminal": 246,
+      "percent": 55.16
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36329,7 +36339,6 @@
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-470599356B",
-      "AIMW-EMAI-77C637E3E3",
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
@@ -37202,6 +37211,7 @@
       "AIMW-EMAI-2E59E39808",
       "AIMW-EMAI-54E7EEFB15",
       "AIMW-EMAI-62B0B8EE4C",
+      "AIMW-EMAI-77C637E3E3",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
@@ -37370,10 +37380,17 @@
         "operation_ids": [
           "AIMW-CONT-2CDC790742"
         ]
+      },
+      {
+        "label": "AIMW-EMAI-77C637E3E3 NotificationCenter Close focused closure",
+        "sha": "93bd664e46a9508ccc1a1b47278199043b505c17",
+        "operation_ids": [
+          "AIMW-EMAI-77C637E3E3"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 15,
-    "focused_closure_contract_count": 245,
+    "focused_closure_operation_scoped_count": 16,
+    "focused_closure_contract_count": 246,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
