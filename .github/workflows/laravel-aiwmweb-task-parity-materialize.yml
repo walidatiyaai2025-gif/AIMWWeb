@@ -1,12 +1,12 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: focused-source-registration-repair
+# trigger: temporary-1082-materialization
 # exact-head: governance-repair
 # retrigger: email-focused-source-registration
 
 on:
   push:
     branches:
-      - fix/laravel-aiwmweb-email-focused-source-registration
+      - worker/laravel-aiwmweb-AIMW-CONT-16D09482D4-security-audit-settings
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
