@@ -28,6 +28,15 @@
         .rows { display: grid; gap: 10px; }
         .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 15px; border-radius: 14px; background: rgba(255,255,255,.045); }
         .row b { color: #72e2d1; }
+        .workflow { padding: 12px 0 72px; scroll-margin-top: 24px; }
+        .workflow-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 20px; }
+        .workflow-head h2 { margin: 8px 0 0; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.03em; }
+        .workflow-head p { margin: 0; max-width: 600px; color: #91a4bf; line-height: 1.65; }
+        .workflow-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        .workflow-card { min-height: 150px; padding: 20px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: rgba(255,255,255,.035); }
+        .workflow-card b { display: block; color: #72e2d1; font-size: 12px; letter-spacing: .12em; }
+        .workflow-card h3 { margin: 16px 0 8px; font-size: 18px; }
+        .workflow-card p { margin: 0; color: #9fb0c6; line-height: 1.55; }
         .pricing { padding: 12px 0 80px; }
         .pricing-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 24px; }
         .pricing-head h2 { margin: 8px 0 0; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.03em; }
@@ -40,7 +49,8 @@
         .price small { font-size: 13px; color: #91a4bf; font-weight: 650; }
         .price-cta { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 14px; border-radius: 11px; background: #72e2d1; color: #06111e; text-decoration: none; font-weight: 850; }
         .pricing-empty { padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color: #aabbd1; background: rgba(255,255,255,.03); }
-        @media (max-width: 820px) { .hero { grid-template-columns: 1fr; padding: 48px 0; } .panel { order: -1; } .pricing-head { align-items: start; flex-direction: column; } }
+        @media (max-width: 820px) { .hero { grid-template-columns: 1fr; padding: 48px 0; } .panel { order: -1; } .workflow-head, .pricing-head { align-items: start; flex-direction: column; } .workflow-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 560px) { .workflow-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -58,6 +68,11 @@
                     <small>{{ $welcomeLocale === 'ar' ? 'نظام إدارة عمليات ووردبريس' : 'WORDPRESS OPERATIONS OS' }}</small>
                 </span>
             </a>
+            <a
+                class="signin"
+                href="#workflow"
+                data-canonical-operation="AIMW-CONT-EE531AE1FC"
+            >{{ $welcomeLocale === 'ar' ? 'طريقة العمل' : 'Workflow' }}</a>
             <a class="signin" data-canonical-operation="AIMW-BILL-3EAD5A351E"
                 href="{{ route('public.welcome', ['lang' => $welcomeLocale === 'ar' ? 'en' : 'ar'], false) }}"
                 lang="{{ $welcomeLocale === 'ar' ? 'en' : 'ar' }}"
@@ -88,6 +103,45 @@
                 </div>
             </aside>
         </main>
+
+        <section
+            class="workflow"
+            id="workflow"
+            data-workflow-anchor-target="AIMW-CONT-EE531AE1FC"
+            aria-labelledby="workflow-title"
+        >
+            <div class="workflow-head">
+                <div>
+                    <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'من الإشارة إلى التنفيذ' : 'SIGNAL → DECISION → EXECUTION' }}</div>
+                    <h2 id="workflow-title">{{ $welcomeLocale === 'ar' ? 'تحرك بسرعة بدون فقدان السيطرة.' : 'Move faster without losing control.' }}</h2>
+                </div>
+                <p>{{ $welcomeLocale === 'ar'
+                    ? 'راقب الحالة، افهم التأثير، راجع التغيير ثم نفّذ مع سجل واضح للنتيجة.'
+                    : 'Observe state, understand impact, review the change, then execute with a traceable result.' }}</p>
+            </div>
+            <div class="workflow-grid">
+                <article class="workflow-card">
+                    <b>01</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'راقب' : 'Observe' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'زامن حالة المواقع والمحتوى والصحة التشغيلية.' : 'Synchronize site, content and operational state.' }}</p>
+                </article>
+                <article class="workflow-card">
+                    <b>02</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'افهم' : 'Understand' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'رتب الإشارات حسب التأثير قبل اتخاذ القرار.' : 'Prioritize signals by impact before deciding.' }}</p>
+                </article>
+                <article class="workflow-card">
+                    <b>03</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'راجع' : 'Review' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'اعرف ما سيتغير قبل اعتماد الإجراء.' : 'Know what changes before approving the action.' }}</p>
+                </article>
+                <article class="workflow-card">
+                    <b>04</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'نفّذ' : 'Execute' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'نفّذ مع حالة وسجل وتشخيص واضح.' : 'Run with status, history and clear diagnostics.' }}</p>
+                </article>
+            </div>
+        </section>
 
         <section class="pricing" id="pricing" aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}">
             <div class="pricing-head">
