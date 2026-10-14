@@ -50,6 +50,7 @@ import { NotificationCenterToggleControl } from './notification-center-toggle-co
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
+import { MediaPagesLinkControl } from './media-pages-link-control';
 import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
 import { PostsExecutionLinkControl } from './posts-execution-link-control';
 import { RuntimeErrorBoundary } from './runtime-error-boundary';
@@ -183,6 +184,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'explorer') return <><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sync') return <><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;

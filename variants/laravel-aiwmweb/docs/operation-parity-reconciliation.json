@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 70,
-      "pending": 12,
+      "adapted": 69,
+      "pending": 13,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 70,
-      "percent": 85.37
+      "terminal": 69,
+      "percent": 84.15
     },
     "identity": {
       "total": 7,
@@ -133,12 +133,12 @@
     "media": {
       "total": 15,
       "ported": 0,
-      "adapted": 5,
-      "pending": 10,
+      "adapted": 6,
+      "pending": 9,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 5,
-      "percent": 33.33
+      "terminal": 6,
+      "percent": 40.0
     },
     "operations": {
       "total": 5,
@@ -21557,31 +21557,21 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-toggle-control.test.tsx",
-      "evidence": "AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync focused closure@fe7903eeb15527eb6e649841e031a94415b39db6: variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx; focused-closure:AIMW-EMAI-8E3B0AACD6; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-toggle-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/notification-center-toggle-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync focused closure",
-        "source_sha": "fe7903eeb15527eb6e649841e031a94415b39db6",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/notification-center-toggle-terminality.json",
-        "signals": [
-          "operation:AIMW-EMAI-8E3B0AACD6",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-toggle-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/notification-center-toggle-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -24666,21 +24656,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/media-pages-link-control.test.tsx",
+      "evidence": "AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages link focused closure@9f15e26b717d394b135896feafcddedcc6a6ddf4: variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx; focused-closure:AIMW-MEDI-0694CEEBBA; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-pages-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-pages-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages link focused closure",
+        "source_sha": "9f15e26b717d394b135896feafcddedcc6a6ddf4",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/media-pages-link-terminality.json",
+        "signals": [
+          "operation:AIMW-MEDI-0694CEEBBA",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/media-pages-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/media-pages-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/media-pages-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36292,6 +36292,7 @@
       "AIMW-EMAI-7A54150265",
       "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
+      "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-9EB09C490D",
       "AIMW-EMAI-A9CB66F400",
       "AIMW-EMAI-E4EEF1914B"
@@ -36299,7 +36300,6 @@
     "identity": [],
     "media": [
       "AIMW-MEDI-03A0D722AD",
-      "AIMW-MEDI-0694CEEBBA",
       "AIMW-MEDI-3444B17C11",
       "AIMW-MEDI-34B5C789D2",
       "AIMW-MEDI-34E7DCA832",
@@ -37149,7 +37149,6 @@
       "AIMW-EMAI-12A6FEB2FF",
       "AIMW-EMAI-2E59E39808",
       "AIMW-EMAI-54E7EEFB15",
-      "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
       "AIMW-EMAI-EC34E40629",
@@ -37161,6 +37160,7 @@
       "AIMW-IDEN-BF78057C28",
       "AIMW-IDEN-CD4ADA5087",
       "AIMW-IDEN-FC900E61B8",
+      "AIMW-MEDI-0694CEEBBA",
       "AIMW-MEDI-73C0DA6B3D",
       "AIMW-OPER-21EC1BDE45",
       "AIMW-PLAT-17BC7DA9E5",
@@ -37290,10 +37290,10 @@
         ]
       },
       {
-        "label": "AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync focused closure",
-        "sha": "fe7903eeb15527eb6e649841e031a94415b39db6",
+        "label": "AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages link focused closure",
+        "sha": "9f15e26b717d394b135896feafcddedcc6a6ddf4",
         "operation_ids": [
-          "AIMW-EMAI-8E3B0AACD6"
+          "AIMW-MEDI-0694CEEBBA"
         ]
       }
     ],
