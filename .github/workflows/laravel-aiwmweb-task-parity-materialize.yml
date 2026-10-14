@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - fix/laravel-aiwmweb-email-focused-source-registration
-      - chore/1081-materialize-email-diagnostics-parity
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
