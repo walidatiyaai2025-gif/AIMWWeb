@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 705,
-    "pending": 226,
+    "adapted": 706,
+    "pending": 225,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 705,
-    "overall_parity_percent": 75.73
+    "terminal": 706,
+    "overall_parity_percent": 75.83
   },
   "visible_controls": {
     "total": 446,
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 71,
-      "pending": 11,
+      "adapted": 72,
+      "pending": 10,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 71,
-      "percent": 86.59
+      "terminal": 72,
+      "percent": 87.8
     },
     "identity": {
       "total": 7,
