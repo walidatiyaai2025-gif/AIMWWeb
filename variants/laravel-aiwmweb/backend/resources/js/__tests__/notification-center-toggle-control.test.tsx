@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
@@ -40,24 +40,17 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
     document.querySelector('.topbar-actions')?.remove();
 });
 
 describe('AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync', () => {
     it('toggles the popover and reads authoritative tenant notifications only when opening', async () => {
-        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-            data: [
-                {
-                    id: 11,
-                    title: 'Sync completed',
-                    message: 'The authoritative sync finished.',
-                    severity: 'success',
-                    is_read: false,
-                    created_at: '2026-10-14T04:00:00Z',
-                },
-            ],
-        }), { status: 200, headers: { 'content-type': 'application/json' } }));
+        let resolveFetch: (response: Response) => void = () => undefined;
+        const fetchMock = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => {
+            resolveFetch = resolve;
+        }));
         vi.stubGlobal('fetch', fetchMock);
 
         renderControl();
@@ -70,7 +63,21 @@ describe('AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync', () => {
         fireEvent.click(trigger);
 
         expect(trigger).toHaveAttribute('aria-expanded', 'true');
-        expect(screen.getByRole('status')).toHaveTextContent('Loading notifications');
+        expect(await screen.findByRole('status')).toHaveTextContent('Loading notifications');
+
+        resolveFetch(new Response(JSON.stringify({
+            data: [
+                {
+                    id: 11,
+                    title: 'Sync completed',
+                    message: 'The authoritative sync finished.',
+                    severity: 'success',
+                    is_read: false,
+                    created_at: '2026-10-14T04:00:00Z',
+                },
+            ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } }));
+
         expect(await screen.findByText('Sync completed')).toBeInTheDocument();
         expect(screen.getByText('1 unread')).toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledTimes(1);
