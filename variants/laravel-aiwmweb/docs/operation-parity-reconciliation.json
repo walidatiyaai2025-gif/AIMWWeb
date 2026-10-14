@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 715,
-    "pending": 216,
+    "adapted": 716,
+    "pending": 215,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 715,
-    "overall_parity_percent": 76.8
+    "terminal": 716,
+    "overall_parity_percent": 76.91
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 50,
-      "pending": 114,
+      "adapted": 51,
+      "pending": 113,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 50,
-      "percent": 30.49
+      "terminal": 51,
+      "percent": 31.1
     },
     "email": {
       "total": 82,
@@ -13401,12 +13401,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php",
-      "evidence": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure@e50010da48b9b48e5c18cd970f67a6efd3cb96e1: variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php; focused-closure:AIMW-BILL-F73C7348C3; test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
+      "evidence": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure@2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d: variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php; focused-closure:AIMW-BILL-F73C7348C3; test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
-        "source_sha": "e50010da48b9b48e5c18cd970f67a6efd3cb96e1",
+        "source_sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
@@ -20778,21 +20778,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-E4275AE57F Content Workspace canonical route terminality@9535f66b12b3839dd7606c5b305c6f0bd32e1216: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-CONT-E4275AE57F; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-workspace-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-E4275AE57F Content Workspace canonical route terminality",
+        "source_sha": "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-workspace-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-E4275AE57F",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -36245,12 +36258,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 62,
-      "pending": 22,
+      "adapted": 63,
+      "pending": 21,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 62,
-      "percent": 73.81
+      "terminal": 63,
+      "percent": 75.0
     },
     "service": {
       "total": 349,
@@ -36387,7 +36400,6 @@
       "AIMW-CONT-DF6FFA9D87",
       "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
-      "AIMW-CONT-E4275AE57F",
       "AIMW-CONT-E4D7C73D4E",
       "AIMW-CONT-E89EDDF780",
       "AIMW-CONT-EBD89B0642",
@@ -36954,6 +36966,18 @@
           "AIMW-CONT-C6C7F24B03"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-E4275AE57F Content Workspace canonical route terminality",
+        "sha": "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-E4275AE57F"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -36983,6 +37007,7 @@
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
+      "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
       "a5f91d67cecde21f25d016c9a3eb1cecf5a10a1f",
       "aa328fe4daabf8e5042abe568e10e7719a9d3ad4",
@@ -37090,6 +37115,7 @@
       "AIMW-CONT-859135B2D1",
       "AIMW-CONT-95341D9AB0",
       "AIMW-CONT-C6C7F24B03",
+      "AIMW-CONT-E4275AE57F",
       "AIMW-EMAI-2D94EFDD53",
       "AIMW-EMAI-7F2D7C5921",
       "AIMW-EMAI-B2CFCF818C",
@@ -37105,7 +37131,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 29,
+    "explicit_route_api_contract_count": 30,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
@@ -37511,7 +37537,7 @@
       },
       {
         "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
-        "sha": "e50010da48b9b48e5c18cd970f67a6efd3cb96e1",
+        "sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
         "operation_ids": [
           "AIMW-BILL-F73C7348C3"
         ]
