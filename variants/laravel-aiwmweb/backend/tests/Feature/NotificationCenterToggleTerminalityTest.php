@@ -69,18 +69,13 @@ final class NotificationCenterToggleTerminalityTest extends TestCase
         $this->actingAs($user)
             ->getJson('/api/v1/tenants/beta/notifications')
             ->assertNotFound();
-    }
 
-    public function test_notification_endpoint_requires_notification_permission(): void
-    {
         $limited = User::factory()->create();
         $this->membership($limited, 'limited', ['tenant.view']);
-
         $this->actingAs($limited)
-            ->getJson('/api/v1/tenants/limited/notifications')
+            ->get('/tenants/limited/notifications')
             ->assertForbidden();
     }
-
     /** @param list<string> $permissions */
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
