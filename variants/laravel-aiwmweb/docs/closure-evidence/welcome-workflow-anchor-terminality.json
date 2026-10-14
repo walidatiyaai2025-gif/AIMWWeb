@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #888 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-EE531AE1FC",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:#workflow -> #workflow",
+    "source_intent": "Navigate from the public Welcome navigation to the real Workflow section on the same page.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "navigation_href": "#workflow",
+    "target_id": "workflow",
+    "operation_marker": "AIMW-CONT-EE531AE1FC",
+    "target_content": [
+      "Observe",
+      "Understand",
+      "Review",
+      "Execute"
+    ]
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_alias": "none; /tenants/{tenant}/welcome remains 404",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeWorkflowAnchorTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source route, workflow href, and workflow target are verified",
+      "existing PublicWelcomeReadController route remains authoritative",
+      "Laravel /welcome remains web-only, anonymous, and tenant-neutral",
+      "canonical workflow control points to exactly one workflow target",
+      "workflow target contains source-aligned Observe, Understand, Review, Execute content",
+      "POST /welcome remains rejected with 405",
+      "tenant-scoped /tenants/{tenant}/welcome alias remains unavailable",
+      "no sibling Welcome canonical operations are claimed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-EE531AE1FC"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "44f293c68dc9a987ceed7820d1eca21d3940ab6d",
+    "branch": "worker/888-welcome-workflow-anchor"
+  }
+}
