@@ -27,6 +27,8 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
 
     private const NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
 
+    private const APP_FORM_ACTIONS_OPERATION_ID = 'AIMW-SYNC-7071DA172F';
+
     public function test_next_async_is_a_client_only_control_inside_the_same_tenant_guarded_onboarding_boundary(): void
     {
         $frontend = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
@@ -40,6 +42,22 @@ final class SiteOnboardingSaveTestAndSyncTerminalityTest extends TestCase
             (int) strpos($frontend, 'const continueStep = () =>'),
             (int) strpos($frontend, 'const previousStep = () =>') - (int) strpos($frontend, 'const continueStep = () =>'),
         ));
+    }
+
+    public function test_sync_app_form_actions_dispatches_real_onboarding_save_inside_the_tenant_boundary(): void
+    {
+        $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Shared/AppFormActions.razor'));
+        $this->assertStringContainsString('Busy || Disabled ? Task.CompletedTask : OnSave.InvokeAsync(args)', $source);
+
+        $control = (string) file_get_contents(resource_path('js/sync-form-actions-control.tsx'));
+        $this->assertStringContainsString(self::APP_FORM_ACTIONS_OPERATION_ID, $control);
+        $this->assertStringContainsString("requiredPermission = 'sites.manage'", $control);
+        $this->assertStringContainsString('await onSave();', $control);
+
+        $onboarding = (string) file_get_contents(resource_path('js/site-onboarding-save-test-sync-control.tsx'));
+        $this->assertStringContainsString('<SyncFormActionsControl', $onboarding);
+        $this->assertStringContainsString('onSave={() => mutation.mutateAsync().catch(() => undefined)}', $onboarding);
+        $this->assertStringContainsString('saveOperationId={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}', $onboarding);
     }
 
     public function test_exact_mutation_route_is_guarded_and_bound_to_the_canonical_operation(): void

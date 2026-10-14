@@ -2,6 +2,7 @@ import React, { FormEvent, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { ApiError, apiRequest, type FrontendContext } from './core';
 import { useLocale } from './i18n';
+import { SyncFormActionsControl } from './sync-form-actions-control';
 
 export const SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID = 'AIMW-BILL-2EF6B8A27A';
 export const SITE_ONBOARDING_NEXT_OPERATION_ID = 'AIMW-BILL-5DE86937F7';
@@ -283,14 +284,13 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                 {stepError ? <p role="alert">{stepError}</p> : null}
                 {errorMessage ? <p role="alert">{errorMessage}</p> : null}
 
-                <div className="toolbar-actions">
-                    {step > 1 ? (
-                        <button type="button" className="btn" disabled={mutation.isPending} onClick={previousStep}>
-                            {locale === 'ar' ? 'السابق' : 'Previous'}
-                        </button>
-                    ) : null}
-
-                    {step < 3 ? (
+                {step < 3 ? (
+                    <div className="toolbar-actions">
+                        {step > 1 ? (
+                            <button type="button" className="btn" disabled={mutation.isPending} onClick={previousStep}>
+                                {locale === 'ar' ? 'السابق' : 'Previous'}
+                            </button>
+                        ) : null}
                         <button
                             type="button"
                             className="btn primary"
@@ -300,19 +300,22 @@ export function SiteOnboardingSaveTestSyncControl({ context }: { context: Fronte
                         >
                             {locale === 'ar' ? 'التالي' : 'Continue'}
                         </button>
-                    ) : (
-                        <button
-                            type="submit"
-                            className="btn primary"
-                            disabled={finalSubmitDisabled}
-                            data-canonical-operation={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}
-                        >
-                            {mutation.isPending
-                                ? (locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…')
-                                : (locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize')}
-                        </button>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <SyncFormActionsControl
+                        context={context}
+                        busy={mutation.isPending}
+                        disabled={finalSubmitDisabled}
+                        dirty={!result}
+                        hint={locale === 'ar' ? 'سيتم الحفظ والاختبار ثم بدء المزامنة الفعلية.' : 'This will save, test, then start the real synchronization.'}
+                        cancelText={locale === 'ar' ? 'السابق' : 'Previous'}
+                        saveText={locale === 'ar' ? 'حفظ واختبار ومزامنة' : 'Save, test and synchronize'}
+                        savingText={locale === 'ar' ? 'جارٍ الحفظ والاختبار وبدء المزامنة…' : 'Saving, testing & starting sync…'}
+                        saveOperationId={SITE_ONBOARDING_SAVE_TEST_SYNC_OPERATION_ID}
+                        onCancel={previousStep}
+                        onSave={() => mutation.mutateAsync().catch(() => undefined)}
+                    />
+                )}
             </form>
 
             {result ? (
