@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "97e068076ba4876d3b6deb95a458c4e6faecc833",
+  "previous_reconciliation_sha": "228a363f1bf6f2348798486abd3acdc9ef71a4b8",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -919,6 +919,14 @@
       "observed_pr_head": "8644489a398d272c8bbe6e500ad95dd25f27e874",
       "operation_ids": [
         "AIMW-MEDI-73C0DA6B3D"
+      ]
+    },
+    {
+      "label": "AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages link focused closure",
+      "sha": "9f15e26b717d394b135896feafcddedcc6a6ddf4",
+      "observed_pr_head": "9f15e26b717d394b135896feafcddedcc6a6ddf4",
+      "operation_ids": [
+        "AIMW-MEDI-0694CEEBBA"
       ]
     }
   ]
