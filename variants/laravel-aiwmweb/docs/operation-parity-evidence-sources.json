@@ -1041,6 +1041,14 @@
       "operation_ids": [
         "AIMW-CONT-D4607F943C"
       ]
+    },
+    {
+      "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
+      "sha": "f1367fda54a079c95526d1234f94361102a2be91",
+      "observed_pr_head": "f1367fda54a079c95526d1234f94361102a2be91",
+      "operation_ids": [
+        "AIMW-BILL-F73C7348C3"
+      ]
     }
   ]
 }
