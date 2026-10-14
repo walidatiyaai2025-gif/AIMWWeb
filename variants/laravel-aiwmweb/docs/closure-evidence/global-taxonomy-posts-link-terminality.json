@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #1000 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-TAXO-EC57E21E70",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-TAXO-EC57E21E70",
+    "domain": "taxonomy",
+    "kind": "visible_control",
+    "route_screen": "/module/taxonomy",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalTaxonomyExplorer.razor",
+    "source_intent": "Expose the localized Posts toolbar navigation from the taxonomy explorer to /module/posts.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-posts-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "/tenants/{tenant}/module/posts",
+    "operation_marker": "AIMW-TAXO-EC57E21E70"
+  },
+  "security": {
+    "source_permission": "content.view",
+    "tenant_context_permission": "tenant.view",
+    "capability": "posts",
+    "connector_scope": "posts.read",
+    "tenant_destination": "active tenant slug from server-authenticated frontend context",
+    "foreign_tenant": "encoded/fail closed behind server 404 tenant boundary",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-posts-link-control.test.tsx"
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-TAXO-EC57E21E70"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}
