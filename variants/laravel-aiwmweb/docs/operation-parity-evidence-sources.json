@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "8c588495d83aca72a8cf9432c76d7bab310ff24a",
+  "previous_reconciliation_sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -869,6 +869,28 @@
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsWorkspaceRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsWorkspaceRouteTerminalityTest.php",
           "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/operations-workspace-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
+      "label": "AIMW-CONT-E4275AE57F Content Workspace canonical route terminality",
+      "sha": "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
+      "observed_pr_head": "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-E4275AE57F"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-E4275AE57F": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-workspace-route-terminality.json",
           "security_mode": "tenant_selected"
         }
       }
