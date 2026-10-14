@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #992 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-7071DA172F",
+  "domain": "sync",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-SYNC-7071DA172F",
+    "domain": "sync",
+    "kind": "visible_control",
+    "route_screen": "component:AppFormActions",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppFormActions.razor",
+    "source_intent": "SaveClickedAsync invokes the supplied save callback only when the form is neither busy nor disabled; cancel remains independently guarded.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/site-onboarding-save-test-sync-control.tsx",
+    "operation_marker": "AIMW-SYNC-7071DA172F",
+    "behavior": "The source-equivalent form action wrapper is mounted on the real WordPress Site Onboarding final step. Its Save callback awaits the existing Save/Test/Sync mutation, preserves the pre-existing mutation operation marker on the button, suppresses duplicate dispatch, and exposes busy/disabled state.",
+    "authorization": "The sync adaptation is rendered only for sites.manage (or *).",
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "tenant_context": "The mounted flow uses the server-authored active tenant FrontendContext and the existing auth + tenant.context onboarding endpoint.",
+    "permission": "sites.manage",
+    "caller_supplied_tenant_selector": "none",
+    "truthful_success": "The wrapper never manufactures success; it only dispatches the existing authoritative Save/Test/Sync mutation."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOnboardingSaveTestAndSyncTerminalityTest.php"
+  ],
+  "scope_guards": {
+    "claimed_operations": ["AIMW-SYNC-7071DA172F"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "manual_reconciliation_totals_modified": false
+  }
+}
