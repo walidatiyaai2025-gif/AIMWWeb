@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 706,
-    "pending": 225,
+    "adapted": 707,
+    "pending": 224,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 706,
-    "overall_parity_percent": 75.83
+    "terminal": 707,
+    "overall_parity_percent": 75.94
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 244,
-    "pending": 202,
+    "terminal": 245,
+    "pending": 201,
     "blocked": 0,
-    "percent": 54.71
+    "percent": 54.93
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 45,
-      "pending": 119,
+      "adapted": 46,
+      "pending": 118,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 45,
-      "percent": 27.44
+      "terminal": 46,
+      "percent": 28.05
     },
     "email": {
       "total": 82,
@@ -17752,21 +17752,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/my-sessions-admin-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/my-sessions-admin-link-control.test.tsx",
+      "evidence": "AIMW-CONT-2CDC790742 My Sessions admin sessions link focused closure@f3bc1ddb5d698c3f5dd5e8bc7303c8f996aef2fa: variants/laravel-aiwmweb/backend/resources/js/my-sessions-admin-link-control.tsx; focused-closure:AIMW-CONT-2CDC790742; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/my-sessions-admin-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/my-sessions-admin-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-2CDC790742 My Sessions admin sessions link focused closure",
+        "source_sha": "f3bc1ddb5d698c3f5dd5e8bc7303c8f996aef2fa",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/my-sessions-admin-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/my-sessions-admin-link-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-2CDC790742",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/my-sessions-admin-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/my-sessions-admin-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/my-sessions-admin-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36172,12 +36182,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 244,
-      "pending": 202,
+      "adapted": 245,
+      "pending": 201,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 244,
-      "percent": 54.71
+      "terminal": 245,
+      "percent": 54.93
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36208,7 +36218,6 @@
       "AIMW-CONT-289CEEF3BA",
       "AIMW-CONT-2C02B7A328",
       "AIMW-CONT-2C51372C70",
-      "AIMW-CONT-2CDC790742",
       "AIMW-CONT-3443C173C6",
       "AIMW-CONT-346657AD9D",
       "AIMW-CONT-349017BDF5",
@@ -37173,6 +37182,7 @@
       "AIMW-COMM-C083D47BC4",
       "AIMW-CONT-058F41BD1B",
       "AIMW-CONT-1A08B49164",
+      "AIMW-CONT-2CDC790742",
       "AIMW-CONT-4209A8ADF4",
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
@@ -37353,10 +37363,17 @@
         "operation_ids": [
           "AIMW-EMAI-62B0B8EE4C"
         ]
+      },
+      {
+        "label": "AIMW-CONT-2CDC790742 My Sessions admin sessions link focused closure",
+        "sha": "f3bc1ddb5d698c3f5dd5e8bc7303c8f996aef2fa",
+        "operation_ids": [
+          "AIMW-CONT-2CDC790742"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 14,
-    "focused_closure_contract_count": 244,
+    "focused_closure_operation_scoped_count": 15,
+    "focused_closure_contract_count": 245,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
