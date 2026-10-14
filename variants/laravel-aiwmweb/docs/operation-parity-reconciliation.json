@@ -13393,7 +13393,7 @@
       "external_dependency": "payment_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/__tests__/subscription-plans-new-plan.test.js",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
@@ -13401,18 +13401,18 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php",
-      "evidence": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure@d3beb376fb95e6573b2ee0ebc898cb5da97031be: variants/laravel-aiwmweb/backend/resources/js/__tests__/subscription-plans-new-plan.test.js; focused-closure:AIMW-BILL-F73C7348C3; test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
+      "evidence": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure@e50010da48b9b48e5c18cd970f67a6efd3cb96e1: variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php; focused-closure:AIMW-BILL-F73C7348C3; test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
-        "source_sha": "d3beb376fb95e6573b2ee0ebc898cb5da97031be",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/subscription-plans-new-plan.test.js",
+        "source_sha": "e50010da48b9b48e5c18cd970f67a6efd3cb96e1",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
         "signals": [
           "operation:AIMW-BILL-F73C7348C3",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/__tests__/subscription-plans-new-plan.test.js",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
           "test:variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php",
           "evidence:variants/laravel-aiwmweb/docs/closure-evidence/subscription-plans-new-plan-terminality.json",
           "scope:operation-specific",
@@ -37511,7 +37511,7 @@
       },
       {
         "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
-        "sha": "d3beb376fb95e6573b2ee0ebc898cb5da97031be",
+        "sha": "e50010da48b9b48e5c18cd970f67a6efd3cb96e1",
         "operation_ids": [
           "AIMW-BILL-F73C7348C3"
         ]
