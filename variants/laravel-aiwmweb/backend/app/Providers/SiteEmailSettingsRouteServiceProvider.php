@@ -14,6 +14,8 @@ final class SiteEmailSettingsRouteServiceProvider extends ServiceProvider
 
     public const SITE_ROUTE_OPERATION_ID = 'AIMW-EMAI-BFDC050625';
 
+    public const DIAGNOSTICS_ROUTE_OPERATION_ID = 'AIMW-EMAI-E4EEF1914B';
+
     public function boot(): void
     {
         Route::middleware(['web', 'auth', 'tenant.context'])
@@ -29,6 +31,7 @@ final class SiteEmailSettingsRouteServiceProvider extends ServiceProvider
 
         Route::middleware(['web', 'auth', 'tenant.context'])
             ->get('/tenants/{tenant}/sites/{site}/email-diagnostics', [SiteEmailSettingsController::class, 'diagnostics'])
+            ->defaults('canonical_operation_id', self::DIAGNOSTICS_ROUTE_OPERATION_ID)
             ->whereNumber('site')
             ->name('canonical.workspace.site-email-diagnostics');
 
