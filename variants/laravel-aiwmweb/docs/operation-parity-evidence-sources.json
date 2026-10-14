@@ -998,8 +998,8 @@
     },
     {
       "label": "AIMW-CONT-EE531AE1FC Welcome workflow anchor focused closure",
-      "sha": "aa946474e09653e7d847373049052cc860816187",
-      "observed_pr_head": "aa946474e09653e7d847373049052cc860816187",
+      "sha": "fb4f3c57bc9c312f2e912bc704113501d5ff8aba",
+      "observed_pr_head": "fb4f3c57bc9c312f2e912bc704113501d5ff8aba",
       "operation_ids": [
         "AIMW-CONT-EE531AE1FC"
       ]
