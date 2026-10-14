@@ -46,6 +46,7 @@ import { LocaleProvider, useLocale } from './i18n';
 import { LogsClearFiltersControl } from './logs-clear-filters-control';
 import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
+import { NotificationCenterToggleControl } from './notification-center-toggle-control';
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
@@ -120,6 +121,7 @@ function TenantBootstrap() {
             <AppShell context={context}>
                 <CurrentUserSiteDetailsControl context={context} />
                 <MainLayoutParityControls context={context} />
+                <NotificationCenterToggleControl context={context} />
                 <ApplicationUserPasswordResetControl context={context} />
                 <AutomationPhaseNavigationControls context={context} />
                 <Outlet context={{ context } satisfies OutletState} />
