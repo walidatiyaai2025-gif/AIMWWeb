@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "authority": "AIMWWeb Issue #741",
+  "authority": "AIMWWeb Issue #741 / umbrella #257",
   "target_variant": "LARAVEL_AIWMWEB",
   "operation_id": "AIMW-BILL-F73C7348C3",
   "domain": "billing",
@@ -43,21 +43,45 @@
     "control_type": "type=button",
     "network_request": false,
     "server_mutation": false,
-    "payment_provider_call": false
+    "payment_provider_call": false,
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/subscription-plans-new-plan.test.js",
+    "localization": "English New plan renders under lang=en dir=ltr; Arabic خطة جديدة renders under lang=ar dir=rtl.",
+    "repeatability": "Repeated New plan clicks discard unsaved draft edits and restore the exact NewForm defaults.",
+    "truthfulness": "The real browser handler performs no fetch/XHR/form submission and cannot fabricate persistence."
   },
   "authorization_and_isolation": {
     "guest": "redirected",
     "missing_settings_manage": "403",
-    "foreign_tenant": "404"
+    "foreign_tenant": "404",
+    "server_permission": "settings.manage",
+    "caller_controlled_tenant_escalation": false
   },
   "scope_guards": {
     "only_operation_claimed": "AIMW-BILL-F73C7348C3",
     "clone_current_not_claimed": "AIMW-BILL-7BD7B04B26",
     "save_async_not_claimed": "AIMW-BILL-D307963B59",
-    "aspnet_runtime_modified": false
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push_used_only_for_clean_rebase_to_latest_composition": true
   },
   "terminality": {
     "state": "ADAPTED",
     "basis": "NewPlan now exists as a real tenant-authorized browser control that resets the authoritative create form to source defaults, clears prior feedback, performs no persistence or provider call, and has focused deterministic coverage."
+  },
+  "acceptance_tests": [
+    "source NewPlan and NewForm exact reset/default semantics",
+    "authorized settings manager sees the exact canonical control",
+    "browser-level Vitest executes the production handler and proves no network or submit",
+    "repeated clicks discard unsaved draft state deterministically",
+    "English/LTR and Arabic/RTL rendering",
+    "GET/control causes no billing plan or audit mutation",
+    "guest redirect, missing permission 403, foreign tenant 404"
+  ],
+  "provenance": {
+    "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "21e06945d84f9c8b645af0c4984ef5a5c37135ab",
+    "exact_pushed_source": "registered in operation-parity-evidence-sources.json by the following manifest-only commit",
+    "self_sha_rule": "A Git commit cannot embed its own SHA; the manifest references the pushed evidence-bearing commit."
   }
 }
