@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 715,
-    "pending": 216,
+    "adapted": 716,
+    "pending": 215,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 715,
-    "overall_parity_percent": 76.8
+    "terminal": 716,
+    "overall_parity_percent": 76.91
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 252,
-    "pending": 194,
+    "terminal": 253,
+    "pending": 193,
     "blocked": 0,
-    "percent": 56.5
+    "percent": 56.73
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 50,
-      "pending": 114,
+      "adapted": 51,
+      "pending": 113,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 50,
-      "percent": 30.49
+      "terminal": 51,
+      "percent": 31.1
     },
     "email": {
       "total": 82,
@@ -20435,21 +20435,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeProductAnchorTerminalityTest.php",
+      "evidence": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure@d88005dd11ea7db346ccc6dc340c4467b138d89e: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-B1E9E1D6B0; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeProductAnchorTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-product-anchor-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
+        "source_sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-product-anchor-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-B1E9E1D6B0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeProductAnchorTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-product-anchor-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36265,12 +36275,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 252,
-      "pending": 194,
+      "adapted": 253,
+      "pending": 193,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 252,
-      "percent": 56.5
+      "terminal": 253,
+      "percent": 56.73
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36367,7 +36377,6 @@
       "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-AC737C80BF",
       "AIMW-CONT-B1024628D9",
-      "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-B44DA81C28",
       "AIMW-CONT-B60F3F750B",
       "AIMW-CONT-B6BB292F85",
@@ -37282,6 +37291,7 @@
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-8B3518EF80",
       "AIMW-CONT-9D5E269773",
+      "AIMW-CONT-B1E9E1D6B0",
       "AIMW-CONT-C178278FCB",
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
@@ -37515,10 +37525,17 @@
         "operation_ids": [
           "AIMW-BILL-F73C7348C3"
         ]
+      },
+      {
+        "label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
+        "sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+        "operation_ids": [
+          "AIMW-CONT-B1E9E1D6B0"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 22,
-    "focused_closure_contract_count": 252,
+    "focused_closure_operation_scoped_count": 23,
+    "focused_closure_contract_count": 253,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
