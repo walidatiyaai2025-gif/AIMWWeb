@@ -1,12 +1,12 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: focused-source-registration-repair
-# exact-head: governance-repair
-# retrigger: email-focused-source-registration
+# trigger: AIMW-TAXO-EC57E21E70 sequential integration
+# exact-head: 42f2a092b697e535478b88ae0ae40c58fb34ab20
+# retrigger: AIMW-TAXO-EC57E21E70
 
 on:
   push:
     branches:
-      - fix/laravel-aiwmweb-email-focused-source-registration
+      - worker/laravel-aiwmweb-AIMW-TAXO-EC57E21E70
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
