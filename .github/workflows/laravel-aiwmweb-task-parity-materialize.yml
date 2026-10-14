@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - fix/laravel-aiwmweb-email-focused-source-registration
-      - worker/888-welcome-workflow-anchor
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
