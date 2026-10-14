@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 709,
-    "pending": 222,
+    "adapted": 710,
+    "pending": 221,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 709,
-    "overall_parity_percent": 76.15
+    "terminal": 710,
+    "overall_parity_percent": 76.26
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 247,
-    "pending": 199,
+    "terminal": 248,
+    "pending": 198,
     "blocked": 0,
-    "percent": 55.38
+    "percent": 55.61
   },
   "domains": {
     "ai": {
@@ -213,12 +213,12 @@
     "taxonomy": {
       "total": 13,
       "ported": 0,
-      "adapted": 5,
-      "pending": 8,
+      "adapted": 6,
+      "pending": 7,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 5,
-      "percent": 38.46
+      "terminal": 6,
+      "percent": 46.15
     }
   },
   "uncounted_work": [],
@@ -35779,21 +35779,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-posts-link-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-posts-link-control.test.tsx",
+      "evidence": "AIMW-TAXO-EC57E21E70 Global Taxonomy Explorer Posts focused closure@42f2a092b697e535478b88ae0ae40c58fb34ab20: variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-posts-link-control.tsx; focused-closure:AIMW-TAXO-EC57E21E70; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-posts-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-posts-link-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-TAXO-EC57E21E70 Global Taxonomy Explorer Posts focused closure",
+        "source_sha": "42f2a092b697e535478b88ae0ae40c58fb34ab20",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-posts-link-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-posts-link-terminality.json",
+        "signals": [
+          "operation:AIMW-TAXO-EC57E21E70",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/global-taxonomy-posts-link-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/global-taxonomy-posts-link-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/global-taxonomy-posts-link-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36202,12 +36212,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 247,
-      "pending": 199,
+      "adapted": 248,
+      "pending": 198,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 247,
-      "percent": 55.38
+      "terminal": 248,
+      "percent": 55.61
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36454,8 +36464,7 @@
       "AIMW-TAXO-602DE140EB",
       "AIMW-TAXO-770DAA668D",
       "AIMW-TAXO-A96714F338",
-      "AIMW-TAXO-D6126926AD",
-      "AIMW-TAXO-EC57E21E70"
+      "AIMW-TAXO-D6126926AD"
     ]
   },
   "source_manifest": {
@@ -37283,6 +37292,7 @@
       "AIMW-SYNC-F340B5445A",
       "AIMW-TAXO-D5A5B530C7",
       "AIMW-TAXO-D784149312",
+      "AIMW-TAXO-EC57E21E70",
       "AIMW-TAXO-ECDD00F787"
     ],
     "focused_closure_operation_sources": [
@@ -37404,10 +37414,17 @@
         "operation_ids": [
           "AIMW-SYNC-7071DA172F"
         ]
+      },
+      {
+        "label": "AIMW-TAXO-EC57E21E70 Global Taxonomy Explorer Posts focused closure",
+        "sha": "42f2a092b697e535478b88ae0ae40c58fb34ab20",
+        "operation_ids": [
+          "AIMW-TAXO-EC57E21E70"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 17,
-    "focused_closure_contract_count": 247,
+    "focused_closure_operation_scoped_count": 18,
+    "focused_closure_contract_count": 248,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
