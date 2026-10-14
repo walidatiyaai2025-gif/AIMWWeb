@@ -85,6 +85,28 @@ final class SubscriptionPlansAdminNewPlanTerminalityTest extends TestCase
         }
     }
 
+    public function test_new_plan_control_is_localized_for_english_and_arabic_with_matching_direction(): void
+    {
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['settings.manage']);
+
+        $this->app->setLocale('en');
+        $this->actingAs($user)
+            ->get('/tenants/alpha/admin/subscription-plans')
+            ->assertOk()
+            ->assertSee('<html lang="en" dir="ltr">', false)
+            ->assertSee('New plan')
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false);
+
+        $this->app->setLocale('ar');
+        $this->actingAs($user)
+            ->get('/tenants/alpha/admin/subscription-plans')
+            ->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee('خطة جديدة')
+            ->assertSee('data-canonical-operation="'.self::OPERATION_ID.'"', false);
+    }
+
     public function test_control_is_read_only_until_separate_save_operation(): void
     {
         $user = User::factory()->create();

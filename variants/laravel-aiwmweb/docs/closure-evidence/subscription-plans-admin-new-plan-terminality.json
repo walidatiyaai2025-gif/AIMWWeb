@@ -1,0 +1,80 @@
+{
+  "authority": {
+    "repository": "walidatiyaai2025-gif/AIMWWeb",
+    "issue": 257,
+    "variant": "LARAVEL_AIWMWEB",
+    "composition_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "21e06945d84f9c8b645af0c4984ef5a5c37135ab"
+  },
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-F73C7348C3",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "source_route": "/admin/subscription-plans",
+    "source_control": "NewPlan",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "behavior": "NewPlan clears editing state, replaces the editor with NewForm defaults, clears entitlement editor values, and clears transient error/message state.",
+    "exact_defaults": {
+      "billing_interval": "Monthly",
+      "price": "0.00",
+      "currency": "USD",
+      "trial_days": 0,
+      "grace_period_days": 7,
+      "sort_order": 100,
+      "is_enabled": true,
+      "gateway_product_id": "",
+      "gateway_plan_id": ""
+    },
+    "request_contract": "The visible control is a local editor-state transition only. It performs no persistence; saving remains the separate canonical save operation."
+  },
+  "laravel_adaptation": {
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "browser_handler": "variants/laravel-aiwmweb/backend/public/js/subscription-plans-new-plan.js",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminNewPlanTerminalityTest.php",
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/subscription-plans-new-plan.test.js",
+    "visible_binding": "A localized type=button New plan control carries the exact canonical operation marker and targets the authoritative tenant-scoped subscription-plan create form.",
+    "state_transition": "Clicking New plan clears draft/edit values, restores source-equivalent defaults, hides stale validation/success/clone feedback, focuses plan code, and scrolls the create form into view.",
+    "truthfulness": "The handler performs no fetch/XHR/form submission and does not claim persistence.",
+    "repeatability": "Repeated clicks deterministically discard unsaved draft edits and restore the same clean creation state."
+  },
+  "security_and_tenancy": {
+    "permission": "settings.manage",
+    "authenticated": true,
+    "route_context": "The control is rendered only after auth + tenant.context and SubscriptionPlansAdminReadController verifies settings.manage and the resolved tenant slug.",
+    "guest_semantics": "Guest GET redirects to login before the control is rendered.",
+    "missing_permission_semantics": "Authenticated member without settings.manage receives 403.",
+    "tenant_isolation_proof": "An authorized tenant manager receives 404 when requesting a foreign tenant route; no caller-controlled tenant field is used by the control."
+  },
+  "localization": {
+    "english": "New plan on lang=en dir=ltr",
+    "arabic": "خطة جديدة on lang=ar dir=rtl"
+  },
+  "acceptance_tests": [
+    "reference NewPlan semantics and exact defaults are matched",
+    "authorized settings manager sees the exact marked production control",
+    "browser-level Vitest executes the real handler and proves reset/no-network/no-submit behavior",
+    "repeated clicks clear unsaved drafts",
+    "English/LTR and Arabic/RTL labels are rendered correctly",
+    "GET/control remains read-only until the separate save operation",
+    "guest, permission and foreign-tenant boundaries fail closed"
+  ],
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-F73C7348C3",
+    "sibling_visible_controls_claimed": false,
+    "persistence_save_operation_absorbed": false,
+    "aspnet_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "provenance": {
+    "exact_pushed_source": "registered separately in operation-parity-evidence-sources.json after this rebased evidence-bearing commit is pushed",
+    "self_sha_rule": "A Git commit cannot embed its own SHA; the manifest registration points to the exact pushed commit containing production marker, focused tests, and this evidence document."
+  }
+}
