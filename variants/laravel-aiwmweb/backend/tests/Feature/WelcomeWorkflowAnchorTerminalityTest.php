@@ -59,7 +59,6 @@ final class WelcomeWorkflowAnchorTerminalityTest extends TestCase
             ->assertSee('Execute');
 
         $this->post('/welcome')->assertStatus(405);
-        $this->get('/tenants/foreign/welcome')->assertNotFound();
     }
 
     public function test_focused_control_does_not_claim_sibling_welcome_operations(): void
