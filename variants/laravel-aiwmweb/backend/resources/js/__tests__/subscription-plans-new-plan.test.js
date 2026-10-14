@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('AIMW-BILL-F73C7348C3 New plan visible control', () => {
+describe('Subscription Plans New plan browser behavior', () => {
     beforeEach(() => {
         vi.resetModules();
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
         document.documentElement.lang = 'en';
         document.body.innerHTML = `
-            <button type="button" data-new-plan data-canonical-operation="AIMW-BILL-F73C7348C3">New plan</button>
+            <button type="button" data-new-plan>New plan</button>
             <p data-new-plan-feedback>Previous success</p>
             <section data-new-plan-feedback>Previous validation error</section>
             <p data-clone-current-status>Previous clone status</p>
