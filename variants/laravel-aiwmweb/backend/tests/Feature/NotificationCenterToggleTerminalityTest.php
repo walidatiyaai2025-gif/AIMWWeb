@@ -76,6 +76,7 @@ final class NotificationCenterToggleTerminalityTest extends TestCase
             ->get('/tenants/limited/notifications')
             ->assertForbidden();
     }
+
     /** @param list<string> $permissions */
     private function membership(User $user, string $slug, array $permissions): TenantMembership
     {
