@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 712,
-    "pending": 219,
+    "adapted": 713,
+    "pending": 218,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 712,
-    "overall_parity_percent": 76.48
+    "terminal": 713,
+    "overall_parity_percent": 76.58
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 250,
-    "pending": 196,
+    "terminal": 251,
+    "pending": 195,
     "blocked": 0,
-    "percent": 56.05
+    "percent": 56.28
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 48,
-      "pending": 116,
+      "adapted": 49,
+      "pending": 115,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 48,
-      "percent": 29.27
+      "terminal": 49,
+      "percent": 29.88
     },
     "email": {
       "total": 82,
@@ -20528,21 +20528,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeWorkspacePreviewAnchorTerminalityTest.php",
+      "evidence": "AIMW-CONT-D4607F943C Welcome workspace preview anchor focused closure@bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-D4607F943C; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeWorkspacePreviewAnchorTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-workspace-preview-anchor-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-D4607F943C Welcome workspace preview anchor focused closure",
+        "source_sha": "bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-workspace-preview-anchor-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-D4607F943C",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeWorkspacePreviewAnchorTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-workspace-preview-anchor-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36232,12 +36242,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 250,
-      "pending": 196,
+      "adapted": 251,
+      "pending": 195,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 250,
-      "percent": 56.05
+      "terminal": 251,
+      "percent": 56.28
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36351,7 +36361,6 @@
       "AIMW-CONT-CA17F05024",
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
-      "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
       "AIMW-CONT-DD56664FDA",
       "AIMW-CONT-DF6FFA9D87",
@@ -37239,6 +37248,7 @@
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-C178278FCB",
       "AIMW-CONT-CEA27985CB",
+      "AIMW-CONT-D4607F943C",
       "AIMW-CONT-DF8B12B6DE",
       "AIMW-CONT-E38ADF8481",
       "AIMW-CONT-EBD53650BC",
@@ -37455,10 +37465,17 @@
         "operation_ids": [
           "AIMW-CONT-16D09482D4"
         ]
+      },
+      {
+        "label": "AIMW-CONT-D4607F943C Welcome workspace preview anchor focused closure",
+        "sha": "bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07",
+        "operation_ids": [
+          "AIMW-CONT-D4607F943C"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 20,
-    "focused_closure_contract_count": 250,
+    "focused_closure_operation_scoped_count": 21,
+    "focused_closure_contract_count": 251,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
