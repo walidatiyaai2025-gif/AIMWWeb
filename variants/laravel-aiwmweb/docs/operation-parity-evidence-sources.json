@@ -987,6 +987,14 @@
         "AIMW-SYNC-7071DA172F"
       ],
       "observed_pr_head": "eeda454691fd16e219a8207a14a4dfd85b266585"
+    },
+    {
+      "label": "AIMW-TAXO-EC57E21E70 Global Taxonomy Explorer Posts focused closure",
+      "sha": "42f2a092b697e535478b88ae0ae40c58fb34ab20",
+      "observed_pr_head": "42f2a092b697e535478b88ae0ae40c58fb34ab20",
+      "operation_ids": [
+        "AIMW-TAXO-EC57E21E70"
+      ]
     }
   ]
 }
