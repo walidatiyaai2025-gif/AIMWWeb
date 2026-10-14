@@ -32108,12 +32108,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx",
-      "evidence": "AIMW-SYNC-7071DA172F AppFormActions focused closure@6962e4d9f03ec736162815a291606d2fce9acbd2: variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx; focused-closure:AIMW-SYNC-7071DA172F; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-terminality.json",
+      "evidence": "AIMW-SYNC-7071DA172F AppFormActions focused closure@eeda454691fd16e219a8207a14a4dfd85b266585: variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx; focused-closure:AIMW-SYNC-7071DA172F; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/sync-form-actions-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-SYNC-7071DA172F AppFormActions focused closure",
-        "source_sha": "6962e4d9f03ec736162815a291606d2fce9acbd2",
+        "source_sha": "eeda454691fd16e219a8207a14a4dfd85b266585",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/js/sync-form-actions-control.tsx",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/sync-app-form-actions-terminality.json",
@@ -37400,7 +37400,7 @@
       },
       {
         "label": "AIMW-SYNC-7071DA172F AppFormActions focused closure",
-        "sha": "6962e4d9f03ec736162815a291606d2fce9acbd2",
+        "sha": "eeda454691fd16e219a8207a14a4dfd85b266585",
         "operation_ids": [
           "AIMW-SYNC-7071DA172F"
         ]
