@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - worker/laravel-aiwmweb-AIMW-CONT-C6C7F24B03-operations-workspace-route
-      - chore/1093-rematerialize-operations-workspace-parity
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/operations-workspace-route-terminality.json'
