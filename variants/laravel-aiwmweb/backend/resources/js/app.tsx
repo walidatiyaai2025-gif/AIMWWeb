@@ -48,6 +48,7 @@ import { LogsCloseDetailsControl } from './logs-close-details-control';
 import { MainLayoutParityControls } from './main-layout-parity-controls';
 import { NotificationCenterToggleControl } from './notification-center-toggle-control';
 import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
+import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
 import { OperationsHubReloadControl } from './operations-hub-reload-control';
 import { PagesPostsLinkControl } from './pages-posts-link-control';
 import { MediaPagesLinkControl } from './media-pages-link-control';
@@ -196,6 +197,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
     if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'operations') return <><OperationsHubReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sessions') return <><MySessionsAdminLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'settings') return <><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;

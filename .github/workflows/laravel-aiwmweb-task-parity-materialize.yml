@@ -1,15 +1,15 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: focused-source-registration-repair
-# exact-head: governance-repair
-# retrigger: email-focused-source-registration
+# trigger: AIMW-CONT-2CDC790742 issue-792-admin-sessions-link
+# exact-head: 20b84e7ea1e354e660ecbfa11d672cf06990fe6c
+# retrigger: issue-792-materialize-latest
 
 on:
   push:
     branches:
-      - fix/laravel-aiwmweb-email-focused-source-registration
+      - worker/laravel-aiwmweb-AIMW-CONT-2CDC790742-admin-sessions-link
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
-      - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
+      - 'variants/laravel-aiwmweb/docs/closure-evidence/my-sessions-admin-link-terminality.json'
       - '.github/workflows/laravel-aiwmweb-task-parity-materialize.yml'
 
 permissions:
@@ -50,5 +50,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize repaired email focused sources"
+          git commit -m "chore(laravel): materialize parity for AIMW-CONT-2CDC790742"
           git push origin "HEAD:${{ github.ref_name }}"
