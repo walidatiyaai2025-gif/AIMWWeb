@@ -1,12 +1,12 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-SYNC-7071DA172F clean integration
-# exact-head: 7afe3ec0939955c6ee83a7562a5376ff3ef04653
-# retrigger: AIMW-SYNC-7071DA172F
+# trigger: focused-source-registration-repair
+# exact-head: governance-repair
+# retrigger: email-focused-source-registration
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-SYNC-7071DA172F-form-actions
+      - fix/laravel-aiwmweb-email-focused-source-registration
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
