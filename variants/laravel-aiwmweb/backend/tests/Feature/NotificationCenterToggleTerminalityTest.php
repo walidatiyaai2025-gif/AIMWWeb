@@ -46,8 +46,8 @@ final class NotificationCenterToggleTerminalityTest extends TestCase
 
         $this->assertStringContainsString('NotificationCenterToggleControl', $app);
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("context.api.notifications", $control);
-        $this->assertStringContainsString("apiRequest<NotificationEnvelope | NotificationRow[]>", $control);
+        $this->assertStringContainsString('context.api.notifications', $control);
+        $this->assertStringContainsString('apiRequest<NotificationEnvelope | NotificationRow[]>', $control);
         $this->assertStringNotContainsString("method: 'POST'", $control);
         $this->assertStringNotContainsString('method: "POST"', $control);
     }
