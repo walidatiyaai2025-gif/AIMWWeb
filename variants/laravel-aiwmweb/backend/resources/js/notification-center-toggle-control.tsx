@@ -6,6 +6,7 @@ import { useLocale } from './i18n';
 import './notification-center-toggle-control.css';
 
 export const NOTIFICATION_CENTER_TOGGLE_OPERATION_ID = 'AIMW-EMAI-8E3B0AACD6';
+export const NOTIFICATION_CENTER_REFRESH_OPERATION_ID = 'AIMW-EMAI-62B0B8EE4C';
 
 type NotificationRow = Record<string, unknown>;
 
@@ -123,6 +124,18 @@ export function NotificationCenterToggleControl({ context }: { context: Frontend
                         <div>
                             <strong>{locale === 'ar' ? 'مركز التنبيهات' : 'Notification center'}</strong>
                             <small>{locale === 'ar' ? `${unreadCount} غير مقروء` : `${unreadCount} unread`}</small>
+                        </div>
+                        <div className="notification-center-head-actions">
+                            <button
+                                type="button"
+                                className="icon-button notification-center-refresh"
+                                data-canonical-operation={NOTIFICATION_CENTER_REFRESH_OPERATION_ID}
+                                aria-label={locale === 'ar' ? 'تحديث' : 'Refresh'}
+                                disabled={state === 'loading'}
+                                onClick={() => void refresh()}
+                            >
+                                <span aria-hidden="true">↻</span>
+                            </button>
                         </div>
                     </header>
 

@@ -936,6 +936,14 @@
       "operation_ids": [
         "AIMW-EMAI-8E3B0AACD6"
       ]
+    },
+    {
+      "label": "AIMW-EMAI-62B0B8EE4C NotificationCenter RefreshAsync focused closure",
+      "sha": "560dfc63fbcd9022c5bf4282255f3cf7837d500e",
+      "observed_pr_head": "560dfc63fbcd9022c5bf4282255f3cf7837d500e",
+      "operation_ids": [
+        "AIMW-EMAI-62B0B8EE4C"
+      ]
     }
   ]
 }
