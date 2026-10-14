@@ -1,0 +1,97 @@
+{
+  "operation_id": "AIMW-EMAI-E4EEF1914B",
+  "domain": "email",
+  "kind": "route",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteEmailDiagnostics.razor",
+    "route_screen": "/sites/{SiteId:guid}/email-diagnostics",
+    "visible_control": "Open/render route",
+    "behavior": "Open the current tenant's site SMTP diagnostics surface, resolve enabled recipient state for the selected site, and expose the saved SMTP profile only as non-secret diagnostic context."
+  },
+  "laravel_adaptation": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteEmailSettingsRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteEmailSettingsController.php",
+    "view_path": "variants/laravel-aiwmweb/backend/resources/views/sites/email-diagnostics.blade.php",
+    "route": "GET /tenants/{tenant}/sites/{site}/email-diagnostics",
+    "route_name": "canonical.workspace.site-email-diagnostics",
+    "canonical_operation_id": "AIMW-EMAI-E4EEF1914B",
+    "behavior": "The existing real Laravel diagnostics workspace is explicitly operation-bound. The GET route authenticates the caller, establishes tenant context, authorizes tenant.view + sites.view + settings.manage, resolves the site through tenant-scoped models, rereads persisted SMTP/recipient state, and renders the real diagnostics view without exposing secret material."
+  },
+  "runtime_path": [
+    "/tenants/{tenant}/sites/{site}/email-diagnostics",
+    "web + auth + tenant.context",
+    "SiteEmailSettingsController::diagnostics",
+    "TenantAuthorizer tenant.view + sites.view + settings.manage",
+    "TenantContext active tenant",
+    "tenant-scoped Site::findOrFail(site)",
+    "SiteEmailRecipientService::listAsync(site)",
+    "SiteMailProfileService::getAsync(site)",
+    "sites/email-diagnostics.blade.php"
+  ],
+  "authorization": {
+    "authentication": "auth",
+    "tenant_context": "tenant.context",
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "settings.manage"
+    ],
+    "guest_semantics": "redirect to canonical login before tenant-owned diagnostics are rendered",
+    "missing_permission_semantics": "403 fail closed",
+    "foreign_tenant_semantics": "404 fail closed",
+    "direct_id_semantics": "the numeric site ID is resolved under the authenticated TenantContext; a foreign tenant site ID returns 404"
+  },
+  "tenant_isolation": {
+    "tenant_owned": true,
+    "server_derived_ownership": "TenantContext comes from the active authenticated membership and the controller verifies the route tenant slug before tenant-scoped Site, recipient, or SMTP profile reads are returned.",
+    "idor_proof": "Focused acceptance creates separate Alpha and Beta sites and proves Alpha cannot render Beta by substituting either the foreign site ID or the foreign tenant slug."
+  },
+  "read_and_failure_semantics": {
+    "mutation": false,
+    "authoritative_reread": "Each GET resolves the current Site plus persisted recipient and SMTP profile state; the empty state is rendered when no saved site profile or enabled recipient exists.",
+    "truthful_success": "200 is asserted only after the guarded controller resolves the active tenant site and renders real persisted data.",
+    "empty_state": "the real view renders deterministic no-profile and no-enabled-recipient messages",
+    "invalid_site": "404",
+    "missing_permission": "403",
+    "unauthenticated": "login redirect",
+    "retry": "safe; GET is read-only and repeatable",
+    "cancellation": "not applicable to synchronous route rendering"
+  },
+  "secret_provider_wordpress_boundaries": {
+    "smtp_secret_non_exposure": "The route exposes only non-secret SMTP view fields and never renders saved password ciphertext, SMTP passwords, provider secrets, or the plaintext secret used by focused acceptance.",
+    "provider_calls": "Opening this route does not send mail, probe SMTP, or invoke an external email provider.",
+    "wordpress_connector": "No WordPress or Connector call is performed.",
+    "ai_provider": "No AI provider is touched.",
+    "queue_cache_scheduler": "No queue, cache, scheduler, or background job side effect is introduced."
+  },
+  "canonical_boundaries": {
+    "diagnose_operation": "AIMW-BILL-EE42461195 remains bound only to POST /email-diagnostics/diagnose.",
+    "send_test_operation": "AIMW-BILL-BC093D6418 remains bound only to POST /email-diagnostics/send-test.",
+    "back_visible_control": "AIMW-EMAI-8E56589573 remains the separate Back to email settings visible control.",
+    "selected_operation": "Only the diagnostics Open/render GET route is claimed."
+  },
+  "acceptance_tests": [
+    "Tests\\Feature\\SiteEmailDiagnosticsRouteTerminalityTest::test_exact_canonical_operation_is_the_site_email_diagnostics_route",
+    "Tests\\Feature\\SiteEmailDiagnosticsRouteTerminalityTest::test_route_is_explicit_guarded_operation_bound_and_read_only",
+    "Tests\\Feature\\SiteEmailDiagnosticsRouteTerminalityTest::test_authorized_member_renders_real_profile_and_recipient_without_secret_material",
+    "Tests\\Feature\\SiteEmailDiagnosticsRouteTerminalityTest::test_empty_state_guest_permission_and_cross_tenant_paths_fail_closed",
+    "Tests\\Feature\\SiteEmailDiagnosticsRouteTerminalityTest::test_sibling_diagnostics_controls_remain_separate_canonical_operations",
+    "Tests\\Feature\\SiteEmailDiagnosticsRouteTerminalityTest::test_source_and_laravel_authorization_contracts_match_the_same_route"
+  ],
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "diagnose_claimed": false,
+    "send_test_claimed": false,
+    "back_visible_control_claimed": false,
+    "source_aspnet_modified": false,
+    "manual_parity_count_edit": false,
+    "taxonomy_domain_touched": false,
+    "sync_domain_touched": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "A real guarded tenant-qualified Laravel diagnostics route is explicitly bound to AIMW-EMAI-E4EEF1914B and proven with authoritative persisted reads, empty-state rendering, permission/tenant failure semantics, read-only behavior, secret non-exposure, and separation from sibling SMTP controls."
+  }
+}
