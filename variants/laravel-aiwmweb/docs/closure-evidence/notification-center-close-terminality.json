@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #893 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-77C637E3E3",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-EMAI-77C637E3E3",
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "component:NotificationCenter",
+    "visible_control": "@(L.IsArabic ? [Close]",
+    "source": "src/AIWordPressManager.Web/Components/Layout/NotificationCenter.razor",
+    "source_intent": "Close the open notification popover immediately without an additional authoritative read or mutation.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/notification-center-toggle-control.tsx",
+    "integration": "existing global NotificationCenter control mounted in variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "operation_marker": "AIMW-EMAI-77C637E3E3",
+    "close_semantics": "explicit Close button sets the NotificationCenter popover closed immediately and does not issue an additional read or mutation",
+    "authoritative_context_endpoint": "/api/v1/tenants/{tenant}/notifications",
+    "render_states_preserved": [
+      "loading",
+      "empty",
+      "error",
+      "authoritative notification rows"
+    ]
+  },
+  "security": {
+    "workspace_permission": "notifications.view",
+    "tenant_endpoint": "server-advertised FrontendContext api.notifications for the active tenant",
+    "foreign_tenant": "404/fail closed",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/notification-center-close-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/NotificationCenterCloseTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and ASP.NET source intent",
+      "explicit close control is operation-linked",
+      "close hides the open popover without an extra network request",
+      "close remains available while the authoritative read is in flight",
+      "no mutation is introduced",
+      "permission and endpoint fail-closed behavior",
+      "active tenant endpoint is authoritative",
+      "foreign tenant API access fails closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-EMAI-77C637E3E3"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  }
+}
