@@ -1066,11 +1066,12 @@
     },
     {
       "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
-      "sha": "e50010da48b9b48e5c18cd970f67a6efd3cb96e1",
-      "observed_pr_head": "e50010da48b9b48e5c18cd970f67a6efd3cb96e1",
+      "sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
+      "observed_pr_head": "5313abf56da9c8a8e21f653a45e28a6192f1f960",
       "operation_ids": [
         "AIMW-BILL-F73C7348C3"
-      ]
+      ],
+      "provenance_refresh": "Merged composition commit retained the accepted billing implementation/evidence after the original worker ref was deleted."
     }
   ]
 }
