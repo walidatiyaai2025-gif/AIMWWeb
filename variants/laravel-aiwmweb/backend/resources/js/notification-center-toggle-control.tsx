@@ -7,6 +7,7 @@ import './notification-center-toggle-control.css';
 
 export const NOTIFICATION_CENTER_TOGGLE_OPERATION_ID = 'AIMW-EMAI-8E3B0AACD6';
 export const NOTIFICATION_CENTER_REFRESH_OPERATION_ID = 'AIMW-EMAI-62B0B8EE4C';
+export const NOTIFICATION_CENTER_CLOSE_OPERATION_ID = 'AIMW-EMAI-77C637E3E3';
 
 type NotificationRow = Record<string, unknown>;
 
@@ -87,9 +88,11 @@ export function NotificationCenterToggleControl({ context }: { context: Frontend
         }
     };
 
+    const close = () => setOpen(false);
+
     const toggle = () => {
         if (open) {
-            setOpen(false);
+            close();
             return;
         }
 
@@ -136,6 +139,15 @@ export function NotificationCenterToggleControl({ context }: { context: Frontend
                             >
                                 <span aria-hidden="true">↻</span>
                             </button>
+                            <button
+                                type="button"
+                                className="icon-button notification-center-close"
+                                data-canonical-operation={NOTIFICATION_CENTER_CLOSE_OPERATION_ID}
+                                aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
+                                onClick={close}
+                            >
+                                <span aria-hidden="true">×</span>
+                            </button>
                         </div>
                     </header>
 
@@ -174,7 +186,7 @@ export function NotificationCenterToggleControl({ context }: { context: Frontend
                     )}
 
                     <footer>
-                        <Link to={tenantUrl(context.tenant.slug, '/notifications')} onClick={() => setOpen(false)}>
+                        <Link to={tenantUrl(context.tenant.slug, '/notifications')} onClick={close}>
                             {locale === 'ar' ? 'عرض كل الإشعارات' : 'View all notifications'}
                         </Link>
                     </footer>
