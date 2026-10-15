@@ -17852,12 +17852,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php",
-      "evidence": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure@d6c4a464f26173808b07768f97c18db6fa85bdf0: variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php; focused-closure:AIMW-CONT-6E22D74EE0; test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
+      "evidence": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure@0d5b234041565d4c7f6129afdbc829152b697769: variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php; focused-closure:AIMW-CONT-6E22D74EE0; test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
-        "source_sha": "d6c4a464f26173808b07768f97c18db6fa85bdf0",
+        "source_sha": "0d5b234041565d4c7f6129afdbc829152b697769",
         "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
@@ -37571,7 +37571,7 @@
       },
       {
         "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
-        "sha": "d6c4a464f26173808b07768f97c18db6fa85bdf0",
+        "sha": "0d5b234041565d4c7f6129afdbc829152b697769",
         "operation_ids": [
           "AIMW-CONT-6E22D74EE0"
         ]
