@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
+  "previous_reconciliation_sha": "a3b827d0a958240de31bbd7b72760067c0e148fe",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -1067,11 +1067,18 @@
     {
       "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
       "sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
-      "observed_pr_head": "5313abf56da9c8a8e21f653a45e28a6192f1f960",
+      "observed_pr_head": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
       "operation_ids": [
         "AIMW-BILL-F73C7348C3"
-      ],
-      "provenance_refresh": "Merged composition commit retained the accepted billing implementation/evidence after the original worker ref was deleted."
+      ]
+    },
+    {
+      "label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
+      "sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+      "observed_pr_head": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+      "operation_ids": [
+        "AIMW-CONT-B1E9E1D6B0"
+      ]
     }
   ]
 }
