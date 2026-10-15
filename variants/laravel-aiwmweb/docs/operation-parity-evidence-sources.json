@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "a3b827d0a958240de31bbd7b72760067c0e148fe",
+  "previous_reconciliation_sha": "2f115e254ef589b07acb74fffe8544f5f75a2854",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -1078,6 +1078,14 @@
       "observed_pr_head": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
       "operation_ids": [
         "AIMW-CONT-B1E9E1D6B0"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+      "sha": "0d5b234041565d4c7f6129afdbc829152b697769",
+      "observed_pr_head": "0d5b234041565d4c7f6129afdbc829152b697769",
+      "operation_ids": [
+        "AIMW-CONT-6E22D74EE0"
       ]
     }
   ]

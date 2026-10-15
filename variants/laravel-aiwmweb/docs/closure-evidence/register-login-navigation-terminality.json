@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #793 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6E22D74EE0",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/register",
+    "visible_control": "/login -> /login",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Register.razor",
+    "source_intent": "Allow an anonymous visitor on the registration page to navigate to the canonical sign-in page.",
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_view": "variants/laravel-aiwmweb/backend/resources/views/auth/register.blade.php",
+    "source_controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+    "destination": "/login",
+    "operation_marker": "AIMW-CONT-6E22D74EE0",
+    "behavior": "Render the canonical Sign in link on the anonymous registration surface without changing registration state."
+  },
+  "security": {
+    "source_authorization": "public anonymous registration surface",
+    "destination_authorization": "public sign-in surface",
+    "caller_supplied_tenant": false,
+    "caller_supplied_user": false,
+    "mutation_added": false,
+    "secret_exposure": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity",
+      "exact /login destination",
+      "exact operation marker",
+      "anonymous register rendering",
+      "authenticated register redirect remains unchanged",
+      "navigation is distinct from registration mutation",
+      "no tenant or user identity is appended to the destination"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-6E22D74EE0"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

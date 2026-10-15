@@ -15,6 +15,8 @@ final class RegisterController extends Controller
 {
     public const OPERATION_ID = 'AIMW-BILL-34B7686F5E';
 
+    public const LOGIN_NAVIGATION_OPERATION_ID = 'AIMW-CONT-6E22D74EE0';
+
     /** @var list<string> */
     private const FORBIDDEN_OWNERSHIP_FIELDS = [
         'tenant',
