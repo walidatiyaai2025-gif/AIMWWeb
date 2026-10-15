@@ -38,11 +38,15 @@
       "sites.view permission fail-closed behavior",
       "active membership fail-closed behavior",
       "tenant slug URL encoding",
-      "navigation-only behavior"
-    ]
+      "navigation-only behavior",
+      "foreign tenant workspace request fails 404 under tenant.context"
+    ],
+    "backend_test": "variants/laravel-aiwmweb/backend/tests/Feature/DashboardSitesNavigationTerminalityTest.php"
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-CONT-71F54E3BA6"],
+    "claimed_operations": [
+      "AIMW-CONT-71F54E3BA6"
+    ],
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false
   }
