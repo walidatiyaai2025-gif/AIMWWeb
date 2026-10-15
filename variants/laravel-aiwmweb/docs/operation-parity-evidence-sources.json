@@ -1060,8 +1060,8 @@
     },
     {
       "label": "AIMW-CONT-71F54E3BA6 Dashboard sites navigation focused closure",
-      "sha": "188fd3b79bb80b80f381be7db44ae93a3f6b63d1",
-      "observed_pr_head": "188fd3b79bb80b80f381be7db44ae93a3f6b63d1",
+      "sha": "c0333cafaab8b8fdaa186dd3d0d660ba68ae044c",
+      "observed_pr_head": "c0333cafaab8b8fdaa186dd3d0d660ba68ae044c",
       "operation_ids": [
         "AIMW-CONT-71F54E3BA6"
       ]
