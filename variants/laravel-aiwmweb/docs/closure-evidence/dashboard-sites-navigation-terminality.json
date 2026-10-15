@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #784 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-71F54E3BA6",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/",
+    "visible_control": "/sites -> /sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Home.razor",
+    "source_intent": "Expose the dashboard Add site navigation into the real Sites workspace.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "component": "variants/laravel-aiwmweb/backend/resources/js/dashboard-sites-navigation-control.tsx",
+    "host": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "destination": "/tenants/{tenant}/sites",
+    "operation_marker": "AIMW-CONT-71F54E3BA6"
+  },
+  "security": {
+    "tenant_selector": "server-provided active FrontendContext tenant",
+    "active_membership_required": true,
+    "permission": "sites.view",
+    "foreign_or_synthesized_tenant": "control omitted/fail closed",
+    "tenant_slug_encoding": true,
+    "mutation_added": false,
+    "secret_exposure": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/dashboard-sites-navigation-control.test.tsx",
+    "coverage": [
+      "exact canonical operation marker",
+      "exact tenant-scoped Sites destination",
+      "sites.view permission fail-closed behavior",
+      "active membership fail-closed behavior",
+      "tenant slug URL encoding",
+      "navigation-only behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-71F54E3BA6"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}
