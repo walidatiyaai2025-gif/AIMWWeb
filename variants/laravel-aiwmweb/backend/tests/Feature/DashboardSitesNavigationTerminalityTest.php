@@ -41,7 +41,7 @@ final class DashboardSitesNavigationTerminalityTest extends TestCase
         $control = (string) file_get_contents(resource_path('js/dashboard-sites-navigation-control.tsx'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $control);
-        $this->assertStringContainsString("tenantUrl(context.tenant.slug, sitesRoute.path)", $control);
+        $this->assertStringContainsString('tenantUrl(context.tenant.slug, sitesRoute.path)', $control);
         $this->assertStringContainsString("sitesRoute.permission === 'sites.view'", $control);
         $this->assertStringContainsString('expectedSitesApi', $control);
         $this->assertStringNotContainsString('POST', $control);
