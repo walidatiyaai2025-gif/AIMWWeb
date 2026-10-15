@@ -52,6 +52,11 @@ final class RegisterLoginNavigationTerminalityTest extends TestCase
             ->assertRedirect('/');
     }
 
+    public function test_foreign_tenant_alias_cannot_rebind_the_public_register_navigation(): void
+    {
+        $this->get('/tenants/foreign/register')->assertNotFound();
+    }
+
     public function test_navigation_contract_is_static_read_only_and_distinct_from_registration_mutation(): void
     {
         $controller = (string) file_get_contents(app_path('Http/Controllers/RegisterController.php'));
