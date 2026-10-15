@@ -13,14 +13,18 @@ export function DashboardSitesNavigationControl({ context }: { context: Frontend
         && Number.isSafeInteger(context.user.id)
         && context.user.id > 0,
     );
+    const encodedTenant = encodeURIComponent(context.tenant.slug);
+    const expectedSitesApi = `/api/tenants/${encodedTenant}/sites`;
     const routeContractIsExact = Boolean(
         sitesRoute
         && sitesRoute.path === '/sites'
-        && sitesRoute.permission === 'sites.view',
+        && sitesRoute.permission === 'sites.view'
+        && sitesRoute.apiKey === 'sites',
     );
+    const apiContractIsExact = context.api.sites === expectedSitesApi;
     const capability = sitesRoute ? resolveCapability(context, sitesRoute) : { state: 'pending_integration' as const };
 
-    if (!activeTenantIsAuthoritative || !sitesRoute || !routeContractIsExact || capability.state !== 'enabled') {
+    if (!activeTenantIsAuthoritative || !sitesRoute || !routeContractIsExact || !apiContractIsExact || capability.state !== 'enabled') {
         return null;
     }
 
