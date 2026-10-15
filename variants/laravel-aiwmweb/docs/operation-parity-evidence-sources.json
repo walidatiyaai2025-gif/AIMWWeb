@@ -1049,6 +1049,14 @@
       "operation_ids": [
         "AIMW-BILL-F73C7348C3"
       ]
+    },
+    {
+      "label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
+      "sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+      "observed_pr_head": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+      "operation_ids": [
+        "AIMW-CONT-B1E9E1D6B0"
+      ]
     }
   ]
 }

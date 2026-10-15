@@ -73,6 +73,11 @@
             </a>
             <a
                 class="signin"
+                href="#product"
+                data-canonical-operation="AIMW-CONT-B1E9E1D6B0"
+            >{{ $welcomeLocale === 'ar' ? 'المنتج' : 'Product' }}</a>
+            <a
+                class="signin"
                 href="#workflow"
                 data-canonical-operation="AIMW-CONT-EE531AE1FC"
             >{{ $welcomeLocale === 'ar' ? 'طريقة العمل' : 'Workflow' }}</a>
@@ -83,7 +88,11 @@
             <a class="signin" href="/login">{{ $welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in' }}</a>
         </header>
 
-        <main class="hero">
+        <main
+            class="hero"
+            id="product"
+            data-product-anchor-target="AIMW-CONT-B1E9E1D6B0"
+        >
             <section>
                 <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'إدارة ووردبريس بمساعدة الذكاء الاصطناعي' : 'AI-ASSISTED WORDPRESS OPERATIONS' }}</div>
                 <h1>{{ $welcomeLocale === 'ar' ? 'أدر ووردبريس كنظام واحد.' : 'Operate WordPress as one system.' }}</h1>
