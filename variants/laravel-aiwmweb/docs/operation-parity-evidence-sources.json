@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "8c588495d83aca72a8cf9432c76d7bab310ff24a",
+  "previous_reconciliation_sha": "a3b827d0a958240de31bbd7b72760067c0e148fe",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -1051,9 +1051,17 @@
       ]
     },
     {
+      "label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
+      "sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+      "observed_pr_head": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+      "operation_ids": [
+        "AIMW-CONT-B1E9E1D6B0"
+      ]
+    },
+    {
       "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
-      "sha": "875342d1cf6e29d16719cb6c9d0388d0d8990684",
-      "observed_pr_head": "875342d1cf6e29d16719cb6c9d0388d0d8990684",
+      "sha": "e85b1bf3e7574ddcc67e56055d4460e902a50c86",
+      "observed_pr_head": "e85b1bf3e7574ddcc67e56055d4460e902a50c86",
       "operation_ids": [
         "AIMW-CONT-6E22D74EE0"
       ]
