@@ -1049,6 +1049,14 @@
       "operation_ids": [
         "AIMW-BILL-F73C7348C3"
       ]
+    },
+    {
+      "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+      "sha": "875342d1cf6e29d16719cb6c9d0388d0d8990684",
+      "observed_pr_head": "875342d1cf6e29d16719cb6c9d0388d0d8990684",
+      "operation_ids": [
+        "AIMW-CONT-6E22D74EE0"
+      ]
     }
   ]
 }
