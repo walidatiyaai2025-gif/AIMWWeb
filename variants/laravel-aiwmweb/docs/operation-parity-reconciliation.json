@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 717,
-    "pending": 214,
+    "adapted": 718,
+    "pending": 213,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 717,
-    "overall_parity_percent": 77.01
+    "terminal": 718,
+    "overall_parity_percent": 77.12
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 253,
-    "pending": 193,
+    "terminal": 254,
+    "pending": 192,
     "blocked": 0,
-    "percent": 56.73
+    "percent": 56.95
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 52,
-      "pending": 112,
+      "adapted": 53,
+      "pending": 111,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 52,
-      "percent": 31.71
+      "terminal": 53,
+      "percent": 32.32
     },
     "email": {
       "total": 82,
@@ -17844,21 +17844,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php",
+      "evidence": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure@d6c4a464f26173808b07768f97c18db6fa85bdf0: variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php; focused-closure:AIMW-CONT-6E22D74EE0; test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+        "source_sha": "d6c4a464f26173808b07768f97c18db6fa85bdf0",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-6E22D74EE0",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36288,12 +36298,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 253,
-      "pending": 193,
+      "adapted": 254,
+      "pending": 192,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 253,
-      "percent": 56.73
+      "terminal": 254,
+      "percent": 56.95
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36358,7 +36368,6 @@
       "AIMW-CONT-6B6790BE84",
       "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6D14B76763",
-      "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-6EC0601E18",
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-73E4F88038",
@@ -37313,6 +37322,7 @@
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
       "AIMW-CONT-564636DDC9",
+      "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-83908F2D7C",
       "AIMW-CONT-85394A0E55",
       "AIMW-CONT-8B3518EF80",
@@ -37558,10 +37568,17 @@
         "operation_ids": [
           "AIMW-CONT-B1E9E1D6B0"
         ]
+      },
+      {
+        "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+        "sha": "d6c4a464f26173808b07768f97c18db6fa85bdf0",
+        "operation_ids": [
+          "AIMW-CONT-6E22D74EE0"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 23,
-    "focused_closure_contract_count": 253,
+    "focused_closure_operation_scoped_count": 24,
+    "focused_closure_contract_count": 254,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
