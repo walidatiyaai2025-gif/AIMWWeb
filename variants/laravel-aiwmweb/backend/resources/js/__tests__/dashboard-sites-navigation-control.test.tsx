@@ -12,6 +12,7 @@ const context = (
     slug = 'alpha',
     permissions: string[] = ['tenant.view', 'sites.view'],
     tenantSlugs: string[] = [slug],
+    sitesApi = `/api/tenants/${encodeURIComponent(slug)}/sites`,
 ): FrontendContext => ({
     user: { id: 10, name: 'Alpha Owner', email: 'alpha@example.test' },
     tenant: { slug, name: 'Alpha' },
@@ -19,7 +20,7 @@ const context = (
     permissions,
     connectors: [],
     capabilities: {},
-    api: {},
+    api: { sites: sitesApi },
     actions: {},
 });
 
@@ -51,6 +52,11 @@ describe('AIMW-CONT-71F54E3BA6 dashboard /sites navigation', () => {
 
     it('fails closed when the active tenant is not in the server-provided membership set', () => {
         renderControl(context('alpha', undefined, ['beta']));
+        expect(screen.queryByRole('link', { name: 'Add site' })).not.toBeInTheDocument();
+    });
+
+    it('rejects a foreign Sites API contract', () => {
+        renderControl(context('alpha', undefined, ['alpha'], '/api/tenants/beta/sites'));
         expect(screen.queryByRole('link', { name: 'Add site' })).not.toBeInTheDocument();
     });
 
