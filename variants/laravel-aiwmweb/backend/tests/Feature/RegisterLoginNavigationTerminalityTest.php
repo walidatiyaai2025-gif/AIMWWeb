@@ -3,7 +3,12 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\RegisterController;
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\TenantMembership;
 use App\Models\User;
+use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -53,9 +58,14 @@ final class RegisterLoginNavigationTerminalityTest extends TestCase
             ->assertRedirect('/');
     }
 
-    public function test_foreign_tenant_alias_cannot_rebind_the_public_register_navigation(): void
+    public function test_foreign_tenant_alias_cannot_rebind_the_public_login_navigation(): void
     {
-        $this->get('/tenants/foreign/register')->assertNotFound();
+        $user = User::factory()->create();
+        $this->membership($user, 'alpha', ['tenant.view']);
+
+        $this->actingAs($user)
+            ->get('/tenants/foreign/login')
+            ->assertNotFound();
     }
 
     public function test_navigation_contract_is_static_read_only_and_distinct_from_registration_mutation(): void
@@ -70,5 +80,28 @@ final class RegisterLoginNavigationTerminalityTest extends TestCase
         $this->assertStringContainsString("public const LOGIN_NAVIGATION_OPERATION_ID = '".self::OPERATION_ID."';", $controller);
         $this->assertStringNotContainsString('href="/login?tenant=', $view);
         $this->assertStringNotContainsString('href="/login?user_id=', $view);
+    }
+
+    private function membership(User $user, string $slug, array $permissions): void
+    {
+        $tenant = Tenant::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
+        $context = app(TenantContext::class);
+        $context->activate($tenant);
+
+        $membership = TenantMembership::query()->create([
+            'user_id' => $user->id,
+            'status' => 'active',
+        ]);
+        $role = Role::query()->create([
+            'name' => "register-login-{$slug}-{$user->id}",
+        ]);
+
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::query()->firstOrCreate(['name' => $permissionName]);
+            $role->permissions()->attach($permission, ['tenant_id' => $tenant->id]);
+        }
+
+        $membership->roles()->attach($role, ['tenant_id' => $tenant->id]);
+        $context->forget();
     }
 }
