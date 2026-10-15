@@ -1057,6 +1057,14 @@
       "operation_ids": [
         "AIMW-CONT-B1E9E1D6B0"
       ]
+    },
+    {
+      "label": "AIMW-CONT-71F54E3BA6 Dashboard sites navigation focused closure",
+      "sha": "8afde16d61aab0bb0532c7914cbaaf69e21cd5cf",
+      "observed_pr_head": "8afde16d61aab0bb0532c7914cbaaf69e21cd5cf",
+      "operation_ids": [
+        "AIMW-CONT-71F54E3BA6"
+      ]
     }
   ]
 }
