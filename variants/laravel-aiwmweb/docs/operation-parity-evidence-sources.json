@@ -1082,8 +1082,8 @@
     },
     {
       "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
-      "sha": "c5d6b853af71e7ba00dc204f98021e155134d2ca",
-      "observed_pr_head": "c5d6b853af71e7ba00dc204f98021e155134d2ca",
+      "sha": "d6c4a464f26173808b07768f97c18db6fa85bdf0",
+      "observed_pr_head": "d6c4a464f26173808b07768f97c18db6fa85bdf0",
       "operation_ids": [
         "AIMW-CONT-6E22D74EE0"
       ]
