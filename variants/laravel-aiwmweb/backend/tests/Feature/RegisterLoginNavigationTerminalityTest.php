@@ -10,6 +10,7 @@ use Tests\TestCase;
 final class RegisterLoginNavigationTerminalityTest extends TestCase
 {
     use RefreshDatabase;
+
     private const OPERATION_ID = 'AIMW-CONT-6E22D74EE0';
 
     public function test_exact_canonical_operation_is_register_to_login_navigation(): void
