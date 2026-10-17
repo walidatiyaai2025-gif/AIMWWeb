@@ -180,6 +180,7 @@ export const workspaceRoutes: WorkspaceRoute[] = [
     r('system-overview', '/module/overview', 'overview', '▦', 'System Overview', 'مركز النظام', 'High-level platform modules and runtime state.', 'نظرة عامة على وحدات المنصة وحالة التشغيل.'),
 
     r('content-hub', '/content', 'content', '▦', 'Content Hub', 'مركز المحتوى', 'Central content workspace.', 'مساحة العمل المركزية للمحتوى.', { permission: 'content.view', kind: 'workspace' }),
+    r('content-workspace', '/content-workspace', 'content', '▦', 'WordPress Content Management', 'إدارة محتوى WordPress', 'Open the real posts, pages, media, taxonomy, comments, and users workspaces.', 'افتح مساحات المقالات والصفحات والوسائط والتصنيفات والتعليقات والمستخدمين المتصلة بالخدمات الفعلية.', { permission: 'content.view', kind: 'workspace' }),
     r('posts', '/module/posts', 'content', '▤', 'Posts', 'المقالات', 'Create, edit, filter and publish posts.', 'إنشاء وتحرير وتصفية ونشر المقالات.', { permission: 'content.view', connectorScope: 'posts.read', controls: ['posts.create', 'posts.bulk', 'posts.publish'] }),
     r('pages', '/module/pages', 'content', '▧', 'Pages', 'الصفحات', 'Create and manage WordPress pages.', 'إنشاء وإدارة صفحات WordPress.', { permission: 'content.view', connectorScope: 'pages.read', controls: ['pages.create', 'pages.bulk', 'pages.publish'] }),
     r('media', '/module/media', 'content', '▣', 'Media', 'الوسائط', 'Manage the WordPress media library.', 'إدارة مكتبة وسائط WordPress.', { permission: 'content.view', connectorScope: 'media.read', controls: ['media.upload', 'media.bulk'] }),

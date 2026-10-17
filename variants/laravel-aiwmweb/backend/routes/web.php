@@ -348,6 +348,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
 
         Route::get('/content', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-65F2819526')->name('canonical.workspace.content-hub');
+        Route::get('/content-workspace', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-E4275AE57F')->name('canonical.workspace.content-workspace');
         Route::get('/module/content', 'redirect')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/content')->defaults('canonical_operation_id', 'AIMW-CONT-859135B2D1')->name('canonical.alias.module-content');
 
         Route::get('/module/posts', 'showSiteBound')->defaults('workspace_permissions', 'content.view')->name('canonical.workspace.posts');
