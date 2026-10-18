@@ -894,6 +894,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-6458D3030B Welcome security anchor focused closure",
+      "sha": "d807224f10f552687771e75bb9a33d825bdeebd1",
+      "observed_pr_head": "d807224f10f552687771e75bb9a33d825bdeebd1",
+      "operation_ids": [
+        "AIMW-CONT-6458D3030B"
+      ]
     }
   ],
   "excluded_sources": [],
