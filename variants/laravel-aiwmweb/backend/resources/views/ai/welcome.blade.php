@@ -81,6 +81,11 @@
                 href="#workflow"
                 data-canonical-operation="AIMW-CONT-EE531AE1FC"
             >{{ $welcomeLocale === 'ar' ? 'طريقة العمل' : 'Workflow' }}</a>
+            <a
+                class="signin"
+                href="#security"
+                data-canonical-operation="AIMW-CONT-6458D3030B"
+            >{{ $welcomeLocale === 'ar' ? 'الأمان' : 'Security' }}</a>
             <a class="signin" data-canonical-operation="AIMW-BILL-3EAD5A351E"
                 href="{{ route('public.welcome', ['lang' => $welcomeLocale === 'ar' ? 'en' : 'ar'], false) }}"
                 lang="{{ $welcomeLocale === 'ar' ? 'en' : 'ar' }}"
@@ -163,6 +168,47 @@
                     <b>04</b>
                     <h3>{{ $welcomeLocale === 'ar' ? 'نفّذ' : 'Execute' }}</h3>
                     <p>{{ $welcomeLocale === 'ar' ? 'نفّذ مع حالة وسجل وتشخيص واضح.' : 'Run with status, history and clear diagnostics.' }}</p>
+                </article>
+            </div>
+        </section>
+
+        <section
+            class="workflow"
+            id="security"
+            data-security-anchor-target="AIMW-CONT-6458D3030B"
+            aria-labelledby="security-title"
+        >
+            <div class="workflow-head">
+                <div>
+                    <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'التحكم والأمان' : 'CONTROL & SECURITY' }}</div>
+                    <h2 id="security-title">{{ $welcomeLocale === 'ar'
+                        ? 'الأتمتة مفيدة فقط عندما يمكن تفسيرها وإيقافها ومراجعتها.'
+                        : 'Automation is useful only when it can be explained, stopped and audited.' }}</h2>
+                </div>
+                <p>{{ $welcomeLocale === 'ar'
+                    ? 'صلاحيات على الخادم، أسرار محمية، سجل أمني، تشخيص Runtime، وعمليات يمكن تتبعها من الطلب إلى النتيجة.'
+                    : 'Server-side permissions, protected secrets, security audit, runtime diagnostics and operations that remain traceable from request to outcome.' }}</p>
+            </div>
+            <div class="workflow-grid">
+                <article class="workflow-card">
+                    <b>◈</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'صلاحيات دقيقة' : 'Permission aware' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'القدرات الحساسة محمية بسياسات الخادم.' : 'Sensitive capabilities are protected by server policies.' }}</p>
+                </article>
+                <article class="workflow-card">
+                    <b>⌁</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'أسرار معزولة' : 'Protected secrets' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'بيانات الاعتماد لا تتحول إلى نصوص معروضة.' : 'Credentials do not become display data.' }}</p>
+                </article>
+                <article class="workflow-card">
+                    <b>◎</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'تشخيص قابل للإرسال' : 'Actionable diagnostics' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'Correlation IDs وRuntime logs لتحديد الخطأ.' : 'Correlation IDs and runtime logs localize failures.' }}</p>
+                </article>
+                <article class="workflow-card">
+                    <b>✓</b>
+                    <h3>{{ $welcomeLocale === 'ar' ? 'تنفيذ مدقق' : 'Auditable execution' }}</h3>
+                    <p>{{ $welcomeLocale === 'ar' ? 'سجل يوضح ماذا حدث ومتى وبأي نتيجة.' : 'History records what happened, when and with what outcome.' }}</p>
                 </article>
             </div>
         </section>
