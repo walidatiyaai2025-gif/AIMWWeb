@@ -69,7 +69,7 @@
         <span>✓ 3-day backup retention</span>
     </div>
 
-    <div class="footer">Already registered? <a href="/login">Sign in</a></div>
+    <div class="footer">Already registered? <a href="/login" data-canonical-operation="{{ \\App\\Http\\Controllers\\RegisterController::LOGIN_NAVIGATION_OPERATION_ID }}">Sign in</a></div>
 </section>
 </body>
 </html>
