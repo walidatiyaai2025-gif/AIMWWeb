@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 718,
-    "pending": 213,
+    "adapted": 719,
+    "pending": 212,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 718,
-    "overall_parity_percent": 77.12
+    "terminal": 719,
+    "overall_parity_percent": 77.23
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 254,
-    "pending": 192,
+    "terminal": 255,
+    "pending": 191,
     "blocked": 0,
-    "percent": 56.95
+    "percent": 57.17
   },
   "domains": {
     "ai": {
@@ -48,7 +48,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 92,
-      "percent": 100.0
+      "percent": 100
     },
     "approvals": {
       "total": 25,
@@ -58,7 +58,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 25,
-      "percent": 100.0
+      "percent": 100
     },
     "automation": {
       "total": 59,
@@ -68,7 +68,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 59,
-      "percent": 100.0
+      "percent": 100
     },
     "backup": {
       "total": 14,
@@ -78,7 +78,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 14,
-      "percent": 100.0
+      "percent": 100
     },
     "billing": {
       "total": 178,
@@ -98,17 +98,17 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 8,
-      "percent": 100.0
+      "percent": 100
     },
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 53,
-      "pending": 111,
+      "adapted": 54,
+      "pending": 110,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 53,
-      "percent": 32.32
+      "terminal": 54,
+      "percent": 32.93
     },
     "email": {
       "total": 82,
@@ -128,7 +128,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 7,
-      "percent": 100.0
+      "percent": 100
     },
     "media": {
       "total": 15,
@@ -138,7 +138,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 6,
-      "percent": 40.0
+      "percent": 40
     },
     "operations": {
       "total": 5,
@@ -148,7 +148,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 5,
-      "percent": 100.0
+      "percent": 100
     },
     "platform": {
       "total": 18,
@@ -158,7 +158,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 18,
-      "percent": 100.0
+      "percent": 100
     },
     "reports": {
       "total": 1,
@@ -168,7 +168,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 1,
-      "percent": 100.0
+      "percent": 100
     },
     "seo": {
       "total": 24,
@@ -178,7 +178,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 24,
-      "percent": 100.0
+      "percent": 100
     },
     "settings": {
       "total": 1,
@@ -188,7 +188,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 1,
-      "percent": 100.0
+      "percent": 100
     },
     "sites": {
       "total": 12,
@@ -198,7 +198,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 12,
-      "percent": 100.0
+      "percent": 100
     },
     "sync": {
       "total": 213,
@@ -17854,21 +17854,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php",
+      "evidence": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure@f8a237e6ab9736685f33cb08394f6b8f74d9955b: variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php; focused-closure:AIMW-CONT-6E22D74EE0; test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+        "source_sha": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-6E22D74EE0",
+          "production-marker:variants/laravel-aiwmweb/backend/app/Http/Controllers/RegisterController.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/RegisterLoginNavigationTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/register-login-navigation-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36263,7 +36273,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 31,
-      "percent": 100.0
+      "percent": 100
     },
     "background_job": {
       "total": 21,
@@ -36273,7 +36283,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 21,
-      "percent": 100.0
+      "percent": 100
     },
     "route": {
       "total": 84,
@@ -36283,7 +36293,7 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 63,
-      "percent": 75.0
+      "percent": 75
     },
     "service": {
       "total": 349,
@@ -36293,17 +36303,17 @@
       "blocked": 0,
       "verified_unavailable_external": 0,
       "terminal": 349,
-      "percent": 100.0
+      "percent": 100
     },
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 254,
-      "pending": 192,
+      "adapted": 255,
+      "pending": 191,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 254,
-      "percent": 56.95
+      "terminal": 255,
+      "percent": 57.17
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36368,7 +36378,6 @@
       "AIMW-CONT-6B6790BE84",
       "AIMW-CONT-6CB3D0BE1B",
       "AIMW-CONT-6D14B76763",
-      "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-6EC0601E18",
       "AIMW-CONT-73E4F88038",
       "AIMW-CONT-7957ECC794",
@@ -37045,6 +37054,7 @@
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
+      "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
@@ -37322,6 +37332,7 @@
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
       "AIMW-CONT-564636DDC9",
+      "AIMW-CONT-6E22D74EE0",
       "AIMW-CONT-71F54E3BA6",
       "AIMW-CONT-83908F2D7C",
       "AIMW-CONT-85394A0E55",
@@ -37409,24 +37420,24 @@
     ],
     "focused_closure_operation_sources": [
       {
-        "label": "AIMW-CONT-E38ADF8481 application user StartCreate focused closure",
-        "sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
+        "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
+        "sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
         "operation_ids": [
-          "AIMW-CONT-E38ADF8481"
+          "AIMW-BILL-F73C7348C3"
         ]
       },
       {
-        "label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
-        "sha": "c7ef213efe1db541c88bb202110b53fbdf61200e",
+        "label": "AIMW-CONT-16D09482D4 SecurityAudit Back to settings focused closure",
+        "sha": "8133faf788d919e047deb21067697ea0ce8d4652",
         "operation_ids": [
-          "AIMW-TAXO-D5A5B530C7"
+          "AIMW-CONT-16D09482D4"
         ]
       },
       {
-        "label": "AIMW-CONT-4D6C928D75 GlobalContentHub All sites focused closure",
-        "sha": "6ceac98a66060fceea6b63a544b545b783bdab4f",
+        "label": "AIMW-CONT-2CDC790742 My Sessions admin sessions link focused closure",
+        "sha": "f3bc1ddb5d698c3f5dd5e8bc7303c8f996aef2fa",
         "operation_ids": [
-          "AIMW-CONT-4D6C928D75"
+          "AIMW-CONT-2CDC790742"
         ]
       },
       {
@@ -37437,17 +37448,38 @@
         ]
       },
       {
-        "label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
-        "sha": "e3daa2befe7234d544281a6e0a63036b037105d9",
+        "label": "AIMW-CONT-4D6C928D75 GlobalContentHub All sites focused closure",
+        "sha": "6ceac98a66060fceea6b63a544b545b783bdab4f",
         "operation_ids": [
-          "AIMW-EMAI-EC34E40629"
+          "AIMW-CONT-4D6C928D75"
         ]
       },
       {
-        "label": "AIMW-EMAI-12A6FEB2FF NotificationInbox Reload focused closure",
-        "sha": "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
+        "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+        "sha": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
         "operation_ids": [
-          "AIMW-EMAI-12A6FEB2FF"
+          "AIMW-CONT-6E22D74EE0"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-71F54E3BA6 Dashboard sites navigation focused closure",
+        "sha": "c0333cafaab8b8fdaa186dd3d0d660ba68ae044c",
+        "operation_ids": [
+          "AIMW-CONT-71F54E3BA6"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
+        "sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
+        "operation_ids": [
+          "AIMW-CONT-B1E9E1D6B0"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-D4607F943C Welcome workspace preview anchor focused closure",
+        "sha": "bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07",
+        "operation_ids": [
+          "AIMW-CONT-D4607F943C"
         ]
       },
       {
@@ -37455,6 +37487,34 @@
         "sha": "34e66eba87657e5283f29765c083529b08ba7625",
         "operation_ids": [
           "AIMW-CONT-DF8B12B6DE"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-E38ADF8481 application user StartCreate focused closure",
+        "sha": "d32c91a10de07c92a306d43db3b540b4140d51a2",
+        "operation_ids": [
+          "AIMW-CONT-E38ADF8481"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-EE531AE1FC Welcome workflow anchor focused closure",
+        "sha": "48f4f26e6f7526e7634701d10d07232c46af1543",
+        "operation_ids": [
+          "AIMW-CONT-EE531AE1FC"
+        ]
+      },
+      {
+        "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
+        "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
+        "operation_ids": [
+          "AIMW-EMAI-00CC1272F6"
+        ]
+      },
+      {
+        "label": "AIMW-EMAI-12A6FEB2FF NotificationInbox Reload focused closure",
+        "sha": "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
+        "operation_ids": [
+          "AIMW-EMAI-12A6FEB2FF"
         ]
       },
       {
@@ -37472,45 +37532,10 @@
         ]
       },
       {
-        "label": "AIMW-EMAI-00CC1272F6 Account Email Settings save profile focused closure",
-        "sha": "5a0e5a4ff9daacd0d13d660f7b89c0ee6ea67d05",
-        "operation_ids": [
-          "AIMW-EMAI-00CC1272F6"
-        ]
-      },
-      {
-        "label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
-        "sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
-        "operation_ids": [
-          "AIMW-MEDI-73C0DA6B3D"
-        ]
-      },
-      {
-        "label": "AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages link focused closure",
-        "sha": "9f15e26b717d394b135896feafcddedcc6a6ddf4",
-        "operation_ids": [
-          "AIMW-MEDI-0694CEEBBA"
-        ]
-      },
-      {
-        "label": "AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync focused closure",
-        "sha": "fe7903eeb15527eb6e649841e031a94415b39db6",
-        "operation_ids": [
-          "AIMW-EMAI-8E3B0AACD6"
-        ]
-      },
-      {
         "label": "AIMW-EMAI-62B0B8EE4C NotificationCenter RefreshAsync focused closure",
         "sha": "560dfc63fbcd9022c5bf4282255f3cf7837d500e",
         "operation_ids": [
           "AIMW-EMAI-62B0B8EE4C"
-        ]
-      },
-      {
-        "label": "AIMW-CONT-2CDC790742 My Sessions admin sessions link focused closure",
-        "sha": "f3bc1ddb5d698c3f5dd5e8bc7303c8f996aef2fa",
-        "operation_ids": [
-          "AIMW-CONT-2CDC790742"
         ]
       },
       {
@@ -37521,10 +37546,45 @@
         ]
       },
       {
+        "label": "AIMW-EMAI-8E3B0AACD6 NotificationCenter ToggleAsync focused closure",
+        "sha": "fe7903eeb15527eb6e649841e031a94415b39db6",
+        "operation_ids": [
+          "AIMW-EMAI-8E3B0AACD6"
+        ]
+      },
+      {
+        "label": "AIMW-EMAI-EC34E40629 EmailSchedules Delivery history focused closure",
+        "sha": "e3daa2befe7234d544281a6e0a63036b037105d9",
+        "operation_ids": [
+          "AIMW-EMAI-EC34E40629"
+        ]
+      },
+      {
+        "label": "AIMW-MEDI-0694CEEBBA GlobalMediaExplorer Pages link focused closure",
+        "sha": "9f15e26b717d394b135896feafcddedcc6a6ddf4",
+        "operation_ids": [
+          "AIMW-MEDI-0694CEEBBA"
+        ]
+      },
+      {
+        "label": "AIMW-MEDI-73C0DA6B3D ContentExplorer SetMediaTab focused closure",
+        "sha": "8644489a398d272c8bbe6e500ad95dd25f27e874",
+        "operation_ids": [
+          "AIMW-MEDI-73C0DA6B3D"
+        ]
+      },
+      {
         "label": "AIMW-SYNC-7071DA172F AppFormActions focused closure",
         "sha": "eeda454691fd16e219a8207a14a4dfd85b266585",
         "operation_ids": [
           "AIMW-SYNC-7071DA172F"
+        ]
+      },
+      {
+        "label": "AIMW-TAXO-D5A5B530C7 TaxonomyManager ShowCategories focused closure",
+        "sha": "c7ef213efe1db541c88bb202110b53fbdf61200e",
+        "operation_ids": [
+          "AIMW-TAXO-D5A5B530C7"
         ]
       },
       {
@@ -37533,52 +37593,10 @@
         "operation_ids": [
           "AIMW-TAXO-EC57E21E70"
         ]
-      },
-      {
-        "label": "AIMW-CONT-EE531AE1FC Welcome workflow anchor focused closure",
-        "sha": "48f4f26e6f7526e7634701d10d07232c46af1543",
-        "operation_ids": [
-          "AIMW-CONT-EE531AE1FC"
-        ]
-      },
-      {
-        "label": "AIMW-CONT-16D09482D4 SecurityAudit Back to settings focused closure",
-        "sha": "8133faf788d919e047deb21067697ea0ce8d4652",
-        "operation_ids": [
-          "AIMW-CONT-16D09482D4"
-        ]
-      },
-      {
-        "label": "AIMW-CONT-D4607F943C Welcome workspace preview anchor focused closure",
-        "sha": "bbb7e8d90b68ad65ee74aa8ecd30ff5669adba07",
-        "operation_ids": [
-          "AIMW-CONT-D4607F943C"
-        ]
-      },
-      {
-        "label": "AIMW-BILL-F73C7348C3 Subscription Plans New Plan visible-control closure",
-        "sha": "2c986d6c8ce74f93af5e4c2c361cbbf1664fc51d",
-        "operation_ids": [
-          "AIMW-BILL-F73C7348C3"
-        ]
-      },
-      {
-        "label": "AIMW-CONT-B1E9E1D6B0 Welcome product anchor focused closure",
-        "sha": "d88005dd11ea7db346ccc6dc340c4467b138d89e",
-        "operation_ids": [
-          "AIMW-CONT-B1E9E1D6B0"
-        ]
-      },
-      {
-        "label": "AIMW-CONT-71F54E3BA6 Dashboard sites navigation focused closure",
-        "sha": "c0333cafaab8b8fdaa186dd3d0d660ba68ae044c",
-        "operation_ids": [
-          "AIMW-CONT-71F54E3BA6"
-        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 24,
-    "focused_closure_contract_count": 254,
+    "focused_closure_operation_scoped_count": 25,
+    "focused_closure_contract_count": 255,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
