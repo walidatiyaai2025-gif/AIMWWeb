@@ -37005,6 +37005,16 @@
           "AIMW-CONT-E4275AE57F"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-6458D3030B Welcome security anchor focused closure",
+        "sha": "d807224f10f552687771e75bb9a33d825bdeebd1",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-CONT-6458D3030B"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37046,6 +37056,7 @@
       "c394c3143917c6c1cbff8e136a2a8b1847929a78",
       "ca212724d1ba532253c7128231326122967fc9d1",
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
+      "d807224f10f552687771e75bb9a33d825bdeebd1",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
