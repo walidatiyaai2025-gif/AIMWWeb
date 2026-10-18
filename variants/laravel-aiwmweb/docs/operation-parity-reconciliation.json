@@ -37054,7 +37054,6 @@
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
-      "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
@@ -37455,13 +37454,6 @@
         ]
       },
       {
-        "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
-        "sha": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
-        "operation_ids": [
-          "AIMW-CONT-6E22D74EE0"
-        ]
-      },
-      {
         "label": "AIMW-CONT-71F54E3BA6 Dashboard sites navigation focused closure",
         "sha": "c0333cafaab8b8fdaa186dd3d0d660ba68ae044c",
         "operation_ids": [
@@ -37592,6 +37584,13 @@
         "sha": "42f2a092b697e535478b88ae0ae40c58fb34ab20",
         "operation_ids": [
           "AIMW-TAXO-EC57E21E70"
+        ]
+      },
+      {
+        "label": "AIMW-CONT-6E22D74EE0 Register login navigation focused closure",
+        "sha": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
+        "operation_ids": [
+          "AIMW-CONT-6E22D74EE0"
         ]
       }
     ],
