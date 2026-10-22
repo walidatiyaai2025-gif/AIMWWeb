@@ -34,7 +34,7 @@ jobs:
           --health-timeout=5s
           --health-retries=12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: shivammathur/setup-php@v2
@@ -42,7 +42,7 @@ jobs:
           php-version: '8.4'
           extensions: mbstring, pdo_mysql, pdo_sqlite, sqlite3
           coverage: none
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -145,7 +145,7 @@ jobs:
             git -C "${RUNNER_TEMP}/laravel-aiwmweb-convergence-tree" diff --stat > preflight-artifacts/reconstruction-diff-stat.txt || true
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: laravel-aiwmweb-convergence-preflight-${{ github.sha }}
