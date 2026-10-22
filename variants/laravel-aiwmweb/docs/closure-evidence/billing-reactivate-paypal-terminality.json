@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-A8CBD94255",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AccountBilling.razor",
+    "source_screen": "/account/billing",
+    "source_control": "ReactivateAsync / Request reactivation",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "high"
+  },
+  "laravel_adaptation": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Billing/PayPalSubscriptionReactivationService.php",
+    "provider": "variants/laravel-aiwmweb/backend/app/Billing/Providers/PayPalProvider.php",
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/billing-reactivate-paypal-control.tsx",
+    "mount": "variants/laravel-aiwmweb/backend/resources/js/billing-profile-link.tsx",
+    "route": "/api/v1/tenants/{tenant}/billing/reactivate",
+    "method": "POST",
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "permission": "billing.manage",
+    "operation_marker": "AIMW-BILL-A8CBD94255",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_success": false
+  },
+  "security": {
+    "server_owned_identity": true,
+    "foreign_tenant_denied": true,
+    "direct_id_rejected": true,
+    "provider_secret_not_exposed": true,
+    "csrf_web_middleware": true
+  },
+  "semantics": {
+    "eligible_state": "SUSPENDED only",
+    "permanently_cancelled_rejected": true,
+    "provider_preflight_reconciliation": true,
+    "provider_acceptance_does_not_set_active": true,
+    "authoritative_active_only_from_reconciliation": true,
+    "retry_receipt_action": "billing.reactivation.requested",
+    "retry_does_not_resubmit_after_accepted_receipt": true
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/BillingReactivatePayPalTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-reactivate-paypal-control.test.tsx"
+  },
+  "validation": {
+    "status": "PENDING_EXACT_HEAD_CI"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-A8CBD94255",
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "Real tenant-scoped PayPal reactivation is wired with server-owned identity, retry-safe provider command receipt, provider-authoritative reconciliation and focused backend/frontend evidence."
+  }
+}

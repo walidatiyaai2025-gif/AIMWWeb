@@ -1,0 +1,17 @@
+{
+  "schema": 2,
+  "authority": "AIMWWeb Issue #257",
+  "candidate_branch": "lead/laravel-aiwmweb-final-convergence",
+  "composed_source_sha": "86c39dc90bbd6374a1ed1c814d7f8895255770d0",
+  "execution": "current_pull_request_exact_head",
+  "domains": [
+    "tenant-core", "sites", "connector", "content", "sync", "admin",
+    "billing", "ai", "seo", "email", "runtime", "frontend"
+  ],
+  "superseded": [
+    {
+      "pr": 268,
+      "reason": "Handoff-only output superseded by PR #276."
+    }
+  ]
+}

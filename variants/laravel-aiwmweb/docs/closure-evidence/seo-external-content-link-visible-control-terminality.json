@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SEO-A4307E94C8",
+  "domain": "seo",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "previous_state": "PENDING",
+  "production_surface": "backend/resources/js/seo-visible-controls.tsx",
+  "acceptance_test": "backend/tests/Feature/SeoVisibleControlMassClosureTest.php",
+  "chain": "Open content link -> tenant-scoped presentation GET -> persisted SyncedContent canonical/permalink -> target=_blank user navigation",
+  "fake_success": false
+}

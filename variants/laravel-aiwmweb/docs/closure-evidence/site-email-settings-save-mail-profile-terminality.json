@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #725",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-609F15BFCA",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/site-email-settings | /sites/{SiteId:guid}/email-settings",
+    "visible_control": "Save mail profile",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteEmailSettings.razor",
+    "tenant_owned": true,
+    "risk": "low",
+    "external": "payment_provider"
+  },
+  "laravel_runtime": {
+    "route": "POST /tenants/{tenant}/sites/{site}/email-settings/mail-profile",
+    "controller": "App\\\\Http\\\\Controllers\\\\SiteEmailSettingsController::saveMailProfile",
+    "service": "App\\\\Email\\\\Services\\\\SiteMailProfileService::saveAsync",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
+    "semantics": "Persist the site-scoped outbound mail profile, leave an existing secret unchanged when password is blank, and reread non-secret profile metadata on GET."
+  },
+  "security": {
+    "route_guards": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "permissions": [
+      "tenant.view",
+      "sites.view",
+      "settings.manage"
+    ],
+    "foreign_tenant_access": "404",
+    "foreign_site_access": "404",
+    "secret_storage": "TenantSecret encrypted cast",
+    "secret_rendering": "never rendered; password input is always blank",
+    "blank_password": "preserves existing saved secret"
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsSaveMailProfileTerminalityTest.php",
+    "coverage": [
+      "canonical source and route binding",
+      "authorized profile mutation",
+      "secret encryption boundary and no HTML exposure",
+      "blank-password secret retention",
+      "validation failure",
+      "permission denial",
+      "foreign tenant/site isolation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-609F15BFCA"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "destructive_migration": false
+  }
+}

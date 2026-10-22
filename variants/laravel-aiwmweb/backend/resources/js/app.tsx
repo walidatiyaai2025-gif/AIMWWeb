@@ -1,0 +1,264 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
+import { AccountEmailSettingsSummary } from './account-email-settings-summary';
+import { AdminBillingSupportSettingsLink } from './admin-billing-support-settings-link';
+import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
+import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
+import { AiUsageLoadWorkspace } from './ai-usage-load-workspace';
+import { AutomationPhaseNavigationControls } from './automation-phase-controls';
+import { AiWorkspaceHub } from './ai-workspace-hub';
+import { ApplicationUserPasswordResetControl } from './application-user-password-reset-control';
+import { approvalExecutionCenterHref, withApprovalQueueEndpoint } from './approvalQueue';
+import { BillingProfileLink } from './billing-profile-link';
+import { BillingStartCheckoutControl } from './billing-start-checkout-control';
+import { BackupCopyPathControl } from './backup-copy-path-control';
+import { CommentsBackToExplorerControl } from './comments-back-to-explorer-control';
+import { TaxonomyBackToExplorerControl } from './taxonomy-back-to-explorer-control';
+import { CommentsBackToSitesControl } from './comments-back-to-sites-control';
+import { CommentsCommentLinksControl } from './comments-comment-link-control';
+import { CommentsContentHubLink } from './comments-content-hub-link';
+import { CommentsManageSiteControl } from './comments-manage-site-control';
+import { ConfigurationValidationCopyReportControl } from './configuration-validation-copy-report';
+import { ApiError, apiRequest, workspaceRoutes, type FrontendContext, type WorkspaceRoute } from './core';
+import { AppShell, LoadingState, StatePanel, ToastProvider } from './components';
+import { ContentExplorerBulkTrashControl } from './content-explorer-bulk-trash-widget';
+import { GlobalPagesConfirmTrashControl } from './global-pages-confirm-trash-widget';
+import { GlobalPostsConfirmTrashControl } from './global-posts-confirm-trash-widget';
+import { GlobalTaxonomyPostsLinkControl } from './global-taxonomy-posts-link-control';
+import { GlobalSynchronizationAcceptRemoteControl } from './global-synchronization-accept-remote-control';
+import { GlobalSynchronizationReviewConflictsControl } from './global-synchronization-review-conflicts-control';
+import { ContentExplorerSynchronizeControl } from './content-explorer-synchronize-control';
+import { ContentExplorerExecutionLinkControl } from './content-explorer-execution-link-control';
+import { ContentExplorerMediaTabControl } from './content-explorer-media-tab-control';
+import { ContentEditorSaveControl } from './content-editor-save-control';
+import { ContentHubAllSitesControl } from './content-hub-all-sites-control';
+import { ContentPlannerAiCenterLinkControl } from './content-planner-ai-center-link-control';
+import { ContentPlannerExecutionLinkControl } from './content-planner-execution-link-control';
+import { ContentPlannerNewItemControl } from './content-planner-new-item-control';
+import { ContentPlannerReloadControl } from './content-planner-reload-control';
+import { CurrentUserSiteDetailsControl } from './current-user-site-details-control';
+import { DashboardExecutionLinkControl } from './dashboard-execution-link-control';
+import { ExecutionConnectSiteControl } from './execution-connect-site-control';
+import { EmailSchedulesCreateControl } from './email-schedules-create-control';
+import { EmailSchedulesHistoryLinkControl } from './email-schedules-history-link-control';
+import { LocaleProvider, useLocale } from './i18n';
+import { LogsClearFiltersControl } from './logs-clear-filters-control';
+import { LogsCloseDetailsControl } from './logs-close-details-control';
+import { MainLayoutParityControls } from './main-layout-parity-controls';
+import { NotificationCenterToggleControl } from './notification-center-toggle-control';
+import { ModuleWorkspaceLoadSitesControl } from './module-workspace-load-sites-control';
+import { MySessionsAdminLinkControl } from './my-sessions-admin-link-control';
+import { OperationsHubReloadControl } from './operations-hub-reload-control';
+import { PagesPostsLinkControl } from './pages-posts-link-control';
+import { MediaPagesLinkControl } from './media-pages-link-control';
+import { NotFoundPage, SiteDetailsRoute, WorkspacePage } from './pages';
+import { PostsExecutionLinkControl } from './posts-execution-link-control';
+import { RuntimeErrorBoundary } from './runtime-error-boundary';
+import { SettingsAiPromptsLinkControl } from './settings-ai-prompts-link-control';
+import { SettingsBillingSupportLinkControl } from './settings-billing-support-link-control';
+import { SettingsAiProvidersLinkControl } from './settings-ai-providers-link-control';
+import { SiteDetailsBackControl } from './site-details-back-control';
+import { SiteDetailsCancelSynchronizationControl } from './site-details-cancel-synchronization-control';
+import { SiteDetailsSettingsLinkControl } from './site-details-settings-link-control';
+import { SiteDetailsSynchronizeControl } from './site-details-synchronize-control';
+import { SiteDetailsSiteUrlControl } from './site-details-site-url-control';
+import { SiteOnboardingSaveTestSyncControl } from './site-onboarding-save-test-sync-control';
+import { SiteDataSnapshotSyncControl } from './site-data-snapshot-sync-control';
+import { SiteConnectionCenterSyncControl } from './site-connection-center-sync-control';
+import { SitesBulkDeleteControl } from './sites-bulk-delete-control';
+import { SitesDeleteControl } from './sites-delete-control';
+import { SitesSaveControl } from './sites-save-control';
+import { SitesRetestSelectedControl } from './sites-retest-selected-control';
+import { SystemHealthWorkspace } from './system-health-workspace';
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 20_000,
+            retry: (count, error) => error instanceof ApiError ? error.status >= 500 && count < 2 : count < 1,
+            refetchOnWindowFocus: false,
+        },
+        mutations: { retry: false },
+    },
+});
+
+type OutletState = { context: FrontendContext };
+
+function ContextFailure({ error, retry }: { error: unknown; retry: () => void }) {
+    const { locale } = useLocale();
+    const apiError = error instanceof ApiError ? error : null;
+    const isAuth = apiError?.status === 401;
+    const isForbidden = apiError?.status === 403;
+    return (
+        <div className="bootstrap-state">
+            <StatePanel tone={isForbidden ? 'danger' : 'warning'} title={isAuth ? (locale === 'ar' ? 'يلزم تسجيل الدخول' : 'Sign-in required') : isForbidden ? (locale === 'ar' ? 'الوصول مرفوض' : 'Access denied') : (locale === 'ar' ? 'تعذر تحميل سياق الحساب' : 'Tenant context unavailable')}>
+                <p>{apiError?.message ?? (locale === 'ar' ? 'لم يكتمل طلب سياق الواجهة.' : 'The frontend context request did not complete.')}</p>
+                {isAuth ? <p>{locale === 'ar' ? 'لم يتم اختراع تدفق دخول محلي؛ يلزم دمج مصادقة Laravel من قائد التكامل.' : 'No local fake sign-in is provided; the Laravel authentication flow must be integrated by the backend authority.'}</p> : null}
+                <button type="button" className="btn" onClick={retry}>{locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}</button>
+            </StatePanel>
+        </div>
+    );
+}
+
+function TenantBootstrap() {
+    const { tenantSlug } = useParams();
+    const location = useLocation();
+    const activeSite = new URLSearchParams(location.search).get('site');
+    const contextUrl = `/tenants/${encodeURIComponent(tenantSlug ?? '')}/context${activeSite ? `?site=${encodeURIComponent(activeSite)}` : ''}`;
+    const query = useQuery({
+        queryKey: ['frontend-context', tenantSlug, activeSite],
+        queryFn: () => apiRequest<FrontendContext>(contextUrl),
+        enabled: Boolean(tenantSlug),
+    });
+
+    if (query.isLoading) return <div className="bootstrap-state"><LoadingState /></div>;
+    if (query.error) return <ContextFailure error={query.error} retry={() => query.refetch()} />;
+    if (!query.data) return <ContextFailure error={new Error('Tenant context returned no data.')} retry={() => query.refetch()} />;
+
+    const context = withApprovalQueueEndpoint(query.data);
+
+    return (
+        <ToastProvider>
+            <AppShell context={context}>
+                <CurrentUserSiteDetailsControl context={context} />
+                <MainLayoutParityControls context={context} />
+                <NotificationCenterToggleControl context={context} />
+                <ApplicationUserPasswordResetControl context={context} />
+                <AutomationPhaseNavigationControls context={context} />
+                <Outlet context={{ context } satisfies OutletState} />
+            </AppShell>
+        </ToastProvider>
+    );
+}
+
+function ApprovalQueueRoute({ context, route }: { context: FrontendContext; route: WorkspaceRoute }) {
+    const { locale } = useLocale();
+
+    return (
+        <div className="workspace-stack" data-canonical-operation="AIMW-APPR-31A36E339F">
+            <section className="hero-panel" aria-label={locale === 'ar' ? 'روابط قائمة الموافقات' : 'Approval queue navigation'}>
+                <div>
+                    <span className="workspace-kicker">CONTROLLED WORKFLOW</span>
+                    <h2>{locale === 'ar' ? 'التنفيذ المحكوم' : 'Governed execution'}</h2>
+                    <p>{locale === 'ar' ? 'انتقل إلى مركز التنفيذ لمراجعة المهام المعتمدة وحالتها الحقيقية.' : 'Open the Execution Center to review approved jobs and their real runtime state.'}</p>
+                </div>
+                <Link className="btn" data-canonical-operation="AIMW-APPR-B360D1C8BA" to={approvalExecutionCenterHref(context)}>▶ {locale === 'ar' ? 'مركز التنفيذ' : 'Execution center'}</Link>
+            </section>
+            <WorkspacePage context={context} route={route} />
+        </div>
+    );
+}
+
+function ContentEditorRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <ContentEditorSaveControl context={context} />;
+}
+
+function AccountEmailSettingsRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <AccountEmailSettingsSummary context={context} />;
+}
+
+function AiWorkspaceRoute() {
+    const { context } = useOutletContext<OutletState>();
+    return <AiWorkspaceHub context={context} />;
+}
+
+function RouteElement({ route }: { route: WorkspaceRoute }) {
+    const { context } = useOutletContext<OutletState>();
+    if (route.key === 'site-snapshot' || route.key === 'site-offline-data') return <SiteDataSnapshotSyncControl context={context} />;
+    if (route.key === 'site-connection-center' || route.key === 'site-connection-operations') return <SiteConnectionCenterSyncControl context={context} />;
+    if (route.key === 'site-connect') return <SiteOnboardingSaveTestSyncControl context={context} />;
+    if (route.key === 'site-details') return (
+        <>
+            <SiteDetailsBackControl context={context} />
+            <SiteDetailsCancelSynchronizationControl context={context} />
+            <SiteDetailsSettingsLinkControl context={context} />
+            <SiteDetailsSynchronizeControl context={context} />
+            <SiteDetailsSiteUrlControl context={context} />
+            <SiteDetailsRoute context={context} route={route} />
+        </>
+    );
+    if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'explorer') return <><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'content-hub') return <><ContentHubAllSitesControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'content-planner') return <><ContentPlannerAiCenterLinkControl context={context} /><ContentPlannerExecutionLinkControl context={context} /><ContentPlannerNewItemControl context={context} /><ContentPlannerReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'media') return <><MediaPagesLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'pages') return <><GlobalPagesConfirmTrashControl context={context} /><PagesPostsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'posts') return <><GlobalPostsConfirmTrashControl context={context} /><PostsExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sync') return <><GlobalSynchronizationReviewConflictsControl context={context} /><GlobalSynchronizationAcceptRemoteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'seo-audit' || route.key === 'seo-suggestions') return <ModuleWorkspaceLoadSitesControl context={context} route={route} />;
+    if (route.key === 'comments') return <><CommentsBackToSitesControl context={context} /><CommentsCommentLinksControl context={context} /><CommentsContentHubLink context={context} /><CommentsManageSiteControl context={context} /><WorkspacePage context={context} route={route} /><CommentsBackToExplorerControl context={context} /></>;
+    if (route.key === 'taxonomy') return <><GlobalTaxonomyPostsLinkControl context={context} /><TaxonomyBackToExplorerControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'approvals') return <ApprovalQueueRoute context={context} route={route} />;
+    if (route.key === 'email-schedules') return <><EmailSchedulesHistoryLinkControl context={context} /><EmailSchedulesCreateControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'execution') return <><ExecutionConnectSiteControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'logs') return <><LogsClearFiltersControl context={context} /><LogsCloseDetailsControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'operations') return <><OperationsHubReloadControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'sessions') return <><MySessionsAdminLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'backups') return <><BackupCopyPathControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'configuration-validation') return <><ConfigurationValidationCopyReportControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'settings') return <><SettingsBillingSupportLinkControl context={context} /><SettingsAiProvidersLinkControl context={context} /><SettingsAiPromptsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'account-billing') return <><BillingProfileLink context={context} /><BillingStartCheckoutControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'admin-billing-support') return <><AdminBillingSupportSettingsLink context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'ai-center') return <><AiCenterApprovalStatusControl context={context} /><WorkspacePage context={context} route={route} /></>;
+    if (route.key === 'ai-usage') return <><AiUsageAiCenterLinkControl context={context} /><AiUsageLoadWorkspace context={context} route={route} /></>;
+    if (route.key === 'system-health') return <SystemHealthWorkspace context={context} route={route} />;
+    return <WorkspacePage context={context} route={route} />;
+}
+
+function NotFoundElement() {
+    const { context } = useOutletContext<OutletState>();
+    return <NotFoundPage context={context} />;
+}
+
+function OutsideTenantRoute() {
+    const { locale } = useLocale();
+    return (
+        <div className="bootstrap-state">
+            <StatePanel tone="warning" title={locale === 'ar' ? 'اختر مساحة حساب' : 'Tenant workspace required'}>
+                {locale === 'ar' ? 'واجهة Laravel متعددة الحسابات تتطلب مسارًا من شكل /tenants/{tenant}.' : 'The multi-tenant Laravel frontend requires a /tenants/{tenant} workspace URL.'}
+            </StatePanel>
+        </div>
+    );
+}
+
+function AppRoutes() {
+    return (
+        <Routes>
+            <Route path="/tenants/:tenantSlug" element={<TenantBootstrap />}>
+                <Route path="account/email-settings" element={<AccountEmailSettingsRoute />} />
+                <Route path="ai-workspace" element={<AiWorkspaceRoute />} />
+                <Route path="sites/onboarding" element={<RouteElement route={workspaceRoutes.find((route) => route.key === 'site-connect')!} />} />
+                <Route path="admin/roles-permissions" element={<RouteElement route={workspaceRoutes.find((route) => route.key === 'roles')!} />} />
+                <Route path="sites/:siteId/content/:contentType/:wordpressId/edit" element={<ContentEditorRoute />} />
+                {workspaceRoutes.map((route) => {
+                    const relative = route.path === '/' ? undefined : route.path.replace(/^\//, '');
+                    return route.path === '/'
+                        ? <Route key={route.key} index element={<RouteElement route={route} />} />
+                        : <Route key={route.key} path={relative} element={<RouteElement route={route} />} />;
+                })}
+                <Route path="*" element={<NotFoundElement />} />
+            </Route>
+            <Route path="*" element={<OutsideTenantRoute />} />
+        </Routes>
+    );
+}
+
+export function App() {
+    return (
+        <RuntimeErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+                <LocaleProvider>
+                    <BrowserRouter><AppRoutes /></BrowserRouter>
+                </LocaleProvider>
+            </QueryClientProvider>
+        </RuntimeErrorBoundary>
+    );
+}
+
+const root = document.getElementById('app');
+if (root) createRoot(root).render(<React.StrictMode><App /></React.StrictMode>);

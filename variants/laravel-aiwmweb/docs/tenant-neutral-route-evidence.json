@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "source_sha": "66095bcecfaf63c43e987891ffc538c304c8f4a9",
+  "routes": {
+    "AIMW-CONT-8EE96B77A8": {
+      "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AccessDeniedReadController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccessDeniedRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/access-denied-route-terminality.json",
+      "security_mode": "explicit_anonymous"
+    },
+    "AIMW-CONT-455F01DAC7": {
+      "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/ErrorRouteServiceProvider.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ErrorReadController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ErrorRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/error-route-terminality.json",
+      "security_mode": "authenticated_fallback",
+      "source_auth_path": "src/AIWordPressManager.Web/Program.cs"
+    },
+    "AIMW-CONT-86346F4C6C": {
+      "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/PublicWelcomeRouteServiceProvider.php",
+      "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/PublicWelcomeReadController.php",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeRouteTerminalityTest.php",
+      "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-route-terminality.json",
+      "security_mode": "explicit_anonymous"
+    }
+  }
+}

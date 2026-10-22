@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-COMM-A0D005681B",
+    "domain": "comments",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/GlobalCommentsWorkspace.razor",
+    "source_screen": "/module/comments",
+    "source_control": "Content hub / مركز المحتوى -> /content",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered source-equivalent navigation is tenant-derived and remains inside the authorized content workspace"
+  },
+  "source_behavior": {
+    "summary": "The current global WordPress Comments workspace exposes a visible Content hub action in its toolbar that navigates to /content.",
+    "side_effect": "navigation only",
+    "mutation": false,
+    "wordpress_behavior": "none; activating this canonical control does not read from or mutate WordPress",
+    "connector_behavior": "none; no Connector action is invoked",
+    "success_semantics": "browser navigation only; the control emits no synthetic success message or mutation receipt"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/module/comments",
+    "source_route_name": "canonical.workspace.comments",
+    "source_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::showSiteBound",
+    "source_permissions": ["auth", "tenant.context", "content.view"],
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/comments-content-hub-link.tsx",
+    "runtime_wiring": "CommentsContentHubLink renders only for the existing React comments RouteElement and fails closed without content.view",
+    "target_builder": "tenantUrl(context.tenant.slug, '/content')",
+    "target_route": "/tenants/{tenant}/content",
+    "target_runtime": "existing React content-hub workspace under the authenticated tenant shell",
+    "caller_supplied_tenant_or_resource_id": false,
+    "placeholder_or_fake_success": false,
+    "generated_reconciliation_modified_by_hand": false
+  },
+  "runtime_path": [
+    "auth + tenant.context resolve the active membership for /tenants/{tenant}/module/comments",
+    "CanonicalWorkspaceRouteController authorizes content.view and binds only a tenant-owned active Site",
+    "FrontendContext is reread for the same active tenant and publishes its tenant slug and content.view permission",
+    "React renders CommentsContentHubLink only on route.key=comments",
+    "the control derives /tenants/{activeTenant}/content exclusively through tenantUrl(context.tenant.slug, '/content')",
+    "navigation performs no API mutation, queue/cache/scheduler operation, provider call, Connector call, or WordPress call"
+  ],
+  "authorization_and_isolation": {
+    "guest_source": "redirects to canonical login",
+    "missing_content_view_source": "403 and the frontend control independently renders nothing without content.view",
+    "foreign_tenant_source": "404 through tenant.context membership resolution",
+    "foreign_site_source": "404 because showSiteBound resolves the selected Site through the active tenant global scope",
+    "target_tenant_source": "authoritative FrontendContext.tenant.slug",
+    "tenant_path_encoding": "tenantUrl URL-encodes the authoritative tenant slug so path fragments cannot synthesize another tenant",
+    "direct_id_surface": "none; this control accepts no tenant, site, comment, user, or other resource identifier",
+    "csrf": "not applicable because the canonical operation is a GET/navigation-only control"
+  },
+  "runtime_semantics": {
+    "real_visible_control": true,
+    "read_only": true,
+    "idempotency": "repeated navigation has no persistent side effect",
+    "retry_safety": "navigation may be repeated without creating jobs, writes, provider requests, or WordPress operations",
+    "cancellation": "not applicable",
+    "authoritative_persistence_reread": "not applicable to navigation-only operation; source tenant/site context is resolved authoritatively before rendering",
+    "secret_non_exposure": "the component consumes only tenant slug and permission names and renders no connector/provider/WordPress secret",
+    "audit_or_receipt": "not applicable because no mutation occurs"
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsContentHubLinkTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/comments-content-hub-link.test.tsx",
+    "focused_ci_run": 35063307214,
+    "focused_ci_job": 104688080378,
+    "focused_ci_result": "success",
+    "validated": [
+      "canonical identity/source/domain/kind/non-mutation/tenant-owned metadata",
+      "real guarded comments source route",
+      "authorized tenant/site runtime",
+      "guest redirect, missing-permission 403, foreign-tenant 404, and foreign-site 404",
+      "comments-only runtime wiring and no network/mutation hook",
+      "exact canonical marker and tenant-qualified content destination",
+      "permission fail-closed rendering and tenant-slug path encoding"
+    ]
+  },
+  "implementation_snapshot_sha": "55592613852407d627177b7a80b8df0fd0d5f4f3",
+  "exact_tested_sha": "55592613852407d627177b7a80b8df0fd0d5f4f3",
+  "canonical_denominator": {
+    "authority_sha_before_closure": "101ea861da6600477f124826406bba21c183814a",
+    "total": 931,
+    "previous_terminal": 583,
+    "previous_pending": 348,
+    "previous_blocked": 0,
+    "expected_isolated_generator_result": {
+      "terminal": 584,
+      "pending": 347,
+      "blocked": 0
+    },
+    "note": "Counts are expectations for the official generator guard only and are not manually written into canonical reconciliation."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-COMM-A0D005681B",
+    "other_comments_controls_claimed": false,
+    "comments_route_operation_claimed": false,
+    "content_hub_route_operation_claimed": false,
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_green": true,
+    "evidence_recorded": true
+  }
+}

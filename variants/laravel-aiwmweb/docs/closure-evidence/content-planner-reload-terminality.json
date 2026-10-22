@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-8BE4A39748",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/content-planner",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/ContentPlanner.razor:/content-planner:ReloadAsync:ReloadAsync",
+    "source_intent": "Re-read the content planner sites and planner items from their authoritative sources",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-planner-reload-control.tsx",
+    "host_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "semantics": "explicit full-page authoritative reread of tenant context and workspace data",
+    "visibility_permission": "content.view"
+  },
+  "security": {
+    "backend_mutation_added": false,
+    "provider_mutation_added": false,
+    "caller_owned_identity_override_added": false,
+    "tenant_selector_added": false,
+    "foreign_tenant_access_added": false,
+    "fake_success": false,
+    "secret_disclosure_added": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerReloadTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-planner-reload-control.test.ts",
+    "coverage": [
+      "exact canonical operation identity",
+      "source ReloadAsync reread contract",
+      "one explicit authoritative browser reread",
+      "content.view visibility",
+      "foreign tenant fail-closed host route",
+      "no backend or provider mutation introduced"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-8BE4A39748"
+    ],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "8c2e08a6a17b685cafada10aa7b4240c34365c55",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-8BE4A39748-reload",
+    "implementation_sha": "e335efbbf0a37ace67e16762e15c945839fa50bd"
+  }
+}

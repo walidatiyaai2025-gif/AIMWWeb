@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #685",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-5E76AD4FAE",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/reports | /module/reports",
+    "visible_control": "ExportPlannerAsync [ExportPlannerAsync]",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/ReportsExports.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/views/reports/approvals-export.blade.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ApprovalsReportExportController.php",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/ApprovalsReportExportRouteServiceProvider.php",
+    "download_route": "/tenants/{tenant}/reports/content-planner.csv",
+    "permission": "reports.manage",
+    "read_model": "content_planner_items joined to tenant-owned sites",
+    "filename": "content-planner-report.csv",
+    "bom_utf8": true,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentPlannerReportExportTerminalityTest.php",
+    "assertions": [
+      "canonical source row identity",
+      "both report aliases render the control",
+      "CSV content is tenant-scoped",
+      "reports.manage is required for download",
+      "cross-tenant and guest access fail closed",
+      "empty and repeated exports are truthful and read-only"
+    ],
+    "local_php_syntax": "passed",
+    "local_phpunit": "deferred to CI because Composer is unavailable on GCC"
+  }
+}

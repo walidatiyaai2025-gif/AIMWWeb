@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #731",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-582319B640",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsOverview.razor",
+    "route_screen": "/site-operations | /operations/sites",
+    "visible_control": "@ExportAvailabilityMessage [ExportCsvAsync]",
+    "behavior": "Export the currently retained authoritative Site Operations rows to CSV, disable export when no matching retained rows exist, and report download startup failures without fake success.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low",
+    "retained_history_limit": 2000
+  },
+  "laravel_adaptation": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-operations-export-control.tsx",
+    "runtime_wiring": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "authoritative_read": "GET /tenants/{tenant}/route-api/site-operations",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/RouteApiAdapterController.php",
+    "history_service": "variants/laravel-aiwmweb/backend/app/Sites/SiteOperationHistoryService.php",
+    "model": "variants/laravel-aiwmweb/backend/app/Models/SiteOperationHistory.php",
+    "authorization": "execution.view",
+    "tenant_isolation": "auth + tenant.context + TenantAuthorizer plus tenant global scope on SiteOperationHistory and Site relation",
+    "retained_history_scope": "The Laravel route reads up to 2000 retained authoritative rows, matching the canonical retained history limit.",
+    "csv_contract": [
+      "Time",
+      "Site",
+      "SiteId",
+      "ExecutionJobId",
+      "Operation",
+      "Result",
+      "DurationMs",
+      "Records",
+      "Message",
+      "Details"
+    ],
+    "browser_download": "Blob + URL.createObjectURL + temporary anchor download",
+    "fake_success_path": "none",
+    "empty_state": "Export button is disabled when the authoritative row set is empty.",
+    "error_state": "Browser download startup failure renders an alert and does not report success."
+  },
+  "security_boundary": {
+    "authentication": "Laravel auth middleware",
+    "tenant_context": "tenant.context resolves active membership and rejects foreign tenant route access",
+    "permission": "RouteApiAdapterController::siteOperations re-authorizes execution.view",
+    "direct_object_identifier": "none",
+    "caller_supplied_tenant_selector": "route tenant must match authenticated active TenantContext",
+    "secret_non_exposure": "CSV is built only from the server-returned SiteOperationHistory fields; no credentials or connector secrets are queried or synthesized",
+    "mutation": false
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsExportCsvTerminalityTest.php",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-operations-export-control.test.tsx"
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical ExportCsvAsync control is wired to real tenant-scoped retained Site Operations data, produces a real browser CSV download from those authoritative rows, fails closed for empty/unauthorized/foreign-tenant reads, and never fabricates success."
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No adjacent Site Operations filter or reset operations are claimed",
+    "No payment provider readiness is fabricated",
+    "No persistence mutation is introduced",
+    "No manual generated parity-count edit"
+  ]
+}

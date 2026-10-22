@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-5DC460397B",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_screen": "/sites/{Id:guid}/explorer",
+    "source_control": "SynchronizeAsync [SynchronizeAsync]",
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "ownership": "WordPressSyncWebService.SynchronizeAsync enforces site ownership before synchronization.",
+    "duplicate_click_guard": "ContentExplorer ignores a second click while _syncing is true.",
+    "real_sync": "The source invokes SyncService.SynchronizeAsync(Id), reports the result, then reloads Explorer data.",
+    "failure": "Failures flow through the page error path and busy state is cleared in finally."
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-synchronize-control.tsx",
+    "frontend_wiring": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "start_endpoint": "POST /api/tenants/{tenant}/sites/{site}/sync",
+    "status_endpoint": "GET /api/tenants/{tenant}/sync-runs/{run}",
+    "backend_action": "App\\Http\\Controllers\\DemoController::sync",
+    "status_action": "App\\Http\\Controllers\\DemoController::syncStatus",
+    "background_job": "App\\Jobs\\SyncSiteJob",
+    "behavior": "The control starts the existing real tenant/site sync, polls authoritative run state, surfaces terminal failure, and invalidates Explorer data only after successful completion.",
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "authentication": "web/authenticated same-origin session",
+    "permission": "sites.manage",
+    "tenant_isolation": "route tenant must equal TenantContext tenant and site lookup is restricted to the active tenant",
+    "foreign_tenant_and_site_fail_closed": true,
+    "caller_owned_identity_fields": false,
+    "secrets_exposed": false
+  },
+  "concurrency_and_idempotency": {
+    "ui_repeat_guard": true,
+    "idempotency_key": true,
+    "durable_replay": "same idempotency key for the same tenant/site reuses the existing durable SyncRun without a second queue dispatch",
+    "conflicting_key_reuse": "server rejects rebinding an idempotency key to another sync request",
+    "polling": "queued/running are pending; succeeded/completed are success; failed/partial/cancelled states are terminal failure"
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerSynchronizeTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-synchronize-terminality.test.ts",
+    "coverage": [
+      "source-to-Laravel visible control binding",
+      "real sync and authoritative status endpoints",
+      "guest 401 and permission 403",
+      "foreign tenant/site isolation with 404",
+      "idempotent single dispatch",
+      "authoritative terminal status polling",
+      "no secret fields in status response",
+      "invalid tenant/site/run identifiers fail closed"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-5DC460397B",
+    "shared_sync_backend_reimplemented": false,
+    "sibling_operations_terminalized": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "4ae3e47da0da82d30b10402bda29555c30ff9a04",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-5DC460397B-synchronize",
+    "implementation_sha": "037a25abaa6769dc27a248851d09196fb364c334"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "Laravel preserves the ContentExplorer SynchronizeAsync boundary with a visible real synchronization control, durable idempotency, tenant/site authorization, authoritative polling, terminal failure handling, and post-success Explorer refresh."
+  }
+}

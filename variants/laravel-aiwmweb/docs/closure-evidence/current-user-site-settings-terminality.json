@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-SITE-9F9F2977B5",
+    "domain": "sites",
+    "kind": "visible_control",
+    "route_screen": "component:CurrentUserChip",
+    "visible_control": "/sites/@_activeSite.Id/settings",
+    "current_source": "src/AIWordPressManager.Web/Components/Layout/CurrentUserChip.razor",
+    "risk": "low",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "control": "When CurrentUserChip has an active site, the source workspace actions expose a visible Settings link to /sites/{activeSiteId}/settings.",
+    "read_only": "The canonical control is navigation only. It does not itself save site settings, mutate WordPress, enqueue work, or claim success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/current-user-site-details-control.tsx renders Settings only from authoritative active_site context, sites.view permission, and the exact tenant-scoped sites.detail.{id} contract.",
+    "destination": "SiteSettingsRouteServiceProvider registers explicit /tenants/{tenant}/sites/{site}/settings under auth + tenant.context and binds the route to the canonical operation ID.",
+    "read_authority": "SiteSettingsReadController authorizes tenant.view and sites.view, then reads the Site through the active tenant scope and renders persisted name, URL, and status without mutation.",
+    "guard": "The CurrentUserChip settings link fails closed without an active site, sites.view, or the exact active-site API contract; foreign tenant site IDs resolve 404 through TenantContext and Site tenant scoping."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/CurrentUserSiteSettingsVisibleTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/current-user-site-settings-control.test.tsx",
+    "proofs": [
+      "exact canonical PENDING operation identity and CurrentUserChip source at implementation stage",
+      "real visible Settings control carries the canonical operation marker and active-tenant destination",
+      "explicit authenticated tenant-scoped settings destination with tenant.view and sites.view authorization",
+      "persisted Site name, URL, and status are reread without mutation",
+      "guest, missing-permission, and Tenant A to Tenant B direct-ID paths fail closed",
+      "missing active-site or mismatched API context never synthesizes a settings destination"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "site_settings_mutation_added": false,
+    "fake_success": false,
+    "excluded_operations": []
+  }
+}

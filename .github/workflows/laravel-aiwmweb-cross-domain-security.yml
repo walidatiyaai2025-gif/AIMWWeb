@@ -1,0 +1,67 @@
+name: Laravel AIWMWeb Cross-Domain Security
+
+on:
+  pull_request:
+    paths:
+      - 'variants/laravel-aiwmweb/**'
+      - '.github/workflows/laravel-aiwmweb-cross-domain-security.yml'
+  push:
+    branches:
+      - worker/laravel-aiwmweb-closure-composition
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composed-adversarial:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: variants/laravel-aiwmweb/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3, redis
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - name: Install composed adversarial acceptance
+        shell: bash
+        run: |
+          mkdir -p tests/Feature/Security
+          cp ../security/tests/CrossDomainSecurityAcceptanceTest.php tests/Feature/Security/
+      - name: Prepare SQLite
+        shell: bash
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch "$RUNNER_TEMP/security.sqlite"
+          php artisan migrate:fresh --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ runner.temp }}/security.sqlite
+          CACHE_STORE: redis
+          REDIS_HOST: 127.0.0.1
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array
+      - run: vendor/bin/pint --test tests/Feature/Security/CrossDomainSecurityAcceptanceTest.php
+      - run: php artisan test tests/Feature/Security/CrossDomainSecurityAcceptanceTest.php
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ runner.temp }}/security.sqlite
+          CACHE_STORE: redis
+          REDIS_HOST: 127.0.0.1
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: array

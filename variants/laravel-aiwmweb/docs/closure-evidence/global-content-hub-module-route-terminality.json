@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #775 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-859135B2D1",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/module/content",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalContentHub.razor",
+    "source_intent": "Open the module/content alias for the same Global Content Hub.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_route": "GET /tenants/{tenant}/module/content",
+    "source_route_name": "canonical.alias.module-content",
+    "action": "CanonicalWorkspaceRouteController@redirect",
+    "workspace_target": "/tenants/{tenant}/content",
+    "operation_marker": "AIMW-CONT-859135B2D1"
+  },
+  "security": {
+    "route_middleware": ["web", "auth", "tenant.context"],
+    "permission": "content.view",
+    "tenant_selector": "authenticated server-derived tenant context",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalContentHubModuleRouteTerminalityTest.php",
+    "coverage": [
+      "exact canonical source identity",
+      "GET/HEAD-only explicit alias route",
+      "canonical operation marker",
+      "content.view authorization",
+      "redirect to real tenant content hub",
+      "guest redirect",
+      "missing-permission 403",
+      "foreign-tenant 404",
+      "caller query identity cannot override tenant",
+      "read-only alias behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-859135B2D1"],
+    "sibling_operations_claimed": false,
+    "explicitly_not_claimed": ["AIMW-CONT-65F2819526"],
+    "aspnet_product_modified": false
+  }
+}

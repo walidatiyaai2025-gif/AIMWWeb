@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "unit": "backup-reload-runtime-hardening-recovery",
+  "canonical_operation_id": "AIMW-BILL-07A0F6427B",
+  "canonical_state": "already_terminal",
+  "parity_transition_expected": false,
+  "selected_authority_sha": "d6d79177eedf68d24984bbe0c98db2d5adb20aab",
+  "recovered_from_pr": 577,
+  "official_reconciliation_validation": {
+    "workflow_run_id": 35274856313,
+    "result": "success",
+    "total": 931,
+    "terminal": 606,
+    "pending": 325,
+    "blocked": 0,
+    "committed_artifacts_match_regeneration": true
+  },
+  "runtime": {
+    "workspace": "/tenants/{tenant}/module/backups",
+    "authoritative_read": "/tenants/{tenant}/admin/backups?page=1",
+    "tenant_source": "FrontendContext.tenant.slug through the existing route API contract",
+    "permission": "backups.view",
+    "mutation": false,
+    "csrf": "not applicable: GET-only reread",
+    "busy_semantics": "second reload request is rejected locally while query.isFetching",
+    "truthful_success": "success toast only after query.refetch resolves without error",
+    "truthful_failure": "returned or thrown reread errors produce error feedback and never success",
+    "idempotency": "repeatable read-only refresh; no server-side state created",
+    "direct_id_surface": "none added",
+    "secrets": "none added or exposed"
+  },
+  "focused_tests": [
+    "backend/resources/js/__tests__/backup-reload-control.test.ts",
+    "backend/resources/js/__tests__/backup-reload-visible-control.test.tsx"
+  ],
+  "scope_guards": {
+    "no_second_operation": true,
+    "no_reference_product_write": true,
+    "no_manual_parity_edit": true,
+    "no_force_push": true
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #732",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-B84663A4C0",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsOverview.razor",
+    "route_screen": "/site-operations | /operations/sites",
+    "visible_control": "ReloadAsync [ReloadAsync]",
+    "behavior": "Reload retained site-operation history for the authenticated tenant from the authoritative source, expose loading/error/retry state truthfully, replace the rendered collection only from the authoritative read, and perform no mutation.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "reload_contract": "variants/laravel-aiwmweb/backend/resources/js/site-operations-reload-control.ts",
+    "authoritative_endpoint": "GET /tenants/{tenant}/route-api/site-operations",
+    "backend_action": "RouteApiAdapterController::siteOperations using SiteOperationHistoryService::getAll(2000)",
+    "operation_marker": "AIMW-BILL-B84663A4C0",
+    "loading": "The Refresh control is disabled and aria-busy while the authoritative query is fetching, preventing duplicate ReloadAsync execution.",
+    "success": "Success is returned only after query.refetch resolves without an error and React Query supplies the authoritative payload.",
+    "failure": "A rejected or error-bearing refetch is classified as failed; the page's QueryError state exposes retry and does not render the collection as a successful reload.",
+    "authorization": "execution.view",
+    "tenant_isolation": "auth + tenant.context + tenant-scoped SiteOperationHistoryService read",
+    "mutation": false,
+    "external_call": false,
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authentication": "Laravel auth middleware",
+    "tenant_context": "tenant.context activates the authenticated membership before the route API adapter reads history",
+    "permission": "RouteApiAdapterController::siteOperations re-authorizes execution.view",
+    "foreign_tenant": "focused feature coverage proves a foreign tenant route is 404 and a reader without execution.view is 403",
+    "authoritative_scope": "focused feature coverage proves only the active tenant operation history is returned",
+    "read_only": "focused feature coverage snapshots total history row count and proves the reload GET performs no persistence mutation"
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-operations-reload-control.test.ts — proves duplicate reload suppression, success only after a clean authoritative refetch, and truthful error/rejection outcomes.",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsReloadTerminalityTest.php — binds AIMW-BILL-B84663A4C0 to the real tenant-scoped route API read, proves authoritative tenant-only data, no mutation, auth/tenant middleware, permission denial, and foreign-tenant 404."
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical ReloadAsync control is bound to a real tenant-scoped authoritative GET, blocks duplicate concurrent reloads, surfaces query failure through the existing retryable error state, and has focused tenant-isolation/read-only acceptance coverage."
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No ExportCsvAsync, filters, details navigation, or adjacent Site Operations controls are claimed",
+    "No payment-provider state is fabricated",
+    "No mutation endpoint is introduced",
+    "No manual generated parity-count edit"
+  ]
+}

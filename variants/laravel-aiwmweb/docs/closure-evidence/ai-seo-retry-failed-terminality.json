@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-49E68B3816",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "ai",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/seo",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SeoManager.razor",
+    "source_service": "src/AIWordPressManager.Web/Services/SeoRemediationWebService.cs",
+    "source_intent": "Expose Retry failed only when a failed SEO remediation still has an applicable suggested value, and execute it through the existing authorized remediation path.",
+    "tenant_owned": true,
+    "mutation": true
+  },
+  "laravel_adapter": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/seo-visible-controls.tsx",
+    "manager_config": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoVisibleControlController.php",
+    "route": "variants/laravel-aiwmweb/backend/routes/api.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SeoRemediationClosureController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Services/SeoRemediationClosureService.php",
+    "execution_job": "variants/laravel-aiwmweb/backend/app/Jobs/ExecuteApprovedSuggestionJob.php",
+    "endpoint": "POST /api/v1/tenants/{tenant}/sites/{site}/seo/remediations/failed/retry"
+  },
+  "acceptance": {
+    "eligibility": "Only site-scoped executions in failed state whose approval remains APPROVED and whose proposed_state is non-empty can transition to queued.",
+    "concurrency": "The failed-to-queued update is conditional inside a transaction, preventing duplicate dispatch when retry requests race.",
+    "execution_boundary": "The HTTP request performs no WordPress mutation; it dispatches the existing tenant-aware ExecuteApprovedSuggestionJob, which preserves the approved execution operation and performs authoritative pre-state and post-mutation re-read verification.",
+    "attempt_history": "Existing attempts are preserved during requeue and increment only when the execution job atomically claims the queued execution.",
+    "ui_contract": "data-testid=seo-retry-failed; operation AIMW-AI-49E68B3816; disabled while busy or when no retryable failed proposal exists.",
+    "security": "Mutation requires seo.write, tenant context remains active, and foreign tenant site identifiers resolve fail-closed."
+  },
+  "focused_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SeoRetryFailedVisibleControlTerminalityTest.php",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/seo-visible-controls.test.tsx"
+  ],
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "claim_base_sha": "f6fa24bd717ee5471e94dce43af8772c7192fbab",
+    "claim_issue_comment": 5564130921,
+    "branch": "worker/laravel-aiwmweb-AIMW-AI-49E68B3816-slot0123",
+    "reason": "Canonical RetryFailedAsync was PENDING and Laravel lacked an operation-specific visible control and authorized retry adapter."
+  },
+  "ci_policy": {
+    "required_before_integration": [
+      "focused Laravel feature test",
+      "focused frontend Vitest",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ],
+    "counts_must_be_generator_derived": true,
+    "manual_or_live_evidence_fabricated": false
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-2C653A870A",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Layout/MainLayout.razor",
+    "source_screen": "component:MainLayout",
+    "source_control": "@(L.IsArabic ? [OpenCommandPalette]",
+    "mutation": false,
+    "tenant_owned": true,
+    "connector_required": false
+  },
+  "source_behavior": {
+    "open_paths": [
+      "Quick Search control",
+      "Ctrl+K / Cmd+K"
+    ],
+    "on_open": "Reset the current command query and open the command dialog.",
+    "destination_visibility": "Only destinations accepted by the source CanNavigate authorization check are exposed.",
+    "activation": "RunCommand rechecks authorization immediately before navigation."
+  },
+  "laravel_adaptation": {
+    "runtime_shell": "variants/laravel-aiwmweb/backend/resources/js/components.tsx::AppShell/CommandPalette",
+    "context_route": "GET /tenants/{tenant}/context",
+    "context_guards": [
+      "auth",
+      "tenant.context",
+      "tenant.view authorization in the context handler"
+    ],
+    "candidate_filter": "workspaceRoutes are exposed only when !hidden and resolveCapability(context, route).state === enabled.",
+    "capability_inputs": [
+      "authoritative FrontendContext.permissions",
+      "route permission requirement",
+      "connector scope",
+      "explicit capability state",
+      "advertised backend API contract"
+    ],
+    "activation_recheck": "resolveCapability(context, route) is evaluated again at click time and navigation is refused if it is no longer enabled.",
+    "tenant_target_builder": "tenantUrl(context.tenant.slug, route.path)",
+    "truthful_empty_state": true,
+    "query_reset_on_open": true,
+    "demo_or_sample_data": false,
+    "new_backend_architecture": false,
+    "generated_931_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "Authenticated user enters the Laravel tenant workspace.",
+    "TenantBootstrap loads GET /tenants/{tenant}/context through auth + tenant.context.",
+    "AppShell receives the authoritative tenant FrontendContext.",
+    "Quick Search or Ctrl+K opens CommandPalette and clears stale query text.",
+    "CommandPalette derives visible destinations through resolveCapability(context, route).",
+    "The user searches only the currently authorized/available destination set.",
+    "On selection, resolveCapability is rechecked and the target is built only from context.tenant.slug.",
+    "The router navigates only after that recheck succeeds; otherwise the dialog remains open without a fake success path."
+  ],
+  "authorization": {
+    "guest_json_context": "401 Unauthorized",
+    "missing_tenant_view": "403 Forbidden",
+    "foreign_tenant_without_membership": "404 Not Found",
+    "destination_visibility": "Fails closed on permission, connector scope, explicit capability, or missing advertised API contract.",
+    "permission_revoked_before_click": "Navigation is refused by the activation-time capability recheck.",
+    "anonymous_runtime_semantics": "The authoritative tenant context is not returned to an unauthenticated JSON caller."
+  },
+  "tenant_isolation": {
+    "authoritative_context": "The context endpoint is tenant-scoped and returns permissions/API URLs for the active tenant only.",
+    "cross_tenant_idor": "There is no direct resource ID in this operation; foreign tenant context access without membership returns 404.",
+    "caller_url_tenant_resistance": "A mismatched URL tenant cannot control command navigation because targets use context.tenant.slug, not the caller path parameter.",
+    "tested_example": "The React acceptance starts at /tenants/beta with authoritative context tenant alpha; successful command navigation resolves to /tenants/alpha/sites."
+  },
+  "runtime_semantics": {
+    "read_navigation_only": true,
+    "persistence": "not applicable; this operation does not mutate server state",
+    "authoritative_reread_after_mutation": "not applicable; no mutation exists",
+    "idempotency": "Repeated open/search/close cycles create no server mutation and reset stale query state on each open.",
+    "retry_safety": "Safe for repeated invocation because the operation is navigation/read-only.",
+    "rollback_or_cancellation": "Closing the palette cancels the pending UI interaction; no server state exists to roll back.",
+    "runtime_audit_event": "not applicable to this navigation-only control",
+    "closure_receipt": "this evidence artifact",
+    "fake_success_path": false
+  },
+  "acceptance_tests": {
+    "frontend": {
+      "path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/command-palette-full-closure.test.tsx",
+      "proof": [
+        "The real Quick Search trigger opens the labeled dialog and maintains aria-expanded/aria-controls state.",
+        "A destination lacking the authoritative permission/API contract is not disclosed and a truthful empty state is shown.",
+        "An enabled destination is visible.",
+        "Capability is rechecked at activation time; revoking permission before click prevents navigation and keeps the dialog open.",
+        "Successful navigation uses context.tenant.slug rather than a mismatched caller URL tenant.",
+        "Ctrl+K opens the canonical path and each new open clears stale query text."
+      ]
+    },
+    "laravel": {
+      "path": "variants/laravel-aiwmweb/backend/tests/Feature/CommandPaletteFullClosureTest.php",
+      "proof": [
+        "Exact canonical operation identity and PENDING pre-state are asserted from the generated reconciliation.",
+        "GET /tenants/{tenant}/context is verified as a real auth + tenant.context route.",
+        "Authoritative active-tenant permissions and tenant-scoped API URLs are returned without leaking another tenant's permission set.",
+        "Guest JSON context returns 401, missing tenant.view returns 403, and foreign tenant access without membership returns 404."
+      ]
+    }
+  },
+  "implementation_snapshot_sha": "f45380b50c00fce2e10cfe5d1ce150ae887af624",
+  "exact_tested_implementation_sha": "f45380b50c00fce2e10cfe5d1ce150ae887af624",
+  "exact_tested_implementation_ci": {
+    "pr_plan_link": {
+      "run_id": 33223412121,
+      "run_number": 937,
+      "result": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33223412268,
+      "run_number": 214,
+      "result": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 33223412117,
+      "run_number": 283,
+      "result": "success",
+      "subgates": {
+        "acceptance_gate": "success",
+        "pint_sqlite_migrations_full_php": "success",
+        "mysql_fresh_rollback_forward_full_php": "success",
+        "redis_queue_scheduler": "success",
+        "wordpress_disposable_runtime": "success",
+        "wordpress_real_rest_e2e": "success",
+        "frontend_typecheck_tests": "success",
+        "frontend_production_build": "success",
+        "runtime_artifacts": "success",
+        "production_docker_compose_runtime_smoke": "success"
+      }
+    }
+  },
+  "canonical_denominator": {
+    "source": "latest generated 931-operation reconciliation on worker/laravel-aiwmweb-closure-composition @ 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal_count": 358,
+    "new_terminal_count_after_this_operation": 359,
+    "previous_pending_count": 573,
+    "new_pending_count_after_this_operation": 572,
+    "generated_reconciliation_modified": false,
+    "accounting_note": "This is the isolated denominator contribution of exactly this operation; parallel unmerged worker contributions are intentionally not folded in."
+  },
+  "scope_guards": {
+    "one_operation_only": true,
+    "second_operation_started": false,
+    "aspnet_current_product_modified": false,
+    "files_outside_variant_modified": false,
+    "merged": false,
+    "force_pushed": false,
+    "not_claimed": [
+      "CloseCommandPalette",
+      "recent-pages",
+      "appearance/theme",
+      "sidebar controls"
+    ]
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "deterministic_acceptance": true,
+    "implementation_sha_ci_green": true,
+    "evidence_recorded": true,
+    "final_evidence_bearing_head_must_be_green_before_handoff": true
+  }
+}

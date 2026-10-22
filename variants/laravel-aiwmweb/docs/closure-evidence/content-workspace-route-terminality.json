@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #890 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-E4275AE57F",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/content-workspace",
+    "source": "src/AIWordPressManager.Web/Components/Pages/WorkspaceHub.razor",
+    "source_intent": "Open and render the tenant-scoped WordPress Content Management workspace backed by real content destinations.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "source_route": "GET /tenants/{tenant}/content-workspace",
+    "source_route_name": "canonical.workspace.content-workspace",
+    "action": "CanonicalWorkspaceRouteController@show",
+    "frontend_workspace": "/content-workspace",
+    "operation_marker": "AIMW-CONT-E4275AE57F"
+  },
+  "security": {
+    "route_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "permission": "content.view",
+    "tenant_selector": "authenticated server-derived tenant context",
+    "foreign_tenant": "404/fail closed",
+    "missing_permission": "403/fail closed",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentWorkspaceRouteTerminalityTest.php",
+    "coverage": [
+      "exact canonical source identity",
+      "GET/HEAD-only explicit route",
+      "canonical operation marker",
+      "content.view authorization",
+      "real React workspace registration",
+      "real posts/pages/media/taxonomy/comments/users destinations remain authoritative",
+      "guest redirect",
+      "missing-permission 403",
+      "foreign-tenant 404",
+      "caller query identity cannot override tenant",
+      "read-only route behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-E4275AE57F"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

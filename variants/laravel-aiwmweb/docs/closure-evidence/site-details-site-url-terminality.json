@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-A8D10964C6",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "route_screen": "/sites/{Id:guid}",
+    "visible_control": "@_site.SiteUrl -> @_site.SiteUrl",
+    "behavior": "When a real Site Details record is loaded, the source renders the persisted SiteUrl as a read-only external anchor opening in a new browser tab.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "laravel_adaptation": {
+    "workspace_route": "GET /tenants/{tenant}/sites/{site}",
+    "workspace_route_name": "canonical.site.details",
+    "workspace_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController@showSite",
+    "context_route": "GET /tenants/{tenant}/context",
+    "context_api_key": "sites.detail.{siteId}",
+    "site_read_api": "GET /api/tenants/{tenant}/sites/{site}",
+    "site_read_controller": "App\\Http\\Controllers\\SiteManagementController::show",
+    "authoritative_model": "App\\Models\\Site",
+    "authoritative_field": "sites.url",
+    "frontend_control": "resources/js/site-details-site-url-control.tsx",
+    "control_binding": "data-canonical-operation=AIMW-AI-A8D10964C6",
+    "external_navigation": "target=_blank",
+    "safety_rel": "noopener noreferrer",
+    "destination_guard": "The control renders a clickable destination only when the persisted API value is a syntactically valid absolute http:// or https:// URL; it never derives the destination from query string, route text, or another caller-controlled surface.",
+    "fake_or_demo_data": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/sites/{site}",
+    "auth + tenant.context activate the requested tenant and the workspace requires tenant.view plus sites.view",
+    "CanonicalWorkspaceRouteController::showSite resolves the requested Site through the tenant-scoped Site model and stores that real site id as active canonical site context",
+    "GET /tenants/{tenant}/context advertises sites.detail.{siteId} only for that active tenant-scoped site",
+    "SiteDetailsSiteUrlControl reads exactly that advertised endpoint",
+    "GET /api/tenants/{tenant}/sites/{site} authorizes tenant.view and SiteManagementController::show performs explicit tenant slug, numeric id, tenant_id, and primary-key checks",
+    "the real persisted Site model is returned including its url field",
+    "the frontend accepts only an absolute HTTP(S) persisted url and renders it with the exact canonical marker",
+    "activating the anchor opens the persisted site URL in a new tab; no Laravel or WordPress mutation is issued"
+  ],
+  "authorization": {
+    "workspace_authentication": "auth",
+    "workspace_tenant_context": "tenant.context",
+    "workspace_permissions": ["tenant.view", "sites.view"],
+    "context_authentication": "auth",
+    "context_tenant_context": "tenant.context",
+    "context_permission": "tenant.view",
+    "api_authentication": "auth",
+    "api_tenant_context": "tenant.context",
+    "api_permission": "tenant.view",
+    "guest_workspace_semantics": "redirect to /login",
+    "missing_sites_view_workspace_semantics": "403 forbidden before the Site Details control surface renders",
+    "foreign_tenant_or_site_semantics": "404"
+  },
+  "tenant_isolation": {
+    "proof": "Acceptance creates persisted Alpha and Beta Site rows with distinct URLs. Alpha can read its own exact URL, but Alpha requests for the Beta site through both the workspace and Site Details API fail 404, and an Alpha identity cannot switch to the Beta tenant API path.",
+    "active_site_binding": "FrontendContext advertises the detail endpoint from the canonical_site_id session value only after resolving that id through the active tenant Site global scope.",
+    "read_binding": "SiteManagementController::show additionally removes global scopes only after pinning tenant_id to TenantContext::id and the validated positive numeric site primary key.",
+    "caller_override_probe": "Adding ?url=https://attacker.example to the real Site Details GET cannot alter the JSON url; the response remains the persisted tenant Site URL."
+  },
+  "semantics": {
+    "mutation": false,
+    "persistence_mutation": false,
+    "wordpress_mutation": false,
+    "external_navigation_only": true,
+    "idempotent": true,
+    "retry_safe_read": true,
+    "authoritative_reread": true,
+    "audit_receipt": "not applicable; the operation performs no mutation",
+    "queue_runtime": "not applicable",
+    "provider_runtime": "not applicable",
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/SiteDetailsSiteUrlControlTerminalityTest.php",
+      "coverage": [
+        "exact canonical PENDING identity/domain/kind/source/control/read-only/tenant-owned/risk metadata",
+        "real Site Details workspace and tenant Site read API route bindings",
+        "workspace auth + tenant.context + tenant.view/sites.view enforcement",
+        "active tenant Site Details context advertises the exact sites.detail.{id} endpoint",
+        "real persisted Alpha Site URL reread with no Site row or URL mutation",
+        "guest redirect and missing sites.view 403 workspace semantics",
+        "Tenant A to Tenant B workspace/API 404 isolation",
+        "caller-supplied URL query cannot override persisted URL",
+        "production frontend control is wired only on Site Details and contains no mutation hook"
+      ]
+    },
+    "frontend": {
+      "file": "backend/resources/js/__tests__/site-details-site-url-control.test.tsx",
+      "coverage": [
+        "exact canonical operation marker",
+        "real advertised Site Details endpoint is fetched",
+        "persisted URL renders as _blank external anchor with noopener noreferrer",
+        "GET-only behavior with no mutation method",
+        "unsafe javascript/data/malformed destinations fail closed",
+        "missing exact Site Details API contract causes no fetch and no synthesized link"
+      ]
+    }
+  },
+  "implementation": {
+    "dependency_base_pr": 307,
+    "dependency_base_sha": "d49591242592aa5a2c16b5e4b0bd7e8b87c77e74",
+    "implementation_sha": "7f2acf7f6f4893296fd67b1bcfb2789847b6c72e",
+    "tested_sha": "7f2acf7f6f4893296fd67b1bcfb2789847b6c72e"
+  },
+  "implementation_head_ci": {
+    "result": "GREEN",
+    "pr_plan_link": {
+      "run_id": 33227941582,
+      "run_number": 966,
+      "conclusion": "success"
+    },
+    "cross_domain_security": {
+      "run_id": 33227941480,
+      "run_number": 235,
+      "conclusion": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 33227943608,
+      "run_number": 304,
+      "conclusion": "success"
+    },
+    "acceptance_subgates": {
+      "pint": "success",
+      "sqlite_migrate_fresh_and_full_php_tests": "success",
+      "mysql_fresh_rollback_forward_and_full_php_tests": "success",
+      "redis_queue_scheduler": "success",
+      "wordpress_disposable_runtime": "success",
+      "wordpress_real_rest_e2e": "success",
+      "frontend_typecheck_tests_build": "success",
+      "production_frontend_build": "success",
+      "runtime_artifacts": "success",
+      "acceptance_gate": "success",
+      "production_docker_compose_model_build_boot_real_runtime_smoke_cleanup": "success",
+      "generate_parity_ledger": "skipped_by_workflow_design"
+    }
+  },
+  "canonical_denominator": {
+    "authority_branch": "worker/laravel-aiwmweb-closure-composition",
+    "authority_sha": "4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "isolated_new_terminal": 359,
+    "previous_pending": 573,
+    "isolated_new_pending": 572,
+    "note": "This is the isolated contribution of exactly this operation against the live generated reconciliation authority. Parallel unmerged worker PRs are intentionally not folded into these generated-authority counts."
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "aspnet_current_product_modified": false,
+    "second_operation_started": false,
+    "merge_performed": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The Laravel Site Details route now exposes the exact canonical persisted Site URL control using only the existing authoritative tenant-scoped Site Details API. The destination cannot be overridden by caller input, unsafe schemes fail closed, tenant A/B isolation is proven, and the implementation exact head passed all authoritative repository gates. Final handoff additionally requires this evidence-bearing head itself to pass those gates."
+  }
+}

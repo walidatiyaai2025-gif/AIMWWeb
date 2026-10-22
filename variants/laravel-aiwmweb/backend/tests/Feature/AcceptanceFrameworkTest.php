@@ -3,9 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\AuditEvent;
+use App\Models\BillingAudit;
+use App\Models\BillingSubscriptionChange;
+use App\Models\BillingTransaction;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\IdempotencyKey;
+use App\Models\TenantBillingProfile;
 use App\Models\TenantSecret;
+use App\Models\TenantSubscription;
+use App\Models\TenantUsageCounter;
 use Tests\TestCase;
 
 class AcceptanceFrameworkTest extends TestCase
@@ -22,7 +28,8 @@ class AcceptanceFrameworkTest extends TestCase
         $this->assertSame([
             'sites', 'content', 'media', 'comments', 'taxonomy', 'credentials', 'connector', 'ai_config',
             'audits', 'findings', 'suggestions', 'approvals', 'executions', 'evidence', 'jobs', 'schedules',
-            'backups', 'reports', 'members', 'settings',
+            'backups', 'reports', 'members', 'settings', 'billing_subscription', 'billing_profile',
+            'billing_usage', 'billing_transactions', 'billing_changes', 'billing_audits',
         ], $matrix['tenant_resources']);
 
         $this->assertContains('bulk_mixed_tenant_ids', $matrix['tenant_attack_shapes']);
@@ -38,7 +45,17 @@ class AcceptanceFrameworkTest extends TestCase
 
     public function test_current_tenant_owned_models_use_the_shared_tenant_scope_contract(): void
     {
-        foreach ([TenantSecret::class, IdempotencyKey::class, AuditEvent::class] as $model) {
+        foreach ([
+            TenantSecret::class,
+            IdempotencyKey::class,
+            AuditEvent::class,
+            TenantBillingProfile::class,
+            TenantSubscription::class,
+            TenantUsageCounter::class,
+            BillingTransaction::class,
+            BillingSubscriptionChange::class,
+            BillingAudit::class,
+        ] as $model) {
             $uses = class_uses_recursive($model);
             $this->assertArrayHasKey(
                 BelongsToTenant::class,

@@ -35,7 +35,7 @@ final class ConnectorScopePolicy
         if (array_intersect(['title', 'content', 'slug'], array_keys($changes))) {
             $required[] = 'content.update';
         }
-        if (array_intersect(['seo_title', 'seo_description'], array_keys($changes))) {
+        if (array_intersect(['seo_title', 'seo_description', 'seo_canonical', 'seo_robots'], array_keys($changes))) {
             $required[] = 'seo.write';
         }
         if ($required === []) {

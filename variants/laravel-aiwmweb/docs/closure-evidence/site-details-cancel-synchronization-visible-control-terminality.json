@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-54BB64BB13",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteDetails.razor",
+    "route_screen": "/sites/{Id:guid}",
+    "scanner_visible_control": "CancelSynchronization [CancelSynchronization]",
+    "resolved_control": "Cancel button shown while Site Details synchronization is running",
+    "source_action": "CancelSynchronization",
+    "behavior": "The source invokes CancellationTokenSource.Cancel() for the currently running WordPress synchronization and handles OperationCanceledException as user-requested cancellation.",
+    "tenant_owned": true,
+    "mutation": true,
+    "risk": "high"
+  },
+  "laravel_adaptation": {
+    "ui_control": "backend/resources/js/site-details-cancel-synchronization-control.tsx",
+    "mount": "backend/resources/js/app.tsx",
+    "route_contract": "backend/routes/api.php",
+    "action": "backend/app/Http/Controllers/SiteSyncCancellationController.php",
+    "runtime_service": "backend/app/Sync/SyncCancellationService.php",
+    "worker_paths": [
+      "backend/app/Jobs/ProcessSyncRunJob.php",
+      "backend/app/Jobs/ProcessSyncBatchJob.php"
+    ],
+    "race_guards": [
+      "backend/app/Models/SyncRun.php",
+      "backend/app/Models/SyncBatch.php",
+      "backend/app/Models/SyncItem.php"
+    ],
+    "control_binding": "AIMW-AI-54BB64BB13",
+    "target_contract": "/api/v1/tenants/{tenant}/sites/{site}/sync/cancel",
+    "adaptation_reason": "Laravel synchronization is queue-backed rather than held by a page-local CancellationTokenSource, so the canonical cancel intent is preserved as a tenant-authorized cooperative cancel request consumed by the existing real Sync runtime.",
+    "fake_or_demo_data": false
+  },
+  "authorization": {
+    "authentication": "required",
+    "permission": "content.edit",
+    "tenant_context": "tenant.context middleware",
+    "site_authority": "Site::query()->findOrFail within active tenant context",
+    "caller_selected_run_id": false
+  },
+  "tenant_isolation": {
+    "proof": "Focused acceptance rejects a content.edit user attempting to cancel a foreign-tenant Site ID and rejects a caller without content.edit before mutation.",
+    "caller_override_probe": "Cancellation resolves the active run only from the tenant-scoped Site ID and never accepts tenant ownership or sync-run ownership metadata from the request body."
+  },
+  "semantics": {
+    "persistence_mutation": true,
+    "external_dependency": "No external provider success is required or claimed by cancellation itself.",
+    "approval_required": false,
+    "authoritative_tenant_context": true,
+    "cross_tenant_disclosure": false,
+    "fake_success_path": "none",
+    "no_active_behavior": "HTTP 409; no run or SyncCancelled event is fabricated",
+    "requested_state": "cancel_requested",
+    "terminal_state": "cancelled",
+    "terminal_event": "SyncCancelled",
+    "race_behavior": "stale run, batch and item writes cannot restore progress or completion after cancellation has been requested"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/Sync/SyncCancellationTerminalityTest.php",
+      "coverage": [
+        "exact canonical operation identity and source metadata",
+        "authenticated tenant-context active and cancel route bindings",
+        "content.edit authorization",
+        "foreign-tenant Site isolation",
+        "409 and no fabricated event when no sync is active",
+        "cancel_requested to cancelled worker finalization",
+        "queued/running batch cancellation",
+        "SyncCancelled event without SyncCompleted",
+        "stale runtime model cannot resurrect cancellation"
+      ]
+    },
+    "frontend": {
+      "file": "backend/resources/js/__tests__/site-details-cancel-synchronization-control.test.tsx",
+      "coverage": [
+        "real active-sync lookup",
+        "disabled control without active synchronization",
+        "canonical operation ID submitted to cancellation endpoint",
+        "accepted cancellation request reflected without fabricated sync completion"
+      ]
+    }
+  },
+  "implementation": {
+    "baseline_composition_sha": "e63e560d074849e16b4d57ed6f0a0628de9fa495",
+    "validated_implementation_sha": "152faa0cd1617bf13f14e88e249582513f5b00d1",
+    "validated_ci": {
+      "acceptance": {
+        "run_id": 34152287114,
+        "conclusion": "success"
+      },
+      "parity_reconciliation": {
+        "run_id": 34152287138,
+        "conclusion": "success"
+      },
+      "cross_domain_security": {
+        "run_id": 34152287134,
+        "conclusion": "success"
+      },
+      "pr_plan_link": {
+        "run_id": 34152287105,
+        "conclusion": "success"
+      }
+    }
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "reference_product_modified": false,
+    "second_operation_started": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical user cancellation is implemented against the existing Laravel Sync runtime with operation-linked production and focused-test markers, tenant/permission enforcement, cooperative queue cancellation, explicit no-active failure semantics, and race guards preventing stale completion after cancellation."
+  }
+}

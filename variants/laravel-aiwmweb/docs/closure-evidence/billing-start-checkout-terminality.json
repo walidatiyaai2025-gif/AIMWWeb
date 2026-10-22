@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257 / handoff #614",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-8DD8F167D3",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/account/billing",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AccountBilling.razor",
+    "source_operation_key": "visible:src/AIWordPressManager.Web/Components/Pages/AccountBilling.razor:/account/billing:StartCheckoutAsync",
+    "source_intent": "Start a real server-created PayPal subscription checkout for the selected commercially configured plan and navigate to the provider approval URL; browser return is navigation only and never payment evidence.",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/BillingController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Billing/SubscriptionService.php",
+    "mutation_route": "POST /api/v1/tenants/{tenant}/billing/checkout",
+    "workspace_route": "GET /tenants/{tenant}/account/billing",
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/billing-start-checkout-control.tsx",
+    "permissions": [
+      "billing.view",
+      "billing.manage"
+    ],
+    "provider_boundary": "BillingProvider::createSubscriptionIntent via the existing provider registry",
+    "authoritative_subscription_read": "GET /api/v1/tenants/{tenant}/billing/subscription",
+    "catalog_read": "GET /api/v1/billing/plans",
+    "idempotency_service": "variants/laravel-aiwmweb/backend/app/Tenancy/IdempotencyService.php",
+    "idempotency_header": "Idempotency-Key"
+  },
+  "security": {
+    "tenant_selector": "server-owned auth + tenant.context; foreign tenant membership fails closed",
+    "actor_identity": "authenticated server session only",
+    "plan_selector": "caller may submit only bounded plan_code; tenant_id, user_id, subscription/provider identifiers and extra request keys are rejected",
+    "authorization": "billing.manage is required server-side for checkout; billing.view controls the account surface",
+    "idempotency": "tenant-scoped IdempotencyService binds key + canonical operation + plan_code and replays the stored checkout response without a second provider intent",
+    "provider_identity": "provider and provider subscription identity are resolved and persisted server-side and are never accepted from the browser",
+    "provider_secret_policy": "provider subscription identity is never returned to the browser; only the approval URL and pending-provider-confirmation state are exposed",
+    "redirect_policy": "frontend accepts only an HTTPS approval URL returned by the authenticated Laravel checkout endpoint",
+    "payment_truth": "browser return/cancel navigation is not treated as payment success; provider reconciliation remains authoritative",
+    "csrf": "mutation uses the Laravel web/auth/tenant.context route stack and apiRequest supplies the CSRF token when present",
+    "fake_success": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/BillingStartCheckoutTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/billing-start-checkout-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity on production UI and Laravel route",
+      "guest denial",
+      "foreign-tenant denial",
+      "billing.manage RBAC denial",
+      "caller-owned tenant/user/provider identity rejection",
+      "mandatory bounded Idempotency-Key",
+      "same-key replay creates no second provider checkout intent",
+      "provider subscription identity is not exposed",
+      "server-created pending provider approval response",
+      "HTTPS provider navigation only after successful server checkout",
+      "unsafe approval URL rejection",
+      "current paid subscription checkout is fail-closed in favor of plan change"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-8DD8F167D3"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "destructive_migration": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "d82c2a6df2326dc9f8bae4ff9d2bba28df5fbbf9",
+    "branch": "worker/laravel-bill-8dd8f167d3",
+    "implementation_sha": "270952162d8a707b09c37b26f2510c0aff577da2"
+  }
+}

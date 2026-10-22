@@ -1,0 +1,21 @@
+{
+  "authority": "AIMWWeb Issue #257",
+  "operation_id": "AIMW-BILL-48E69F42EB",
+  "domain": "billing",
+  "kind": "visible_control",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SystemHealth.razor",
+    "behavior": "CopySummaryAsync copies the loaded health summary and reports actual clipboard success or failure."
+  },
+  "laravel_adaptation": {
+    "control_file": "variants/laravel-aiwmweb/backend/resources/js/system-health-copy-summary-control.tsx",
+    "workspace_file": "variants/laravel-aiwmweb/backend/resources/js/system-health-workspace.tsx",
+    "behavior": "Copies only allowlisted real runtime check statuses after tenant-authorized snapshot success. No synthetic check time or version is invented when the runtime read contract does not supply them. Reload, missing data, invalid statuses and foreign tenant snapshots withhold the control. Clipboard rejection and unavailability are reported without raw error details; duplicate clicks are suppressed."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/system-health-copy-summary-control.test.tsx",
+    "variants/laravel-aiwmweb/backend/tests/Feature/SystemHealthCopySummaryTerminalityTest.php"
+  ],
+  "tenant_isolation": "web+auth+tenant.context; tenant.view and diagnostics.view; foreign-tenant 404; query IDs cannot override TenantContext; no server mutation or arbitrary payload serialization"
+}

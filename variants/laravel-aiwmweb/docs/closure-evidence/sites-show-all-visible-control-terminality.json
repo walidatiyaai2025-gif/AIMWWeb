@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-CONT-C178278FCB",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "visible_control": "ShowAllSites",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "show_all": "The source Sites workspace exposes ShowAllSites to select the all-sites view rather than narrowing the already loaded tenant collection.",
+    "read_only": "ShowAllSites is browser-local view state. It does not persist data, enqueue work, call a provider mutation, or fabricate mutation success."
+  },
+  "laravel_adaptation": {
+    "frontend": "resources/js/pages.tsx binds AIMW-CONT-C178278FCB only to the All control on the real Sites ResourceContent workspace.",
+    "view_state": "The Sites workspace owns an explicit local all/connected filter state. ShowAllSites sets that state to all and renders the complete current authoritative Sites result.",
+    "read_contract": "The control operates over rows already returned by the existing tenant Sites query; clicking All does not issue an additional request.",
+    "mutation_boundary": "The control performs no mutation. Refresh, selection, bulk-delete, and later connection filters remain distinct canonical operations."
+  },
+  "acceptance": {
+    "backend_test": "backend/tests/Feature/SitesShowAllVisibleControlTerminalityTest.php",
+    "frontend_test": "resources/js/__tests__/sites-show-all-visible-control.test.tsx",
+    "proofs": [
+      "exact canonical operation identity and non-mutation metadata",
+      "production operation marker only on the real Sites All control",
+      "a member with tenant.view plus sites.view and no sites.manage can reach the control surface",
+      "the authoritative active and disabled site rows remain visible in the all-sites view",
+      "clicking All is browser-local and performs no additional request or mutation",
+      "missing sites.view returns 403 and a foreign tenant Sites workspace returns 404"
+    ]
+  },
+  "scope": {
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "backend_mutation_modified": false,
+    "fake_success": false
+  }
+}

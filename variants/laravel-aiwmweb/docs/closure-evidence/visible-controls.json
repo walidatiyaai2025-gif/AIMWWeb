@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "integration_base": {
+    "pull_request": 277,
+    "branch": "lead/laravel-aiwmweb-final-convergence",
+    "sha": "23c36521069c9f0b80ffd79d856122db1af3b7c6"
+  },
+  "worker_branch": "worker/laravel-aiwmweb-visible-controls-closure",
+  "canonical_visible_controls": 446,
+  "controls_inspected": 446,
+  "controls_terminalized": 0,
+  "controls_still_pending": 446,
+  "closed_controls": [],
+  "shared_frontend_hardening": [
+    {
+      "scope": "resource action mutations",
+      "behavior_before": "success notification was emitted before invalidation and without proving the authoritative read completed",
+      "behavior_after": "the mutation resolves only after the active server-backed collection refetch completes; a committed mutation with failed reconciliation is surfaced distinctly and never reported as success",
+      "implementation_commit": "7ed49ba5cb8824f130d8924d5370eccd33781919",
+      "test_commit": "43eacf2c0c82425ccd6da08532bd48419a32253b",
+      "test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/reconciliation.test.ts"
+    }
+  ],
+  "negative_control_sweep": {
+    "href_hash_matches": 0,
+    "math_random_matches": 0,
+    "notes": "The centralized React route registry, shared resource executor, action button, dialogs, server-backed search/pagination, loading/error/empty states and capability gates were inspected. No control is promoted to terminal solely because it renders or because this shared hardening applies."
+  },
+  "backend_contract_blockers": [
+    {
+      "id": "ACTION_OPERATION_ID_MISSING",
+      "frontend_contract": "ActionContract",
+      "missing_field": "operation_id",
+      "impact": "The frontend cannot bind a visible action contract to the canonical operation ledger, so operation-specific terminal evidence cannot be produced without guessing."
+    },
+    {
+      "id": "ACTION_TENANT_OWNERSHIP_MISSING",
+      "frontend_contract": "ActionContract",
+      "missing_field": "tenant_id",
+      "impact": "The frontend cannot independently prove that an enabled mutation contract belongs to the active tenant. Backend authorization may still reject misuse, but strict visible-control terminality requires explicit ownership evidence."
+    },
+    {
+      "id": "ACTION_SITE_OWNERSHIP_MISSING",
+      "frontend_contract": "ActionContract",
+      "missing_field": "site_id",
+      "impact": "Site-scoped visible actions cannot be independently reconciled to the selected site from the frontend contract."
+    }
+  ],
+  "required_backend_contract_extension": {
+    "ActionContract": {
+      "operation_id": "canonical parity operation identifier",
+      "tenant_id": "active tenant identifier or other verifiable tenant ownership token",
+      "site_id": "site identifier when the action is site-scoped"
+    }
+  },
+  "operation_ids_terminalized": [],
+  "truthfulness_note": "Expected parity delta is intentionally not claimed. Re-run canonical reconciliation only after the backend action metadata exists and each control has operation-specific ownership, authorization, authoritative reconciliation and test evidence."
+}

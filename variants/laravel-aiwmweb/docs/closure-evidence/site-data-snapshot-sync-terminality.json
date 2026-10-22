@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-2D6F2BC88E",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteDataSnapshot.razor",
+    "source_screen": "/sites/{Id:guid}/snapshot | /sites/{Id:guid}/offline-data",
+    "source_control": "SynchronizeAsync / Sync now",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "action": "WordPressSyncWebService.SynchronizeAsync(Id)",
+    "busy_state": "_syncing disables repeat interaction",
+    "result": "truthful synchronization result message",
+    "authoritative_follow_up": "LoadAsync rereads local cached state after synchronization"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/site-data-snapshot-sync-control.tsx",
+    "frontend_routes": [
+      "/tenants/{tenant}/sites/{siteId}/snapshot",
+      "/tenants/{tenant}/sites/{siteId}/offline-data"
+    ],
+    "snapshot_endpoint": "GET /api/tenants/{tenant}/sites/{site}/snapshot",
+    "sync_endpoint": "POST /api/tenants/{tenant}/sites/{site}/sync",
+    "run_endpoint": "GET /api/tenants/{tenant}/sync-runs/{run}",
+    "queue_job": "App\\Jobs\\SyncSiteJob",
+    "existing_provider_path_reused": true,
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "session_authentication": true,
+    "active_tenant_from_server_context": true,
+    "site_ownership": "tenant-scoped Site and SyncRun queries; foreign direct site ID is 404",
+    "read_permission": "tenant.view + sites.view",
+    "mutation_permission": "sites.manage",
+    "csrf": "web route stack and apiRequest X-CSRF-TOKEN",
+    "provider_secret_exposed": false
+  },
+  "retry_and_reconciliation": {
+    "idempotency_header": "Idempotency-Key",
+    "receipt_scope": "tenant + key with request hash bound to tenant/site/site.sync",
+    "active_run_dedupe": "queued/running SyncRun for the same site is reused",
+    "queue_dispatch_failure": "run is persisted failed; no success is returned",
+    "frontend_mutation_retry": "disabled; one key per explicit user action",
+    "terminal_success": "only status=succeeded",
+    "failed_cancelled_or_cancel_requested": "shown as failure, never success",
+    "authoritative_reread": "snapshot endpoint is fetched only after successful terminal SyncRun"
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SiteDataSnapshotSynchronizeTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-data-snapshot-sync-terminality.test.tsx",
+    "coverage": [
+      "canonical source and route identity",
+      "guest and permission denial",
+      "foreign tenant site direct-ID denial",
+      "real queued SyncSiteJob dispatch",
+      "idempotent replay without duplicate SyncRun or job dispatch",
+      "idempotency key cannot be rebound to another site",
+      "authoritative snapshot reread",
+      "frontend exact operation marker and post-run reread"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-2D6F2BC88E",
+    "supporting_routes_terminalized": false,
+    "sibling_sync_operation_terminalized": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "The Site Data Snapshot Sync-now control is real and tenant-owned, reuses the existing queued WordPress synchronization path, prevents duplicate unsafe submissions through tenant-scoped idempotency and active-run convergence, treats failed/cancelled runs as failure, and shows success only after a succeeded SyncRun followed by authoritative server reread."
+  }
+}

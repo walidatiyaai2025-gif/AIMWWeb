@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-E5D089844A",
+    "domain": "ai",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor",
+    "source_route": "/operations/sites/{OperationId:guid}",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "source_behavior": {
+    "summary": "Open and render one persisted site-operation history record by correlation GUID through the canonical operations/sites alias.",
+    "operation_boundary": "This operation owns only the /operations/sites/{OperationId:guid} read alias. The sibling /site-operations/{OperationId:guid} route remains owned by AIMW-AI-3CDB30A4C2 and site-operation execution/maintenance controls remain separate operations.",
+    "read_semantics": "authorized tenant-scoped read only; the route itself performs no site-operation mutation"
+  },
+  "laravel_adaptation": {
+    "canonical_route": "/tenants/{tenant}/operations/sites/{operationId}",
+    "shared_controller": "App\\Http\\Controllers\\SiteOperationDetailsReadController",
+    "route_provider": "App\\Providers\\SiteOperationDetailsRouteServiceProvider",
+    "persistence": "App\\Models\\SiteOperationHistory through App\\Sites\\SiteOperationHistoryService",
+    "view": "resources/views/operations/site-operation-details.blade.php",
+    "runtime_data": "real persisted tenant-scoped site-operation history identified by correlation_id",
+    "shared_behavior_not_duplicate_implementation": true,
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated member opens the tenant operations/sites detail alias",
+    "auth + tenant.context resolve an active membership for the requested tenant",
+    "SiteOperationDetailsReadController authorizes execution.view and verifies the active TenantContext slug",
+    "the controller rejects malformed non-UUID operation identifiers with 404",
+    "SiteOperationHistoryService resolves correlation_id through the tenant-scoped SiteOperationHistory model",
+    "the Blade view renders persisted operation state and recursively redacted context",
+    "the GET performs no history mutation"
+  ],
+  "authorization": {
+    "route_middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
+    "controller_permission": "execution.view",
+    "guest": "redirect to canonical /login",
+    "missing_permission": "403",
+    "foreign_tenant": "404",
+    "foreign_tenant_operation_guid": "404",
+    "malformed_operation_guid": "404"
+  },
+  "tenant_and_idor_isolation": {
+    "tenant_scope": "SiteOperationHistory uses the shared BelongsToTenant scope under the active TenantContext",
+    "tenant_a_to_tenant_b_route": "404 when the authenticated member has no active membership for the requested tenant",
+    "tenant_a_lookup_of_tenant_b_correlation_guid": "404",
+    "secret_redaction": "secret-like context keys remain [REDACTED] and raw secret values are absent from the response"
+  },
+  "acceptance_tests": {
+    "php_feature_file": "backend/tests/Feature/SiteOperationDetailsAliasRouteTerminalityTest.php",
+    "companion_regression_file": "backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php",
+    "proofs": [
+      "AIMW-AI-E5D089844A is attached to the exact operations/sites alias rather than the sibling route",
+      "the sibling /site-operations route retains AIMW-AI-3CDB30A4C2 while both routes share the hardened read implementation",
+      "the alias is an explicit GET/HEAD route guarded by web + auth + tenant.context and execution.view",
+      "an authorized tenant member reads a real persisted operation by correlation GUID without mutation",
+      "secret-bearing context remains redacted",
+      "guest, missing permission, foreign tenant, cross-tenant GUID, missing GUID and malformed GUID paths fail closed"
+    ],
+    "required_repository_gates": [
+      "SQLite full Laravel suite",
+      "MySQL fresh/rollback/forward plus full Laravel suite",
+      "Redis tenant lock plus queue worker and scheduler",
+      "WordPress disposable runtime",
+      "WordPress real REST E2E",
+      "frontend typecheck/tests/build",
+      "frontend production build",
+      "runtime artifacts",
+      "acceptance release gate",
+      "production Docker Compose runtime",
+      "cross-domain security",
+      "parity reconciliation",
+      "PR plan-link gate"
+    ]
+  },
+  "implementation_snapshot_sha": "a20531381c2fa013d0b0a5faae75e241f24b3076",
+  "exact_tested_sha": "a20531381c2fa013d0b0a5faae75e241f24b3076",
+  "exact_tested_sha_ci": {
+    "pr_plan_link": {
+      "run_id": 34219825381,
+      "result": "success"
+    },
+    "laravel_aiwmweb_cross_domain_security": {
+      "run_id": 34219825341,
+      "result": "success"
+    },
+    "laravel_aiwmweb_parity_reconciliation": {
+      "run_id": 34219825316,
+      "result": "success"
+    },
+    "laravel_aiwmweb_acceptance": {
+      "run_id": 34219825336,
+      "result": "success"
+    },
+    "sqlite_full_php_suite": "success",
+    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "frontend_production_build": "success",
+    "runtime_artifacts": "success",
+    "acceptance_gate": "success",
+    "production_compose_runtime": "success"
+  },
+  "canonical_denominator": {
+    "source": "authoritative closure composition 877762545b02a9857314f629abd758afdf371111",
+    "total": 931,
+    "current_terminal": 511,
+    "current_pending": 420,
+    "current_blocked": 0,
+    "candidate_terminal_after_authorized_integration_and_regeneration": 512,
+    "candidate_pending_after_authorized_integration_and_regeneration": 419,
+    "generated_reconciliation_modified": false,
+    "note": "Candidate delta is exactly one operation and is materialized only by the repository generator after this pushed exact-SHA evidence is enrolled."
+  },
+  "generator_contract": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteOperationDetailsRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsAliasRouteTerminalityTest.php",
+    "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-operation-details-alias-route-terminality.json",
+    "evidence_mode": "explicit_route_contract",
+    "manifest_update_owner": "authorized closure composition/convergence role"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-E5D089844A",
+    "sibling_operation_reopened": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_931_reconciliation_modified": false,
+    "owner_only_evidence_required": false,
+    "force_push": false,
+    "merge": false
+  },
+  "terminality": {
+    "candidate_state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "implementation_sha_tests_green": true,
+    "evidence_recorded": true,
+    "canonical_reconciliation_pending": true,
+    "reason": "The second canonical route alias has independent operation provenance while reusing the hardened read-only details controller/view. Exact tested SHA a20531381c2fa013d0b0a5faae75e241f24b3076 passed Plan Link, Cross-Domain Security, Parity Reconciliation and the complete Laravel AIWMWeb Acceptance matrix, including full SQLite and MySQL suites, while preserving RBAC, tenant/IDOR isolation, malformed-ID failure and secret redaction. Canonical terminality remains pending only until generator-authorized reconciliation succeeds.",
+    "evidence_bearing_head_ci": "exact tested head a20531381c2fa013d0b0a5faae75e241f24b3076 passed the required PR-level gates before generator reconciliation"
+  }
+}

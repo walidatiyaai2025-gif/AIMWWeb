@@ -1,0 +1,164 @@
+{
+  "errors": [],
+  "facts": {
+    "created_tables": [
+      "ai_generation_records",
+      "ai_model_profiles",
+      "ai_planner_histories",
+      "ai_planner_items",
+      "ai_prompt_revisions",
+      "ai_prompt_templates",
+      "ai_provider_configs",
+      "ai_provider_profiles",
+      "ai_usage_records",
+      "approvals",
+      "audit_events",
+      "automation_rules",
+      "automation_runs",
+      "backups",
+      "billing_audits",
+      "billing_plan_audits",
+      "billing_plans",
+      "billing_provider_credentials",
+      "billing_provider_events",
+      "billing_subscription_changes",
+      "billing_transactions",
+      "cache",
+      "cache_locks",
+      "connector_nonces",
+      "connector_pairings",
+      "connectors",
+      "content_comments",
+      "content_conflicts",
+      "content_items",
+      "content_revisions",
+      "content_sync_states",
+      "content_taxonomy",
+      "content_transfers",
+      "email_deliveries",
+      "email_schedules",
+      "email_templates",
+      "evidence_receipts",
+      "executions",
+      "failed_jobs",
+      "idempotency_keys",
+      "in_app_notifications",
+      "job_batches",
+      "jobs",
+      "mail_configurations",
+      "media_items",
+      "notification_event_receipts",
+      "notification_preferences",
+      "operation_executions",
+      "operation_logs",
+      "password_reset_tokens",
+      "permission_role",
+      "permissions",
+      "report_exports",
+      "restore_requests",
+      "role_tenant_membership",
+      "roles",
+      "scheduled_tasks",
+      "scoped_settings",
+      "seo_audits",
+      "seo_findings",
+      "sessions",
+      "site_diagnostics",
+      "site_operation_histories",
+      "sites",
+      "suggestions",
+      "sync_batches",
+      "sync_events",
+      "sync_items",
+      "sync_resource_versions",
+      "sync_runs",
+      "sync_site_leases",
+      "sync_tombstones",
+      "sync_webhook_events",
+      "synced_contents",
+      "taxonomy_terms",
+      "tenant_billing_profiles",
+      "tenant_invitations",
+      "tenant_memberships",
+      "tenant_secrets",
+      "tenant_subscriptions",
+      "tenant_usage_counters",
+      "tenants",
+      "users"
+    ],
+    "explicit_indexes": [
+      "ai_models_tenant_provider_model_unique",
+      "ai_planner_history_item_version_action_unique",
+      "audit_finding_unique",
+      "billing_tx_provider_ref_unique",
+      "comment_remote_unique",
+      "content_items_remote_unique",
+      "content_remote_unique",
+      "email_template_version_unique",
+      "execution_approval_unique",
+      "media_remote_unique",
+      "notification_pref_scope_unique",
+      "seo_audit_history_idx",
+      "site_diag_history_idx",
+      "site_history_idx",
+      "sync_batch_unique",
+      "sync_batches_site_state_idx",
+      "sync_event_time_idx",
+      "sync_items_run_resource_idx",
+      "sync_items_site_state_idx",
+      "sync_resource_seen_idx",
+      "sync_resource_version_unique",
+      "sync_runs_site_created_idx",
+      "sync_runs_site_state_idx",
+      "sync_site_lease_expiry_idx",
+      "sync_site_lease_unique",
+      "sync_tombstone_unique",
+      "sync_webhook_event_time_idx",
+      "sync_webhook_event_unique",
+      "taxonomy_remote_unique"
+    ],
+    "migration_count": 13,
+    "php_declaration_count": 200,
+    "route_count": null,
+    "service_bindings": {
+      "AdvancedWordPressGateway": [
+        "HttpWordPressGateway"
+      ],
+      "AiGenerator": [
+        "AiGenerationService"
+      ],
+      "AiProvider": [
+        "HttpAiProvider"
+      ],
+      "AiQuotaGateway": [
+        "UnconfiguredAiQuotaGateway"
+      ],
+      "BillingProvider": [
+        "PayPalProvider"
+      ],
+      "ContentRemoteDriver": [
+        "DualPathContentDriver"
+      ],
+      "EmailTransport": [
+        "SymfonyEmailTransport"
+      ],
+      "PlannerApprovalGateway": [
+        "UnconfiguredPlannerApprovalGateway"
+      ],
+      "PlannerSiteGateway": [
+        "UnconfiguredPlannerSiteGateway"
+      ],
+      "SyncSiteGuard": [
+        "CanonicalSyncSiteGuard"
+      ],
+      "SyncWebhookVerifier": [
+        "ConnectorSyncWebhookVerifier"
+      ],
+      "WordPressGateway": [
+        "HttpWordPressGateway"
+      ]
+    }
+  },
+  "ok": true,
+  "warnings": []
+}

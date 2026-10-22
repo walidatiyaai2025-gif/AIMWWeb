@@ -81,7 +81,8 @@ def op_id(domain: str, key: str) -> str:
 
 def is_mutation(*values: str) -> bool:
     words = set(re.findall(r"[a-z]+", " ".join(values).lower()))
-    return bool(words & MUTATION_WORDS)
+    async_bases = {word[:-5] for word in words if word.endswith("async") and len(word) > 5}
+    return bool((words | async_bases) & MUTATION_WORDS)
 
 
 def risk_for(mutation: bool, *values: str) -> str:

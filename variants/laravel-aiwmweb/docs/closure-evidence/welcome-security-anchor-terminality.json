@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #882 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-6458D3030B",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/welcome",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Welcome.razor",
+    "source_operation_key": "visible:Welcome.razor:/welcome:#security -> #security",
+    "source_intent": "Navigate from the public Welcome navigation to the real Control & Security section on the same page.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "medium"
+  },
+  "laravel_runtime": {
+    "route": "GET /welcome",
+    "route_name": "public.welcome",
+    "route_controller": "App\\Http\\Controllers\\PublicWelcomeReadController",
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+    "navigation_href": "#security",
+    "target_id": "security",
+    "operation_marker": "AIMW-CONT-6458D3030B",
+    "target_content": [
+      "Permission aware",
+      "Protected secrets",
+      "Actionable diagnostics",
+      "Auditable execution"
+    ]
+  },
+  "security": {
+    "route_scope": "existing web-only anonymous public welcome route",
+    "tenant_context_required": false,
+    "tenant_selector_consumed": false,
+    "direct_object_surface": false,
+    "tenant_boundary": "canonical public route has no tenant parameter, no tenant.context middleware, and no tenant-scoped Welcome alias",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeSecurityAnchorTerminalityTest.php",
+    "coverage": [
+      "ASP.NET source security href and security target are verified",
+      "Laravel renders the canonical Security link and exactly one security target",
+      "English and Arabic security labels and source-aligned security content render",
+      "existing PublicWelcomeReadController route remains authoritative",
+      "public Welcome remains web-only, anonymous, and tenant-neutral",
+      "404 tenant boundary is proved from the route table without dispatching tenant data",
+      "POST /welcome remains rejected with 405",
+      "operation-specific marker and target assertions do not claim Welcome siblings"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-6458D3030B"
+    ],
+    "sibling_operations_claimed": false,
+    "existing_welcome_route_replaced": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "5421baac29b5fbe34f091cc5a3df6f36c4f627fc",
+    "branch": "worker/882-welcome-security-anchor"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-6EF2330C99",
+  "operation": {
+    "domain": "ai",
+    "kind": "route",
+    "source_route": "/operations/maintenance",
+    "source_path": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
+    "mutation": false,
+    "tenant_owned": true
+  },
+  "claim": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_sha": "2cb0744f466501f79dec5d7cbef8b6ec5d0aeae3",
+    "pcc_source_sha": "91df1c313794dd85c0e1672becbf7cdb35a9b60e",
+    "worker_branch": "worker/laravel-AIMW-AI-6EF2330C99-operations-maintenance-route",
+    "issue_257_claim_comment_id": 5474669523
+  },
+  "adaptation": {
+    "laravel_route": "/tenants/{tenant}/operations/maintenance",
+    "route_name": "canonical.workspace.operations-maintenance",
+    "route_provider": "variants/laravel-aiwmweb/backend/app/Providers/OperationsMaintenanceRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/OperationsMaintenanceReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/operations-maintenance.blade.php",
+    "authorization": "execution.view",
+    "middleware": ["web", "auth", "tenant.context"],
+    "read_model": "App\\Sites\\SiteOperationHistoryService::getStorageInfo + previewCleanup(90, 100)",
+    "canonical_operation_marker": "AIMW-AI-6EF2330C99",
+    "caller_supplied_resource_ids": false,
+    "mutation_added": false
+  },
+  "focused_acceptance": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceRouteTerminalityTest.php",
+  "proof": [
+    "explicit named route wins before the generic tenant SPA catch-all",
+    "authorized tenant member renders a real database-backed storage count and retention preview",
+    "guest redirects to login",
+    "missing execution.view fails 403",
+    "cross-tenant direct route access fails 404",
+    "route exposes only the tenant path parameter",
+    "rendered page carries the exact canonical operation marker"
+  ],
+  "explicit_exclusions": [
+    "AIMW-AI-959B247B1D sibling /site-operations/maintenance route",
+    "AIMW-AI-CAAC427FC0 ReloadAsync visible control",
+    "AIMW-AI-C5BC29CF27 RefreshPreviewAsync visible control",
+    "cleanup mutation and every other maintenance visible control",
+    "generated operation-parity reconciliation artifacts"
+  ]
+}

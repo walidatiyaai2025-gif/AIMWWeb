@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #737",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-7BD7B04B26",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "route_screen": "/admin/subscription-plans",
+    "visible_control": "Clone as new / نسخ كخطة جديدة [CloneCurrent]",
+    "authorization": "Settings.Manage",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "external_dependency_metadata": "payment_provider"
+  },
+  "source_semantics": {
+    "precondition": "CloneCurrent is available only for the currently edited plan.",
+    "state_source": "The operation copies the current editor form values, including unsaved field edits; immutable plan code comes from the currently edited plan state.",
+    "transformations": {
+      "editing_id": "cleared so the next explicit save is a create rather than an update",
+      "code": "trim current code and append -copy",
+      "name_en": "append Copy",
+      "name_ar": "prepend نسخة",
+      "other_plan_fields": "preserved from current editor state",
+      "gateway_product_id": "cleared",
+      "gateway_plan_id": "cleared",
+      "is_enabled": false
+    },
+    "message_en": "A disabled clone is ready. Adjust its code and details, then save it.",
+    "message_ar": "تم تجهيز نسخة غير مفعلة. غيّر الكود والبيانات ثم احفظها.",
+    "persistence": "none until the separately governed SaveAsync operation is explicitly invoked",
+    "provider_behavior": "none; CloneCurrent clears provider identifiers locally and does not call PayPal"
+  },
+  "laravel_adaptation": {
+    "source_route": "/tenants/{tenant}/admin/subscription-plans",
+    "source_route_name": "tenant.admin.subscription-plans",
+    "source_authorization": "auth + tenant.context + settings.manage",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "browser_behavior": "variants/laravel-aiwmweb/backend/public/js/subscription-plans-clone-current.js",
+    "operation_marker": "AIMW-BILL-7BD7B04B26",
+    "control_type": "type=button",
+    "editor_source": "nearest real data-plan-editor form",
+    "code_source": "immutable data-plan-code from the same persisted plan article",
+    "create_target": "the real data-plan-create-form already used by the separately governed save operation",
+    "network_request": false,
+    "server_mutation": false,
+    "payment_provider_call": false
+  },
+  "runtime_path": [
+    "authenticated settings manager opens the tenant-scoped Subscription Plans page",
+    "each persisted plan editor renders a Clone as new button carrying the canonical operation marker",
+    "button click reads the live current editor values directly in the browser, so unsaved edits are preserved",
+    "the create form receives code-name transformations plus the remaining current editor values",
+    "the create form enabled checkbox is forced off and both PayPal identifier inputs are cleared",
+    "the localized clone-ready message is surfaced and focus moves to the new code field",
+    "no request, form submit, database write, audit write, queue job, or provider call occurs"
+  ],
+  "authorization_and_isolation": {
+    "guest": "redirected by auth middleware",
+    "missing_settings_manage": "403",
+    "foreign_tenant": "404",
+    "plan_source": "only plan editors rendered from the active server-authorized tenant page can originate the browser operation",
+    "caller_query_override": "not used; CloneCurrent does not consume a clone plan id or plan fields from query/body input",
+    "idor_surface": "none introduced by this local visible-control operation"
+  },
+  "security_and_truthfulness": {
+    "provider_ids_rendered": false,
+    "provider_ids_copied": false,
+    "clone_enabled": false,
+    "payment_success_claim": false,
+    "persistence_success_claim": false,
+    "fake_success_path": "none",
+    "network_primitives": "the dedicated clone script contains no fetch, XMLHttpRequest, form submit, or requestSubmit call"
+  },
+  "acceptance_tests": [
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_reference_clone_current_semantics_are_exactly_local_editor_state_only",
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_settings_manager_sees_clone_control_bound_to_each_real_editor",
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_clone_browser_contract_copies_live_unsaved_editor_values_and_never_submits",
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_opening_page_and_clone_control_are_read_only_until_user_explicitly_saves",
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_clone_control_never_exposes_or_copies_provider_identifiers",
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_no_catalog_has_no_clone_button_and_does_not_seed_sample_data",
+    "Tests\\Feature\\SubscriptionPlansAdminCloneCurrentTerminalityTest::test_guest_missing_permission_and_foreign_tenant_fail_closed"
+  ],
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-7BD7B04B26",
+    "new_plan_not_claimed": "AIMW-BILL-F73C7348C3",
+    "save_async_not_claimed": "AIMW-BILL-D307963B59",
+    "save_entitlements_not_claimed": true,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The exact CloneCurrent behavior is now a real local visible control over the current editor state: it preserves unsaved plan edits, applies the source code/name transforms, prepares a disabled provider-free create form, reports the localized ready message, performs no network or persistence action, preserves tenant authorization, and has focused deterministic coverage."
+  }
+}

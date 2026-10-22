@@ -260,7 +260,7 @@ final class AIMW_Connector_V1
         if (! $post || ! in_array($post->post_type, ['post', 'page'], true) || $post->post_type !== ($payload['resource_type'] ?? '')) {
             return new WP_Error('not_found', 'Content not found.', ['status' => 404]);
         }
-        $changes = array_intersect_key((array) ($payload['changes'] ?? []), array_flip(['title', 'content', 'slug', 'seo_title', 'seo_description']));
+        $changes = array_intersect_key((array) ($payload['changes'] ?? []), array_flip(['title', 'content', 'slug', 'seo_title', 'seo_description', 'seo_canonical', 'seo_robots']));
         $before = self::serialize($post);
         $update = ['ID' => $post->ID];
         if (isset($changes['title'])) {
@@ -280,8 +280,8 @@ final class AIMW_Connector_V1
                 return $result;
             }
         }
-        if (array_key_exists('seo_title', $changes) || array_key_exists('seo_description', $changes)) {
-            $seo = AIMW_Connector_Runtime::write_seo($post->ID, $changes);
+        if (array_intersect(['seo_title', 'seo_description', 'seo_canonical', 'seo_robots'], array_keys($changes))) {
+            $seo = self::writeSeoMetadata($post->ID, $changes);
             if (is_wp_error($seo)) {
                 AIMW_Connector_Store::record('content_execute', 'failed', $protocol, ['error' => $seo->get_error_code()], $before, null);
 
@@ -385,7 +385,7 @@ final class AIMW_Connector_V1
     {
         preg_match_all('/<h[1-6][^>]*>(.*?)<\/h[1-6]>/is', $post->post_content, $matches);
         $media = get_attached_media('image', $post->ID);
-        $seo = AIMW_Connector_Runtime::seo_values($post->ID);
+        $seo = self::seoState($post->ID);
 
         return [
             'type' => $post->post_type,
@@ -400,8 +400,162 @@ final class AIMW_Connector_V1
             'seo_provider' => $seo['provider'],
             'seo_title' => $seo['seo_title'],
             'seo_description' => $seo['seo_description'],
+            'seo_canonical' => $seo['seo_canonical'],
+            'seo_robots' => $seo['seo_robots'],
             'modified_at' => get_post_modified_time(DATE_ATOM, true, $post),
         ];
+    }
+
+    private static function seoState(int $postId): array
+    {
+        $base = AIMW_Connector_Runtime::seo_values($postId);
+        $provider = $base['provider'] ?? null;
+        $canonical = '';
+        $robots = [];
+
+        if ($provider === 'rank-math') {
+            $canonical = (string) get_post_meta($postId, 'rank_math_canonical_url', true);
+            $robots = self::normalizeRobots(get_post_meta($postId, 'rank_math_robots', true), false);
+        } elseif ($provider === 'yoast-seo') {
+            $canonical = (string) get_post_meta($postId, '_yoast_wpseo_canonical', true);
+            $noindex = (string) get_post_meta($postId, '_yoast_wpseo_meta-robots-noindex', true);
+            $nofollow = (string) get_post_meta($postId, '_yoast_wpseo_meta-robots-nofollow', true);
+            if ($noindex === '1') {
+                $robots[] = 'noindex';
+            } elseif ($noindex === '2') {
+                $robots[] = 'index';
+            }
+            if ($nofollow === '1') {
+                $robots[] = 'nofollow';
+            } elseif ($nofollow === '0' && metadata_exists('post', $postId, '_yoast_wpseo_meta-robots-nofollow')) {
+                $robots[] = 'follow';
+            }
+            $advanced = preg_split('/\s*,\s*/', (string) get_post_meta($postId, '_yoast_wpseo_meta-robots-adv', true), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $robots = self::normalizeRobots(array_merge($robots, $advanced), false);
+        } else {
+            $unsupported = self::unsupportedSeoProvider();
+            if ($unsupported !== null) {
+                $provider = $unsupported;
+            } else {
+                $permalink = get_permalink($postId);
+                $canonical = is_string($permalink) ? $permalink : '';
+                if ((string) get_option('blog_public', '1') === '0') {
+                    $robots[] = 'noindex';
+                }
+            }
+        }
+
+        return [
+            'provider' => $provider,
+            'seo_title' => (string) ($base['seo_title'] ?? ''),
+            'seo_description' => (string) ($base['seo_description'] ?? ''),
+            'seo_canonical' => $canonical,
+            'seo_robots' => is_wp_error($robots) ? [] : $robots,
+        ];
+    }
+
+    private static function writeSeoMetadata(int $postId, array $changes): array|WP_Error
+    {
+        $state = self::seoState($postId);
+        $provider = $state['provider'];
+        if (! in_array($provider, ['rank-math', 'yoast-seo'], true)) {
+            return new WP_Error('seo_provider_unsupported', 'No supported enabled SEO provider is available for semantic SEO metadata writes.', ['status' => 409]);
+        }
+
+        if (array_key_exists('seo_title', $changes) || array_key_exists('seo_description', $changes)) {
+            $written = AIMW_Connector_Runtime::write_seo($postId, $changes);
+            if (is_wp_error($written)) {
+                return $written;
+            }
+        }
+
+        if (array_key_exists('seo_canonical', $changes)) {
+            $raw = trim((string) $changes['seo_canonical']);
+            $canonical = $raw === '' ? '' : esc_url_raw($raw);
+            if ($raw !== '' && $canonical === '') {
+                return new WP_Error('invalid_canonical', 'Canonical URL must be an absolute valid URL.', ['status' => 422]);
+            }
+            $key = $provider === 'rank-math' ? 'rank_math_canonical_url' : '_yoast_wpseo_canonical';
+            if ($canonical === '') {
+                delete_post_meta($postId, $key);
+            } else {
+                update_post_meta($postId, $key, $canonical);
+            }
+        }
+
+        if (array_key_exists('seo_robots', $changes)) {
+            $robots = self::normalizeRobots($changes['seo_robots'], true);
+            if (is_wp_error($robots)) {
+                return $robots;
+            }
+            if (in_array('index', $robots, true) && in_array('noindex', $robots, true)) {
+                return new WP_Error('invalid_robots', 'Robots directives cannot contain both index and noindex.', ['status' => 422]);
+            }
+            if (in_array('follow', $robots, true) && in_array('nofollow', $robots, true)) {
+                return new WP_Error('invalid_robots', 'Robots directives cannot contain both follow and nofollow.', ['status' => 422]);
+            }
+            if ($provider === 'rank-math') {
+                if ($robots === []) {
+                    delete_post_meta($postId, 'rank_math_robots');
+                } else {
+                    update_post_meta($postId, 'rank_math_robots', $robots);
+                }
+            } else {
+                if (in_array('noindex', $robots, true)) {
+                    update_post_meta($postId, '_yoast_wpseo_meta-robots-noindex', '1');
+                } elseif (in_array('index', $robots, true)) {
+                    update_post_meta($postId, '_yoast_wpseo_meta-robots-noindex', '2');
+                } else {
+                    delete_post_meta($postId, '_yoast_wpseo_meta-robots-noindex');
+                }
+                if (in_array('nofollow', $robots, true)) {
+                    update_post_meta($postId, '_yoast_wpseo_meta-robots-nofollow', '1');
+                } elseif (in_array('follow', $robots, true)) {
+                    update_post_meta($postId, '_yoast_wpseo_meta-robots-nofollow', '0');
+                } else {
+                    delete_post_meta($postId, '_yoast_wpseo_meta-robots-nofollow');
+                }
+                $advanced = array_values(array_intersect(['noarchive', 'nosnippet', 'noimageindex'], $robots));
+                if ($advanced === []) {
+                    delete_post_meta($postId, '_yoast_wpseo_meta-robots-adv');
+                } else {
+                    update_post_meta($postId, '_yoast_wpseo_meta-robots-adv', implode(',', $advanced));
+                }
+            }
+        }
+
+        return ['provider' => $provider];
+    }
+
+    private static function normalizeRobots(mixed $value, bool $strict): array|WP_Error
+    {
+        $values = is_array($value) ? $value : preg_split('/[\s,]+/', strtolower((string) $value), -1, PREG_SPLIT_NO_EMPTY);
+        $allowed = ['index', 'noindex', 'follow', 'nofollow', 'noarchive', 'nosnippet', 'noimageindex'];
+        $normalized = array_values(array_unique(array_filter(array_map(static fn ($item): string => strtolower(trim((string) $item)), $values ?: []))));
+        $unknown = array_values(array_diff($normalized, $allowed));
+        if ($strict && $unknown !== []) {
+            return new WP_Error('unsupported_robots_directive', 'Unsupported robots directive: '.implode(', ', $unknown).'.', ['status' => 422]);
+        }
+        $normalized = array_values(array_intersect($allowed, $normalized));
+        sort($normalized);
+
+        return $normalized;
+    }
+
+    private static function unsupportedSeoProvider(): ?string
+    {
+        require_once ABSPATH.'wp-admin/includes/plugin.php';
+        foreach (get_plugins() as $file => $data) {
+            if (! is_plugin_active($file) || in_array($file, ['wordpress-seo/wp-seo.php', 'seo-by-rank-math/rank-math.php'], true)) {
+                continue;
+            }
+            $haystack = strtolower((string) ($data['Name'] ?? '').' '.$file);
+            if (str_contains($haystack, 'seo')) {
+                return 'unsupported:'.$file;
+            }
+        }
+
+        return null;
     }
 
     private static function required_scopes(WP_REST_Request $request): array|WP_Error
@@ -425,7 +579,7 @@ final class AIMW_Connector_V1
             if (array_intersect(['title', 'content', 'slug'], array_keys($changes))) {
                 $required[] = 'content.update';
             }
-            if (array_intersect(['seo_title', 'seo_description'], array_keys($changes))) {
+            if (array_intersect(['seo_title', 'seo_description', 'seo_canonical', 'seo_robots'], array_keys($changes))) {
                 $required[] = 'seo.write';
             }
             if ($required) {

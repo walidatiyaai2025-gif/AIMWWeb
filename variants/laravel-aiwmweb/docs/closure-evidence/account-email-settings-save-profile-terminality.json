@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #895 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-00CC1272F6",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/account/email-settings",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AccountEmailSettings.razor",
+    "source_intent": "Save the authoritative tenant account SMTP profile while preserving an existing stored credential when the password field is left blank."
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-profile-form.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/account-email-settings-summary.tsx",
+    "endpoint": "PUT /api/v1/tenants/{tenant}/email/configuration",
+    "operation_marker": "AIMW-EMAI-00CC1272F6"
+  },
+  "security": {
+    "permission": "tenant.manage",
+    "tenant_scope": "tenant.context",
+    "stored_secret_returned_to_client": false,
+    "blank_password_preserves_existing_secret": true,
+    "foreign_tenant": "404/fail closed"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-email-settings-profile-form.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountEmailSettingsSaveProfileTerminalityTest.php"
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-EMAI-00CC1272F6"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false
+  }
+}

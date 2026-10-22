@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-77E7F0D972",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/logs | /module/logs",
+    "source": "src/AIWordPressManager.Web/Components/Pages/LogsAndErrors.razor",
+    "source_intent": "Copy the currently selected log line's full error details to the browser clipboard.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/logs-close-details-control.tsx",
+    "read_authority": "GET /tenants/{tenant}/admin/logs",
+    "permissions": ["operations.manage", "diagnostics.view"],
+    "clipboard_only": true,
+    "format": "File, Line, Level, Error code, blank line, message"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "foreign_tenant_rejected": true,
+    "authorization_required": true,
+    "server_mutation_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/LogsCopySelectedTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/logs-copy-selected-control.test.tsx",
+    "coverage": [
+      "exact CopySelectedAsync source contract and operation identity",
+      "source-equivalent selected-row formatting and error-code extraction",
+      "clipboard success only after confirmed write",
+      "trusted active-tenant logs endpoint",
+      "foreign-tenant fail-closed behavior",
+      "no server mutation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-77E7F0D972"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  }
+}

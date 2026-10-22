@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-4DCB58743D",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/MediaManager.razor",
+    "source_screen": "/sites/{SiteId:guid}/media",
+    "source_control": "ConfirmDeleteAsync",
+    "tenant_owned": true,
+    "risk": "critical"
+  },
+  "source_semantics": {
+    "permission": "ConfirmDeleteAsync requires ContentEdit before the destructive operation.",
+    "permanent_delete": "The source confirmation explicitly describes force=true permanent deletion and calls WordPressMediaWebService.DeleteAsync for the pending WordPress media ID.",
+    "truthful_failure": "A failed DeleteAsync result is surfaced as an error and does not clear the pending confirmation state.",
+    "authoritative_reread": "Only after successful deletion the source runs RefreshLocalAsync, clears matching editor state, closes the confirmation dialog and resets the pending media ID/title."
+  },
+  "laravel_adaptation": {
+    "visible_control": "variants/laravel-aiwmweb/backend/resources/js/media-delete-control.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentApiController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Content/MediaDeleteService.php",
+    "wordpress_path": "variants/laravel-aiwmweb/backend/app/Content/Remote/NativeWordPressRestPath.php",
+    "route": "DELETE /api/v1/tenants/{tenant}/sites/{site}/media/{media}",
+    "route_name": "api.v1.media.delete-permanently",
+    "canonical_operation_id": "AIMW-BILL-4DCB58743D",
+    "confirmation": "The media workspace renders an explicit permanent-delete confirmation dialog carrying the canonical operation marker.",
+    "degraded_state": "If tenant-owned WordPress application-password credentials are unavailable, the operation fails closed with 503 instead of widening Connector scopes or synthesizing success."
+  },
+  "runtime_path": [
+    "same-origin authenticated session",
+    "web middleware and CSRF validation",
+    "explicit auth middleware",
+    "tenant.context active-membership resolution",
+    "TenantAuthorizer content.edit",
+    "tenant-scoped Site lookup",
+    "tenant-and-site-scoped MediaItem lookup",
+    "featured-media reference conflict guard",
+    "server-derived WordPress remote ID",
+    "tenant-owned encrypted SiteCredential lookup",
+    "authoritative WordPress GET preflight",
+    "non-blind-retried DELETE wp-json/wp/v2/media/{remoteId}?force=true when present",
+    "authoritative WordPress GET proves remote absence",
+    "locked local media reconciliation inside bounded DB transaction",
+    "authoritative local reread proves local absence",
+    "tenant-scoped audit event",
+    "JSON success only after both remote and local absence are verified",
+    "frontend authoritative collection reread before success toast"
+  ],
+  "authentication_authorization_isolation": {
+    "guest": "ResolveTenantContext and explicit auth require an authenticated user; unauthenticated access fails before the controller.",
+    "active_tenant": "ResolveTenantContext derives the tenant from the authenticated active membership and rejects foreign tenant slugs.",
+    "permission": "content.edit is required server-side; missing permission returns 403.",
+    "foreign_tenant": "404 fail closed.",
+    "foreign_site": "Site uses BelongsToTenant and must resolve inside the active tenant or returns 404.",
+    "foreign_media": "MediaItem uses BelongsToTenant and is additionally constrained by route site_id; guessed foreign media IDs return 404.",
+    "caller_ownership_fields": "DELETE request bodies are rejected with 422; tenant_id, site_id and remote_id are never accepted from the caller.",
+    "server_derived_ownership": "Tenant comes from TenantContext, site/media from tenant-scoped persisted records, actor from auth(), and WordPress remote ID from the persisted MediaItem."
+  },
+  "validation_csrf_and_errors": {
+    "csrf": "The API route explicitly carries web middleware; bootstrap CSRF exemption covers only the PayPal webhook, and the frontend sends X-CSRF-TOKEN from the page meta token.",
+    "unexpected_body": "422 before external mutation.",
+    "missing_permission": "403 before external mutation.",
+    "foreign_resource": "404 before external mutation.",
+    "referenced_media": "409 before external mutation when the media is still used as featured media.",
+    "missing_wordpress_credentials": "503 fail closed; local state remains unchanged.",
+    "wordpress_failure": "Provider/transport failure is propagated if authoritative reread still sees the media; local state remains unchanged.",
+    "verification_failure": "409 if the WordPress reread still sees the media or local reconciliation remains present.",
+    "no_fake_success": true
+  },
+  "persistence_truthfulness_and_retry": {
+    "destructive_retry_policy": "The DELETE request itself uses a no-blind-retry PendingRequest. Read-only verification GETs retain bounded retry.",
+    "lost_response_recovery": "If a prior attempt already removed the WordPress object but did not reconcile locally, the next request sees authoritative remote absence and completes local reconciliation without issuing another DELETE.",
+    "post_delete_verification": "WordPress absence is reread after DELETE before any local record is removed.",
+    "transaction": "Local deletion uses DB::transaction with three bounded attempts and lockForUpdate on the tenant/site media row.",
+    "second_reference_check": "Featured-media usage is checked again after the remote effect and before local removal, preventing a newly introduced local reference from being silently erased.",
+    "local_reread": "The service refuses success if the local media row remains after reconciliation.",
+    "frontend_reread": "mutateThenReconcile reloads the media collection before displaying success.",
+    "replay_after_full_success": "A replay cannot repeat the WordPress destructive mutation because the tenant/site local media identifier no longer resolves.",
+    "replay_after_remote_only_success": "A replay repairs the local half-completed state by observing remote absence and skipping DELETE."
+  },
+  "external_secret_and_runtime_boundaries": {
+    "wordpress": "The destructive effect is performed only through the real native WordPress REST media endpoint with force=true.",
+    "connector": "The current Connector content.execute scope contract has no operation-specific permanent-media-delete authorization; this closure deliberately fails closed rather than broadening that scope.",
+    "credentials": "NativeWordPressRestPath resolves the active tenant's encrypted SiteCredential model; username/application password are used only for outbound Basic Auth and are never returned by the controller or frontend.",
+    "ai_provider": "No AI provider is used.",
+    "billing_provider": "No billing/payment provider is used; the canonical scanner's billing domain classification does not describe the source control's runtime behavior.",
+    "queue_cache_scheduler": "No queue, cache or scheduler side effect is introduced.",
+    "cancellation": "This is a short synchronous external mutation plus reconciliation; no fake cancellation surface is introduced."
+  },
+  "focused_tests": [
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_exact_critical_canonical_operation_is_terminalized",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_route_is_session_tenant_permission_csrf_and_operation_bound",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_permission_foreign_tenant_foreign_site_and_foreign_media_fail_closed",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_delete_rejects_caller_owned_fields_and_featured_media_references",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_permanent_delete_uses_real_wordpress_force_delete_and_authoritative_reread",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_lost_response_retry_recovers_from_remote_absence_without_second_delete",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_wordpress_failure_and_missing_credentials_never_fabricate_success_or_delete_local_state",
+    "Tests\\Feature\\MediaDeleteTerminalityTest::test_source_and_laravel_contracts_prove_force_delete_no_secret_exposure_and_visible_control"
+  ],
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-4DCB58743D",
+    "supporting_fixes_only": [
+      "NativeWordPressRestPath now consumes the existing encrypted SiteCredential model instead of nonexistent Site columns because the selected operation requires a real credentialed WordPress call."
+    ],
+    "second_operation_started": false,
+    "aspnet_reference_modified": false,
+    "canonical_counts_hand_edited": false,
+    "assertion_weakening": false,
+    "fabricated_live_or_manual_evidence": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "tenant_isolation_enforced": true,
+    "authorization_enforced": true,
+    "idor_resistant": true,
+    "validation_enforced": true,
+    "csrf_protected": true,
+    "retry_safe": true,
+    "idempotent_external_effect": true,
+    "authoritative_reread": true,
+    "secret_non_exposure": true,
+    "reason": "The critical MediaManager ConfirmDeleteAsync control is adapted to a real tenant-scoped permanent WordPress media deletion with content.edit authorization, CSRF/session protection, foreign-resource rejection, no caller ownership fields, force=true semantics, fail-closed credential/provider behavior, replay-safe remote/local reconciliation, and success only after authoritative remote and local rereads."
+  }
+}

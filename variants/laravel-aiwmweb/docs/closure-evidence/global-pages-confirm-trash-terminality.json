@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-C499965699",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/module/pages",
+    "source": "src/AIWordPressManager.Web/Components/Pages/GlobalPagesExplorer.razor",
+    "source_intent": "Confirm moving selected pages across the tenant's WordPress sites to trash and reconcile the authoritative result",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/global-pages-confirm-trash-widget.tsx",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/GlobalPagesTrashController.php",
+    "service": "variants/laravel-aiwmweb/backend/app/Content/GlobalPagesTrashService.php",
+    "route": "POST /api/v1/tenants/{tenant}/global-pages/trash",
+    "permission": "content.edit",
+    "authoritative_reread": true,
+    "idempotency": "already-trashed targets are authoritatively reread and returned without a duplicate remote mutation"
+  },
+  "security": {
+    "tenant_context_required": true,
+    "site_lookup_tenant_scoped": true,
+    "caller_owned_tenant_override_rejected": true,
+    "caller_owned_user_override_rejected": true,
+    "foreign_site_idor_rejected": true,
+    "secret_disclosure_added": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/GlobalPagesConfirmTrashTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/global-pages-confirm-trash-terminality.test.ts",
+    "coverage": [
+      "exact canonical operation identity and source ConfirmTrashAsync contract",
+      "tenant middleware and content.edit authorization",
+      "multi-site tenant-scoped selection with foreign-site IDOR fail-closed",
+      "authoritative reread after every successful WordPress trash mutation",
+      "retry-safe already-trashed handling without duplicate remote mutation",
+      "confirmation UI and authoritative frontend refetch before visible reconciliation",
+      "guest, missing permission, duplicate and caller-owned identity inputs fail closed"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-BILL-C499965699"],
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "88c067fee0beb41ff85f9ba09eb4ff4b6e067abe",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-C499965699-confirm-trash",
+    "implementation_sha": "9a71ee6ee0ab6175158441fc5b7332ae536913de"
+  }
+}

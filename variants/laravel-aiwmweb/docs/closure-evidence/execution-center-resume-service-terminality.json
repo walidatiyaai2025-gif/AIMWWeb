@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AUTO-E57D5E6134",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "domain": "automation",
+    "kind": "service",
+    "source": "src/AIWordPressManager.Web/Services/ExecutionCenterService.cs",
+    "service": "ExecutionCenterService",
+    "member": "Resume"
+  },
+  "service_closure_contract": {
+    "implementation_sha": "96ec87c87398e91404b445c49568bb3ebe563b34",
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Automation/ExecutionCenterService.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AutomationPhaseServiceTerminalityTest.php"
+  },
+  "security": {
+    "tenant_isolation": "focused cross-tenant ModelNotFound proof",
+    "fake_success": false
+  }
+}

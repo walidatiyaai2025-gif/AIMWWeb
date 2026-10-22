@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #701",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-81D0940A0A",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "billing",
+    "kind": "visible_control",
+    "route_screen": "/settings",
+    "visible_control": "/admin/billing-support -> /admin/billing-support",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "medium",
+    "source_authorization": "ApplicationPermissionCatalog.SettingsManage"
+  },
+  "laravel_runtime": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/settings-billing-support-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
+    "destination": "GET /tenants/{tenant}/admin/billing-support",
+    "source_visibility": "settings.manage or wildcard authority",
+    "route_guards": "web + auth + tenant.context + platform.admin",
+    "adaptation": "source absolute /admin/billing-support navigation is tenant-scoped through tenantUrl; the existing stricter platform-admin destination guard is retained"
+  },
+  "security": {
+    "tenant_selector": "active FrontendContext tenant slug only and percent-encoded by tenantUrl",
+    "foreign_tenant_access": "404 through tenant.context",
+    "non_platform_admin_access": "403 through platform.admin",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsBillingSupportLinkVisibleTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-billing-support-link-control.test.tsx",
+    "coverage": [
+      "exact canonical operation identity and source intent",
+      "settings.manage visibility",
+      "tenant-scoped Billing Support destination",
+      "untrusted tenant path fragments are encoded",
+      "destination retains auth, tenant.context and platform.admin guards",
+      "foreign tenant returns 404",
+      "non-platform admin returns 403",
+      "no billing/provider mutation is added by navigation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-BILL-81D0940A0A"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  }
+}

@@ -6,6 +6,8 @@ use App\Connector\WordPressGateway;
 use App\Models\Site;
 use App\Models\SyncedContent;
 use App\Models\SyncRun;
+use App\Services\SeoManagerService;
+use App\Sites\SiteOperationHistoryService;
 use Throwable;
 
 final class SyncSiteJob extends TenantAwareJob
@@ -20,21 +22,66 @@ final class SyncSiteJob extends TenantAwareJob
         return "tenant:{$this->tenantId}:site:{$this->siteId}:sync";
     }
 
-    public function handle(WordPressGateway $wordpress): void
+    public function handle(WordPressGateway $wordpress, SeoManagerService $seo, SiteOperationHistoryService $history): void
     {
         $run = SyncRun::query()->findOrFail($this->syncRunId);
         $site = Site::query()->findOrFail($this->siteId);
-        $run->update(['status' => 'running', 'started_at' => now(), 'failure' => null]);
+        $startedAt = now();
+        $run->update(['status' => 'running', 'started_at' => $startedAt, 'failure' => null]);
+
         try {
             $payload = $wordpress->content($site, $site->last_sync_at?->toIso8601String());
             $items = $payload['items'] ?? [];
+
             foreach ($items as $item) {
-                SyncedContent::query()->updateOrCreate(['site_id' => $site->id, 'resource_type' => $item['type'], 'remote_id' => $item['id']], ['slug' => $item['slug'], 'title' => $item['title'] ?? null, 'content' => $item['content'] ?? null, 'excerpt' => $item['excerpt'] ?? null, 'headings' => $item['headings'] ?? [], 'taxonomy' => $item['taxonomy'] ?? [], 'media' => $item['media'] ?? [], 'seo_title' => $item['seo_title'] ?? null, 'seo_description' => $item['seo_description'] ?? null, 'remote_modified_at' => $item['modified_at'] ?? now()]);
+                $metadata = $seo->metadata($item);
+                SyncedContent::query()->updateOrCreate(
+                    ['site_id' => $site->id, 'resource_type' => $item['type'], 'remote_id' => $item['id']],
+                    [
+                        'slug' => $item['slug'],
+                        'title' => $item['title'] ?? null,
+                        'content' => $item['content'] ?? null,
+                        'excerpt' => $item['excerpt'] ?? null,
+                        'headings' => $item['headings'] ?? [],
+                        'taxonomy' => $item['taxonomy'] ?? [],
+                        'media' => $item['media'] ?? [],
+                        'seo_title' => $metadata['seo_title'],
+                        'seo_description' => $metadata['seo_description'],
+                        'seo_provider' => $metadata['seo_provider'],
+                        'seo_canonical' => $metadata['seo_canonical'],
+                        'seo_robots' => $metadata['seo_robots'],
+                        'seo_readability_score' => $seo->readabilityScore((string) ($item['content'] ?? '')),
+                        'seo_source_hash' => $seo->sourceHash($metadata),
+                        'remote_modified_at' => $item['modified_at'] ?? now(),
+                    ]
+                );
             }
+
             $site->update(['last_sync_at' => now(), 'health_state' => 'healthy']);
             $run->update(['status' => 'succeeded', 'processed' => count($items), 'completed_at' => now()]);
+            $history->record(
+                $site->id,
+                'synchronization',
+                true,
+                'WordPress synchronization completed.',
+                ['sync_run_id' => (int) $run->getKey()],
+                count($items),
+                null,
+                $startedAt,
+            );
         } catch (Throwable $e) {
             $run->update(['status' => 'failed', 'failure' => $e->getMessage(), 'completed_at' => now()]);
+            $history->record(
+                $site->id,
+                'synchronization',
+                false,
+                'WordPress synchronization failed.',
+                ['sync_run_id' => (int) $run->getKey()],
+                null,
+                null,
+                $startedAt,
+            );
+
             throw $e;
         }
     }

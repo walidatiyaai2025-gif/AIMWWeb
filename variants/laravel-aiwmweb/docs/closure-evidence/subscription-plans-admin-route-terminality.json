@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "35ea3bd44a3c6977da8e40ad1dd08c2ff117c9cc",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-B86D339C12",
+    "domain": "billing",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SubscriptionPlansAdmin.razor",
+    "source_screen": "/admin/subscription-plans",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "verification": "rendered/read response matches authoritative source"
+  },
+  "source_behavior": {
+    "authorization": "ApplicationPermissionCatalog.SettingsManage",
+    "initial_read": "ISubscriptionPlanCatalog.ListAsync(includeDisabled: true)",
+    "page": "Subscription Plans administration",
+    "get_side_effect": "none"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/admin/subscription-plans",
+    "route_name": "tenant.admin.subscription-plans",
+    "provider": "variants/laravel-aiwmweb/backend/app/Providers/SubscriptionPlansAdminRouteServiceProvider.php",
+    "controller": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SubscriptionPlansAdminReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/billing/subscription-plans-admin.blade.php",
+    "catalog_model": "App\\Models\\BillingPlan",
+    "placeholder_or_catch_all": false,
+    "demo_or_sample_data": false
+  },
+  "runtime_path": [
+    "web middleware establishes the session and CSRF-capable web context",
+    "auth rejects guests before route execution",
+    "tenant.context resolves only an active membership for the route tenant slug",
+    "TenantAuthorizer requires settings.manage",
+    "controller verifies resolved tenant slug equals the route tenant",
+    "BillingPlan is read in authoritative display order",
+    "Blade renders persisted catalog state without invoking provider or mutation services"
+  ],
+  "authorization_and_isolation": {
+    "session": "required",
+    "active_tenant": "server-resolved by tenant.context",
+    "permission": "settings.manage",
+    "foreign_tenant": "404/fail closed",
+    "direct_resource_id_surface": false,
+    "tenant_from_caller_body_or_query": false
+  },
+  "data_and_secret_policy": {
+    "authoritative_read": "billing_plans persisted rows",
+    "displayed_fields": [
+      "code",
+      "name/localized_name",
+      "description",
+      "price_minor/currency",
+      "billing_interval",
+      "trial_period_days",
+      "grace_period_days",
+      "enabled/retired_at"
+    ],
+    "provider_product_id_exposed": false,
+    "provider_plan_id_exposed": false,
+    "provider_credentials_exposed": false,
+    "get_mutation": false,
+    "audit_write_on_get": false,
+    "fake_success": false,
+    "empty_state": "truthful zero-row message; no seed/sample side effect"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-B86D339C12",
+    "sibling_visible_controls_claimed": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "acceptance_tests": {
+    "path": "variants/laravel-aiwmweb/backend/tests/Feature/SubscriptionPlansAdminRouteTerminalityTest.php",
+    "proof": [
+      "exact source route and settings.manage policy",
+      "explicit auth + tenant.context route",
+      "guest redirect",
+      "missing permission 403",
+      "foreign tenant 404",
+      "persisted disabled and enabled plans render truthfully",
+      "provider identifiers are not rendered",
+      "GET does not mutate billing plans or billing_plan_audits",
+      "empty catalog stays empty and renders a truthful empty state"
+    ]
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The canonical Subscription Plans route is a real authenticated tenant-qualified read surface with source-equivalent settings.manage authorization, authoritative persisted catalog rendering, fail-closed tenant boundaries, no GET mutation, and no provider identifier or credential exposure."
+  }
+}

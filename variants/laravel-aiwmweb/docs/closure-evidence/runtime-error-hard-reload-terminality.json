@@ -1,0 +1,19 @@
+{
+  "authority": "Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-PLAT-4BAE8344AF",
+  "domain": "platform",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {"file":"src/AIWordPressManager.Web/Components/Routes.razor","visible_control":"@Navigation.Uri -> @Navigation.Uri","user_visible_text":"Hard reload","behavior":"The runtime error surface exposes a raw anchor to the exact current Navigation.Uri with enhanced navigation disabled, forcing a full document navigation rather than an in-app router transition."},
+  "laravel_adaptation": {"file":"variants/laravel-aiwmweb/backend/resources/js/runtime-error-boundary.tsx","control":"RuntimeErrorHardReloadControl","operation_marker":"AIMW-PLAT-4BAE8344AF","destination":"window.location.href","behavior":"The runtime error boundary renders a real anchor whose href is the browser's exact current URL. Native anchor navigation performs the source-equivalent full-document reload while preserving path, query string, and fragment. No React Router Link, callback reload shim, API request, tenant route synthesis, or persistence mutation is used."},
+  "authorization": {"authentication_change":"none","rbac_change":"none","session_or_csrf_change":"none","reason":"Navigation-only recovery control; no privileged server action."},
+  "tenant_isolation": {"canonical_tenant_owned":false,"route_tenant_derivation":"none","idor_surface":"none","proof":"The control reuses the exact current browser URL without accepting or constructing tenant/resource identifiers."},
+  "runtime_boundaries": {"queue":"not used","cache":"not used","scheduler":"not used","secrets":"not read or written","wordpress_connector":"not used","ai_provider":"not used"},
+  "semantics": {"mutation":false,"read_only_navigation":true,"full_document_navigation":true,"preserves_path_query_fragment":true,"authoritative_reread":"fresh document request for exact current URL","audit_receipt":"not applicable; no application mutation","fake_success_path":"none"},
+  "acceptance_tests": [{"file":"variants/laravel-aiwmweb/backend/resources/js/__tests__/runtime-error-hard-reload.test.tsx","coverage":"exact canonical operation marker, raw link role, exact current href, path/query/hash preservation, and no synthesized API destination; exercised by both frontend CI jobs"}],
+  "generator_evidence_source": {"sha":"7030c9f31a61cd1cf10fab7fd70922d27a98cc90","note":"Immutable pushed source used by the official focused-closure generator contains the production marker, focused frontend contract, and the original PHP evidence contract that proved canonical metadata during materialization."},
+  "scope_guards": {"exactly_one_operation":true,"aspnet_current_product_modified":false,"second_operation_started":false,"manual_parity_count_edit":false,"force_push_performed":false},
+  "terminality": {"state":"ADAPTED","basis":"Real source-equivalent full-document navigation is bound to the exact canonical operation ID in production code and deterministic focused frontend tests; official generator-backed reconciliation materialized the isolated transition."}
+}

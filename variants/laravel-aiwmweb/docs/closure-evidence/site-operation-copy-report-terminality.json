@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #729",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-BILL-AA8C2FD5B3",
+  "domain": "billing",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationDetails.razor",
+    "route_screen": "/operations/sites/{OperationId:guid} | /site-operations/{OperationId:guid}",
+    "visible_control": "Copy report [CopyReportAsync]",
+    "behavior": "Build the Operation Diagnostic Report from the currently loaded authoritative operation record, await navigator.clipboard.writeText with the exact report text, report success only after the browser confirms the write, and report retryable failure without fake success.",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_view": "variants/laravel-aiwmweb/backend/resources/views/operations/site-operation-details.blade.php",
+    "browser_control": "variants/laravel-aiwmweb/backend/resources/js/site-operation-details-copy-report.ts",
+    "authoritative_read": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteOperationDetailsReadController.php + SiteOperationHistoryService::getByCorrelationId",
+    "operation_marker": "AIMW-BILL-AA8C2FD5B3",
+    "report_contract": [
+      "AI WordPress Manager - Operation Diagnostic Report",
+      "Operation ID",
+      "Site",
+      "Site ID",
+      "Execution Job ID",
+      "Operation",
+      "Result",
+      "Started UTC",
+      "Completed UTC",
+      "Duration ms",
+      "Affected records",
+      "Message",
+      "Details"
+    ],
+    "clipboard": "navigator.clipboard.writeText is awaited before success becomes visible.",
+    "concurrency": "A local copying guard prevents duplicate concurrent clipboard writes.",
+    "failure": "Clipboard rejection or an unavailable Clipboard API shows a retryable error and never shows copy success.",
+    "mutation": false,
+    "network_request_on_copy": false,
+    "external_call": false,
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authentication": "The page is behind Laravel auth and tenant.context middleware.",
+    "tenant_context": "SiteOperationHistory uses the active tenant context/global scope and the controller rejects a route tenant that does not match TenantContext.",
+    "permission": "execution.view is re-authorized before reading the operation.",
+    "foreign_tenant": "The focused feature test proves foreign tenant and cross-tenant correlation GUID reads return 404.",
+    "secret_non_exposure": "SiteOperationHistoryService redacts secret/token/password/API-key-like detail keys before persistence; the report uses only the already-redacted authoritative stored details.",
+    "caller_supplied_tenant_selector": "The route tenant must match authenticated TenantContext.",
+    "direct_object_identifier": "The correlation GUID is resolved only inside the active tenant scope."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationDetailsRouteTerminalityTest.php — binds AIMW-BILL-AA8C2FD5B3 to the real tenant-scoped details page, proves no persistence mutation, redacted details, guest/permission/foreign-tenant fail-closed behavior, and cross-tenant GUID 404.",
+    "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-operation-details-copy-report.test.ts — proves exact report formatting, browser-confirmed success, duplicate-click suppression, rejection/retry behavior, and Clipboard API unavailable failure."
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical CopyReportAsync control is now a real browser clipboard operation over the authoritative tenant-scoped operation record, with source-equivalent report fields, truthful success/failure semantics, and focused tenant-isolation coverage."
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No adjacent Back/Execution Center/Connection Center operations are claimed",
+    "No server mutation or new API endpoint is introduced",
+    "No payment-provider state is fabricated",
+    "No manual generated parity-count edit"
+  ]
+}

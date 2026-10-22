@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-BILL-F5686193FE",
+    "domain": "billing",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "source_control": "SubmitForApprovalAsync / Submit change for approval",
+    "mutation": true,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "authorization": "Content.Edit is required before approval submission",
+    "baseline": "the loaded _baselineRequest is retained as the before-state and concurrency baseline",
+    "proposed_state": "the current editor model is converted to a WordPressContentUpdate request using the baseline expected modified timestamp",
+    "approval_policy": "ApprovedChangePolicy.WordPressContentUpdateOperation",
+    "risk_level": "Medium",
+    "side_effect": "ApprovalService.Submit creates a pending approval; submission itself does not write to WordPress",
+    "future_execution": "approved execution is expected to recheck the WordPress version before mutation"
+  },
+  "laravel_adaptation": {
+    "frontend_control": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "frontend_route": "/tenants/{tenant}/sites/{siteId}/content/{contentType}/{wordpressId}/edit",
+    "endpoint": "POST /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor/approval",
+    "controller": "App\\Http\\Controllers\\ContentApiController::submitEditorForApproval",
+    "version_guard": "App\\Content\\ContentPlatformService::assertContentVersion",
+    "approval_model": "App\\Models\\Approval",
+    "operation_type": "WordPressContentUpdateOperation",
+    "approval_status": "PENDING",
+    "approval_risk": "Medium",
+    "wordpress_mutation_on_submit": false,
+    "placeholder_or_fake_success": false
+  },
+  "security": {
+    "session_authentication": true,
+    "active_tenant_from_server_context": true,
+    "permission": "content.edit",
+    "tenant_site_content_ownership": "tenant-scoped Site and ContentItem resolution plus route type/remote-id binding",
+    "csrf": "web middleware plus browser CSRF header",
+    "caller_owned_identity_fields": "tenant/site/content/remote/user/actor ownership fields are rejected with 422",
+    "actor_identity": "derived only from the authenticated request user",
+    "secrets_exposed": false
+  },
+  "concurrency_and_idempotency": {
+    "remote_baseline_check": true,
+    "optimistic_inputs": [
+      "expected_hash",
+      "expected_modified_at",
+      "expected_version"
+    ],
+    "stale_wordpress_result": "409 conflict with durable ContentConflict evidence; no Approval is created and no remote mutation occurs",
+    "request_key": "tenant-scoped UUID backed by the approvals tenant/request unique constraint",
+    "replay": "same request key with the same proposal returns the existing approval",
+    "conflicting_reuse": "same request key with a different proposal fails 409",
+    "remote_mutation_count_on_submit": 0
+  },
+  "approval_evidence": {
+    "before_state": "server-built from the persisted content baseline after remote version verification",
+    "proposed_state": "validated editor fields plus the same optimistic concurrency evidence",
+    "site_identity": "server-owned Site ID and name",
+    "actor_identity": "authenticated user ID and display label",
+    "source_operation_id": "AIMW-BILL-F5686193FE",
+    "operation_type": "WordPressContentUpdateOperation",
+    "risk_level": "Medium"
+  },
+  "acceptance_tests": {
+    "php": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorSubmitApprovalTerminalityTest.php",
+    "frontend": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-submit-approval-terminality.test.ts",
+    "coverage": [
+      "exact source SubmitForApprovalAsync contract and canonical operation identity",
+      "route method, auth, tenant middleware and canonical marker",
+      "guest 401, missing content.edit 403, foreign tenant/site 404",
+      "caller-owned identity rejection before remote check",
+      "server-owned actor/site/before-state provenance",
+      "PENDING Medium-risk WordPressContentUpdateOperation approval",
+      "same-key replay and conflicting-key reuse behavior",
+      "stale WordPress baseline returns 409 and records conflict",
+      "zero WordPress mutation during submission",
+      "frontend active tenant/site/type/WordPress route binding and payload boundary"
+    ]
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-BILL-F5686193FE",
+    "save_operation_reimplemented": false,
+    "approval_execution_claimed": false,
+    "sibling_controls_terminalized": false,
+    "aspnet_reference_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false,
+    "force_push": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "5446b7657b70a06f7d447667d17da8b730eefa07",
+    "branch": "worker/laravel-aiwmweb-AIMW-BILL-F5686193FE-submit-for-approval",
+    "implementation_sha": "f6ecc85eb6a836f8610249a18c581a7e3302f905"
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "Laravel now preserves the canonical SubmitForApprovalAsync boundary: content.edit authorization, server-owned tenant/site/actor identity, remote baseline verification, structured before/proposed states, Medium-risk pending approval persistence, replay safety, and zero WordPress mutation at submission time."
+  }
+}

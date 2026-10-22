@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-AI-3B59F172AB",
+  "domain": "ai",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor",
+    "route_screen": "/settings/ai-providers",
+    "visible_control": "Settings / Back to settings",
+    "source_target": "/settings",
+    "mutation": false,
+    "tenant_owned": true,
+    "behavior": "The guarded AI Provider Settings page exposes navigation back to the Settings workspace. Activating the control performs navigation only and does not create, update, clear, test, reorder, enable, disable, or otherwise mutate provider configuration."
+  },
+  "laravel_adaptation": {
+    "ui_control": "backend/resources/views/ai/provider-settings.blade.php",
+    "source_workspace_route": "GET /tenants/{tenant}/settings/ai-providers",
+    "source_controller": "App\\Http\\Controllers\\AiProviderSettingsReadController",
+    "source_permission": "settings.manage",
+    "control_binding": "data-canonical-operation=AIMW-AI-3B59F172AB",
+    "visible_control": "← Settings",
+    "adapted_target": "/tenants/{tenant}/settings",
+    "destination_workspace": "generic guarded tenant settings workspace",
+    "destination_permission": "tenant.view",
+    "tenant_binding": "The link target is derived from the authoritative route-resolved Tenant model slug; no request field, query parameter, provider identifier, site identifier, or user identifier can select the destination tenant.",
+    "mutation": false,
+    "fake_or_demo_data": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/settings/ai-providers",
+    "auth + tenant.context activate the requested tenant",
+    "AiProviderSettingsReadController verifies the route tenant and authorizes settings.manage",
+    "the server-rendered provider settings page exposes AIMW-AI-3B59F172AB as ← Settings",
+    "the href is derived from the resolved tenant slug as /tenants/{tenant}/settings",
+    "the guarded tenant settings workspace resolves under the same tenant context",
+    "no AiProviderProfile persistence is mutated by the navigation"
+  ],
+  "authorization": {
+    "source_authentication": "auth",
+    "source_tenant_context": "tenant.context",
+    "source_permission": "settings.manage",
+    "destination_authentication": "auth",
+    "destination_tenant_context": "tenant.context",
+    "destination_permission": "tenant.view",
+    "guest_semantics": "source redirects to /login",
+    "missing_permission_semantics": "403 forbidden on source workspace",
+    "foreign_tenant_semantics": "404 on source and destination workspace"
+  },
+  "tenant_isolation": {
+    "proof": "Focused acceptance renders the control for Alpha with an exact /tenants/alpha/settings target, rejects a foreign /tenants/beta/settings target, and verifies foreign source/destination access fails closed.",
+    "active_tenant_binding": "Destination is derived only from the route-resolved Tenant slug.",
+    "direct_id_idor": "The control introduces no provider, site, user, secret, or other caller-selected resource identifier."
+  },
+  "semantics": {
+    "navigation_only": true,
+    "persistence_mutation": false,
+    "idempotent": true,
+    "retry_safe": true,
+    "audit_receipt": "not applicable; this operation performs no mutation",
+    "wordpress_runtime": "not applicable",
+    "provider_runtime": "not applicable; no provider call is performed or claimed",
+    "queue_runtime": "not applicable",
+    "secret_disclosure": false,
+    "fake_success_path": "none"
+  },
+  "acceptance_tests": {
+    "php": {
+      "file": "backend/tests/Feature/AiProviderSettingsBackToSettingsTerminalityTest.php",
+      "coverage": [
+        "exact canonical operation identity, domain, kind, source route, source file, visible-control semantics, non-mutation flag, and tenant ownership",
+        "real rendered canonical operation marker and visible ← Settings control",
+        "exact tenant-derived /tenants/alpha/settings destination",
+        "guarded destination resolves for an authorized tenant member",
+        "AiProviderProfile row count remains unchanged across navigation",
+        "guest redirect semantics",
+        "missing settings.manage 403 semantics",
+        "Tenant A to Tenant B source and destination 404 isolation",
+        "no caller-supplied tenant, provider, site, or user destination surface"
+      ]
+    }
+  },
+  "implementation": {
+    "baseline_composition_sha": "8ff790633213538c25861f2cf4ab342b62046115",
+    "recovered_branch": "worker/laravel-aiwmweb-AIMW-AI-3B59F172AB-ai-provider-settings-back-slot0150",
+    "claim_origin": "Issue #257 Slot0150 active-owned claim recovered by Slot0162",
+    "ci_status": "not claimed in this evidence file; authoritative repository CI must validate the exact PR/integration head"
+  },
+  "scope_guards": {
+    "exactly_one_operation": true,
+    "generated_reconciliation_edited": false,
+    "reference_product_modified": false,
+    "second_operation_started": false,
+    "owner_or_live_provider_evidence_manufactured": false,
+    "force_push_performed": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical navigation-only control is bound to the real guarded Laravel AI Provider Settings workspace, preserves settings.manage authorization at the source, derives the settings destination from authoritative tenant context, introduces no caller-controlled destination resource, and has focused deterministic acceptance coverage. Generator reconciliation and exact-head repository CI remain authoritative for final integration."
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-1E1BF9CEDC",
+    "domain": "ai",
+    "kind": "route",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AIUsage.razor",
+    "source_route": "/module/ai-usage",
+    "source_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "Authenticated AI Usage & Cost observability for the current account/session identity, with persisted AI call/token/cost telemetry, refresh, site filtering, and truthful loading/error/empty states.",
+    "identity_rule": "The authenticated session is authoritative; a caller-supplied UserId is not trusted.",
+    "read_semantics": "read-only observability; no server/domain mutation is owned by this canonical route"
+  },
+  "laravel_adaptation": {
+    "workspace_route": "/tenants/{tenant}/module/ai-usage",
+    "workspace_route_name": "canonical.workspace.ai-usage",
+    "workspace_controller": "App\\Http\\Controllers\\CanonicalWorkspaceRouteController::show",
+    "api_route": "/api/v1/tenants/{tenant}/ai/usage",
+    "api_route_name": "canonical.api.ai-usage",
+    "api_controller": "App\\Http\\Controllers\\AiUsageReadController::index",
+    "read_service": "App\\AI\\Platform\\Services\\AiUsageService::report",
+    "persistence": "App\\Models\\AiUsageRecord using BelongsToTenant",
+    "frontend_context_contract": "api.ai-usage",
+    "frontend_workspace": "React workspace route key ai-usage",
+    "runtime_data": "persisted AiUsageRecord rows and aggregate summary/provider/workflow telemetry; no demo/sample rows",
+    "resource_envelope": "data/total are derived from the same authoritative recent/summary report so the existing React resource workspace renders real rows while retaining the complete usage report payload",
+    "generated_reconciliation_modified": false
+  },
+  "runtime_path": [
+    "authenticated user opens /tenants/{tenant}/module/ai-usage",
+    "auth + tenant.context activate the requested tenant membership",
+    "CanonicalWorkspaceRouteController enforces tenant.view and ai.viewUsage before returning the real React application",
+    "frontend context publishes /api/v1/tenants/{tenant}/ai/usage as api.ai-usage",
+    "React capability resolution becomes enabled only when ai.viewUsage and the real API contract are both present",
+    "React requests the tenant-qualified API and renders persisted usage rows, truthful empty state, loading/error state, and refresh",
+    "AiUsageReadController re-authorizes ai.viewUsage, derives user_id from the authenticated session, validates optional site, and delegates to AiUsageService",
+    "AiUsageRecord BelongsToTenant scope and tenant-scoped Site lookup enforce the active tenant before data is returned"
+  ],
+  "authorization": {
+    "workspace": ["auth", "tenant.context", "tenant.view", "ai.viewUsage"],
+    "api": ["auth", "tenant.context", "ai.viewUsage"],
+    "guest_workspace": "redirect to canonical login",
+    "guest_api": "401",
+    "missing_permission": "403",
+    "client_user_id": "ignored; server always uses request()->user()->getKey()"
+  },
+  "tenant_and_identity_isolation": {
+    "tenant_scope": "AiUsageRecord and Site are resolved under the active TenantContext through BelongsToTenant/global tenant scoping",
+    "same_tenant_other_user": "excluded by server-injected authenticated user_id filter",
+    "tenant_a_to_tenant_b_workspace": "404",
+    "foreign_site_direct_id": "404",
+    "caller_supplied_user_id_override": "cannot change returned identity scope",
+    "idor_result": "cross-tenant site IDs and cross-user usage rows are not returned"
+  },
+  "runtime_semantics": {
+    "real_route_before_spa_catch_all": true,
+    "real_persisted_data": true,
+    "placeholder_or_catch_all_only": false,
+    "demo_or_sample_data": false,
+    "mutation": false,
+    "fake_success_path": "not applicable; operation is read-only",
+    "authoritative_reread": "every refresh performs the same authenticated tenant/user-scoped persisted read",
+    "idempotency": "GET-only; repeated reads do not mutate state",
+    "retry_safety": "frontend query retry/refresh repeats a read-only authorized request",
+    "audit_or_mutation_receipt": "not applicable because this canonical operation is read-only"
+  },
+  "acceptance_tests": {
+    "php_feature": [
+      "AiUsageRouteTerminalityTest::test_exact_canonical_operation_is_the_pending_ai_usage_route",
+      "AiUsageRouteTerminalityTest::test_route_is_explicit_guarded_and_frontend_context_binds_the_real_api",
+      "AiUsageRouteTerminalityTest::test_persisted_usage_is_current_user_and_tenant_scoped_with_authoritative_site_filtering",
+      "AiUsageRouteTerminalityTest::test_authentication_permission_and_empty_state_contract_fail_closed_truthfully"
+    ],
+    "frontend_vitest": [
+      "canonical AI usage route binding keeps the exact source workspace contract",
+      "canonical AI usage route binding is enabled only when permission and the real API contract are both present"
+    ],
+    "production_like_repository_gates": [
+      "Pint + SQLite migrate:fresh + full PHP suite",
+      "MySQL fresh/rollback/forward + full PHP suite",
+      "Redis tenant lock + real queue worker + scheduler smoke",
+      "WordPress disposable runtime",
+      "WordPress real REST E2E",
+      "frontend typecheck/tests/build",
+      "frontend production build",
+      "runtime artifacts",
+      "acceptance release gate",
+      "production Docker Compose model/image build + stack boot + real runtime smokes + cleanup"
+    ]
+  },
+  "implementation_snapshot_sha": "0b2a52b97de4a50c4cc4b33e6d3c3ce49f7de1b8",
+  "exact_tested_sha": "0b2a52b97de4a50c4cc4b33e6d3c3ce49f7de1b8",
+  "exact_tested_sha_ci": {
+    "pr_plan_link": {"run_id": 33221426628, "run_number": 913, "result": "success"},
+    "laravel_aiwmweb_cross_domain_security": {"run_id": 33221426631, "run_number": 198, "result": "success"},
+    "laravel_aiwmweb_acceptance": {"run_id": 33221426616, "run_number": 267, "result": "success"},
+    "pint": "success",
+    "sqlite_migrations_and_full_php_suite": "success",
+    "mysql_fresh_rollback_forward_and_full_php_suite": "success",
+    "redis_queue_scheduler": "success",
+    "wordpress_disposable_runtime": "success",
+    "wordpress_real_rest_e2e": "success",
+    "frontend_typecheck_tests_build": "success",
+    "frontend_production_build": "success",
+    "runtime_artifacts": "success",
+    "acceptance_gate": "success",
+    "production_compose_model_image_build_stack_boot_real_runtime_smokes_cleanup": "success"
+  },
+  "canonical_denominator": {
+    "source": "latest generated 931-operation reconciliation on closure composition head 4d9d8a0efd70ffb7f3dc5b96a90f847dd30e5895",
+    "total": 931,
+    "previous_terminal": 358,
+    "new_terminal_after_this_one_operation": 359,
+    "previous_pending": 573,
+    "new_pending_after_this_one_operation": 572,
+    "generated_reconciliation_modified": false,
+    "note": "This is this worker's isolated one-operation contribution against the latest generated closure-composition reconciliation. Parallel unmerged closure contributions are not folded into these counts."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-1E1BF9CEDC",
+    "second_operation_started": false,
+    "aspnet_or_current_product_modified": false,
+    "generated_931_reconciliation_modified": false,
+    "force_push": false,
+    "merge": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "tests_green_on_implementation_sha": true,
+    "evidence_recorded": true,
+    "reason": "The exact canonical route is explicit and user-reachable, backed by persisted authenticated tenant/user-scoped AI usage data, permission and IDOR protections are deterministic, the React runtime is bound to the real API without demo data, and the implementation snapshot passed every required repository gate.",
+    "evidence_bearing_head_ci": "must be revalidated after this evidence-only commit; final-head CI is recorded in PR #305 because a commit cannot self-contain its own SHA without changing it"
+  }
+}

@@ -1,0 +1,179 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Authorization\TenantAuthorizer;
+use App\Tenancy\TenantContext;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+final class ApprovalsReportExportController extends Controller
+{
+    public function show(
+        string $tenant,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+    ): View {
+        $authorizer->authorize('reports.view');
+        $this->assertTenant($tenant, $context);
+
+        $rows = $this->rows($context);
+        $siteRows = $this->siteRows($context);
+        $plannerRows = $this->plannerRows($context);
+
+        return view('reports.approvals-export', [
+            'rows' => $rows,
+            'siteRows' => $siteRows,
+            'plannerRows' => $plannerRows,
+            'canExport' => $context->membership()->hasPermission('reports.manage'),
+            'downloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/approvals.csv',
+            'sitesDownloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/sites.csv',
+            'plannerDownloadUrl' => '/tenants/'.rawurlencode($tenant).'/reports/content-planner.csv',
+        ]);
+    }
+
+    public function download(
+        string $tenant,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+    ): StreamedResponse {
+        $authorizer->authorize('reports.manage');
+        $this->assertTenant($tenant, $context);
+
+        $rows = $this->rows($context);
+
+        return response()->streamDownload(function () use ($rows): void {
+            $stream = fopen('php://output', 'wb');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, ['Id', 'Title', 'Site', 'Status']);
+
+            foreach ($rows as $row) {
+                fputcsv($stream, [$row['id'], $row['title'], $row['site'], $row['status']]);
+            }
+
+            fclose($stream);
+        }, 'approvals-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function downloadSites(
+        string $tenant,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+    ): StreamedResponse {
+        $authorizer->authorize('reports.manage');
+        $this->assertTenant($tenant, $context);
+
+        $rows = $this->siteRows($context);
+
+        return response()->streamDownload(function () use ($rows): void {
+            $stream = fopen('php://output', 'wb');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, ['Name', 'Url', 'Status']);
+
+            foreach ($rows as $row) {
+                fputcsv($stream, [$row['name'], $row['url'], $row['status']]);
+            }
+
+            fclose($stream);
+        }, 'sites-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    public function downloadPlanner(
+        string $tenant,
+        TenantAuthorizer $authorizer,
+        TenantContext $context,
+    ): StreamedResponse {
+        $authorizer->authorize('reports.manage');
+        $this->assertTenant($tenant, $context);
+
+        $rows = $this->plannerRows($context);
+
+        return response()->streamDownload(function () use ($rows): void {
+            $stream = fopen('php://output', 'wb');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, ['Id', 'Title', 'Site', 'Status']);
+
+            foreach ($rows as $row) {
+                fputcsv($stream, [$row['id'], $row['title'], $row['site'], $row['status']]);
+            }
+
+            fclose($stream);
+        }, 'content-planner-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function rows(TenantContext $context): Collection
+    {
+        return DB::table('approvals')
+            ->join('suggestions', function ($join): void {
+                $join->on('suggestions.id', '=', 'approvals.suggestion_id')
+                    ->on('suggestions.tenant_id', '=', 'approvals.tenant_id');
+            })
+            ->join('sites', function ($join): void {
+                $join->on('sites.id', '=', 'suggestions.site_id')
+                    ->on('sites.tenant_id', '=', 'approvals.tenant_id');
+            })
+            ->leftJoin('synced_contents', function ($join): void {
+                $join->on('synced_contents.id', '=', 'suggestions.synced_content_id')
+                    ->on('synced_contents.tenant_id', '=', 'approvals.tenant_id');
+            })
+            ->where('approvals.tenant_id', $context->id())
+            ->orderBy('approvals.id')
+            ->get([
+                'approvals.id',
+                'approvals.status',
+                'sites.name as site_name',
+                'synced_contents.title as content_title',
+            ])
+            ->map(fn ($row): array => [
+                'id' => (string) $row->id,
+                'title' => trim((string) ($row->content_title ?? '')) !== ''
+                    ? (string) $row->content_title
+                    : 'Approval #'.$row->id,
+                'site' => (string) $row->site_name,
+                'status' => (string) $row->status,
+            ]);
+    }
+
+    private function siteRows(TenantContext $context): Collection
+    {
+        return DB::table('sites')
+            ->where('tenant_id', $context->id())
+            ->orderBy('id')
+            ->get(['name', 'url', 'connection_status'])
+            ->map(fn ($row): array => [
+                'name' => (string) $row->name,
+                'url' => (string) $row->url,
+                'status' => (string) ($row->connection_status ?? 'unknown'),
+            ]);
+    }
+
+    private function plannerRows(TenantContext $context): Collection
+    {
+        return DB::table('content_planner_items')
+            ->leftJoin('sites', function ($join): void {
+                $join->on('sites.id', '=', 'content_planner_items.site_id')
+                    ->on('sites.tenant_id', '=', 'content_planner_items.tenant_id');
+            })
+            ->where('content_planner_items.tenant_id', $context->id())
+            ->orderBy('content_planner_items.id')
+            ->get([
+                'content_planner_items.id',
+                'content_planner_items.title',
+                'content_planner_items.scheduled_at',
+                'sites.name as site_name',
+            ])
+            ->map(fn ($row): array => [
+                'id' => (string) $row->id,
+                'title' => (string) $row->title,
+                'site' => trim((string) ($row->site_name ?? '')) !== '' ? (string) $row->site_name : '—',
+                'status' => $row->scheduled_at === null ? 'Draft' : 'Scheduled',
+            ]);
+    }
+
+    private function assertTenant(string $tenant, TenantContext $context): void
+    {
+        abort_unless($context->tenant()->slug === $tenant, 404);
+    }
+}

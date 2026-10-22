@@ -14,7 +14,17 @@ abstract class TenantAwareJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public readonly int $tenantId) {}
+    public readonly ?string $correlationId;
+
+    public function __construct(public readonly int $tenantId, ?string $correlationId = null)
+    {
+        if ($correlationId === null && app()->bound('request')) {
+            $candidate = request()->attributes->get('correlation_id');
+            $correlationId = is_string($candidate) ? $candidate : null;
+        }
+
+        $this->correlationId = $correlationId;
+    }
 
     public function middleware(): array
     {
@@ -24,5 +34,12 @@ abstract class TenantAwareJob implements ShouldBeUnique, ShouldQueue
     public function uniqueId(): string
     {
         return "tenant:{$this->tenantId}:".static::class;
+    }
+
+    public function runtimeJobId(): ?string
+    {
+        $id = $this->job?->getJobId();
+
+        return $id === null ? null : (string) $id;
     }
 }

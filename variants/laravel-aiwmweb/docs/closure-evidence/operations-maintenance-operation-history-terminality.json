@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-C2776A0F99",
+    "domain": "ai",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsMaintenance.razor",
+    "source_route": "/operations/maintenance | /site-operations/maintenance",
+    "source_control": "/site-operations -> /site-operations",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "source_behavior": {
+    "summary": "SiteOperationsMaintenance exposes a read-only Operation history navigation control alongside the distinct Refresh and Operations hub controls.",
+    "navigation": "The canonical control navigates from either maintenance route alias to /site-operations.",
+    "scope_boundary": "Refresh, Operations hub, cleanup preview, cleanup confirmation and cleanup execution are separate canonical operations and are not claimed by this closure.",
+    "read_semantics": "Opening Operation history performs navigation only and does not mutate operation-history persistence or invoke WordPress, provider, queue, payment, email, DNS, approval or execution behavior."
+  },
+  "laravel_adaptation": {
+    "production_views": [
+      "variants/laravel-aiwmweb/backend/resources/views/operations-maintenance.blade.php",
+      "variants/laravel-aiwmweb/backend/resources/views/site-operations-maintenance.blade.php"
+    ],
+    "source_routes": [
+      "/tenants/{tenant}/operations/maintenance",
+      "/tenants/{tenant}/site-operations/maintenance"
+    ],
+    "history_destination": "/tenants/{tenant}/site-operations",
+    "history_route_name": "canonical.workspace.site-operations",
+    "control_operation_marker": "AIMW-AI-C2776A0F99",
+    "tenant_derivation": "Both existing maintenance controllers validate the route tenant against TenantContext and pass only the authoritative active tenant slug to the views; Blade resolves the existing named history route from that slug.",
+    "permission_alignment": "Both source maintenance reads and the existing history target require execution.view, so an authorized maintenance reader cannot receive a navigation capability broader than the source boundary.",
+    "generated_reconciliation_modified_by_hand": false
+  },
+  "authorization": {
+    "source_boundary": ["web", "auth", "tenant.context", "execution.view"],
+    "target_boundary": ["web", "auth", "tenant.context", "execution.view"],
+    "guest": "redirect to login",
+    "missing_execution_view": "403",
+    "foreign_tenant": "404"
+  },
+  "tenant_and_security_contract": {
+    "active_tenant_source": "TenantContext established by auth + tenant.context and rechecked by the maintenance controllers",
+    "history_url_source": "named canonical.workspace.site-operations route using the already-validated active tenant slug",
+    "cross_tenant_result": "404 for both source aliases and the destination when an Alpha member attempts a Beta path",
+    "identifier_minimization": "The control contains only the trusted tenant slug and no site, history-record, credential, provider, execution, approval or arbitrary return-URL identifier.",
+    "mutation_surface": "none",
+    "external_runtime": "Navigation-only operation; no live WordPress, AI-provider, email, payment, DNS or production mutation evidence is required."
+  },
+  "acceptance_tests": {
+    "php_feature": "variants/laravel-aiwmweb/backend/tests/Feature/OperationsMaintenanceOperationHistoryTerminalityTest.php",
+    "assertions": [
+      "exact canonical operation identity, source aliases, visible-control fingerprint, read-only flag and tenant ownership",
+      "both real maintenance aliases render the exact canonical marker and tenant-scoped history destination",
+      "destination is the existing named canonical.workspace.site-operations GET route and retains execution.view with auth and tenant.context",
+      "guest requests redirect to login and a tenant member without execution.view receives 403 on source and target",
+      "foreign-tenant source and target paths fail closed with 404",
+      "opening both source aliases and the history target does not change operation-history persistence"
+    ],
+    "repository_gates_required": [
+      "PR Plan Link",
+      "Laravel AIWMWeb Cross-Domain Security",
+      "Laravel AIWMWeb Parity Reconciliation",
+      "Laravel AIWMWeb Acceptance",
+      "Laravel AIWMWeb Closure Evidence Audit",
+      "Laravel AIWMWeb Convergence Preflight"
+    ]
+  },
+  "implementation_snapshot_sha": "d9a641329a1f3e662fe3df052259dedb50092115",
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-AI-C2776A0F99",
+    "second_operation_started": false,
+    "refresh_claimed": false,
+    "operations_hub_claimed": false,
+    "cleanup_claimed": false,
+    "reference_product_modified": false,
+    "denominator_modified": false,
+    "new_route_or_api_added": false,
+    "force_push": false,
+    "owner_manual_evidence_required": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "security_and_tenant_enforced": true,
+    "evidence_recorded": true,
+    "reason": "Both already-real maintenance aliases now expose the canonical tenant-scoped Operation history navigation with exact provenance and deterministic authorization, tenant-isolation and read-only coverage. Generator-controlled terminal credit remains contingent on this pushed evidence snapshot and repository CI."
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "task_id": "AIMW-AI-58FABCCEDB",
+  "operation_id": "AIMW-AI-58FABCCEDB",
+  "terminal_state": "ADAPTED",
+  "canonical_operation": {
+    "operation_id": "AIMW-AI-58FABCCEDB",
+    "domain": "ai",
+    "kind": "route",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/AIProviderSettings.razor",
+    "source_route": "/settings/ai-providers",
+    "visible_control": "Open/render route",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED"
+  },
+  "recovery": {
+    "original_claim_comment": 5474825235,
+    "original_implementation_pr": 397,
+    "original_implementation_head": "669bc72450d9bad99c27345a388f6ef00dc3dbda",
+    "original_merge_commit": "d352543f2f3c52383670f2c25e3a3b7ed04fb7f8",
+    "recovery_claim_comment": 5556826542,
+    "authoritative_base_sha": "3441336289f22b9921e58a2b8ae42958f228f15a",
+    "recovery_branch": "worker/laravel-aiwmweb-AIMW-AI-58FABCCEDB-provider-route-reconciliation-recovery",
+    "reason": "The original implementation was merged and is an ancestor of the authoritative composition, but the live generator still reports the canonical route operation PENDING. This recovery supplies current route provenance and generator-backed evidence rather than re-merging the feature."
+  },
+  "source_contract": {
+    "authorization": "The canonical Razor page requires ApplicationPermissionCatalog.SettingsManage.",
+    "behavior": "An authorized settings manager opens /settings/ai-providers to review persisted AI provider configuration, model/runtime readiness, priority and whether encrypted API credentials are configured.",
+    "secret_boundary": "Saved API key material is never rendered back to the page; only credential presence is exposed.",
+    "selected_operation_scope": "GET/open-render behavior only. Provider save, key removal and other mutations are separate canonical operations and are excluded."
+  },
+  "laravel_adaptation": {
+    "canonical_route": "/tenants/{tenant}/settings/ai-providers",
+    "route_name": "tenant.settings.ai-providers",
+    "route_file": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "controller": "App\\Http\\Controllers\\AiProviderSettingsReadController",
+    "controller_file": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiProviderSettingsReadController.php",
+    "view": "variants/laravel-aiwmweb/backend/resources/views/ai/provider-settings.blade.php",
+    "service": "App\\AI\\Platform\\Services\\AIProviderSettingsAdministrationService::getAiSettingsAsync",
+    "middleware": [
+      "auth",
+      "tenant.context"
+    ],
+    "permission": "settings.manage",
+    "data_source": "tenant-scoped persisted AiProviderProfile/model state through the existing ProviderConfigService compatibility boundary",
+    "mutation": false
+  },
+  "authorization_and_tenant_isolation": {
+    "guest": "Unauthenticated access is redirected to login before provider state is read.",
+    "permission": "AiProviderSettingsReadController explicitly authorizes settings.manage and the delegated administration service independently enforces the same permission.",
+    "foreign_tenant": "A user from tenant A cannot select tenant B through the route; tenant.context and the controller slug invariant fail closed with 404.",
+    "secret_redaction": "Focused acceptance persists a sentinel inside provider settings and proves it is not rendered, while exposing only API credential configured/not-configured state.",
+    "idor": "The only route selector is the tenant slug and it is constrained by tenant.context plus TenantContext identity equality."
+  },
+  "read_semantics": {
+    "mutation": false,
+    "authoritative_reread": "Focused acceptance creates tenant-owned persisted provider state and verifies the rendered page shows the provider/model configuration from the real persistence path.",
+    "read_only_surface": "POST to the selected route is method-not-allowed; this closure does not own provider mutation behavior.",
+    "fake_success": false,
+    "demo_data": false
+  },
+  "acceptance": {
+    "test": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+    "proofs": [
+      "exact canonical operation ID/domain/kind/source/route identity",
+      "explicit named Laravel route and canonical_operation_id provenance marker",
+      "auth and tenant.context middleware",
+      "real persisted provider/model state rendering",
+      "API secret material is not rendered",
+      "settings.manage authorization fails closed with 403",
+      "foreign tenant selection fails closed with 404",
+      "guest boundary redirects to login",
+      "route is GET/read-only and POST returns method-not-allowed"
+    ]
+  },
+  "generator_contract": {
+    "mode": "explicit_route_api_contract",
+    "verifier": "variants/laravel-aiwmweb/tools/apply_explicit_route_api_provenance.py",
+    "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AiProviderSettingsReadController.php",
+    "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+    "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/AiProviderSettingsRouteTerminalityTest.php",
+    "security_mode": "tenant_selected",
+    "denominator_must_remain": 931,
+    "expected_delta_if_accepted": {
+      "terminal": 1,
+      "pending": -1,
+      "blocked": 0
+    }
+  },
+  "implementation": {
+    "original_feature_head": "669bc72450d9bad99c27345a388f6ef00dc3dbda",
+    "route_authorization_hardening_commit": "59cda2352243dd607e5da33a45dad54502a7ea68"
+  },
+  "scope": {
+    "other_operations_started": false,
+    "provider_mutations_owned": false,
+    "aspnet_source_modified": false,
+    "denominator_changed": false,
+    "tests_weakened": false,
+    "owner_manual_evidence_required": false
+  }
+}

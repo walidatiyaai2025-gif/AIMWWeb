@@ -1,0 +1,63 @@
+name: Laravel AIWMWeb handoff unit
+description: One claimable execution unit for the Laravel AIWMWeb auto-handoff lanes.
+title: "[Laravel Handoff] "
+labels:
+  - "handoff:ready"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One issue = one owner = one branch = one PR. Do not duplicate an active branch or PR.
+  - type: input
+    id: authority
+    attributes:
+      label: Authority / umbrella
+      description: Use #257 unless a more specific umbrella owns this lane.
+      value: "#257"
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Lane
+      options:
+        - backend
+        - frontend
+        - database
+        - wordpress-connector
+        - security
+        - acceptance
+        - repository
+        - release
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Single execution unit
+      description: Exact code/runtime behavior this issue owns.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / blockers
+      description: List prerequisite issues/PRs. If blocked, apply handoff:blocked.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: State deterministic checks and evidence required before merge.
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Repository invariants
+      options:
+        - label: I checked for an existing branch/PR and will continue it instead of duplicating work.
+          required: true
+        - label: This unit does not modify the ASP.NET runtime.
+          required: true
+        - label: Completion requires exact-head CI/evidence, not a local-only claim.
+          required: true

@@ -1,0 +1,44 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import {
+    GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID,
+    buildGlobalPostsTrashPayload,
+    globalPostsEndpoint,
+} from '../global-posts-confirm-trash-control';
+
+describe('GlobalPostsExplorer ConfirmTrashAsync terminality', () => {
+    it('binds the exact canonical operation and tenant-global endpoint', () => {
+        expect(GLOBAL_POSTS_CONFIRM_TRASH_OPERATION_ID).toBe('AIMW-BILL-AD4781C803');
+        expect(globalPostsEndpoint('alpha team')).toBe('/api/v1/tenants/alpha%20team/global-posts');
+        expect(globalPostsEndpoint('')).toBeNull();
+        expect(globalPostsEndpoint('alpha/beta')).toBeNull();
+    });
+
+    it('submits only tenant-scoped selected site and WordPress page identifiers', () => {
+        const payload = buildGlobalPostsTrashPayload([
+            { site_id: 7, wordpress_id: 101 },
+            { site_id: 8, wordpress_id: 202 },
+        ]);
+
+        expect(payload).toEqual({
+            targets: [
+                { site_id: 7, wordpress_id: 101 },
+                { site_id: 8, wordpress_id: 202 },
+            ],
+        });
+        expect(payload).not.toHaveProperty('tenant_id');
+        expect(payload).not.toHaveProperty('user_id');
+        expect(payload).not.toHaveProperty('actor_user_id');
+    });
+
+    it('requires confirmation and authoritative reread before visible success reconciliation', () => {
+        const widget = readFileSync('resources/js/global-posts-confirm-trash-widget.tsx', 'utf8');
+
+        expect(widget).toContain('setConfirmOpen(true)');
+        expect(widget).toContain('role="dialog"');
+        expect(widget).toContain('mutation.mutate(selectedTargets)');
+        expect(widget).toContain('await query.refetch()');
+        expect(widget).toContain("result.succeeded === 0 ? 'error' : 'success'");
+        expect(widget).toContain('row.status === \'trash\'');
+    });
+});
