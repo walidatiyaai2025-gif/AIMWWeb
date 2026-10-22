@@ -1,4 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize
+# convergence-trigger: 20261022-final-parity
 # trigger: AIMW-CONT-C6C7F24B03 issue-889-operations-workspace-route
 # exact-head: 51db87142aa45ece0dbbc0d5eaea3fd8efa69d90
 # retrigger: issue-889-post-materialization-exact-head-gates
