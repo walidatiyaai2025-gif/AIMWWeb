@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #900 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-EMAI-7A54150265",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "operation_id": "AIMW-EMAI-7A54150265",
+    "domain": "email",
+    "kind": "visible_control",
+    "route_screen": "/account/profile",
+    "source": "src/AIWordPressManager.Web/Components/Pages/AccountProfile.razor",
+    "source_intent": "Navigate from My Account to Dashboard email settings.",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/account-profile-email-settings-link-control.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/app.tsx mounts the control on the account-profile workspace",
+    "operation_marker": "AIMW-EMAI-7A54150265",
+    "source_destination": "/account/email-settings",
+    "adapted_destination": "/tenants/{tenant}/account/email-settings",
+    "destination_route": "canonical.workspace.account-email-settings",
+    "destination_permission": "tenant.view",
+    "navigation_semantics": "React Router link derives the tenant slug from authenticated frontend context and performs no mutation"
+  },
+  "security": {
+    "source_workspace_permission": "tenant.view",
+    "destination_workspace_permission": "tenant.view",
+    "guest": "redirect to login",
+    "foreign_tenant": "404/fail closed",
+    "missing_workspace_permission": "403/fail closed",
+    "mutation_added": false,
+    "secret_exposure_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/account-profile-email-settings-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AccountProfileEmailSettingsLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and ASP.NET source intent",
+      "tenant-qualified destination generated from authenticated context",
+      "canonical operation marker on the visible link",
+      "destination route is session guarded and tenant scoped",
+      "guest, missing permission, and foreign tenant fail closed",
+      "no network mutation is introduced"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-EMAI-7A54150265"],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "core_variant_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false,
+    "destructive_migration": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
+    "branch": "worker/900-account-profile-email-settings-link"
+  }
+}
