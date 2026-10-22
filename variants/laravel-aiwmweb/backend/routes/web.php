@@ -336,7 +336,7 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/email/schedules', 'show')->defaults('workspace_permissions', 'operations.manage')->defaults('canonical_operation_id', 'AIMW-EMAI-F77DB6435F')->name('canonical.workspace.email-schedules');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
         Route::get('/module/backups', 'show')->defaults('workspace_permissions', 'backup.manage,backups.view')->name('canonical.workspace.backups');
-        Route::get('/module/configuration', 'show')->defaults('workspace_permissions', 'settings.manage')->name('canonical.workspace.configuration-validation');
+        Route::get('/module/configuration', 'show')->defaults('workspace_permissions', 'settings.manage')->defaults('canonical_operation_id', 'AIMW-CONT-F90125AE87')->name('canonical.workspace.configuration-validation');
         Route::get('/module/logs', 'show')->defaults('workspace_permissions', 'operations.manage,diagnostics.view')->name('canonical.workspace.logs');
         Route::get('/module/ai-usage', 'show')->defaults('workspace_permissions', 'tenant.view,ai.viewUsage')->defaults('canonical_operation_id', 'AIMW-AI-1E1BF9CEDC')->name('canonical.workspace.ai-usage');
         Route::get('/operations', 'show')->defaults('workspace_permissions', 'operations.manage,execution.view')->name('canonical.workspace.operations');
