@@ -1,3 +1,4 @@
+// Parity materialization is complete; this comment retriggers exact-head PR validation.
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
