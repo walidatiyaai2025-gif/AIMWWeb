@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #801 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-EBD89B0642",
+    "terminal_state": "ADAPTED",
+    "domain": "content",
+    "kind": "route",
+    "route_screen": "/admin/security-audit",
+    "source": "src/AIWordPressManager.Web/Components/Pages/SecurityAudit.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SecurityAuditRouteServiceProvider.php",
+    "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SecurityAuditReadController.php",
+    "route": "GET /admin/security-audit",
+    "route_name": "canonical.admin.security-audit",
+    "middleware": [
+      "web",
+      "auth",
+      "platform.admin"
+    ],
+    "route_parameters": [],
+    "tenant_context": false,
+    "behavior": "Render the existing read-only Security Audit surface for authenticated platform administrators."
+  },
+  "security": {
+    "source_authorization": "ApplicationPermissionCatalog.SettingsManage",
+    "laravel_authorization": "auth + platform.admin",
+    "caller_selected_tenant": false,
+    "tenant_context_invented": false,
+    "resource_identifiers_in_route": [],
+    "mutation_added": false,
+    "guest": "redirect /login",
+    "non_admin": "403",
+    "platform_admin": "200"
+  },
+  "acceptance": {
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SecurityAuditRouteTerminalityTest.php",
+    "proof": [
+      "canonical route identity and ASP.NET source mapping",
+      "zero route parameters",
+      "web + auth + platform.admin middleware",
+      "explicit absence of tenant.context",
+      "GET/HEAD only and POST 405",
+      "guest redirect, non-admin 403, platform-admin 200",
+      "no tenant/account/subscription/provider/user selector fields",
+      "no tenant-scoped Security Audit alias"
+    ]
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "reason": "The existing Laravel Security Audit route preserves the source administrator-only read surface with stricter platform-admin enforcement, no invented tenant selector, and deterministic fail-closed access."
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-EBD89B0642",
+    "second_operation_started": false,
+    "existing_load_async_operation_modified": false,
+    "existing_back_to_settings_operation_modified": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-EBD89B0642-security-audit-route"
+  }
+}
