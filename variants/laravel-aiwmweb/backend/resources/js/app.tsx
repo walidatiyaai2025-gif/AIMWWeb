@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Link, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { AccountEmailSettingsSummary } from './account-email-settings-summary';
+import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { AdminBillingSupportSettingsLink } from './admin-billing-support-settings-link';
 import { AiCenterApprovalStatusControl } from './ai-center-approval-status-control';
 import { AiUsageAiCenterLinkControl } from './ai-usage-ai-center-link-control';
@@ -181,6 +182,7 @@ function RouteElement({ route }: { route: WorkspaceRoute }) {
             <SiteDetailsRoute context={context} route={route} />
         </>
     );
+    if (route.key === 'account-profile') return <><AccountProfileEmailSettingsLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'dashboard') return <><DashboardExecutionLinkControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'sites') return <><SitesSaveControl context={context} /><SitesRetestSelectedControl context={context} /><SitesDeleteControl context={context} /><SitesBulkDeleteControl context={context} /><WorkspacePage context={context} route={route} /></>;
     if (route.key === 'explorer') return <><ContentExplorerMediaTabControl context={context} /><ContentExplorerExecutionLinkControl context={context} /><ContentExplorerSynchronizeControl context={context} /><ContentExplorerBulkTrashControl context={context} /><WorkspacePage context={context} route={route} /></>;
