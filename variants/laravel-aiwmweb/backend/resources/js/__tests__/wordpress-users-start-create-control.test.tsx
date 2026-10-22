@@ -48,7 +48,7 @@ function renderStartCreate(value: FrontendContext, onAvailable = vi.fn()) {
 describe('AIMW-CONT-BCE1211CE3 WordPress Users StartCreate control', () => {
     it('marks the existing authoritative dialog-launch control and opens the real save contract', () => {
         const onAvailable = renderStartCreate(context());
-        const button = screen.getByRole('button', { name: 'Save' });
+        const button = screen.getByRole('button', { name: 'Add user' });
 
         expect(button).toHaveAttribute('data-canonical-operation', WORDPRESS_USERS_START_CREATE_OPERATION_ID);
         expect(WORDPRESS_USERS_START_CREATE_OPERATION_ID).toBe('AIMW-CONT-BCE1211CE3');
@@ -60,7 +60,7 @@ describe('AIMW-CONT-BCE1211CE3 WordPress Users StartCreate control', () => {
 
     it('fails closed when the server does not advertise the mutation contract', () => {
         const onAvailable = renderStartCreate(context({ actions: {} }));
-        const button = screen.getByRole('button', { name: 'Save' });
+        const button = screen.getByRole('button', { name: 'Add user' });
 
         expect(button).toBeDisabled();
         fireEvent.click(button);
@@ -69,7 +69,7 @@ describe('AIMW-CONT-BCE1211CE3 WordPress Users StartCreate control', () => {
 
     it('fails closed when the WordPress users connector scope is unavailable', () => {
         const onAvailable = renderStartCreate(context({ connectors: [] }));
-        const button = screen.getByRole('button', { name: 'Save' });
+        const button = screen.getByRole('button', { name: 'Add user' });
 
         expect(button).toBeDisabled();
         fireEvent.click(button);
