@@ -21,13 +21,13 @@ jobs:
     env:
       PYTHONHASHSEED: '0'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
       - name: Fetch exact evidence refs
         run: git fetch origin --prune '+refs/heads/*:refs/remotes/origin/*'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Run official parity materializer

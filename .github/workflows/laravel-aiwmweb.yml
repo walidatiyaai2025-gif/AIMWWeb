@@ -25,11 +25,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Apply one-time classifier repair when present
@@ -68,8 +68,8 @@ jobs:
   acceptance-gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Rebuild census from checked-out source
@@ -83,7 +83,7 @@ jobs:
       run:
         working-directory: variants/laravel-aiwmweb/backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -134,7 +134,7 @@ jobs:
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -195,7 +195,7 @@ jobs:
       SESSION_CONNECTION: default
       REDIS_QUEUE: default
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -228,8 +228,8 @@ jobs:
       run:
         working-directory: variants/laravel-aiwmweb/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - name: Install frontend dependencies
@@ -244,7 +244,7 @@ jobs:
       - run: npm run --if-present typecheck
       - run: npm run --if-present test -- --run
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: laravel-aiwmweb-frontend-${{ github.sha }}
           path: variants/laravel-aiwmweb/backend/public/build
@@ -253,7 +253,7 @@ jobs:
   wordpress-disposable-runtime:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Create ephemeral runtime environment
         shell: bash
         run: |
@@ -288,7 +288,7 @@ jobs:
   compose-production-runtime:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Create ephemeral runtime environment
         shell: bash
         run: |
@@ -353,7 +353,7 @@ jobs:
   runtime-artifacts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Package Connector when canonical source is present
         id: connector
         shell: bash
@@ -379,7 +379,7 @@ jobs:
           tar --exclude='runtime/artifacts' --exclude='runtime/.env' \
             -czf "runtime/artifacts/Laravel-AIWMWeb-runtime-runbook-${GITHUB_SHA::12}.tgz" \
             runtime docs/PRODUCTION_RUNTIME_RUNBOOK.md README.md
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: laravel-aiwmweb-runtime-${{ github.sha }}
           path: variants/laravel-aiwmweb/runtime/artifacts
@@ -406,7 +406,7 @@ jobs:
       WP_DB_USER: root
       WP_DB_PASSWORD: root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           # Match the supported disposable/production WordPress runtime image
@@ -424,8 +424,8 @@ jobs:
       run:
         working-directory: variants/laravel-aiwmweb/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
