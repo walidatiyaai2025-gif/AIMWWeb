@@ -902,6 +902,24 @@
       "operation_ids": [
         "AIMW-CONT-6458D3030B"
       ]
+    },
+    {
+      "label": "AIMW-CONT-6B051BD8C0 Application Sessions route reconciliation recovery",
+      "sha": "f9b4b6e4d4ccceb8fdf4be058b7cf1342b06f71d",
+      "observed_pr_head": "f9b4b6e4d4ccceb8fdf4be058b7cf1342b06f71d",
+      "domains": [
+        "content"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-6B051BD8C0": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/application-sessions-route-terminality.json",
+          "security_mode": "tenant_bound"
+        }
+      }
     }
   ],
   "excluded_sources": [],
