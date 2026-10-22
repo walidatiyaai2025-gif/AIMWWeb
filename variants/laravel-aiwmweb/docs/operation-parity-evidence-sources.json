@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "AIMWWeb Issue #257",
   "base_main_sha": "bd6d272748753e21b65655901eaed8bb65a267c7",
-  "previous_reconciliation_sha": "2f115e254ef589b07acb74fffe8544f5f75a2854",
+  "previous_reconciliation_sha": "df8b57225130e583fc9642bfed5851db5d7ded8a",
   "focused_closure_evidence_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
   "countable_sources": [
     {
@@ -902,6 +902,28 @@
       "operation_ids": [
         "AIMW-CONT-6458D3030B"
       ]
+    },
+    {
+      "label": "Module Configuration canonical route terminality",
+      "sha": "392c4efe25adc0214893fd81b740171b8cd9a750",
+      "observed_pr_head": "392c4efe25adc0214893fd81b740171b8cd9a750",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-F90125AE87"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-F90125AE87": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleConfigurationRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleConfigurationRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/module-configuration-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
