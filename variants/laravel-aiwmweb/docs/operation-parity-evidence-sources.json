@@ -896,12 +896,26 @@
       }
     },
     {
-      "label": "AIMW-CONT-6458D3030B Welcome security anchor focused closure",
-      "sha": "d807224f10f552687771e75bb9a33d825bdeebd1",
-      "observed_pr_head": "d807224f10f552687771e75bb9a33d825bdeebd1",
+      "label": "AIMW-CONT-6B051BD8C0 Application Sessions canonical route reconciliation recovery",
+      "sha": "f9b4b6e4d4ccceb8fdf4be058b7cf1342b06f71d",
+      "observed_pr_head": "f9b4b6e4d4ccceb8fdf4be058b7cf1342b06f71d",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
       "operation_ids": [
-        "AIMW-CONT-6458D3030B"
-      ]
+        "AIMW-CONT-6B051BD8C0"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-6B051BD8C0": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/AdminOperationsController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ApplicationSessionsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/application-sessions-route-terminality.json",
+          "security_mode": "tenant_scoped"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1102,6 +1116,78 @@
       "observed_pr_head": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
       "operation_ids": [
         "AIMW-CONT-6E22D74EE0"
+      ]
+    },
+    {
+      "label": "AIMW-BILL-616576D8F7 Welcome plan CTA focused closure recovery",
+      "sha": "61f7a0adb985294f4b94b7e4da6443af2310f068",
+      "observed_pr_head": "61f7a0adb985294f4b94b7e4da6443af2310f068",
+      "operation_ids": [
+        "AIMW-BILL-616576D8F7"
+      ]
+    },
+    {
+      "label": "AIMW-BILL-7BD7B04B26 CloneCurrent focused closure recovery",
+      "sha": "54b50b93c6a172f4e009d2bd46c11c6f83c2aacc",
+      "observed_pr_head": "54b50b93c6a172f4e009d2bd46c11c6f83c2aacc",
+      "operation_ids": [
+        "AIMW-BILL-7BD7B04B26"
+      ]
+    },
+    {
+      "label": "AIMW-BILL-BC093D6418 SMTP SendTestAsync focused closure recovery",
+      "sha": "e4c71c6853429b1ffe8e69d11ee1cb46e96a28d6",
+      "observed_pr_head": "e4c71c6853429b1ffe8e69d11ee1cb46e96a28d6",
+      "operation_ids": [
+        "AIMW-BILL-BC093D6418"
+      ]
+    },
+    {
+      "label": "AIMW-BILL-D307963B59 WordPress users SaveAsync focused closure recovery",
+      "sha": "97806fe03dd54c1b1f3deded2ba788e8908aa555",
+      "observed_pr_head": "97806fe03dd54c1b1f3deded2ba788e8908aa555",
+      "operation_ids": [
+        "AIMW-BILL-D307963B59"
+      ]
+    },
+    {
+      "label": "AIMW-BILL-EE42461195 SMTP DiagnoseAsync focused closure recovery",
+      "sha": "493411f12bc60340f9467f253940e0f45d9344e4",
+      "observed_pr_head": "493411f12bc60340f9467f253940e0f45d9344e4",
+      "operation_ids": [
+        "AIMW-BILL-EE42461195"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-A6867078EA ClearFeatured focused closure recovery",
+      "sha": "4b2f529dc9241f3dc31973e783cb7a6ee63acad3",
+      "observed_pr_head": "4b2f529dc9241f3dc31973e783cb7a6ee63acad3",
+      "operation_ids": [
+        "AIMW-CONT-A6867078EA"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-B6BB292F85 sites breadcrumb focused closure recovery",
+      "sha": "207998fff0d1c66e641e36f1bbec22680455500d",
+      "observed_pr_head": "207998fff0d1c66e641e36f1bbec22680455500d",
+      "operation_ids": [
+        "AIMW-CONT-B6BB292F85"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-0AA71A5EF6 delivery history link focused closure recovery",
+      "sha": "ea231be55a5ed7830d833a0f25450c901d6ab6ef",
+      "observed_pr_head": "ea231be55a5ed7830d833a0f25450c901d6ab6ef",
+      "operation_ids": [
+        "AIMW-EMAI-0AA71A5EF6"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-6458D3030B Welcome security anchor focused closure recovery",
+      "sha": "d807224f10f552687771e75bb9a33d825bdeebd1",
+      "observed_pr_head": "d807224f10f552687771e75bb9a33d825bdeebd1",
+      "operation_ids": [
+        "AIMW-CONT-6458D3030B"
       ]
     }
   ]
