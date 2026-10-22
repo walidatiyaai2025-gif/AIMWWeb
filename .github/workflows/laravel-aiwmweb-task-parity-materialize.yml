@@ -1,7 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-CONT-9EDE4C1141 issue-883-welcome-auth-aware-header-link
 # exact-head: 5d1e370df09547deaea8edb7e263815d1cec6d2c
-# retrigger: issue-883-post-materialization-exact-head-gates
+# retrigger: issue-883-materializer-ready-7717d001
 
 on:
   push:
