@@ -83,6 +83,11 @@
             >{{ $welcomeLocale === 'ar' ? 'طريقة العمل' : 'Workflow' }}</a>
             <a
                 class="signin"
+                href="#pricing"
+                data-canonical-operation="AIMW-CONT-3C205B1901"
+            >{{ $welcomeLocale === 'ar' ? 'الخطط' : 'Pricing' }}</a>
+            <a
+                class="signin"
                 href="#security"
                 data-canonical-operation="AIMW-CONT-6458D3030B"
             >{{ $welcomeLocale === 'ar' ? 'الأمان' : 'Security' }}</a>
@@ -90,7 +95,13 @@
                 href="{{ route('public.welcome', ['lang' => $welcomeLocale === 'ar' ? 'en' : 'ar'], false) }}"
                 lang="{{ $welcomeLocale === 'ar' ? 'en' : 'ar' }}"
                 aria-label="{{ $welcomeLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية' }}">{{ $welcomeLocale === 'ar' ? 'EN' : 'AR' }}</a>
-            <a class="signin" href="/login">{{ $welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in' }}</a>
+            <a
+                class="signin"
+                href="{{ $isAuthenticated ? '/' : '/login' }}"
+                data-canonical-operation="AIMW-CONT-9EDE4C1141"
+            >{{ $isAuthenticated
+                ? ($welcomeLocale === 'ar' ? 'لوحة التحكم' : 'Dashboard')
+                : ($welcomeLocale === 'ar' ? 'تسجيل الدخول' : 'Sign in') }}</a>
         </header>
 
         <main
@@ -213,7 +224,12 @@
             </div>
         </section>
 
-        <section class="pricing" id="pricing" aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}">
+        <section
+            class="pricing"
+            id="pricing"
+            data-pricing-anchor-target="AIMW-CONT-3C205B1901"
+            aria-label="{{ $welcomeLocale === 'ar' ? 'خطط الاشتراك' : 'Subscription plans' }}"
+        >
             <div class="pricing-head">
                 <div>
                     <div class="eyebrow">{{ $welcomeLocale === 'ar' ? 'خطط من كتالوج المنتج' : 'LIVE PRODUCT CATALOG' }}</div>

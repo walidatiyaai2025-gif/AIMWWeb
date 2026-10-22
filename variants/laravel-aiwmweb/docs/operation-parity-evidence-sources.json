@@ -902,6 +902,28 @@
       "operation_ids": [
         "AIMW-CONT-6458D3030B"
       ]
+    },
+    {
+      "label": "Module Configuration canonical route terminality",
+      "sha": "392c4efe25adc0214893fd81b740171b8cd9a750",
+      "observed_pr_head": "392c4efe25adc0214893fd81b740171b8cd9a750",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-F90125AE87"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-F90125AE87": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleConfigurationRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/ModuleConfigurationRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/module-configuration-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1102,6 +1124,30 @@
       "observed_pr_head": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
       "operation_ids": [
         "AIMW-CONT-6E22D74EE0"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-3C205B1901 Welcome pricing anchor focused closure",
+      "sha": "530549bc0672db1a07bb5c6f1af917ec5b8e1436",
+      "observed_pr_head": "530549bc0672db1a07bb5c6f1af917ec5b8e1436",
+      "operation_ids": [
+        "AIMW-CONT-3C205B1901"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
+      "sha": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "observed_pr_head": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "operation_ids": [
+        "AIMW-CONT-9EDE4C1141"
+      ]
+    },
+    {
+      "label": "AIMW-EMAI-470599356B NotificationCenter view-all focused closure",
+      "sha": "723b1e713041c11ddf59c3423990afb826e2b6de",
+      "observed_pr_head": "723b1e713041c11ddf59c3423990afb826e2b6de",
+      "operation_ids": [
+        "AIMW-EMAI-470599356B"
       ]
     }
   ]

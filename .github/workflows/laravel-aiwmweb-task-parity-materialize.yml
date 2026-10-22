@@ -6,7 +6,7 @@ name: Laravel AIWMWeb Task Parity Materialize
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-CONT-C6C7F24B03-operations-workspace-route
+      - closure/laravel-aiwmweb-final-parity-20261022
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/operations-workspace-route-terminality.json'
