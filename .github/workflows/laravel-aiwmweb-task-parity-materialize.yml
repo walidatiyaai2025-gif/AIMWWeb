@@ -1,12 +1,12 @@
 name: Laravel AIWMWeb Task Parity Materialize
-# trigger: AIMW-CONT-C6C7F24B03 issue-889-operations-workspace-route
-# exact-head: 51db87142aa45ece0dbbc0d5eaea3fd8efa69d90
-# retrigger: issue-889-post-materialization-exact-head-gates
+# trigger: reconciliation-only catch-up for already-integrated handoff:done operations
+# exact-head: df8b57225130e583fc9642bfed5851db5d7ded8a
+# retrigger: stale-reconciliation-repair
 
 on:
   push:
     branches:
-      - worker/laravel-aiwmweb-AIMW-CONT-C6C7F24B03-operations-workspace-route
+      - closure/laravel-reconciliation-repair-20261022
     paths:
       - 'variants/laravel-aiwmweb/docs/operation-parity-evidence-sources.json'
       - 'variants/laravel-aiwmweb/docs/closure-evidence/operations-workspace-route-terminality.json'
@@ -50,5 +50,5 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(laravel): materialize parity for AIMW-CONT-C6C7F24B03"
+          git commit -m "chore(laravel): materialize stale parity reconciliation"
           git push origin "HEAD:${{ github.ref_name }}"
