@@ -902,14 +902,6 @@
       "operation_ids": [
         "AIMW-CONT-6458D3030B"
       ]
-    },
-    {
-      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
-      "sha": "5d1e370df09547deaea8edb7e263815d1cec6d2c",
-      "observed_pr_head": "5d1e370df09547deaea8edb7e263815d1cec6d2c",
-      "operation_ids": [
-        "AIMW-CONT-9EDE4C1141"
-      ]
     }
   ],
   "excluded_sources": [],
@@ -1110,6 +1102,14 @@
       "observed_pr_head": "f8a237e6ab9736685f33cb08394f6b8f74d9955b",
       "operation_ids": [
         "AIMW-CONT-6E22D74EE0"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
+      "sha": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "observed_pr_head": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "operation_ids": [
+        "AIMW-CONT-9EDE4C1141"
       ]
     }
   ]
