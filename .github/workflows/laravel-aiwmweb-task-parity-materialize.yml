@@ -1,7 +1,7 @@
 name: Laravel AIWMWeb Task Parity Materialize
 # trigger: AIMW-CONT-F90125AE87 issue-751-module-configuration-route
-# exact-head: 392c4efe25adc0214893fd81b740171b8cd9a750
-# retrigger: issue-751-materialize
+# exact-head: 912e594713cd952bb4e50802508e9c2abf444e19
+# retrigger: issue-751-materialize-exact-head
 
 on:
   push:
