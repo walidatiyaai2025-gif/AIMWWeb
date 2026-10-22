@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\PublicWelcomeReadController;
+use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -87,6 +89,22 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
             ->all();
 
         $this->assertSame([], $tenantWelcomeAliases);
+
+        $user = User::factory()->create();
+        $alpha = Tenant::query()->create(['name' => 'Alpha', 'slug' => 'alpha']);
+        Tenant::query()->create(['name' => 'Foreign', 'slug' => 'foreign']);
+        DB::table('tenant_memberships')->insert([
+            'tenant_id' => $alpha->id,
+            'user_id' => $user->id,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get('/tenants/foreign/welcome')
+            ->assertNotFound();
+
         $this->post('/welcome')->assertStatus(405);
     }
 
