@@ -156,6 +156,8 @@ export function Pagination({
     );
 }
 
+export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
+
 export function ActionButton({
     route,
     actionKey,
@@ -171,7 +173,10 @@ export function ActionButton({
     const state = resolveCapability(context, route, actionKey);
     const contract = context.actions[actionKey];
     const enabled = state.state === 'enabled' && Boolean(contract);
-    const label = actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
+    const isWordPressUsersStartCreate = route.key === 'wp-users' && actionKey === 'wordpress-users.save';
+    const label = isWordPressUsersStartCreate
+        ? (locale === 'ar' ? 'إضافة مستخدم' : 'Add user')
+        : actionKey.split('.').slice(-1)[0].replaceAll('-', ' ').replaceAll('_', ' ');
     const reason = enabled ? '' : capabilityReason(state, locale);
 
     return (
@@ -182,6 +187,7 @@ export function ActionButton({
                 disabled={!enabled}
                 aria-disabled={!enabled}
                 title={reason || label}
+                data-canonical-operation={isWordPressUsersStartCreate ? WORDPRESS_USERS_START_CREATE_OPERATION_ID : undefined}
                 onClick={() => contract && onAvailable(contract)}
             >
                 {label.charAt(0).toUpperCase() + label.slice(1)}
