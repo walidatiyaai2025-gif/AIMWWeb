@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 737,
-    "pending": 194,
+    "adapted": 738,
+    "pending": 193,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 737,
-    "overall_parity_percent": 79.16
+    "terminal": 738,
+    "overall_parity_percent": 79.27
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 70,
-      "pending": 94,
+      "adapted": 71,
+      "pending": 93,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 70,
-      "percent": 42.68
+      "terminal": 71,
+      "percent": 43.29
     },
     "email": {
       "total": 82,
@@ -19830,21 +19830,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-3443C173C6 Site Settings route closure@836b6a6a6d1d5d02022474f391d072fad2690c73: variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php; explicit-route-api:AIMW-CONT-3443C173C6; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-settings-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-3443C173C6 Site Settings route closure",
+        "source_sha": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+        "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-settings-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-3443C173C6",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -36489,12 +36502,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 68,
-      "pending": 16,
+      "adapted": 69,
+      "pending": 15,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 68,
-      "percent": 80.95
+      "terminal": 69,
+      "percent": 82.14
     },
     "service": {
       "total": 349,
@@ -36538,7 +36551,6 @@
       "AIMW-CONT-16D4AD8DC8",
       "AIMW-CONT-2752ED9351",
       "AIMW-CONT-276925F148",
-      "AIMW-CONT-3443C173C6",
       "AIMW-CONT-349017BDF5",
       "AIMW-CONT-371D22489E",
       "AIMW-CONT-37B4B4BEC4",
@@ -37234,6 +37246,18 @@
           "AIMW-CONT-2C02B7A328"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-3443C173C6 Site Settings route closure",
+        "sha": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-3443C173C6"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37263,6 +37287,7 @@
       "53d1178f4ec9e1a9134650bf9d3ac22a68ccf081",
       "57308368978c1bcb1e2a7083e1ecbf540baadc8d",
       "75ab4dcf2045786b875fc315000ca0c6de095b2e",
+      "836b6a6a6d1d5d02022474f391d072fad2690c73",
       "860095fc8322b913f17b472b41c44c1c17dcc5eb",
       "9535f66b12b3839dd7606c5b305c6f0bd32e1216",
       "a3890ef1d4dac7e4e4bb5123d23625dd11269e7a",
@@ -37376,6 +37401,7 @@
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2C02B7A328",
       "AIMW-CONT-2F2E40D7F0",
+      "AIMW-CONT-3443C173C6",
       "AIMW-CONT-475267F150",
       "AIMW-CONT-65F2819526",
       "AIMW-CONT-6F699A5C14",
@@ -37399,7 +37425,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 33,
+    "explicit_route_api_contract_count": 34,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
