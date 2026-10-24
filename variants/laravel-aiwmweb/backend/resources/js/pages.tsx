@@ -34,7 +34,8 @@ import { MediaDeleteControl } from './media-delete-control';
 import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
-import { SiteOperationsExportControl } from './site-operations-export-control';\nimport { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
+import { SiteOperationsExportControl } from './site-operations-export-control';
+import { SiteOperationsSitesLinkControl } from './site-operations-sites-link-control';
 import {
     filterSiteOperationsRows,
     siteOperationsDefaultFilters,
