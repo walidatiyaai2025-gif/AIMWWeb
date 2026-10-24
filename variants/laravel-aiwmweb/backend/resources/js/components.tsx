@@ -21,6 +21,7 @@ import {
     type WorkspaceRoute,
 } from './core';
 import { commonText, useLocale } from './i18n';
+import { WordPressUsersWorkingStateControl } from './wordpress-users-working-state-control';
 
 interface Toast {
     id: number;
@@ -290,7 +291,11 @@ export function ActionDialog({
                     ))}
                     <footer className="dialog-actions">
                         <button type="button" className="btn" onClick={onClose} disabled={busy}>{text(commonText.close)}</button>
-                        <button type="submit" className="btn primary" disabled={busy}>{busy ? text(commonText.loading) : text(commonText.submit)}</button>
+                        {actionKey === 'wordpress-users.save' ? (
+                            <WordPressUsersWorkingStateControl busy={busy} locale={locale} />
+                        ) : (
+                            <button type="submit" className="btn primary" disabled={busy}>{busy ? text(commonText.loading) : text(commonText.submit)}</button>
+                        )}
                     </footer>
                 </form>
             </div>
