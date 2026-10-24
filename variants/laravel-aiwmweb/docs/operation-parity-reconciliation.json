@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 731,
-    "pending": 200,
+    "adapted": 732,
+    "pending": 199,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 731,
-    "overall_parity_percent": 78.52
+    "terminal": 732,
+    "overall_parity_percent": 78.63
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 263,
-    "pending": 183,
+    "terminal": 264,
+    "pending": 182,
     "blocked": 0,
-    "percent": 58.97
+    "percent": 59.19
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 64,
-      "pending": 100,
+      "adapted": 65,
+      "pending": 99,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 64,
-      "percent": 39.02
+      "terminal": 65,
+      "percent": 39.63
     },
     "email": {
       "total": 82,
@@ -20851,21 +20851,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php",
+      "evidence": "AIMW-CONT-DD56664FDA Welcome primary CTA focused closure@9568cb257d2227bf9e5cd67c405563b3e624bffc: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-DD56664FDA; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-primary-cta-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-DD56664FDA Welcome primary CTA focused closure",
+        "source_sha": "9568cb257d2227bf9e5cd67c405563b3e624bffc",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-primary-cta-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-DD56664FDA",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeAuthenticatedHeaderLinkTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-primary-cta-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36446,12 +36456,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 263,
-      "pending": 183,
+      "adapted": 264,
+      "pending": 182,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 263,
-      "percent": 58.97
+      "terminal": 264,
+      "percent": 59.19
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36553,7 +36563,6 @@
       "AIMW-CONT-CA17F05024",
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
-      "AIMW-CONT-DD56664FDA",
       "AIMW-CONT-DF6FFA9D87",
       "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
@@ -37517,6 +37526,7 @@
       "AIMW-CONT-CEA27985CB",
       "AIMW-CONT-D4607F943C",
       "AIMW-CONT-D5FFC84EC2",
+      "AIMW-CONT-DD56664FDA",
       "AIMW-CONT-DF8B12B6DE",
       "AIMW-CONT-E38ADF8481",
       "AIMW-CONT-EBD53650BC",
@@ -37826,10 +37836,17 @@
         "operation_ids": [
           "AIMW-CONT-3C205B1901"
         ]
+      },
+      {
+        "label": "AIMW-CONT-DD56664FDA Welcome primary CTA focused closure",
+        "sha": "9568cb257d2227bf9e5cd67c405563b3e624bffc",
+        "operation_ids": [
+          "AIMW-CONT-DD56664FDA"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 33,
-    "focused_closure_contract_count": 263,
+    "focused_closure_operation_scoped_count": 34,
+    "focused_closure_contract_count": 264,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
