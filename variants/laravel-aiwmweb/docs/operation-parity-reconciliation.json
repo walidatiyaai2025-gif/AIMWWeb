@@ -16751,21 +16751,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx",
+      "evidence": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure@49ada2c1193e44eebfe32c4369b31da1189821ae: variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx; focused-closure:AIMW-CONT-A31317B378; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-previous-page-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure",
+        "source_sha": "49ada2c1193e44eebfe32c4369b31da1189821ae",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-previous-page-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-A31317B378",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-explorer-previous-page-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-previous-page-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-explorer-previous-page-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -18809,31 +18819,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
-      "evidence": "AIMW-CONT-4961F90970 Settings SetLight focused closure@b5806dfe95896b4cd0cd68690de159a4abda87a3: variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx; focused-closure:AIMW-CONT-4961F90970; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
-        "source_sha": "b5806dfe95896b4cd0cd68690de159a4abda87a3",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-4961F90970",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36842,6 +36842,7 @@
       "AIMW-CONT-4147188AB1",
       "AIMW-CONT-47007EE040",
       "AIMW-CONT-47C0477703",
+      "AIMW-CONT-4961F90970",
       "AIMW-CONT-4A64732FC6",
       "AIMW-CONT-50DF6B23CC",
       "AIMW-CONT-519B93F503",
@@ -36875,7 +36876,6 @@
       "AIMW-CONT-9BA2C255AF",
       "AIMW-CONT-9CF12067E6",
       "AIMW-CONT-9F0D652C67",
-      "AIMW-CONT-A31317B378",
       "AIMW-CONT-A3A2CD23B6",
       "AIMW-CONT-A6867078EA",
       "AIMW-CONT-A6EA54E66D",
@@ -37888,7 +37888,6 @@
       "AIMW-CONT-3D6485D903",
       "AIMW-CONT-4209A8ADF4",
       "AIMW-CONT-44A3B8E551",
-      "AIMW-CONT-4961F90970",
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
       "AIMW-CONT-564636DDC9",
@@ -37905,6 +37904,7 @@
       "AIMW-CONT-97AD37042A",
       "AIMW-CONT-9D5E269773",
       "AIMW-CONT-9EDE4C1141",
+      "AIMW-CONT-A31317B378",
       "AIMW-CONT-A5D88995F3",
       "AIMW-CONT-A93DE991C0",
       "AIMW-CONT-B1E9E1D6B0",
@@ -38456,10 +38456,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
-        "sha": "b5806dfe95896b4cd0cd68690de159a4abda87a3",
+        "label": "AIMW-CONT-A31317B378 Content Explorer PreviousPage focused closure",
+        "sha": "49ada2c1193e44eebfe32c4369b31da1189821ae",
         "operation_ids": [
-          "AIMW-CONT-4961F90970"
+          "AIMW-CONT-A31317B378"
         ]
       }
     ],
