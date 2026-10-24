@@ -9,6 +9,7 @@ export const CONTENT_EDITOR_SUBMIT_APPROVAL_OPERATION_ID = 'AIMW-BILL-F5686193FE
 export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA';
 export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
+export const CONTENT_EDITOR_SITE_LINK_OPERATION_ID = 'AIMW-CONT-E89EDDF780';
 export const CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID = 'AIMW-CONT-607ACDF4D8';
 export const CONTENT_EDITOR_SHOW_EDIT_OPERATION_ID = 'AIMW-CONT-A5D88995F3';
 export const CONTENT_EDITOR_SHOW_PREVIEW_OPERATION_ID = 'AIMW-CONT-F57B1E1503';
@@ -67,6 +68,48 @@ export function ContentEditorSitesLinkControl({ context }: { context: FrontendCo
 type ContentEditorSiteAwareContext = FrontendContext & {
     active_site?: { id: number; name?: string; status?: string } | null;
 };
+
+export function authoritativeContentEditorSiteHref(
+    context: FrontendContext,
+    siteId: string | number,
+): string | null {
+    const requestedSiteId = Number(siteId);
+    const activeSite = (context as ContentEditorSiteAwareContext).active_site;
+
+    if (!Number.isSafeInteger(requestedSiteId) || requestedSiteId <= 0) return null;
+    if (!activeSite || Number(activeSite.id) !== requestedSiteId) return null;
+    if (typeof activeSite.name !== 'string' || !activeSite.name.trim()) return null;
+    if (!context.permissions.includes('*')
+        && (!context.permissions.includes('tenant.view') || !context.permissions.includes('sites.view'))) return null;
+    if (context.api[`sites.detail.${requestedSiteId}`] !== `/api/tenants/${context.tenant.slug}/sites/${requestedSiteId}`) return null;
+
+    return tenantUrl(context.tenant.slug, `/sites/${requestedSiteId}`);
+}
+
+export function ContentEditorSiteLinkControl({
+    context,
+    siteId,
+}: {
+    context: FrontendContext;
+    siteId: string | number;
+}) {
+    const { locale } = useLocale();
+    const href = authoritativeContentEditorSiteHref(context, siteId);
+    const activeSite = (context as ContentEditorSiteAwareContext).active_site;
+
+    if (!href || !activeSite?.name) return null;
+
+    return (
+        <Link
+            className="btn"
+            to={href}
+            data-canonical-operation={CONTENT_EDITOR_SITE_LINK_OPERATION_ID}
+            aria-label={locale === 'ar' ? `فتح الموقع ${activeSite.name}` : `Open ${activeSite.name} site`}
+        >
+            {activeSite.name}
+        </Link>
+    );
+}
 
 const contentEditorExplorerRoute = workspaceRoutes.find((route) => route.key === 'explorer');
 
@@ -538,6 +581,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
     return (
         <form className="workspace-stack" onSubmit={save} data-canonical-operation={CONTENT_EDITOR_SAVE_OPERATION_ID}>
             <ContentEditorSitesLinkControl context={context} />
+            <ContentEditorSiteLinkControl context={context} siteId={siteId ?? ''} />
             <ContentEditorExplorerLinkControl context={context} siteId={siteId ?? ''} editorEndpoint={endpoint} />
             <section className="hero-panel">
                 <div>

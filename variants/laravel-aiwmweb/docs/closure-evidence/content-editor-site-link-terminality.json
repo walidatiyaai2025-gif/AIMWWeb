@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #759 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-E89EDDF780",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{SiteId:guid}/content/{ContentType}/{WordPressId:int}/edit",
+    "visible_control": "@($ -> @($",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentEditor.razor",
+    "source_intent": "Navigate from the Content Editor breadcrumb to the currently loaded site's detail page while rendering the authoritative site name.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+    "control": "ContentEditorSiteLinkControl",
+    "destination": "tenantUrl(context.tenant.slug, `/sites/${requestedSiteId}`)",
+    "authoritative_binding": "requested site must equal active_site and match context.api[`sites.detail.${requestedSiteId}`]",
+    "label_source": "server-provided active_site.name",
+    "operation_marker": "AIMW-CONT-E89EDDF780"
+  },
+  "state_and_security": {
+    "navigation_only": true,
+    "api_request": false,
+    "wordpress_mutation": false,
+    "server_mutation": false,
+    "tenant_identity_override": false,
+    "site_identity_override": false,
+    "permissions": [
+      "tenant.view",
+      "sites.view"
+    ],
+    "fail_closed_on": [
+      "invalid requested site id",
+      "active-site mismatch",
+      "missing site name",
+      "missing destination permission",
+      "missing or mismatched site-detail API binding"
+    ],
+    "tenant_path_encoding": "tenantUrl encodes the server-provided tenant slug",
+    "tenant_isolation": "focused Feature coverage proves an Alpha member receives 404 when attempting the same Content Editor route under a foreign tenant"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-site-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentEditorSiteLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source visible-control row",
+      "source ContentEditor site-name breadcrumb semantics",
+      "authoritative active-site and site-detail API binding",
+      "tenant-qualified site details destination",
+      "server-provided site-name label",
+      "permission fail-closed behavior",
+      "tenant slug path-escape resistance",
+      "navigation-only behavior with no API/provider mutation",
+      "focused foreign-tenant 404 isolation assertion"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-E89EDDF780"
+    ],
+    "sibling_operations_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "variant_boundary": "variants/laravel-aiwmweb/** only",
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "589751f48254b9e539fdc5782b050952d2e3b3f6",
+    "branch": "worker/laravel-aiwmweb-AIMW-CONT-E89EDDF780-site-link"
+  }
+}
