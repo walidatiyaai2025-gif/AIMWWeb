@@ -56,7 +56,10 @@ final class TaxonomyStartCreateControlTerminalityTest extends TestCase
         $this->assertSame('POST', $contract['method']);
         $this->assertSame('/api/v1/tenants/alpha/sites/'.$site->id.'/taxonomy', $contract['endpoint']);
         $this->assertSame('content.edit', $contract['permission']);
-        $this->assertSame('site', $contract['ownership']);
+
+        $definition = config('frontend_actions', [])['taxonomy.manage'] ?? null;
+        $this->assertIsArray($definition);
+        $this->assertSame('site', $definition['ownership']);
 
         $readOnly = app(ActionContractRegistry::class)->contracts(
             $membership->tenant,
