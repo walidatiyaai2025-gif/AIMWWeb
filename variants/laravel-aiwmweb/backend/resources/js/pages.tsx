@@ -16,6 +16,7 @@ import { ActionButton, ActionDialog, DataTable, LoadingState, Pagination, StateP
 import { commonText, useLocale } from './i18n';
 import { AiCenterGenerateControl } from './ai-center-generate-control';
 import { AdminBillingSupportClearSearchControl } from './admin-billing-support-clear-search-control';
+import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
@@ -432,7 +433,26 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 ) : null}
                 <form className="search-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput); }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
-                    <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
+                    {route.key === 'comments' ? (
+                        <AppSearchBox
+                            id={`search-${route.key}`}
+                            value={searchInput}
+                            onValueChange={(value) => {
+                                setSearchInput(value);
+                                if (value === '' && search !== '') {
+                                    setPage(1);
+                                    setSearch('');
+                                }
+                            }}
+                            placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'}
+                            ariaLabel={text(commonText.search)}
+                            clearAriaLabel={locale === 'ar' ? 'مسح البحث' : 'Clear search'}
+                            busy={query.isFetching}
+                            busyText={locale === 'ar' ? 'جارٍ البحث' : 'Searching'}
+                        />
+                    ) : (
+                        <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
+                    )}
                     <button
                         type="submit"
                         className="btn"

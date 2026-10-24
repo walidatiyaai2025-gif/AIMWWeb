@@ -157,6 +157,12 @@ html[data-mode='light'] .topbar { background: color-mix(in srgb, #fff 88%, trans
 .toolbar-panel { display: flex; align-items: flex-start; justify-content: space-between; gap: .9rem; padding: .85rem; }
 .search-form { display: flex; gap: .5rem; flex: 1; max-width: 540px; }
 .search-form input { flex: 1; min-width: 0; }
+
+.app-search-box { display: flex; align-items: center; gap: .4rem; flex: 1; min-width: 0; }
+.app-search-box__icon { opacity: .65; flex: 0 0 auto; }
+.app-search-box input[type="search"] { flex: 1; min-width: 0; }
+.app-search-box__clear { border: 0; background: transparent; padding: .2rem .35rem; cursor: pointer; font: inherit; line-height: 1; }
+.app-search-box__spinner { width: .85rem; height: .85rem; border: 2px solid currentColor; border-top-color: transparent; border-radius: 999px; opacity: .65; flex: 0 0 auto; }
 .toolbar-actions { display: flex; align-items: flex-start; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
 .control-with-reason { display: grid; justify-items: start; gap: .25rem; max-width: 230px; }
 .control-with-reason small { color: var(--muted); font-size: .66rem; line-height: 1.25; }

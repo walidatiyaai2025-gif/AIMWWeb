@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #993 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-SYNC-1778E3F6B5",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "sync",
+    "kind": "visible_control",
+    "source": "src/AIWordPressManager.Web/Components/Shared/AppSearchBox.razor",
+    "source_intent": "Render a controlled search input with source-equivalent clear, busy-status, autocomplete and disabled semantics.",
+    "mutation": false
+  },
+  "laravel_runtime": {
+    "production_component": "variants/laravel-aiwmweb/backend/resources/js/app-search-box.tsx",
+    "production_consumer": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx::comments search",
+    "authoritative_read": "GET /api/v1/tenants/{tenant}/sites/{site}/comments?search={value}",
+    "operation_marker": "AIMW-SYNC-1778E3F6B5",
+    "clear_contract": "controlled value callback; clearing an applied Comments search resets page and authoritative query",
+    "busy_contract": "busy status replaces the clear control and announces a polite live-region status"
+  },
+  "state_and_security": {
+    "client_request_added_by_shared_control": false,
+    "server_mutation_added": false,
+    "wordpress_mutation_added": false,
+    "authorization": "Comments authoritative read requires content.view.",
+    "tenant_isolation": "tenant.context plus membership checks fail closed for a foreign tenant.",
+    "authoritative_state": "Search filters persisted Comment rows by author name, author email or body; the shared control does not synthesize results."
+  },
+  "source_semantics": {
+    "input_type": "search",
+    "controlled_value": "Value + ValueChanged",
+    "input_event": "oninput",
+    "autocomplete_default": "off",
+    "disabled_parameter": true,
+    "busy_status": "role=status, aria-live=polite",
+    "clear_visible_when": "non-blank Value and ShowClearButton while not Busy",
+    "clear_handler": "sets Value to empty and invokes ValueChanged"
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-search-box.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/AppSearchBoxTerminalityTest.php",
+    "existing_authoritative_consumer_test": "variants/laravel-aiwmweb/backend/tests/Feature/CommentsSearchClickedTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "controlled search value callback",
+      "source-equivalent clear visibility and callback",
+      "busy polite live-region semantics",
+      "disabled and autocomplete semantics",
+      "no request or mutation inside the shared control",
+      "content.view authorization",
+      "foreign tenant fails closed",
+      "real authoritative Comments search consumer"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-SYNC-1778E3F6B5"
+    ],
+    "comments_search_submit_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "f1250b6ee3fd75b7a8b2dc3fa9c43adcb1a46a29",
+    "branch": "worker/993-app-search-box",
+    "issue": 993
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-993.yml",
+    "generated_reconciliation_required": true
+  }
+}
