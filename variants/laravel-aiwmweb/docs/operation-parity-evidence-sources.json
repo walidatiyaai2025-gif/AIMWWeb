@@ -1135,6 +1135,46 @@
       ]
     },
     {
+      "label": "AIMW-CONT-9EDE4C1141 Welcome auth-aware header link focused closure",
+      "sha": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "observed_pr_head": "1f8bef5b99a8943055c1fd8c1e085b7c91071436",
+      "operation_ids": [
+        "AIMW-CONT-9EDE4C1141"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-BCE1211CE3 WordPress Users StartCreate focused closure",
+      "sha": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
+      "observed_pr_head": "a368d5f828cfecc9cd8c945eddd52517157af1f5",
+      "operation_ids": [
+        "AIMW-CONT-BCE1211CE3"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-289CEEF3BA Content Editor secondary Save focused closure",
+      "sha": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
+      "observed_pr_head": "8058b549ace9cdf85b55e80ce3eeabc21358e01c",
+      "operation_ids": [
+        "AIMW-CONT-289CEEF3BA"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-346657AD9D WordPress Users working-state focused closure",
+      "sha": "34b7b208e7ed9fe8e386563556f99205a2f51f60",
+      "observed_pr_head": "288d284ed775f523aa9e0946d1eac80934e20ec4",
+      "operation_ids": [
+        "AIMW-CONT-346657AD9D"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-D5FFC84EC2 WordPress Users back-to-explorer focused closure",
+      "sha": "534c1e9ac65393a3aa5ccba385f79cf255092a90",
+      "observed_pr_head": "534c1e9ac65393a3aa5ccba385f79cf255092a90",
+      "operation_ids": [
+        "AIMW-CONT-D5FFC84EC2"
+      ]
+    },
+    {
       "label": "AIMW-CONT-3C205B1901 Welcome pricing anchor focused closure",
       "sha": "e986d9e27e11a743db24f73aa4164fb3f4d10711",
       "observed_pr_head": "e986d9e27e11a743db24f73aa4164fb3f4d10711",
