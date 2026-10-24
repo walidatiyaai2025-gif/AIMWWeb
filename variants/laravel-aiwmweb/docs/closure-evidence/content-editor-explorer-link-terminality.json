@@ -30,7 +30,7 @@
       "sites.view"
     ],
     "editor_visibility": "inherits the already-authorized Content Editor loaded state",
-    "explorer_capability": "must resolve enabled",
+    "explorer_capability": "explicit Explorer capability, when present, must be enabled; absence does not fabricate an unavailable API contract",
     "route_site_matches_active_site": true,
     "editor_endpoint_same_origin": true,
     "editor_endpoint_same_tenant": true,
@@ -65,7 +65,7 @@
       "authoritative active-site match",
       "tenant/site-scoped editor endpoint validation",
       "tenant and sites permission gates",
-      "explorer capability gate",
+      "explicit Explorer disablement gate",
       "cross-tenant and cross-site fail-closed context",
       "navigation-only no-mutation boundary"
     ]
