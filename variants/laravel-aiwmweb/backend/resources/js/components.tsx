@@ -159,6 +159,7 @@ export function Pagination({
 
 export const WORDPRESS_USERS_START_CREATE_OPERATION_ID = 'AIMW-CONT-BCE1211CE3';
 export const TAXONOMY_START_CREATE_OPERATION_ID = 'AIMW-TAXO-005925568C';
+export const TAXONOMY_SAVE_SUBMIT_OPERATION_ID = 'AIMW-TAXO-39CDD7EF81';
 
 export function ActionButton({
     route,
@@ -229,6 +230,7 @@ export function ActionDialog({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const dialogRef = useRef<HTMLDivElement>(null);
     const firstFieldRef = useRef<HTMLInputElement>(null);
+    const isTaxonomySaveSubmit = actionKey === 'taxonomy.manage';
 
     useEffect(() => {
         if (!open) return;
@@ -309,7 +311,19 @@ export function ActionDialog({
                         {actionKey === 'wordpress-users.save' ? (
                             <WordPressUsersWorkingStateControl busy={busy} locale={locale} />
                         ) : (
-                            <button type="submit" className="btn primary" disabled={busy}>{busy ? text(commonText.loading) : text(commonText.submit)}</button>
+                            <button
+                                type="submit"
+                                className="btn primary"
+                                disabled={busy}
+                                aria-busy={busy ? 'true' : 'false'}
+                                data-canonical-operation={isTaxonomySaveSubmit ? TAXONOMY_SAVE_SUBMIT_OPERATION_ID : undefined}
+                            >
+                                {isTaxonomySaveSubmit
+                                    ? (busy
+                                        ? (locale === 'ar' ? 'جارٍ الحفظ' : 'Saving')
+                                        : (locale === 'ar' ? 'حفظ' : 'Save'))
+                                    : (busy ? text(commonText.loading) : text(commonText.submit))}
+                            </button>
                         )}
                     </footer>
                 </form>
