@@ -1536,8 +1536,8 @@
     },
     {
       "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
-      "sha": "9eee4ef45a9a85da4a833b8eba7f0d9169df85a6",
-      "observed_pr_head": "9eee4ef45a9a85da4a833b8eba7f0d9169df85a6",
+      "sha": "b5806dfe95896b4cd0cd68690de159a4abda87a3",
+      "observed_pr_head": "b5806dfe95896b4cd0cd68690de159a4abda87a3",
       "operation_ids": [
         "AIMW-CONT-4961F90970"
       ]
