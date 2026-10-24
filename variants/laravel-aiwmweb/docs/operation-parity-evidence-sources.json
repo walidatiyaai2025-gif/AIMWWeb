@@ -1527,6 +1527,14 @@
       ]
     },
     {
+      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
+      "sha": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
+      "observed_pr_head": "336b283ff8837a32d6e06b0b2f8135b9fb7ad3eb",
+      "operation_ids": [
+        "AIMW-CONT-5BE26C7AB5"
+      ]
+    },
+    {
       "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
       "sha": "5c784d3af2ffbcbff560341cd71072687cdd4a7b",
       "observed_pr_head": "bbf07713f79a14770fcdbbc6f5d38803c75088c2",
