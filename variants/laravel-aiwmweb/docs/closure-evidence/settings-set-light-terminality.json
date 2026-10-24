@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "canonical_base_branch": "worker/laravel-aiwmweb-closure-composition",
+  "canonical_base_sha": "74167a4bc057b1652f96f4dcffd3207ce682a1f3",
+  "canonical_operation": {
+    "operation_id": "AIMW-CONT-4961F90970",
+    "domain": "content",
+    "kind": "visible_control",
+    "previous_state": "PENDING",
+    "terminal_state": "ADAPTED",
+    "source_file": "src/AIWordPressManager.Web/Components/Pages/Settings.razor",
+    "source_screen": "/settings",
+    "source_control": "SetLight [SetLight]",
+    "mutation": false,
+    "verification": "focused deterministic frontend/PHP tests plus exact pushed production marker"
+  },
+  "source_behavior": {
+    "action": "SetLight",
+    "mode": "light",
+    "persist": "SetMode stores the selected appearance mode",
+    "apply": "the active document switches to the light appearance immediately"
+  },
+  "laravel_adaptation": {
+    "route": "/tenants/{tenant}/settings",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+    "shell_runtime": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+    "storage_key": "aiwm.mode",
+    "placeholder_or_fake_success": false
+  },
+  "runtime_path": [
+    "authenticated tenant bootstrap resolves FrontendContext before the Settings route renders",
+    "Settings route requires tenant.view and the control independently fails closed without tenant.view or wildcard permission",
+    "button applies only the fixed light appearance value and accepts no caller-supplied tenant, resource or destination",
+    "the control persists aiwm.mode=light, updates document data-mode/colorScheme immediately, and emits the bounded aiwm:appearance-mode event",
+    "AppShell consumes the same bounded event and synchronizes its real appearance state so the topbar and Settings control do not diverge",
+    "the control performs no fetch, server persistence, queue, cache, scheduler, WordPress, Connector, AI or provider mutation"
+  ],
+  "authorization_and_isolation": {
+    "session": "required by tenant bootstrap",
+    "active_tenant": "server-resolved FrontendContext",
+    "permission": "tenant.view or wildcard",
+    "foreign_tenant": "remains governed by tenant bootstrap; the control accepts no tenant input",
+    "direct_object_id": "not applicable",
+    "csrf": "not applicable because no HTTP mutation occurs"
+  },
+  "secret_and_external_policy": {
+    "secrets_read_or_exposed": false,
+    "wordpress_or_connector_effect": false,
+    "ai_or_provider_effect": false,
+    "server_mutation": false,
+    "fake_or_demo_success": false
+  },
+  "acceptance_tests": {
+    "path": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
+    "proof": [
+      "canonical operation marker is bound to the rendered Light button",
+      "dark state switches to light immediately and persists aiwm.mode",
+      "document data-mode/colorScheme and aria-pressed expose the authoritative read state",
+      "shell appearance events keep the Settings control synchronized",
+      "no fetch call occurs during the preference change",
+      "missing tenant.view fails closed"
+    ],
+    "php_path": "variants/laravel-aiwmweb/backend/tests/Feature/SettingsSetLightTerminalityTest.php"
+  },
+  "scope_guards": {
+    "only_operation_claimed": "AIMW-CONT-4961F90970",
+    "sibling_controls_terminalized": false,
+    "generated_reconciliation_hand_edited": false,
+    "force_push": false
+  },
+  "terminality": {
+    "state": "ADAPTED",
+    "fully_implemented": true,
+    "runtime_wired": true,
+    "focused_tests_present": true,
+    "evidence_recorded": true,
+    "reason": "The canonical Settings SetLight control now drives the same real Laravel appearance runtime as the shell, persists and renders the selected light state immediately, fails closed outside the tenant Settings permission boundary, and introduces no server/external mutation or fabricated success path."
+  }
+}
