@@ -250,6 +250,7 @@ Route::middleware(['auth', 'tenant.context'])->group(function (): void {
             $siteId = (int) $site->getKey();
             $api += [
                 'sites.detail.'.$siteId => "/api/tenants/{$tenant}/sites/{$siteId}",
+                'explorer' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/explorer",
                 'posts' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/post",
                 'pages' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/content/page",
                 'media' => "/api/v1/tenants/{$tenant}/sites/{$siteId}/media",
@@ -351,6 +352,10 @@ Route::prefix('/tenants/{tenant}')
         Route::get('/account/profile', 'show')->defaults('workspace_permissions', 'tenant.view')->name('canonical.workspace.account-profile');
         Route::get('/account/billing', 'show')->defaults('workspace_permissions', 'billing.view')->name('canonical.workspace.account-billing');
 
+        Route::get('/explorer', 'showSiteBound')
+            ->defaults('workspace_permissions', 'sites.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-5CF47CBE2A')
+            ->name('canonical.workspace.explorer');
         Route::get('/content', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-65F2819526')->name('canonical.workspace.content-hub');
         Route::get('/content-workspace', 'show')->defaults('workspace_permissions', 'content.view')->defaults('canonical_operation_id', 'AIMW-CONT-E4275AE57F')->name('canonical.workspace.content-workspace');
         Route::get('/module/content', 'redirect')->defaults('workspace_permissions', 'content.view')->defaults('workspace_target', '/content')->defaults('canonical_operation_id', 'AIMW-CONT-859135B2D1')->name('canonical.alias.module-content');
