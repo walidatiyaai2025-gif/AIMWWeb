@@ -1568,8 +1568,8 @@
     },
     {
       "label": "AIMW-TAXO-602DE140EB Global Taxonomy row links focused closure",
-      "sha": "780e538aa5680a01ca4e2f89c67ae70c5993000d",
-      "observed_pr_head": "780e538aa5680a01ca4e2f89c67ae70c5993000d",
+      "sha": "b3c78bbc11ff1d3be1016637182d4f7298e5ecf3",
+      "observed_pr_head": "b3c78bbc11ff1d3be1016637182d4f7298e5ecf3",
       "operation_ids": [
         "AIMW-TAXO-602DE140EB"
       ]
