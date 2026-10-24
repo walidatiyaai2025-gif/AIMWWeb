@@ -1022,6 +1022,14 @@
       ]
     },
     {
+      "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+      "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "operation_ids": [
+        "AIMW-SYNC-F7CE702C7D"
+      ]
+    },
+    {
       "label": "AIMW-CONT-BF5F72F4F9 Site Connect canonical route terminality",
       "sha": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
       "observed_pr_head": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
@@ -1578,6 +1586,22 @@
       "observed_pr_head": "7afac66bfeab3d5a56700598a318e9b5ab186c7e",
       "operation_ids": [
         "AIMW-CONT-4961F90970"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure",
+      "sha": "de1c5ff00086a98377499ee02a4b7d7811000872",
+      "observed_pr_head": "de1c5ff00086a98377499ee02a4b7d7811000872",
+      "operation_ids": [
+        "AIMW-SYNC-1778E3F6B5"
+      ]
+    },
+    {
+      "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+      "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "operation_ids": [
+        "AIMW-SYNC-F7CE702C7D"
       ]
     }
   ]
