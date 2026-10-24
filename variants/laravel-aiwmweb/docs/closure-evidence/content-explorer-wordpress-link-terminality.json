@@ -63,5 +63,13 @@
     "variant_boundary": "variants/laravel-aiwmweb/** plus task-specific materialization workflow",
     "authorization_weakened": false,
     "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "ae59a08b5351ed3ab205587898feac103bb9eb70",
+    "branch": "worker/761-content-explorer-wordpress-link",
+    "implementation_sha": "c24e9bcc17df88ecd8e63171792cce666f490421",
+    "evidence_registration_sha": "5f9a9a4007d732c4a6486a7bf2ae8644ec904c61",
+    "materialized_reconciliation_sha": "3dd5c17320f0c0e3ef4cc826d53ffc441b67fc33"
   }
 }
