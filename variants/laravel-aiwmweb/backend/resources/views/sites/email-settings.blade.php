@@ -31,6 +31,7 @@
         'disabled' => 'متوقف',
         'edit' => 'تعديل',
         'save' => 'حفظ',
+        'cancel' => 'إلغاء',
         'back' => 'العودة إلى تفاصيل الموقع',
     ] : [
         'title' => 'Site email settings',
@@ -63,6 +64,7 @@
         'disabled' => 'Disabled',
         'edit' => 'Edit',
         'save' => 'Save',
+        'cancel' => 'Cancel',
         'back' => 'Back to site details',
     ];
 @endphp
@@ -243,6 +245,12 @@
                                             <input type="hidden" name="is_enabled" value="0">
                                             <label><span><input type="checkbox" name="is_enabled" value="1" @checked($recipient->is_enabled)> {{ $copy['enabled'] }}</span></label>
                                             <button type="submit" data-canonical-operation="AIMW-BILL-F189D80354">{{ $copy['save'] }}</button>
+                                            <button
+                                                type="button"
+                                                data-canonical-operation="AIMW-EMAI-7E1D4105B0"
+                                                data-source-handler="CancelEdit"
+                                                onclick="this.closest('details').removeAttribute('open')"
+                                            >{{ $copy['cancel'] }}</button>
                                         </form>
                                     </details>
                                 </td>
