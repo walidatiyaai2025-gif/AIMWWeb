@@ -98,6 +98,8 @@ final class ContentEditorSiteLinkTerminalityTest extends TestCase
 
         $this->assertNotNull($operation);
         $this->assertSame('ADAPTED', $operation['migration_state']);
+        $this->assertSame('content', $operation['domain']);
+        $this->assertSame('visible_control', $operation['kind']);
         $this->assertSame(
             'variants/laravel-aiwmweb/docs/closure-evidence/content-editor-site-link-terminality.json',
             $operation['reconciliation']['evidence_path'] ?? null,
