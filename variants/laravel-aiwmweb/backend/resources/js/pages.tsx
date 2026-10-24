@@ -37,6 +37,7 @@ import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { OperationsHubSiteOperationsControl } from './operations-hub-site-operations-control';
 import {
     filterSiteOperationsRows,
     siteOperationsDefaultFilters,
@@ -693,6 +694,10 @@ function WorkspaceHub({ context, route }: { context: FrontendContext; route: Wor
             <section className="hero-panel" data-canonical-operation={route.key === 'content-hub' ? CONTENT_WORKSPACE_LOAD_OPERATION_ID : undefined}><div><span className="workspace-kicker">WORKSPACE</span><h2>{route.label[locale]}</h2><p>{route.description[locale]}</p></div><span className="tenant-badge">{context.tenant.name}</span></section>
             <section className="workspace-card-grid">
                 {workspaceRoutes.filter((candidate) => !candidate.hidden && related.includes(candidate.group) && candidate.key !== route.key).map((candidate) => {
+                    if (route.key === 'operations' && candidate.key === 'site-operations') {
+                        return <OperationsHubSiteOperationsControl key={candidate.key} context={context} />;
+                    }
+
                     const state = resolveCapability(context, candidate);
                     return (
                         <Link className="workspace-card" key={candidate.key} to={tenantUrl(tenantSlug, candidate.path)}>
