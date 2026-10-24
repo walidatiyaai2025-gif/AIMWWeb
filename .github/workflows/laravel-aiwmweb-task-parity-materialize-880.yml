@@ -1,4 +1,5 @@
 name: Laravel AIWMWeb Task Parity Materialize 880
+# Keep generated parity artifacts synchronized after evidence provenance refresh.
 
 on:
   push:
