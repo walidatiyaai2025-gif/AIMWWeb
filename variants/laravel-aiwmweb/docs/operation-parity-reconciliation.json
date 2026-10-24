@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 769,
-    "pending": 162,
+    "adapted": 770,
+    "pending": 161,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 769,
-    "overall_parity_percent": 82.6
+    "terminal": 770,
+    "overall_parity_percent": 82.71
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 298,
-    "pending": 148,
+    "terminal": 299,
+    "pending": 147,
     "blocked": 0,
-    "percent": 66.82
+    "percent": 67.04
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 75,
-      "pending": 7,
+      "adapted": 76,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 75,
-      "percent": 91.46
+      "terminal": 76,
+      "percent": 92.68
     },
     "identity": {
       "total": 7,
@@ -22909,21 +22909,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsCancelEditTerminalityTest.php",
+      "evidence": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure@faa63881a3f34ec885b1a1548933acfabe92af81: variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php; focused-closure:AIMW-EMAI-7E1D4105B0; test:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsCancelEditTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-cancel-edit-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure",
+        "source_sha": "faa63881a3f34ec885b1a1548933acfabe92af81",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-cancel-edit-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-7E1D4105B0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/sites/email-settings.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteEmailSettingsCancelEditTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-email-settings-cancel-edit-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36837,12 +36847,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 298,
-      "pending": 148,
+      "adapted": 299,
+      "pending": 147,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 298,
-      "percent": 66.82
+      "terminal": 299,
+      "percent": 67.04
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36934,7 +36944,6 @@
       "AIMW-EMAI-01F5713C4F",
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
-      "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-9EB09C490D",
       "AIMW-EMAI-A9CB66F400"
@@ -37564,6 +37573,16 @@
           "AIMW-SYNC-8719C812DC"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure",
+        "sha": "faa63881a3f34ec885b1a1548933acfabe92af81",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-EMAI-7E1D4105B0"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37621,6 +37640,7 @@
       "f22da647d324acde8f962c40453e2e3f852ad1b8",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
+      "faa63881a3f34ec885b1a1548933acfabe92af81",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
       "fb1507b10ec2aba89da4eb540dd1ad98e87e35a2",
       "fcdb592864636e096ec75a4fab8beb580c380f6c"
@@ -37963,6 +37983,7 @@
       "AIMW-EMAI-62B0B8EE4C",
       "AIMW-EMAI-77C637E3E3",
       "AIMW-EMAI-7A54150265",
+      "AIMW-EMAI-7E1D4105B0",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
@@ -38512,10 +38533,17 @@
         "operation_ids": [
           "AIMW-SYNC-1778E3F6B5"
         ]
+      },
+      {
+        "label": "AIMW-EMAI-7E1D4105B0 CancelEdit focused closure",
+        "sha": "faa63881a3f34ec885b1a1548933acfabe92af81",
+        "operation_ids": [
+          "AIMW-EMAI-7E1D4105B0"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 68,
-    "focused_closure_contract_count": 298,
+    "focused_closure_operation_scoped_count": 69,
+    "focused_closure_contract_count": 299,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
