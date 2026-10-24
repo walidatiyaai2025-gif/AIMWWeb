@@ -49,5 +49,3 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(laravel): materialize #836 parity"
           git push origin "HEAD:${{ github.ref_name }}"
-
-# Rematerialize after composition synchronization; generated parity files remain authoritative.
