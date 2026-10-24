@@ -11,7 +11,7 @@ import {
 
 function context(
     slug = 'alpha',
-    permissions: string[] = ['tenant.view', 'execution.view'],
+    permissions: string[] = ['operations.manage', 'execution.view'],
     tenantSlugs: string[] = [slug],
     siteOperationsApi = `/tenants/${encodeURIComponent(slug)}/route-api/site-operations`,
 ): FrontendContext {
@@ -49,12 +49,16 @@ describe('AIMW-CONT-BCAD1E3A49 Operations Hub site-operation history navigation'
         expect(OPERATIONS_HUB_SITE_OPERATIONS_OPERATION_ID).toBe('AIMW-CONT-BCAD1E3A49');
     });
 
-    it('fails closed without execution.view or an authoritative active tenant membership', () => {
-        renderControl(context('alpha', ['tenant.view']));
+    it('fails closed without the host/destination permissions or an authoritative active tenant membership', () => {
+        renderControl(context('alpha', ['operations.manage']));
         expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
 
         cleanup();
-        renderControl(context('alpha', ['tenant.view', 'execution.view'], ['beta']));
+        renderControl(context('alpha', ['execution.view']));
+        expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
+
+        cleanup();
+        renderControl(context('alpha', ['operations.manage', 'execution.view'], ['beta']));
         expect(screen.queryByRole('link', { name: /Site Operations/i })).not.toBeInTheDocument();
     });
 
