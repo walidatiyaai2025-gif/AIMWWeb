@@ -43,7 +43,7 @@ describe('AIMW-CONT-93B6E02ACF ContentExplorer SetContentTab', () => {
         window.addEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, reset);
 
         renderControl(context());
-        const button = screen.getByRole('button', { name: 'Content' });
+        const button = screen.getByRole('button', { name: /Content/ });
         expect(button).toHaveAttribute('aria-pressed', 'true');
         expect(button).toHaveAttribute('data-canonical-operation', CONTENT_EXPLORER_CONTENT_TAB_OPERATION_ID);
         expect(CONTENT_EXPLORER_CONTENT_TAB_OPERATION_ID).toBe('AIMW-CONT-93B6E02ACF');
@@ -68,6 +68,6 @@ describe('AIMW-CONT-93B6E02ACF ContentExplorer SetContentTab', () => {
         ['sites.view is absent', ['tenant.view']],
     ])('does not render when %s', (_label, permissions) => {
         renderControl(context({ permissions }));
-        expect(screen.queryByRole('button', { name: 'Content' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Content/ })).not.toBeInTheDocument();
     });
 });
