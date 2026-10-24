@@ -45,7 +45,8 @@ import {
     SiteOperationsFiltersControl,
     type SiteOperationsFilterState,
 } from './site-operations-filters-control';
-import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';\nimport { GlobalTaxonomySiteLinksControl } from './global-taxonomy-site-links-control';
+import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
+import { GlobalTaxonomySiteLinksControl } from './global-taxonomy-site-links-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
 import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
@@ -638,7 +639,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                                 <span aria-hidden="true"> · </span>
                                 <ContentExplorerWordPressLinkControl value={row.link} />
                             </span>
-                        ) : route.key === 'taxonomy' ? (row) => (\n                            <GlobalTaxonomySiteLinksControl context={context} siteId={row.site_id ?? row.siteId} />\n                        ) : route.key === 'sites' ? (row) => (
+                        ) : route.key === 'taxonomy' ? (row) => (
+                            <GlobalTaxonomySiteLinksControl context={context} siteId={row.site_id ?? row.siteId} />
+                        ) : route.key === 'sites' ? (row) => (
                             <span className="site-row-actions">
                                 <SitesInterpolatedLinksControl tenantSlug={context.tenant.slug} siteId={row.id} />
                                 <span aria-hidden="true"> · </span>
