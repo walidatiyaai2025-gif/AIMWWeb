@@ -36,6 +36,7 @@ import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATIO
 
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
+const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
@@ -78,6 +79,11 @@ function normalizeCollection(payload: unknown) {
     const page = envelope.current_page ?? envelope.page ?? envelope.meta?.current_page ?? 1;
     const lastPage = envelope.last_page ?? envelope.lastPage ?? envelope.meta?.last_page ?? Math.max(1, Math.ceil(total / 20));
     return { rows, total, page, lastPage };
+}
+
+function isSiteReviewRow(row: Record<string, unknown>): boolean {
+    const normalized = String(row.connection_status ?? 'unknown').trim().toLowerCase() || 'unknown';
+    return normalized !== 'connected' && normalized !== 'unknown';
 }
 
 function endpointWithQuery(endpoint: string, page: number, search: string, filters: Record<string, string> = {}) {
@@ -178,7 +184,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [sitesFilter, setSitesFilter] = useState<'all' | 'connected'>('all');
+    const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
     const [emailHistoryDraft, setEmailHistoryDraft] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
@@ -323,9 +329,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     );
 
     const collection = normalizeCollection(query.data);
-    const visibleRows = route.key === 'sites' && sitesFilter === 'connected'
-        ? collection.rows.filter((row) => String(row.status ?? '').toLowerCase() === 'active')
+    const visibleRows = route.key === 'sites'
+        ? (sitesFilter === 'connected'
+            ? collection.rows.filter((row) => String(row.status ?? '').toLowerCase() === 'active')
+            : sitesFilter === 'review'
+                ? collection.rows.filter(isSiteReviewRow)
+                : collection.rows)
         : collection.rows;
+    const reviewSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteReviewRow).length : 0;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
     const aiCenterMeta = route.key === 'ai-center' && query.data && typeof query.data === 'object'
         ? ((query.data as CollectionEnvelope).meta ?? null)
@@ -406,6 +417,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                             aria-pressed={sitesFilter === 'all'}
                             onClick={() => setSitesFilter('all')}
                         >{locale === 'ar' ? 'الكل' : 'All'}</button>
+                    ) : null}
+                    {route.key === 'sites' ? (
+                        <button
+                            type="button"
+                            className="btn"
+                            data-canonical-operation={SITES_SHOW_REVIEW_OPERATION_ID}
+                            aria-pressed={sitesFilter === 'review'}
+                            onClick={() => setSitesFilter('review')}
+                        >{locale === 'ar' ? 'يحتاج مراجعة' : 'Needs review'} <b>{reviewSiteCount}</b></button>
                     ) : null}
                     {route.key === 'taxonomy' ? (
                         <button
@@ -513,7 +533,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 />
             ) : null}
             <section className="panel data-panel">
-                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter === 'connected' ? visibleRows.length : collection.total}</span></header>
+                <header className="panel-header"><div><span className="workspace-kicker">LIVE DATA</span><h2>{route.label[locale]}</h2></div><span className="count-badge">{route.key === 'sites' && sitesFilter !== 'all' ? visibleRows.length : collection.total}</span></header>
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
