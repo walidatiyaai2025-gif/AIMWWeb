@@ -37,6 +37,7 @@ import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATIO
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
+export const SITES_URL_LINK_OPERATION_ID = 'AIMW-CONT-44A3B8E551';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
@@ -84,6 +85,31 @@ function normalizeCollection(payload: unknown) {
 function isSiteReviewRow(row: Record<string, unknown>): boolean {
     const normalized = String(row.connection_status ?? 'unknown').trim().toLowerCase() || 'unknown';
     return normalized !== 'connected' && normalized !== 'unknown';
+}
+
+export function canonicalExternalSiteUrl(value: unknown): string | null {
+    if (typeof value !== 'string' || !value.trim()) return null;
+    try {
+        const candidate = new URL(value.trim());
+        return candidate.protocol === 'http:' || candidate.protocol === 'https:' ? candidate.href : null;
+    } catch {
+        return null;
+    }
+}
+
+export function SitesUrlLinkControl({ value }: { value: unknown }) {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    const href = canonicalExternalSiteUrl(raw);
+    if (!href) return <span>{raw || '—'}</span>;
+
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-canonical-operation={SITES_URL_LINK_OPERATION_ID}
+        >{raw}</a>
+    );
 }
 
 function endpointWithQuery(endpoint: string, page: number, search: string, filters: Record<string, string> = {}) {
@@ -537,7 +563,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        renderActions={route.key === 'posts' ? (row) => (
+                        renderActions={route.key === 'sites' ? (row) => (
+                            <SitesUrlLinkControl value={row.url} />
+                        ) : route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
                         ) : route.key === 'pages' ? (row) => (
                             <PagesWordPressLinkControl value={row.link} />
