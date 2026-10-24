@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #766 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-9BA2C255AF",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites/{Id:guid}/explorer",
+    "source": "src/AIWordPressManager.Web/Components/Pages/ContentExplorer.razor",
+    "source_control": "@($ -> @($",
+    "source_intent": "Open the selected authoritative preview item in the tenant/site content editor, presenting Edit to content editors and View to read-only content viewers.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-preview-editor-link-control.tsx",
+    "preview_panel": "variants/laravel-aiwmweb/backend/resources/js/content-explorer-preview-panel.tsx",
+    "integration": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "web_destination": "GET /tenants/{tenant}/sites/{site}/content/{contentType}/{wordpressId}/edit",
+    "authoritative_editor_read": "GET /api/v1/tenants/{tenant}/sites/{site}/content/{type}/{wordpressId}/editor",
+    "behavior": "The control derives site/type/WordPress identity only from the authoritative active-site Explorer contract and server-returned preview row. It navigates internally to the existing Laravel content editor; that editor performs the authoritative content.view read. The navigation itself is read-only."
+  },
+  "security": {
+    "permissions": ["tenant.view", "sites.view", "content.view"],
+    "edit_decoration_permission": "content.edit",
+    "active_site_required": true,
+    "exact_same_origin_explorer_endpoint_required": true,
+    "content_type_allowlist": ["post", "page"],
+    "positive_wordpress_id_required": true,
+    "foreign_tenant": "404/fail closed",
+    "foreign_site": "404/fail closed",
+    "caller_owned_destination": "not accepted",
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-explorer-preview-editor-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerPreviewEditorLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation marker",
+      "source interpolated preview editor route",
+      "Edit versus View permission semantics",
+      "tenant/site/type/WordPress identity derivation",
+      "existing authoritative content editor route and API",
+      "read-only navigation",
+      "permission and cross-tenant/site fail-closed behavior"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": ["AIMW-CONT-9BA2C255AF"],
+    "preview_external_link_operation_claimed": false,
+    "content_tab_operation_claimed": false,
+    "content_editor_save_operation_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "authorization_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "stacked_on_issue": 764,
+    "stacked_base_sha": "c8113b48fe7dadb199f78c139dfb80e66df22179",
+    "branch": "worker/766-content-explorer-preview-editor-link",
+    "issue": 766
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-766.yml",
+    "generated_reconciliation_required": true
+  }
+}
