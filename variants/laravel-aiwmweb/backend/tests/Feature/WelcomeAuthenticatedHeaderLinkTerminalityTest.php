@@ -115,6 +115,6 @@ final class WelcomeAuthenticatedHeaderLinkTerminalityTest extends TestCase
         $this->assertSame(1, substr_count($view, 'data-canonical-operation="'.self::OPERATION_ID.'"'));
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-C7CB5EE184"', $view);
         $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-DD56664FDA"', $view);
-        $this->assertStringNotContainsString('data-canonical-operation="AIMW-CONT-3C205B1901"', $view);
+        $this->assertSame(1, substr_count($view, 'data-canonical-operation="AIMW-CONT-3C205B1901"'));
     }
 }
