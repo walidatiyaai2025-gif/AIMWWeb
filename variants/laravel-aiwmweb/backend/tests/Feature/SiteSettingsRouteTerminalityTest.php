@@ -142,7 +142,7 @@ final class SiteSettingsRouteTerminalityTest extends TestCase
         $this->assertStringContainsString('Authoritative settings summary', $view);
         $this->assertStringContainsString('{{ $site->name }}', $view);
         $this->assertStringContainsString('{{ $site->url }}', $view);
-        $this->assertStringContainsString("where('tenant_id', $activeTenant->getKey())", $controller);
+        $this->assertStringContainsString('where(\'tenant_id\', $activeTenant->getKey())', $controller);
         $this->assertStringContainsString('->firstOrFail()', $controller);
         $this->assertStringNotContainsString('fake success', strtolower($view));
     }
