@@ -79,10 +79,10 @@ final class WordPressUsersStartCreateControlTerminalityTest extends TestCase
         $source = (string) file_get_contents(base_path('../../../src/AIWordPressManager.Web/Components/Pages/UsersManager.razor'));
 
         $this->assertStringContainsString(self::OPERATION_ID, $components);
-        $this->assertStringContainsString("route.key === 'wp-users'", $components);
-        $this->assertStringContainsString("actionKey === 'wordpress-users.save'", $components);
+        $this->assertStringContainsString('route.key === \'wp-users\'', $components);
+        $this->assertStringContainsString('actionKey === \'wordpress-users.save\'', $components);
         $this->assertStringContainsString('onAvailable(contract)', $components);
-        $this->assertStringContainsString("route.controls?.map", $pages);
+        $this->assertStringContainsString('route.controls?.map', $pages);
         $this->assertStringContainsString('OnClick="StartCreateClicked"', $source);
         $this->assertStringContainsString('StartCreate()', $source);
         $this->assertStringNotContainsString('apiRequest', substr($components, strpos($components, 'export function ActionButton'), 1800));
