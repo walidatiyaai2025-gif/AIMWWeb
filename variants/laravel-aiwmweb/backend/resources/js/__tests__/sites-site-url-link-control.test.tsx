@@ -73,6 +73,7 @@ describe(`${SITES_SITE_URL_LINK_OPERATION_ID} Sites SiteUrl link`, () => {
 
         const link = await screen.findByRole('link', { name: 'https://alpha.example.test' });
         expect(link).toHaveAttribute('href', 'https://alpha.example.test');
+        expect(link).toHaveTextContent('https://alpha.example.test');
         expect(link).toHaveAttribute('target', '_blank');
         expect(link).toHaveAttribute('rel', 'noopener noreferrer');
         expect(link).toHaveAttribute('data-canonical-operation', SITES_SITE_URL_LINK_OPERATION_ID);
