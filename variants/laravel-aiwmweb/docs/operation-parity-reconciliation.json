@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 93,
-      "pending": 71,
+      "adapted": 94,
+      "pending": 70,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 93,
-      "percent": 56.71
+      "terminal": 94,
+      "percent": 57.32
     },
     "email": {
       "total": 82,
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 145,
-      "pending": 68,
+      "adapted": 144,
+      "pending": 69,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 145,
-      "percent": 68.08
+      "terminal": 144,
+      "percent": 67.61
     },
     "taxonomy": {
       "total": 13,
@@ -18819,21 +18819,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
+      "evidence": "AIMW-CONT-4961F90970 Settings SetLight focused closure@7afac66bfeab3d5a56700598a318e9b5ab186c7e: variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx; focused-closure:AIMW-CONT-4961F90970; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
+        "source_sha": "7afac66bfeab3d5a56700598a318e9b5ab186c7e",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-4961F90970",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -32674,31 +32684,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-search-box.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-search-box.test.tsx",
-      "evidence": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure@de1c5ff00086a98377499ee02a4b7d7811000872: variants/laravel-aiwmweb/backend/resources/js/app-search-box.tsx; focused-closure:AIMW-SYNC-1778E3F6B5; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/app-search-box.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-search-box-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure",
-        "source_sha": "de1c5ff00086a98377499ee02a4b7d7811000872",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-search-box.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-search-box-terminality.json",
-        "signals": [
-          "operation:AIMW-SYNC-1778E3F6B5",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-search-box.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/app-search-box.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-search-box-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36862,7 +36862,6 @@
       "AIMW-CONT-4147188AB1",
       "AIMW-CONT-47007EE040",
       "AIMW-CONT-47C0477703",
-      "AIMW-CONT-4961F90970",
       "AIMW-CONT-4A64732FC6",
       "AIMW-CONT-50DF6B23CC",
       "AIMW-CONT-519B93F503",
@@ -36954,6 +36953,7 @@
       "AIMW-SYNC-078D172C71",
       "AIMW-SYNC-0DFEE862FA",
       "AIMW-SYNC-14DAFE7D73",
+      "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-1A20057999",
       "AIMW-SYNC-1B63FBC758",
       "AIMW-SYNC-21483C88FA",
@@ -37906,6 +37906,7 @@
       "AIMW-CONT-3D6485D903",
       "AIMW-CONT-4209A8ADF4",
       "AIMW-CONT-44A3B8E551",
+      "AIMW-CONT-4961F90970",
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
       "AIMW-CONT-564636DDC9",
@@ -37991,7 +37992,6 @@
       "AIMW-SYNC-112E6B9631",
       "AIMW-SYNC-12C023E4CC",
       "AIMW-SYNC-12F15A0A80",
-      "AIMW-SYNC-1778E3F6B5",
       "AIMW-SYNC-461B1075DE",
       "AIMW-SYNC-4E3C0156FC",
       "AIMW-SYNC-4E969573BB",
@@ -38490,10 +38490,10 @@
         ]
       },
       {
-        "label": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure",
-        "sha": "de1c5ff00086a98377499ee02a4b7d7811000872",
+        "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
+        "sha": "7afac66bfeab3d5a56700598a318e9b5ab186c7e",
         "operation_ids": [
-          "AIMW-SYNC-1778E3F6B5"
+          "AIMW-CONT-4961F90970"
         ]
       }
     ],
