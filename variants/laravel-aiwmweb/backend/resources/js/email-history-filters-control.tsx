@@ -2,6 +2,7 @@ import React from 'react';
 import type { Locale } from './core';
 
 export const EMAIL_HISTORY_APPLY_FILTERS_OPERATION_ID = 'AIMW-EMAI-F8E8A2BEE9';
+export const EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID = 'AIMW-EMAI-8C9768BCD0';
 
 export type EmailHistoryFilterState = {
     siteId: string;
@@ -15,12 +16,14 @@ export function EmailHistoryFiltersControl({
     busy,
     onChange,
     onApply,
+    onClear,
 }: {
     value: EmailHistoryFilterState;
     locale: Locale;
     busy: boolean;
     onChange: (next: EmailHistoryFilterState) => void;
     onApply: () => void;
+    onClear: () => void;
 }) {
     return (
         <form
@@ -67,6 +70,15 @@ export function EmailHistoryFiltersControl({
                     disabled={busy}
                 />
             </label>
+            <button
+                type="button"
+                className="btn"
+                data-canonical-operation={EMAIL_HISTORY_CLEAR_FILTERS_OPERATION_ID}
+                disabled={busy}
+                onClick={onClear}
+            >
+                {locale === 'ar' ? 'مسح' : 'Clear'}
+            </button>
             <button
                 type="submit"
                 className="btn primary"
