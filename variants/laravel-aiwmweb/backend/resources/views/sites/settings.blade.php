@@ -137,6 +137,10 @@
         @endif
 
         <nav aria-label="Site settings navigation">
+            <a
+                href="{{ route('canonical.workspace.sites', ['tenant' => $tenant], false) }}"
+                data-canonical-operation="AIMW-CONT-3D6485D903"
+            >{{ app()->getLocale() === 'ar' ? 'العودة للمواقع' : 'Back to sites' }}</a>
             <a href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}">Back to site details</a>
         </nav>
     </main>
