@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #857 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation": {
+    "operation_id": "AIMW-CONT-A93DE991C0",
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/site-reliability | /operations/reliability",
+    "visible_control": "@($ -> @($",
+    "current_source": "src/AIWordPressManager.Web/Components/Pages/SiteReliability.razor",
+    "mutation": false,
+    "tenant_owned": true,
+    "terminal_state": "ADAPTED"
+  },
+  "source_semantics": {
+    "summary": "Each authoritative Site Reliability row exposes Open and navigates to /sites/{row.SiteId}/connection.",
+    "label_en": "Open",
+    "label_ar": "فتح",
+    "side_effect": "Navigation only; no persistence, WordPress mutation, queue, cache, or synthetic success state."
+  },
+  "laravel_adaptation": {
+    "source_api": "/tenants/{tenant}/route-api/site-reliability",
+    "source_permission": "sites.view",
+    "authoritative_site_id_field": "site_id",
+    "production_control": "variants/laravel-aiwmweb/backend/resources/js/site-reliability-connection-link-control.tsx",
+    "runtime_mount": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "destination_builder": "tenantUrl(active tenant slug, /sites/{validated site_id}/connection)",
+    "destination_capability": "site-connection-center",
+    "destination_permission": "sites.view"
+  },
+  "state_and_security": {
+    "tenant_source": "Authenticated FrontendContext.tenant.slug",
+    "site_id_source": "Authoritative tenant-scoped Site Reliability response row",
+    "malformed_or_missing_site_id": "No link rendered",
+    "caller_selected_tenant": false,
+    "extra_request": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "fake_success": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/site-reliability-connection-link-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityConnectionLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical marker",
+      "English and Arabic labels",
+      "tenant-derived encoded destination",
+      "positive authoritative site_id validation",
+      "tenant-scoped reliability read",
+      "sites.view source and destination capability",
+      "foreign-tenant rejection",
+      "no extra request or mutation"
+    ]
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-CONT-A93DE991C0",
+    "sibling_operations_claimed": false,
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false
+  }
+}
