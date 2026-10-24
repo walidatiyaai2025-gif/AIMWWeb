@@ -1295,6 +1295,14 @@
       "operation_ids": [
         "AIMW-CONT-A5D88995F3"
       ]
+    },
+    {
+      "label": "AIMW-CONT-C7CB5EE184 Welcome footer brand focused closure",
+      "sha": "a8b2136fb6c813da06d87f556c94ff3c27369cf9",
+      "observed_pr_head": "a8b2136fb6c813da06d87f556c94ff3c27369cf9",
+      "operation_ids": [
+        "AIMW-CONT-C7CB5EE184"
+      ]
     }
   ]
 }
