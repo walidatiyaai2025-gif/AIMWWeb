@@ -18,6 +18,7 @@ final class WordPressUsersWorkingStateTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-346657AD9D';
+
     private const EXISTING_SAVE_OPERATION_ID = 'AIMW-BILL-D307963B59';
 
     public function test_exact_source_working_state_is_adapted_without_duplicating_the_save_mutation(): void
