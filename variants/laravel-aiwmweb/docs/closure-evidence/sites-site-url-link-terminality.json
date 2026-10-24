@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #862 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-44A3B8E551",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "@site.SiteUrl -> @site.SiteUrl",
+    "source_intent": "Render the authoritative WordPress site URL as both the visible anchor text and the external anchor target.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "control_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "table_source": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+    "operation_marker": "AIMW-CONT-44A3B8E551",
+    "authoritative_field": "site_url",
+    "backend_mapping": "SiteManagementService maps site_url directly from the tenant-owned Site url",
+    "rendering": "The Sites DataTable explicitly includes site_url and renders a target=_blank rel=noopener anchor whose href and visible text are the same authoritative value."
+  },
+  "state_and_security": {
+    "additional_request_for_link": false,
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "synthetic_url": false,
+    "blank_url_behavior": "renders the existing deterministic em dash formatter and does not synthesize an anchor",
+    "loading_error_authority": "inherits the existing guarded Sites ResourceContent query loading and error states",
+    "tenant_isolation": "the Sites workspace remains tenant.view + sites.view gated; foreign tenant access returns 404"
+  },
+  "source_semantics": {
+    "source_anchor": "<a href=\"@site.SiteUrl\" target=\"_blank\" rel=\"noopener\">@site.SiteUrl</a>",
+    "href_and_text_same_value": true,
+    "external_new_tab": true,
+    "noopener": true,
+    "read_only": true
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-site-url-link.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesSiteUrlLinkTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and source semantics",
+      "authoritative site_url is visible anchor text and href",
+      "target blank and noopener parity",
+      "production operation marker on the real Sites URL anchor",
+      "single authoritative GET with no extra link request or mutation",
+      "blank authoritative URL does not synthesize a fake link",
+      "sites.view authorization and foreign-tenant 404 isolation"
+    ]
+  },
+  "scope_guards": {
+    "claimed_operations": [
+      "AIMW-CONT-44A3B8E551"
+    ],
+    "visit_site_quick_link_claimed": false,
+    "dashboard_link_claimed": false,
+    "content_link_claimed": false,
+    "aspnet_product_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "backend_mutation_added": false,
+    "authorization_weakened": false,
+    "tenant_isolation_weakened": false
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "86865c168d7792287a6323439b08b8d8e35205ff",
+    "branch": "worker/862-sites-site-url-link",
+    "issue": 862
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-862.yml",
+    "generated_reconciliation_required": true,
+    "generated_artifacts": [
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.json",
+      "variants/laravel-aiwmweb/docs/operation-parity-reconciliation.md"
+    ]
+  }
+}
