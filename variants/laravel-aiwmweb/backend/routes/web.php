@@ -332,6 +332,10 @@ Route::prefix('/tenants/{tenant}')
     ->group(function (): void {
         Route::get('/sites', 'show')->defaults('workspace_permissions', 'tenant.view,sites.view')->name('canonical.workspace.sites');
         Route::get('/sites/{site}', 'showSite')->defaults('workspace_permissions', 'tenant.view,sites.view')->whereNumber('site')->name('canonical.site.details');
+        Route::get('/sites/{site}/content/{contentType}/{wordpressId}/edit', 'showContentEditor')
+            ->defaults('workspace_permissions', 'content.view')
+            ->defaults('canonical_operation_id', 'AIMW-CONT-2C02B7A328')
+            ->name('canonical.site.content-editor');
         Route::get('/notifications', 'show')->defaults('workspace_permissions', 'tenant.view,notifications.view')->name('canonical.workspace.notifications');
         Route::get('/email/schedules', 'show')->defaults('workspace_permissions', 'operations.manage')->defaults('canonical_operation_id', 'AIMW-EMAI-F77DB6435F')->name('canonical.workspace.email-schedules');
         Route::get('/email/history', 'show')->defaults('workspace_permissions', 'tenant.manage,diagnostics.view')->name('canonical.workspace.email-history');
