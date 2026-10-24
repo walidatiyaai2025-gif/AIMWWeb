@@ -125,6 +125,107 @@ export function StatePanel({
     );
 }
 
+
+export const STATE_BANNER_RETRY_OPERATION_ID = 'AIMW-SYNC-8719C812DC';
+
+type StateBannerKind = 'info' | 'success' | 'warning' | 'error' | 'offline' | 'cached' | 'partial';
+
+function normalizeStateBannerKind(kind: string): StateBannerKind {
+    const normalized = kind.trim().toLowerCase();
+    if (normalized === 'success') return 'success';
+    if (normalized === 'warning') return 'warning';
+    if (normalized === 'error' || normalized === 'danger') return 'error';
+    if (normalized === 'offline') return 'offline';
+    if (normalized === 'cached' || normalized === 'stale') return 'cached';
+    if (normalized === 'partial') return 'partial';
+    return 'info';
+}
+
+export function StateBanner({
+    title,
+    kind = 'info',
+    description,
+    freshnessText,
+    icon,
+    busy = false,
+    assertive = false,
+    retryText,
+    retryingText,
+    retryAriaLabel,
+    onRetry,
+    action,
+}: {
+    title: string;
+    kind?: string;
+    description?: string;
+    freshnessText?: string;
+    icon?: string;
+    busy?: boolean;
+    assertive?: boolean;
+    retryText?: string;
+    retryingText?: string;
+    retryAriaLabel?: string;
+    onRetry?: () => void;
+    action?: React.ReactNode;
+}) {
+    const { locale } = useLocale();
+    const normalizedKind = normalizeStateBannerKind(kind);
+    const effectiveRetryText = retryText ?? (locale === 'ar' ? 'إعادة المحاولة' : 'Retry');
+    const effectiveRetryingText = retryingText ?? (locale === 'ar' ? 'جارٍ إعادة المحاولة…' : 'Retrying...');
+    const effectiveIcon = icon ?? ({
+        success: '✓',
+        warning: '!',
+        error: '×',
+        offline: '⌁',
+        cached: '◷',
+        partial: '◐',
+        info: 'i',
+    } satisfies Record<StateBannerKind, string>)[normalizedKind];
+    const isAssertive = assertive || normalizedKind === 'error';
+
+    const retryControl = onRetry ? (
+        <button
+            type="button"
+            className="btn"
+            data-canonical-operation={STATE_BANNER_RETRY_OPERATION_ID}
+            aria-label={retryAriaLabel ?? effectiveRetryText}
+            aria-busy={busy ? 'true' : 'false'}
+            disabled={busy}
+            onClick={() => {
+                if (!busy) onRetry();
+            }}
+        >
+            <span aria-hidden="true">↻</span>
+            <span>{busy ? effectiveRetryingText : effectiveRetryText}</span>
+        </button>
+    ) : null;
+
+    return (
+        <aside
+            className={`state-banner state-banner-${normalizedKind}`}
+            role={isAssertive ? 'alert' : 'status'}
+            aria-live={isAssertive ? 'assertive' : 'polite'}
+            aria-atomic="true"
+            aria-busy={busy ? 'true' : 'false'}
+            data-state={normalizedKind}
+            data-retains-content="true"
+        >
+            <span className="state-banner-icon" aria-hidden="true">{effectiveIcon}</span>
+            <div className="state-banner-content">
+                <strong>{title}</strong>
+                {description ? <span>{description}</span> : null}
+                {freshnessText ? <small>{freshnessText}</small> : null}
+            </div>
+            {(retryControl || action) ? (
+                <div className="state-banner-actions">
+                    {retryControl}
+                    {action}
+                </div>
+            ) : null}
+        </aside>
+    );
+}
+
 export function LoadingState() {
     const { text } = useLocale();
     return (

@@ -132,7 +132,9 @@ describe(`${AI_USAGE_LOAD_OPERATION_ID} AI Usage LoadAsync`, () => {
 
         expect(await screen.findByText('Refresh failed — showing last successful data')).toBeInTheDocument();
         expect(screen.getByText('openai / gpt-test')).toBeInTheDocument();
-        expect(screen.getByRole('alert')).toHaveTextContent('usage backend unavailable');
+        expect(screen.getByText('usage backend unavailable')).toBeInTheDocument();
+        expect(screen.getByText('Refresh failed — showing last successful data').closest('[data-retains-content="true"]'))
+            .toHaveAttribute('data-state', 'cached');
 
         fireEvent.click(screen.getByRole('button', { name: 'Retry refresh' }));
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));

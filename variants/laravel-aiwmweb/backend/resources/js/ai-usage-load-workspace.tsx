@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest, type FrontendContext, type WorkspaceRoute } from './core';
-import { LoadingState, StatePanel } from './components';
+import { LoadingState, StateBanner, StatePanel } from './components';
 import { useLocale } from './i18n';
 
 export const AI_USAGE_LOAD_OPERATION_ID = 'AIMW-BILL-258E431558';
@@ -159,24 +159,24 @@ export function AiUsageLoadWorkspace({ context, route }: { context: FrontendCont
                 </div>
             </section>
 
-            {loading && snapshot ? <p role="status">{locale === 'ar' ? 'جارٍ تحديث البيانات مع إبقاء آخر نتيجة ناجحة ظاهرة.' : 'Refreshing while keeping the last successful snapshot visible.'}</p> : null}
+            {loading && snapshot ? (
+                <StateBanner
+                    kind="info"
+                    title={locale === 'ar' ? 'جارٍ تحديث البيانات' : 'Refreshing usage data'}
+                    description={locale === 'ar' ? 'آخر نتيجة ناجحة ما زالت ظاهرة أثناء القراءة الحالية.' : 'The last successful snapshot remains visible during the current read.'}
+                    busy
+                />
+            ) : null}
             {error && snapshot ? (
-                <StatePanel
-                    tone="warning"
+                <StateBanner
+                    kind="cached"
                     title={locale === 'ar' ? 'تعذر التحديث — آخر بيانات ناجحة ما زالت ظاهرة' : 'Refresh failed — showing last successful data'}
-                    action={(
-                        <button
-                            type="button"
-                            className="btn"
-                            data-canonical-operation={AI_USAGE_LOAD_OPERATION_ID}
-                            onClick={() => void load(selectedSiteId)}
-                            disabled={loading}
-                        >{locale === 'ar' ? 'إعادة المحاولة' : 'Retry refresh'}</button>
-                    )}
-                >
-                    <p role="alert">{error}</p>
-                    {loadedAt ? <small>{locale === 'ar' ? 'آخر تحديث ناجح' : 'Last successful refresh'}: {loadedAt.toLocaleString()}</small> : null}
-                </StatePanel>
+                    description={error}
+                    freshnessText={loadedAt ? `${locale === 'ar' ? 'آخر تحديث ناجح' : 'Last successful refresh'}: ${loadedAt.toLocaleString()}` : undefined}
+                    onRetry={() => void load(selectedSiteId)}
+                    busy={loading}
+                    retryText={locale === 'ar' ? 'إعادة المحاولة' : 'Retry refresh'}
+                />
             ) : null}
 
             {summary ? (
