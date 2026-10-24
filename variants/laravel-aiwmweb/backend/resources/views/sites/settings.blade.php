@@ -73,7 +73,7 @@
                         <p role="alert">{{ $message }}</p>
                     @enderror
 
-                    <button type="submit" data-canonical-operation="AIMW-BILL-5C15471E4B">Save changes</button>
+                    <button type="submit" data-canonical-operation="AIMW-BILL-5C15471E4B" data-canonical-control-operation="AIMW-CONT-E1A7A8CAA7">{{ app()->getLocale() === 'ar' ? 'حفظ التغييرات' : 'Save changes' }}</button>
                 </form>
             </section>
         @endif
@@ -110,7 +110,7 @@
                         Application Password
                         <input type="password" name="application_password" minlength="8" maxlength="1024" autocomplete="new-password" required>
                     </label>
-                    <button type="submit" data-canonical-operation="AIMW-BILL-723BEA8F1D">Save &amp; Test</button>
+                    <button type="submit" data-canonical-operation="AIMW-BILL-723BEA8F1D" data-canonical-control-operation="AIMW-CONT-E1A7A8CAA7">{{ app()->getLocale() === 'ar' ? 'حفظ واختبار' : 'Save and test' }}</button>
                 </form>
 
                 @if ($credential)
