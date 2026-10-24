@@ -16,7 +16,6 @@ final class SitesCloseFormTerminalityTest extends TestCase
     use RefreshDatabase;
 
     private const OPERATION_ID = 'AIMW-CONT-FBA95BDC1D';
-    // Exact-head CI retrigger after composition sync; no runtime behavior.
 
     public function test_exact_canonical_operation_matches_sites_close_form(): void
     {
