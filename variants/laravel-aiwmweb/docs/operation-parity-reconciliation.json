@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 769,
-    "pending": 162,
+    "adapted": 770,
+    "pending": 161,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 769,
-    "overall_parity_percent": 82.6
+    "terminal": 770,
+    "overall_parity_percent": 82.71
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 298,
-    "pending": 148,
+    "terminal": 299,
+    "pending": 147,
     "blocked": 0,
-    "percent": 66.82
+    "percent": 67.04
   },
   "domains": {
     "ai": {
@@ -203,12 +203,12 @@
     "sync": {
       "total": 213,
       "ported": 0,
-      "adapted": 145,
-      "pending": 68,
+      "adapted": 146,
+      "pending": 67,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 145,
-      "percent": 68.08
+      "terminal": 146,
+      "percent": 68.54
     },
     "taxonomy": {
       "total": 13,
@@ -32540,21 +32540,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/app-filter-bar.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/app-filter-bar-clear-control.test.tsx",
+      "evidence": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure@2ab60e249852eceb662d615a61f0ba758ed9a494: variants/laravel-aiwmweb/backend/resources/js/app-filter-bar.tsx; focused-closure:AIMW-SYNC-F7CE702C7D; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/app-filter-bar-clear-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-filter-bar-clear-control-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+        "source_sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/app-filter-bar.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/app-filter-bar-clear-control-terminality.json",
+        "signals": [
+          "operation:AIMW-SYNC-F7CE702C7D",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/app-filter-bar.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/app-filter-bar-clear-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/app-filter-bar-clear-control-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36837,12 +36847,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 298,
-      "pending": 148,
+      "adapted": 299,
+      "pending": 147,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 298,
-      "percent": 66.82
+      "terminal": 299,
+      "percent": 67.04
     }
   },
   "pending_operation_ids_by_domain": {
@@ -37023,7 +37033,6 @@
       "AIMW-SYNC-EE7D7534DF",
       "AIMW-SYNC-EEFDDFFF87",
       "AIMW-SYNC-F7BCCD650C",
-      "AIMW-SYNC-F7CE702C7D",
       "AIMW-SYNC-FD27B795ED",
       "AIMW-SYNC-FF579F0EBF"
     ],
@@ -37564,6 +37573,16 @@
           "AIMW-SYNC-8719C812DC"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+        "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-F7CE702C7D"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37585,6 +37604,7 @@
       "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
       "18191b10b7909f3670ccbde3dc41025202cb7ca5",
       "2497296794e0f1fde94d8c0fd30babb047c912ae",
+      "2ab60e249852eceb662d615a61f0ba758ed9a494",
       "316d28cd4a22001812fa06c3a41f8ee962c6acd8",
       "34e66eba87657e5283f29765c083529b08ba7625",
       "392c4efe25adc0214893fd81b740171b8cd9a750",
@@ -38027,6 +38047,7 @@
       "AIMW-SYNC-F0C46A9BD1",
       "AIMW-SYNC-F135B261B2",
       "AIMW-SYNC-F340B5445A",
+      "AIMW-SYNC-F7CE702C7D",
       "AIMW-TAXO-005925568C",
       "AIMW-TAXO-39CDD7EF81",
       "AIMW-TAXO-5D39DA68B7",
@@ -38512,10 +38533,17 @@
         "operation_ids": [
           "AIMW-SYNC-1778E3F6B5"
         ]
+      },
+      {
+        "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
+        "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+        "operation_ids": [
+          "AIMW-SYNC-F7CE702C7D"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 68,
-    "focused_closure_contract_count": 298,
+    "focused_closure_operation_scoped_count": 69,
+    "focused_closure_contract_count": 299,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
