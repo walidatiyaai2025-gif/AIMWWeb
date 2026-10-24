@@ -37528,6 +37528,16 @@
           "AIMW-SYNC-8719C812DC"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-SYNC-1778E3F6B5 AppSearchBox focused closure",
+        "sha": "de1c5ff00086a98377499ee02a4b7d7811000872",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-SYNC-1778E3F6B5"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37576,6 +37586,7 @@
       "d7ed8030da65376f9d0c43380fb6c80c1ee87508",
       "d807224f10f552687771e75bb9a33d825bdeebd1",
       "dbc983f4c9c7a9dfa07d1b4414eed38f1843fd76",
+      "de1c5ff00086a98377499ee02a4b7d7811000872",
       "e26a7d9a254f7df980714b778491d0f864605087",
       "e4a21b493d2c40dbdda9cdabb1e539449c528cbe",
       "e9bf787b783b972541187ac8748ca24d7785f5d3",
