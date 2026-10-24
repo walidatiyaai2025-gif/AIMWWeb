@@ -35,6 +35,7 @@ const route: WorkspaceRoute = {
     icon: '◒',
     label: { en: 'Site Reliability', ar: 'موثوقية المواقع' },
     description: { en: 'Compare connectivity and synchronization reliability.', ar: 'مقارنة موثوقية الاتصال والمزامنة.' },
+    apiKey: 'site-reliability',
     permission: 'sites.view',
     controls: [],
     kind: 'resource',
