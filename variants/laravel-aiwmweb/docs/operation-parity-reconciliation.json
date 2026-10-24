@@ -20725,12 +20725,12 @@
       "risk": "low",
       "migration_state": "ADAPTED",
       "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterLoginTerminalityTest.php",
-      "evidence": "AIMW-CONT-247E791DA7 Welcome footer login focused closure@13ea273300a0eb14cedf1c011411f402b9c1ca52: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-247E791DA7; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterLoginTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-login-terminality.json",
+      "evidence": "AIMW-CONT-247E791DA7 Welcome footer login focused closure@ad1f961595ac9eb3cfb644af9044d4e94c2a320e: variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php; focused-closure:AIMW-CONT-247E791DA7; test:variants/laravel-aiwmweb/backend/tests/Feature/WelcomeFooterLoginTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-login-terminality.json",
       "reconciliation": {
         "decision": "ADAPTED",
         "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
         "source_label": "AIMW-CONT-247E791DA7 Welcome footer login focused closure",
-        "source_sha": "13ea273300a0eb14cedf1c011411f402b9c1ca52",
+        "source_sha": "ad1f961595ac9eb3cfb644af9044d4e94c2a320e",
         "destination_path": "variants/laravel-aiwmweb/backend/resources/views/ai/welcome.blade.php",
         "evidence_mode": "focused_closure_contract",
         "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/welcome-footer-login-terminality.json",
@@ -37856,7 +37856,7 @@
       },
       {
         "label": "AIMW-CONT-247E791DA7 Welcome footer login focused closure",
-        "sha": "13ea273300a0eb14cedf1c011411f402b9c1ca52",
+        "sha": "ad1f961595ac9eb3cfb644af9044d4e94c2a320e",
         "operation_ids": [
           "AIMW-CONT-247E791DA7"
         ]
