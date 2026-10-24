@@ -924,6 +924,28 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-CONT-1C2443112C WordPress Users route closure",
+      "sha": "f22da647d324acde8f962c40453e2e3f852ad1b8",
+      "observed_pr_head": "b9ed0e9d7610c5f320ef48558d3b19b2825fe234",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-1C2443112C"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-1C2443112C": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
