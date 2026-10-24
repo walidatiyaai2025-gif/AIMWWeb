@@ -11,6 +11,7 @@ export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
 export const CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID = 'AIMW-CONT-607ACDF4D8';
 export const CONTENT_EDITOR_SHOW_EDIT_OPERATION_ID = 'AIMW-CONT-A5D88995F3';
+export const CONTENT_EDITOR_SHOW_PREVIEW_OPERATION_ID = 'AIMW-CONT-F57B1E1503';
 export const CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID = 'AIMW-CONT-2C51372C70';
 
 export function safeContentEditorExternalUrl(value: unknown): string | null {
@@ -153,6 +154,59 @@ export function ContentEditorShowEditControl({
         >
             {locale === 'ar' ? 'تحرير' : 'Edit'}
         </button>
+    );
+}
+
+export function showContentEditorPreview(): ContentEditorViewMode {
+    return 'preview';
+}
+
+export function ContentEditorShowPreviewControl({
+    viewMode,
+    onShowPreview,
+}: {
+    viewMode: ContentEditorViewMode;
+    onShowPreview: () => void;
+}) {
+    const { locale } = useLocale();
+
+    return (
+        <button
+            type="button"
+            className={viewMode === 'preview' ? 'btn active' : 'btn'}
+            aria-pressed={viewMode === 'preview'}
+            data-canonical-operation={CONTENT_EDITOR_SHOW_PREVIEW_OPERATION_ID}
+            onClick={onShowPreview}
+        >
+            {locale === 'ar' ? 'معاينة' : 'Preview'}
+        </button>
+    );
+}
+
+export function ContentEditorPreviewSurface({ content }: { content: string }) {
+    const { locale } = useLocale();
+
+    if (!content.trim()) {
+        return (
+            <article className="content-preview content-preview-empty" role="status">
+                {locale === 'ar' ? 'لا يوجد محتوى لمعاينته.' : 'There is no content to preview.'}
+            </article>
+        );
+    }
+
+    return (
+        <article
+            className="content-preview"
+            aria-label={locale === 'ar' ? 'معاينة محتوى WordPress' : 'WordPress content preview'}
+        >
+            <iframe
+                className="content-preview-frame"
+                title={locale === 'ar' ? 'معاينة HTML للمحتوى' : 'Content HTML preview'}
+                sandbox=""
+                referrerPolicy="no-referrer"
+                srcDoc={content}
+            />
+        </article>
     );
 }
 
@@ -549,6 +603,10 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                                 viewMode={viewMode}
                                 onShowEdit={() => setViewMode(showContentEditorEdit())}
                             />
+                            <ContentEditorShowPreviewControl
+                                viewMode={viewMode}
+                                onShowPreview={() => setViewMode(showContentEditorPreview())}
+                            />
                         </div>
                     </div>
                     {viewMode === 'edit' ? (
@@ -556,7 +614,9 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                             <span className="sr-only">{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span>
                             <textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} />
                         </label>
-                    ) : null}
+                    ) : (
+                        <ContentEditorPreviewSurface content={draft.content} />
+                    )}
                 </section>
                 <label><span>{locale === 'ar' ? 'الملخص' : 'Excerpt'}</span><textarea rows={4} value={draft.excerpt} onChange={(e) => set('excerpt', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'الحالة' : 'Status'}</span>

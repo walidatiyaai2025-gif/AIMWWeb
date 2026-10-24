@@ -62,11 +62,11 @@ final class ContentEditorShowEditTerminalityTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_show_edit_slice_is_local_state_only_and_does_not_claim_show_preview(): void
+    public function test_show_edit_slice_remains_local_state_only_and_does_not_claim_preview_behavior(): void
     {
         $control = (string) file_get_contents(resource_path('js/content-editor-save-control.tsx'));
-        $start = strpos($control, 'export type ContentEditorViewMode');
-        $end = strpos($control, 'export type ContentEditorSnapshot', $start);
+        $start = strpos($control, 'export function showContentEditorEdit');
+        $end = strpos($control, 'export function showContentEditorPreview', $start);
         $slice = substr($control, $start, $end - $start);
 
         $this->assertStringNotContainsString('apiRequest', $slice);
@@ -74,8 +74,8 @@ final class ContentEditorShowEditTerminalityTest extends TestCase
         $this->assertStringNotContainsString('POST', $slice);
         $this->assertStringNotContainsString('PATCH', $slice);
         $this->assertStringNotContainsString('DELETE', $slice);
-        $this->assertStringNotContainsString('AIMW-CONT-F57B1E1503', $control);
-        $this->assertStringNotContainsString('ContentEditorShowPreviewControl', $control);
+        $this->assertStringNotContainsString('AIMW-CONT-F57B1E1503', $slice);
+        $this->assertStringNotContainsString('ContentEditorShowPreviewControl', $slice);
     }
 
     /** @param list<string> $permissions */
