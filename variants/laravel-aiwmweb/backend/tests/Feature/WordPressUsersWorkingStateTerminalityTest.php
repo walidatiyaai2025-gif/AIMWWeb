@@ -46,7 +46,8 @@ final class WordPressUsersWorkingStateTerminalityTest extends TestCase
         $this->assertStringContainsString("actionKey === 'wordpress-users.save'", $components);
         $this->assertStringContainsString('busy={busy}', $components);
 
-        $contract = config('frontend_actions.wordpress-users.save');
+        $actions = config('frontend_actions');
+        $contract = $actions['wordpress-users.save'] ?? null;
         $this->assertIsArray($contract);
         $this->assertSame(self::EXISTING_SAVE_OPERATION_ID, $contract['operation_id']);
         $this->assertSame('content.edit', $contract['permission']);
