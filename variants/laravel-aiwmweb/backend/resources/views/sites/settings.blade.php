@@ -11,6 +11,16 @@
             <p>Site workspace</p>
             <h1>Settings</h1>
             <p>Authoritative settings summary for <strong>{{ $site->name }}</strong>.</p>
+            <nav aria-label="Site settings shortcuts">
+                <a
+                    href="{{ route('canonical.site.details', ['tenant' => $tenant, 'site' => $site->getKey()], false) }}"
+                    data-canonical-operation="AIMW-CONT-0154E7772B"
+                >{{ app()->getLocale() === 'ar' ? 'لوحة الموقع' : 'Site dashboard' }}</a>
+                <a
+                    href="/tenants/{{ rawurlencode($tenant) }}/sites/{{ $site->getKey() }}/connection"
+                    data-canonical-operation="AIMW-CONT-0154E7772B"
+                >{{ app()->getLocale() === 'ar' ? 'مركز الاتصال' : 'Connection center' }}</a>
+            </nav>
         </header>
 
         @if (session('status'))
