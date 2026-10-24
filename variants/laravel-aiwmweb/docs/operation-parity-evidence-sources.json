@@ -1023,8 +1023,8 @@
     },
     {
       "label": "AIMW-CONT-BF5F72F4F9 Site Connect canonical route terminality",
-      "sha": "c971d347b00485c08876b5354d17d7638a6bd6fe",
-      "observed_pr_head": "c971d347b00485c08876b5354d17d7638a6bd6fe",
+      "sha": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
+      "observed_pr_head": "9ff12621218525ea09cf75e93cb5ad40fbb9a44c",
       "domains": [
         "content"
       ],
@@ -1034,7 +1034,7 @@
       ],
       "route_api_provenance": {
         "AIMW-CONT-BF5F72F4F9": {
-          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SitesConnectRouteServiceProvider.php",
           "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
           "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
           "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
