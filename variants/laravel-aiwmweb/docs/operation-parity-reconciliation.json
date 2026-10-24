@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 765,
-    "pending": 166,
+    "adapted": 766,
+    "pending": 165,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 765,
-    "overall_parity_percent": 82.17
+    "terminal": 766,
+    "overall_parity_percent": 82.28
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 294,
-    "pending": 152,
+    "terminal": 295,
+    "pending": 151,
     "blocked": 0,
-    "percent": 65.92
+    "percent": 66.14
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 91,
-      "pending": 73,
+      "adapted": 92,
+      "pending": 72,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 91,
-      "percent": 55.49
+      "terminal": 92,
+      "percent": 56.1
     },
     "email": {
       "total": 82,
@@ -18809,21 +18809,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
+      "evidence": "AIMW-CONT-4961F90970 Settings SetLight focused closure@b5806dfe95896b4cd0cd68690de159a4abda87a3: variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx; focused-closure:AIMW-CONT-4961F90970; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
+        "source_sha": "b5806dfe95896b4cd0cd68690de159a4abda87a3",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-4961F90970",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/settings-appearance-light-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/settings-appearance-light-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/settings-set-light-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36797,12 +36807,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 294,
-      "pending": 152,
+      "adapted": 295,
+      "pending": 151,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 294,
-      "percent": 65.92
+      "terminal": 295,
+      "percent": 66.14
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36832,7 +36842,6 @@
       "AIMW-CONT-4147188AB1",
       "AIMW-CONT-47007EE040",
       "AIMW-CONT-47C0477703",
-      "AIMW-CONT-4961F90970",
       "AIMW-CONT-4A64732FC6",
       "AIMW-CONT-50DF6B23CC",
       "AIMW-CONT-519B93F503",
@@ -37879,6 +37888,7 @@
       "AIMW-CONT-3D6485D903",
       "AIMW-CONT-4209A8ADF4",
       "AIMW-CONT-44A3B8E551",
+      "AIMW-CONT-4961F90970",
       "AIMW-CONT-4D6C928D75",
       "AIMW-CONT-553D999DDB",
       "AIMW-CONT-564636DDC9",
@@ -38444,10 +38454,17 @@
         "operation_ids": [
           "AIMW-CONT-5BE26C7AB5"
         ]
+      },
+      {
+        "label": "AIMW-CONT-4961F90970 Settings SetLight focused closure",
+        "sha": "b5806dfe95896b4cd0cd68690de159a4abda87a3",
+        "operation_ids": [
+          "AIMW-CONT-4961F90970"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 64,
-    "focused_closure_contract_count": 294,
+    "focused_closure_operation_scoped_count": 65,
+    "focused_closure_contract_count": 295,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
