@@ -34,6 +34,7 @@ import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
 import { SitesSystemHealthLinkControl } from './sites-system-health-link-control';
@@ -577,7 +578,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
-                        renderActions={route.key === 'explorer' ? (row) => (
+                        renderActions={route.key === 'site-reliability' ? (row) => (
+                            <SiteReliabilityConnectionLinkControl tenantSlug={context.tenant.slug} siteId={row.site_id} />
+                        ) : route.key === 'explorer' ? (row) => (
                             <ContentExplorerWordPressLinkControl value={row.link} />
                         ) : route.key === 'sites' ? (row) => (
                             <span className="site-row-actions">
