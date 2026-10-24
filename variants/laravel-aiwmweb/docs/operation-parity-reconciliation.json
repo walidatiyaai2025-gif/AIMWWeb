@@ -25,12 +25,12 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 729,
-    "pending": 202,
+    "adapted": 730,
+    "pending": 201,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 729,
-    "overall_parity_percent": 78.3
+    "terminal": 730,
+    "overall_parity_percent": 78.41
   },
   "visible_controls": {
     "total": 446,
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 62,
-      "pending": 102,
+      "adapted": 63,
+      "pending": 101,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 62,
-      "percent": 37.8
+      "terminal": 63,
+      "percent": 38.41
     },
     "email": {
       "total": 82,
@@ -20478,21 +20478,34 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/routes/web.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+      "evidence": "AIMW-CONT-1C2443112C WordPress Users route closure@f22da647d324acde8f962c40453e2e3f852ad1b8: variants/laravel-aiwmweb/backend/routes/web.php; explicit-route-api:AIMW-CONT-1C2443112C; action:variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php; acceptance:variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-route-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed route/API provenance is operation-linked to a real route declaration, declared action, focused operation-ID binding, runtime acceptance, and strict security contract.",
+        "source_label": "AIMW-CONT-1C2443112C WordPress Users route closure",
+        "source_sha": "f22da647d324acde8f962c40453e2e3f852ad1b8",
+        "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+        "evidence_mode": "explicit_route_api_contract",
+        "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/wordpress-users-route-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-1C2443112C",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "operation-link-test:variants/laravel-aiwmweb/backend/tests/Feature/WordPressUsersRouteTerminalityTest.php",
+          "middleware:auth",
+          "middleware:tenant.context",
+          "authorization:TenantAuthorizer",
+          "test:404",
+          "test:403"
+        ]
       }
     },
     {
@@ -36403,12 +36416,12 @@
     "route": {
       "total": 84,
       "ported": 0,
-      "adapted": 66,
-      "pending": 18,
+      "adapted": 67,
+      "pending": 17,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 66,
-      "percent": 78.57
+      "terminal": 67,
+      "percent": 79.76
     },
     "service": {
       "total": 349,
@@ -36450,7 +36463,6 @@
       "AIMW-CONT-10AFCDF334",
       "AIMW-CONT-1456BE001F",
       "AIMW-CONT-16D4AD8DC8",
-      "AIMW-CONT-1C2443112C",
       "AIMW-CONT-247E791DA7",
       "AIMW-CONT-2752ED9351",
       "AIMW-CONT-276925F148",
@@ -37132,6 +37144,18 @@
           "AIMW-CONT-F90125AE87"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-CONT-1C2443112C WordPress Users route closure",
+        "sha": "f22da647d324acde8f962c40453e2e3f852ad1b8",
+        "domains": [
+          "content"
+        ],
+        "supporting_only": true,
+        "operation_ids": [
+          "AIMW-CONT-1C2443112C"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37182,6 +37206,7 @@
       "e9df9b090a8bb5ee98a3487a65ce6cc2d7af9a72",
       "ed3f8fa663b105d8b8105b56eb22fc7399baa8f4",
       "ef875ba3118ce78b45f0d6fc3a1e46ccc5c722d8",
+      "f22da647d324acde8f962c40453e2e3f852ad1b8",
       "f3ddc770f717710aa290c0790dd87b5a03550100",
       "fa06abdfabc3d435386644615f7d59f3adb49d94",
       "fb068134c2ad60111bd376f4f400c1bd247394ca",
@@ -37268,6 +37293,7 @@
       "AIMW-BILL-69825FEAD5",
       "AIMW-BILL-B86D339C12",
       "AIMW-COMM-A16719E105",
+      "AIMW-CONT-1C2443112C",
       "AIMW-CONT-270F69CE9A",
       "AIMW-CONT-2F2E40D7F0",
       "AIMW-CONT-475267F150",
@@ -37293,7 +37319,7 @@
       "AIMW-SEO-5F71B89C92",
       "AIMW-TAXO-CDC6948A06"
     ],
-    "explicit_route_api_contract_count": 31,
+    "explicit_route_api_contract_count": 32,
     "focused_closure_source_sha": "ae01461eb85c64046734688ae0bf3f418591c653",
     "focused_closure_contract_terminals": [
       "AIMW-AI-024BB0971B",
