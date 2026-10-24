@@ -971,8 +971,8 @@
     },
     {
       "label": "AIMW-CONT-3443C173C6 Site Settings route closure",
-      "sha": "09026a652d4c2f29e2d871c68e757291f317419d",
-      "observed_pr_head": "09026a652d4c2f29e2d871c68e757291f317419d",
+      "sha": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+      "observed_pr_head": "836b6a6a6d1d5d02022474f391d072fad2690c73",
       "domains": [
         "content"
       ],
