@@ -37,6 +37,7 @@ import { runAuthoritativeSiteReliabilityReload, SITE_RELIABILITY_RELOAD_OPERATIO
 const SITES_RELOAD_OPERATION_ID = 'AIMW-SYNC-A9E956A4DA';
 const SITES_SHOW_ALL_OPERATION_ID = 'AIMW-CONT-C178278FCB';
 const SITES_SHOW_REVIEW_OPERATION_ID = 'AIMW-CONT-CA17F05024';
+export const SITES_SITE_URL_OPERATION_ID = 'AIMW-CONT-44A3B8E551';
 export const COMMENTS_SEARCH_OPERATION_ID = 'AIMW-SYNC-4E3C0156FC';
 export const AI_CENTER_METADATA_REFRESH_OPERATION_ID = 'AIMW-AI-953A6C0D98';
 export const NOTIFICATION_INBOX_RELOAD_OPERATION_ID = 'AIMW-EMAI-12A6FEB2FF';
@@ -537,6 +538,24 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                 {visibleRows.length ? (
                     <DataTable
                         rows={visibleRows}
+                        columnOrder={route.key === 'sites'
+                            ? ['id', 'name', 'site_url', 'connection_status', 'last_connection_test_at_utc']
+                            : undefined}
+                        renderCell={route.key === 'sites' ? (row, column, formatted) => {
+                            if (column !== 'site_url') return formatted;
+                            const siteUrl = typeof row.site_url === 'string' ? row.site_url.trim() : '';
+                            if (!siteUrl) return formatted;
+                            return (
+                                <a
+                                    href={siteUrl}
+                                    target="_blank"
+                                    rel="noopener"
+                                    data-canonical-operation={SITES_SITE_URL_OPERATION_ID}
+                                >
+                                    {siteUrl}
+                                </a>
+                            );
+                        } : undefined}
                         renderActions={route.key === 'posts' ? (row) => (
                             <PostsWordPressLinkControl value={row.link} />
                         ) : route.key === 'pages' ? (row) => (
