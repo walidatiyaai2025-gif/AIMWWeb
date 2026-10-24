@@ -115,7 +115,7 @@ function DashboardContent({ context, route }: { context: FrontendContext; route:
         <div className="workspace-stack">
             <section className="hero-panel">
                 <div><span className="workspace-kicker">LIVE TENANT DATA</span><h2>{locale === 'ar' ? 'ملخص التشغيل' : 'Operational summary'}</h2><p>{locale === 'ar' ? 'تُعرض المؤشرات فقط عندما يعيدها خادم Laravel للحساب الحالي.' : 'Metrics render only when the Laravel backend returns them for the active tenant.'}</p></div>
-                <LiveSystemStatusRefreshControl busy={query.isFetching} onRefresh={() => query.refetch()} />
+                <LiveSystemStatusRefreshControl busy={query.isFetching} onClick={() => query.refetch()} />
                 <DashboardSitesNavigationControl context={context} />
             </section>
             {metrics.length ? (
