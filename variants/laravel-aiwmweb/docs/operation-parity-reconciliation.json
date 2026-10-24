@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 764,
-    "pending": 167,
+    "adapted": 765,
+    "pending": 166,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 764,
-    "overall_parity_percent": 82.06
+    "terminal": 765,
+    "overall_parity_percent": 82.17
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 293,
-    "pending": 153,
+    "terminal": 294,
+    "pending": 152,
     "blocked": 0,
-    "percent": 65.7
+    "percent": 65.92
   },
   "domains": {
     "ai": {
@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 90,
-      "pending": 74,
+      "adapted": 91,
+      "pending": 73,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 90,
-      "percent": 54.88
+      "terminal": 91,
+      "percent": 55.49
     },
     "email": {
       "total": 82,
@@ -19840,21 +19840,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php",
+      "evidence": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure@8b54683118d35836bf70a5c2c279fd1c2a83a5fa: variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php; focused-closure:AIMW-CONT-E1A7A8CAA7; test:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php; evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-settings-localized-submit-controls-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure",
+        "source_sha": "8b54683118d35836bf70a5c2c279fd1c2a83a5fa",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-settings-localized-submit-controls-terminality.json",
+        "signals": [
+          "operation:AIMW-CONT-E1A7A8CAA7",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/views/sites/settings.blade.php",
+          "test:variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsLocalizedSubmitControlsTerminalityTest.php",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/site-settings-localized-submit-controls-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36787,12 +36797,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 293,
-      "pending": 153,
+      "adapted": 294,
+      "pending": 152,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 293,
-      "percent": 65.7
+      "terminal": 294,
+      "percent": 65.92
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36875,7 +36885,6 @@
       "AIMW-CONT-CA4920CBC8",
       "AIMW-CONT-CF4BE4EC3B",
       "AIMW-CONT-DF6FFA9D87",
-      "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E4D7C73D4E",
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
@@ -37897,6 +37906,7 @@
       "AIMW-CONT-D5FFC84EC2",
       "AIMW-CONT-DD56664FDA",
       "AIMW-CONT-DF8B12B6DE",
+      "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
       "AIMW-CONT-E38ADF8481",
       "AIMW-CONT-E89EDDF780",
@@ -38427,10 +38437,17 @@
         "operation_ids": [
           "AIMW-CONT-93B6E02ACF"
         ]
+      },
+      {
+        "label": "AIMW-CONT-E1A7A8CAA7 Site Settings localized submit controls focused closure",
+        "sha": "8b54683118d35836bf70a5c2c279fd1c2a83a5fa",
+        "operation_ids": [
+          "AIMW-CONT-E1A7A8CAA7"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 63,
-    "focused_closure_contract_count": 293,
+    "focused_closure_operation_scoped_count": 64,
+    "focused_closure_contract_count": 294,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
