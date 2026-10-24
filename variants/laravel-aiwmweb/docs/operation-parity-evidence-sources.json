@@ -1333,6 +1333,14 @@
       "operation_ids": [
         "AIMW-TAXO-770DAA668D"
       ]
+    },
+    {
+      "label": "AIMW-CONT-F57B1E1503 Content Editor ShowPreview focused closure",
+      "sha": "39784fd5cda6f0dd9949558d055410ee7e7190b1",
+      "observed_pr_head": "39784fd5cda6f0dd9949558d055410ee7e7190b1",
+      "operation_ids": [
+        "AIMW-CONT-F57B1E1503"
+      ]
     }
   ]
 }
