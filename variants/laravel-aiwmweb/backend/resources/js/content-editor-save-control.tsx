@@ -10,6 +10,7 @@ export const CONTENT_EDITOR_CLEAR_FEATURED_OPERATION_ID = 'AIMW-CONT-A6867078EA'
 export const CONTENT_EDITOR_GENERATE_SLUG_OPERATION_ID = 'AIMW-CONT-564636DDC9';
 export const CONTENT_EDITOR_SITES_LINK_OPERATION_ID = 'AIMW-CONT-B6BB292F85';
 export const CONTENT_EDITOR_EXPLORER_LINK_OPERATION_ID = 'AIMW-CONT-607ACDF4D8';
+export const CONTENT_EDITOR_SHOW_EDIT_OPERATION_ID = 'AIMW-CONT-A5D88995F3';
 export const CONTENT_EDITOR_WORDPRESS_LINK_OPERATION_ID = 'AIMW-CONT-2C51372C70';
 
 export function safeContentEditorExternalUrl(value: unknown): string | null {
@@ -124,6 +125,34 @@ export function ContentEditorExplorerLinkControl({
         >
             ← {locale === 'ar' ? 'العودة إلى المستكشف' : 'Back to Explorer'}
         </a>
+    );
+}
+
+export type ContentEditorViewMode = 'edit' | 'preview';
+
+export function showContentEditorEdit(): ContentEditorViewMode {
+    return 'edit';
+}
+
+export function ContentEditorShowEditControl({
+    viewMode,
+    onShowEdit,
+}: {
+    viewMode: ContentEditorViewMode;
+    onShowEdit: () => void;
+}) {
+    const { locale } = useLocale();
+
+    return (
+        <button
+            type="button"
+            className={viewMode === 'edit' ? 'btn active' : 'btn'}
+            aria-pressed={viewMode === 'edit'}
+            data-canonical-operation={CONTENT_EDITOR_SHOW_EDIT_OPERATION_ID}
+            onClick={onShowEdit}
+        >
+            {locale === 'ar' ? 'تحرير' : 'Edit'}
+        </button>
     );
 }
 
@@ -352,6 +381,7 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
     const [submittingApproval, setSubmittingApproval] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [viewMode, setViewMode] = useState<ContentEditorViewMode>('edit');
 
     const reload = async (): Promise<ContentEditorSnapshot> => {
         if (!endpoint) throw new ApiError('Invalid content editor route.', 404, 'invalid_editor_route');
@@ -506,7 +536,28 @@ export function ContentEditorSaveControl({ context }: { context: FrontendContext
                         />
                     </div>
                 </label>
-                <label><span>{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span><textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} /></label>
+                <section className="form-stack content-editor-content-card">
+                    <div className="editor-card-head">
+                        <div>
+                            <h3>{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</h3>
+                            <p>{locale === 'ar'
+                                ? 'حرر محتوى WordPress بصيغة HTML.'
+                                : 'Edit WordPress HTML content.'}</p>
+                        </div>
+                        <div className="editor-view-toggle">
+                            <ContentEditorShowEditControl
+                                viewMode={viewMode}
+                                onShowEdit={() => setViewMode(showContentEditorEdit())}
+                            />
+                        </div>
+                    </div>
+                    {viewMode === 'edit' ? (
+                        <label>
+                            <span className="sr-only">{locale === 'ar' ? 'المحتوى HTML' : 'Content HTML'}</span>
+                            <textarea rows={14} value={draft.content} onChange={(e) => set('content', e.target.value)} />
+                        </label>
+                    ) : null}
+                </section>
                 <label><span>{locale === 'ar' ? 'الملخص' : 'Excerpt'}</span><textarea rows={4} value={draft.excerpt} onChange={(e) => set('excerpt', e.target.value)} /></label>
                 <label><span>{locale === 'ar' ? 'الحالة' : 'Status'}</span>
                     <select value={draft.status} onChange={(e) => set('status', e.target.value as ContentEditorDraft['status'])}>

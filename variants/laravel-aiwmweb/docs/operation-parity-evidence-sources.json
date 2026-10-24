@@ -970,6 +970,28 @@
       }
     },
     {
+      "label": "AIMW-CONT-3443C173C6 Site Settings route closure",
+      "sha": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+      "observed_pr_head": "836b6a6a6d1d5d02022474f391d072fad2690c73",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-3443C173C6"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-3443C173C6": {
+          "destination_path": "variants/laravel-aiwmweb/backend/app/Providers/SiteSettingsRouteServiceProvider.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/SiteSettingsReadController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteSettingsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-settings-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
+    },
+    {
       "label": "AIMW-CONT-5CF47CBE2A Content Explorer route closure",
       "sha": "18191b10b7909f3670ccbde3dc41025202cb7ca5",
       "observed_pr_head": "18191b10b7909f3670ccbde3dc41025202cb7ca5",
@@ -1286,6 +1308,14 @@
       "observed_pr_head": "1dbaca6967ec022a52224dbb47f523a32a34cf80",
       "operation_ids": [
         "AIMW-CONT-607ACDF4D8"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-A5D88995F3 Content Editor ShowEdit focused closure",
+      "sha": "39effaa2c6686e1d2d7a9466a569fb7596a92b54",
+      "observed_pr_head": "39effaa2c6686e1d2d7a9466a569fb7596a92b54",
+      "operation_ids": [
+        "AIMW-CONT-A5D88995F3"
       ]
     }
   ]
