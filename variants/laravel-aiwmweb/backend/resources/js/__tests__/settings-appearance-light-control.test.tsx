@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FrontendContext } from '../core';
@@ -74,7 +74,9 @@ describe('AIMW-CONT-4961F90970 Settings SetLight', () => {
         const button = screen.getByRole('button', { name: 'Light' });
         expect(button).toHaveAttribute('aria-pressed', 'true');
 
-        window.dispatchEvent(new CustomEvent(APPEARANCE_MODE_EVENT, { detail: { mode: 'dark' } }));
+        act(() => {
+            window.dispatchEvent(new CustomEvent(APPEARANCE_MODE_EVENT, { detail: { mode: 'dark' } }));
+        });
         expect(button).toHaveAttribute('aria-pressed', 'false');
     });
 
