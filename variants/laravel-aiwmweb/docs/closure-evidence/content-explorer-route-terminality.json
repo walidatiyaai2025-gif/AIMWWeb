@@ -12,11 +12,15 @@
   "laravel_read_api": "GET /api/v1/tenants/{tenant}/sites/{site}/explorer",
   "read_api_route_name": "canonical.api.content-explorer.read",
   "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
-  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php",
+  "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
   "frontend_path": "variants/laravel-aiwmweb/backend/resources/js/app.tsx",
   "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/ContentExplorerRouteTerminalityTest.php",
   "authorization_and_isolation": {
-    "middleware": ["web", "auth", "tenant.context"],
+    "middleware": [
+      "web",
+      "auth",
+      "tenant.context"
+    ],
     "workspace_permission": "sites.view",
     "tenant_membership_required": true,
     "selected_site_is_server_bound": true,
@@ -61,5 +65,6 @@
     "branch": "worker/763-content-explorer-route",
     "issue": 763,
     "authority_issue": 257
-  }
+  },
+  "read_controller_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/ContentExplorerReadController.php"
 }
