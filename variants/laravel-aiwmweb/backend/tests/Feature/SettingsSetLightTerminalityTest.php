@@ -1,0 +1,44 @@
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+
+final class SettingsSetLightTerminalityTest extends TestCase
+{
+    private const OPERATION_ID = 'AIMW-CONT-4961F90970';
+
+    public function test_source_semantics_are_the_settings_set_light_control(): void
+    {
+        $source = (string) file_get_contents(
+            base_path('../../../src/AIWordPressManager.Web/Components/Pages/Settings.razor'),
+        );
+
+        $this->assertStringContainsString('@onclick="SetLight"', $source);
+        $this->assertStringContainsString('private Task SetLight() => SetMode("light");', $source);
+        $this->assertStringContainsString('ModeClass("light")', $source);
+        $this->assertStringContainsString('Clearer in bright environments', $source);
+    }
+
+    public function test_laravel_control_matches_real_local_appearance_state_and_shell_sync(): void
+    {
+        $control = (string) file_get_contents(resource_path('js/settings-appearance-light-control.tsx'));
+        $app = (string) file_get_contents(resource_path('js/app.tsx'));
+        $shell = (string) file_get_contents(resource_path('js/components.tsx'));
+
+        $this->assertStringContainsString(self::OPERATION_ID, $control);
+        $this->assertStringContainsString("applyAppearanceMode('light')", $control);
+        $this->assertStringContainsString("window.localStorage.setItem(MODE_STORAGE_KEY, mode)", $control);
+        $this->assertStringContainsString('document.documentElement.dataset.mode = mode', $control);
+        $this->assertStringContainsString("window.dispatchEvent(new CustomEvent(APPEARANCE_MODE_EVENT", $control);
+        $this->assertStringContainsString('aria-pressed={mode === \'light\'}', $control);
+        $this->assertStringContainsString('<SettingsAppearanceLightControl context={context} />', $app);
+        $this->assertStringContainsString("window.addEventListener('aiwm:appearance-mode', syncAppearanceMode)", $shell);
+
+        $this->assertStringNotContainsString('apiRequest', $control);
+        $this->assertStringNotContainsString('fetch(', $control);
+        $this->assertStringNotContainsString('POST', $control);
+        $this->assertStringNotContainsString('PATCH', $control);
+        $this->assertStringNotContainsString('DELETE', $control);
+    }
+}

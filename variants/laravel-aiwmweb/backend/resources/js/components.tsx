@@ -608,6 +608,15 @@ export function AppShell({ context, children }: { context: FrontendContext; chil
     }, [mode]);
 
     useEffect(() => {
+        const syncAppearanceMode = (event: Event) => {
+            const next = (event as CustomEvent<{ mode?: unknown }>).detail?.mode;
+            if (next === 'dark' || next === 'light') setMode(next);
+        };
+        window.addEventListener('aiwm:appearance-mode', syncAppearanceMode);
+        return () => window.removeEventListener('aiwm:appearance-mode', syncAppearanceMode);
+    }, []);
+
+    useEffect(() => {
         const handler = (event: KeyboardEvent) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
                 event.preventDefault();
