@@ -1504,8 +1504,8 @@
     },
     {
       "label": "AIMW-CONT-93B6E02ACF Content Explorer SetContentTab focused closure",
-      "sha": "ccd27bb532e0233e395e1ec69591979ce8a254d3",
-      "observed_pr_head": "ccd27bb532e0233e395e1ec69591979ce8a254d3",
+      "sha": "243bcdeb80587b7438935ccbed4c2820c94f1633",
+      "observed_pr_head": "243bcdeb80587b7438935ccbed4c2820c94f1633",
       "operation_ids": [
         "AIMW-CONT-93B6E02ACF"
       ]
