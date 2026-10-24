@@ -95,15 +95,20 @@ export function LoadingState() {
 
 export function DataTable({
     rows,
+    columnOrder,
+    renderCell,
     renderActions,
 }: {
     rows: Array<Record<string, unknown>>;
+    columnOrder?: string[];
+    renderCell?: (row: Record<string, unknown>, column: string, formatted: string) => React.ReactNode;
     renderActions?: (row: Record<string, unknown>) => React.ReactNode;
 }) {
     const { locale } = useLocale();
     const preferred = ['id', 'title', 'name', 'status', 'type', 'site', 'updated_at', 'updatedAt', 'created_at'];
     const available = new Set(rows.flatMap((row) => Object.keys(row)));
-    const columns = preferred.filter((column) => available.has(column)).slice(0, 6);
+    const candidateColumns = columnOrder ?? preferred;
+    const columns = candidateColumns.filter((column) => available.has(column)).slice(0, 6);
     const fallbackColumns = columns.length ? columns : Array.from(available).slice(0, 6);
 
     const format = (value: unknown) => {
@@ -125,7 +130,10 @@ export function DataTable({
                 <tbody>
                     {rows.map((row, index) => (
                         <tr key={String(row.id ?? index)}>
-                            {fallbackColumns.map((column) => <td key={column}>{format(row[column])}</td>)}
+                            {fallbackColumns.map((column) => {
+                                const formatted = format(row[column]);
+                                return <td key={column}>{renderCell ? renderCell(row, column, formatted) : formatted}</td>;
+                            })}
                             {renderActions ? <td>{renderActions(row)}</td> : null}
                         </tr>
                     ))}
