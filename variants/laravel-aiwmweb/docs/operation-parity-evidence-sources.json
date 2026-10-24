@@ -1023,8 +1023,8 @@
     },
     {
       "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
-      "sha": "317475505bc60c4b37770fc4049d61c6b0b7deff",
-      "observed_pr_head": "317475505bc60c4b37770fc4049d61c6b0b7deff",
+      "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
       "operation_ids": [
         "AIMW-SYNC-F7CE702C7D"
       ]
@@ -1576,8 +1576,8 @@
     },
     {
       "label": "AIMW-SYNC-F7CE702C7D AppFilterBar clear filters focused closure",
-      "sha": "317475505bc60c4b37770fc4049d61c6b0b7deff",
-      "observed_pr_head": "317475505bc60c4b37770fc4049d61c6b0b7deff",
+      "sha": "2ab60e249852eceb662d615a61f0ba758ed9a494",
+      "observed_pr_head": "2ab60e249852eceb662d615a61f0ba758ed9a494",
       "operation_ids": [
         "AIMW-SYNC-F7CE702C7D"
       ]
