@@ -35,6 +35,12 @@ import { NotificationOpenControl } from './notification-open-control';
 import { PagesWordPressLinkControl } from './pages-wordpress-link-control';
 import { PostsWordPressLinkControl } from './posts-wordpress-link-control';
 import { SiteOperationsExportControl } from './site-operations-export-control';
+import {
+    filterSiteOperationsRows,
+    siteOperationsDefaultFilters,
+    SiteOperationsFiltersControl,
+    type SiteOperationsFilterState,
+} from './site-operations-filters-control';
 import { SiteReliabilityConnectionLinkControl } from './site-reliability-connection-link-control';
 import { SitesSiteUrlLinkControl } from './sites-site-url-link-control';
 import { SitesInterpolatedLinksControl } from './sites-interpolated-links-control';
@@ -205,6 +211,8 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
+    const [siteOperationsFilters, setSiteOperationsFilters] = useState<SiteOperationsFilterState>(() => siteOperationsDefaultFilters());
+    const [siteOperationsExportResetToken, setSiteOperationsExportResetToken] = useState(0);
     const [taxonomyType, setTaxonomyType] = useState<'category' | 'post_tag'>('category');
     const [emailHistoryDraft, setEmailHistoryDraft] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
     const [emailHistoryFilters, setEmailHistoryFilters] = useState<EmailHistoryFilterState>({ siteId: '', status: '', correlation: '' });
@@ -255,6 +263,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, '')),
             staleTime: 0,
         });
+    };
+
+    const resetSiteOperationsFilters = (): void => {
+        if (route.key !== 'site-operations') return;
+        setSearchInput('');
+        setSearch('');
+        setPage(1);
+        setSiteOperationsFilters(siteOperationsDefaultFilters());
+        setSiteOperationsExportResetToken((current) => current + 1);
     };
 
     const applyEmailHistoryFilters = async (): Promise<void> => {
@@ -361,7 +378,9 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
             : sitesFilter === 'review'
                 ? collection.rows.filter(isSiteReviewRow)
                 : collection.rows)
-        : collection.rows;
+        : route.key === 'site-operations'
+            ? filterSiteOperationsRows(collection.rows, search, siteOperationsFilters)
+            : collection.rows;
     const connectedSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteConnectedRow).length : 0;
     const reviewSiteCount = route.key === 'sites' ? collection.rows.filter(isSiteReviewRow).length : 0;
     const serverErrors = mutation.error instanceof ApiError ? mutation.error.validation : {};
@@ -390,6 +409,15 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         busy={query.isFetching}
                         onChange={setEmailHistoryDraft}
                         onApply={() => { void applyEmailHistoryFilters(); }}
+                    />
+                ) : null}
+                {route.key === 'site-operations' ? (
+                    <SiteOperationsFiltersControl
+                        rows={collection.rows}
+                        locale={locale}
+                        value={siteOperationsFilters}
+                        onChange={setSiteOperationsFilters}
+                        onReset={resetSiteOperationsFilters}
                     />
                 ) : null}
                 <form className="search-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput); }} role="search">
@@ -538,7 +566,10 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         );
                     })}
                     {route.key === 'site-operations' ? (
-                        <SiteOperationsExportControl rows={visibleRows} locale={locale} />
+                        <SiteOperationsExportControl rows={visibleRows}
+                            locale={locale}
+                            resetToken={siteOperationsExportResetToken}
+                        />
                     ) : null}
                     {route.key === 'schedules' ? (
                         <button
