@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #862 / umbrella #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-44A3B8E551",
+  "terminal_state": "ADAPTED",
+  "operation": {
+    "domain": "content",
+    "kind": "visible_control",
+    "route_screen": "/sites",
+    "source": "src/AIWordPressManager.Web/Components/Pages/Sites.razor",
+    "source_control": "@site.SiteUrl -> @site.SiteUrl",
+    "source_intent": "Render each authoritative SiteUrl as an external navigation link while preserving the displayed URL value.",
+    "mutation": false,
+    "tenant_owned": true,
+    "external_dependency": "WordPress",
+    "risk": "low"
+  },
+  "laravel_runtime": {
+    "production_source": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "operation_marker": "AIMW-CONT-44A3B8E551",
+    "collection_source": "/api/tenants/{tenant}/sites",
+    "binding": "DataTable Sites rows pass row.url into SitesUrlLinkControl.",
+    "safe_navigation": "Only absolute http and https URLs are rendered as anchors; malformed or non-http(s) values remain inert text.",
+    "target": "_blank",
+    "rel": "noopener noreferrer",
+    "display_value": "The authoritative trimmed URL string is the visible link text."
+  },
+  "security_and_truthfulness": {
+    "authentication_and_tenant_boundary": "The control is rendered only after the existing tenant-scoped Sites workspace successfully reads the active tenant collection.",
+    "authorization": "tenant.view and sites.view remain enforced by the existing Sites route and backend contract.",
+    "foreign_tenant": "404 through the existing tenant context boundary.",
+    "unsafe_scheme_navigation": false,
+    "network_request_on_click": "browser navigation to the authoritative external URL only",
+    "server_mutation": false,
+    "wordpress_mutation": false,
+    "fake_success": false
+  },
+  "deterministic_states": {
+    "loading": "Existing ResourceContent loading state is unchanged.",
+    "empty": "Existing authoritative empty state is unchanged.",
+    "invalid_url": "The value is shown as inert text rather than converted into an unsafe link.",
+    "valid_url": "A real external anchor is rendered with the canonical operation marker."
+  },
+  "scope_boundary": {
+    "selected_operation": "AIMW-CONT-44A3B8E551 only",
+    "sibling_sites_operations_claimed": false,
+    "aspnet_runtime_modified": false,
+    "generated_reconciliation_hand_edited": false,
+    "mutation_added": false
+  },
+  "acceptance": {
+    "frontend_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/sites-url-link-visible-control.test.tsx",
+    "feature_test": "variants/laravel-aiwmweb/backend/tests/Feature/SitesUrlLinkVisibleControlTerminalityTest.php",
+    "coverage": [
+      "exact canonical operation identity and ASP.NET source semantics",
+      "authoritative site URL is rendered as the visible external link",
+      "http and https only",
+      "target blank plus noopener noreferrer",
+      "no POST, PATCH, DELETE, fetch, or mutation in the link control",
+      "active tenant and sites.view boundary",
+      "foreign tenant fail-closed behavior"
+    ]
+  },
+  "provenance": {
+    "base_branch": "worker/laravel-aiwmweb-closure-composition",
+    "base_composition_sha": "86865c168d7792287a6323439b08b8d8e35205ff",
+    "branch": "worker/862-sites-url-link",
+    "issue": 862,
+    "authority_issue": 257
+  },
+  "materialization": {
+    "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-862.yml",
+    "operation_state": "ADAPTED",
+    "generated_reconciliation_required": true
+  }
+}
