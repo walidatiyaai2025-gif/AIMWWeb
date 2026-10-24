@@ -55,6 +55,8 @@
         .price-cta { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 14px; border-radius: 11px; background: #72e2d1; color: #06111e; text-decoration: none; font-weight: 850; }
         .pricing-empty { padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color: #aabbd1; background: rgba(255,255,255,.03); }
         .public-footer { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid rgba(255,255,255,.08); color: #91a4bf; }
+        .footer-brand { color: inherit; text-decoration: none; font-weight: 750; }
+        .footer-brand:hover, .footer-brand:focus-visible { color: #72e2d1; outline: none; }
         .footer-nav { display: flex; align-items: center; gap: 16px; }
         .footer-nav a { color: #d9e7fb; text-decoration: none; font-weight: 750; }
         .footer-nav a:hover, .footer-nav a:focus-visible { color: #72e2d1; outline: none; }
@@ -298,7 +300,12 @@
         </section>
 
         <footer class="public-footer" aria-label="Public footer">
-            <span>AI WordPress Manager · Operations OS</span>
+            <a
+                class="footer-brand"
+                href="{{ route('public.welcome', [], false) }}"
+                data-canonical-operation="AIMW-CONT-C7CB5EE184"
+                aria-label="AI WordPress Manager"
+            >AI WordPress Manager · Operations OS</a>
             <nav class="footer-nav" aria-label="Footer navigation">
                 <a href="/login" data-canonical-operation="AIMW-CONT-247E791DA7">Sign in</a>
             </nav>
