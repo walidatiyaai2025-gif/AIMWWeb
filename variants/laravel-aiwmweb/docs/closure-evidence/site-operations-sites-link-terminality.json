@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "AIMWWeb Issue #836",
+  "parent_authority": "AIMWWeb Issue #257",
+  "target_variant": "LARAVEL_AIWMWEB",
+  "operation_id": "AIMW-CONT-5BE26C7AB5",
+  "domain": "content",
+  "kind": "visible_control",
+  "previous_state": "PENDING",
+  "terminal_state": "ADAPTED",
+  "canonical_source": {
+    "file": "src/AIWordPressManager.Web/Components/Pages/SiteOperationsOverview.razor",
+    "route_screen": "/site-operations | /operations/sites",
+    "visible_control": "/sites -> /sites",
+    "label": "Manage sites / إدارة المواقع",
+    "tenant_owned": true,
+    "mutation": false,
+    "risk": "low"
+  },
+  "laravel_adaptation": {
+    "production_page": "variants/laravel-aiwmweb/backend/resources/js/pages.tsx",
+    "control": "variants/laravel-aiwmweb/backend/resources/js/site-operations-sites-link-control.tsx",
+    "source_route": "GET /tenants/{tenant}/site-operations (alias /tenants/{tenant}/operations/sites)",
+    "destination_route": "GET /tenants/{tenant}/sites",
+    "operation_marker": "AIMW-CONT-5BE26C7AB5",
+    "destination": "tenantUrl(active tenant slug, /sites)",
+    "source_permission": "execution.view",
+    "destination_permissions": ["tenant.view", "sites.view"],
+    "visibility": "The control renders only when the active tenant is present in the authenticated frontend context, the Sites route contract is exact, tenant.view is present, and resolveCapability confirms sites.view.",
+    "read_only": true,
+    "external_call": false,
+    "fake_success_path": "none"
+  },
+  "security_boundary": {
+    "authentication": "Both source and destination Laravel workspace routes use auth middleware.",
+    "tenant_context": "Both routes use tenant.context; foreign tenant slugs fail closed.",
+    "permission": "The source requires execution.view. The destination requires tenant.view and sites.view, and the frontend hides the navigation when those destination capabilities are unavailable.",
+    "tenant_derived_url": "The destination is generated from context.tenant.slug rather than a raw cross-tenant identifier or global /sites path.",
+    "mutation": "No API request, mutation hook, persistence write, or external WordPress call is introduced."
+  },
+  "acceptance_tests": [
+    "variants/laravel-aiwmweb/backend/tests/Feature/SiteOperationsSitesLinkTerminalityTest.php — binds the exact PENDING canonical row to the production control, proves tenant-derived destination and capability gating, verifies source/alias/destination route contracts, and proves permission/foreign-tenant fail-closed behavior.",
+    "Static production wiring assertions prove the control is rendered only from the Site Operations workspace and carries the exact canonical operation marker."
+  ],
+  "terminality": {
+    "state": "ADAPTED",
+    "basis": "The canonical Site Operations /sites navigation is implemented as a real tenant-scoped, permission-aware Laravel route transition with no fake success or mutation path."
+  },
+  "scope": {
+    "only_operation_claimed": "AIMW-CONT-5BE26C7AB5",
+    "aspnet_modified": false,
+    "generated_reconciliation_modified": false,
+    "denominator_modified": false
+  },
+  "scope_exclusions": [
+    "No ASP.NET runtime changes",
+    "No Site Operations filter, reload, export, details, reliability, or maintenance operation is claimed",
+    "No generated parity ledger or reconciliation artifact is manually edited",
+    "No production deployment is performed"
+  ]
+}
