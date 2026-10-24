@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -19,6 +19,7 @@ import { AdminBillingSupportClearSearchControl } from './admin-billing-support-c
 import { AppSearchBox } from './app-search-box';
 import { AccountProfileEmailSettingsLinkControl } from './account-profile-email-settings-link-control';
 import { ApplicationUsersClearSearchControl } from './application-users-clear-search-control';
+import { ApplicationUsersSearchControl } from './application-users-search-control';
 import { ApplicationUsersRolesPermissionsLinkControl } from './application-users-roles-permissions-link-control';
 import { ApplicationUsersStartCreateControl } from './application-users-start-create-control';
 import { runAuthoritativeBackupReload } from './backup-reload-control';
@@ -220,6 +221,7 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const applicationUsersSearchInFlight = useRef(false);
     const [sitesFilter, setSitesFilter] = useState<'all' | 'connected' | 'review'>('all');
     const [explorerPreview, setExplorerPreview] = useState<Record<string, unknown> | null>(null);
     const [explorerSelectedKeys, setExplorerSelectedKeys] = useState<Set<string>>(() => new Set());
@@ -267,7 +269,32 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
         enabled: state.state === 'enabled' && Boolean(endpoint),
     });
 
-    const applicationUsersClearAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
+    const applicationUsersSearchAuthorized = context.permissions.includes('*') || context.permissions.includes('members.manage');
+    const searchApplicationUsers = async (): Promise<void> => {
+        if (
+            route.key !== 'application-users'
+            || !endpoint
+            || query.isFetching
+            || applicationUsersSearchInFlight.current
+            || !applicationUsersSearchAuthorized
+        ) return;
+
+        const nextSearch = searchInput.trim();
+        applicationUsersSearchInFlight.current = true;
+        setPage(1);
+        setSearch(nextSearch);
+        try {
+            await queryClient.fetchQuery({
+                queryKey: ['workspace', context.tenant.slug, route.key, endpoint, 1, nextSearch, taxonomyType],
+                queryFn: () => apiRequest<unknown>(endpointWithQuery(endpoint, 1, nextSearch)),
+                staleTime: 0,
+            });
+        } finally {
+            applicationUsersSearchInFlight.current = false;
+        }
+    };
+
+    const applicationUsersClearAuthorized = applicationUsersSearchAuthorized;
     const clearApplicationUsersSearch = async (): Promise<void> => {
         if (route.key !== 'application-users' || !endpoint || query.isFetching || !applicationUsersClearAuthorized) return;
 
@@ -450,7 +477,14 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                         onReset={resetSiteOperationsFilters}
                     />
                 ) : null}
-                <form className="search-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set()); }} role="search">
+                <form className="search-form" onSubmit={(event) => {
+                    event.preventDefault();
+                    if (route.key === 'application-users') {
+                        void searchApplicationUsers().catch(() => undefined);
+                        return;
+                    }
+                    setPage(1); setSearch(searchInput); if (route.key === 'explorer') setExplorerSelectedKeys(new Set());
+                }} role="search">
                     <label className="sr-only" htmlFor={`search-${route.key}`}>{text(commonText.search)}</label>
                     {route.key === 'comments' ? (
                         <AppSearchBox
@@ -472,15 +506,23 @@ function ResourceContent({ context, route }: { context: FrontendContext; route: 
                     ) : (
                         <input id={`search-${route.key}`} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder={locale === 'ar' ? 'بحث في البيانات الحية…' : 'Search live data…'} />
                     )}
-                    <button
-                        type="submit"
-                        className="btn"
-                        data-canonical-operation={route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined}
-                        disabled={route.key === 'comments' && query.isFetching}
-                        aria-busy={route.key === 'comments' && query.isFetching ? 'true' : 'false'}
-                    >
-                        {text(commonText.search)}
-                    </button>
+                    {route.key === 'application-users' ? (
+                        <ApplicationUsersSearchControl
+                            busy={query.isFetching || applicationUsersSearchInFlight.current}
+                            locale={locale}
+                            authorized={applicationUsersSearchAuthorized}
+                        />
+                    ) : (
+                        <button
+                            type="submit"
+                            className="btn"
+                            data-canonical-operation={route.key === 'comments' ? COMMENTS_SEARCH_OPERATION_ID : undefined}
+                            disabled={route.key === 'comments' && query.isFetching}
+                            aria-busy={route.key === 'comments' && query.isFetching ? 'true' : 'false'}
+                        >
+                            {text(commonText.search)}
+                        </button>
+                    )}
                     {route.key === 'application-users' ? (
                         <ApplicationUsersClearSearchControl
                             searchValue={searchInput}
