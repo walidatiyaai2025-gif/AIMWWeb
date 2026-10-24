@@ -54,7 +54,7 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | api | 31 | 0 | 31 | 0 | 0 | 0 | 31 | 100.00% |
 | background_job | 21 | 0 | 21 | 0 | 0 | 0 | 21 | 100.00% |
-| route | 84 | 0 | 70 | 14 | 0 | 0 | 70 | 83.33% |
+| route | 84 | 0 | 71 | 13 | 0 | 0 | 71 | 84.52% |
 | service | 349 | 0 | 349 | 0 | 0 | 0 | 349 | 100.00% |
 | visible_control | 446 | 0 | 300 | 146 | 0 | 0 | 300 | 67.26% |
 
@@ -161,7 +161,6 @@ Terminal progress is strictly `PORTED + ADAPTED + VERIFIED_UNAVAILABLE_EXTERNAL`
 - `AIMW-CONT-B9E6EFF3DF`
 - `AIMW-CONT-BB31987A53`
 - `AIMW-CONT-BCAD1E3A49`
-- `AIMW-CONT-BF5F72F4F9`
 - `AIMW-CONT-C3EC665880`
 - `AIMW-CONT-C49C37E2C9`
 - `AIMW-CONT-CA4920CBC8`
