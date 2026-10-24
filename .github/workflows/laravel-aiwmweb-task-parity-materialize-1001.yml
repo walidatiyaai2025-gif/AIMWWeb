@@ -1,4 +1,6 @@
 name: Laravel AIWMWeb Task Parity Materialize 1001
+# merge-validation: pr-1118-post-materialization
+# parity-refresh: composition-acdc848 pr-1118
 
 on:
   push:
