@@ -5,12 +5,30 @@ import {
     CONTENT_EXPLORER_PREVIEW_LINK_OPERATION_ID,
     ContentExplorerPreviewPanel,
 } from '../content-explorer-preview-panel';
+import type { FrontendContext } from '../core';
 import { LocaleProvider } from '../i18n';
+
+type SiteAwareContext = FrontendContext & {
+    active_site?: { id: number; name: string; status: string } | null;
+};
+
+const previewContext: SiteAwareContext = {
+    user: { id: 10, name: 'Alpha Owner', email: 'alpha@example.test' },
+    tenant: { slug: 'alpha', name: 'Alpha' },
+    tenants: [{ slug: 'alpha', name: 'Alpha' }],
+    permissions: ['tenant.view', 'sites.view', 'content.view'],
+    connectors: [],
+    capabilities: {},
+    api: { explorer: '/api/v1/tenants/alpha/sites/17/explorer' },
+    actions: {},
+    active_site: { id: 17, name: 'Alpha Site', status: 'active' },
+};
 
 function renderPreview(link: unknown, onClose = vi.fn()) {
     return render(
         <LocaleProvider>
             <ContentExplorerPreviewPanel
+                context={previewContext}
                 row={{
                     id: 7,
                     wordpress_id: 71,
@@ -48,7 +66,7 @@ describe('AIMW-CONT-37B4B4BEC4 Content Explorer preview link', () => {
 
         rerender(
             <LocaleProvider>
-                <ContentExplorerPreviewPanel row={{ title: 'No link' }} onClose={() => undefined} />
+                <ContentExplorerPreviewPanel context={previewContext} row={{ title: 'No link' }} onClose={() => undefined} />
             </LocaleProvider>,
         );
         expect(screen.queryByRole('link', { name: /Open on site/ })).not.toBeInTheDocument();
