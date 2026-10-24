@@ -1027,8 +1027,8 @@
   "focused_closure_operation_sources": [
     {
       "label": "AIMW-SYNC-26F2BF8EE8 ApplicationUsers SearchClickedAsync focused closure",
-      "sha": "797479371de3f90170bdbeed06444b433d57235b",
-      "observed_pr_head": "797479371de3f90170bdbeed06444b433d57235b",
+      "sha": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
+      "observed_pr_head": "9ef1547ac9d36a40c53ec79b552ac5020ee2ec3f",
       "operation_ids": [
         "AIMW-SYNC-26F2BF8EE8"
       ]
