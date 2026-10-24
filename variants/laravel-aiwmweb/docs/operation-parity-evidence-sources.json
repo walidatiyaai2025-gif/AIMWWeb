@@ -1020,6 +1020,28 @@
       "operation_ids": [
         "AIMW-SYNC-8719C812DC"
       ]
+    },
+    {
+      "label": "AIMW-CONT-BF5F72F4F9 Site Connect canonical route terminality",
+      "sha": "1f9c788c7c80d6cd2b7d239cd84477f8be777f3b",
+      "observed_pr_head": "1f9c788c7c80d6cd2b7d239cd84477f8be777f3b",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-BF5F72F4F9"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-BF5F72F4F9": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteConnectRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-connect-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
