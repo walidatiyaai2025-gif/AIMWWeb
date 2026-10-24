@@ -103,12 +103,12 @@
     "content": {
       "total": 164,
       "ported": 0,
-      "adapted": 78,
-      "pending": 86,
+      "adapted": 77,
+      "pending": 87,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 78,
-      "percent": 47.56
+      "terminal": 77,
+      "percent": 46.95
     },
     "email": {
       "total": 82,
@@ -213,12 +213,12 @@
     "taxonomy": {
       "total": 13,
       "ported": 0,
-      "adapted": 8,
-      "pending": 5,
+      "adapted": 9,
+      "pending": 4,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 8,
-      "percent": 61.54
+      "terminal": 9,
+      "percent": 69.23
     }
   },
   "uncounted_work": [],
@@ -16099,31 +16099,21 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
+      "laravel_destination": "",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "ADAPTED",
-      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-site-link-control.test.tsx",
-      "evidence": "AIMW-CONT-E89EDDF780 Content Editor site breadcrumb focused closure@cdad1ea5c92560095a316f93eea2cd35f20ea466: variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx; focused-closure:AIMW-CONT-E89EDDF780; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-site-link-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-site-link-terminality.json",
+      "migration_state": "PENDING",
+      "acceptance_test": "",
+      "evidence": "",
       "reconciliation": {
-        "decision": "ADAPTED",
-        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
-        "source_label": "AIMW-CONT-E89EDDF780 Content Editor site breadcrumb focused closure",
-        "source_sha": "cdad1ea5c92560095a316f93eea2cd35f20ea466",
-        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
-        "evidence_mode": "focused_closure_contract",
-        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/content-editor-site-link-terminality.json",
-        "signals": [
-          "operation:AIMW-CONT-E89EDDF780",
-          "production-marker:variants/laravel-aiwmweb/backend/resources/js/content-editor-save-control.tsx",
-          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/content-editor-site-link-control.test.tsx",
-          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/content-editor-site-link-terminality.json",
-          "scope:operation-specific",
-          "test:tenant-isolation"
-        ]
+        "decision": "PENDING",
+        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
+        "source_label": null,
+        "source_sha": null,
+        "destination_path": null
       }
     },
     {
@@ -36265,21 +36255,31 @@
       "external_dependency": "WordPress",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
       "native_wp_rest": true,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx",
+      "evidence": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure@71f17dd3d88940794aa8b43d18f0a8918f3ee204: variants/laravel-aiwmweb/backend/resources/js/components.tsx; focused-closure:AIMW-TAXO-39CDD7EF81; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-save-submit-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure",
+        "source_sha": "71f17dd3d88940794aa8b43d18f0a8918f3ee204",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-save-submit-terminality.json",
+        "signals": [
+          "operation:AIMW-TAXO-39CDD7EF81",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/components.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/taxonomy-save-submit-control.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/taxonomy-save-submit-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36706,6 +36706,7 @@
       "AIMW-CONT-E1A7A8CAA7",
       "AIMW-CONT-E346398EAD",
       "AIMW-CONT-E4D7C73D4E",
+      "AIMW-CONT-E89EDDF780",
       "AIMW-CONT-ED2F1E1572",
       "AIMW-CONT-EDC262499D",
       "AIMW-CONT-EE659E3F13",
@@ -36817,7 +36818,6 @@
       "AIMW-SYNC-FF579F0EBF"
     ],
     "taxonomy": [
-      "AIMW-TAXO-39CDD7EF81",
       "AIMW-TAXO-5D39DA68B7",
       "AIMW-TAXO-602DE140EB",
       "AIMW-TAXO-A96714F338",
@@ -37713,7 +37713,6 @@
       "AIMW-CONT-DD56664FDA",
       "AIMW-CONT-DF8B12B6DE",
       "AIMW-CONT-E38ADF8481",
-      "AIMW-CONT-E89EDDF780",
       "AIMW-CONT-EBD53650BC",
       "AIMW-CONT-EE531AE1FC",
       "AIMW-CONT-F57B1E1503",
@@ -37787,6 +37786,7 @@
       "AIMW-SYNC-F135B261B2",
       "AIMW-SYNC-F340B5445A",
       "AIMW-TAXO-005925568C",
+      "AIMW-TAXO-39CDD7EF81",
       "AIMW-TAXO-770DAA668D",
       "AIMW-TAXO-D5A5B530C7",
       "AIMW-TAXO-D784149312",
@@ -38103,10 +38103,10 @@
         ]
       },
       {
-        "label": "AIMW-CONT-E89EDDF780 Content Editor site breadcrumb focused closure",
-        "sha": "cdad1ea5c92560095a316f93eea2cd35f20ea466",
+        "label": "AIMW-TAXO-39CDD7EF81 TaxonomyManager Save submit focused closure",
+        "sha": "71f17dd3d88940794aa8b43d18f0a8918f3ee204",
         "operation_ids": [
-          "AIMW-CONT-E89EDDF780"
+          "AIMW-TAXO-39CDD7EF81"
         ]
       }
     ],
