@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { tenantUrl, type FrontendContext } from './core';
 import { useLocale } from './i18n';
 
-// Source parity: SiteOperationsOverview.razor Manage sites navigation.
+// Source parity: SiteOperationsOverview.razor Manage sites navigation to the tenant Sites workspace.
 export const SITE_OPERATIONS_SITES_LINK_OPERATION_ID = 'AIMW-CONT-5BE26C7AB5';
 
 export function SiteOperationsSitesLinkControl({ context }: { context: FrontendContext }) {
