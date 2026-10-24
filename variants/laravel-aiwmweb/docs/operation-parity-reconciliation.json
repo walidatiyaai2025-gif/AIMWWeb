@@ -25,19 +25,19 @@
   "totals": {
     "total": 931,
     "ported": 0,
-    "adapted": 769,
-    "pending": 162,
+    "adapted": 770,
+    "pending": 161,
     "blocked": 0,
     "verified_unavailable_external": 0,
-    "terminal": 769,
-    "overall_parity_percent": 82.6
+    "terminal": 770,
+    "overall_parity_percent": 82.71
   },
   "visible_controls": {
     "total": 446,
-    "terminal": 298,
-    "pending": 148,
+    "terminal": 299,
+    "pending": 147,
     "blocked": 0,
-    "percent": 66.82
+    "percent": 67.04
   },
   "domains": {
     "ai": {
@@ -113,12 +113,12 @@
     "email": {
       "total": 82,
       "ported": 0,
-      "adapted": 75,
-      "pending": 7,
+      "adapted": 76,
+      "pending": 6,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 75,
-      "percent": 91.46
+      "terminal": 76,
+      "percent": 92.68
     },
     "identity": {
       "total": 7,
@@ -22502,21 +22502,31 @@
       "external_dependency": "email_provider",
       "approval": false,
       "verification": "rendered/read response matches authoritative source",
-      "laravel_destination": "",
+      "laravel_destination": "variants/laravel-aiwmweb/backend/resources/js/email-history-filters-control.tsx",
       "native_wp_rest": false,
       "connector_required": false,
       "connector_scope": "",
       "tenant_owned": true,
       "risk": "low",
-      "migration_state": "PENDING",
-      "acceptance_test": "",
-      "evidence": "",
+      "migration_state": "ADAPTED",
+      "acceptance_test": "variants/laravel-aiwmweb/backend/resources/js/__tests__/email-history-apply-filters-terminality.test.tsx",
+      "evidence": "AIMW-EMAI-8C9768BCD0 ClearFiltersAsync focused closure@3f06ddbbd2a01621893578d3d3eb2ebeafe5206e: variants/laravel-aiwmweb/backend/resources/js/email-history-filters-control.tsx; focused-closure:AIMW-EMAI-8C9768BCD0; test:variants/laravel-aiwmweb/backend/resources/js/__tests__/email-history-apply-filters-terminality.test.tsx; evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-history-clear-filters-terminality.json",
       "reconciliation": {
-        "decision": "PENDING",
-        "reason": "Visible/screen operation lacks converged functional UI+backend evidence; frontend foundation placeholders are not parity.",
-        "source_label": null,
-        "source_sha": null,
-        "destination_path": null
+        "decision": "ADAPTED",
+        "reason": "Exact pushed operation-scoped focused closure evidence is linked to the canonical operation ID in production code and focused acceptance tests; sibling focused closures cannot be counted by this source.",
+        "source_label": "AIMW-EMAI-8C9768BCD0 ClearFiltersAsync focused closure",
+        "source_sha": "3f06ddbbd2a01621893578d3d3eb2ebeafe5206e",
+        "destination_path": "variants/laravel-aiwmweb/backend/resources/js/email-history-filters-control.tsx",
+        "evidence_mode": "focused_closure_contract",
+        "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/email-history-clear-filters-terminality.json",
+        "signals": [
+          "operation:AIMW-EMAI-8C9768BCD0",
+          "production-marker:variants/laravel-aiwmweb/backend/resources/js/email-history-filters-control.tsx",
+          "test:variants/laravel-aiwmweb/backend/resources/js/__tests__/email-history-apply-filters-terminality.test.tsx",
+          "evidence:variants/laravel-aiwmweb/docs/closure-evidence/email-history-clear-filters-terminality.json",
+          "scope:operation-specific",
+          "test:tenant-isolation"
+        ]
       }
     },
     {
@@ -36837,12 +36847,12 @@
     "visible_control": {
       "total": 446,
       "ported": 0,
-      "adapted": 298,
-      "pending": 148,
+      "adapted": 299,
+      "pending": 147,
       "blocked": 0,
       "verified_unavailable_external": 0,
-      "terminal": 298,
-      "percent": 66.82
+      "terminal": 299,
+      "percent": 67.04
     }
   },
   "pending_operation_ids_by_domain": {
@@ -36935,7 +36945,6 @@
       "AIMW-EMAI-0AA71A5EF6",
       "AIMW-EMAI-10F3C44369",
       "AIMW-EMAI-7E1D4105B0",
-      "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-9EB09C490D",
       "AIMW-EMAI-A9CB66F400"
     ],
@@ -37564,6 +37573,16 @@
           "AIMW-SYNC-8719C812DC"
         ],
         "explicit_operation_evidence_ids": []
+      },
+      {
+        "label": "AIMW-EMAI-8C9768BCD0 ClearFiltersAsync focused closure",
+        "sha": "3f06ddbbd2a01621893578d3d3eb2ebeafe5206e",
+        "domains": [],
+        "supporting_only": false,
+        "operation_ids": [
+          "AIMW-EMAI-8C9768BCD0"
+        ],
+        "explicit_operation_evidence_ids": []
       }
     ]
   },
@@ -37590,6 +37609,7 @@
       "392c4efe25adc0214893fd81b740171b8cd9a750",
       "3e932f83ee1a9e3bcbee1159ead1fe29f8721640",
       "3ef0d094b3211f0e67966346f1a896d2daf164a9",
+      "3f06ddbbd2a01621893578d3d3eb2ebeafe5206e",
       "41011429295d0b5daa7a36a59824d4b45015b93e",
       "486f9f0cd1ea46afaed862c52525bf82a7cb4bd4",
       "53d1178f4ec9e1a9134650bf9d3ac22a68ccf081",
@@ -37963,6 +37983,7 @@
       "AIMW-EMAI-62B0B8EE4C",
       "AIMW-EMAI-77C637E3E3",
       "AIMW-EMAI-7A54150265",
+      "AIMW-EMAI-8C9768BCD0",
       "AIMW-EMAI-8E3B0AACD6",
       "AIMW-EMAI-8E56589573",
       "AIMW-EMAI-BDF888551C",
@@ -38512,10 +38533,17 @@
         "operation_ids": [
           "AIMW-SYNC-1778E3F6B5"
         ]
+      },
+      {
+        "label": "AIMW-EMAI-8C9768BCD0 ClearFiltersAsync focused closure",
+        "sha": "3f06ddbbd2a01621893578d3d3eb2ebeafe5206e",
+        "operation_ids": [
+          "AIMW-EMAI-8C9768BCD0"
+        ]
       }
     ],
-    "focused_closure_operation_scoped_count": 68,
-    "focused_closure_contract_count": 298,
+    "focused_closure_operation_scoped_count": 69,
+    "focused_closure_contract_count": 299,
     "focused_closure_provenance_refreshed": [],
     "focused_closure_provenance_refreshed_count": 0,
     "focused_service_contract_terminals": [
