@@ -55,7 +55,9 @@
     ]
   },
   "scope_guards": {
-    "claimed_operations": ["AIMW-SYNC-26F2BF8EE8"],
+    "claimed_operations": [
+      "AIMW-SYNC-26F2BF8EE8"
+    ],
     "sibling_operations_claimed": false,
     "aspnet_product_modified": false,
     "generated_reconciliation_hand_edited": false
@@ -68,6 +70,8 @@
   },
   "materialization": {
     "workflow": ".github/workflows/laravel-aiwmweb-task-parity-materialize-924.yml",
-    "generated_reconciliation_required": true
+    "generated_reconciliation_required": true,
+    "generated_reconciliation_sha": "571f55233384409657fa6394c3b4d11687688e0d",
+    "generated_reconciliation_state": "ADAPTED"
   }
 }
