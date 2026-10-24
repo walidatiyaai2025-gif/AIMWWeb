@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, type FrontendContext } from './core';
 import { useToast } from './components';
 import { useLocale } from './i18n';
+import { CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT } from './content-explorer-content-tab-control';
 import {
     CONTENT_EXPLORER_BULK_TRASH_OPERATION_ID,
     buildBulkTrashPayload,
@@ -58,6 +59,12 @@ export function ContentExplorerBulkTrashControl({ context }: { context: Frontend
     const { locale } = useLocale();
     const { notify } = useToast();
     const [selected, setSelected] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        const clearSelection = () => setSelected(new Set());
+        window.addEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, clearSelection);
+        return () => window.removeEventListener(CONTENT_EXPLORER_CONTENT_TAB_RESET_EVENT, clearSelection);
+    }, []);
     const activeSite = (context as ContextWithActiveSite).active_site;
     const siteId = activeSite?.id ?? 0;
     const canView = hasPermission(context, 'content.view');
