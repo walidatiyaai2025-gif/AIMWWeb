@@ -66,7 +66,7 @@ describe('AIMW-CONT-607ACDF4D8 Content Editor Explorer link', () => {
         }
     });
 
-    it('requires tenant and explorer permissions and an enabled explorer capability', () => {
+    it('requires tenant and explorer permissions and fails closed when Explorer is explicitly disabled', () => {
         const noSites = { ...context, permissions: ['tenant.view', 'content.view'] } as FrontendContext;
         const noTenant = { ...context, permissions: ['sites.view', 'content.view'] } as FrontendContext;
         const disabled = {
