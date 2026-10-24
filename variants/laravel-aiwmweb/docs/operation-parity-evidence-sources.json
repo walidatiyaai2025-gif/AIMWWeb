@@ -1020,6 +1020,28 @@
       "operation_ids": [
         "AIMW-SYNC-8719C812DC"
       ]
+    },
+    {
+      "label": "AIMW-CONT-47007EE040 Site Reliability operations route closure",
+      "sha": "4ad93bd9cba56406cfb9077041dd40d4199aa651",
+      "observed_pr_head": "4ad93bd9cba56406cfb9077041dd40d4199aa651",
+      "domains": [
+        "content"
+      ],
+      "supporting_only": true,
+      "operation_ids": [
+        "AIMW-CONT-47007EE040"
+      ],
+      "route_api_provenance": {
+        "AIMW-CONT-47007EE040": {
+          "destination_path": "variants/laravel-aiwmweb/backend/routes/web.php",
+          "action_path": "variants/laravel-aiwmweb/backend/app/Http/Controllers/CanonicalWorkspaceRouteController.php",
+          "acceptance_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "operation_link_test": "variants/laravel-aiwmweb/backend/tests/Feature/SiteReliabilityOperationsRouteTerminalityTest.php",
+          "evidence_path": "variants/laravel-aiwmweb/docs/closure-evidence/site-reliability-operations-route-terminality.json",
+          "security_mode": "tenant_selected"
+        }
+      }
     }
   ],
   "excluded_sources": [],
@@ -1516,6 +1538,14 @@
       "observed_pr_head": "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
       "operation_ids": [
         "AIMW-SYNC-8719C812DC"
+      ]
+    },
+    {
+      "label": "AIMW-CONT-5BE26C7AB5 Site Operations Manage sites focused closure",
+      "sha": "ffa5037010f28079f64576264fb67ebfd6733e73",
+      "observed_pr_head": "ffa5037010f28079f64576264fb67ebfd6733e73",
+      "operation_ids": [
+        "AIMW-CONT-5BE26C7AB5"
       ]
     }
   ]
