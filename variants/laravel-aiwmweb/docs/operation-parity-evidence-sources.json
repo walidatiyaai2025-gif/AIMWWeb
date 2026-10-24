@@ -1012,6 +1012,14 @@
           "security_mode": "tenant_selected"
         }
       }
+    },
+    {
+      "label": "AIMW-SYNC-8719C812DC retained StateBanner retry focused closure",
+      "sha": "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
+      "observed_pr_head": "0df86d6e260b6b7d6748fb8ffdf8f03517405cec",
+      "operation_ids": [
+        "AIMW-SYNC-8719C812DC"
+      ]
     }
   ],
   "excluded_sources": [],
